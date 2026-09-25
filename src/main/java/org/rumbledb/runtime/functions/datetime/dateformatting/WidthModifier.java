@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -17,11 +32,7 @@ final class WidthModifier {
         this.maxWidth = maxWidth;
     }
 
-    static WidthModifier parse(
-            String rest,
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+    static WidthModifier parse(String rest, String pictureString, ExceptionMetadata metadata) {
         int comma = rest.lastIndexOf(',');
 
         if (comma < 0) {
@@ -33,18 +44,10 @@ final class WidthModifier {
 
         ParsedWidth width = parseWidth(widthPart, pictureString, metadata);
 
-        return new WidthModifier(
-                presentationPart,
-                width.minWidth,
-                width.maxWidth
-        );
+        return new WidthModifier(presentationPart, width.minWidth, width.maxWidth);
     }
 
-    private static ParsedWidth parseWidth(
-            String widthPart,
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+    private static ParsedWidth parseWidth(String widthPart, String pictureString, ExceptionMetadata metadata) {
         if (widthPart.isEmpty()) {
             throw incorrectSyntax(pictureString, metadata);
         }
@@ -56,20 +59,14 @@ final class WidthModifier {
         }
 
         int min = parseWidthValue(parts[0], pictureString, metadata);
-        int max = parts.length == 2
-            ? parseWidthValue(parts[1], pictureString, metadata)
-            : UNBOUNDED;
+        int max = parts.length == 2 ? parseWidthValue(parts[1], pictureString, metadata) : UNBOUNDED;
 
         validateWidth(min, max, pictureString, metadata);
 
         return new ParsedWidth(min, max);
     }
 
-    private static int parseWidthValue(
-            String value,
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+    private static int parseWidthValue(String value, String pictureString, ExceptionMetadata metadata) {
         if ("*".equals(value)) {
             return UNBOUNDED;
         }
@@ -85,12 +82,7 @@ final class WidthModifier {
         }
     }
 
-    private static void validateWidth(
-            int min,
-            int max,
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+    private static void validateWidth(int min, int max, String pictureString, ExceptionMetadata metadata) {
         if (min == 0 || max == 0) {
             throw invalidPicture(pictureString, metadata);
         }
@@ -101,23 +93,14 @@ final class WidthModifier {
     }
 
     private static IncorrectSyntaxFormatDateTimeException incorrectSyntax(
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
-        return new IncorrectSyntaxFormatDateTimeException(
-                "\"" + pictureString + "\": incorrect syntax",
-                metadata
-        );
+            String pictureString, ExceptionMetadata metadata) {
+        return new IncorrectSyntaxFormatDateTimeException("\"" + pictureString + "\": incorrect syntax", metadata);
     }
 
     private static IncorrectSyntaxFormatDateTimeException invalidPicture(
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            String pictureString, ExceptionMetadata metadata) {
         return new IncorrectSyntaxFormatDateTimeException(
-                "\"" + pictureString + "\": invalid picture string",
-                metadata
-        );
+                "\"" + pictureString + "\": invalid picture string", metadata);
     }
 
     private static final class ParsedWidth {

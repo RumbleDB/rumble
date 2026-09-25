@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,29 +11,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * An expression representing a text node constructor.
- * 
+ *
  * All text node constructors are computed constructors. The result of a text node constructor is a new text node, with
  * its own node identity.
- * 
+ *
  * Syntax: text { content }
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-textConstructors">XQuery 3.1, 3.9.3.4: Text Node Constructors</a>
  */
 @Getter
@@ -46,14 +42,11 @@ public class TextNodeConstructorExpression extends Expression {
 
     /**
      * Constructor for text node constructor.
-     * 
+     *
      * @param contentExpression The content expression
      * @param metadata The exception metadata
      */
-    public TextNodeConstructorExpression(
-            Expression contentExpression,
-            ExceptionMetadata metadata
-    ) {
+    public TextNodeConstructorExpression(Expression contentExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.contentExpression = contentExpression;
     }

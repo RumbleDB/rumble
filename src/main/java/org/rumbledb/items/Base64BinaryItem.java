@@ -1,15 +1,31 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import lombok.Getter;
 import java.io.Serial;
 import java.util.Base64;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
+
+import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-
 
 public class Base64BinaryItem extends AbstractAtomicItem {
 
@@ -29,8 +45,10 @@ public class Base64BinaryItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     @Getter
     private byte[] value;
+
     private String stringValue;
 
     public Base64BinaryItem(String stringValue) {

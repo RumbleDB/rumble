@@ -1,6 +1,25 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.expressions.typing;
 
+import java.util.Collections;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -8,19 +27,12 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-import java.util.Collections;
-import java.util.List;
-
 @Getter
 public class IsStaticallyExpression extends Expression {
     private Expression mainExpression;
     private SequenceType sequenceType;
 
-    public IsStaticallyExpression(
-            Expression mainExpression,
-            SequenceType sequenceType,
-            ExceptionMetadata metadata
-    ) {
+    public IsStaticallyExpression(Expression mainExpression, SequenceType sequenceType, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
@@ -48,13 +60,11 @@ public class IsStaticallyExpression extends Expression {
         buffer.append(" (" + (this.sequenceType.toString()) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(
-            " | "
+        buffer.append(" | "
                 + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
+                        ? "not set"
+                        : this.staticSequenceType
+                                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

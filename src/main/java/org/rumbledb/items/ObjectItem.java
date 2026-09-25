@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.items;
 
 import java.io.Serial;
@@ -38,16 +33,16 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-
 public class ObjectItem extends AbstractMapItem {
-
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private List<Item> values;
     private List<String> keys;
     /** String key → index in {@link #keys} / {@link #values}; rebuilt after remove and Kryo read. */
     private Map<String, Integer> keyStringToIndex;
+
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -103,9 +98,7 @@ public class ObjectItem extends AbstractMapItem {
      * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for
      *        functionality
      */
-    public ObjectItem(Map<String, ?> keyValuePairs)
-
-    {
+    public ObjectItem(Map<String, ?> keyValuePairs) {
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();
@@ -132,10 +125,8 @@ public class ObjectItem extends AbstractMapItem {
                 } else {
                     throw new RuntimeException("Unexpected value type found.");
                 }
-
             }
         }
-
 
         this.keys = keyList;
         this.values = valueList;
@@ -148,8 +139,6 @@ public class ObjectItem extends AbstractMapItem {
         this.collection = null;
         this.topLevelOrder = 0.0;
     }
-
-
 
     private void rebuildKeyStringIndex() {
         if (this.keyStringToIndex == null) {
@@ -279,7 +268,6 @@ public class ObjectItem extends AbstractMapItem {
         putItemByKey(key.getStringValue(), value);
     }
 
-
     @Override
     public void putSequenceByKey(String key, List<Item> valueSequence) {
         if (valueSequence == null) {
@@ -290,8 +278,7 @@ public class ObjectItem extends AbstractMapItem {
             return;
         }
         throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
-        );
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
     }
 
     @Override
@@ -306,8 +293,7 @@ public class ObjectItem extends AbstractMapItem {
         }
         // throw an error
         throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
-        );
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
     }
 
     @Override
@@ -353,8 +339,6 @@ public class ObjectItem extends AbstractMapItem {
             }
         }
     }
-
-
 
     @Override
     public ItemType getDynamicType() {
@@ -517,9 +501,7 @@ public class ObjectItem extends AbstractMapItem {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -543,6 +525,5 @@ public class ObjectItem extends AbstractMapItem {
         for (Item item : this.values) {
             item.setCollection(collection);
         }
-
     }
 }

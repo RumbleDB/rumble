@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
 import java.io.Serial;
@@ -18,9 +33,8 @@ public class UnionItemType extends AbstractItemType {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
-            Arrays.asList(ConstrainingFacetTypes.CONTENT)
-    );
+    private static final Set<ConstrainingFacetTypes> allowedFacets =
+            new HashSet<>(Arrays.asList(ConstrainingFacetTypes.CONTENT));
 
     private final Name name;
     private final ItemType baseType;
@@ -195,8 +209,7 @@ public class UnionItemType extends AbstractItemType {
     @Override
     public boolean isResolved() {
         for (ItemType itemType : this.types) {
-            if (!itemType.isResolved())
-                return false;
+            if (!itemType.isResolved()) return false;
         }
         return true;
     }
@@ -226,18 +239,14 @@ public class UnionItemType extends AbstractItemType {
         }
         ItemType first = this.types.get(0);
         ItemType second = this.types.get(1);
-        if (
-            first.equals(BuiltinTypesCatalogue.nullItem)
+        if (first.equals(BuiltinTypesCatalogue.nullItem)
                 && second.isAtomicItemType()
-                && second.isCompatibleWithDataFrames(configuration)
-        ) {
+                && second.isCompatibleWithDataFrames(configuration)) {
             return true;
         }
-        if (
-            second.equals(BuiltinTypesCatalogue.nullItem)
+        if (second.equals(BuiltinTypesCatalogue.nullItem)
                 && first.isAtomicItemType()
-                && first.isCompatibleWithDataFrames(configuration)
-        ) {
+                && first.isCompatibleWithDataFrames(configuration)) {
             return true;
         }
         return false;
@@ -309,5 +318,4 @@ public class UnionItemType extends AbstractItemType {
         }
         return null;
     }
-
 }

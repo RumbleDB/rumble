@@ -1,32 +1,41 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.util.formatting;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatNumberException;
 import org.rumbledb.exceptions.RumbleException;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public final class NumericPictureParser {
 
     public static class NumericPictureKind {
-        private NumericPictureKind() {
-        }
+        private NumericPictureKind() {}
 
         public static final String DATE = "DATE";
         public static final String INTEGER = "INTEGER";
     }
 
-    private NumericPictureParser() {
-    }
+    private NumericPictureParser() {}
 
     private static NumericPicture parse(
-            String picture,
-            String pictureStringForErrors,
-            ExceptionMetadata metadata,
-            String kind
-    ) {
+            String picture, String pictureStringForErrors, ExceptionMetadata metadata, String kind) {
         if (picture == null || picture.isEmpty()) {
             throw invalidPicture(pictureStringForErrors, metadata, kind);
         }
@@ -91,28 +100,16 @@ public final class NumericPictureParser {
         RepeatingGroupingInfo repeatingInfo = detectRepeatingGrouping(groupings, runLengths, kind);
 
         return new NumericPicture(
-                zeroDigit,
-                mandatoryCount,
-                activeCount,
-                groupings,
-                repeatingInfo.repeating,
-                repeatingInfo.interval
-        );
+                zeroDigit, mandatoryCount, activeCount, groupings, repeatingInfo.repeating, repeatingInfo.interval);
     }
 
     public static NumericPicture parseForDate(
-            String picture,
-            String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            String picture, String pictureStringForErrors, ExceptionMetadata metadata) {
         return parse(picture, pictureStringForErrors, metadata, NumericPictureKind.DATE);
     }
 
     public static NumericPicture parseForInteger(
-            String picture,
-            String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            String picture, String pictureStringForErrors, ExceptionMetadata metadata) {
         return parse(picture, pictureStringForErrors, metadata, NumericPictureKind.INTEGER);
     }
 
@@ -176,10 +173,7 @@ public final class NumericPictureParser {
     }
 
     private static RepeatingGroupingInfo detectRepeatingGrouping(
-            List<GroupingPos> groupings,
-            List<Integer> runLengths,
-            String kind
-    ) {
+            List<GroupingPos> groupings, List<Integer> runLengths, String kind) {
         if (!kind.equals(NumericPictureKind.INTEGER)) {
             return new RepeatingGroupingInfo(false, 0);
         }
@@ -234,10 +228,7 @@ public final class NumericPictureParser {
     }
 
     private static RumbleException invalidPicture(
-            String pictureStringForErrors,
-            ExceptionMetadata metadata,
-            String kind
-    ) {
+            String pictureStringForErrors, ExceptionMetadata metadata, String kind) {
         String message = "\"" + pictureStringForErrors + "\": invalid picture string";
 
         if (kind == NumericPictureKind.DATE) {

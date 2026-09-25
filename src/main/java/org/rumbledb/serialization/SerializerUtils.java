@@ -1,10 +1,19 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.serialization;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.RumbleException;
 
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -13,13 +22,18 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
+
 /**
  * Shared helpers for {@link Serializer} implementations (map serialization, DM node names).
  */
 public final class SerializerUtils {
 
-    private SerializerUtils() {
-    }
+    private SerializerUtils() {}
 
     public static void appendDmNodeNameLexical(StringBuilder sb, Item item) {
         Name n = item.nodeName();
@@ -48,9 +62,7 @@ public final class SerializerUtils {
     }
 
     public static String getEffectiveXmlVersion(SerializationParameters params) {
-        return params.getVersion() == null || params.getVersion().isEmpty()
-            ? "1.0"
-            : params.getVersion();
+        return params.getVersion() == null || params.getVersion().isEmpty() ? "1.0" : params.getVersion();
     }
 
     /**
@@ -64,8 +76,7 @@ public final class SerializerUtils {
             Item mapItem,
             StringBuilder sb,
             String indent,
-            String optionalPrefixBeforeOpenBrace
-    ) {
+            String optionalPrefixBeforeOpenBrace) {
         if (optionalPrefixBeforeOpenBrace != null && !optionalPrefixBeforeOpenBrace.isEmpty()) {
             sb.append(optionalPrefixBeforeOpenBrace);
         }
@@ -101,8 +112,7 @@ public final class SerializerUtils {
             Item mapItem,
             Item key,
             StringBuilder sb,
-            String indent
-    ) {
+            String indent) {
         List<Item> sequence = mapItem.getSequenceByKey(key);
         if (sequence == null || sequence.isEmpty()) {
             sb.append("null");
@@ -140,13 +150,9 @@ public final class SerializerUtils {
         sb.append("]");
     }
 
-    public static void appendJsonEscapedString(
-            StringBuilder sb,
-            String value,
-            SerializationParameters params
-    ) {
+    public static void appendJsonEscapedString(StringBuilder sb, String value, SerializationParameters params) {
         CharsetEncoder encoder = getCharsetEncoder(params);
-        for (int i = 0; i < value.length();) {
+        for (int i = 0; i < value.length(); ) {
             int codePoint = value.codePointAt(i);
             i += Character.charCount(codePoint);
             appendJsonEscapedCodePoint(sb, codePoint, encoder);
@@ -162,16 +168,11 @@ public final class SerializerUtils {
             throw new RumbleException(
                     "Unsupported serialization encoding: " + encoding,
                     new ErrorCode(new Name(Name.ERROR_NS, "err", "SESU0007")),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
-    private static void appendJsonEscapedCodePoint(
-            StringBuilder sb,
-            int codePoint,
-            CharsetEncoder encoder
-    ) {
+    private static void appendJsonEscapedCodePoint(StringBuilder sb, int codePoint, CharsetEncoder encoder) {
         switch (codePoint) {
             case '"':
                 sb.append("\\\"");

@@ -1,20 +1,34 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.datetime.dateformatting;
+
+import java.math.BigInteger;
+import java.time.OffsetDateTime;
 
 import org.rumbledb.exceptions.ComponentSpecifierNotAvailableException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
+import org.rumbledb.runtime.functions.util.formatting.NumberWords;
 import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
-import org.rumbledb.runtime.functions.util.formatting.NumberWords;
-
-import java.math.BigInteger;
-import java.time.OffsetDateTime;
 
 final class TemporalComponentRenderer {
 
-    private TemporalComponentRenderer() {
-    }
+    private TemporalComponentRenderer() {}
 
     static String render(
             OffsetDateTime value,
@@ -23,15 +37,13 @@ final class TemporalComponentRenderer {
             FormattingContext formattingContext,
             TemporalPictureFormatter.ComponentSupport componentSupport,
             String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         if (!componentSupport.supports(variableMarker.component)) {
             throw new ComponentSpecifierNotAvailableException(
                     "\""
-                        + pictureString
-                        + "\": a component specifier refers to components that are not available in the date type",
-                    metadata
-            );
+                            + pictureString
+                            + "\": a component specifier refers to components that are not available in the date type",
+                    metadata);
         }
 
         switch (variableMarker.kind) {
@@ -46,29 +58,17 @@ final class TemporalComponentRenderer {
 
             case VariableMarker.Kind.FRACTIONAL_SECONDS:
                 return FractionalSecondsFormatter.format(
-                    value,
-                    variableMarker,
-                    formattingContext,
-                    pictureString,
-                    metadata
-                );
+                        value, variableMarker, formattingContext, pictureString, metadata);
 
             case VariableMarker.Kind.NAME:
                 return formatNamedComponent(value, variableMarker, formattingContext, pictureString, metadata);
-
-            case VariableMarker.Kind.AM_PM:
-                return value.getHour() < 12 ? "am" : "pm";
 
             case VariableMarker.Kind.WORDS:
                 return formatWordsComponent(value, variableMarker, formattingContext, pictureString, metadata);
 
             case VariableMarker.Kind.TIMEZONE:
                 return TemporalFormattingSupport.formatTimezone(
-                    value,
-                    variableMarker.timezonePicture,
-                    hasExplicitTimezone,
-                    formattingContext
-                );
+                        value, variableMarker.timezonePicture, hasExplicitTimezone, formattingContext);
 
             case VariableMarker.Kind.DEFAULT:
             default:
@@ -81,15 +81,14 @@ final class TemporalComponentRenderer {
             VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         int numericValue = variableMarker.numericValue(dt, formattingContext, pictureString, metadata);
 
         numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
 
         String roman = numericValue >= 1 && numericValue <= 3999
-            ? NumberWords.roman(numericValue, variableMarker.lowerCaseRoman)
-            : Integer.toString(numericValue);
+                ? NumberWords.roman(numericValue, variableMarker.lowerCaseRoman)
+                : Integer.toString(numericValue);
         roman = maybeAppendOrdinal(roman, numericValue, variableMarker, formattingContext);
 
         return padRightWithSpaces(roman, variableMarker.minWidth);
@@ -100,8 +99,7 @@ final class TemporalComponentRenderer {
             VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         int numericValue = variableMarker.numericValue(dt, formattingContext, pictureString, metadata);
 
         numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
@@ -117,8 +115,7 @@ final class TemporalComponentRenderer {
             VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         String value = variableMarker.nameValue(dt, formattingContext, pictureString, metadata);
 
         return TemporalFormattingSupport.applyNameCase(value, variableMarker, formattingContext.locale);
@@ -129,34 +126,25 @@ final class TemporalComponentRenderer {
             VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         int numericValue = variableMarker.numericValue(dt, formattingContext, pictureString, metadata);
 
         numericValue = applyYearMaximumWidthRule(numericValue, variableMarker);
 
         String words = variableMarker.isOrdinal()
-            ? NumberWords.ordinalWords(numericValue, formattingContext.uLocale, variableMarker.formatSpecifier)
-            : NumberWords.cardinal(numericValue, formattingContext.uLocale, variableMarker.formatSpecifier);
+                ? NumberWords.ordinalWords(numericValue, formattingContext.uLocale, variableMarker.formatSpecifier)
+                : NumberWords.cardinal(numericValue, formattingContext.uLocale, variableMarker.formatSpecifier);
 
         return TemporalFormattingSupport.applyWordCase(words, variableMarker.wordCase, formattingContext.locale);
     }
 
     private static String maybeAppendOrdinal(
-            String base,
-            int numericValue,
-            VariableMarker variableMarker,
-            FormattingContext formattingContext
-    ) {
+            String base, int numericValue, VariableMarker variableMarker, FormattingContext formattingContext) {
         if (!variableMarker.isOrdinal()) {
             return base;
         }
 
-        return base
-            + NumberWords.ordinalSuffix(
-                BigInteger.valueOf(numericValue),
-                formattingContext.uLocale
-            );
+        return base + NumberWords.ordinalSuffix(BigInteger.valueOf(numericValue), formattingContext.uLocale);
     }
 
     private static String formatNumericComponent(
@@ -164,8 +152,7 @@ final class TemporalComponentRenderer {
             VariableMarker variableMarker,
             FormattingContext formattingContext,
             String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         int value = variableMarker.numericValue(dt, formattingContext, pictureString, metadata);
 
         NumericPicture pic = variableMarker.numericPicture;
@@ -185,19 +172,17 @@ final class TemporalComponentRenderer {
 
         String digits = Integer.toString(value);
 
-        if (
-            variableMarker.appliesYearMaximumWidthRule()
+        if (variableMarker.appliesYearMaximumWidthRule()
                 && variableMarker.explicitNumeric
                 && variableMarker.maxWidth < 0
                 && pic.getActiveDigitCount() > 1
-                && digits.length() > pic.getActiveDigitCount()
-        ) {
+                && digits.length() > pic.getActiveDigitCount()) {
             digits = digits.substring(digits.length() - pic.getActiveDigitCount());
         }
 
         int minWidth = variableMarker.explicitNumeric
-            ? Math.max(variableMarker.minWidth, pic.getMandatoryDigitCount())
-            : variableMarker.minWidth;
+                ? Math.max(variableMarker.minWidth, pic.getMandatoryDigitCount())
+                : variableMarker.minWidth;
 
         digits = leftPad(digits, minWidth);
 
@@ -241,15 +226,9 @@ final class TemporalComponentRenderer {
     }
 
     private static UnsupportedFeatureException unsupported(
-            String pictureString,
-            ExceptionMetadata metadata,
-            String modifier
-    ) {
-        String message = String.format(
-            "\"%s\": first presentation modifier not supported: %s",
-            pictureString,
-            modifier
-        );
+            String pictureString, ExceptionMetadata metadata, String modifier) {
+        String message =
+                String.format("\"%s\": first presentation modifier not supported: %s", pictureString, modifier);
 
         return new UnsupportedFeatureException(message, metadata);
     }

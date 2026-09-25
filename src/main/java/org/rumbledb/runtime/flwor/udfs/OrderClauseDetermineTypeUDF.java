@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,31 +11,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.flwor.udfs;
-
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.api.java.UDF1;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
-import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
-import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
-import org.rumbledb.runtime.misc.CollationSupport;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
+import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final DataFrameContext dataFrameContext;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
@@ -48,8 +45,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
-            List<FlworDataFrameColumn> columns
-    ) {
+            List<FlworDataFrameColumn> columns) {
         this.dataFrameContext = new DataFrameContext(context, columns);
         this.expressionsWithIterator = expressionsWithIterator;
 
@@ -68,15 +64,17 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     }
 
     private void populateFromExpression(OrderByClauseAnnotatedChildIterator expressionWithIterator) {
-        RuntimeIterator iterator = expressionWithIterator.getIterator();
+        ItemRuntimePlan iterator = expressionWithIterator.getIterator();
         try {
             // apply expression in the dynamic context
-            this.nextItem = iterator.materializeAtMostOneItemOrNull(this.dataFrameContext.getContext());
+            this.nextItem = iterator.materializeAtMostOne(this.dataFrameContext.getContext());
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Can not order by variables with sequences of multiple items.",
-                    expressionWithIterator.getIterator().getMetadata()
-            );
+                    expressionWithIterator
+                            .getIterator()
+                            .getRuntimeStaticContext()
+                            .getMetadata());
         }
 
         if (this.nextItem == null) {
@@ -87,8 +85,10 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
         if (atomized.size() > 1) {
             throw new UnexpectedTypeException(
                     "Order by variable must atomize to at most one item.",
-                    expressionWithIterator.getIterator().getMetadata()
-            );
+                    expressionWithIterator
+                            .getIterator()
+                            .getRuntimeStaticContext()
+                            .getMetadata());
         }
         if (atomized.isEmpty()) {
             this.result.add(OrderByClauseIterator.StringFlagForEmptySequence);
@@ -98,17 +98,17 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
         if (!this.nextItem.isAtomic()) {
             throw new UnexpectedTypeException(
                     "Order by variable must atomize to an atomic value.",
-                    expressionWithIterator.getIterator().getMetadata()
-            );
+                    expressionWithIterator
+                            .getIterator()
+                            .getRuntimeStaticContext()
+                            .getMetadata());
         }
         this.nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(
-            this.nextItem,
-            CollationSupport.resolveCollation(
-                expressionWithIterator.getUri(),
-                expressionWithIterator.getIterator().getRuntimeStaticContext()
-            ),
-            expressionWithIterator.getIterator().getMetadata()
-        );
+                this.nextItem,
+                CollationSupport.resolveCollation(
+                        expressionWithIterator.getUri(),
+                        expressionWithIterator.getIterator().getRuntimeStaticContext()),
+                expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata());
         this.result.add(this.nextItem.getDynamicType().getName().getLocalName());
     }
 }

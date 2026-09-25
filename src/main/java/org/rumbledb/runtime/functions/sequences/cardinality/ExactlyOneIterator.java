@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,60 +11,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.sequences.cardinality;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionExactlyOne;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 
-import java.io.Serial;
-import java.util.List;
-
-public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
-
+public class ExactlyOneIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ExactlyOneIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ExactlyOneIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         try {
-            Item value = this.getChild(0).materializeAtMostOneItemOrNull(dynamicContext);
+            Item value = this.getChild(0).materializeAtMostOne(dynamicContext);
             if (value == null) {
                 throw new SequenceExceptionExactlyOne(
-                        "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                        getMetadata()
-                );
-
+                        "fn:exactly-one() called with a sequence that doesn't contain exactly one item", getMetadata());
             }
             return value;
         } catch (MoreThanOneItemException e) {
             throw new SequenceExceptionExactlyOne(
-                    "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                    getMetadata()
-            );
+                    "fn:exactly-one() called with a sequence that doesn't contain exactly one item", getMetadata());
         }
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return this.getChild(0).generateNativeQuery(nativeClauseContext);
+        return NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
     }
-
 }

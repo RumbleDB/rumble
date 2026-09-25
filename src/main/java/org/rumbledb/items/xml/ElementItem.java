@@ -1,14 +1,19 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items.xml;
-
-import lombok.Setter;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.typing.CastIterator;
-import org.rumbledb.runtime.xml.NamespaceBindingUtils;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
 
 import java.io.Serial;
 import java.util.ArrayList;
@@ -18,19 +23,39 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.w3c.dom.Node;
+
+import lombok.NonNull;
+import lombok.Setter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.TypedValueUnavailableException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+
 public class ElementItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private List<Item> children;
     private List<Item> attributes;
     private Map<String, String> namespaces;
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
-    private ItemType typeAnnotation;
+    private XmlSchemaTypeAnnotation typeAnnotation;
+    private NodeTypedValue nodeTypedValue;
+    private Boolean schemaNilled;
+    private boolean id;
+    private boolean idRefs;
+
     @Setter
     private boolean inheritNamespacesFromParent;
-    // TODO: add base-uri, is-id, is-idrefs
+    // TODO: add base-uri
     private XMLDocumentPosition documentPos;
 
     /**
@@ -42,6 +67,8 @@ public class ElementItem extends AbstractNodeItem {
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
+        this.schemaNilled = null;
         this.inheritNamespacesFromParent = true;
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
@@ -53,23 +80,20 @@ public class ElementItem extends AbstractNodeItem {
     }
 
     public ElementItem(
-            Node elementNode,
-            List<Item> children,
-            List<Item> attributes,
-            Map<String, String> namespaceBindings
-    ) {
+            Node elementNode, List<Item> children, List<Item> attributes, Map<String, String> namespaceBindings) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(elementNode);
         this.stringValue = elementNode.getTextContent();
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
+        this.schemaNilled = null;
         this.inheritNamespacesFromParent = true;
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
                 addOrReplaceNamespace(
-                    ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue())
-                );
+                        ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue()));
             }
         }
     }
@@ -98,6 +122,10 @@ public class ElementItem extends AbstractNodeItem {
         ElementItem copy = new ElementItem(this.dmNodeName, copiedChildren, copiedAttributes);
         copy.namespaces = copiedNamespaces;
         copy.typeAnnotation = this.typeAnnotation;
+        copy.nodeTypedValue = this.nodeTypedValue;
+        copy.schemaNilled = this.schemaNilled;
+        copy.id = this.id;
+        copy.idRefs = this.idRefs;
         copy.inheritNamespacesFromParent = this.inheritNamespacesFromParent;
         return copy;
     }
@@ -132,8 +160,6 @@ public class ElementItem extends AbstractNodeItem {
             attribute.addParentToDescendants();
         });
     }
-
-
 
     @Override
     public boolean isNode() {
@@ -200,8 +226,7 @@ public class ElementItem extends AbstractNodeItem {
         }
         List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : this.namespaces.entrySet()) {
-            Item namespaceItem = ItemFactory.getInstance()
-                .createXmlNamespaceNode(entry.getKey(), entry.getValue());
+            Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue());
             namespaceItem.setParent(this);
             result.add(namespaceItem);
         }
@@ -216,7 +241,7 @@ public class ElementItem extends AbstractNodeItem {
          * Recursion would instantiate namespace node instances for each ancestor element, resulting in a higher memory
          * footprint.
          * A LinkedHashMap is used so that:
-         * 
+         *
          * <ul>
          * <li>Insertion order is preserved for stable iteration.</li>
          * <li>Later puts for the same prefix override earlier values.</li>
@@ -252,8 +277,7 @@ public class ElementItem extends AbstractNodeItem {
         // Step 3: Create NamespaceItem nodes from the final in-scope map.
         List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> entry : inScope.entrySet()) {
-            Item namespaceItem = ItemFactory.getInstance()
-                .createXmlNamespaceNode(entry.getKey(), entry.getValue());
+            Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(entry.getKey(), entry.getValue());
             namespaceItem.setParent(this);
             result.add(namespaceItem);
         }
@@ -278,21 +302,21 @@ public class ElementItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — is-id.
      *
-     * "For an Element Node, dm:is-id returns false."
+     * For schema-validated elements, this reflects whether the typed value is derived from xs:ID.
      */
     @Override
     public boolean isId() {
-        return false;
+        return this.id;
     }
 
     /**
      * XDM 3.1 Section 6.2 Element Node Accessors — is-idrefs.
      *
-     * "For an Element Node, dm:is-idrefs returns false."
+     * For schema-validated elements, this reflects whether the typed value contains a value derived from xs:IDREF.
      */
     @Override
     public boolean isIdrefs() {
-        return false;
+        return this.idRefs;
     }
 
     /**
@@ -301,12 +325,14 @@ public class ElementItem extends AbstractNodeItem {
      * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
      * not nilled, or the empty sequence if the concept of nilled does not apply."
      *
-     * RumbleDB does not currently support XML Schema nilled elements, so this implementation
-     * returns the empty sequence.
+     * Schema-validated elements return the boolean value supplied by the PSVI.
+     * Stripping a schema annotation resets that value to false.
      */
     @Override
     public List<Item> nilled() {
-        return Collections.emptyList();
+        return this.schemaNilled == null
+                ? Collections.emptyList()
+                : Collections.singletonList(ItemFactory.getInstance().createBooleanItem(this.schemaNilled));
     }
 
     @Override
@@ -339,18 +365,13 @@ public class ElementItem extends AbstractNodeItem {
      *
      * "For an Element Node, dm:type-name returns the name of the dynamic type of the element
      * node, or the empty sequence if the node is untyped."
-     *
-     * RumbleDB does not currently support schema-validated element types, so the dynamic
-     * type-name is not available and this method returns null to represent the empty sequence.
      */
     @Override
     public List<Item> typeName() {
-        if (this.typeAnnotation == null || !this.typeAnnotation.hasName()) {
+        if (this.typeAnnotation == null) {
             return Collections.emptyList();
         }
-        return Collections.singletonList(
-            ItemFactory.getInstance().createQNameItem(this.typeAnnotation.getName())
-        );
+        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.name()));
     }
 
     /**
@@ -358,10 +379,6 @@ public class ElementItem extends AbstractNodeItem {
      *
      * "For an Element Node, dm:typed-value returns the typed value of the element node as a
      * sequence of zero or more atomic values."
-     *
-     * This implementation delegates to atomizedValue(), which currently computes a
-     * best-effort typed value by concatenating the atomized values of the element's
-     * children in document order.
      */
     @Override
     public List<Item> typedValue() {
@@ -369,13 +386,50 @@ public class ElementItem extends AbstractNodeItem {
     }
 
     @Override
-    public void setSchemaType(ItemType typeAnnotation) {
+    public void setSchemaType(@NonNull XmlSchemaTypeAnnotation typeAnnotation) {
         this.typeAnnotation = typeAnnotation;
+        this.nodeTypedValue = NodeTypedValue.unavailable();
+        this.schemaNilled = false;
+        this.id = false;
+        this.idRefs = false;
     }
 
     @Override
-    public ItemType getSchemaType() {
+    public void setSchemaType(@NonNull XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
+        NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
+        this.typeAnnotation = typeAnnotation;
+        this.nodeTypedValue = newTypedValue;
+        this.schemaNilled = false;
+        this.id = false;
+        this.idRefs = false;
+    }
+
+    @Override
+    public void clearSchemaType() {
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
+        this.schemaNilled = false;
+        this.id = false;
+        this.idRefs = false;
+    }
+
+    @Override
+    public XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
         return this.typeAnnotation;
+    }
+
+    @Override
+    public void setXmlSchemaNilled(boolean nilled) {
+        if (this.typeAnnotation == null) {
+            throw new IllegalStateException("An untyped element does not have a nilled property.");
+        }
+        this.schemaNilled = nilled;
+    }
+
+    @Override
+    public void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        this.id = id;
+        this.idRefs = idRefs;
     }
 
     @Override
@@ -427,8 +481,8 @@ public class ElementItem extends AbstractNodeItem {
 
     private boolean hasConflictingPrefix(Name name, String prefix, String uri) {
         return name != null
-            && normalizeNamespaceComponent(name.getPrefix()).equals(normalizeNamespaceComponent(prefix))
-            && !normalizeNamespaceComponent(uri).equals(normalizeNamespaceComponent(name.getNamespace()));
+                && normalizeNamespaceComponent(name.getPrefix()).equals(normalizeNamespaceComponent(prefix))
+                && !normalizeNamespaceComponent(uri).equals(normalizeNamespaceComponent(name.getNamespace()));
     }
 
     private String normalizeNamespaceComponent(String value) {
@@ -444,24 +498,21 @@ public class ElementItem extends AbstractNodeItem {
         return candidate;
     }
 
-
     @Override
     public List<Item> atomizedValue() {
-        if (this.typeAnnotation != null) {
-            Item typedValue = CastIterator.castItemToType(
-                ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue),
-                this.typeAnnotation,
-                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA
-            );
-            return Collections.singletonList(typedValue);
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.AVAILABLE) {
+            return this.nodeTypedValue.getItems();
+        }
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.UNAVAILABLE) {
+            throw new TypedValueUnavailableException(
+                    "The typed value is not available for element " + this.dmNodeName + ".",
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         // For untyped elements, atomization yields the element's typed value as xs:untypedAtomic.
         // For element nodes, typed-value is based on the element's string value, which is the
         // concatenation of descendant text nodes in document order and therefore excludes comment
         // and processing-instruction content.
-        return Collections.singletonList(
-            ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue)
-        );
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
     @Override

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,42 +11,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis, Ghislain Fourny
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.navigation;
-
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.api.java.UDF1;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.ItemType;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.ItemType;
+
 public class PredicateUDF implements UDF1<Row, Boolean> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator expression;
+    private final ItemRuntimePlan expression;
     private final DynamicContext dynamicContext;
     private final ExceptionMetadata metadata;
     private final ItemType itemType;
     final List<Item> currentItems = new ArrayList<>();
 
     public PredicateUDF(
-            RuntimeIterator expression,
-            DynamicContext context,
-            ExceptionMetadata metadata,
-            ItemType itemType
-    ) {
+            ItemRuntimePlan expression, DynamicContext context, ExceptionMetadata metadata, ItemType itemType) {
         this.expression = expression;
         this.dynamicContext = new DynamicContext(context);
         this.metadata = metadata;
@@ -64,7 +57,7 @@ public class PredicateUDF implements UDF1<Row, Boolean> {
         this.currentItems.add(item);
         this.dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this.currentItems);
 
-        boolean result = this.expression.getEffectiveBooleanValue(this.dynamicContext);
+        boolean result = EffectiveBooleanValue.evaluate(this.expression, this.dynamicContext);
         return result;
     }
 }

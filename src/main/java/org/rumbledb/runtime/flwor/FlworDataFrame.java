@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.flwor;
 
 import java.io.Serial;
@@ -8,11 +23,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
-import lombok.Getter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.UDFRegistration;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -21,6 +39,7 @@ import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.types.SequenceType;
 
+@Log4j2
 public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
@@ -30,6 +49,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
 
     @Getter
     private List<FlworDataFrameColumn> columns;
+
     private Map<Name, SequenceType> columnTypes;
 
     public FlworDataFrame(Dataset<Row> dataFrame) {
@@ -47,10 +67,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
 
     @Override
     public JavaRDD<FlworTuple> toRDD(ExceptionMetadata metadata) {
-        throw new OurBadException(
-                "Converting a FLWOR DataFrame to an RDD of tuples is not implemented.",
-                metadata
-        );
+        throw new OurBadException("Converting a FLWOR DataFrame to an RDD of tuples is not implemented.", metadata);
     }
 
     public List<Name> getVariableNames() {
@@ -63,8 +80,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
 
     public boolean hasVariableName(Name name) {
         for (FlworDataFrameColumn c : getColumns()) {
-            if (name.equals(c.getVariableName()))
-                return true;
+            if (name.equals(c.getVariableName())) return true;
         }
         return false;
     }
@@ -74,10 +90,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     public FlworDataFrame sql(String sqlQuery) {
-        FlworDataFrame result = new FlworDataFrame(
-                this.dataFrame.sparkSession()
-                    .sql(sqlQuery)
-        );
+        FlworDataFrame result = new FlworDataFrame(this.dataFrame.sparkSession().sql(sqlQuery));
         for (Name v : this.getVariableNames()) {
             SequenceType type = this.getVariableType(v);
             if (result.hasVariableName(v)) {
@@ -88,21 +101,15 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     public Dataset<Row> sqlRaw(String sqlQuery) {
-        return this.dataFrame.sparkSession()
-            .sql(sqlQuery);
+        return this.dataFrame.sparkSession().sql(sqlQuery);
     }
 
     public List<FlworDataFrameColumn> getColumns(
             Map<Name, DynamicContext.VariableDependency> dependencies,
             List<Name> variablesToRestrictTo,
-            List<Name> variablesToExclude
-    ) {
+            List<Name> variablesToExclude) {
         return FlworDataFrameUtils.getColumns(
-            this.dataFrame.schema(),
-            dependencies,
-            variablesToRestrictTo,
-            variablesToExclude
-        );
+                this.dataFrame.schema(), dependencies, variablesToRestrictTo, variablesToExclude);
     }
 
     public void setVariableType(Name name, SequenceType type) {
@@ -127,18 +134,18 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     public void show() {
-        System.err.println("FLWOR DataFrame");
-        System.err.println("Columns");
+        StringBuilder sb = new StringBuilder();
+        sb.append("FLWOR DataFrame\n");
+        sb.append("Columns\n");
         for (FlworDataFrameColumn c : this.columns) {
-            System.err.println(c.toString());
+            sb.append(c).append('\n');
         }
-        System.err.println("Column types");
+        sb.append("Column types\n");
         for (Name n : this.columnTypes.keySet()) {
-            System.err.println(n + " " + this.columnTypes.get(n));
+            sb.append(n).append(' ').append(this.columnTypes.get(n)).append('\n');
         }
-        System.err.println("Data Frame");
+        sb.append("Data Frame");
+        log.debug(sb);
         this.dataFrame.show();
     }
-
-
 }

@@ -1,27 +1,41 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.dataframe;
 
 import java.io.Serial;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
-import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.ItemType;
 
 /**
  * Encodes item RDDs as {@link HomogeneousItemDataFrame}s.
  */
+@Log4j2
 public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactory<Item> {
 
     @Serial
@@ -29,43 +43,40 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
 
     public static final ItemRuntimeDataFrameFactory INSTANCE = new ItemRuntimeDataFrameFactory();
 
-    private ItemRuntimeDataFrameFactory() {
-    }
+    private ItemRuntimeDataFrameFactory() {}
 
     @Override
-    public RuntimeDataFrame<Item> fromList(
-            List<Item> items,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
+    public HomogeneousItemDataFrame fromList(
+            List<Item> items, DynamicContext context, RuntimeStaticContext staticContext) {
         ItemType itemType = staticContext.getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
             itemType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items,
-                staticContext.getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
+                    items, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
             if (staticContext.getConfiguration().analysis().printInferredTypes()) {
-                System.err.println("Inferred DataFrame type:\n" + itemType);
+                log.debug("Inferred DataFrame type:\n" + itemType);
             }
         }
-        return ValidateTypeIterator.convertLocalItemsToDataFrame(items, itemType, context, true, staticContext);
+        return JSONiqValidateIterator.convertLocalItemsToDataFrame(items, itemType, context, true, staticContext);
     }
 
     @Override
-    public RuntimeDataFrame<Item> fromRDD(
-            JavaRDD<Item> rdd,
-            DynamicContext context,
-            RuntimeStaticContext staticContext
-    ) {
+    public HomogeneousItemDataFrame fromRDD(
+            JavaRDD<Item> rdd, DynamicContext context, RuntimeStaticContext staticContext) {
         ItemType itemType = staticContext.getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
             itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                rdd,
-                staticContext.getMetadata(),
-                TypeInferrenceUtils.TypeMergeMode.LAX
-            );
+                    rdd, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
         }
-        return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
+        return JSONiqValidateIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
+    }
+
+    public HomogeneousItemDataFrame fromPlan(ItemRuntimePlan plan, DynamicContext context) {
+        RuntimeDataFrame<Item> dataFrame = plan.getDataFrame(context);
+        if (dataFrame instanceof HomogeneousItemDataFrame homogeneousDataFrame) {
+            return homogeneousDataFrame;
+        }
+        throw new OurBadException(
+                "Expected an item plan to produce a homogeneous item DataFrame.",
+                plan.getRuntimeStaticContext().getMetadata());
     }
 }

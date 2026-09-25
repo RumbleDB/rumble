@@ -1,21 +1,37 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.update.primitives;
+
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.expr;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-
-import java.util.Arrays;
-import java.util.List;
-
-import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.expr;
 
 public interface UpdatePrimitive {
 
@@ -150,15 +166,15 @@ public interface UpdatePrimitive {
     default void applySetFieldInCollection(String location, long rowID, String fieldPath, String fieldValueSQL) {
         if (this.getTarget().getCollection().getMode() != Mode.ICEBERG) {
             String updateQuery = "UPDATE "
-                + location
-                + " SET "
-                + fieldPath
-                + " = "
-                + fieldValueSQL
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
+                    + location
+                    + " SET "
+                    + fieldPath
+                    + " = "
+                    + fieldValueSQL
+                    + " WHERE `"
+                    + SparkSessionManager.rowIdColumnName
+                    + "` == "
+                    + rowID;
             SparkSessionManager.getInstance().getOrCreateSession().sql(updateQuery);
             return;
         }
@@ -167,9 +183,9 @@ public interface UpdatePrimitive {
         // Future optimization: batch row rewrites (delete all + insert all) for multi-row updates
 
         Dataset<Row> updatedRows = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .table(location)
-            .where(col(SparkSessionManager.rowIdColumnName).equalTo(rowID));
+                .getOrCreateSession()
+                .table(location)
+                .where(col(SparkSessionManager.rowIdColumnName).equalTo(rowID));
         Column newValue = expr(fieldValueSQL);
 
         if (fieldPath.contains(".")) {
@@ -183,23 +199,17 @@ public interface UpdatePrimitive {
 
         List<Row> rewrittenRows = updatedRows.collectAsList();
         if (rewrittenRows.size() != 1) {
-            throw new IllegalStateException(
-                    "Expected exactly one row in update rewrite for row ID "
-                        + rowID
-                        + " but found "
-                        + rewrittenRows.size()
-            );
+            throw new IllegalStateException("Expected exactly one row in update rewrite for row ID "
+                    + rowID
+                    + " but found "
+                    + rewrittenRows.size());
         }
         Dataset<Row> frozenRows = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .createDataFrame(rewrittenRows, updatedRows.schema());
+                .getOrCreateSession()
+                .createDataFrame(rewrittenRows, updatedRows.schema());
 
-        String deleteQuery = "DELETE FROM "
-            + location
-            + " WHERE `"
-            + SparkSessionManager.rowIdColumnName
-            + "` = "
-            + rowID;
+        String deleteQuery =
+                "DELETE FROM " + location + " WHERE `" + SparkSessionManager.rowIdColumnName + "` = " + rowID;
         SparkSessionManager.getInstance().getOrCreateSession().sql(deleteQuery);
 
         this.getTarget().getCollection().insertUnordered(frozenRows);
@@ -232,21 +242,22 @@ public interface UpdatePrimitive {
         }
 
         String selectArrayQuery = "SELECT "
-            + preIndexingPathIn
-            + " AS `"
-            + SparkSessionManager.nonObjectJSONiqItemColumnName
-            + "` FROM "
-            + location
-            + " WHERE `"
-            + SparkSessionManager.rowIdColumnName
-            + "` == "
-            + rowID;
+                + preIndexingPathIn
+                + " AS `"
+                + SparkSessionManager.nonObjectJSONiqItemColumnName
+                + "` FROM "
+                + location
+                + " WHERE `"
+                + SparkSessionManager.rowIdColumnName
+                + "` == "
+                + rowID;
 
-        Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
+        Dataset<Row> arrayDF =
+                SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
         ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-            .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
-            .getType();
+                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                .getType();
 
         JavaRDD<Row> rowRDD = arrayDF.javaRDD();
         JavaRDD<Item> itemRDD = rowRDD.map(new RowToItemMapper(ExceptionMetadata.EMPTY_METADATA, arrayType));
@@ -277,13 +288,11 @@ public interface UpdatePrimitive {
             innerItem.putItemByKey(finalSelector, this.getTarget());
         } else if (innerItem.isArray()) {
             int finalIndex = Integer.parseInt(
-                finalSelector.substring(finalSelector.indexOf("[") + 1, finalSelector.indexOf("]"))
-            );
+                    finalSelector.substring(finalSelector.indexOf("[") + 1, finalSelector.indexOf("]")));
             innerItem.removeItemAt(finalIndex);
             innerItem.putItemAt(this.getTarget(), finalIndex);
         }
 
         this.applySetFieldInCollection(location, rowID, preIndexingPathIn, originalArray.getSparkSQLValue(arrayType));
     }
-
 }

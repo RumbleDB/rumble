@@ -1,22 +1,34 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.update.primitives;
+
+import java.net.URI;
+
+import org.apache.spark.sql.SparkSession;
 
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.net.URI;
-
-import org.apache.spark.sql.SparkSession;
-
 public class TruncateCollectionPrimitive implements UpdatePrimitive {
     private final Collection collection;
     private ExceptionMetadata metadata;
 
-    public TruncateCollectionPrimitive(
-            Collection collection,
-            ExceptionMetadata metadata
-    ) {
+    public TruncateCollectionPrimitive(Collection collection, ExceptionMetadata metadata) {
         this.collection = collection;
         this.metadata = metadata;
     }
@@ -55,10 +67,8 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
 
         // Handle delta files
         if (mode == Mode.DELTA) {
-            URI collectionURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                this.collection.getLogicalName(),
-                this.metadata
-            );
+            URI collectionURI =
+                    FileSystemUtil.resolveURIAgainstWorkingDirectory(this.collection.getLogicalName(), this.metadata);
             FileSystemUtil.delete(collectionURI, this.metadata);
             return;
         }
@@ -69,18 +79,14 @@ public class TruncateCollectionPrimitive implements UpdatePrimitive {
         if (!session.catalog().tableExists(tableName)) {
             throw new CannotRetrieveResourceException(
                     "Table "
-                        + this.collection.getLogicalName()
-                        + " not found in "
-                        + mode.toString().toLowerCase()
-                        + " catalogue.",
-                    this.metadata
-            );
+                            + this.collection.getLogicalName()
+                            + " not found in "
+                            + mode.toString().toLowerCase()
+                            + " catalogue.",
+                    this.metadata);
         }
 
-        String truncateQuery = String.format(
-            "DROP TABLE %s PURGE",
-            tableName
-        );
+        String truncateQuery = String.format("DROP TABLE %s PURGE", tableName);
         session.sql(truncateQuery);
     }
 }

@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.datetime.dateformatting;
 
 import java.time.OffsetDateTime;
@@ -10,8 +25,7 @@ import org.rumbledb.runtime.functions.util.formatting.TimezoneNames;
 
 final class TemporalFormattingSupport {
 
-    private TemporalFormattingSupport() {
-    }
+    private TemporalFormattingSupport() {}
 
     static String applyNameCase(String value, VariableMarker parsed, Locale locale) {
         if (parsed.nameForm == null) {
@@ -74,8 +88,7 @@ final class TemporalFormattingSupport {
             OffsetDateTime value,
             ParsedTimezonePicture tz,
             boolean hasExplicitTimezone,
-            FormattingContext formattingContext
-    ) {
+            FormattingContext formattingContext) {
         if (!hasExplicitTimezone) {
             return tz.military ? "J" : "";
         }
@@ -91,12 +104,8 @@ final class TemporalFormattingSupport {
         return formatNumericTimezone(value.getOffset(), tz);
     }
 
-
     private static String formatNamedTimezone(
-            OffsetDateTime value,
-            ParsedTimezonePicture tz,
-            FormattingContext formattingContext
-    ) {
+            OffsetDateTime value, ParsedTimezonePicture tz, FormattingContext formattingContext) {
         // TODO Figure out where we could configure the name size
         String result = TimezoneNames.name(value, formattingContext, false);
 
@@ -104,10 +113,7 @@ final class TemporalFormattingSupport {
             return applyTimezoneNamePresentation(result, tz.namePresentation, formattingContext.locale);
         }
 
-        return formatNumericTimezone(
-            value.getOffset(),
-            ParsedTimezonePicture.defaultNumeric()
-        );
+        return formatNumericTimezone(value.getOffset(), ParsedTimezonePicture.defaultNumeric());
     }
 
     private static String applyTimezoneNamePresentation(String value, String presentation, Locale locale) {
@@ -122,10 +128,7 @@ final class TemporalFormattingSupport {
         return value;
     }
 
-    private static String formatNumericTimezone(
-            ZoneOffset offset,
-            ParsedTimezonePicture tz
-    ) {
+    private static String formatNumericTimezone(ZoneOffset offset, ParsedTimezonePicture tz) {
         int totalMinutes = offset.getTotalSeconds() / 60;
 
         if (tz.zuluForZeroOffset && totalMinutes == 0 && !tz.gmtPrefix) {

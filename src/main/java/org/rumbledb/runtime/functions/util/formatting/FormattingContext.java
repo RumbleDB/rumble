@@ -1,11 +1,19 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.util.formatting;
-
-import com.ibm.icu.util.ULocale;
-import org.rumbledb.config.FormattingLanguageSupport;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarModes;
-import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
-import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
 import java.time.DateTimeException;
 import java.time.ZoneId;
@@ -14,6 +22,14 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.EqualsAndHashCode;
+
+import com.ibm.icu.util.ULocale;
+
+import org.rumbledb.config.FormattingLanguageSupport;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarModes;
+import org.rumbledb.runtime.functions.util.formatting.calendar.CalendarSupport;
+import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
 public final class FormattingContext {
 
@@ -40,8 +56,7 @@ public final class FormattingContext {
             String icuCalendarType,
             boolean calendarFallback,
             String place,
-            ZoneId placeZoneId
-    ) {
+            ZoneId placeZoneId) {
         this.requestedLanguage = requestedLanguage;
         this.effectiveLanguage = effectiveLanguage;
         this.languageFallback = requestedLanguage != null && !requestedLanguage.equalsIgnoreCase(effectiveLanguage);
@@ -52,19 +67,15 @@ public final class FormattingContext {
         this.place = place;
         this.placeZoneId = placeZoneId;
 
-        LocaleTriple triple = LOCALE_CACHE.computeIfAbsent(
-            new LocaleKey(effectiveLanguage, icuCalendarType),
-            key -> {
-                Locale resolvedLocale = LanguageSupport.resolveLocale(key.effectiveLanguage);
-                ULocale base = ULocale.forLanguageTag(
+        LocaleTriple triple = LOCALE_CACHE.computeIfAbsent(new LocaleKey(effectiveLanguage, icuCalendarType), key -> {
+            Locale resolvedLocale = LanguageSupport.resolveLocale(key.effectiveLanguage);
+            ULocale base = ULocale.forLanguageTag(
                     key.effectiveLanguage == null
-                        ? FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE
-                        : key.effectiveLanguage
-                );
-                ULocale resolvedULocale = base.setKeywordValue("calendar", key.icuCalendarType);
-                return new LocaleTriple(resolvedLocale, resolvedULocale, resolvedULocale.toLocale());
-            }
-        );
+                            ? FormattingLanguageSupport.DEFAULT_FORMATTING_LANGUAGE
+                            : key.effectiveLanguage);
+            ULocale resolvedULocale = base.setKeywordValue("calendar", key.icuCalendarType);
+            return new LocaleTriple(resolvedLocale, resolvedULocale, resolvedULocale.toLocale());
+        });
         this.locale = triple.locale;
         this.uLocale = triple.uLocale;
         this.javaLocale = triple.javaLocale;
@@ -79,7 +90,6 @@ public final class FormattingContext {
             this.effectiveLanguage = effectiveLanguage;
             this.icuCalendarType = icuCalendarType;
         }
-
     }
 
     private static final class LocaleTriple {
@@ -106,8 +116,7 @@ public final class FormattingContext {
             String calendar,
             String rawPlace,
             Map<String, String> staticallyKnownNamespaces,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         String place = normalizePlace(rawPlace);
         ZoneId placeZoneId = resolveExplicitIanaZoneOrNull(place);
         String resolvedCalendar = CalendarSupport.resolveCalendarMode(calendar, staticallyKnownNamespaces, metadata);
@@ -124,8 +133,7 @@ public final class FormattingContext {
                 CalendarModes.toCalendarTypeOrDefault(effectiveCalendar),
                 calendarFallback,
                 place,
-                placeZoneId
-        );
+                placeZoneId);
     }
 
     public boolean shouldAdjustToPlaceTimezone() {

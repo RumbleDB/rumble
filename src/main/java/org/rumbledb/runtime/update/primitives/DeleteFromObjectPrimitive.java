@@ -1,13 +1,28 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.update.primitives;
+
+import java.util.*;
+
+import static org.apache.spark.sql.functions.col;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.spark.SparkSessionManager;
-
-import static org.apache.spark.sql.functions.col;
-
-import java.util.*;
 
 public class DeleteFromObjectPrimitive implements UpdatePrimitive {
     private Item target;
@@ -19,9 +34,7 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
         for (Item item : namesToRemove) {
             if (targetObject.getItemByKey(item.getStringValue()) == null) {
                 throw new CannotResolveUpdateSelectorException(
-                        "Cannot delete key that does not exist in target object",
-                        metadata
-                );
+                        "Cannot delete key that does not exist in target object", metadata);
             }
         }
 
@@ -59,13 +72,13 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
                 String key = item.getStringValue();
                 String fullPath = pathIn + key;
                 String type = SparkSessionManager.getInstance()
-                    .getOrCreateSession()
-                    .sql("DESC (SELECT " + fullPath + " FROM " + location + ")")
-                    .filter(col("col_name").equalTo(key))
-                    .select("data_type")
-                    .collectAsList()
-                    .get(0)
-                    .getString(0);
+                        .getOrCreateSession()
+                        .sql("DESC (SELECT " + fullPath + " FROM " + location + ")")
+                        .filter(col("col_name").equalTo(key))
+                        .select("data_type")
+                        .collectAsList()
+                        .get(0)
+                        .getString(0);
                 this.applySetFieldInCollection(location, rowID, fullPath, "CAST(NULL AS " + type + ")");
             }
         } else {
@@ -92,5 +105,4 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
     public boolean isDeleteObject() {
         return true;
     }
-
 }

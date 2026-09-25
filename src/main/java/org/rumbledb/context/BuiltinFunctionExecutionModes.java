@@ -1,18 +1,17 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
 package org.rumbledb.context;
 
@@ -25,18 +24,13 @@ import org.rumbledb.expressions.ExecutionMode;
  */
 public final class BuiltinFunctionExecutionModes {
 
-    private BuiltinFunctionExecutionModes() {
-    }
+    private BuiltinFunctionExecutionModes() {}
 
     public static ExecutionMode resolve(
-            BuiltinFunction builtinFunction,
-            ExecutionMode firstArgumentMode,
-            RumbleConfiguration configuration
-    ) {
-        ExecutionMode firstMode =
-            firstArgumentMode != null ? firstArgumentMode : ExecutionMode.LOCAL;
+            BuiltinFunction builtinFunction, ExecutionMode firstArgumentMode, RumbleConfiguration configuration) {
+        ExecutionMode firstMode = firstArgumentMode != null ? firstArgumentMode : ExecutionMode.LOCAL;
         BuiltinFunction.BuiltinFunctionExecutionMode functionExecutionMode =
-            builtinFunction.getBuiltinFunctionExecutionMode();
+                builtinFunction.getBuiltinFunctionExecutionMode();
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL) {
             return ExecutionMode.LOCAL;
         }
@@ -44,34 +38,22 @@ public final class BuiltinFunctionExecutionModes {
             return ExecutionMode.RDD;
         }
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME) {
-            return dataFrameIfConfigurationAllows(configuration);
+            return configuration.runtime().useDataFrameExecution() ? ExecutionMode.DATAFRAME : ExecutionMode.RDD;
         }
         if (functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
-            if (firstMode.isDataFrame()) {
-                return dataFrameIfConfigurationAllows(configuration);
-            }
-            if (firstMode.isRDDOrDataFrame()) {
-                return ExecutionMode.RDD;
-            }
-            return ExecutionMode.LOCAL;
+            return firstMode.isDataFrame()
+                    ? configuration.runtime().useDataFrameExecution() ? ExecutionMode.DATAFRAME : ExecutionMode.RDD
+                    : firstMode.isRDDOrDataFrame() ? ExecutionMode.RDD : ExecutionMode.LOCAL;
         }
-        if (
-            functionExecutionMode == BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
-        ) {
+        if (functionExecutionMode
+                == BuiltinFunction.BuiltinFunctionExecutionMode
+                        .INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL) {
             if (firstMode.isRDDOrDataFrame() && !firstMode.isDataFrame()) {
                 return ExecutionMode.RDD;
             }
             return ExecutionMode.LOCAL;
         }
         throw new OurBadException(
-                "Unhandled functionExecutionMode detected while extracting execution mode for built-in function."
-        );
-    }
-
-    public static ExecutionMode dataFrameIfConfigurationAllows(RumbleConfiguration configuration) {
-        if (configuration.runtime().useDataFrameExecution()) {
-            return ExecutionMode.DATAFRAME;
-        }
-        return ExecutionMode.RDD;
+                "Unhandled functionExecutionMode detected while extracting execution mode for built-in function.");
     }
 }

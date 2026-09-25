@@ -1,14 +1,29 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.update.primitives;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-
 
 public class DeleteFromArrayPrimitive implements UpdatePrimitive {
     private Item target;
@@ -18,9 +33,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
     public DeleteFromArrayPrimitive(Item targetArray, Item positionInt, ExceptionMetadata metadata) {
         if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize()) {
             throw new CannotResolveUpdateSelectorException(
-                    "Cannot delete item at index out of range of target array",
-                    metadata
-            );
+                    "Cannot delete item at index out of range of target array", metadata);
         }
         this.target = targetArray;
         this.selector = positionInt;
@@ -43,28 +56,30 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public void applyDelta() {
-        String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
+        String pathIn =
+                this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
         String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 
         if (startOfArrayIndexing == -1) {
             String selectArrayQuery = "SELECT "
-                + pathIn
-                + " AS `"
-                + SparkSessionManager.nonObjectJSONiqItemColumnName
-                + "` FROM "
-                + location
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
+                    + pathIn
+                    + " AS `"
+                    + SparkSessionManager.nonObjectJSONiqItemColumnName
+                    + "` FROM "
+                    + location
+                    + " WHERE `"
+                    + SparkSessionManager.rowIdColumnName
+                    + "` == "
+                    + rowID;
 
-            Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
+            Dataset<Row> arrayDF =
+                    SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
             ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
-                .getType();
+                    .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                    .getType();
             this.applyItem();
             this.applySetFieldInCollection(location, rowID, pathIn, this.target.getSparkSQLValue(arrayType));
         } else {

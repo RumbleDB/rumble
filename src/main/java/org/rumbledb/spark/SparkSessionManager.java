@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,14 +11,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.spark;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
 import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -31,7 +24,11 @@ import org.apache.spark.sql.types.DoubleType;
 import org.apache.spark.sql.types.FloatType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.api.Item;
+import org.rumbledb.cli.LoggingConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -66,19 +63,19 @@ import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.flwor.tuple.FlworKey;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+@Log4j2
 public class SparkSessionManager {
 
     private static final String APP_NAME = "Rumble application";
     private static final String DEFAULT_APP_NAME = "<none>";
     private static SparkSessionManager instance;
-    private static final Level LOG_LEVEL = Level.FATAL;
     private SparkConf configuration;
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
@@ -107,8 +104,7 @@ public class SparkSessionManager {
     public static final String tableLocationColumnName = "__tableLocation";
     public static final String rowOrderColumnName = "__rowOrder";
 
-    private SparkSessionManager() {
-    }
+    private SparkSessionManager() {}
 
     private SparkSessionManager(SparkConf conf) {
         this.configuration = conf;
@@ -156,28 +152,23 @@ public class SparkSessionManager {
         try {
             this.configuration = new SparkConf();
             if (this.configuration.get("spark.app.name", DEFAULT_APP_NAME).equals(DEFAULT_APP_NAME)) {
-                LogManager.getLogger("SparkSessionManager")
-                    .warn(
-                        "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
-                            + APP_NAME
-                    );
+                log.warn("No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
+                        + APP_NAME);
                 this.configuration.setAppName(APP_NAME);
             }
             this.configuration.set("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/test.myCollection");
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
             this.configuration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
             this.configuration.set(
-                "spark.sql.catalog.spark_catalog",
-                "org.apache.spark.sql.delta.catalog.DeltaCatalog"
-            );
+                    "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
-            this.configuration.set("spark.log.level", LOG_LEVEL.name());
+            this.configuration.set(
+                    "spark.log.level", LoggingConfiguration.getSparkLogLevel().name());
         } catch (NoClassDefFoundError e) {
             throw new RuntimeException(
-                    "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
-            );
+                    "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured.");
         }
     }
 
@@ -193,7 +184,12 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            this.session = SparkSession.builder().config(this.configuration).enableHiveSupport().getOrCreate();
+
+            this.session = SparkSession.builder()
+                    .config(this.configuration)
+                    .enableHiveSupport()
+                    .getOrCreate();
+            LoggingConfiguration.apply();
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }
@@ -243,8 +239,8 @@ public class SparkSessionManager {
                 DynamicContext.class,
                 FlworTuple.class,
                 FlworKey.class,
-                RuntimeIterator.class,
-                RuntimeTupleIterator.class,
+                RuntimePlan.class,
+                TupleRuntimePlan.class,
                 StructType.class,
                 StructType[].class,
                 StructField.class,
@@ -258,7 +254,6 @@ public class SparkSessionManager {
             this.configuration.registerKryoClasses(serializedClasses);
         }
     }
-
 
     public void initializeConfigurationAndSession(SparkConf conf, boolean setAppName) {
         if (setAppName) {
@@ -276,9 +271,9 @@ public class SparkSessionManager {
             initializeSession();
         }
         if (this.javaSparkContext == null) {
-            this.javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
+            this.javaSparkContext =
+                    JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
         return this.javaSparkContext;
     }
-
 }

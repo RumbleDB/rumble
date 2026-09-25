@@ -1,6 +1,25 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.expressions.update;
 
+import java.util.Arrays;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -8,19 +27,21 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.update.primitives.Mode;
 
-import java.util.Arrays;
-import java.util.List;
-
 public class InsertIndexIntoCollectionExpression extends Expression {
     @Getter
     private final Expression collection;
+
     @Getter
     private final Expression contentExpression;
+
     private final Expression pos;
+
     @Getter
     private final Mode mode;
+
     @Getter
     private final boolean isFirst;
+
     @Getter
     private final boolean isLast;
 
@@ -31,8 +52,7 @@ public class InsertIndexIntoCollectionExpression extends Expression {
             Mode mode,
             boolean isFirst,
             boolean isLast,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         if (collection == null) {
             throw new OurBadException("Collection must be identified for insertion.");
@@ -56,8 +76,8 @@ public class InsertIndexIntoCollectionExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return this.pos != null
-            ? Arrays.asList(this.contentExpression, this.collection, this.pos)
-            : Arrays.asList(this.contentExpression, this.collection);
+                ? Arrays.asList(this.contentExpression, this.collection, this.pos)
+                : Arrays.asList(this.contentExpression, this.collection);
     }
 
     @Override
@@ -91,5 +111,4 @@ public class InsertIndexIntoCollectionExpression extends Expression {
         sb.append(")");
         sb.append("\n");
     }
-
 }

@@ -1,12 +1,28 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
-
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
-import org.rumbledb.api.Item;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import org.rumbledb.api.Item;
 
 public class ArrayItemTypeTest {
 
@@ -17,15 +33,13 @@ public class ArrayItemTypeTest {
     @Test
     public void laxMergeCombinesNestedObjectContent() {
         ObjectItemType leftObject = createObjectType(
-            true,
-            field("a", BuiltinTypesCatalogue.intItem, true, false),
-            field("common", BuiltinTypesCatalogue.intItem, true, false)
-        );
+                true,
+                field("a", BuiltinTypesCatalogue.intItem, true, false),
+                field("common", BuiltinTypesCatalogue.intItem, true, false));
         ObjectItemType rightObject = createObjectType(
-            true,
-            field("b", BuiltinTypesCatalogue.stringItem, false, true),
-            field("common", BuiltinTypesCatalogue.stringItem, false, true)
-        );
+                true,
+                field("b", BuiltinTypesCatalogue.stringItem, false, true),
+                field("common", BuiltinTypesCatalogue.stringItem, false, true));
         ArrayItemType left = createArrayType(leftObject, null, null);
         ArrayItemType right = createArrayType(rightObject, null, null);
 
@@ -73,14 +87,7 @@ public class ArrayItemTypeTest {
     }
 
     private ArrayItemType createArrayType(ItemType content, Integer minLength, Integer maxLength) {
-        return new ArrayItemType(
-                null,
-                BuiltinTypesCatalogue.arrayItem,
-                content,
-                minLength,
-                maxLength,
-                null
-        );
+        return new ArrayItemType(null, BuiltinTypesCatalogue.arrayItem, content, minLength, maxLength, null);
     }
 
     private ObjectItemType createObjectType(boolean closed, FieldDescriptor... descriptors) {
@@ -97,8 +104,7 @@ public class ArrayItemTypeTest {
                 keys,
                 content,
                 Collections.<String>emptyList(),
-                Collections.<Item>emptyList()
-        );
+                Collections.<Item>emptyList());
     }
 
     private FieldDescriptor field(String name, ItemType type, boolean required, boolean unique) {

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,19 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.context;
-
-import lombok.Getter;
-import lombok.Setter;
-import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.expressions.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,14 +21,25 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.expressions.ExecutionMode;
+
 public class UserDefinedFunctionExecutionModes {
 
     // two maps for User defined function are needed as execution mode is known at static analysis phase
     // but functions items are fully known at runtimeIterator generation
     private final HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
     private final HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
+
     @Getter
     private final List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
+
     @Setter
     private String queryLanguage;
 
@@ -56,33 +54,21 @@ public class UserDefinedFunctionExecutionModes {
         return this.userDefinedFunctionsExecutionMode.containsKey(identifier);
     }
 
-    public ExecutionMode getExecutionMode(
-            FunctionIdentifier identifier,
-            ExceptionMetadata metadata
-    ) {
+    public ExecutionMode getExecutionMode(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         if (exists(identifier)) {
             return this.userDefinedFunctionsExecutionMode.get(identifier);
         }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                metadata
-        );
-
+        throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
     }
 
     public void setExecutionMode(
             FunctionIdentifier functionIdentifier,
             ExecutionMode executionMode,
             boolean suppressErrorsForFunctionSignatureCollision,
-            ExceptionMetadata metadata
-    ) {
-        if (
-            BuiltinFunctionCatalogue.exists(functionIdentifier, this.queryLanguage)
-                ||
-                (!suppressErrorsForFunctionSignatureCollision
-                    && this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
-        ) {
+            ExceptionMetadata metadata) {
+        if (BuiltinFunctionCatalogue.exists(functionIdentifier, this.queryLanguage)
+                || (!suppressErrorsForFunctionSignatureCollision
+                        && this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, metadata);
         }
 
@@ -94,10 +80,7 @@ public class UserDefinedFunctionExecutionModes {
         this.userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
     }
 
-    public List<ExecutionMode> getParameterExecutionMode(
-            FunctionIdentifier identifier,
-            ExceptionMetadata metadata
-    ) {
+    public List<ExecutionMode> getParameterExecutionMode(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         if (exists(identifier)) {
             return this.userDefinedFunctionsParametersStorageMode.get(identifier);
         }
@@ -110,16 +93,14 @@ public class UserDefinedFunctionExecutionModes {
     }
 
     public void setParameterExecutionMode(
-            FunctionIdentifier functionIdentifier,
-            List<ExecutionMode> executionModes,
-            ExceptionMetadata meta
-    ) {
+            FunctionIdentifier functionIdentifier, List<ExecutionMode> executionModes, ExceptionMetadata meta) {
         List<ExecutionMode> newModes = new ArrayList<>();
         if (!this.userDefinedFunctionsParametersStorageMode.containsKey(functionIdentifier)) {
             this.userDefinedFunctionsParametersStorageMode.put(functionIdentifier, executionModes);
         }
-        Iterator<ExecutionMode> oldModes = this.userDefinedFunctionsParametersStorageMode.get(functionIdentifier)
-            .iterator();
+        Iterator<ExecutionMode> oldModes = this.userDefinedFunctionsParametersStorageMode
+                .get(functionIdentifier)
+                .iterator();
         Iterator<ExecutionMode> updatedModes = executionModes.iterator();
         while (oldModes.hasNext() && updatedModes.hasNext()) {
             ExecutionMode oldMode = oldModes.next();
@@ -138,11 +119,10 @@ public class UserDefinedFunctionExecutionModes {
             }
             throw new OurBadException(
                     "Conflicting execution modes in user-defined function parameters for function: "
-                        + functionIdentifier.getName()
-                        + " with arity: "
-                        + functionIdentifier.getArity()
-                        + ". This happens when the same function is used in a setting with big sequences and another with small sequences, which is an unsupported feature. If you need this, please let us know so we can prioritize."
-            );
+                            + functionIdentifier.getName()
+                            + " with arity: "
+                            + functionIdentifier.getArity()
+                            + ". This happens when the same function is used in a setting with big sequences and another with small sequences, which is an unsupported feature. If you need this, please let us know so we can prioritize.");
         }
         if (oldModes.hasNext() || updatedModes.hasNext()) {
             throw new OurBadException("Inconsistent parameter execution modes.");
@@ -151,20 +131,16 @@ public class UserDefinedFunctionExecutionModes {
     }
 
     private boolean isAddingNewUnsetUserDefinedFunction(
-            FunctionIdentifier functionIdentifier,
-            ExecutionMode executionMode
-    ) {
+            FunctionIdentifier functionIdentifier, ExecutionMode executionMode) {
         return !this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
-            && executionMode == ExecutionMode.UNSET;
+                && executionMode == ExecutionMode.UNSET;
     }
 
     private boolean isUpdatingUnsetUserDefinedFunctionToNonUnset(
-            FunctionIdentifier functionIdentifier,
-            ExecutionMode executionMode
-    ) {
+            FunctionIdentifier functionIdentifier, ExecutionMode executionMode) {
         return this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
-            && this.userDefinedFunctionsExecutionMode.get(functionIdentifier) == ExecutionMode.UNSET
-            && executionMode != ExecutionMode.UNSET;
+                && this.userDefinedFunctionsExecutionMode.get(functionIdentifier) == ExecutionMode.UNSET
+                && executionMode != ExecutionMode.UNSET;
     }
 
     @Override

@@ -1,11 +1,23 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.compiler;
+
+import java.io.IOException;
+import java.net.URI;
+import java.util.List;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
@@ -16,23 +28,17 @@ import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.LibraryModule;
 
-import java.io.IOException;
-import java.net.URI;
-import java.util.List;
-
 /** Shared module import semantics for the JSONiq and XQuery frontends. */
-final class ModuleImportLoader {
+public final class ModuleImportLoader {
 
-    private ModuleImportLoader() {
-    }
+    private ModuleImportLoader() {}
 
     public static LibraryModule load(
             String namespace,
             List<String> locationHints,
             StaticContext importingModuleContext,
             CompilationConfiguration compilationConfiguration,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         URI baseURI = importingModuleContext.getStaticBaseURI();
         String normalizedNamespace = URILiteralUtils.normalizeAsAnyURI(namespace);
         List<String> candidates = locationHints.isEmpty() ? List.of(normalizedNamespace) : locationHints;
@@ -47,21 +53,16 @@ final class ModuleImportLoader {
                 continue;
             }
             try {
-                LibraryModule module = VisitorHelpers.parseLibraryModuleFromLocation(
-                    location,
-                    importingModuleContext,
-                    compilationConfiguration,
-                    metadata
-                );
+                LibraryModule module = CompilationPipeline.prepareLibraryModuleFromLocation(
+                        location, importingModuleContext, compilationConfiguration, metadata);
 
                 if (!normalizedNamespace.equals(module.getNamespace())) {
                     throw new ModuleNotFoundException(
                             "A module with namespace "
-                                + normalizedNamespace
-                                + " was not found. The namespace of the module at this location was: "
-                                + module.getNamespace(),
-                            metadata
-                    );
+                                    + normalizedNamespace
+                                    + " was not found. The namespace of the module at this location was: "
+                                    + module.getNamespace(),
+                            metadata);
                 }
 
                 return module;
@@ -71,12 +72,9 @@ final class ModuleImportLoader {
         }
 
         RumbleException exception = new ModuleNotFoundException(
-                "Module not found: %s, cause: %s".formatted(
-                    normalizedNamespace,
-                    lastFailure != null ? lastFailure.getMessage() : "unknown"
-                ),
-                metadata
-        );
+                "Module not found: %s, cause: %s"
+                        .formatted(normalizedNamespace, lastFailure != null ? lastFailure.getMessage() : "unknown"),
+                metadata);
         if (lastFailure != null) {
             exception.initCause(lastFailure);
         }

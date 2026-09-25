@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,14 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.primary;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -29,32 +28,25 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class FunctionCallExpression extends Expression {
 
     private final FunctionIdentifier identifier;
+
     @Getter
     private final List<Expression> arguments; // null for placeholder
+
     @Getter
     private final boolean isPartialApplication;
+
     @Setter
     @Getter
     private boolean isTailCallOptimization;
 
-    public FunctionCallExpression(
-            Name functionName,
-            List<Expression> arguments,
-            ExceptionMetadata metadata
-    ) {
+    public FunctionCallExpression(Name functionName, List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         this.arguments = arguments;
         this.isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
-        this.identifier = new FunctionIdentifier(
-                functionName,
-                this.arguments.size()
-        );
+        this.identifier = new FunctionIdentifier(functionName, this.arguments.size());
         this.isTailCallOptimization = false;
     }
 
@@ -88,13 +80,11 @@ public class FunctionCallExpression extends Expression {
         }
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(
-            " | "
+        buffer.append(" | "
                 + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
+                        ? "not set"
+                        : this.staticSequenceType
+                                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")));
         buffer.append("\n");
         for (Expression arg : this.arguments) {
             if (arg == null) {

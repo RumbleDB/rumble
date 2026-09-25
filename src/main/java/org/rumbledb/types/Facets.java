@@ -1,11 +1,27 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
-
-import lombok.Getter;
-import lombok.Setter;
-import org.rumbledb.api.Item;
 
 import java.util.Collections;
 import java.util.List;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.api.Item;
 
 /**
  * Facets class represent a container with the ability to get and set facets and is intended to be a mutable proxy that
@@ -67,33 +83,45 @@ public class Facets {
 
     @Setter
     private Item minInclusive;
+
     @Setter
     private Item maxInclusive;
+
     @Setter
     private Item minExclusive;
+
     @Setter
     private Item maxExclusive;
+
     private Integer minLength;
     private Integer length;
     private Integer maxLength;
     private Integer totalDigits;
+
     @Setter
     private Integer fractionDigits;
+
     private List<String> constraints = Collections.emptyList();
     private List<Item> enumeration;
+
     @Setter
     private TimezoneFacet explicitTimezone;
+
     @Setter
     private WhitespaceFacet whiteSpace;
+
     @Setter
     private List<String> pattern;
 
     // Fundamental facets (XSD 1.1 §4.2)
     private OrderedFacetValue ordered;
+
     @Setter
     private Boolean bounded;
+
     @Setter
     private CardinalityFacetValue cardinality;
+
     private Boolean numeric;
 
     /**
@@ -125,8 +153,7 @@ public class Facets {
             Item minExclusive,
             Item maxExclusive,
             Integer totalDigits,
-            Integer fractionDigits
-    ) {
+            Integer fractionDigits) {
         Facets facets = new Facets();
         facets.length = length;
         facets.enumeration = enumeration;

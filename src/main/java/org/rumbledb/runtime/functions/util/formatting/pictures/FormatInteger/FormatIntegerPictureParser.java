@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -29,35 +44,19 @@ public final class FormatIntegerPictureParser {
             throw invalidPicture(pictureString, metadata);
         }
 
-        IntegerFormatModifier formatModifier = parseFormatModifier(
-            formatModifierString,
-            pictureString,
-            metadata
-        );
+        IntegerFormatModifier formatModifier = parseFormatModifier(formatModifierString, pictureString, metadata);
 
-        PrimaryFormatToken primaryFormatToken = parsePrimaryFormatToken(
-            primaryFormatTokenString,
-            pictureString,
-            metadata
-        );
+        PrimaryFormatToken primaryFormatToken =
+                parsePrimaryFormatToken(primaryFormatTokenString, pictureString, metadata);
 
-        return new FormatIntegerPicture(
-                primaryFormatToken,
-                formatModifier
-        );
+        return new FormatIntegerPicture(primaryFormatToken, formatModifier);
     }
 
     public static PrimaryFormatToken parsePrimaryFormatToken(
-            String primaryFormatTokenString,
-            String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            String primaryFormatTokenString, String pictureStringForErrors, ExceptionMetadata metadata) {
         if (containsDecimalDigit(primaryFormatTokenString)) {
-            NumericPicture numericPicture = NumericPictureParser.parseForInteger(
-                primaryFormatTokenString,
-                pictureStringForErrors,
-                metadata
-            );
+            NumericPicture numericPicture =
+                    NumericPictureParser.parseForInteger(primaryFormatTokenString, pictureStringForErrors, metadata);
             return PrimaryFormatToken.decimal(numericPicture);
         }
 
@@ -82,10 +81,7 @@ public final class FormatIntegerPictureParser {
     }
 
     private static IntegerFormatModifier parseFormatModifier(
-            String formatModifierString,
-            String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            String formatModifierString, String pictureStringForErrors, ExceptionMetadata metadata) {
         int i = 0;
         String numberType = IntegerFormatModifier.CARDINAL;
         String formatSpecifier = null;
@@ -140,7 +136,7 @@ public final class FormatIntegerPictureParser {
     }
 
     private static boolean containsDecimalDigit(String s) {
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
             if (Character.getType(cp) == Character.DECIMAL_DIGIT_NUMBER) {
                 return true;
@@ -151,12 +147,8 @@ public final class FormatIntegerPictureParser {
     }
 
     private static IncorrectSyntaxFormatNumberException invalidPicture(
-            String pictureStringForErrors,
-            ExceptionMetadata metadata
-    ) {
+            String pictureStringForErrors, ExceptionMetadata metadata) {
         return new IncorrectSyntaxFormatNumberException(
-                "\"" + pictureStringForErrors + "\": invalid picture string",
-                metadata
-        );
+                "\"" + pictureStringForErrors + "\": invalid picture string", metadata);
     }
 }

@@ -1,19 +1,36 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.flwor;
-
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.StructType;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.spark.SparkSessionManager;
-import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructType;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.SequenceType;
 
 /**
  * This class describes the context of a native clause and is used when processing FLWOR expressions without UDF
@@ -22,19 +39,25 @@ public class NativeClauseContext {
     public static final NativeClauseContext NoNativeQuery = new NativeClauseContext();
 
     private NativeClauseContext parent;
+
     @Setter
     @Getter
     private FLWOR_CLAUSES clauseType;
+
     @Setter
     @Getter
     private DataType schema;
+
     @Getter
     private DynamicContext context;
+
     @Setter
     @Getter
     private String resultingQuery;
+
     @Getter
     private List<String> lateralViewPart; // used in array unboxing to generate the correct lateral view
+
     @Setter
     @Getter
     private SequenceType resultingType;
@@ -57,14 +80,15 @@ public class NativeClauseContext {
     private Map<String, Boolean> sortingColumns;
 
     private Map<Name, Name> variables;
+
     @Getter
     private String rowIdField;
+
     @Setter
     @Getter
     private boolean grouped;
 
-    private NativeClauseContext() {
-    }
+    private NativeClauseContext() {}
 
     public NativeClauseContext(FLWOR_CLAUSES clauseType, StructType schema, DynamicContext context) {
         this.clauseType = clauseType;
@@ -153,16 +177,14 @@ public class NativeClauseContext {
 
     public Name addVariable() {
         Name variable = Name.createVariableInNoNamespace(
-            SparkSessionManager.sparkSqlVariableName + "-" + this.getAndIncrementMonotonicallyIncreasingId()
-        );
+                SparkSessionManager.sparkSqlVariableName + "-" + this.getAndIncrementMonotonicallyIncreasingId());
         this.variables.put(variable, variable);
         return variable;
     }
 
     public Name addVariable(Name name) {
         Name variable = Name.createVariableInNoNamespace(
-            SparkSessionManager.sparkSqlVariableName + "-" + this.getAndIncrementMonotonicallyIncreasingId()
-        );
+                SparkSessionManager.sparkSqlVariableName + "-" + this.getAndIncrementMonotonicallyIncreasingId());
         this.variables.put(name, variable);
         return variable;
     }

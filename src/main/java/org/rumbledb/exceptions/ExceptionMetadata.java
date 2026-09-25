@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,17 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.exceptions;
 
 import java.io.Serial;
 import java.io.Serializable;
 
-import lombok.Getter;
 import org.antlr.v4.runtime.Token;
+
+import lombok.Getter;
 
 /**
  * Metadata for error reporting (line and column number)
@@ -36,17 +32,15 @@ public class ExceptionMetadata implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private final String location;
     private final SourceRange range;
     /**
      * The the query code around the error.
      */
     private final String code;
-    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata(
-            "none",
-            SourceRange.point(1, 0),
-            ""
-    );
+
+    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata("none", SourceRange.point(1, 0), "");
 
     /**
      * Builds a new metadata object
@@ -58,22 +52,11 @@ public class ExceptionMetadata implements Serializable {
      * @param endColumn the ending column number at which the error occurred.
      * @param code the query code around the error.
      */
-    public ExceptionMetadata(
-            String location,
-            int startLine,
-            int startColumn,
-            int endLine,
-            int endColumn,
-            String code
-    ) {
+    public ExceptionMetadata(String location, int startLine, int startColumn, int endLine, int endColumn, String code) {
         this(
-            location,
-            new SourceRange(
-                    new SourcePosition(startLine, startColumn),
-                    new SourcePosition(endLine, endColumn)
-            ),
-            code
-        );
+                location,
+                new SourceRange(new SourcePosition(startLine, startColumn), new SourcePosition(endLine, endColumn)),
+                code);
     }
 
     public ExceptionMetadata(String location, SourceRange range, String code) {
@@ -97,13 +80,7 @@ public class ExceptionMetadata implements Serializable {
         String endText = end.getText();
         int endColumn = end.getCharPositionInLine() + (endText == null ? 0 : endText.length());
         return new ExceptionMetadata(
-                location,
-                start.getLine(),
-                start.getCharPositionInLine(),
-                end.getLine(),
-                endColumn,
-                code
-        );
+                location, start.getLine(), start.getCharPositionInLine(), end.getLine(), endColumn, code);
     }
 
     public SourcePosition getStart() {

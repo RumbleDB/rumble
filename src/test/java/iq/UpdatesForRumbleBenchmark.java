@@ -1,20 +1,19 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package iq;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.log4j.LogManager;
-import org.apache.spark.SparkConf;
-import org.junit.jupiter.api.Assertions;
-import org.rumbledb.api.Item;
-import org.rumbledb.api.Rumble;
-import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.cli.JsoniqQueryExecutor;
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.spark.SparkSessionManager;
-
-import scala.Function0;
-import scala.util.Properties;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -24,36 +23,50 @@ import java.net.URI;
 import java.util.*;
 import java.util.function.Consumer;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.spark.SparkConf;
+import org.junit.jupiter.api.Assertions;
+
+import lombok.extern.log4j.Log4j2;
+import scala.Function0;
+import scala.util.Properties;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.api.Rumble;
+import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.cli.JsoniqQueryExecutor;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.spark.SparkSessionManager;
+
+@Log4j2
 public class UpdatesForRumbleBenchmark {
 
     private static final String APP_NAME = "Rumble application";
-    public static final String javaVersion =
-        System.getProperty("java.version");
-    public static final String scalaVersion =
-        Properties.scalaPropOrElse("version.number", new Function0<String>() {
-            @Override
-            public String apply() {
-                return "unknown";
-            }
-        });
+    public static final String javaVersion = System.getProperty("java.version");
+    public static final String scalaVersion = Properties.scalaPropOrElse("version.number", new Function0<String>() {
+        @Override
+        public String apply() {
+            return "unknown";
+        }
+    });
 
     public List<FileTuple> benchmarkFiles;
 
     protected static final RumbleConfiguration configuration = RumbleConfiguration.builder()
-        .configureDebug(debug -> debug.showErrorInfo(true))
-        .configureRuntime(
-            runtime -> runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true)
-        )
-        .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
-        .build();
+            .configureDebug(debug -> debug.showErrorInfo(true))
+            .configureRuntime(runtime ->
+                    runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true))
+            .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
+            .build();
 
     protected static final RumbleConfiguration createDeltaConfiguration = RumbleConfiguration.builder()
-        .configureDebug(debug -> debug.showErrorInfo(true))
-        .configureOutput(output -> output.outputFormat("delta"))
-        .configureRuntime(
-            runtime -> runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true)
-        )
-        .build();
+            .configureDebug(debug -> debug.showErrorInfo(true))
+            .configureOutput(output -> output.outputFormat("delta"))
+            .configureRuntime(runtime ->
+                    runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true))
+            .build();
 
     public UpdatesForRumbleBenchmark() {
         this.benchmarkFiles = new ArrayList<>();
@@ -175,53 +188,43 @@ public class UpdatesForRumbleBenchmark {
         // NEW ORDER TRANSACTION
         // RUMBLE
         for (Integer power : powersOf2) {
-            this.benchmarkFiles.add(
-                new FileTuple(
-                        "/home/davidl/Documents/Thesis/rumble/src/test/resources/queries/delta-benchmark/new_order_trans/update_new_order_"
+            this.benchmarkFiles.add(new FileTuple(
+                    "/home/davidl/Documents/Thesis/rumble/src/test/resources/queries/delta-benchmark/new_order_trans/update_new_order_"
                             + power
                             + ".jq",
-                        "null",
-                        Collections.singletonList(
+                    "null",
+                    Collections.singletonList(
                             "/home/davidl/Documents/Thesis/rumble/src/test/resources/queries/delta_benchmark_data/newOrderTable"
-                                + power
-                        ),
-                        Collections.singletonList(
+                                    + power),
+                    Collections.singletonList(
                             "/home/davidl/Documents/Thesis/rumble/src/test/resources/queries/delta-benchmark/new_order_trans/create_new_order_table_"
-                                + power
-                                + ".jq"
-                        ),
-                        "/home/davidl/Documents/Thesis/rumble/BenchmarkResults/NEW_ORDER_TRANS/RUMBLE_NEW_ORDER_INC_"
+                                    + power
+                                    + ".jq"),
+                    "/home/davidl/Documents/Thesis/rumble/BenchmarkResults/NEW_ORDER_TRANS/RUMBLE_NEW_ORDER_INC_"
                             + power
                             + ".txt",
-                        false
-                )
-            );
+                    false));
         }
 
         // SPARK
         for (Integer power : powersOf2) {
-            this.benchmarkFiles.add(
-                new FileTuple(
-                        null,
-                        (tables) -> {
-                            String query = "UPDATE delta.`" + tables.get(0) + "` SET NO_O_ID = (NO_O_ID + 1);";
-                            SparkSessionManager.getInstance().getOrCreateSession().sql(query);
-                        },
-                        Collections.singletonList(
+            this.benchmarkFiles.add(new FileTuple(
+                    null,
+                    (tables) -> {
+                        String query = "UPDATE delta.`" + tables.get(0) + "` SET NO_O_ID = (NO_O_ID + 1);";
+                        SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+                    },
+                    Collections.singletonList(
                             "/home/davidl/Documents/Thesis/rumble/src/test/resources/queries/delta_benchmark_data/newOrderTable"
-                                + power
-                        ),
-                        Collections.singletonList(
+                                    + power),
+                    Collections.singletonList(
                             "/home/davidl/Documents/Thesis/rumble/src/test/resources/queries/delta-benchmark/new_order_trans/create_new_order_table_"
-                                + power
-                                + ".jq"
-                        ),
-                        "/home/davidl/Documents/Thesis/rumble/BenchmarkResults/NEW_ORDER_TRANS/SPARK_NEW_ORDER_INC_"
+                                    + power
+                                    + ".jq"),
+                    "/home/davidl/Documents/Thesis/rumble/BenchmarkResults/NEW_ORDER_TRANS/SPARK_NEW_ORDER_INC_"
                             + power
                             + ".txt",
-                        true
-                )
-            );
+                    true));
         }
         // benchmarkFiles.add(new FileTuple(
         // null,
@@ -340,15 +343,12 @@ public class UpdatesForRumbleBenchmark {
 
     public static void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
-        System.err.println("Java version: " + javaVersion);
-        System.err.println("Scala version: " + scalaVersion);
+        log.info("Java version: {}", javaVersion);
+        log.info("Scala version: {}", scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
         if (sparkConfiguration.get("spark.app.name", "<none>").equals("<none")) {
-            LogManager.getLogger("SparkSessionManager")
-                .warn(
-                    "No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
-                        + APP_NAME
-                );
+            log.warn("No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
+                    + APP_NAME);
             sparkConfiguration.setAppName(APP_NAME);
         }
         sparkConfiguration.set("spark.master", "local[*]");
@@ -357,13 +357,13 @@ public class UpdatesForRumbleBenchmark {
         sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
         sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension"); // enables delta
         // store
-        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
+        sparkConfiguration.set(
+                "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog"); // enables
         // delta
         // store
 
         // prevents spark from failing to start on MacOS when disconnected from the internet
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");
-
 
         sparkConfiguration.set("spark.kryoserializer.buffer.max", "256m");
         sparkConfiguration.set("spark.driver.memory", "4g");
@@ -372,7 +372,9 @@ public class UpdatesForRumbleBenchmark {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-        System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
+        log.info(
+                "Spark version: {}",
+                SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     public List<Item> benchmarkDeltaTest(Rumble rumble, URI uri) throws IOException {
@@ -383,11 +385,7 @@ public class UpdatesForRumbleBenchmark {
     }
 
     public void benchmarkDelta(
-            String queryPath,
-            List<String> tablePaths,
-            List<String> createTablePaths,
-            String outputPath
-    )
+            String queryPath, List<String> tablePaths, List<String> createTablePaths, String outputPath)
             throws IOException {
         long total = 0;
         long[] diffs = new long[10];
@@ -400,10 +398,7 @@ public class UpdatesForRumbleBenchmark {
         this.appendToFile(outputPath, "RUMBLE");
         this.appendToFile(outputPath, queryPath);
 
-        URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            queryPath,
-            ExceptionMetadata.EMPTY_METADATA
-        );
+        URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(queryPath, ExceptionMetadata.EMPTY_METADATA);
         Rumble rumble = new Rumble(configuration);
 
         // WARMUP
@@ -439,7 +434,6 @@ public class UpdatesForRumbleBenchmark {
         this.appendToFile(outputPath, "##########################################");
     }
 
-
     public void benchmarkSparkSQLTest(String query) {
         SparkSessionManager.getInstance().getOrCreateSession().sql(query);
     }
@@ -449,8 +443,7 @@ public class UpdatesForRumbleBenchmark {
             List<String> tablePaths,
             List<String> createTablePaths,
             String outputPath,
-            Optional<Consumer<List<String>>> possSqlFunc
-    )
+            Optional<Consumer<List<String>>> possSqlFunc)
             throws IOException {
         long total = 0;
         long[] diffs = new long[10];
@@ -523,10 +516,8 @@ public class UpdatesForRumbleBenchmark {
     }
 
     public void appendToFile(String path, String str) {
-        try (
-            FileWriter writer = new FileWriter(path, true);
-            BufferedWriter bufferedWriter = new BufferedWriter(writer)
-        ) {
+        try (FileWriter writer = new FileWriter(path, true);
+                BufferedWriter bufferedWriter = new BufferedWriter(writer)) {
             bufferedWriter.write(str);
             bufferedWriter.newLine();
         } catch (IOException e) {
@@ -535,19 +526,13 @@ public class UpdatesForRumbleBenchmark {
     }
 
     public void createTable(String path, String query) throws IOException {
-        URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            path,
-            ExceptionMetadata.EMPTY_METADATA
-        );
-        URI queryURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            query,
-            ExceptionMetadata.EMPTY_METADATA
-        );
+        URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, ExceptionMetadata.EMPTY_METADATA);
+        URI queryURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(query, ExceptionMetadata.EMPTY_METADATA);
 
         RumbleConfiguration executionConfiguration = UpdatesForRumbleBenchmark.createDeltaConfiguration.toBuilder()
-            .configureInput(input -> input.queryPath(queryURI.getPath()))
-            .configureOutput(output -> output.outputPath(tableURI.getPath()))
-            .build();
+                .configureInput(input -> input.queryPath(queryURI.getPath()))
+                .configureOutput(output -> output.outputPath(tableURI.getPath()))
+                .build();
         JsoniqQueryExecutor executor = new JsoniqQueryExecutor(executionConfiguration);
         executor.runQuery();
     }
@@ -559,17 +544,14 @@ public class UpdatesForRumbleBenchmark {
     }
 
     public void deleteTable(String path) {
-        URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            path,
-            ExceptionMetadata.EMPTY_METADATA
-        );
+        URI tableURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, ExceptionMetadata.EMPTY_METADATA);
 
         try {
             File oldTable = new File(tableURI.getPath());
             FileUtils.deleteDirectory(oldTable);
-            System.err.println("Deleted file: " + oldTable.getAbsolutePath());
+            log.info("Deleted file: {}", oldTable.getAbsolutePath());
         } catch (IOException e) {
-            e.printStackTrace();
+            log.error("Could not delete old table.", e);
             Assertions.fail();
         }
     }
@@ -594,7 +576,6 @@ public class UpdatesForRumbleBenchmark {
         return Math.sqrt(sd / N);
     }
 
-
     public static void main(String[] args) throws IOException {
 
         UpdatesForRumbleBenchmark benchmark = new UpdatesForRumbleBenchmark();
@@ -603,26 +584,20 @@ public class UpdatesForRumbleBenchmark {
         for (FileTuple ft : benchmark.benchmarkFiles) {
             if (ft.isSQL()) {
                 benchmark.benchmarkSpark(
-                    ft.getQueryMaterial(),
-                    ft.getTablePaths(),
-                    ft.getCreateTablePaths(),
-                    ft.getOutputPath(),
-                    Optional.ofNullable(ft.getSqlQueryFunc())
-                );
+                        ft.getQueryMaterial(),
+                        ft.getTablePaths(),
+                        ft.getCreateTablePaths(),
+                        ft.getOutputPath(),
+                        Optional.ofNullable(ft.getSqlQueryFunc()));
             } else {
                 benchmark.benchmarkDelta(
-                    ft.getQueryMaterial(),
-                    ft.getTablePaths(),
-                    ft.getCreateTablePaths(),
-                    ft.getOutputPath()
-                );
+                        ft.getQueryMaterial(), ft.getTablePaths(), ft.getCreateTablePaths(), ft.getOutputPath());
             }
         }
 
-        System.out.println("##########################################");
-        System.out.println("DONE");
-        System.out.println("##########################################");
-
+        log.info("##########################################");
+        log.info("DONE");
+        log.info("##########################################");
     }
 
     class FileTuple {
@@ -641,8 +616,7 @@ public class UpdatesForRumbleBenchmark {
                 List<String> tablePaths,
                 List<String> createTablePaths,
                 String outputPath,
-                boolean isSQL
-        ) {
+                boolean isSQL) {
             this.queryPath = queryPath;
             this.sqlQuery = sqlQuery;
             this.tablePaths = tablePaths;
@@ -657,8 +631,7 @@ public class UpdatesForRumbleBenchmark {
                 List<String> tablePaths,
                 List<String> createTablePaths,
                 String outputPath,
-                boolean isSQL
-        ) {
+                boolean isSQL) {
             this.queryPath = queryPath;
             this.sqlQuery = null;
             this.sqlQueryFunc = sqlQueryFunc;

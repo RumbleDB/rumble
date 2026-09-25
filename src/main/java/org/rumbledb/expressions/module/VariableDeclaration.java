@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,15 +11,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.module;
 
+import java.util.Collections;
+import java.util.List;
+import javax.annotation.Nullable;
 
 import lombok.Getter;
 import lombok.Setter;
+
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -34,24 +33,26 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.types.SequenceType;
 
-import javax.annotation.Nullable;
-import java.util.Collections;
-import java.util.List;
-
 import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAssignable;
 
 public class VariableDeclaration extends Node {
     // Default is false for variable declaration.
     private final boolean DEFAULT_ASSIGNABLE = false;
+
     @Getter
     private final Name variableName;
+
     @Getter
     private final ExceptionMetadata variableMetadata;
+
     private final boolean external;
     protected final SequenceType sequenceType;
+
     @Getter
     protected final Expression expression;
+
     private final List<Annotation> annotations;
+
     @Getter
     private final boolean isAssignable;
 
@@ -64,8 +65,7 @@ public class VariableDeclaration extends Node {
             SequenceType sequenceType,
             Expression expression,
             List<Annotation> annotations,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         this(variableName, external, sequenceType, expression, annotations, metadata, metadata);
     }
 
@@ -76,8 +76,7 @@ public class VariableDeclaration extends Node {
             Expression expression,
             List<Annotation> annotations,
             ExceptionMetadata metadata,
-            ExceptionMetadata variableMetadata
-    ) {
+            ExceptionMetadata variableMetadata) {
         super(metadata);
         this.variableName = variableName;
         this.variableMetadata = variableMetadata;
@@ -129,10 +128,8 @@ public class VariableDeclaration extends Node {
     }
 
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
-        if (
-            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.variableHighestStorageMode == ExecutionMode.UNSET
-        ) {
+        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.variableHighestStorageMode == ExecutionMode.UNSET) {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
@@ -144,14 +141,12 @@ public class VariableDeclaration extends Node {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(
-            " ("
+        buffer.append(" ("
                 + (this.variableName)
                 + ", "
                 + (this.external ? "external, " : "")
                 + this.getSequenceType().toString()
-                + ") "
-        );
+                + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
@@ -163,10 +158,8 @@ public class VariableDeclaration extends Node {
     public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("declare variable $" + this.variableName);
-        if (this.sequenceType != null)
-            sb.append(" as " + this.sequenceType.toString());
-        if (this.external)
-            sb.append(" external\n");
+        if (this.sequenceType != null) sb.append(" as " + this.sequenceType.toString());
+        if (this.external) sb.append(" external\n");
         else {
             sb.append(" ");
             this.expression.serializeToJSONiq(sb, 0);
@@ -174,10 +167,7 @@ public class VariableDeclaration extends Node {
         }
     }
 
-    @Nullable
-    public List<Annotation> getAnnotations() {
+    @Nullable public List<Annotation> getAnnotations() {
         return this.annotations;
     }
-
-
 }

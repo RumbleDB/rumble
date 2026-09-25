@@ -1,7 +1,19 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.util.formatting;
-
-import com.ibm.icu.text.TimeZoneNames;
-import com.ibm.icu.util.TimeZone;
 
 import java.time.DateTimeException;
 import java.time.OffsetDateTime;
@@ -10,16 +22,14 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 
+import com.ibm.icu.text.TimeZoneNames;
+import com.ibm.icu.util.TimeZone;
+
 public final class TimezoneNames {
 
-    private TimezoneNames() {
-    }
+    private TimezoneNames() {}
 
-    public static String name(
-            OffsetDateTime value,
-            FormattingContext context,
-            boolean longName
-    ) {
+    public static String name(OffsetDateTime value, FormattingContext context, boolean longName) {
         String zoneId = resolveZoneId(value, context);
         if (zoneId == null) {
             return null;
@@ -35,22 +45,16 @@ public final class TimezoneNames {
         boolean daylight = zone.inDaylightTime(new Date(millis));
         TimeZoneNames.NameType type = nameType(daylight, longName);
 
-        return TimeZoneNames
-            .getInstance(context.uLocale)
-            .getDisplayName(zoneId, type, millis);
+        return TimeZoneNames.getInstance(context.uLocale).getDisplayName(zoneId, type, millis);
     }
 
     private static String javaDisplayName(
-            OffsetDateTime value,
-            FormattingContext context,
-            String zoneId,
-            boolean longName
-    ) {
+            OffsetDateTime value, FormattingContext context, String zoneId, boolean longName) {
         try {
             ZoneId zone = ZoneId.of(zoneId);
             String pattern = longName ? "zzzz" : "z";
             String name = DateTimeFormatter.ofPattern(pattern, context.javaLocale)
-                .format(value.toInstant().atZone(zone));
+                    .format(value.toInstant().atZone(zone));
 
             return name == null || name.isEmpty() ? null : name;
         } catch (DateTimeException | IllegalArgumentException e) {

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,35 +11,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis, Ghislain Fourny
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.navigation;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
+
+import scala.Option;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
-
-import scala.Option;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator expression;
+    private final ItemRuntimePlan expression;
     private final DynamicContext dynamicContext;
     private final ExceptionMetadata metadata;
     private final ItemType itemType;
@@ -50,12 +47,11 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
     final List<Item> currentItems = new ArrayList<>();
 
     public PredicateWithZipUDF(
-            RuntimeIterator expression,
+            ItemRuntimePlan expression,
             DynamicContext context,
             ExceptionMetadata metadata,
             ItemType itemType,
-            long contextSize
-    ) {
+            long contextSize) {
         this.expression = expression;
         this.dynamicContext = new DynamicContext(context);
         this.metadata = metadata;
@@ -77,10 +73,10 @@ public class PredicateWithZipUDF implements UDF1<Row, Boolean> {
         this.dynamicContext.getVariableValues().setPosition(row.getLong((int) opt.get()));
         this.dynamicContext.getVariableValues().setLast(this.contextSize);
 
-        boolean result = this.expression.getEffectiveBooleanValueOrCheckPosition(
-            this.dynamicContext,
-            this.dynamicContext.getVariableValues().getPosition()
-        );
+        boolean result = EffectiveBooleanValue.evaluateOrCheckPosition(
+                this.expression,
+                this.dynamicContext,
+                this.dynamicContext.getVariableValues().getPosition());
 
         return result;
     }

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,20 +11,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.xml;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Expression representing a computed namespace constructor.
@@ -51,11 +47,7 @@ public class ComputedNamespaceConstructorExpression extends Expression {
      * @param uriExpression The URI expression
      * @param metadata The exception metadata
      */
-    public ComputedNamespaceConstructorExpression(
-            String prefix,
-            Expression uriExpression,
-            ExceptionMetadata metadata
-    ) {
+    public ComputedNamespaceConstructorExpression(String prefix, Expression uriExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.prefix = prefix;
         this.prefixExpression = null;
@@ -70,10 +62,7 @@ public class ComputedNamespaceConstructorExpression extends Expression {
      * @param metadata The exception metadata
      */
     public ComputedNamespaceConstructorExpression(
-            Expression prefixExpression,
-            Expression uriExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression prefixExpression, Expression uriExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.prefix = null;
         this.prefixExpression = prefixExpression;

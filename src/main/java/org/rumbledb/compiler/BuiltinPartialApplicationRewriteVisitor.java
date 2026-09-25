@@ -1,10 +1,32 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.compiler;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -12,9 +34,6 @@ import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.types.SequenceType;
-
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * Rewrites direct partial application of builtins, e.g. {@code fn:max(0, ?)},
@@ -26,16 +45,41 @@ import java.util.stream.Collectors;
  */
 public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
-    private static String getQueryLanguage(Expression expression) {
-        return expression.getStaticContext() == null ? null : expression.getStaticContext().getQueryLanguage();
+    private StaticContext moduleContext;
+
+    private BuiltinFunction resolveFunction(Expression expression, FunctionIdentifier identifier) {
+        StaticContext context =
+                expression.getStaticContext() != null ? expression.getStaticContext() : this.moduleContext;
+        return context == null
+                ? BuiltinFunctionCatalogue.getBuiltinFunction(identifier, (String) null)
+                : BuiltinFunctionCatalogue.getBuiltinFunction(identifier, context);
+    }
+
+    @Override
+    public Node visitMainModule(MainModule module, Node argument) {
+        StaticContext previousContext = this.moduleContext;
+        this.moduleContext = module.getStaticContext();
+        try {
+            return super.visitMainModule(module, argument);
+        } finally {
+            this.moduleContext = previousContext;
+        }
+    }
+
+    @Override
+    public Node visitLibraryModule(LibraryModule module, Node argument) {
+        StaticContext previousContext = this.moduleContext;
+        this.moduleContext = module.getStaticContext();
+        try {
+            return super.visitLibraryModule(module, argument);
+        } finally {
+            // Resume resolving constructors in the importing module after visiting this library.
+            this.moduleContext = previousContext;
+        }
     }
 
     private InlineFunctionExpression rewriteBuiltinPartialApplication(
-            Name functionName,
-            BuiltinFunction builtin,
-            List<Expression> arguments,
-            Expression sourceExpression
-    ) {
+            Name functionName, BuiltinFunction builtin, List<Expression> arguments, Expression sourceExpression) {
         List<SequenceType> parameterTypes = builtin.getSignature().getParameterTypes();
         Map<Name, SequenceType> params = new LinkedHashMap<>();
 
@@ -53,40 +97,28 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
             Name parameterName = Name.createVariableInNoNamespace(String.format("param%s", i));
             params.put(parameterName, parameterTypes.get(i));
-            VariableReferenceExpression variableReference = new VariableReferenceExpression(
-                    parameterName,
-                    sourceExpression.getMetadata()
-            );
+            VariableReferenceExpression variableReference =
+                    new VariableReferenceExpression(parameterName, sourceExpression.getMetadata());
             variableReference.setActualType(parameterTypes.get(i));
             fullArguments.add(variableReference);
         }
 
-        FunctionCallExpression bodyCall = new FunctionCallExpression(
-                functionName,
-                fullArguments,
-                sourceExpression.getMetadata()
-        );
-        StatementsAndOptionalExpr body = new StatementsAndOptionalExpr(
-                Collections.emptyList(),
-                bodyCall,
-                sourceExpression.getMetadata()
-        );
+        FunctionCallExpression bodyCall =
+                new FunctionCallExpression(functionName, fullArguments, sourceExpression.getMetadata());
+        StatementsAndOptionalExpr body =
+                new StatementsAndOptionalExpr(Collections.emptyList(), bodyCall, sourceExpression.getMetadata());
         return new InlineFunctionExpression(
                 Collections.emptyList(),
                 null,
                 params,
                 builtin.getSignature().getReturnType(),
                 body,
-                sourceExpression.getMetadata()
-        );
+                sourceExpression.getMetadata());
     }
 
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
-        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
-            expression.getFunctionIdentifier(),
-            getQueryLanguage(expression)
-        );
+        BuiltinFunction builtin = resolveFunction(expression, expression.getFunctionIdentifier());
 
         if (!expression.isPartialApplication() || builtin == null) {
             // In case of non-partial application or non-builtin function, we still need to keep descending Because a
@@ -95,39 +127,30 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
             return super.visitFunctionCall(expression, argument);
         }
 
-        List<Expression> arguments = expression.getArguments()
-            .stream()
-            .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
-            .collect(Collectors.toList());
+        List<Expression> arguments = expression.getArguments().stream()
+                .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
+                .collect(Collectors.toList());
         return rewriteBuiltinPartialApplication(expression.getFunctionName(), builtin, arguments, expression);
     }
 
     @Override
     public Node visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, Node argument) {
-        List<Expression> arguments = expression.getArguments()
-            .stream()
-            .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
-            .collect(Collectors.toList());
+        List<Expression> arguments = expression.getArguments().stream()
+                .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
+                .collect(Collectors.toList());
         Expression rewrittenMainExpression = (Expression) visit(expression.getMainExpression(), argument);
 
         if (!(rewrittenMainExpression instanceof NamedFunctionReferenceExpression namedFunctionReference)) {
             return super.visitDynamicFunctionCallExpression(expression, argument);
         }
 
-        BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
-            namedFunctionReference.getIdentifier(),
-            getQueryLanguage(namedFunctionReference)
-        );
+        BuiltinFunction builtin = resolveFunction(namedFunctionReference, namedFunctionReference.getIdentifier());
         boolean isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
         if (!isPartialApplication || builtin == null) {
             return super.visitDynamicFunctionCallExpression(expression, argument);
         }
 
         return rewriteBuiltinPartialApplication(
-            namedFunctionReference.getIdentifier().getName(),
-            builtin,
-            arguments,
-            expression
-        );
+                namedFunctionReference.getIdentifier().getName(), builtin, arguments, expression);
     }
 }

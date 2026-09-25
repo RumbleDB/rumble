@@ -1,24 +1,46 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.exceptions;
-
-import lombok.Getter;
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.update.PendingUpdateList;
 
 import java.io.Serial;
 import java.util.List;
 
+import org.apache.spark.api.java.JavaRDD;
+
+import lombok.Getter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.update.PendingUpdateList;
+
 public class ExitStatementException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
+
     @Getter
     private final PendingUpdateList pendingUpdateList;
+
     private final List<Item> localResult;
+
     @Getter
     private final JavaRDD<Item> rddResult;
+
     @Getter
     private final HomogeneousItemDataFrame dataFrameResult;
+
     private final ExceptionMetadata exceptionMetadata;
 
     public ExitStatementException(
@@ -26,8 +48,7 @@ public class ExitStatementException extends RuntimeException {
             List<Item> localResult,
             JavaRDD<Item> rddResult,
             HomogeneousItemDataFrame dataFrameResult,
-            ExceptionMetadata exceptionMetadata
-    ) {
+            ExceptionMetadata exceptionMetadata) {
         this.pendingUpdateList = pendingUpdateList;
         this.localResult = localResult;
         this.rddResult = rddResult;

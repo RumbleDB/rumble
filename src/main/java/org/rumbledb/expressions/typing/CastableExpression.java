@@ -1,9 +1,25 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.expressions.typing;
 
 import java.util.Collections;
 import java.util.List;
 
 import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -27,8 +43,7 @@ public class CastableExpression extends Expression {
         }
         if (type.getArity() != Arity.OneOrZero && type.getArity() != Arity.One) {
             throw new OurBadException(
-                    "Castable expressions cannot have an arity of more than one, something went wrong with the parser."
-            );
+                    "Castable expressions cannot have an arity of more than one, something went wrong with the parser.");
         }
     }
 
@@ -48,12 +63,10 @@ public class CastableExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(
-            " ("
+        buffer.append(" ("
                 + (this.sequenceType.toString())
                 + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
-                + ") "
-        );
+                + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
         buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));

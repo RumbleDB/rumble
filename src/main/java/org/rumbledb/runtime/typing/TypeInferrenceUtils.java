@@ -1,8 +1,24 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.typing;
 
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -17,14 +33,10 @@ public final class TypeInferrenceUtils {
         LAX
     }
 
-    private TypeInferrenceUtils() {
-    }
+    private TypeInferrenceUtils() {}
 
     public static ItemType inferItemTypeOfRDDItems(
-            JavaRDD<Item> itemRDD,
-            ExceptionMetadata metadata,
-            TypeMergeMode typeMergeMode
-    ) {
+            JavaRDD<Item> itemRDD, ExceptionMetadata metadata, TypeMergeMode typeMergeMode) {
         if (itemRDD.isEmpty()) {
             return BuiltinTypesCatalogue.item;
         }
@@ -32,28 +44,24 @@ public final class TypeInferrenceUtils {
         ItemType neutralElement = BuiltinTypesCatalogue.errorItem;
 
         return itemRDD.aggregate(
-            neutralElement,
-            (ItemType acc, Item item) -> {
-                ItemType itemType = ItemTypeFactory.createItemTypeFromItem(item);
-                return acc.equals(neutralElement) ? itemType : mergeItemTypes(acc, itemType, typeMergeMode);
-            },
-            (ItemType a, ItemType b) -> {
-                if (a.equals(neutralElement)) {
-                    return b;
-                }
-                if (b.equals(neutralElement)) {
-                    return a;
-                }
-                return mergeItemTypes(a, b, typeMergeMode);
-            }
-        );
+                neutralElement,
+                (ItemType acc, Item item) -> {
+                    ItemType itemType = ItemTypeFactory.createItemTypeFromItem(item);
+                    return acc.equals(neutralElement) ? itemType : mergeItemTypes(acc, itemType, typeMergeMode);
+                },
+                (ItemType a, ItemType b) -> {
+                    if (a.equals(neutralElement)) {
+                        return b;
+                    }
+                    if (b.equals(neutralElement)) {
+                        return a;
+                    }
+                    return mergeItemTypes(a, b, typeMergeMode);
+                });
     }
 
     public static ItemType inferItemTypeOfLocalItems(
-            List<Item> items,
-            ExceptionMetadata metadata,
-            TypeMergeMode typeMergeMode
-    ) {
+            List<Item> items, ExceptionMetadata metadata, TypeMergeMode typeMergeMode) {
         if (items.isEmpty()) {
             return BuiltinTypesCatalogue.item;
         }
@@ -66,10 +74,7 @@ public final class TypeInferrenceUtils {
         return result;
     }
 
-    public static SequenceType inferSequenceTypeOfLocalItems(
-            List<Item> items,
-            TypeMergeMode typeMergeMode
-    ) {
+    public static SequenceType inferSequenceTypeOfLocalItems(List<Item> items, TypeMergeMode typeMergeMode) {
         if (items.isEmpty()) {
             return SequenceType.createSequenceType("()");
         }
@@ -81,19 +86,14 @@ public final class TypeInferrenceUtils {
     }
 
     public static SequenceType inferSequenceTypeOfLocalItemSequences(
-            List<List<Item>> sequences,
-            TypeMergeMode typeMergeMode
-    ) {
+            List<List<Item>> sequences, TypeMergeMode typeMergeMode) {
         if (sequences.isEmpty()) {
             return SequenceType.createSequenceType("item*");
         }
         SequenceType result = inferSequenceTypeOfLocalItems(sequences.get(0), typeMergeMode);
         for (int i = 1; i < sequences.size(); i++) {
             result = mergeSequenceTypes(
-                result,
-                inferSequenceTypeOfLocalItems(sequences.get(i), typeMergeMode),
-                typeMergeMode
-            );
+                    result, inferSequenceTypeOfLocalItems(sequences.get(i), typeMergeMode), typeMergeMode);
         }
         return result;
     }
@@ -105,11 +105,7 @@ public final class TypeInferrenceUtils {
         return left.findLeastCommonSuperTypeWith(right);
     }
 
-    private static SequenceType mergeSequenceTypes(
-            SequenceType left,
-            SequenceType right,
-            TypeMergeMode typeMergeMode
-    ) {
+    private static SequenceType mergeSequenceTypes(SequenceType left, SequenceType right, TypeMergeMode typeMergeMode) {
         if (left.isEmptySequence()) {
             if (right.isEmptySequence()) {
                 return left;

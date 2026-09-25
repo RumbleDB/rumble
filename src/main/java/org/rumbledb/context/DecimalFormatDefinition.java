@@ -1,9 +1,24 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.context;
-
-import lombok.Getter;
 
 import java.io.Serial;
 import java.io.Serializable;
+
+import lombok.Getter;
 
 @Getter
 public class DecimalFormatDefinition implements Serializable {
@@ -40,18 +55,17 @@ public class DecimalFormatDefinition implements Serializable {
 
     private DecimalFormatDefinition() {
         this(
-            DEFAULT_DECIMAL_SEPARATOR,
-            DEFAULT_GROUPING_SEPARATOR,
-            DEFAULT_INFINITY,
-            DEFAULT_MINUS_SIGN,
-            DEFAULT_NAN_SYMBOL,
-            DEFAULT_PERCENT,
-            DEFAULT_PER_MILLE,
-            DEFAULT_ZERO_DIGIT,
-            DEFAULT_OPTIONAL_DIGIT,
-            DEFAULT_PATTERN_SEPARATOR,
-            DEFAULT_EXPONENT_SEPARATOR
-        );
+                DEFAULT_DECIMAL_SEPARATOR,
+                DEFAULT_GROUPING_SEPARATOR,
+                DEFAULT_INFINITY,
+                DEFAULT_MINUS_SIGN,
+                DEFAULT_NAN_SYMBOL,
+                DEFAULT_PERCENT,
+                DEFAULT_PER_MILLE,
+                DEFAULT_ZERO_DIGIT,
+                DEFAULT_OPTIONAL_DIGIT,
+                DEFAULT_PATTERN_SEPARATOR,
+                DEFAULT_EXPONENT_SEPARATOR);
     }
 
     public static DecimalFormatDefinition defaultInstance() {
@@ -69,8 +83,7 @@ public class DecimalFormatDefinition implements Serializable {
             int zeroDigit,
             int optionalDigit,
             int patternSeparator,
-            int exponentSeparator
-    ) {
+            int exponentSeparator) {
         this.decimalSeparator = decimalSeparator;
         this.groupingSeparator = groupingSeparator;
         this.infinity = infinity;
@@ -87,39 +100,39 @@ public class DecimalFormatDefinition implements Serializable {
     @Override
     public String toString() {
         return "DecimalFormatDefinition{"
-            + "decimalSeparator='"
-            + new String(Character.toChars(this.decimalSeparator))
-            + '\''
-            + ", groupingSeparator='"
-            + new String(Character.toChars(this.groupingSeparator))
-            + '\''
-            + ", infinity='"
-            + this.infinity
-            + '\''
-            + ", minusSign='"
-            + new String(Character.toChars(this.minusSign))
-            + '\''
-            + ", naN='"
-            + this.nanSymbol
-            + '\''
-            + ", percent='"
-            + new String(Character.toChars(this.percent))
-            + '\''
-            + ", perMille='"
-            + new String(Character.toChars(this.perMille))
-            + '\''
-            + ", zeroDigit='"
-            + new String(Character.toChars(this.zeroDigit))
-            + '\''
-            + ", optionalDigit='"
-            + new String(Character.toChars(this.optionalDigit))
-            + '\''
-            + ", patternSeparator='"
-            + new String(Character.toChars(this.patternSeparator))
-            + '\''
-            + ", exponentSeparator='"
-            + new String(Character.toChars(this.exponentSeparator))
-            + '\''
-            + '}';
+                + "decimalSeparator='"
+                + new String(Character.toChars(this.decimalSeparator))
+                + '\''
+                + ", groupingSeparator='"
+                + new String(Character.toChars(this.groupingSeparator))
+                + '\''
+                + ", infinity='"
+                + this.infinity
+                + '\''
+                + ", minusSign='"
+                + new String(Character.toChars(this.minusSign))
+                + '\''
+                + ", naN='"
+                + this.nanSymbol
+                + '\''
+                + ", percent='"
+                + new String(Character.toChars(this.percent))
+                + '\''
+                + ", perMille='"
+                + new String(Character.toChars(this.perMille))
+                + '\''
+                + ", zeroDigit='"
+                + new String(Character.toChars(this.zeroDigit))
+                + '\''
+                + ", optionalDigit='"
+                + new String(Character.toChars(this.optionalDigit))
+                + '\''
+                + ", patternSeparator='"
+                + new String(Character.toChars(this.patternSeparator))
+                + '\''
+                + ", exponentSeparator='"
+                + new String(Character.toChars(this.exponentSeparator))
+                + '\''
+                + '}';
     }
 }

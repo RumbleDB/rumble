@@ -1,12 +1,27 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.util.formatting.calendar;
-
-import org.rumbledb.config.FormattingCalendarModeSupport;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import org.rumbledb.config.FormattingCalendarModeSupport;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
 
 public final class CalendarSupport {
 
@@ -15,8 +30,7 @@ public final class CalendarSupport {
     private static final Pattern EQNAME_PATTERN = Pattern.compile("^Q\\{([^}]*)}(.+)$");
     private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
 
-    private CalendarSupport() {
-    }
+    private CalendarSupport() {}
 
     /**
      * Normalizes a calendar argument if it matches a known calendar mode.
@@ -36,8 +50,8 @@ public final class CalendarSupport {
         }
 
         return CalendarModes.isKnownDesignator(name.localName)
-            ? CalendarModes.normalizeDesignator(name.localName)
-            : name.localName;
+                ? CalendarModes.normalizeDesignator(name.localName)
+                : name.localName;
     }
 
     /**
@@ -50,10 +64,7 @@ public final class CalendarSupport {
      * calendar.
      */
     public static String resolveCalendarMode(
-            String calendar,
-            Map<String, String> staticallyKnownNamespaces,
-            ExceptionMetadata metadata
-    ) {
+            String calendar, Map<String, String> staticallyKnownNamespaces, ExceptionMetadata metadata) {
         String value = normalizeCalendarArgument(calendar);
 
         CalendarName name = parseCalendarName(value, staticallyKnownNamespaces, metadata);
@@ -87,10 +98,7 @@ public final class CalendarSupport {
      * name whose prefix is resolved using the statically known namespaces.
      */
     private static CalendarName parseCalendarName(
-            String value,
-            Map<String, String> staticallyKnownNamespaces,
-            ExceptionMetadata metadata
-    ) {
+            String value, Map<String, String> staticallyKnownNamespaces, ExceptionMetadata metadata) {
         CalendarName eqName = parseEQNameLiteral(value);
         if (eqName != null) {
             return eqName;
@@ -109,9 +117,7 @@ public final class CalendarSupport {
         String prefix = value.substring(0, colon);
         String localName = value.substring(colon + 1);
 
-        String namespaceUri = staticallyKnownNamespaces == null
-            ? null
-            : staticallyKnownNamespaces.get(prefix);
+        String namespaceUri = staticallyKnownNamespaces == null ? null : staticallyKnownNamespaces.get(prefix);
 
         if (namespaceUri == null) {
             throw invalidCalendar(value, metadata);
@@ -136,14 +142,8 @@ public final class CalendarSupport {
         return localName != null && NCNAME_PATTERN.matcher(localName).matches();
     }
 
-    private static IncorrectSyntaxFormatDateTimeException invalidCalendar(
-            String calendar,
-            ExceptionMetadata metadata
-    ) {
-        return new IncorrectSyntaxFormatDateTimeException(
-                "\"" + calendar + "\": invalid calendar",
-                metadata
-        );
+    private static IncorrectSyntaxFormatDateTimeException invalidCalendar(String calendar, ExceptionMetadata metadata) {
+        return new IncorrectSyntaxFormatDateTimeException("\"" + calendar + "\": invalid calendar", metadata);
     }
 
     private static final class CalendarName {

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,20 +11,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCode;
-
 import java.io.Serial;
+
+import org.rumbledb.errorcodes.ErrorCode;
 
 /**
  * Exception for XQDY0101: It is a dynamic error if a computed namespace constructor attempts to do any of the
  * following:
- * 
+ *
  * <ul>
  * <li>Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace</li>
  * <li>Bind a prefix other than xml to the namespace URI http://www.w3.org/XML/1998/namespace</li>
@@ -47,4 +42,3 @@ public class InvalidComputedNamespaceConstructorException extends RumbleExceptio
         super(message, ErrorCode.InvalidComputedNamespaceConstructorErrorCode, metadata);
     }
 }
-

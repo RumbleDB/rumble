@@ -1,4 +1,22 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.compiler;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import org.rumbledb.compiler.wrapper.DescendentSequentialProperties;
 import org.rumbledb.context.Name;
@@ -36,9 +54,6 @@ import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.SequenceType;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
 
@@ -81,49 +96,28 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
         for (Node child : node.getChildren()) {
             DescendentSequentialProperties childResult = visit(child, argument);
             hasExitStatementDescendant = hasExitStatementDescendant || childResult.hasExitStatement();
-            hasNonExitStatementDescendant = hasNonExitStatementDescendant
-                || childResult.hasNonExitSequentialStatement();
+            hasNonExitStatementDescendant =
+                    hasNonExitStatementDescendant || childResult.hasNonExitSequentialStatement();
             hasInterruptStatement = hasInterruptStatement || childResult.hasInterruptStatement();
         }
         DescendentSequentialProperties result = new DescendentSequentialProperties(
-                hasNonExitStatementDescendant,
-                hasInterruptStatement,
-                hasExitStatementDescendant
-        );
+                hasNonExitStatementDescendant, hasInterruptStatement, hasExitStatementDescendant);
         return result;
     }
 
     @Override
     public DescendentSequentialProperties visitMainModule(MainModule node, DescendentSequentialProperties argument) {
         this.visit(node.getProlog(), argument);
-        this.visit(
-            node.getProgram(),
-            argument
-        );
+        this.visit(node.getProgram(), argument);
         return argument;
     }
 
     @Override
     public DescendentSequentialProperties visitProlog(Prolog node, DescendentSequentialProperties argument) {
-        node.getImportedModules()
-            .forEach(
-                libraryModule -> visit(libraryModule, argument)
-            );
+        node.getImportedModules().forEach(libraryModule -> visit(libraryModule, argument));
         // Visit variables first as they may be modified in a function.
-        node.getVariableDeclarations()
-            .forEach(
-                variableDeclaration -> visit(
-                    variableDeclaration,
-                    argument
-                )
-            );
-        node.getFunctionDeclarations()
-            .forEach(
-                functionDeclaration -> visit(
-                    functionDeclaration,
-                    argument
-                )
-            );
+        node.getVariableDeclarations().forEach(variableDeclaration -> visit(variableDeclaration, argument));
+        node.getFunctionDeclarations().forEach(functionDeclaration -> visit(functionDeclaration, argument));
         return argument;
     }
 
@@ -134,17 +128,12 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
 
     @Override
     public DescendentSequentialProperties visitFunctionCall(
-            FunctionCallExpression expression,
-            DescendentSequentialProperties argument
-    ) {
-        FunctionDeclaration targetFunction = getFunctionDeclarationFromProlog(
-            this.prolog,
-            expression.getFunctionIdentifier()
-        );
+            FunctionCallExpression expression, DescendentSequentialProperties argument) {
+        FunctionDeclaration targetFunction =
+                getFunctionDeclarationFromProlog(this.prolog, expression.getFunctionIdentifier());
         if (targetFunction == null) {
             expression.setSequential(false);
             return new DescendentSequentialProperties(false, false);
-
         }
         InlineFunctionExpression functionBody = (InlineFunctionExpression) targetFunction.getExpression();
         if (functionBody.isSequential()) {
@@ -155,12 +144,9 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
         return new DescendentSequentialProperties(false, false);
     }
 
-
     @Override
     public DescendentSequentialProperties visitAssignStatement(
-            AssignStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            AssignStatement statement, DescendentSequentialProperties argument) {
         int variableBlockLevel = getVariableBlockLevel(statement.getName(), statement.getMetadata());
         // Assign statement is sequential in nature.
         statement.setSequential(true);
@@ -174,65 +160,51 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
 
     @Override
     public DescendentSequentialProperties visitApplyStatement(
-            ApplyStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            ApplyStatement statement, DescendentSequentialProperties argument) {
         DescendentSequentialProperties descendant = visit(statement.getApplyExpression(), argument);
         // Apply Statements are sequential
         statement.setSequential(true);
         return new DescendentSequentialProperties(
-                statement.isSequential(),
-                descendant.hasInterruptStatement(),
-                descendant.hasExitStatement()
-        );
+                statement.isSequential(), descendant.hasInterruptStatement(), descendant.hasExitStatement());
     }
 
     @Override
     public DescendentSequentialProperties visitBreakStatement(
-            BreakStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            BreakStatement statement, DescendentSequentialProperties argument) {
         statement.setSequential(true);
         return new DescendentSequentialProperties(false, true);
     }
 
     @Override
     public DescendentSequentialProperties visitContinueStatement(
-            ContinueStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            ContinueStatement statement, DescendentSequentialProperties argument) {
         statement.setSequential(true);
         return new DescendentSequentialProperties(false, true);
     }
 
     @Override
     public DescendentSequentialProperties visitExitStatement(
-            ExitStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            ExitStatement statement, DescendentSequentialProperties argument) {
         statement.setSequential(true);
         return new DescendentSequentialProperties(false, false, true);
     }
 
     @Override
     public DescendentSequentialProperties visitFunctionDeclaration(
-            FunctionDeclaration expression,
-            DescendentSequentialProperties argument
-    ) {
+            FunctionDeclaration expression, DescendentSequentialProperties argument) {
         InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) expression.getExpression();
         boolean isFunctionBodySequential = false;
         boolean isNonExitSequential = false;
         boolean hasExitStatement = false;
         incrementBlockLevel();
-        for (Map.Entry<Name, SequenceType> parameter : inlineFunctionExpression.getParams().entrySet()) {
+        for (Map.Entry<Name, SequenceType> parameter :
+                inlineFunctionExpression.getParams().entrySet()) {
             addVariableToCurrentBlockLevel(parameter.getKey());
         }
         // Visit each statement to check if it is sequential and non-exit statement.
         for (Node children : inlineFunctionExpression.getBody().getChildren()) {
-            DescendentSequentialProperties result = this.visit(
-                children,
-                new DescendentSequentialProperties(false, false)
-            );
+            DescendentSequentialProperties result =
+                    this.visit(children, new DescendentSequentialProperties(false, false));
             isFunctionBodySequential = isFunctionBodySequential || result.isSequential();
             if (result.hasNonExitSequentialStatement()) {
                 isNonExitSequential = true;
@@ -256,59 +228,40 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
              */
             throw new InvalidSequentialChildInNonSequentialParent(
                     "The body of a non-sequential function can only contain non-sequential expressions. Only exit statements are allowed in non-sequential functions!",
-                    inlineFunctionExpression.getMetadata()
-            );
+                    inlineFunctionExpression.getMetadata());
         }
         decrementBlockLevel();
-        return new DescendentSequentialProperties(
-                inlineFunctionExpression.isSequential(),
-                false
-        );
+        return new DescendentSequentialProperties(inlineFunctionExpression.isSequential(), false);
     }
 
     @Override
     public DescendentSequentialProperties visitInlineFunctionExpr(
-            InlineFunctionExpression expression,
-            DescendentSequentialProperties argument
-    ) {
+            InlineFunctionExpression expression, DescendentSequentialProperties argument) {
         return visitDescendantsWithScope(expression, argument);
     }
 
     @Override
     public DescendentSequentialProperties visitReturnClause(
-            ReturnClause returnClause,
-            DescendentSequentialProperties argument
-    ) {
+            ReturnClause returnClause, DescendentSequentialProperties argument) {
         return visitDescendantsWithScope(returnClause, argument);
     }
 
     @Override
     public DescendentSequentialProperties visitReturnStatementClause(
-            ReturnStatementClause returnStatementClause,
-            DescendentSequentialProperties argument
-    ) {
+            ReturnStatementClause returnStatementClause, DescendentSequentialProperties argument) {
         return visitDescendantsWithScope(returnStatementClause, argument);
     }
 
-
     @Override
     public DescendentSequentialProperties visitWhileStatement(
-            WhileStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            WhileStatement statement, DescendentSequentialProperties argument) {
         incrementBlockLevel();
-        DescendentSequentialProperties descendant = visit(
-            statement.getStatement(),
-            argument
-        );
+        DescendentSequentialProperties descendant = visit(statement.getStatement(), argument);
         if (descendant.isSequential()) {
             statement.setSequential(true);
             decrementBlockLevel();
             return new DescendentSequentialProperties(
-                    descendant.hasNonExitSequentialStatement(),
-                    false,
-                    descendant.hasExitStatement()
-            );
+                    descendant.hasNonExitSequentialStatement(), false, descendant.hasExitStatement());
         }
         // If we have a descendant that is non-sequential with interrupt, the while will be affected by the interrupt,
         // therefore it is not sequential.
@@ -336,9 +289,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
 
     @Override
     public DescendentSequentialProperties visitFlowrStatement(
-            FlowrStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            FlowrStatement statement, DescendentSequentialProperties argument) {
         incrementBlockLevel();
         Clause clause = statement.getReturnStatementClause().getFirstClause();
         DescendentSequentialProperties result = argument;
@@ -350,10 +301,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
             statement.setSequential(true);
             decrementBlockLevel();
             return new DescendentSequentialProperties(
-                    result.hasNonExitSequentialStatement(),
-                    false,
-                    result.hasExitStatement()
-            );
+                    result.hasNonExitSequentialStatement(), false, result.hasExitStatement());
         }
         statement.setSequential(false);
         decrementBlockLevel();
@@ -362,9 +310,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
 
     @Override
     public DescendentSequentialProperties visitTreatExpression(
-            TreatExpression expression,
-            DescendentSequentialProperties argument
-    ) {
+            TreatExpression expression, DescendentSequentialProperties argument) {
         DescendentSequentialProperties result = visit(expression.getMainExpression(), argument);
         expression.setSequential(result.isSequential());
         return result;
@@ -373,9 +319,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
     // Variable declaration is always sequential
     @Override
     public DescendentSequentialProperties visitVariableDeclStatement(
-            VariableDeclStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            VariableDeclStatement statement, DescendentSequentialProperties argument) {
         visitDescendants(statement, argument);
         statement.setSequential(true);
         addVariableToCurrentBlockLevel(statement.getVariableName());
@@ -388,57 +332,43 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
 
     @Override
     public DescendentSequentialProperties visitVariableDeclaration(
-            VariableDeclaration variableDeclaration,
-            DescendentSequentialProperties argument
-    ) {
+            VariableDeclaration variableDeclaration, DescendentSequentialProperties argument) {
         addVariableToCurrentBlockLevel(variableDeclaration.getVariableName());
         return defaultAction(variableDeclaration, argument);
     }
 
     @Override
     public DescendentSequentialProperties visitBlockStatement(
-            BlockStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            BlockStatement statement, DescendentSequentialProperties argument) {
         return visitDescendantWithInterruptPropagation(statement, argument);
     }
 
     @Override
     public DescendentSequentialProperties visitTypeSwitchStatement(
-            TypeSwitchStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            TypeSwitchStatement statement, DescendentSequentialProperties argument) {
         return visitDescendantWithInterruptPropagation(statement, argument);
     }
 
     @Override
     public DescendentSequentialProperties visitConditionalStatement(
-            ConditionalStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            ConditionalStatement statement, DescendentSequentialProperties argument) {
         return visitDescendantWithInterruptPropagation(statement, argument);
     }
 
     @Override
     public DescendentSequentialProperties visitTryCatchStatement(
-            TryCatchStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            TryCatchStatement statement, DescendentSequentialProperties argument) {
         return visitDescendantWithInterruptPropagation(statement, argument);
     }
 
     @Override
     public DescendentSequentialProperties visitSwitchStatement(
-            SwitchStatement statement,
-            DescendentSequentialProperties argument
-    ) {
+            SwitchStatement statement, DescendentSequentialProperties argument) {
         return visitDescendantWithInterruptPropagation(statement, argument);
     }
 
     private DescendentSequentialProperties visitDescendantsWithScope(
-            Node node,
-            DescendentSequentialProperties argument
-    ) {
+            Node node, DescendentSequentialProperties argument) {
         incrementBlockLevel();
         DescendentSequentialProperties result = defaultAction(node, argument);
         decrementBlockLevel();
@@ -452,26 +382,19 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
     private int getVariableBlockLevel(Name variableName, ExceptionMetadata exceptionMetadata) {
         if (!this.variableBlockLevel.containsKey(variableName)) {
             throw new UndeclaredVariableException(
-                    "Variable: " + variableName + " not present at block level when expected to",
-                    exceptionMetadata
-            );
+                    "Variable: " + variableName + " not present at block level when expected to", exceptionMetadata);
         }
         return this.variableBlockLevel.get(variableName);
     }
 
     private DescendentSequentialProperties visitDescendantWithInterruptPropagation(
-            Statement statement,
-            DescendentSequentialProperties argument
-    ) {
+            Statement statement, DescendentSequentialProperties argument) {
         DescendentSequentialProperties result = visitDescendantsWithScope(statement, argument);
         if (result.hasInterruptStatement()) {
             // If we have an interrupt, we are sequential
             statement.setSequential(true);
             return new DescendentSequentialProperties(
-                    result.hasNonExitSequentialStatement(),
-                    true,
-                    result.hasExitStatement()
-            );
+                    result.hasNonExitSequentialStatement(), true, result.hasExitStatement());
         }
         statement.setSequential(result.isSequential());
         return result;

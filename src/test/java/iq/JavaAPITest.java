@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package iq;
+
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
@@ -28,8 +30,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
-import org.rumbledb.api.Item;
+
 import org.rumbledb.api.ExternalBindings;
+import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.CompilationConfiguration;
@@ -43,20 +46,11 @@ import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemTypeFactory;
 
-import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 public class JavaAPITest {
 
-    private static final String XQUERY_SERIALIZATION_NAMESPACE =
-        "http://www.w3.org/2010/xslt-xquery-serialization";
+    private static final String XQUERY_SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
-    public JavaAPITest() {
-    }
+    public JavaAPITest() {}
 
     @BeforeAll
     public static void setupSparkSession() {
@@ -72,7 +66,6 @@ public class JavaAPITest {
         sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
         sparkConfiguration.set("spark.databricks.delta.schema.autoMerge.enabled", "true");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-
     }
 
     @Test
@@ -109,9 +102,8 @@ public class JavaAPITest {
             Files.writeString(queryFile, "$answer");
             URI logicalLocation = URI.create("urn:rumble:test:resolved-query");
             ResourceResolver resolver = new ResourceResolver(Map.of(logicalLocation, queryFile.toUri()));
-            Rumble rumble = new Rumble(
-                    new CompilationConfiguration(RumbleConfiguration.defaultConfiguration(), resolver)
-            );
+            Rumble rumble =
+                    new Rumble(new CompilationConfiguration(RumbleConfiguration.defaultConfiguration(), resolver));
             ExternalBindings bindings = ExternalBindings.empty();
             bindings.bindLiteral("answer", "42");
 
@@ -187,23 +179,25 @@ public class JavaAPITest {
         Assertions.assertEquals(1, rows.get(0).getList(0).size());
         Assertions.assertEquals(1, rows.get(1).getList(0).size());
 
-        JavaRDD<Item> itemRDD = dataFrame.javaRDD()
-            .map(
-                new RowToItemMapper(
+        JavaRDD<Item> itemRDD = dataFrame
+                .javaRDD()
+                .map(new RowToItemMapper(
                         org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA,
-                        ItemTypeFactory.createItemType(dataFrame.schema())
-                )
-            );
+                        ItemTypeFactory.createItemType(dataFrame.schema())));
         List<Item> items = itemRDD.collect();
 
-        Assertions.assertEquals("1", items.get(0).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
-        Assertions.assertEquals("s", items.get(1).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
+        Assertions.assertEquals(
+                "1",
+                items.get(0).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
+        Assertions.assertEquals(
+                "s",
+                items.get(1).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
     }
 
     private static RumbleConfiguration xqueryConfiguration() {
         return RumbleConfiguration.builder()
-            .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
-            .build();
+                .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
+                .build();
     }
 
     @Test
@@ -224,15 +218,13 @@ public class JavaAPITest {
     public void testHtmlSerializationRejectsEmptyMap() {
         Rumble rumble = new Rumble(xqueryConfiguration());
         RumbleException exception = Assertions.assertThrows(
-            RumbleException.class,
-            () -> rumble.runQueryToString(
-                """
+                RumbleException.class,
+                () -> rumble.runQueryToString(
+                        """
                         declare namespace output = "http://www.w3.org/2010/xslt-xquery-serialization";
                         declare option output:method "html";
                         map { }
-                        """
-            )
-        );
+                        """));
         Assertions.assertEquals("SENR0001", exception.getErrorCode().getLocalName());
         Assertions.assertEquals("SENR0001", exception.getErrorCode().toString());
     }
@@ -243,12 +235,11 @@ public class JavaAPITest {
         Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         String supplementaryCharacter = new String(Character.toChars(0x10330));
         String query = String.join(
-            "\n",
-            "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",
-            "declare option output:method \"json\";",
-            "declare option output:encoding \"US-ASCII\";",
-            "\"" + supplementaryCharacter + "\""
-        );
+                "\n",
+                "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",
+                "declare option output:method \"json\";",
+                "declare option output:encoding \"US-ASCII\";",
+                "\"" + supplementaryCharacter + "\"");
 
         Assertions.assertEquals("\"\\uD800\\uDF30\"", rumble.runQuery(query).serialize());
     }
@@ -258,15 +249,14 @@ public class JavaAPITest {
     public void testTextSerializationRejectsMapWithErrNamespaceCode() {
         Rumble rumble = new Rumble(xqueryConfiguration());
         RumbleException exception = Assertions.assertThrows(
-            RumbleException.class,
-            () -> rumble.runQueryToString(
-                """
+                RumbleException.class,
+                () -> rumble.runQueryToString(
+                        """
                         declare namespace output = "%s";
                         declare option output:method "text";
                         map { "a" : 1 }
-                        """.formatted(XQUERY_SERIALIZATION_NAMESPACE)
-            )
-        );
+                        """
+                                .formatted(XQUERY_SERIALIZATION_NAMESPACE)));
         Assertions.assertEquals("SENR0001", exception.getErrorCode().toString());
     }
 
@@ -275,12 +265,12 @@ public class JavaAPITest {
     public void testJsonSerializationEscapesSolidusInStrings() {
         Rumble rumble = new Rumble(xqueryConfiguration());
         String result = rumble.runQueryToString(
-            """
+                """
                     declare namespace output = "%s";
                     declare option output:method "json";
                     <e/>
-                    """.formatted(XQUERY_SERIALIZATION_NAMESPACE)
-        );
+                    """
+                        .formatted(XQUERY_SERIALIZATION_NAMESPACE));
         Assertions.assertEquals("\"<e\\/>\"", result);
     }
 
@@ -309,15 +299,13 @@ public class JavaAPITest {
         JsonSerializer serializer = new JsonSerializer(params);
 
         Item map = ItemFactory.getInstance()
-            .createObjectItem(
-                List.of("w", "x"),
-                List.of(
-                    ItemFactory.getInstance().createIntItem(1),
-                    ItemFactory.getInstance().createIntItem(1)
-                ),
-                org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA,
-                false
-            );
+                .createObjectItem(
+                        List.of("w", "x"),
+                        List.of(
+                                ItemFactory.getInstance().createIntItem(1),
+                                ItemFactory.getInstance().createIntItem(1)),
+                        org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA,
+                        false);
 
         Assertions.assertEquals("{\"k\":1,\"k\":1}", serializer.serialize(map));
     }
@@ -327,14 +315,12 @@ public class JavaAPITest {
     public void testJsonSerializationEscapesEuroCharacterForAscii() {
         Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         String query = String.join(
-            "\n",
-            "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",
-            "declare option output:method \"json\";",
-            "declare option output:encoding \"US-ASCII\";",
-            "\"€\""
-        );
+                "\n",
+                "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",
+                "declare option output:method \"json\";",
+                "declare option output:encoding \"US-ASCII\";",
+                "\"€\"");
 
         Assertions.assertEquals("\"\\u20AC\"", rumble.runQuery(query).serialize());
     }
-
 }

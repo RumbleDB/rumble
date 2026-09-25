@@ -1,26 +1,39 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.io;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.charset.Charset;
 import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+
 public final class TextResourceUtil {
 
-    private TextResourceUtil() {
-    }
+    private TextResourceUtil() {}
 
-    public static byte[] fetchBytes(URI uri, ExceptionMetadata metadata)
-            throws IOException {
+    public static byte[] fetchBytes(URI uri, ExceptionMetadata metadata) throws IOException {
         try (InputStream is = FileSystemUtil.getDataInputStream(uri, metadata)) {
             ByteArrayOutputStream buffer = new ByteArrayOutputStream();
             byte[] data = new byte[8192];
@@ -34,8 +47,8 @@ public final class TextResourceUtil {
 
     public static CharsetDecoder strictDecoder(Charset charset) {
         return charset.newDecoder()
-            .onMalformedInput(CodingErrorAction.REPORT)
-            .onUnmappableCharacter(CodingErrorAction.REPORT);
+                .onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT);
     }
 
     public static String decodeStrict(byte[] bytes, Charset charset) throws CharacterCodingException {

@@ -1,6 +1,24 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatInteger;
 
-import com.ibm.icu.util.ULocale;
+import java.math.BigInteger;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.util.formatting.NumberWords;
@@ -8,17 +26,11 @@ import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
 import org.rumbledb.runtime.functions.util.formatting.NumericPicture;
 import org.rumbledb.runtime.functions.util.formatting.language.LanguageSupport;
 
-import java.math.BigInteger;
-import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
 public final class IntegerPictureFormatter {
 
     private static final Map<String, FormatIntegerPicture> PICTURE_CACHE = new ConcurrentHashMap<>();
 
-    private IntegerPictureFormatter() {
-    }
+    private IntegerPictureFormatter() {}
 
     /**
      * <p>
@@ -58,53 +70,31 @@ public final class IntegerPictureFormatter {
         boolean isNegative = value.signum() < 0;
         BigInteger absValue = value.abs();
 
-        // Resolve the locale once and pass it to the handlers.
-        ULocale locale = LanguageSupport.resolveULocale(
-            LanguageSupport.effectiveLanguageOf(LanguageSupport.normalizeLanguage(language))
-        );
-
-        FormatIntegerPicture picture = PICTURE_CACHE.get(pictureString);
-        if (picture == null) {
-            picture = FormatIntegerPictureParser.parse(pictureString, metadata);
-            PICTURE_CACHE.putIfAbsent(pictureString, picture);
-        }
+        FormatIntegerPicture picture =
+                PICTURE_CACHE.computeIfAbsent(pictureString, key -> FormatIntegerPictureParser.parse(key, metadata));
         PrimaryFormatToken primary = picture.getPrimaryFormatToken();
         IntegerFormatModifier modifier = picture.getFormatModifier();
 
-        String result;
+        String result =
+                switch (primary.getType()) {
+                    case PrimaryFormatToken.DECIMAL -> handleDecimal(absValue, primary, modifier, language);
+                    case PrimaryFormatToken.ALPHABETIC_UPPER, PrimaryFormatToken.ALPHABETIC_LOWER -> handleAlphabetic(
+                            absValue, primary, modifier, language);
+                    case PrimaryFormatToken.ROMAN_UPPER, PrimaryFormatToken.ROMAN_LOWER -> handleRoman(
+                            absValue, primary, modifier, language);
+                    case PrimaryFormatToken.WORDS_LOWER,
+                            PrimaryFormatToken.WORDS_UPPER,
+                            PrimaryFormatToken.WORDS_TITLE -> handleWords(absValue, primary, modifier, language);
+                    default -> handleOther(absValue, modifier, language);
+                };
 
         // Invariant: value => 0
-
-        switch (primary.getType()) {
-            case PrimaryFormatToken.DECIMAL:
-                result = handleDecimal(absValue, primary, modifier, locale);
-                break;
-            case PrimaryFormatToken.ALPHABETIC_UPPER:
-            case PrimaryFormatToken.ALPHABETIC_LOWER:
-                result = handleAlphabetic(absValue, primary, modifier, locale);
-                break;
-            case PrimaryFormatToken.ROMAN_UPPER:
-            case PrimaryFormatToken.ROMAN_LOWER:
-                result = handleRoman(absValue, primary, modifier, locale);
-                break;
-            case PrimaryFormatToken.WORDS_LOWER:
-            case PrimaryFormatToken.WORDS_UPPER:
-            case PrimaryFormatToken.WORDS_TITLE:
-                result = handleWords(absValue, primary, modifier, locale);
-                break;
-            default:
-                result = handleOther(absValue, modifier, locale);
-        }
 
         return !isNegative ? result : ("-" + result);
     }
 
     private static String handleDecimal(
-            BigInteger value,
-            PrimaryFormatToken primary,
-            IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
+            BigInteger value, PrimaryFormatToken primary, IntegerFormatModifier modifier, String language) {
         NumericPicture picture = primary.getNumericPicture();
 
         String digits = NumericFormattingSupport.toDecimalString(value);
@@ -122,20 +112,16 @@ public final class IntegerPictureFormatter {
         // now)
 
         if (IntegerFormatModifier.ORDINAL.equals(modifier.getNumberType())) {
-            digits = digits + NumberWords.ordinalSuffix(value, locale);
+            digits = digits + NumberWords.ordinalSuffix(value, LanguageSupport.resolveEffectiveULocale(language));
         }
 
         return digits;
     }
 
     private static String handleRoman(
-            BigInteger value,
-            PrimaryFormatToken primary,
-            IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
+            BigInteger value, PrimaryFormatToken primary, IntegerFormatModifier modifier, String language) {
         if (value.signum() == 0 || value.compareTo(BigInteger.valueOf(3999)) > 0) {
-            return handleOther(value, modifier, locale);
+            return handleOther(value, modifier, language);
         }
 
         // For Roman, unsupported ordinal handling is ignored and cardinal numbering is used.
@@ -143,40 +129,36 @@ public final class IntegerPictureFormatter {
     }
 
     private static String handleAlphabetic(
-            BigInteger value,
-            PrimaryFormatToken primary,
-            IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
+            BigInteger value, PrimaryFormatToken primary, IntegerFormatModifier modifier, String language) {
         if (value.signum() == 0 || value.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
-            return handleOther(value, modifier, locale);
+            return handleOther(value, modifier, language);
         }
 
         String result = NumericFormattingSupport.integerToAlphabetic(
-            value.intValueExact(),
-            primary.getType().equals(PrimaryFormatToken.ALPHABETIC_LOWER)
-        );
+                value.intValueExact(), primary.getType().equals(PrimaryFormatToken.ALPHABETIC_LOWER));
 
         // For alphabetic numbering, unsupported ordinal handling may be ignored per spec.
         return result;
     }
 
     private static String handleWords(
-            BigInteger value,
-            PrimaryFormatToken primary,
-            IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
+            BigInteger value, PrimaryFormatToken primary, IntegerFormatModifier modifier, String language) {
         if (value.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) > 0) {
-            return handleOther(value, modifier, locale);
+            return handleOther(value, modifier, language);
         }
 
         String result;
 
         if (IntegerFormatModifier.ORDINAL.equals(modifier.getNumberType())) {
-            result = NumberWords.ordinalWords(value.longValueExact(), locale, modifier.getFormatSpecifier());
+            result = NumberWords.ordinalWords(
+                    value.longValueExact(),
+                    LanguageSupport.resolveEffectiveULocale(language),
+                    modifier.getFormatSpecifier());
         } else {
-            result = NumberWords.cardinal(value.longValueExact(), locale, modifier.getFormatSpecifier());
+            result = NumberWords.cardinal(
+                    value.longValueExact(),
+                    LanguageSupport.resolveEffectiveULocale(language),
+                    modifier.getFormatSpecifier());
         }
 
         if (primary.getType().equals(PrimaryFormatToken.WORDS_LOWER)) {
@@ -187,15 +169,11 @@ public final class IntegerPictureFormatter {
         return toTitleCaseWords(result);
     }
 
-    private static String handleOther(
-            BigInteger value,
-            IntegerFormatModifier modifier,
-            ULocale locale
-    ) {
+    private static String handleOther(BigInteger value, IntegerFormatModifier modifier, String language) {
         String result = NumericFormattingSupport.toDecimalString(value);
 
         if (IntegerFormatModifier.ORDINAL.equals(modifier.getNumberType())) {
-            result = result + NumberWords.ordinalSuffix(value, locale);
+            result = result + NumberWords.ordinalSuffix(value, LanguageSupport.resolveEffectiveULocale(language));
         }
 
         return result;

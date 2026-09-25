@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,26 +11,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.items;
 
-import lombok.Getter;
 import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
+
+import lombok.Getter;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 public class AnyURIItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private String lexicalValue;
 
     @Getter
@@ -53,8 +49,7 @@ public class AnyURIItem extends AbstractAtomicItem {
     }
 
     static URI parseAnyURIString(String anyURIString) throws IllegalArgumentException {
-        if (anyURIString == null)
-            throw new IllegalArgumentException();
+        if (anyURIString == null) throw new IllegalArgumentException();
         try {
             return new URI(anyURIString);
         } catch (URISyntaxException e) {

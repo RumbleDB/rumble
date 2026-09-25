@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,15 +11,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.input;
+
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
 
 import org.apache.spark.sql.DataFrameReader;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -30,38 +30,30 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.Serial;
-import java.net.URI;
-import java.util.List;
-
-public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
+public class AvroFileFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public AvroFileFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public AvroFileFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext context) {
-        Item stringItem = this.getChild(0)
-            .materializeFirstItemOrNull(context);
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         String url = stringItem.getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         Item optionsObjectItem;
-        DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
+        DataFrameReader dfr =
+                SparkSessionManager.getInstance().getOrCreateSession().read();
         try {
             if (this.getChildren().size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
                 ObjectItem options = (ObjectItem) optionsObjectItem;
@@ -72,14 +64,8 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     if (value.isString()) {
                         if (keys.get(i).equals("avroSchema")) {
                             URI schemaURI = FileSystemUtil.resolveFileSystemURI(
-                                this.staticContext.getStaticURI(),
-                                value.getStringValue(),
-                                getMetadata()
-                            );
-                            String jsonFormatSchema = FileSystemUtil.readContent(
-                                schemaURI,
-                                getMetadata()
-                            );
+                                    this.staticContext.getStaticURI(), value.getStringValue(), getMetadata());
+                            String jsonFormatSchema = FileSystemUtil.readContent(schemaURI, getMetadata());
                             dfr.option(keys.get(i), jsonFormatSchema);
                         } else {
                             dfr.option(keys.get(i), value.getStringValue());
@@ -89,8 +75,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     } else {
                         throw new UnexpectedTypeException(
                                 "Only string and boolean types allowed as values",
-                                this.getMetadata()
-                        );
+                                this.getRuntimeStaticContext().getMetadata());
                     }
                 }
             }
@@ -98,7 +83,8 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
             return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof UnexpectedTypeException) {
-                RuntimeException f = new UnexpectedTypeException(e.getMessage(), this.getMetadata());
+                RuntimeException f = new UnexpectedTypeException(
+                        e.getMessage(), this.getRuntimeStaticContext().getMetadata());
                 f.initCause(e);
                 throw f;
             } else {
@@ -110,6 +96,6 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     private Item getObjectItem(DynamicContext context) {
-        return this.getChild(1).materializeFirstItemOrNull(context);
+        return this.getChild(1).materializeFirstOrNull(context);
     }
 }

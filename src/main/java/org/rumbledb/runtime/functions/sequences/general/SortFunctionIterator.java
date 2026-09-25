@@ -1,50 +1,64 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.sequences.general;
-
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotAtomizeException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
-import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
-import org.rumbledb.runtime.misc.SortKeyComparison;
-import org.rumbledb.types.SequenceType;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.NamedFunctions;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.FunctionItem;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
+import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
+import org.rumbledb.runtime.misc.SortKeyComparison;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.types.SequenceType;
+
 /**
  * XPath and XQuery Functions and Operators 3.1 {@code fn:sort}:
  * {@code fn:sort($input)}, {@code fn:sort($input, $collation?)},
  * {@code fn:sort($input, $collation?, $key)}.
  */
-public class SortFunctionIterator extends HybridRuntimeIterator {
+public class SortFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> computeResult(context).iterator(), getMetadata());
+    }
+
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private final RuntimeIterator inputIterator;
-    private final RuntimeIterator collationIterator;
-    private final RuntimeIterator keyIterator;
+    private final ItemRuntimePlan inputIterator;
+    private final ItemRuntimePlan collationIterator;
+    private final ItemRuntimePlan keyIterator;
 
-    private List<Item> sortedItems;
-    private int nextIndex;
-
-    public SortFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public SortFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
         int n = arguments.size();
         if (n < 1 || n > 3) {
@@ -55,14 +69,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         this.keyIterator = n == 3 ? arguments.get(2) : null;
     }
 
-    @Override
-    protected void openLocal() {
-        initializeResult(this.currentDynamicContextForLocalExecution);
-        this.nextIndex = 0;
-        this.hasNext = !this.sortedItems.isEmpty();
-    }
-
-    private void initializeResult(DynamicContext context) {
+    private List<Item> computeResult(DynamicContext context) {
         List<Item> inputItems = this.inputIterator.materialize(context);
         String collationUri = resolveCollationUri(context);
         SortKeyComparison.checkCollationSupported(collationUri, getMetadata());
@@ -79,20 +86,17 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
             if (SortKeyComparison.sortKeysDeepEqual(left.keys, right.keys, collationUri, sortStaticContext)) {
                 return 0;
             }
-            boolean less = SortKeyComparison.sortKeysDeepLessThan(
-                left.keys,
-                right.keys,
-                collationUri,
-                sortStaticContext
-            );
+            boolean less =
+                    SortKeyComparison.sortKeysDeepLessThan(left.keys, right.keys, collationUri, sortStaticContext);
             return less ? -1 : 1;
         };
         rows.sort(comparator);
 
-        this.sortedItems = new ArrayList<>(rows.size());
+        List<Item> sortedItems = new ArrayList<>(rows.size());
         for (SortRow row : rows) {
-            this.sortedItems.add(row.item);
+            sortedItems.add(row.item);
         }
+        return sortedItems;
     }
 
     private String resolveCollationUri(DynamicContext context) {
@@ -106,8 +110,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         if (collation.size() != 1 || !collation.get(0).isString()) {
             throw new UnexpectedTypeException(
                     "Type error; second argument to fn:sort must be empty sequence or a single xs:string.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
         return collation.get(0).getStringValue();
     }
@@ -119,15 +122,11 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         List<Item> keySpec = this.keyIterator.materialize(context);
         if (keySpec.isEmpty()) {
             throw new UnexpectedTypeException(
-                    "Type error; third argument to fn:sort must be exactly one item.",
-                    getMetadata()
-            );
+                    "Type error; third argument to fn:sort must be exactly one item.", getMetadata());
         }
         if (keySpec.size() != 1) {
             throw new UnexpectedTypeException(
-                    "Type error; third argument to fn:sort must be exactly one item.",
-                    getMetadata()
-            );
+                    "Type error; third argument to fn:sort must be exactly one item.", getMetadata());
         }
 
         Item spec = keySpec.get(0);
@@ -144,9 +143,7 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
             return (item, ctx) -> keyFromMapLookup(keyMap, item, ctx);
         }
         throw new UnexpectedTypeException(
-                "Type error; third argument to fn:sort must be a function item, map, or array.",
-                getMetadata()
-        );
+                "Type error; third argument to fn:sort must be a function item, map, or array.", getMetadata());
     }
 
     private List<Item> fnDataKeySequence(Item item) {
@@ -172,20 +169,11 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         out.addAll(item.atomizedValue());
     }
 
-    private List<Item> invokeKeyFunction(
-            FunctionItem functionItem,
-            Item item,
-            DynamicContext context
-    ) {
-        List<RuntimeIterator> arguments = new ArrayList<>(1);
+    private List<Item> invokeKeyFunction(FunctionItem functionItem, Item item, DynamicContext context) {
+        List<ItemRuntimePlan> arguments = new ArrayList<>(1);
         arguments.add(new ConstantRuntimeIterator(item, localStaticContext()));
-        RuntimeIterator call = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            this.staticContext,
-            ExecutionMode.LOCAL,
-            arguments,
-            false
-        );
+        ItemRuntimePlan call = NamedFunctions.buildFunctionItemCallIterator(
+                functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
         return materializeKeyIterator(call, context);
     }
 
@@ -193,15 +181,10 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         if (!item.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; when the key is an array, each input item must be a single numeric index.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        RuntimeIterator indexIterator = new ConstantRuntimeIterator(item, localStaticContext());
-        ArrayFunctionCallIterator lookup = new ArrayFunctionCallIterator(
-                keyArray,
-                indexIterator,
-                localStaticContext()
-        );
+        ItemRuntimePlan indexIterator = new ConstantRuntimeIterator(item, localStaticContext());
+        ArrayFunctionCallIterator lookup = new ArrayFunctionCallIterator(keyArray, indexIterator, localStaticContext());
         return materializeKeyIterator(lookup, context);
     }
 
@@ -210,32 +193,18 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
         if (atomized.size() != 1) {
             throw new UnexpectedTypeException(
                     "Type error; map key function expects each input item to atomize to a single atomic value.",
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        RuntimeIterator keyIterator = new ConstantRuntimeIterator(atomized.get(0), localStaticContext());
-        MapFunctionCallIterator lookup = new MapFunctionCallIterator(
-                mapItem,
-                keyIterator,
-                localStaticContext()
-        );
+        ItemRuntimePlan keyIterator = new ConstantRuntimeIterator(atomized.get(0), localStaticContext());
+        MapFunctionCallIterator lookup = new MapFunctionCallIterator(mapItem, keyIterator, localStaticContext());
         return materializeKeyIterator(lookup, context);
     }
 
-    private List<Item> materializeIterator(RuntimeIterator iterator, DynamicContext context) {
-        iterator.open(context);
-        try {
-            List<Item> out = new ArrayList<>();
-            while (iterator.hasNext()) {
-                out.add(iterator.next());
-            }
-            return out;
-        } finally {
-            iterator.close();
-        }
+    private List<Item> materializeIterator(ItemRuntimePlan iterator, DynamicContext context) {
+        return iterator.materialize(context);
     }
 
-    private List<Item> materializeKeyIterator(RuntimeIterator iterator, DynamicContext context) {
+    private List<Item> materializeKeyIterator(ItemRuntimePlan iterator, DynamicContext context) {
         List<Item> rawItems = materializeIterator(iterator, context);
         List<Item> atomizedKeys = new ArrayList<>();
         for (Item rawItem : rawItems) {
@@ -245,57 +214,11 @@ public class SortFunctionIterator extends HybridRuntimeIterator {
     }
 
     private RuntimeStaticContext localStaticContext() {
-        return getRuntimeStaticContext()
-            .toBuilder()
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(getMetadata())
-            .build();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        Item result = this.sortedItems.get(this.nextIndex++);
-        this.hasNext = this.nextIndex < this.sortedItems.size();
-        return result;
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.inputIterator.isOpen()) {
-            this.inputIterator.close();
-        }
-        if (this.collationIterator != null && this.collationIterator.isOpen()) {
-            this.collationIterator.close();
-        }
-        if (this.keyIterator != null && this.keyIterator.isOpen()) {
-            this.keyIterator.close();
-        }
-        this.sortedItems = null;
-        this.nextIndex = 0;
-    }
-
-    @Override
-    protected boolean implementsDataFrames() {
-        return false;
-    }
-
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        throw new OurBadException("fn:sort is currently supported only in local execution mode.");
-    }
-
-    @Override
-    public HomogeneousItemDataFrame getDataFrame(DynamicContext dynamicContext) {
-        throw new OurBadException("fn:sort is currently supported only in local execution mode.");
+        return getRuntimeStaticContext().toBuilder()
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
     }
 
     @FunctionalInterface

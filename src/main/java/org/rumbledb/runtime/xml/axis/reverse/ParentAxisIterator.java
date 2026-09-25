@@ -1,39 +1,30 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.xml.axis.reverse;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnexpectedNodeException;
-import org.rumbledb.runtime.xml.axis.AxisIterator;
-
 import java.io.Serial;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.xml.axis.AxisIterator;
 
 public class ParentAxisIterator extends AxisIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
     public ParentAxisIterator(RuntimeStaticContext staticContext) {
-        super(staticContext);
-    }
-
-    @Override
-    protected void setNextResult() {
-        if (this.results == null) {
-            this.results = new ArrayList<>();
-            List<Item> currentContext = this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            if (currentContext.isEmpty()) {
-                throw new UnexpectedNodeException("Expected at least a node type as context item", getMetadata());
-            }
-            for (Item node : currentContext) {
-                Item parent = node.parent();
-                if (parent != null) {
-                    this.results.add(parent);
-                }
-            }
-        }
-        storeNextResult();
+        super(staticContext, Axis.PARENT);
     }
 }

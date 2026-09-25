@@ -1,4 +1,23 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
+
+import java.io.Serial;
+import java.util.Collections;
+import java.util.Set;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -7,10 +26,6 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * XQuery/XPath map item type: map(*) and map(K, V) per XDM 3.1 / XPath 3.1.
@@ -32,12 +47,7 @@ public class MapItemType extends AbstractItemType {
      * @param baseType {@link BuiltinTypesCatalogue#anyFunctionItem} for primitive map(*), else
      *        {@link BuiltinTypesCatalogue#mapItem}
      */
-    MapItemType(
-            Name name,
-            ItemType baseType,
-            ItemType keyType,
-            SequenceType valueSequenceType
-    ) {
+    MapItemType(Name name, ItemType baseType, ItemType keyType, SequenceType valueSequenceType) {
         if (baseType == null || keyType == null || valueSequenceType == null) {
             throw new OurBadException("map item type requires base, key, and value sequence types");
         }
@@ -68,21 +78,13 @@ public class MapItemType extends AbstractItemType {
 
     @Override
     protected Object equalityKey() {
-        if (
-            this.name == null
+        if (this.name == null
                 && BuiltinTypesCatalogue.mapItem.equals(this.baseType)
                 && BuiltinTypesCatalogue.stringItem.equals(this.keyType)
-                && SequenceType.createSequenceType("item").equals(this.valueSequenceType)
-        ) {
+                && SequenceType.createSequenceType("item").equals(this.valueSequenceType)) {
             return namedTypeKey(new Name(Name.JS_NS, "js", "object"));
         }
-        return structuralTypeKey(
-            MapItemType.class,
-            this.name,
-            this.baseType,
-            this.keyType,
-            this.valueSequenceType
-        );
+        return structuralTypeKey(MapItemType.class, this.name, this.baseType, this.keyType, this.valueSequenceType);
     }
 
     @Override
@@ -99,16 +101,13 @@ public class MapItemType extends AbstractItemType {
         }
         if (superType.isObjectItemType()) {
             // js:object = map(xs:string, item)
-            ItemType objectAsMap = ItemTypeFactory.mapOf(
-                BuiltinTypesCatalogue.stringItem,
-                SequenceType.createSequenceType("item")
-            );
+            ItemType objectAsMap =
+                    ItemTypeFactory.mapOf(BuiltinTypesCatalogue.stringItem, SequenceType.createSequenceType("item"));
             // an object type (js:object) WITHOUT a JSound schema attached is a subtype of a map(*)
             return superType.equals(BuiltinTypesCatalogue.objectItem) && this.isSubtypeOf(objectAsMap);
         }
         if (superType instanceof MapItemType sup) {
-            return this.keyType.isSubtypeOf(sup.keyType)
-                && this.valueSequenceType.isSubtypeOf(sup.valueSequenceType);
+            return this.keyType.isSubtypeOf(sup.keyType) && this.valueSequenceType.isSubtypeOf(sup.valueSequenceType);
         }
         if (superType.isFunctionItemType()) {
             if (superType.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
@@ -120,10 +119,8 @@ public class MapItemType extends AbstractItemType {
             }
             FunctionSignature mapAsFunctionSignature = new FunctionSignature(
                     Collections.singletonList(
-                        new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One)
-                    ),
-                    this.valueSequenceType
-            );
+                            new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One)),
+                    this.valueSequenceType);
             return mapAsFunctionSignature.isSubtypeOf(superSignature);
         }
         return false;
@@ -136,10 +133,8 @@ public class MapItemType extends AbstractItemType {
         }
         if (other.isObjectItemType()) {
             // js:object = map(xs:string, item)
-            ItemType objectAsMap = ItemTypeFactory.mapOf(
-                BuiltinTypesCatalogue.stringItem,
-                SequenceType.createSequenceType("item")
-            );
+            ItemType objectAsMap =
+                    ItemTypeFactory.mapOf(BuiltinTypesCatalogue.stringItem, SequenceType.createSequenceType("item"));
             return this.findLeastCommonSuperTypeWith(objectAsMap);
         }
         if (other.isFunctionItemType()) {
@@ -152,10 +147,8 @@ public class MapItemType extends AbstractItemType {
             }
             FunctionSignature mapAsFunctionSignature = new FunctionSignature(
                     Collections.singletonList(
-                        new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One)
-                    ),
-                    this.valueSequenceType
-            );
+                            new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One)),
+                    this.valueSequenceType);
             if (mapAsFunctionSignature.isSubtypeOf(otherSignature)) {
                 return other;
             }
@@ -167,10 +160,8 @@ public class MapItemType extends AbstractItemType {
         if (other instanceof MapItemType otherMap) {
             ItemType keySuperType = this.keyType.findLeastCommonSuperTypeWith(otherMap.keyType);
             SequenceType valueSuperType = this.valueSequenceType.leastCommonSupertypeWith(otherMap.valueSequenceType);
-            if (
-                keySuperType.equals(BuiltinTypesCatalogue.atomicItem)
-                    && valueSuperType.equals(SequenceType.createSequenceType("item*"))
-            ) {
+            if (keySuperType.equals(BuiltinTypesCatalogue.atomicItem)
+                    && valueSuperType.equals(SequenceType.createSequenceType("item*"))) {
                 return BuiltinTypesCatalogue.mapItem;
             }
             return ItemTypeFactory.mapOf(keySuperType, valueSuperType);
@@ -189,8 +180,6 @@ public class MapItemType extends AbstractItemType {
         }
         return current;
     }
-
-
 
     @Override
     public boolean hasName() {
@@ -231,22 +220,18 @@ public class MapItemType extends AbstractItemType {
             if (!this.keyType.equals(BuiltinTypesCatalogue.atomicItem)) {
                 throw new InvalidSchemaException(
                         "Primitive map(*) must use xs:anyAtomicType for keys, got: " + this.keyType,
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             if (!this.valueSequenceType.equals(SequenceType.createSequenceType("item*"))) {
                 throw new InvalidSchemaException(
                         "Primitive map(*) must use item* for values, got: " + this.valueSequenceType,
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             return;
         }
         if (!isTypedMap()) {
             throw new InvalidSchemaException(
-                    "Invalid base type for map item type: " + this.baseType,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Invalid base type for map item type: " + this.baseType, ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -255,17 +240,15 @@ public class MapItemType extends AbstractItemType {
         if (!this.keyType.isSubtypeOf(primitive.keyType)) {
             throw new InvalidSchemaException(
                     "Map key type " + this.keyType + " must be a subtype of " + primitive.keyType,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         if (!this.valueSequenceType.isSubtypeOf(primitive.valueSequenceType)) {
             throw new InvalidSchemaException(
                     "Map value sequence type "
-                        + this.valueSequenceType
-                        + " must be a subtype of "
-                        + primitive.valueSequenceType,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                            + this.valueSequenceType
+                            + " must be a subtype of "
+                            + primitive.valueSequenceType,
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -305,9 +288,7 @@ public class MapItemType extends AbstractItemType {
 
     @Override
     public boolean isResolved() {
-        return this.baseType.isResolved()
-            && this.keyType.isResolved()
-            && this.valueSequenceType.isResolved();
+        return this.baseType.isResolved() && this.keyType.isResolved() && this.valueSequenceType.isResolved();
     }
 
     @Override

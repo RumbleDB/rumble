@@ -1,26 +1,19 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package iq.base;
-
-import org.apache.spark.SparkConf;
-import org.rumbledb.config.RumbleConfiguration;
-import utils.annotations.AnnotationParseException;
-import utils.annotations.AnnotationProcessor;
 
 import java.io.File;
 import java.io.FileReader;
@@ -30,17 +23,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.spark.SparkConf;
+
+import utils.annotations.AnnotationParseException;
+import utils.annotations.AnnotationProcessor;
+
+import org.rumbledb.config.RumbleConfiguration;
+
 public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
 
     @Override
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()
-            .configureDebug(debug -> debug.showErrorInfo(true))
-            .configureRuntime(
-                runtime -> runtime.materializationCap(900000).resultsSizeCap(900000).shouldApplyUpdates(true)
-            )
-            .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
-            .build();
+                .configureDebug(debug -> debug.showErrorInfo(true))
+                .configureRuntime(runtime -> runtime.materializationCap(900000)
+                        .resultsSizeCap(900000)
+                        .shouldApplyUpdates(true))
+                .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
+                .build();
     }
 
     @Override
@@ -53,8 +53,8 @@ public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
                 dimensions = AnnotationProcessor.readUpdateDimensions(reader);
             }
             filesByDimension
-                .computeIfAbsent(dimensions.dimension1(), ignored -> new TreeMap<>())
-                .put(dimensions.dimension2(), file);
+                    .computeIfAbsent(dimensions.dimension1(), ignored -> new TreeMap<>())
+                    .put(dimensions.dimension2(), file);
         }
 
         List<File> result = new ArrayList<>();
@@ -65,8 +65,8 @@ public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
     private File selectedDirectory() throws IOException {
         String subDirectory = System.getProperty("dir");
         File selected = subDirectory == null || subDirectory.isBlank()
-            ? testDirectory()
-            : new File(testDirectory(), subDirectory.trim());
+                ? testDirectory()
+                : new File(testDirectory(), subDirectory.trim());
         if (!selected.isDirectory()) {
             throw new IOException("Update test directory not found: " + selected.getAbsolutePath());
         }

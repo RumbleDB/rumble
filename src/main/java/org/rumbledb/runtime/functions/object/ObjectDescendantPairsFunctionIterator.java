@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,98 +11,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.object;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.io.Serial;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIterator {
 
-
     @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
-    public ObjectDescendantPairsFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ObjectDescendantPairsFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        this.iterator = this.getChild(0);
-        this.iterator.open(context);
-        this.nextResults = new LinkedList<>();
-
-        setNextResult();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new FlatMappingLocalCursor<>(
+                this.getChild(0),
+                context,
+                item -> {
+                    List<Item> results = new ArrayList<>();
+                    getDescendantPairs(List.of(item), results);
+                    return results.iterator();
+                },
+                getMetadata());
     }
 
-    @Override
-    public void close() {
-        super.close();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item result = this.nextResults.remove(); // save the result to be returned
-            if (this.nextResults.isEmpty()) {
-                // if there are no more results left in the queue, trigger calculation for the next result
-                setNextResult();
-            }
-            return result;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " DESCENDANT-PAIRS function",
-                getMetadata()
-        );
-    }
-
-    public void setNextResult() {
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            List<Item> singleItemList = new ArrayList<>();
-            singleItemList.add(item);
-
-            getDescendantPairs(singleItemList);
-            if (!(this.nextResults.isEmpty())) {
-                break;
-            }
-        }
-
-        if (this.nextResults.isEmpty()) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
-    }
-
-    private void getDescendantPairs(List<Item> items) {
+    private void getDescendantPairs(List<Item> items, Collection<Item> results) {
         for (Item item : items) {
             if (item.isArray()) {
-                getDescendantPairs(item.getItemMembers());
+                getDescendantPairs(item.getItemMembers(), results);
             } else if (item.isObject()) {
                 List<String> keys = item.getStringKeys();
                 for (String key : keys) {
@@ -114,10 +64,9 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
                     List<String> keyList = Collections.singletonList(key);
                     List<Item> valueList = Collections.singletonList(value);
 
-                    Item result = ItemFactory.getInstance()
-                        .createObjectItem(keyList, valueList, getMetadata(), true);
-                    this.nextResults.add(result);
-                    getDescendantPairs(valueList);
+                    Item result = ItemFactory.getInstance().createObjectItem(keyList, valueList, getMetadata(), true);
+                    results.add(result);
+                    getDescendantPairs(valueList, results);
                 }
             } else {
                 // do nothing

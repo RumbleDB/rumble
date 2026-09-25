@@ -1,30 +1,42 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.util.formatting.calendar;
 
-import com.ibm.icu.text.DateFormatSymbols;
-import com.ibm.icu.util.Calendar;
-import com.ibm.icu.util.ULocale;
-import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
-
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.EqualsAndHashCode;
 
+import com.ibm.icu.text.DateFormatSymbols;
+import com.ibm.icu.util.Calendar;
+import com.ibm.icu.util.ULocale;
+
+import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
+
 public final class DateNames {
 
     private static final Map<SymbolsKey, DateFormatSymbols> SYMBOLS_CACHE = new ConcurrentHashMap<>();
 
-    private DateNames() {
-    }
+    private DateNames() {}
 
     public static String monthName(OffsetDateTime value, FormattingContext context, int min, int max) {
         Calendar cal = CalendarFields.calendar(value, context);
         DateFormatSymbols symbols = symbolsFor(cal, context.uLocale);
-        int month = CalendarFields.usesJavaTimeFields(context)
-            ? value.getMonthValue() - 1
-            : cal.get(Calendar.MONTH);
+        int month = CalendarFields.usesJavaTimeFields(context) ? value.getMonthValue() - 1 : cal.get(Calendar.MONTH);
 
         return monthName(symbols, month, min, max);
     }
@@ -32,17 +44,16 @@ public final class DateNames {
     public static String dayName(OffsetDateTime value, FormattingContext context, int min, int max) {
         Calendar cal = CalendarFields.calendar(value, context);
         DateFormatSymbols symbols = symbolsFor(cal, context.uLocale);
-        int day = CalendarFields.usesJavaTimeFields(context)
-            ? javaDayOfWeekToIcu(value)
-            : cal.get(Calendar.DAY_OF_WEEK);
+        int day =
+                CalendarFields.usesJavaTimeFields(context) ? javaDayOfWeekToIcu(value) : cal.get(Calendar.DAY_OF_WEEK);
 
         return dayName(symbols, day, min, max);
     }
 
-    public static String amPmName(Calendar cal, FormattingContext context) {
+    public static String amPmName(Calendar cal, FormattingContext context, int min, int max) {
         DateFormatSymbols symbols = symbolsFor(cal, context.uLocale);
         String[] values = symbols.getAmPmStrings();
-        return values[cal.get(Calendar.AM_PM)];
+        return fitName(values[cal.get(Calendar.AM_PM)], min, max);
     }
 
     private static DateFormatSymbols symbolsFor(Calendar cal, ULocale locale) {
@@ -64,7 +75,6 @@ public final class DateNames {
             this.calendarType = calendarType;
             this.locale = locale;
         }
-
     }
 
     private static String monthName(DateFormatSymbols symbols, int month, int min, int max) {
@@ -89,14 +99,41 @@ public final class DateNames {
     }
 
     private static String fitName(String wide, String abbr, String narrow, int min, int max) {
-        if (max < 0) {
-            return wide;
+        String name = wide;
+
+        if (max >= 0 && name.length() > max) {
+            name = conventionalAbbreviation(min, max, abbr, narrow);
+            if (name == null) {
+                name = truncateToCodePoints(wide, max);
+            }
         }
-        for (String candidate : List.of(abbr, narrow, wide)) {
-            if (candidate != null && candidate.length() >= min && candidate.length() <= max) {
+
+        return padToMinimumWidth(name, min);
+    }
+
+    private static String fitName(String full, int min, int max) {
+        return fitName(full, null, null, min, max);
+    }
+
+    // The minimum matters, not just the maximum: German abbreviations carry a period ("Jan.", "Mo."), so for
+    // [MN,3-3] no conventional form fits and the full name is truncated instead, giving "Jan" rather than "J".
+    private static String conventionalAbbreviation(int min, int max, String... candidates) {
+        for (String candidate : candidates) {
+            if (candidate != null && !candidate.isEmpty() && candidate.length() <= max && candidate.length() >= min) {
                 return candidate;
             }
         }
-        return wide.length() > max ? wide.substring(0, max) : wide;
+        return null;
+    }
+
+    private static String truncateToCodePoints(String name, int max) {
+        if (name.length() <= max) {
+            return name;
+        }
+        return name.substring(0, name.offsetByCodePoints(0, Math.min(max, name.codePointCount(0, name.length()))));
+    }
+
+    private static String padToMinimumWidth(String name, int min) {
+        return name.length() >= min ? name : name + " ".repeat(min - name.length());
     }
 }

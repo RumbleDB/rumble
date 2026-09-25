@@ -1,19 +1,36 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items.xml;
+
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
+import org.w3c.dom.Node;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.w3c.dom.Node;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
 
 public class TextItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private String content; // is also typed-value
     private Item parent;
     private XMLDocumentPosition documentPos;
@@ -24,7 +41,7 @@ public class TextItem extends AbstractNodeItem {
 
     /**
      * Create a new Text Node with the given content.
-     * 
+     *
      * @param content the content of the text node
      */
     public TextItem(String content) {
@@ -66,8 +83,6 @@ public class TextItem extends AbstractNodeItem {
     public boolean getEffectiveBooleanValue() {
         return !this.content.isEmpty();
     }
-
-
 
     @Override
     public String getStringValue() {
@@ -203,7 +218,6 @@ public class TextItem extends AbstractNodeItem {
         return Collections.emptyList();
     }
 
-
     /**
      * XDM 3.1 Section 6.7 Text Node Accessors — type-name:
      *
@@ -211,12 +225,8 @@ public class TextItem extends AbstractNodeItem {
      */
     @Override
     public List<Item> typeName() {
-        return Collections.singletonList(
-            ItemFactory.getInstance()
+        return Collections.singletonList(ItemFactory.getInstance()
                 .createAnnotatedItem(
-                    ItemFactory.getInstance().createStringItem("untypedAtomic"),
-                    BuiltinTypesCatalogue.QNameItem
-                )
-        );
+                        ItemFactory.getInstance().createStringItem("untypedAtomic"), BuiltinTypesCatalogue.QNameItem));
     }
 }

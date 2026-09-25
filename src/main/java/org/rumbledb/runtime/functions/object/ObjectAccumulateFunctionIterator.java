@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,86 +11,67 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.object;
-
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class ObjectAccumulateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.Function2;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+public class ObjectAccumulateFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     /**
      *
      */
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public ObjectAccumulateFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ObjectAccumulateFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator iterator = this.getChild(0);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        ItemRuntimePlan iterator = this.getChild(0);
 
-        if (!iterator.isDataFrame()) {
-            if (this.hasNext) {
-                List<Item> items = iterator.materialize(context);
-                LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
-                for (Item item : items) {
-                    // ignore non-object items
-                    if (item.isObject()) {
-                        for (String key : item.getStringKeys()) {
-                            Item value = item.getItemByKey(key);
-                            if (!keyValuePairs.containsKey(key)) {
-                                List<Item> valueList = new ArrayList<>();
-                                valueList.add(value);
-                                keyValuePairs.put(key, valueList);
-                            }
-                            // store values for key collisions in a list
-                            else {
-                                keyValuePairs.get(key).add(value);
-                            }
-                        }
-                    }
-                }
-
-                Item result = ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
-
-                this.hasNext = false;
-                return result;
-            }
+        if (!iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            return accumulate(iterator.materialize(context));
         }
 
         JavaRDD<Item> childRDD = iterator.getRDD(context);
-        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure(
-                this.getRuntimeStaticContext().isQuerySideEffecting()
-        );
+        Function<Item, Item> mapTransformation =
+                new ObjectIntersectMapClosure(this.getRuntimeStaticContext().isQuerySideEffecting());
         JavaRDD<Item> mapResult = childRDD.map(mapTransformation);
 
         Function2<Item, Item, Item> reductionTransformation = new ObjectIntersectReduceClosure();
         Item result = mapResult.reduce(reductionTransformation);
 
         return result;
-
-
     }
 
+    private Item accumulate(List<Item> items) {
+        LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
+        for (Item item : items) {
+            if (item.isObject()) {
+                for (String key : item.getStringKeys()) {
+                    keyValuePairs
+                            .computeIfAbsent(key, ignored -> new ArrayList<>())
+                            .add(item.getItemByKey(key));
+                }
+            }
+        }
+        return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
+    }
 }

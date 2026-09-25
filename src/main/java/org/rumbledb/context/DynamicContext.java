@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,46 +11,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.context;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.spark.api.java.JavaRDD;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.spark.api.java.JavaRDD;
 
-import java.io.Serial;
-import java.time.OffsetDateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.RuntimeIterator;
-
-import java.io.Serializable;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class DynamicContext implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private DynamicContext parent;
     private RumbleConfiguration conf;
     private ExternalBindings externalBindings;
+
     @Getter
     private VariableValues variableValues;
+
     private NamedFunctions namedFunctions;
     private InScopeSchemaTypes inScopeSchemaTypes;
     private OffsetDateTime currentDateTime;
+
     @Setter
     @Getter
     private int currentMutabilityLevel;
+
     private final GlobalVariables globalVariables;
     /**
      * The top-level runtime iterator for constructing the XML Node Tree.
@@ -61,11 +61,11 @@ public class DynamicContext implements Serializable {
      */
     @Setter
     @Getter
-    private RuntimeIterator topLevelRuntimeIterator;
+    private ItemRuntimePlan topLevelRuntimeIterator;
 
     /**
      * Creates a new, empty module context (without parent).
-     * 
+     *
      * @param conf the Rumble configuration.
      */
     public DynamicContext(RumbleConfiguration conf) {
@@ -104,8 +104,7 @@ public class DynamicContext implements Serializable {
             DynamicContext parent,
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
-            Map<Name, HomogeneousItemDataFrame> dataFrameVariableValues
-    ) {
+            Map<Name, HomogeneousItemDataFrame> dataFrameVariableValues) {
         if (parent == null) {
             throw new OurBadException("Dynamic context defined with null parent");
         }
@@ -115,8 +114,7 @@ public class DynamicContext implements Serializable {
                 localVariableValues,
                 rddVariableValues,
                 dataFrameVariableValues,
-                parent.globalVariables
-        );
+                parent.globalVariables);
         this.namedFunctions = null;
         this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
         this.globalVariables = parent.globalVariables;
@@ -143,7 +141,6 @@ public class DynamicContext implements Serializable {
         return null;
     }
 
-
     public enum VariableDependency {
         FULL,
         COUNT,
@@ -161,9 +158,7 @@ public class DynamicContext implements Serializable {
     }
 
     public static void mergeVariableDependencies(
-            Map<Name, DynamicContext.VariableDependency> into,
-            Map<Name, DynamicContext.VariableDependency> from
-    ) {
+            Map<Name, DynamicContext.VariableDependency> into, Map<Name, DynamicContext.VariableDependency> from) {
         for (Name v : from.keySet()) {
             if (into.containsKey(v)) {
                 into.put(v, DynamicContext.mergeSingleVariableDependency(into.get(v), from.get(v)));
@@ -174,8 +169,7 @@ public class DynamicContext implements Serializable {
     }
 
     public static Map<Name, DynamicContext.VariableDependency> copyVariableDependencies(
-            Map<Name, DynamicContext.VariableDependency> from
-    ) {
+            Map<Name, DynamicContext.VariableDependency> from) {
         Map<Name, DynamicContext.VariableDependency> result = new HashMap<>();
         for (Name v : from.keySet()) {
             result.put(v, from.get(v));
@@ -199,9 +193,7 @@ public class DynamicContext implements Serializable {
         return sb.toString();
     }
 
-    public void setNamedFunctions(
-            NamedFunctions knownFunctions
-    ) {
+    public void setNamedFunctions(NamedFunctions knownFunctions) {
         if (this.parent != null) {
             throw new OurBadException("Known function scan only be stored in the module context.");
         }
@@ -242,9 +234,7 @@ public class DynamicContext implements Serializable {
         return this.currentDateTime;
     }
 
-
     public void addGlobalVariable(Name globalVariable) {
         this.globalVariables.addGlobalVariable(globalVariable);
     }
-
 }

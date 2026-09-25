@@ -1,9 +1,19 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.util.formatting.calendar;
-
-import com.ibm.icu.util.Calendar;
-import com.ibm.icu.util.TimeZone;
-import com.ibm.icu.util.ULocale;
-import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -14,18 +24,23 @@ import java.util.Map;
 
 import lombok.EqualsAndHashCode;
 
+import com.ibm.icu.util.Calendar;
+import com.ibm.icu.util.TimeZone;
+import com.ibm.icu.util.ULocale;
+
+import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
+
 public final class CalendarFields {
 
-    private static final ThreadLocal<Map<CalendarKey, CachedCalendar>> CALENDAR_CACHE = ThreadLocal
-        .withInitial(HashMap::new);
+    private static final ThreadLocal<Map<CalendarKey, CachedCalendar>> CALENDAR_CACHE =
+            ThreadLocal.withInitial(HashMap::new);
 
-    private CalendarFields() {
-    }
+    private CalendarFields() {}
 
     public static Calendar calendar(OffsetDateTime value, FormattingContext context) {
         String tzid = context.placeZoneId != null
-            ? context.placeZoneId.getId()
-            : "GMT" + value.getOffset().getId().replace("Z", "+00:00");
+                ? context.placeZoneId.getId()
+                : "GMT" + value.getOffset().getId().replace("Z", "+00:00");
 
         CachedCalendar cached = cachedCalendar(tzid, context.uLocale);
         Calendar cal = cached.calendar;
@@ -44,13 +59,10 @@ public final class CalendarFields {
 
     private static CachedCalendar cachedCalendar(String tzid, ULocale locale) {
         Map<CalendarKey, CachedCalendar> cache = CALENDAR_CACHE.get();
-        return cache.computeIfAbsent(
-            new CalendarKey(tzid, locale),
-            key -> {
-                Calendar cal = Calendar.getInstance(TimeZone.getTimeZone(key.tzid), key.locale);
-                return new CachedCalendar(cal, cal.getFirstDayOfWeek(), cal.getMinimalDaysInFirstWeek());
-            }
-        );
+        return cache.computeIfAbsent(new CalendarKey(tzid, locale), key -> {
+            Calendar cal = Calendar.getInstance(TimeZone.getTimeZone(key.tzid), key.locale);
+            return new CachedCalendar(cal, cal.getFirstDayOfWeek(), cal.getMinimalDaysInFirstWeek());
+        });
     }
 
     private static final class CachedCalendar {
@@ -74,7 +86,6 @@ public final class CalendarFields {
             this.tzid = tzid;
             this.locale = locale;
         }
-
     }
 
     // ISO requires Gregorian fields and ISO week rules; keep these
@@ -123,9 +134,8 @@ public final class CalendarFields {
 
     public static int weekInMonth(OffsetDateTime value, FormattingContext context) {
         if (usesJavaTimeFields(context)) {
-            WeekFields weekFields = "ISO".equalsIgnoreCase(context.calendarDesignator)
-                ? WeekFields.ISO
-                : WeekFields.SUNDAY_START;
+            WeekFields weekFields =
+                    "ISO".equalsIgnoreCase(context.calendarDesignator) ? WeekFields.ISO : WeekFields.SUNDAY_START;
             return weekInMonth(value.toLocalDate(), weekFields);
         }
         return weekInMonth(calendar(value, context));

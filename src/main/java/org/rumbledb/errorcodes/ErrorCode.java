@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"), you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,14 +11,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis, Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.errorcodes;
-
-import lombok.Getter;
-import org.rumbledb.context.Name;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -30,6 +22,9 @@ import java.util.Map;
 import java.util.Objects;
 
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+
+import org.rumbledb.context.Name;
 
 @Getter
 @EqualsAndHashCode
@@ -158,9 +153,12 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode UnexpectedTypeErrorCode = registerBuiltIn("XPTY0004");
     public static final ErrorCode NodeAndNonNode = registerBuiltIn("XPTY0018");
     public static final ErrorCode UnexpectedNode = registerBuiltIn("XPTY0019");
+    public static final ErrorCode ValidateOperandTypeErrorCode = registerBuiltIn("XQTY0030");
 
     public static final ErrorCode InvalidInstance = registerBuiltIn("XQDY0027");
+    public static final ErrorCode ValidateStrictNoDeclarationErrorCode = registerBuiltIn("XQDY0084");
     public static final ErrorCode InvalidProcessingInstructionTargetCastErrorCode = registerBuiltIn("XQDY0041");
+    public static final ErrorCode InvalidValidateDocumentStructureErrorCode = registerBuiltIn("XQDY0061");
     public static final ErrorCode CycleInVariableDeclarationsErrorCode = registerBuiltIn("XQDY0054");
     public static final ErrorCode InvalidProcessingInstructionContentErrorCode = registerBuiltIn("XQDY0026");
     public static final ErrorCode InvalidProcessingInstructionTargetErrorCode = registerBuiltIn("XQDY0064");
@@ -171,9 +169,9 @@ public final class ErrorCode implements Serializable {
      * Namespace declaration attribute value contains an enclosed expression (direct
      * element constructor).
      */
-    public static final ErrorCode NamespaceDeclarationAttributeEnclosedExpressionErrorCode = registerBuiltIn(
-        "XQST0022"
-    );
+    public static final ErrorCode NamespaceDeclarationAttributeEnclosedExpressionErrorCode =
+            registerBuiltIn("XQST0022");
+
     public static final ErrorCode ModuleDeclarationErrorCode = registerBuiltIn("XQST0016");
     public static final ErrorCode InvalidJsoniqVersionErrorCode = registerBuiltIn("XQST0031");
     public static final ErrorCode MultipleBaseURIExceptionCode = registerBuiltIn("XQST0032");
@@ -181,14 +179,20 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DuplicateFunctionIdentifier = registerBuiltIn("XQST0034");
     public static final ErrorCode DefaultCollationExceptionCode = registerBuiltIn("XQST0038");
     public static final ErrorCode DuplicateParamName = registerBuiltIn("XQST0039");
-    public static final ErrorCode AnnotationInReservedNamespaceErrorCode = registerBuiltIn("XQST0045");
+    public static final ErrorCode DeclarationInReservedNamespaceErrorCode = registerBuiltIn("XQST0045");
+    public static final ErrorCode AnnotationInReservedNamespaceErrorCode = DeclarationInReservedNamespaceErrorCode;
     public static final ErrorCode InvalidURILiteralErrorCode = registerBuiltIn("XQST0046");
     public static final ErrorCode DuplicateModuleTargetNamespace = registerBuiltIn("XQST0047");
     public static final ErrorCode NamespaceDoesNotMatchModule = registerBuiltIn("XQST0048");
     public static final ErrorCode VariableAlreadyExists = registerBuiltIn("XQST0049");
     public static final ErrorCode UnknownCastTypeErrorCode = registerBuiltIn("XQST0052");
+    public static final ErrorCode SchemaImportWithoutTargetNamespaceErrorCode = registerBuiltIn("XQST0057");
+    public static final ErrorCode DuplicateSchemaImportErrorCode = registerBuiltIn("XQST0058");
     public static final ErrorCode MoreThanOneCopyNamespacesDeclarationErrorCode = registerBuiltIn("XQST0055");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
+    public static final ErrorCode SchemaImportErrorCode = ModuleNotFoundErrorCode;
+    public static final ErrorCode MoreThanOneConstructionDeclarationErrorCode = registerBuiltIn("XQST0067");
+    public static final ErrorCode NamespaceSensitiveConstructionErrorCode = registerBuiltIn("XQTY0086");
     public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
@@ -201,6 +205,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DecimalFormatPropertyInvalidValueErrorCode = registerBuiltIn("XQST0097");
     public static final ErrorCode DecimalFormatPropertyConflictErrorCode = registerBuiltIn("XQST0098");
     public static final ErrorCode DuplicateDecimalFormatPropertyErrorCode = registerBuiltIn("XQST0114");
+    public static final ErrorCode ValidateTypeNotFoundErrorCode = registerBuiltIn("XQST0104");
 
     public static final ErrorCode AtomizationError = registerBuiltIn("FOTY0012");
     public static final ErrorCode UnexpectedFunctionItem = registerBuiltIn("FOTY0015");

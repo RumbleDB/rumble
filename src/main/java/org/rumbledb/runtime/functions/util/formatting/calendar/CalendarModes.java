@@ -1,5 +1,19 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.util.formatting.calendar;
-
 
 import java.util.Locale;
 import java.util.Map;
@@ -7,61 +21,30 @@ import java.util.Set;
 
 public final class CalendarModes {
 
-    private CalendarModes() {
-    }
+    private CalendarModes() {}
 
     // Best-effort mappings from W3C calendar designators to ICU calendar keywords.
     // ICU provides the calendar data. If formatted dates are wrong for
     // these calendars, the ICU calendar may need
     // tuning to specification. This is not exhaustevly tested by the current QT3 test.
     private static final Map<String, String> ICU_TYPES = Map.ofEntries(
-        Map.entry("ISO", "gregorian"),
-        Map.entry("AD", "gregorian"),
-        Map.entry("CE", "gregorian"),
-        Map.entry("AH", "islamic"),
-        Map.entry("AP", "persian"),
-        Map.entry("AM", "hebrew"),
-        Map.entry("BE", "buddhist"),
-        Map.entry("JE", "japanese"),
-        Map.entry("CL", "chinese")
-    );
+            Map.entry("ISO", "gregorian"),
+            Map.entry("AD", "gregorian"),
+            Map.entry("CE", "gregorian"),
+            // ICU's Islamic variants differ by up to a day; the tabular one reproduces the AH example in
+            // F&O 3.1 (2002-12-31 -> 26 Shawwal 1423). The spec defines none of these calendars itself.
+            Map.entry("AH", "islamic-civil"),
+            Map.entry("AP", "persian"),
+            Map.entry("AM", "hebrew"),
+            Map.entry("BE", "buddhist"),
+            Map.entry("JE", "japanese"),
+            Map.entry("CL", "chinese"));
 
     private static final Set<String> KNOWN_DESIGNATORS = Set.of(
-        "AD",
-        "AH",
-        "AME",
-        "AM",
-        "AP",
-        "AS",
-        "BE",
-        "CB",
-        "CE",
-        "CL",
-        "CS",
-        "EE",
-        "FE",
-        "ISO",
-        "JE",
-        "KE",
-        "KY",
-        "ME",
-        "MS",
-        "NS",
-        "OS",
-        "RS",
-        "SE",
-        "SH",
-        "SS",
-        "TE",
-        "VE",
-        "VS"
-    );
+            "AD", "AH", "AME", "AM", "AP", "AS", "BE", "CB", "CE", "CL", "CS", "EE", "FE", "ISO", "JE", "KE", "KY",
+            "ME", "MS", "NS", "OS", "RS", "SE", "SH", "SS", "TE", "VE", "VS");
 
-    private static final Set<String> JAVA_TIME_FIELD_DESIGNATORS = Set.of(
-        "ISO",
-        "AD",
-        "CE"
-    );
+    private static final Set<String> JAVA_TIME_FIELD_DESIGNATORS = Set.of("ISO", "AD", "CE");
 
     private static final String FALLBACK_DESIGNATOR = "AD";
     private static final String FALLBACK_ICU_TYPE = ICU_TYPES.get(FALLBACK_DESIGNATOR);
@@ -106,5 +89,4 @@ public final class CalendarModes {
         }
         return JAVA_TIME_FIELD_DESIGNATORS.contains(designator.toUpperCase(Locale.ROOT));
     }
-
 }

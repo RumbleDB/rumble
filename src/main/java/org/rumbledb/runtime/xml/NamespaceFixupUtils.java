@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,9 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.xml;
+
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -25,16 +28,9 @@ import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
 
-import java.util.LinkedHashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 final class NamespaceFixupUtils {
 
-    private NamespaceFixupUtils() {
-    }
+    private NamespaceFixupUtils() {}
 
     static Item copyNodeForConstructor(Item item, RuntimeStaticContext staticContext) {
         Item copy = item.copy(true);
@@ -65,11 +61,7 @@ final class NamespaceFixupUtils {
     }
 
     private static void configureCopiedElementNamespaces(
-            ElementItem original,
-            ElementItem copy,
-            RuntimeStaticContext staticContext,
-            boolean rootOfCopiedTree
-    ) {
+            ElementItem original, ElementItem copy, RuntimeStaticContext staticContext, boolean rootOfCopiedTree) {
         copy.setDeclaredNamespaces(selectPreservedNamespaces(original, staticContext.isCopyNamespacesPreserve()));
         if (rootOfCopiedTree) {
             copy.setInheritNamespacesFromParent(staticContext.isCopyNamespacesInherit());
@@ -82,11 +74,7 @@ final class NamespaceFixupUtils {
             Item copiedChild = copiedChildren.get(i);
             if (originalChild.isElementNode() && copiedChild.isElementNode()) {
                 configureCopiedElementNamespaces(
-                    (ElementItem) originalChild,
-                    (ElementItem) copiedChild,
-                    staticContext,
-                    false
-                );
+                        (ElementItem) originalChild, (ElementItem) copiedChild, staticContext, false);
             }
         }
     }
@@ -137,8 +125,11 @@ final class NamespaceFixupUtils {
         Map<String, String> result = new LinkedHashMap<>();
         for (Item namespaceNode : element.namespaceNodes()) {
             String prefix = namespaceNode instanceof NamespaceItem namespace
-                ? normalize(namespace.getPrefix())
-                : normalize(namespaceNode.nodeName() == null ? "" : namespaceNode.nodeName().getLocalName());
+                    ? normalize(namespace.getPrefix())
+                    : normalize(
+                            namespaceNode.nodeName() == null
+                                    ? ""
+                                    : namespaceNode.nodeName().getLocalName());
             result.put(prefix, namespaceNode.getStringValue());
         }
         return result;
@@ -147,8 +138,11 @@ final class NamespaceFixupUtils {
     private static void mergeDeclaredUndeclarations(ElementItem element, Map<String, String> preservedNamespaces) {
         for (Item namespaceNode : element.declaredNamespaceNodes()) {
             String prefix = namespaceNode instanceof NamespaceItem namespace
-                ? normalize(namespace.getPrefix())
-                : normalize(namespaceNode.nodeName() == null ? "" : namespaceNode.nodeName().getLocalName());
+                    ? normalize(namespace.getPrefix())
+                    : normalize(
+                            namespaceNode.nodeName() == null
+                                    ? ""
+                                    : namespaceNode.nodeName().getLocalName());
             String uri = normalize(namespaceNode.getStringValue());
             if (uri.isEmpty()) {
                 preservedNamespaces.put(prefix, uri);
@@ -230,8 +224,11 @@ final class NamespaceFixupUtils {
         String normalizedPrefix = normalize(prefix);
         for (Item namespaceNode : element.namespaceNodes()) {
             String namespacePrefix = namespaceNode instanceof NamespaceItem namespace
-                ? normalize(namespace.getPrefix())
-                : normalize(namespaceNode.nodeName() == null ? "" : namespaceNode.nodeName().getLocalName());
+                    ? normalize(namespace.getPrefix())
+                    : normalize(
+                            namespaceNode.nodeName() == null
+                                    ? ""
+                                    : namespaceNode.nodeName().getLocalName());
             if (normalizedPrefix.equals(namespacePrefix)) {
                 return namespaceNode.getStringValue();
             }

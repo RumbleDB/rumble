@@ -1,14 +1,29 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.datetime.dateformatting;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
-import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
+import org.rumbledb.runtime.functions.util.formatting.FormattingContext;
 
 final class TemporalPictureFormatter {
 
@@ -19,8 +34,7 @@ final class TemporalPictureFormatter {
 
     private static final Map<String, ParsedPicture> PICTURE_CACHE = new ConcurrentHashMap<>();
 
-    private TemporalPictureFormatter() {
-    }
+    private TemporalPictureFormatter() {}
 
     /**
      * Formats the given temporal value according to the picture string and formatting context.
@@ -31,8 +45,7 @@ final class TemporalPictureFormatter {
             boolean hasExplicitTimezone,
             FormattingContext formattingContext,
             ComponentSupport componentSupport,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         ParsedPicture parsed = PICTURE_CACHE.get(pictureString);
         if (parsed == null) {
             parsed = parsePicture(pictureString, metadata);
@@ -46,17 +59,14 @@ final class TemporalPictureFormatter {
                 continue;
             }
 
-            result.append(
-                TemporalComponentRenderer.render(
+            result.append(TemporalComponentRenderer.render(
                     value,
                     segment.marker,
                     hasExplicitTimezone,
                     formattingContext,
                     componentSupport,
                     pictureString,
-                    metadata
-                )
-            );
+                    metadata));
         }
 
         return applyFallbackPrefixes(result.toString(), parsed, formattingContext);
@@ -86,8 +96,7 @@ final class TemporalPictureFormatter {
             PictureScanState state,
             StringBuilder pendingLiteral,
             List<Segment> segments,
-            int index
-    ) {
+            int index) {
         if (state.insideVariableMarker) {
             return consumeVariableMarkerCharacter(request, state, pendingLiteral, segments, index);
         }
@@ -103,19 +112,15 @@ final class TemporalPictureFormatter {
             PictureScanState state,
             StringBuilder pendingLiteral,
             List<Segment> segments,
-            int index
-    ) {
+            int index) {
         if (request.pictureString.charAt(index) != ']') {
             return index;
         }
 
         String rawVariableMarker = request.pictureString.substring(state.startOfSequence, index);
 
-        VariableMarker variableMarker = TemporalPictureParser.parse(
-            rawVariableMarker,
-            request.pictureString,
-            request.metadata
-        );
+        VariableMarker variableMarker =
+                TemporalPictureParser.parse(rawVariableMarker, request.pictureString, request.metadata);
 
         state.languageSensitiveOutput = state.languageSensitiveOutput || usesLanguage(variableMarker);
         state.calendarSensitiveOutput = state.calendarSensitiveOutput || usesCalendar(variableMarker);
@@ -133,11 +138,7 @@ final class TemporalPictureFormatter {
      * Consumes a character while scanning literal text outside a variable marker.
      */
     private static int consumeLiteralCharacter(
-            ParseRequest request,
-            PictureScanState state,
-            StringBuilder pendingLiteral,
-            int index
-    ) {
+            ParseRequest request, PictureScanState state, StringBuilder pendingLiteral, int index) {
         char c = request.pictureString.charAt(index);
 
         if (c == ']') {
@@ -155,11 +156,7 @@ final class TemporalPictureFormatter {
      * Consumes an escaped closing bracket or reports a syntax error for an unmatched closing bracket.
      */
     private static int consumeClosingBracket(
-            ParseRequest request,
-            PictureScanState state,
-            StringBuilder pendingLiteral,
-            int index
-    ) {
+            ParseRequest request, PictureScanState state, StringBuilder pendingLiteral, int index) {
         if (!hasNextCharacter(request.pictureString, index, ']')) {
             throw syntaxError(request.pictureString, request.metadata);
         }
@@ -174,11 +171,7 @@ final class TemporalPictureFormatter {
      * Consumes an opening bracket as either an escaped literal or the start of a variable marker.
      */
     private static int consumeOpeningBracket(
-            ParseRequest request,
-            PictureScanState state,
-            StringBuilder pendingLiteral,
-            int index
-    ) {
+            ParseRequest request, PictureScanState state, StringBuilder pendingLiteral, int index) {
         if (isLastCharacter(request.pictureString, index)) {
             throw syntaxError(request.pictureString, request.metadata);
         }
@@ -194,11 +187,7 @@ final class TemporalPictureFormatter {
      * Consumes an escaped opening bracket and appends it as literal text.
      */
     private static int consumeEscapedOpeningBracket(
-            ParseRequest request,
-            PictureScanState state,
-            StringBuilder pendingLiteral,
-            int index
-    ) {
+            ParseRequest request, PictureScanState state, StringBuilder pendingLiteral, int index) {
         pendingLiteral.append(request.pictureString, state.startOfSequence, index + 1);
         state.startOfSequence = index + 2;
 
@@ -209,11 +198,7 @@ final class TemporalPictureFormatter {
      * Starts a variable marker and flushes the preceding literal text.
      */
     private static int beginVariableMarker(
-            ParseRequest request,
-            PictureScanState state,
-            StringBuilder pendingLiteral,
-            int index
-    ) {
+            ParseRequest request, PictureScanState state, StringBuilder pendingLiteral, int index) {
         pendingLiteral.append(request.pictureString, state.startOfSequence, index);
         state.insideVariableMarker = true;
         state.startOfSequence = index + 1;
@@ -225,10 +210,7 @@ final class TemporalPictureFormatter {
      * Appends trailing literal text or reports a syntax error for an unclosed variable marker.
      */
     private static void appendTrailingLiteralOrFail(
-            ParseRequest request,
-            PictureScanState state,
-            StringBuilder pendingLiteral
-    ) {
+            ParseRequest request, PictureScanState state, StringBuilder pendingLiteral) {
         if (state.startOfSequence == request.pictureString.length()) {
             return;
         }
@@ -253,10 +235,7 @@ final class TemporalPictureFormatter {
      * Adds fallback prefixes when the formatted output depends on fallback language or calendar data.
      */
     private static String applyFallbackPrefixes(
-            String formatted,
-            ParsedPicture parsed,
-            FormattingContext formattingContext
-    ) {
+            String formatted, ParsedPicture parsed, FormattingContext formattingContext) {
         if (parsed.calendarSensitiveOutput && formattingContext.calendarFallback) {
             formatted = "[Calendar: " + formattingContext.calendarDesignator + "] " + formatted;
         }
@@ -316,9 +295,7 @@ final class TemporalPictureFormatter {
     }
 
     private static IncorrectSyntaxFormatDateTimeException syntaxError(
-            String pictureString,
-            ExceptionMetadata metadata
-    ) {
+            String pictureString, ExceptionMetadata metadata) {
         String message = String.format("\"%s\": incorrect syntax", pictureString);
         return new IncorrectSyntaxFormatDateTimeException(message, metadata);
     }
@@ -377,10 +354,7 @@ final class TemporalPictureFormatter {
         final boolean calendarSensitiveOutput;
 
         private ParsedPicture(
-                List<Segment> segments,
-                boolean languageSensitiveOutput,
-                boolean calendarSensitiveOutput
-        ) {
+                List<Segment> segments, boolean languageSensitiveOutput, boolean calendarSensitiveOutput) {
             this.segments = segments;
             this.languageSensitiveOutput = languageSensitiveOutput;
             this.calendarSensitiveOutput = calendarSensitiveOutput;

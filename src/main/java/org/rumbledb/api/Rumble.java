@@ -1,15 +1,31 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.api;
 
+import java.io.IOException;
+import java.net.URI;
+
 import org.apache.spark.sql.SparkSession;
+
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
-
-import java.io.IOException;
-import java.net.URI;
 
 /**
  * The entry point for Java applications that want to execute JSONiq queries with Rumble.
@@ -46,7 +62,7 @@ public class Rumble {
     /**
      * Creates a new Rumble instance from internal configuration.
      * This should only be used for internal purposes.
-     * 
+     *
      * @param configuration
      */
     public Rumble(org.rumbledb.config.RumbleConfiguration configuration) {
@@ -58,15 +74,14 @@ public class Rumble {
      *
      */
     public Rumble(SparkSession session) {
-        this.compilationConfiguration = new CompilationConfiguration(
-                new RumbleConfiguration().getInternalConfiguration()
-        );
+        this.compilationConfiguration =
+                new CompilationConfiguration(new RumbleConfiguration().getInternalConfiguration());
         SparkSessionManager.getInstance(session);
     }
 
     /**
      * Gets the configuration
-     * 
+     *
      * @return the configuration
      */
     public RumbleConfiguration getConfiguration() {
@@ -103,11 +118,7 @@ public class Rumble {
      */
     public SequenceOfItems runQuery(String query, org.rumbledb.bindings.ExternalBindings bindings) {
         org.rumbledb.bindings.ExternalBindings snapshot = bindings.snapshot();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
-            query,
-            this.compilationConfiguration,
-            snapshot
-        );
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(query, this.compilationConfiguration, snapshot);
         return createSequence(mainModule, snapshot);
     }
 
@@ -130,7 +141,7 @@ public class Rumble {
      * Runs a query and returns an iterator over the resulting sequence of Items.
      *
      * @param location the JSONiq main module location.
-     * @throws java.io.IOException if there was an issue reading a module.
+     * @throws IOException if there was an issue reading a module.
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(URI location) throws IOException {
@@ -159,33 +170,19 @@ public class Rumble {
      */
     public SequenceOfItems runQuery(URI location, org.rumbledb.bindings.ExternalBindings bindings) throws IOException {
         org.rumbledb.bindings.ExternalBindings snapshot = bindings.snapshot();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
-            location,
-            this.compilationConfiguration,
-            snapshot
-        );
+        MainModule mainModule =
+                VisitorHelpers.parseMainModuleFromLocation(location, this.compilationConfiguration, snapshot);
         return createSequence(mainModule, snapshot);
     }
 
-    private SequenceOfItems createSequence(
-            MainModule mainModule,
-            org.rumbledb.bindings.ExternalBindings bindings
-    ) {
+    private SequenceOfItems createSequence(MainModule mainModule, org.rumbledb.bindings.ExternalBindings bindings) {
         var effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
-            mainModule,
-            this.compilationConfiguration.runtimeConfiguration().toBuilder()
-        );
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(
-            mainModule,
-            effectiveConfiguration,
-            bindings
-        );
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
-            mainModule,
-            effectiveConfiguration
-        );
+                mainModule, this.compilationConfiguration.runtimeConfiguration().toBuilder());
+        DynamicContext dynamicContext =
+                VisitorHelpers.createDynamicContext(mainModule, effectiveConfiguration, bindings);
+        ItemRuntimePlan plan = VisitorHelpers.generateRuntimeIterator(mainModule, effectiveConfiguration);
 
-        return new SequenceOfItems(iterator, dynamicContext, effectiveConfiguration);
+        return new SequenceOfItems(plan, dynamicContext, effectiveConfiguration);
     }
 
     /**
@@ -193,7 +190,7 @@ public class Rumble {
      * declared in the static context.
      *
      * @param location the JSONiq main module location.
-     * @throws java.io.IOException if there was an issue reading a module.
+     * @throws IOException if there was an issue reading a module.
      * @return the serialized query result.
      */
     public String runQueryToString(URI location) throws IOException {
@@ -212,10 +209,7 @@ public class Rumble {
      */
     public String serializeToJSONiq(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
-            query,
-            this.compilationConfiguration,
-            ExternalBindings.empty().getInternalBindings()
-        );
+                query, this.compilationConfiguration, ExternalBindings.empty().getInternalBindings());
         StringBuilder sb = new StringBuilder();
         mainModule.serializeToJSONiq(sb, 0);
         return sb.toString();

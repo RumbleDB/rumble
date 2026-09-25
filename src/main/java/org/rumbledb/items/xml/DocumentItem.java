@@ -1,45 +1,67 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items.xml;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
 
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.w3c.dom.Node;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+
 public class DocumentItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
+
     private String stringValue;
     private List<Item> children;
     private XMLDocumentPosition documentPos;
     private Item documentElement;
-    // TODO: add base-uri, document-uri, typed-value
+    // TODO: add base-uri, document-uri
 
     public DocumentItem(Node documentNode, List<Item> children) {
-        this.stringValue = documentNode.getTextContent();
         this.children = children;
+        // org.w3c.dom.Document#getTextContent() returns null. Derive the XDM
+        // string value from the converted child nodes instead.
+        this.stringValue = computeStringValue(children);
         this.documentElement = getDocumentElement();
     }
 
     /**
      * Constructor for creating a document node with children items.
      * Used by document node constructors when no actual DOM node is available.
-     * 
+     *
      * @param children the child nodes of the document
      */
     public DocumentItem(List<Item> children) {
         this.children = children;
-        // Compute string value as concatenated text content of children in document order
-        StringBuilder sb = new StringBuilder();
-        computeStringValue(children, sb);
-        this.stringValue = sb.toString();
+        this.stringValue = computeStringValue(children);
         this.documentElement = getDocumentElement();
+    }
+
+    private static String computeStringValue(List<Item> items) {
+        StringBuilder result = new StringBuilder();
+        appendStringValue(items, result);
+        return result.toString();
     }
 
     @Override
@@ -54,12 +76,12 @@ public class DocumentItem extends AbstractNodeItem {
     /**
      * Recursively computes the string value by concatenating text node descendants in document order.
      */
-    private void computeStringValue(List<Item> items, StringBuilder sb) {
+    private static void appendStringValue(List<Item> items, StringBuilder result) {
         for (Item item : items) {
             if (item.isTextNode()) {
-                sb.append(item.getStringValue());
+                result.append(item.getStringValue());
             } else if (item.isElementNode() && item.children() != null) {
-                computeStringValue(item.children(), sb);
+                appendStringValue(item.children(), result);
             }
         }
     }
@@ -82,8 +104,7 @@ public class DocumentItem extends AbstractNodeItem {
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
         current++;
-        for (Item child : this.children)
-            current = child.setXmlDocumentPosition(path, current);
+        for (Item child : this.children) current = child.setXmlDocumentPosition(path, current);
         return current;
     }
 
@@ -99,8 +120,6 @@ public class DocumentItem extends AbstractNodeItem {
             child.addParentToDescendants();
         });
     }
-
-
 
     @Override
     public List<Item> children() {
@@ -278,9 +297,6 @@ public class DocumentItem extends AbstractNodeItem {
 
     @Override
     public List<Item> atomizedValue() {
-        if (this.documentElement != null) {
-            return this.documentElement.typedValue();
-        }
         return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 

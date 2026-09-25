@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items.structured;
 
 import java.io.Serial;
@@ -6,7 +21,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import lombok.Getter;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -15,6 +29,9 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.types.VariantType;
+
+import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -48,73 +65,59 @@ public class HomogeneousItemDataFrame implements RuntimeDataFrame<Item>, Seriali
             if (type instanceof VariantType) {
                 if (!this.itemType.equals(BuiltinTypesCatalogue.item)) {
                     this.dataFrame.printSchema();
-                    throw new OurBadException(
-                            "Inconsistency in internal representation: "
-                                + this.itemType
-                                + " is not the topmost item type."
-                    );
+                    throw new OurBadException("Inconsistency in internal representation: "
+                            + this.itemType
+                            + " is not the topmost item type.");
                 }
             }
             if (type instanceof ArrayType) {
-                if (
-                    this.itemType.equals(BuiltinTypesCatalogue.item)
+                if (this.itemType.equals(BuiltinTypesCatalogue.item)
                         || this.itemType.equals(BuiltinTypesCatalogue.JSONItem)
-                        || this.itemType.equals(BuiltinTypesCatalogue.arrayItem)
-                ) {
+                        || this.itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                     this.itemType = ItemTypeFactory.createItemType(type);
                 }
                 if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
                     this.dataFrame.printSchema();
                     throw new OurBadException(
-                            "Inconsistency in internal representation: " + this.itemType + " is not an array type."
-                    );
+                            "Inconsistency in internal representation: " + this.itemType + " is not an array type.");
                 }
                 return;
             }
             if (type instanceof StructType) {
                 this.dataFrame.printSchema();
                 throw new OurBadException(
-                        "Inconsistency in internal representation: " + this.itemType + " is an object type."
-                );
+                        "Inconsistency in internal representation: " + this.itemType + " is an object type.");
             }
             if (type instanceof VariantType) {
                 if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.item)) {
                     this.dataFrame.printSchema();
-                    throw new OurBadException(
-                            "Inconsistency in internal representation: "
-                                + this.itemType
-                                + " is not the topmost item type."
-                    );
+                    throw new OurBadException("Inconsistency in internal representation: "
+                            + this.itemType
+                            + " is not the topmost item type.");
                 }
                 return;
             }
-            if (
-                this.itemType.equals(BuiltinTypesCatalogue.item)
-                    || this.itemType.equals(BuiltinTypesCatalogue.atomicItem)
-            ) {
+            if (this.itemType.equals(BuiltinTypesCatalogue.item)
+                    || this.itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
                 this.itemType = ItemTypeFactory.createItemType(type);
             }
 
             if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
                 this.dataFrame.printSchema();
                 throw new OurBadException(
-                        "Inconsistency in internal representation: " + this.itemType + " is not an atomic type."
-                );
+                        "Inconsistency in internal representation: " + this.itemType + " is not an atomic type.");
             }
             return;
         }
-        if (
-            this.itemType.equals(BuiltinTypesCatalogue.item)
+        if (this.itemType.equals(BuiltinTypesCatalogue.item)
                 || this.itemType.equals(BuiltinTypesCatalogue.objectItem)
-                || this.itemType.equals(BuiltinTypesCatalogue.JSONItem)
-        ) {
+                || this.itemType.equals(BuiltinTypesCatalogue.JSONItem)) {
             this.itemType = ItemTypeFactory.createItemType(this.dataFrame.schema());
         }
         if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             this.dataFrame.printSchema();
             throw new OurBadException(
-                    "Inconsistency in internal representation: " + this.itemType + " is not an object type."
-            );
+                    "Inconsistency in internal representation: " + this.itemType + " is not an object type.");
         }
     }
 
@@ -124,9 +127,7 @@ public class HomogeneousItemDataFrame implements RuntimeDataFrame<Item>, Seriali
 
     public static HomogeneousItemDataFrame emptyDataFrame() {
         return new HomogeneousItemDataFrame(
-                SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
-                BuiltinTypesCatalogue.item
-        );
+                SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(), BuiltinTypesCatalogue.item);
     }
 
     /**
@@ -151,9 +152,7 @@ public class HomogeneousItemDataFrame implements RuntimeDataFrame<Item>, Seriali
         return Arrays.asList(this.dataFrame.schema().fieldNames());
     }
 
-    public String getSQLColumnProjection(
-            boolean trailingComma
-    ) {
+    public String getSQLColumnProjection(boolean trailingComma) {
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
         for (String var : Arrays.asList(this.dataFrame.schema().fieldNames())) {
@@ -186,11 +185,7 @@ public class HomogeneousItemDataFrame implements RuntimeDataFrame<Item>, Seriali
         List<Row> result = this.dataFrame.takeAsList(1);
         DataType fieldType = this.dataFrame.schema().fields()[0].dataType();
         return ItemParser.convertValueToItem(
-            result.get(0).get(0),
-            fieldType,
-            ExceptionMetadata.EMPTY_METADATA,
-            this.itemType
-        );
+                result.get(0).get(0), fieldType, ExceptionMetadata.EMPTY_METADATA, this.itemType);
     }
 
     public HomogeneousItemDataFrame distinct() {
@@ -200,8 +195,7 @@ public class HomogeneousItemDataFrame implements RuntimeDataFrame<Item>, Seriali
     public HomogeneousItemDataFrame union(HomogeneousItemDataFrame other) {
         if (!this.itemType.equals(other.itemType)) {
             throw new OurBadException(
-                    "Cannot union two dataframes with types " + this.itemType + " and " + other.itemType
-            );
+                    "Cannot union two dataframes with types " + this.itemType + " and " + other.itemType);
         }
         return new HomogeneousItemDataFrame(this.getDataFrame().union(other.getDataFrame()), this.itemType);
     }

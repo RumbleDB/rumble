@@ -1,16 +1,32 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items.xml;
 
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-
-import java.io.Serial;
-import java.util.Collections;
-import java.util.List;
 
 public class NamespaceItem extends AbstractNodeItem {
     @Serial
@@ -27,6 +43,7 @@ public class NamespaceItem extends AbstractNodeItem {
      */
     @Getter
     private String uri;
+
     private Item parent;
     private XMLDocumentPosition documentPos;
 
@@ -46,14 +63,12 @@ public class NamespaceItem extends AbstractNodeItem {
         return new NamespaceItem(this.prefix, this.uri);
     }
 
-
     /**
      * Each Namespace Node represents the binding of a namespace URI to a namespace prefix or to the default
      * namespace.
      * Namespaces have the following properties: prefix , possibly empty uri parent , possibly empty
      * A Namespace Node must not have the name xmlns nor the string-value http://www.w3.org/2000/xmlns/ .
      */
-
     @Override
     public int setXmlDocumentPosition(String path, int current) {
         this.documentPos = new XMLDocumentPosition(path, current);
@@ -70,8 +85,6 @@ public class NamespaceItem extends AbstractNodeItem {
         // no descendants
         // Namespaces do not have descendants.
     }
-
-
 
     @Override
     public boolean isNode() {

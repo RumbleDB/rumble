@@ -1,64 +1,59 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.random;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serial;
 import java.util.List;
 
-public class RandomSequenceWithBoundsAndSeedIterator extends LocalRuntimeIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+
+public class RandomSequenceWithBoundsAndSeedIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
-    private Item low;
-    private Item high;
-    private Item type;
-    private int seed;
-    private int size;
-    private GeneratedRandomsIterator generatedRandomsIterator;
 
-    public RandomSequenceWithBoundsAndSeedIterator(List<RuntimeIterator> children, RuntimeStaticContext staticContext) {
+    public RandomSequenceWithBoundsAndSeedIterator(List<ItemRuntimePlan> children, RuntimeStaticContext staticContext) {
         super(children, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        this.low = this.getChild(0).materializeFirstItemOrNull(context);
-        this.high = this.getChild(1).materializeFirstItemOrNull(context);
-        this.size = this.getChild(2).materializeFirstItemOrNull(context).castToIntValue();
-        this.type = this.getChild(3).materializeFirstItemOrNull(context);
-        this.seed = this.getChild(4).materializeFirstItemOrNull(context).castToIntValue();
-        this.generatedRandomsIterator = createRandomNumberStream();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> createRandomNumberStream(context), getMetadata());
     }
 
-    private GeneratedRandomsIterator createRandomNumberStream() {
-        if (this.type.getStringValue().equals("integer")) {
-            return new GeneratedRandomIntegersIterator(
-                    this.size,
-                    this.low.castToIntValue(),
-                    this.high.castToIntValue(),
-                    this.seed
-            );
+    private GeneratedRandomsIterator createRandomNumberStream(DynamicContext context) {
+        return createRandomNumberStream(
+                this.getChild(0).materializeFirstOrNull(context),
+                this.getChild(1).materializeFirstOrNull(context),
+                this.getChild(2).materializeFirstOrNull(context).castToIntValue(),
+                this.getChild(3).materializeFirstOrNull(context),
+                this.getChild(4).materializeFirstOrNull(context).castToIntValue());
+    }
+
+    private GeneratedRandomsIterator createRandomNumberStream(Item low, Item high, int size, Item type, int seed) {
+        if (type.getStringValue().equals("integer")) {
+            return new GeneratedRandomIntegersIterator(size, low.castToIntValue(), high.castToIntValue(), seed);
         } else {
             // Generate doubles otherwise
-            return new GeneratedRandomDoublesIterator(
-                    this.size,
-                    this.low.castToDoubleValue(),
-                    this.high.castToDoubleValue(),
-                    this.seed
-            );
+            return new GeneratedRandomDoublesIterator(size, low.castToDoubleValue(), high.castToDoubleValue(), seed);
         }
-    }
-
-    @Override
-    public Item next() {
-        return this.generatedRandomsIterator.getNextRandom();
-    }
-
-    @Override
-    public boolean hasNext() {
-        return this.generatedRandomsIterator.hasNext();
     }
 }

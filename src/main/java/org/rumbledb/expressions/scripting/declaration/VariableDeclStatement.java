@@ -1,6 +1,25 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.expressions.scripting.declaration;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import lombok.Getter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidVariableDeclarationException;
@@ -11,9 +30,6 @@ import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAssignable;
 
 // TODO: Update specification document to reflect this definition:
@@ -21,13 +37,18 @@ import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAss
 public class VariableDeclStatement extends Statement {
     // Default is True for statement variable declaration.
     private final boolean DEFAULT_ASSIGNABLE = true;
+
     @Getter
     private final List<Annotation> annotations;
+
     @Getter
     private final Name variableName;
+
     private final SequenceType variableSequenceType;
+
     @Getter
     private final Expression variableExpression;
+
     @Getter
     private final boolean isAssignable;
 
@@ -36,8 +57,7 @@ public class VariableDeclStatement extends Statement {
             Name variableName,
             SequenceType variableSequenceType,
             Expression variableExpression,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.annotations = annotations;
         this.variableName = variableName;
@@ -45,7 +65,7 @@ public class VariableDeclStatement extends Statement {
         this.variableExpression = variableExpression;
         if (this.annotations != null) {
             this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE, metadata); // default is true
-                                                                                                      // for
+            // for
             // variable statements
         } else {
             this.isAssignable = this.DEFAULT_ASSIGNABLE;
@@ -53,8 +73,7 @@ public class VariableDeclStatement extends Statement {
         if (!this.isAssignable && this.variableExpression == null) {
             throw new InvalidVariableDeclarationException(
                     "Variable declaration is redundant: marked as '%an:unassignable' without initializing expression! This makes the variable unusable as it cannot be changed by Assign statements!",
-                    metadata
-            );
+                    metadata);
         }
     }
 
@@ -98,5 +117,4 @@ public class VariableDeclStatement extends Statement {
     public SequenceType getActualSequenceType() {
         return this.variableSequenceType;
     }
-
 }

@@ -1,11 +1,27 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
-
-import lombok.Getter;
-import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.context.Name;
 
 import java.io.Serial;
 import java.util.Set;
+
+import lombok.Getter;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 
 /**
  * Class representing document-node() and document-node(element(...)) item types.
@@ -71,11 +87,9 @@ public class DocumentNodeItemType extends AbstractItemType {
                 }
             }
         }
-        if (
-            this.equals(superType)
+        if (this.equals(superType)
                 || superType.equals(BuiltinTypesCatalogue.item)
-                || superType.equals(BuiltinTypesCatalogue.nodeItem)
-        ) {
+                || superType.equals(BuiltinTypesCatalogue.nodeItem)) {
             return true;
         }
         if (!(superType instanceof DocumentNodeItemType other)) {
@@ -96,9 +110,8 @@ public class DocumentNodeItemType extends AbstractItemType {
             if (this.isWildcardDocument() || otherDocument.isWildcardDocument()) {
                 return BuiltinTypesCatalogue.documentNode;
             }
-            ItemType innerLeastCommonSuperType = this.elementTestType.findLeastCommonSuperTypeWith(
-                otherDocument.elementTestType
-            );
+            ItemType innerLeastCommonSuperType =
+                    this.elementTestType.findLeastCommonSuperTypeWith(otherDocument.elementTestType);
             return new DocumentNodeItemType((ElementNodeItemType) innerLeastCommonSuperType);
         }
         ItemType current = this;

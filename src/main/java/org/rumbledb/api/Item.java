@@ -1,10 +1,31 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.api;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
-
-import java.time.*;
 
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -13,21 +34,14 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializers;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-
-import java.io.Serializable;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 
 /**
  * An instance of this class is an item in the JSONiq data model.
@@ -46,7 +60,7 @@ public interface Item extends Serializable {
 
     /**
      * Makes a copy.
-     * 
+     *
      * @param mutable whether the copy should be mutable (if supported by the item).
      * @return a copy
      */
@@ -206,7 +220,7 @@ public interface Item extends Serializable {
     /**
      * Return only month of the item, if it's DateTime or Duration
      * It will not convert years into months
-     * 
+     *
      * @return only month
      */
     default int getMonth() {
@@ -225,7 +239,7 @@ public interface Item extends Serializable {
     /**
      * Return only day of the item, if it's DateTime or Duration
      * It will not convert months and years into days.
-     * 
+     *
      * @return only day
      */
     default int getDay() {
@@ -248,41 +262,37 @@ public interface Item extends Serializable {
      */
     default int getHour() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-
     }
 
     /**
      * Return only minutes of the item, if it's DateTime, Time or Duration
      * It will not convert hours into minutes
-     * 
+     *
      * @return only minute
      */
     default int getMinute() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-
     }
 
     /**
      * Return only seconds of the item, if it's DateTime, Time or Duration
      * It will not convert hours and minutes into seconds
-     * 
+     *
      * @return only seconds
      */
     default double getSecond() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-
     }
 
     /**
      * Return the only nanoseconds of the item, if it's DateTime, Time or Duration
      * It will not convert hours, minutes and seconds into nanoseconds
      * It exists only if the value in seconds will have decimal values, otherwise it will return 0
-     * 
+     *
      * @return only nanoseconds
      */
     default int getNanosecond() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-
     }
 
     /**
@@ -357,7 +367,6 @@ public interface Item extends Serializable {
         return false;
     }
 
-
     /**
      * Tests whether the item is an atomic item of type anyURI.
      *
@@ -387,6 +396,16 @@ public interface Item extends Serializable {
      * @throws UnsupportedOperationException if the item is not an xs:QName.
      */
     default Name getQNameValue() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /** Returns whether this item is an xs:NOTATION value (including schema-derived types). */
+    default boolean isNotation() {
+        return false;
+    }
+
+    /** Returns the expanded name of an xs:NOTATION value; its prefix does not affect equality. */
+    default Name getNotationValue() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -626,9 +645,7 @@ public interface Item extends Serializable {
      * @throws DuplicateObjectKeyException if the key is already present.
      */
     default void putItemByKey(Item key, Item value)
-            throws UnsupportedOperationException,
-                OurBadException,
-                DuplicateObjectKeyException {
+            throws UnsupportedOperationException, OurBadException, DuplicateObjectKeyException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -643,9 +660,7 @@ public interface Item extends Serializable {
      * @throws DuplicateObjectKeyException if the key is already present.
      */
     default void putSequenceByKey(String key, List<Item> valueSequence)
-            throws UnsupportedOperationException,
-                OurBadException,
-                DuplicateObjectKeyException {
+            throws UnsupportedOperationException, OurBadException, DuplicateObjectKeyException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -662,9 +677,7 @@ public interface Item extends Serializable {
      * @throws DuplicateObjectKeyException if the key is already present.
      */
     default void putSequenceByKey(Item key, List<Item> valueSequence)
-            throws UnsupportedOperationException,
-                OurBadException,
-                DuplicateObjectKeyException {
+            throws UnsupportedOperationException, OurBadException, DuplicateObjectKeyException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -697,16 +710,10 @@ public interface Item extends Serializable {
      * @param isArray whether to always wrap the result in an array.
      * @throws UnsupportedOperationException if the item is not a lazy object.
      */
-    default void putLazyItemByKey(
-            String key,
-            RuntimeIterator iterator,
-            DynamicContext context,
-            boolean isArray
-    )
+    default void putLazyItemByKey(String key, ItemRuntimePlan iterator, DynamicContext context, boolean isArray)
             throws UnsupportedOperationException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
-
 
     // endregion maps
 
@@ -792,9 +799,7 @@ public interface Item extends Serializable {
      * @throws ArrayIndexOutOfBoundsException if the position is out of bounds.
      */
     default Item getItemAt(int position)
-            throws UnsupportedOperationException,
-                OurBadException,
-                ArrayIndexOutOfBoundsException {
+            throws UnsupportedOperationException, OurBadException, ArrayIndexOutOfBoundsException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -807,8 +812,7 @@ public interface Item extends Serializable {
      * @throws ArrayIndexOutOfBoundsException if the position is out of bounds.
      */
     default List<Item> getSequenceAt(int position)
-            throws UnsupportedOperationException,
-                ArrayIndexOutOfBoundsException {
+            throws UnsupportedOperationException, ArrayIndexOutOfBoundsException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -879,8 +883,7 @@ public interface Item extends Serializable {
      *         members.
      */
     default void putSequencesAt(List<List<Item>> sequences, int index)
-            throws UnsupportedOperationException,
-                OurBadException {
+            throws UnsupportedOperationException, OurBadException {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -1002,7 +1005,7 @@ public interface Item extends Serializable {
     /**
      * Returns the EpochMillis of the item, if it's DateTime or Duration
      * It will collect all the parts of the item and compress it into the EpochMillis
-     * 
+     *
      * @return the EpochMillis
      */
     default long getEpochMillis() {
@@ -1038,7 +1041,7 @@ public interface Item extends Serializable {
 
     /**
      * Returns the dynamic type of the item (only for error message purposes).
-     * 
+     *
      * @return the dynamic type as an item type.
      */
     default ItemType getDynamicType() {
@@ -1047,7 +1050,7 @@ public interface Item extends Serializable {
 
     /**
      * Returns the identifier (name and arity) of the function, if it is a function item.
-     * 
+     *
      * @return the function identifier.
      */
     default FunctionIdentifier getIdentifier() {
@@ -1056,7 +1059,7 @@ public interface Item extends Serializable {
 
     /**
      * Returns the names of the parameters of the function, if it is a function item.
-     * 
+     *
      * @return the function parameter names.
      */
     default List<Name> getParameterNames() {
@@ -1065,7 +1068,7 @@ public interface Item extends Serializable {
 
     /**
      * Returns the signature of the function, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default FunctionSignature getSignature() {
@@ -1074,16 +1077,16 @@ public interface Item extends Serializable {
 
     /**
      * Returns the body iterator, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
-    default RuntimeIterator getBodyIterator() {
+    default ItemRuntimePlan getBodyIterator() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
      * Returns the local variable bindings, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default Map<Name, List<Item>> getLocalVariablesInClosure() {
@@ -1092,7 +1095,7 @@ public interface Item extends Serializable {
 
     /**
      * Returns the RDD variable bindings, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
@@ -1101,7 +1104,7 @@ public interface Item extends Serializable {
 
     /**
      * Returns the DataFrame variable bindings, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default Map<Name, HomogeneousItemDataFrame> getDFVariablesInClosure() {
@@ -1110,7 +1113,7 @@ public interface Item extends Serializable {
 
     /**
      * Returns the module dynamic context, if it is a function item.
-     * 
+     *
      * @return the function signature.
      */
     default DynamicContext getModuleDynamicContext() {
@@ -1210,8 +1213,7 @@ public interface Item extends Serializable {
      *
      * @param mutabilityLevel new mutability level.
      */
-    default void setMutabilityLevel(int mutabilityLevel) {
-    }
+    default void setMutabilityLevel(int mutabilityLevel) {}
 
     /**
      * Returns the top level ID of the item.
@@ -1227,8 +1229,7 @@ public interface Item extends Serializable {
      *
      * @param topLevelID new top level ID.
      */
-    default void setTopLevelID(long topLevelID) {
-    }
+    default void setTopLevelID(long topLevelID) {}
 
     /**
      * Returns the path from the top level object of a DeltaFile for the item.
@@ -1244,8 +1245,7 @@ public interface Item extends Serializable {
      *
      * @param pathIn new path from top level.
      */
-    default void setPathIn(String pathIn) {
-    }
+    default void setPathIn(String pathIn) {}
 
     /**
      * Returns the location of the DeltaFile for the item.
@@ -1256,18 +1256,16 @@ public interface Item extends Serializable {
         return null;
     }
 
-
     /**
      * Sets the location of the DeltaFile for the item to a supplied value.
      *
      * @param location new location of the DeltaFile for the item.
      */
-    default void setTableLocation(String location) {
-    }
+    default void setTableLocation(String location) {}
 
     /**
      * Returns the top level order (sequence number) identifier
-     * 
+     *
      * @return double representing rowOrder of the tuple
      */
     default double getTopLevelOrder() {
@@ -1276,11 +1274,10 @@ public interface Item extends Serializable {
 
     /**
      * Sets the top level order parameter (rowOrder)
-     * 
+     *
      * @param topLevelOrder new rowOrder value
      */
-    default void setTopLevelOrder(double topLevelOrder) {
-    }
+    default void setTopLevelOrder(double topLevelOrder) {}
 
     /**
      * Returns the SparkSQL value of the item for use in a query.
@@ -1332,7 +1329,8 @@ public interface Item extends Serializable {
         if (this.getTopLevelID() == -1 || otherItem.getTopLevelID() == -1) {
             return System.identityHashCode(this) == System.identityHashCode(otherItem);
         }
-        return this.getTopLevelID() == otherItem.getTopLevelID() && this.getPathIn().equals(otherItem.getPathIn());
+        return this.getTopLevelID() == otherItem.getTopLevelID()
+                && this.getPathIn().equals(otherItem.getPathIn());
     }
 
     /**
@@ -1370,7 +1368,7 @@ public interface Item extends Serializable {
 
     /**
      * Get sparkSql string for the item
-     * 
+     *
      * @param context input context
      * @return String representing the item in a sparksql query or null if it is not supported for the item
      */
@@ -1637,10 +1635,10 @@ public interface Item extends Serializable {
      * implementation of dm:typed-value delegates to atomizedValue().
      */
     default List<Item> atomizedValue() {
-        if (isAtomic())
-            return Collections.singletonList(this);
+        if (isAtomic()) return Collections.singletonList(this);
         else
-            throw new UnsupportedOperationException("Operation not defined for class " + this.getClass().getName());
+            throw new UnsupportedOperationException(
+                    "Operation not defined for class " + this.getClass().getName());
     }
 
     default void setParent(Item parent) {
@@ -1651,19 +1649,49 @@ public interface Item extends Serializable {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    default void setSchemaType(ItemType typeAnnotation) {
+    /**
+     * Sets an element node's schema type annotation when its typed value is unavailable.
+     *
+     * @param typeAnnotation the schema type annotation
+     */
+    default void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
-    default ItemType getSchemaType() {
+    /**
+     * Sets a node's schema type annotation together with its XDM typed value.
+     *
+     * @param typeAnnotation the schema type annotation
+     * @param typedValue the typed value, including an empty list for a valid empty typed value
+     */
+    default void setSchemaType(XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /** Removes a node's schema annotation and restores its untyped typed-value behavior. */
+    default void clearSchemaType() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /** @return this node's XML Schema annotation, or {@code null} when the node is untyped. */
+    default XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
         return null;
     }
 
+    /** Records the nilled property supplied by XML Schema validation. */
+    default void setXmlSchemaNilled(boolean nilled) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /** Records the ID and IDREF properties supplied by XML Schema validation. */
+    default void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
 
     /**
      * Get the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
      * uniqueness
-     * 
+     *
      * @return the XML document position
      */
     default XMLDocumentPosition getXmlDocumentPosition() {
@@ -1673,7 +1701,7 @@ public interface Item extends Serializable {
     /**
      * Set the position of the Node inside the XML document (and path incase of multiple docs) for sorting /
      * uniqueness
-     * 
+     *
      * @param path the path of the XML document
      * @param current the current position
      * @return the new position
@@ -1685,7 +1713,7 @@ public interface Item extends Serializable {
     /**
      * Returns the collection to which the item belongs, if any.
      * Only defined for top-level items.
-     * 
+     *
      * @return the collection.
      */
     default Collection getCollection() {
@@ -1695,9 +1723,8 @@ public interface Item extends Serializable {
     /**
      * Sets the collection to which the item belongs.
      * Only defined for top-level items.
-     * 
+     *
      * @param collection the collection.
      */
-    default void setCollection(Collection collection) {
-    }
+    default void setCollection(Collection collection) {}
 }

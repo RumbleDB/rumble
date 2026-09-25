@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
 import java.io.Serial;
@@ -15,16 +30,15 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-
 public class DateItem extends AbstractAtomicItem {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private OffsetDateTime value;
     private boolean hasTimeZone = false;
     private static final Pattern dayRegex = Pattern.compile(
-        "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
-    );
+            "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
 
     DateItem(OffsetDateTime value, boolean hasTimeZone) {
         this.value = value.toLocalDate().atStartOfDay(value.getOffset()).toOffsetDateTime();
@@ -60,13 +74,13 @@ public class DateItem extends AbstractAtomicItem {
             }
             if (dateString.contains("Z") || dateString.contains(":")) {
                 this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE)
-                    .atStartOfDay()
-                    .atOffset(ZoneOffset.of(dateString.substring(10)));
+                        .atStartOfDay()
+                        .atOffset(ZoneOffset.of(dateString.substring(10)));
                 this.hasTimeZone = true;
             } else {
                 this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_LOCAL_DATE)
-                    .atStartOfDay(ZoneOffset.UTC)
-                    .toOffsetDateTime();
+                        .atStartOfDay(ZoneOffset.UTC)
+                        .toOffsetDateTime();
                 this.hasTimeZone = false;
             }
             // Those operations need to be in separate lines,
@@ -77,17 +91,14 @@ public class DateItem extends AbstractAtomicItem {
             throw new IllegalArgumentException("Invalid xs:date: \"" + dateString + "\"");
         } catch (NumberFormatException e) {
             throw new DatetimeOverflowOrUnderflow(
-                    "Invalid xs:date: \"" + dateString + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Invalid xs:date: \"" + dateString + "\"", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
     @Override
     public String getStringValue() {
         String stringValue = this.value.format(
-            this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE : DateTimeFormatter.ISO_LOCAL_DATE
-        );
+                this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE : DateTimeFormatter.ISO_LOCAL_DATE);
         if (this.value.toString().startsWith("+")) {
             return stringValue.substring(1);
         }

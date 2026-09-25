@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
 import java.util.ArrayList;
@@ -7,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.log4j.LogManager;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.CharType;
@@ -17,6 +31,9 @@ import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.apache.spark.sql.types.VarcharType;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -25,19 +42,41 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
+import org.rumbledb.spark.SparkSessionManager;
 
+@Log4j2
 public class ItemTypeFactory {
+
+    /**
+     * Creates Rumble's nominal representation of an atomic type declared in an XML Schema.
+     * Xerces remains responsible for validating the type's constraining facets.
+     *
+     * @param name the declared type name or the internal name assigned to an anonymous schema type
+     * @param baseType the Rumble representation of its XSD base type
+     * @return the corresponding atomic item type
+     */
+    public static ItemType createXmlSchemaAtomicType(Name name, ItemType baseType) {
+        return new DerivedAtomicItemType(name, baseType, baseType.getPrimitiveType(), new Facets());
+    }
+
+    /**
+     * Creates Rumble's representation of a pure union type declared in an XML Schema.
+     *
+     * @param name the declared type name or the internal name assigned to an anonymous schema type
+     * @param memberTypes the union's transitive atomic member types
+     * @return the corresponding generalized atomic item type
+     */
+    public static ItemType createXmlSchemaUnionType(Name name, List<ItemType> memberTypes) {
+        return new UnionItemType(name, BuiltinTypesCatalogue.atomicItem, List.copyOf(memberTypes));
+    }
 
     public static ItemType createItemTypeFromJSoundCompactItem(Name name, Item item, StaticContext staticContext) {
         if (item.isString()) {
             String typeString = item.getStringValue();
             if (typeString.contains("=")) {
                 throw new InvalidSchemaException(
-                        "= is only supported for the types of object values",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        "= is only supported for the types of object values", ExceptionMetadata.EMPTY_METADATA);
             }
             return new ItemTypeReference(Name.createTypeNameFromLiteral(typeString, staticContext));
         }
@@ -46,18 +85,11 @@ public class ItemTypeFactory {
             if (members.size() != 1) {
                 throw new InvalidSchemaException(
                         "Invalid JSound, an array type should only contain one member type: " + item.serialize(),
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             ItemType memberType = createItemTypeFromJSoundCompactItem(null, members.get(0), staticContext);
             return new ArrayItemType(
-                    null,
-                    BuiltinTypesCatalogue.arrayItem,
-                    memberType,
-                    null,
-                    null,
-                    Collections.emptyList()
-            );
+                    null, BuiltinTypesCatalogue.arrayItem, memberType, null, null, Collections.emptyList());
         }
         if (item.isObject()) {
             Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
@@ -86,8 +118,7 @@ public class ItemTypeFactory {
                     if (defaultLiteral.contains("=")) {
                         throw new InvalidSchemaException(
                                 "= can only appear once in a field descriptor type reference",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                ExceptionMetadata.EMPTY_METADATA);
                     }
                     typeString = typeString.substring(0, index);
                     value = ItemFactory.getInstance().createStringItem(typeString);
@@ -100,10 +131,7 @@ public class ItemTypeFactory {
                 ItemType type = createItemTypeFromJSoundCompactItem(null, value, staticContext);
                 if (canBeNull) {
                     type = new UnionItemType(
-                            null,
-                            BuiltinTypesCatalogue.item,
-                            Arrays.asList(type, BuiltinTypesCatalogue.nullItem)
-                    );
+                            null, BuiltinTypesCatalogue.item, Arrays.asList(type, BuiltinTypesCatalogue.nullItem));
                 }
                 fieldDescriptor.setType(type);
                 fieldDescriptor.setUnique(unique);
@@ -117,15 +145,14 @@ public class ItemTypeFactory {
                     new ArrayList<>(fields.keySet()),
                     new ArrayList<>(fields.values()),
                     Collections.emptyList(),
-                    Collections.emptyList()
-            );
+                    Collections.emptyList());
         }
         throw new InvalidSchemaException("Invalid JSound type definition: " + item, ExceptionMetadata.EMPTY_METADATA);
     }
 
     /**
      * Create an anonymous object type from keys and values.
-     * 
+     *
      * @param keys a list of String representing the keys of the object
      * @param values a list of ItemType of the values, all with arity == Arity.One
      * @return an anonymous object type based on the provided keys and values
@@ -133,9 +160,7 @@ public class ItemTypeFactory {
     public static ItemType createAnonymousObjectType(List<String> keys, List<ItemType> values) {
         if (keys.size() != values.size()) {
             throw new InvalidSchemaException(
-                    "Key list and value list must have the same dimensions",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Key list and value list must have the same dimensions", ExceptionMetadata.EMPTY_METADATA);
         }
         List<FieldDescriptor> content = new ArrayList<>();
         for (int i = 0; i < keys.size(); i++) {
@@ -154,56 +179,37 @@ public class ItemTypeFactory {
                 new ArrayList<>(keys),
                 content,
                 Collections.emptyList(),
-                Collections.emptyList()
-        );
+                Collections.emptyList());
     }
 
     /**
      * Create an anonymous array type from keys and values.
-     * 
+     *
      * @param content an item type for the content
      * @return an anonymous array type based on the provided content type
      */
     public static ItemType createAnonymousArrayType(ItemType content) {
-        return new ArrayItemType(
-                null,
-                BuiltinTypesCatalogue.arrayItem,
-                content,
-                null,
-                null,
-                null
-        );
+        return new ArrayItemType(null, BuiltinTypesCatalogue.arrayItem, content, null, null, null);
     }
 
     /**
      * Create an empty array type.
-     * 
+     *
      * @return an empty array type.
      */
     public static ItemType createEmptyArrayType() {
-        return new ArrayItemType(
-                null,
-                BuiltinTypesCatalogue.arrayItem,
-                BuiltinTypesCatalogue.item,
-                0,
-                0,
-                null
-        );
+        return new ArrayItemType(null, BuiltinTypesCatalogue.arrayItem, BuiltinTypesCatalogue.item, 0, 0, null);
     }
 
     public static ItemType createItemTypeFromJSoundVerboseItem(Name name, Item item, StaticContext staticContext) {
         if (!item.isObject()) {
             throw new InvalidSchemaException(
-                    "A JSound verbose schema must be an object",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "A JSound verbose schema must be an object", ExceptionMetadata.EMPTY_METADATA);
         }
         List<String> keys = item.getStringKeys();
         if (!keys.contains("kind")) {
             throw new InvalidSchemaException(
-                    "A JSound verbose schema must contain a 'kind' field.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "A JSound verbose schema must contain a 'kind' field.", ExceptionMetadata.EMPTY_METADATA);
         }
         String kind = item.getItemByKey("kind").getStringValue();
         ItemType baseType = null;
@@ -217,22 +223,18 @@ public class ItemTypeFactory {
             Name declaredName = Name.createTypeNameFromLiteral(declaredNameString, staticContext);
             if (!declaredName.equals(name)) {
                 throw new InvalidSchemaException(
-                        "The 'name' field does not match the type's name.",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        "The 'name' field does not match the type's name.", ExceptionMetadata.EMPTY_METADATA);
             }
         }
         if (keys.contains("enumeration")) {
             throw new UnsupportedFeatureException(
                     "The enumeration facet is not supported yet, but it will come in a subsequent release.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         if (keys.contains("constraints")) {
             throw new UnsupportedFeatureException(
                     "The constraints facet is not supported yet, but it will come in a subsequent release.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         switch (kind) {
             case "object":
@@ -242,10 +244,8 @@ public class ItemTypeFactory {
 
                 Item contentItem = item.getItemByKey("content");
                 if (!keys.contains("content")) {
-                    LogManager.getLogger("ItemTypeFactory")
-                        .warn(
-                            "The content facet of an object type is missing. By default, no fields are defined or overriden."
-                        );
+                    log.warn(
+                            "The content facet of an object type is missing. By default, no fields are defined or overriden.");
                     contentItem = ItemFactory.getInstance().createArrayItem(staticContext.isQuerySideEffecting());
                 } else {
                     if (contentItem == null) {
@@ -253,27 +253,20 @@ public class ItemTypeFactory {
                     }
                     if (!contentItem.isArray()) {
                         throw new InvalidSchemaException(
-                                "The content facet must be an array",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The content facet must be an array", ExceptionMetadata.EMPTY_METADATA);
                     }
                 }
 
                 boolean closed = false;
                 Item closedItem = item.getItemByKey("closed");
                 if (closedItem != null && !closedItem.isBoolean()) {
-                    throw new InvalidSchemaException(
-                            "'closed' must be a boolean.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                    throw new InvalidSchemaException("'closed' must be a boolean.", ExceptionMetadata.EMPTY_METADATA);
                 }
                 if (closedItem != null) {
                     closed = closedItem.getBooleanValue();
                 } else {
-                    LogManager.getLogger("ItemTypeFactory")
-                        .warn(
-                            "The closed facet of an object type is missing. By default, a closed object type is created. Set closed to false to keep the type open and allow arbitrary fields."
-                        );
+                    log.warn(
+                            "The closed facet of an object type is missing. By default, a closed object type is created. Set closed to false to keep the type open and allow arbitrary fields.");
                     closed = true;
                 }
                 List<Item> contents = contentItem.getItemMembers();
@@ -282,37 +275,29 @@ public class ItemTypeFactory {
                     Item fieldItem = c.getItemByKey("name");
                     if (fieldItem == null) {
                         throw new InvalidSchemaException(
-                                "Field descriptor is missing a name.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "Field descriptor is missing a name.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     if (!fieldItem.isString()) {
                         throw new InvalidSchemaException(
-                                "The name of a field must be a string.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The name of a field must be a string.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     String fieldName = fieldItem.getStringValue();
 
                     Item typeItem = c.getItemByKey("type");
                     if (typeItem == null) {
                         throw new InvalidSchemaException(
-                                "Field descriptor is missing a type.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "Field descriptor is missing a type.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     ItemType type = null;
                     if (typeItem.isString()) {
                         type = new ItemTypeReference(
-                                Name.createTypeNameFromLiteral(typeItem.getStringValue(), staticContext)
-                        );
+                                Name.createTypeNameFromLiteral(typeItem.getStringValue(), staticContext));
                     } else if (typeItem.isObject()) {
                         type = createItemTypeFromJSoundVerboseItem(null, typeItem, staticContext);
                     } else {
                         throw new InvalidSchemaException(
                                 "The tyep of a field descriptor must be a string or an object.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                ExceptionMetadata.EMPTY_METADATA);
                     }
 
                     boolean required = false;
@@ -320,9 +305,7 @@ public class ItemTypeFactory {
                     Item requiredItem = c.getItemByKey("required");
                     if (requiredItem != null && !requiredItem.isBoolean()) {
                         throw new InvalidSchemaException(
-                                "'required' must be a boolean.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "'required' must be a boolean.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     if (requiredItem != null) {
                         required = requiredItem.getBooleanValue();
@@ -334,9 +317,7 @@ public class ItemTypeFactory {
                     Item uniqueItem = c.getItemByKey("unique");
                     if (uniqueItem != null && !uniqueItem.isBoolean()) {
                         throw new InvalidSchemaException(
-                                "'unique' must be a boolean.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "'unique' must be a boolean.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     if (uniqueItem != null) {
                         unique = uniqueItem.getBooleanValue();
@@ -347,8 +328,7 @@ public class ItemTypeFactory {
                     if (defaultValue != null && !defaultValue.isAtomic()) {
                         throw new InvalidSchemaException(
                                 "'default' must be an atomic value. Default values for non-atomic types are not supported yet.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                ExceptionMetadata.EMPTY_METADATA);
                     }
                     FieldDescriptor fieldDescriptor = new FieldDescriptor();
                     fieldDescriptor.setName(fieldName);
@@ -371,8 +351,7 @@ public class ItemTypeFactory {
                         new ArrayList<>(fields.keySet()),
                         new ArrayList<>(fields.values()),
                         Collections.emptyList(),
-                        Collections.emptyList()
-                );
+                        Collections.emptyList());
                 return it;
             case "array":
                 if (baseType == null) {
@@ -381,8 +360,7 @@ public class ItemTypeFactory {
                 if (!keys.contains("content")) {
                     throw new InvalidSchemaException(
                             "The content facet is required in an array type declaration.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            ExceptionMetadata.EMPTY_METADATA);
                 }
                 contentItem = item.getItemByKey("content");
                 if (contentItem == null) {
@@ -391,15 +369,12 @@ public class ItemTypeFactory {
                 ItemType memberType = null;
                 if (contentItem.isString()) {
                     memberType = new ItemTypeReference(
-                            Name.createTypeNameFromLiteral(contentItem.getStringValue(), staticContext)
-                    );
+                            Name.createTypeNameFromLiteral(contentItem.getStringValue(), staticContext));
                 } else if (contentItem.isObject()) {
                     memberType = createItemTypeFromJSoundVerboseItem(null, contentItem, staticContext);
                 } else {
                     throw new InvalidSchemaException(
-                            "The content of an array must be a string or an object.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "The content of an array must be a string or an object.", ExceptionMetadata.EMPTY_METADATA);
                 }
                 Integer length = null;
                 Integer minLength = null;
@@ -414,17 +389,13 @@ public class ItemTypeFactory {
 
                 if (keys.contains("enumeration")) {
                     throw new InvalidSchemaException(
-                            "The enumeration facet is not released yet.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "The enumeration facet is not released yet.", ExceptionMetadata.EMPTY_METADATA);
                 }
                 if (keys.contains("minLength")) {
                     Item minLengthItem = item.getItemByKey("minLength");
                     if (!minLengthItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The minLength facet must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The minLength facet must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     minLength = minLengthItem.castToIntValue();
                 }
@@ -432,21 +403,12 @@ public class ItemTypeFactory {
                     Item maxLengthItem = item.getItemByKey("maxLength");
                     if (!maxLengthItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The maxLength facet must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The maxLength facet must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     maxLength = maxLengthItem.castToIntValue();
                 }
 
-                return new ArrayItemType(
-                        name,
-                        baseType,
-                        memberType,
-                        minLength,
-                        maxLength,
-                        enumeration
-                );
+                return new ArrayItemType(name, baseType, memberType, minLength, maxLength, enumeration);
             case "atomic":
                 length = null;
                 minLength = null;
@@ -460,17 +422,13 @@ public class ItemTypeFactory {
                 fractionDigits = null;
                 if (baseType == null) {
                     throw new InvalidSchemaException(
-                            "BaseType is required for an atomic user-defined type.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "BaseType is required for an atomic user-defined type.", ExceptionMetadata.EMPTY_METADATA);
                 }
                 if (keys.contains("length")) {
                     Item lengthItem = item.getItemByKey("length");
                     if (!lengthItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The length facet must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The length facet must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     length = lengthItem.castToIntValue();
                 }
@@ -479,9 +437,7 @@ public class ItemTypeFactory {
                     Item minLengthItem = item.getItemByKey("minLength");
                     if (!minLengthItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The minLength facet must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The minLength facet must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     minLength = minLengthItem.castToIntValue();
                 }
@@ -490,26 +446,20 @@ public class ItemTypeFactory {
                     Item maxLengthItem = item.getItemByKey("maxLength");
                     if (!maxLengthItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The maxLength facet must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The maxLength facet must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     maxLength = maxLengthItem.castToIntValue();
                 }
 
                 if (keys.contains("enumeration")) {
                     throw new InvalidSchemaException(
-                            "The enumeration facet is not released yet.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "The enumeration facet is not released yet.", ExceptionMetadata.EMPTY_METADATA);
                 }
                 if (keys.contains("minInclusive")) {
                     Item minInclusiveItem = item.getItemByKey("minInclusive");
                     if (!minInclusiveItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The minInclusive fact must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The minInclusive fact must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     minInclusive = minInclusiveItem;
                 }
@@ -517,9 +467,7 @@ public class ItemTypeFactory {
                     Item maxInclusiveItem = item.getItemByKey("maxInclusive");
                     if (!maxInclusiveItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The maxInclusive fact must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The maxInclusive fact must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     maxInclusive = maxInclusiveItem;
                 }
@@ -527,9 +475,7 @@ public class ItemTypeFactory {
                     Item minExclusiveItem = item.getItemByKey("minExclusive");
                     if (!minExclusiveItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The minExclusive fact must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The minExclusive fact must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     minExclusive = minExclusiveItem;
                 }
@@ -537,9 +483,7 @@ public class ItemTypeFactory {
                     Item maxExclusiveItem = item.getItemByKey("maxExclusive");
                     if (!maxExclusiveItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The maxExclusive fact must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The maxExclusive fact must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     maxExclusive = maxExclusiveItem;
                 }
@@ -547,9 +491,7 @@ public class ItemTypeFactory {
                     Item totalDigitsItem = item.getItemByKey("totalDigits");
                     if (!totalDigitsItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The totalDigits fact must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The totalDigits fact must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     totalDigits = totalDigitsItem.castToIntValue();
                 }
@@ -557,9 +499,7 @@ public class ItemTypeFactory {
                     Item fractionDigitsItem = item.getItemByKey("fractionDigits");
                     if (!fractionDigitsItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The fractionDigits fact must be a numeric value.",
-                                ExceptionMetadata.EMPTY_METADATA
-                        );
+                                "The fractionDigits fact must be a numeric value.", ExceptionMetadata.EMPTY_METADATA);
                     }
                     fractionDigits = fractionDigitsItem.castToIntValue();
                 }
@@ -570,25 +510,21 @@ public class ItemTypeFactory {
                         baseType,
                         baseType,
                         Facets.createAtomicTypeFacets(
-                            length,
-                            enumeration,
-                            minLength,
-                            maxLength,
-                            minInclusive,
-                            maxInclusive,
-                            minExclusive,
-                            maxExclusive,
-                            totalDigits,
-                            fractionDigits
-                        )
-                );
+                                length,
+                                enumeration,
+                                minLength,
+                                maxLength,
+                                minInclusive,
+                                maxInclusive,
+                                minExclusive,
+                                maxExclusive,
+                                totalDigits,
+                                fractionDigits));
             case "union":
                 throw new OurBadException("Kind union is not supported yet.");
             default:
                 throw new InvalidSchemaException(
-                        "Kind '" + kind + "' does not exist.",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        "Kind '" + kind + "' does not exist.", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -651,6 +587,11 @@ public class ItemTypeFactory {
         return new ElementNodeItemType(nodeName);
     }
 
+    public static ItemType elementNodeItemType(
+            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, boolean nillable) {
+        return new ElementNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy, nillable);
+    }
+
     /**
      * Wildcard XQuery attribute node type attribute().
      *
@@ -671,6 +612,10 @@ public class ItemTypeFactory {
             throw new OurBadException("Attribute node name cannot be null.");
         }
         return new AttributeNodeItemType(nodeName);
+    }
+
+    public static ItemType attributeNodeItemType(Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy) {
+        return new AttributeNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy);
     }
 
     /**
@@ -716,7 +661,7 @@ public class ItemTypeFactory {
 
     /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
-     * 
+     *
      * @param structType descriptor of the object
      * @return an object item type representing the type in Rumble
      */
@@ -730,10 +675,8 @@ public class ItemTypeFactory {
             ItemType mappedItemType = createItemType(filedType);
 
             // Handle atomic types: do not wrap into object
-            if (
-                field.name().equals(SparkSessionManager.nonObjectJSONiqItemColumnName)
-                    && mappedItemType.isAtomicItemType()
-            ) {
+            if (field.name().equals(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                    && mappedItemType.isAtomicItemType()) {
                 return mappedItemType;
             }
 
@@ -751,7 +694,7 @@ public class ItemTypeFactory {
 
     /**
      * Create an object item type from an item by detecting a schema.
-     * 
+     *
      * @param item the item to analyze
      * @return an object item type representing the type in Rumble
      */
@@ -767,14 +710,9 @@ public class ItemTypeFactory {
                 return BuiltinTypesCatalogue.mapItem;
             }
             ItemType keyType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                item.getItemKeys(),
-                ExceptionMetadata.EMPTY_METADATA,
-                TypeInferrenceUtils.TypeMergeMode.STRICT
-            );
+                    item.getItemKeys(), ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.STRICT);
             SequenceType valueSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
-                item.getSequenceValues(),
-                TypeInferrenceUtils.TypeMergeMode.STRICT
-            );
+                    item.getSequenceValues(), TypeInferrenceUtils.TypeMergeMode.STRICT);
             return ItemTypeFactory.mapOf(keyType, valueSequenceType);
         } else if (item.isArrayOfItems()) {
             if (item.getSize() == 0) {
@@ -791,14 +729,7 @@ public class ItemTypeFactory {
     }
 
     private static ItemType createArrayTypeWithSparkDataTypeContent(DataType type) {
-        return new ArrayItemType(
-                null,
-                BuiltinTypesCatalogue.arrayItem,
-                createItemType(type),
-                null,
-                null,
-                null
-        );
+        return new ArrayItemType(null, BuiltinTypesCatalogue.arrayItem, createItemType(type), null, null, null);
     }
 
     public static ItemType createItemType(DataType dt) {
@@ -806,9 +737,7 @@ public class ItemTypeFactory {
             return createItemTypeFromSparkStructType(structType);
         }
         if (dt instanceof ArrayType arrayType) {
-            return createArrayTypeWithSparkDataTypeContent(
-                arrayType.elementType()
-            );
+            return createArrayTypeWithSparkDataTypeContent(arrayType.elementType());
         }
         if (dt.equals(DataTypes.StringType)) {
             return BuiltinTypesCatalogue.stringItem;
@@ -845,9 +774,7 @@ public class ItemTypeFactory {
         } else if (dt.equals(DataTypes.VariantType)) {
             return BuiltinTypesCatalogue.item;
         } else if (dt instanceof VectorUDT) {
-            return createArrayTypeWithSparkDataTypeContent(
-                DataTypes.DoubleType
-            );
+            return createArrayTypeWithSparkDataTypeContent(DataTypes.DoubleType);
         }
         throw new OurBadException("DataFrame type unsupported: " + dt);
     }

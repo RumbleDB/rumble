@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.cli.commands;
 
 import java.util.concurrent.Callable;
+
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Mixin;
 
 import org.rumbledb.cli.CLIInvocation;
 import org.rumbledb.cli.arguments.AnalysisArguments;
@@ -30,10 +30,6 @@ import org.rumbledb.cli.arguments.RuntimeArguments;
 import org.rumbledb.cli.arguments.SemanticsArguments;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.model.RumbleMode;
-
-import picocli.CommandLine.Command;
-import picocli.CommandLine.Mixin;
-
 
 @Command
 public abstract class BaseCommand implements Callable<CLIInvocation> {
@@ -60,13 +56,13 @@ public abstract class BaseCommand implements Callable<CLIInvocation> {
 
     protected final RumbleConfiguration.RumbleConfigurationBuilder baseConfiguration(RumbleMode mode) {
         return RumbleConfiguration.builder()
-            .mode(mode)
-            .runtime(this.runtime.toConfig())
-            .debug(this.debug.toConfig())
-            .analysis(this.analysis.toConfig())
-            .optimization(this.optimization.toConfig())
-            .semantics(this.semantics.toConfig())
-            .formatting(this.formatting.toConfig());
+                .mode(mode)
+                .runtime(this.runtime.toConfig())
+                .debug(this.debug.toConfig())
+                .analysis(this.analysis.toConfig())
+                .optimization(this.optimization.toConfig())
+                .semantics(this.semantics.toConfig())
+                .formatting(this.formatting.toConfig());
     }
 
     protected final CLIInvocation invocation(RumbleConfiguration configuration) {

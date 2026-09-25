@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,26 +11,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.api;
-
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+
 import org.rumbledb.config.model.RumbleMode;
 
 public class RumbleConfigurationTest {
 
     @Test
     public void getReturnsPlainJavaValues() {
-        RumbleConfiguration configuration = configuration(
-            org.rumbledb.config.RumbleConfiguration.builder()
+        RumbleConfiguration configuration = configuration(org.rumbledb.config.RumbleConfiguration.builder()
                 .mode(RumbleMode.RUN)
                 .configureRuntime(runtime -> runtime.resultsSizeCap(100))
                 .configureDebug(debug -> debug.showErrorInfo(true))
-                .build()
-        );
+                .build());
 
         Assertions.assertEquals("RUN", configuration.get("mode"));
         Assertions.assertEquals(100, configuration.get("runtime.resultsSizeCap"));
@@ -42,13 +37,11 @@ public class RumbleConfigurationTest {
 
     @Test
     public void typedGettersConvertValues() {
-        RumbleConfiguration configuration = configuration(
-            org.rumbledb.config.RumbleConfiguration.builder()
+        RumbleConfiguration configuration = configuration(org.rumbledb.config.RumbleConfiguration.builder()
                 .mode(RumbleMode.REPL)
                 .configureRuntime(runtime -> runtime.resultsSizeCap(100))
                 .configureDebug(debug -> debug.showErrorInfo(true))
-                .build()
-        );
+                .build());
 
         Assertions.assertEquals("REPL", configuration.getString("mode"));
         Assertions.assertEquals(100, configuration.getInt("runtime.resultsSizeCap"));
@@ -65,22 +58,16 @@ public class RumbleConfigurationTest {
     @Test
     public void getRejectsUnknownPath() {
         Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> new RumbleConfiguration().get("runtime.unknownOption")
-        );
+                IllegalArgumentException.class, () -> new RumbleConfiguration().get("runtime.unknownOption"));
     }
 
     @Test
     public void getRejectsInvalidPath() {
         Assertions.assertThrows(
-            IllegalArgumentException.class,
-            () -> new RumbleConfiguration().get("runtime..resultsSizeCap")
-        );
+                IllegalArgumentException.class, () -> new RumbleConfiguration().get("runtime..resultsSizeCap"));
     }
 
-    private static RumbleConfiguration configuration(
-            org.rumbledb.config.RumbleConfiguration internalConfiguration
-    ) {
+    private static RumbleConfiguration configuration(org.rumbledb.config.RumbleConfiguration internalConfiguration) {
         return new RumbleConfiguration(internalConfiguration);
     }
 }

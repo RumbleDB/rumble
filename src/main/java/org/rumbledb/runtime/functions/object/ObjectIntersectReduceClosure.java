@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Ioana Stefan
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.object;
 
 import java.io.Serial;
@@ -27,22 +22,19 @@ import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.apache.spark.api.java.function.Function2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 
 public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item> {
 
-
     @Serial
     private static final long serialVersionUID = 1L;
 
-
     @Override
     public Item call(Item v1, Item v2) throws Exception {
-        if (!v1.isObject())
-            return v2;
-        else if (!v2.isObject())
-            return v1;
+        if (!v1.isObject()) return v2;
+        else if (!v2.isObject()) return v1;
 
         LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
 
@@ -66,11 +58,11 @@ public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item>
                 // add the matching key's value to the list
                 Item value = v2.getItemByKey(key);
                 Item prevValue = keyValuePairs.get(key).get(0);
-                for (Item elem : value.getItemMembers())
-                    prevValue.appendItem(elem);
+                for (Item elem : value.getItemMembers()) prevValue.appendItem(elem);
             }
         }
 
         return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
     }
-};
+}
+;
