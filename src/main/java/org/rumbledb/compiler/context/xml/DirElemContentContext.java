@@ -21,23 +21,26 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record DirElemContentContext(
-        ParserRuleContext directConstructor,
-        ParserRuleContext commonContent,
+public record DirElemContentContext<
+        DirectConstructorCtx extends ParserRuleContext, CommonContentCtx extends ParserRuleContext>(
+        DirectConstructorCtx directConstructor,
+        CommonContentCtx commonContent,
         TerminalNode cdata,
         ParserRuleContext context) {
 
-    public static DirElemContentContext from(JsoniqParser.DirElemContentContext c) {
+    public static DirElemContentContext<JsoniqParser.DirectConstructorContext, JsoniqParser.CommonContentContext> from(
+            JsoniqParser.DirElemContentContext c) {
         if (c == null) {
             return null;
         }
-        return new DirElemContentContext(c.directConstructor(), c.commonContent(), c.CDATA(), c);
+        return new DirElemContentContext<>(c.directConstructor(), c.commonContent(), c.CDATA(), c);
     }
 
-    public static DirElemContentContext from(XQueryParser.DirElemContentContext c) {
+    public static DirElemContentContext<XQueryParser.DirectConstructorContext, XQueryParser.CommonContentContext> from(
+            XQueryParser.DirElemContentContext c) {
         if (c == null) {
             return null;
         }
-        return new DirElemContentContext(c.directConstructor(), c.commonContent(), c.CDATA(), c);
+        return new DirElemContentContext<>(c.directConstructor(), c.commonContent(), c.CDATA(), c);
     }
 }

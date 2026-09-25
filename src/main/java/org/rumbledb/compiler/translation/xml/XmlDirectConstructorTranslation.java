@@ -44,7 +44,6 @@ import org.rumbledb.exceptions.NamespaceDeclarationAttributeEnclosedExpressionEx
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
@@ -306,16 +305,18 @@ public final class XmlDirectConstructorTranslation {
         }
     }
 
-    public static Expression dirElemContent(
-            DirElemContentContext ctx,
-            CommonTokenStream tokenStream,
-            TranslationContext translationContext,
-            Function<ParserRuleContext, Node> visit) {
+    public static <DirectConstructorCtx extends ParserRuleContext, CommonContentCtx extends ParserRuleContext>
+            Expression dirElemContent(
+                    DirElemContentContext<DirectConstructorCtx, CommonContentCtx> ctx,
+                    CommonTokenStream tokenStream,
+                    TranslationContext translationContext,
+                    Function<DirectConstructorCtx, Expression> visitDirectConstructor,
+                    Function<CommonContentCtx, Expression> visitCommonContent) {
         if (ctx.directConstructor() != null) {
-            return (Expression) visit.apply(ctx.directConstructor());
+            return visitDirectConstructor.apply(ctx.directConstructor());
         }
         if (ctx.commonContent() != null) {
-            return (Expression) visit.apply(ctx.commonContent());
+            return visitCommonContent.apply(ctx.commonContent());
         }
         String text = tokenStream.getText(ctx.context().getSourceInterval());
         if (ctx.cdata() != null) {

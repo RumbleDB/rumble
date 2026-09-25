@@ -1284,7 +1284,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Expression visitDirElemContent(JsoniqParser.DirElemContentContext ctx) {
         return XmlDirectConstructorTranslation.dirElemContent(
-                DirElemContentContext.from(ctx), this.jsoniqTokenStream, this.translationContext, this::visit);
+                DirElemContentContext.from(ctx),
+                this.jsoniqTokenStream,
+                this.translationContext,
+                this::visitDirectConstructor,
+                this::visitCommonContent);
     }
 
     @Override

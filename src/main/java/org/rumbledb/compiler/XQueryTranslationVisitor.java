@@ -1059,7 +1059,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Expression visitDirElemContent(XQueryParser.DirElemContentContext ctx) {
         return XmlDirectConstructorTranslation.dirElemContent(
-                DirElemContentContext.from(ctx), this.xQueryTokenStream, this.translationContext, this::visit);
+                DirElemContentContext.from(ctx),
+                this.xQueryTokenStream,
+                this.translationContext,
+                this::visitDirectConstructor,
+                this::visitCommonContent);
     }
 
     @Override
