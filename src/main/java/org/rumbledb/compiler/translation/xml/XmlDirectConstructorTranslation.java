@@ -201,7 +201,7 @@ public final class XmlDirectConstructorTranslation {
                 "Direct constructor not yet implemented", translationContext.metadata(ctx.context()));
     }
 
-    public static DirPIConstructorExpression dirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
+    private static DirPIConstructorExpression dirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
         String tokenText = piToken.getText();
         String inner = tokenText.substring(2, tokenText.length() - 2);
         int whitespaceIndex = indexOfWhitespace(inner);
@@ -218,7 +218,7 @@ public final class XmlDirectConstructorTranslation {
         return new DirPIConstructorExpression(target, contentExpression, metadata);
     }
 
-    public static int indexOfWhitespace(String value) {
+    private static int indexOfWhitespace(String value) {
         for (int i = 0; i < value.length(); i++) {
             if (Character.isWhitespace(value.charAt(i))) {
                 return i;
@@ -489,7 +489,7 @@ public final class XmlDirectConstructorTranslation {
         return result.finish();
     }
 
-    public static boolean isWhitespaceOnly(String value) {
+    private static boolean isWhitespaceOnly(String value) {
         for (int i = 0; i < value.length(); i++) {
             if (!Character.isWhitespace(value.charAt(i))) {
                 return false;
@@ -498,7 +498,7 @@ public final class XmlDirectConstructorTranslation {
         return !value.isEmpty();
     }
 
-    public static String processLiteralContent(String content) {
+    private static String processLiteralContent(String content) {
         if (content.startsWith("&") && content.endsWith(";")) {
             return StringEscapeUtils.unescapeXml(content);
         }
