@@ -34,7 +34,7 @@ import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 
 /** Shared processing for JSONiq and XQuery direct element and attribute constructors. */
-final class DirectConstructorUtils {
+public final class DirectConstructorUtils {
 
     private static final class AttributeValueBuilder {
         private final BiFunction<ParseTree, ParseTree, ExceptionMetadata> metadataFactory;
@@ -218,7 +218,7 @@ final class DirectConstructorUtils {
      *
      * @return the hidden text, or an empty string when no hidden tokens follow
      */
-    static String getHiddenTextAfter(CommonTokenStream tokenStream, int previousTokenIndex) {
+    public static String getHiddenTextAfter(CommonTokenStream tokenStream, int previousTokenIndex) {
         List<Token> hidden = tokenStream.getHiddenTokensToRight(previousTokenIndex);
         if (hidden == null) {
             return "";

@@ -35,7 +35,6 @@ import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.bindings.ExternalBindings;
-import org.rumbledb.compiler.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.ArrowExprContext;
@@ -57,6 +56,17 @@ import org.rumbledb.compiler.context.TypeswitchExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
+import org.rumbledb.compiler.translation.ArithmeticTranslation;
+import org.rumbledb.compiler.translation.ComparisonTranslation;
+import org.rumbledb.compiler.translation.ControlTranslation;
+import org.rumbledb.compiler.translation.LogicTranslation;
+import org.rumbledb.compiler.translation.PostfixTranslation;
+import org.rumbledb.compiler.translation.PrimaryTranslation;
+import org.rumbledb.compiler.translation.QuantifiedTranslation;
+import org.rumbledb.compiler.translation.SequenceTranslation;
+import org.rumbledb.compiler.translation.TranslationContext;
+import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
+import org.rumbledb.compiler.translation.TypeTranslation;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
@@ -1062,12 +1072,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region operational
     @Override
     public Node visitOrExpr(JsoniqParser.OrExprContext ctx) {
-        return Translation.orExpr(OrExprContext.from(ctx), this.translationContext, this::visitAndExpr);
+        return LogicTranslation.orExpr(OrExprContext.from(ctx), this.translationContext, this::visitAndExpr);
     }
 
     @Override
     public Node visitAndExpr(JsoniqParser.AndExprContext ctx) {
-        return Translation.andExpr(AndExprContext.from(ctx), this.translationContext, this::visitNotExpr);
+        return LogicTranslation.andExpr(AndExprContext.from(ctx), this.translationContext, this::visitNotExpr);
     }
 
     @Override
@@ -1081,30 +1091,31 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitComparisonExpr(JsoniqParser.ComparisonExprContext ctx) {
-        return Translation.comparisonExpr(
+        return ComparisonTranslation.comparisonExpr(
                 ComparisonExprContext.from(ctx), this.translationContext, this::visitStringConcatExpr);
     }
 
     @Override
     public Node visitStringConcatExpr(JsoniqParser.StringConcatExprContext ctx) {
-        return Translation.stringConcatExpr(
+        return SequenceTranslation.stringConcatExpr(
                 StringConcatExprContext.from(ctx), this.translationContext, this::visitRangeExpr);
     }
 
     @Override
     public Node visitRangeExpr(JsoniqParser.RangeExprContext ctx) {
-        return Translation.rangeExpr(RangeExprContext.from(ctx), this.translationContext, this::visitAdditiveExpr);
+        return SequenceTranslation.rangeExpr(
+                RangeExprContext.from(ctx), this.translationContext, this::visitAdditiveExpr);
     }
 
     @Override
     public Node visitAdditiveExpr(JsoniqParser.AdditiveExprContext ctx) {
-        return Translation.additiveExpr(
+        return ArithmeticTranslation.additiveExpr(
                 AdditiveExprContext.from(ctx), this.translationContext, this::visitMultiplicativeExpr);
     }
 
     @Override
     public Node visitMultiplicativeExpr(JsoniqParser.MultiplicativeExprContext ctx) {
-        return Translation.multiplicativeExpr(
+        return ArithmeticTranslation.multiplicativeExpr(
                 MultiplicativeExprContext.from(ctx),
                 this.translationContext,
                 this.jsoniqTokenStream,
@@ -1113,25 +1124,25 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitUnionExpr(JsoniqParser.UnionExprContext ctx) {
-        return Translation.unionExpr(
+        return SequenceTranslation.unionExpr(
                 UnionExprContext.from(ctx), this.translationContext, this::visitIntersectExceptExpr);
     }
 
     @Override
     public Node visitIntersectExceptExpr(JsoniqParser.IntersectExceptExprContext ctx) {
-        return Translation.intersectExceptExpr(
+        return SequenceTranslation.intersectExceptExpr(
                 IntersectExceptExprContext.from(ctx), this.translationContext, this::visitInstanceOfExpr);
     }
 
     @Override
     public Node visitSimpleMapExpr(JsoniqParser.SimpleMapExprContext ctx) {
-        return Translation.simpleMapExpr(
+        return PostfixTranslation.simpleMapExpr(
                 SimpleMapExprContext.from(ctx), this.translationContext, this::visitPathExpr, this::visitPathExpr);
     }
 
     @Override
     public Node visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
-        return Translation.instanceOfExpr(
+        return TypeTranslation.instanceOfExpr(
                 TypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitIsStaticallyExpr,
@@ -1140,7 +1151,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitIsStaticallyExpr(JsoniqParser.IsStaticallyExprContext ctx) {
-        return Translation.isStaticallyExpr(
+        return TypeTranslation.isStaticallyExpr(
                 TypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitTreatExpr,
@@ -1149,7 +1160,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
-        return Translation.treatExpr(
+        return TypeTranslation.treatExpr(
                 TypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitCastableExpr,
@@ -1158,7 +1169,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitCastableExpr(JsoniqParser.CastableExprContext ctx) {
-        return Translation.castableExpr(
+        return TypeTranslation.castableExpr(
                 SingleTypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitCastExpr,
@@ -1167,7 +1178,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitCastExpr(JsoniqParser.CastExprContext ctx) {
-        return Translation.castExpr(
+        return TypeTranslation.castExpr(
                 SingleTypeCheckExprContext.from(ctx),
                 this.translationContext,
                 this::visitArrowExpr,
@@ -1176,7 +1187,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitArrowExpr(JsoniqParser.ArrowExprContext ctx) {
-        return Translation.arrowExpr(
+        return PostfixTranslation.arrowExpr(
                 ArrowExprContext.from(ctx),
                 this.translationContext,
                 this::visitUnaryExpr,
@@ -1188,12 +1199,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
-        return Translation.unaryExpr(UnaryExprContext.from(ctx), this.translationContext, this::visitValueExpr);
+        return ArithmeticTranslation.unaryExpr(
+                UnaryExprContext.from(ctx), this.translationContext, this::visitValueExpr);
     }
 
     @Override
     public Node visitValueExpr(JsoniqParser.ValueExprContext ctx) {
-        return Translation.valueExpr(
+        return PrimaryTranslation.valueExpr(
                 ValueExprContext.from(ctx), this.translationContext, this::visitSimpleMapExpr, this::visitValidateExpr);
     }
 
@@ -2278,13 +2290,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region control
     @Override
     public Node visitIfExpr(JsoniqParser.IfExprContext ctx) {
-        return Translation.ifExpr(
+        return ControlTranslation.ifExpr(
                 IfExprContext.from(ctx), this.translationContext, this::visitExpr, this::visitExprSingle);
     }
 
     @Override
     public Node visitSwitchExpr(JsoniqParser.SwitchExprContext ctx) {
-        return Translation.switchExpr(
+        return ControlTranslation.switchExpr(
                 SwitchExprContext.from(ctx), this.translationContext, this::visitExpr, this::visitExprSingle);
     }
     // endregion
@@ -2292,7 +2304,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region quantified
     @Override
     public Node visitTypeswitchExpr(JsoniqParser.TypeswitchExprContext ctx) {
-        return Translation.typeswitchExpr(
+        return ControlTranslation.typeswitchExpr(
                 TypeswitchExprContext.from(ctx),
                 this.translationContext,
                 this::visitExpr,
@@ -2303,7 +2315,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
-        return Translation.quantifiedExpr(
+        return QuantifiedTranslation.quantifiedExpr(
                 QuantifiedExprContext.from(ctx),
                 this.translationContext,
                 this::visitExprSingle,
@@ -2313,7 +2325,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Node visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
-        return Translation.tryCatchExpr(
+        return ControlTranslation.tryCatchExpr(
                 TryCatchExprContext.from(ctx), this.translationContext, this::visitExpr, this::parseEqName);
     }
 
@@ -2607,7 +2619,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         for (JsoniqParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
             for (var catchTarget : catchCtx.nameTest()) {
-                CatchPattern pattern = Translation.catchPattern(
+                CatchPattern pattern = ControlTranslation.catchPattern(
                         NameTestContext.from(catchTarget), this.translationContext, this::parseEqName);
                 if (!catchBlockStatements.containsKey(pattern)) {
                     catchBlockStatements.put(pattern, catchBlockStatement);
