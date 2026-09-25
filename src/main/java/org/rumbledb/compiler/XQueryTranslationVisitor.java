@@ -18,7 +18,6 @@ package org.rumbledb.compiler;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,17 +37,25 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
+import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
+import org.rumbledb.compiler.context.IfExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
+import org.rumbledb.compiler.context.NameTestContext;
 import org.rumbledb.compiler.context.OrExprContext;
+import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.compiler.context.RangeExprContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
+import org.rumbledb.compiler.context.SwitchExprContext;
+import org.rumbledb.compiler.context.TryCatchExprContext;
 import org.rumbledb.compiler.context.TypeCheckExprContext;
+import org.rumbledb.compiler.context.TypeswitchExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
 import org.rumbledb.compiler.context.UnionExprContext;
+import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
@@ -61,12 +68,6 @@ import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.CatchPattern;
-import org.rumbledb.expressions.control.ConditionalExpression;
-import org.rumbledb.expressions.control.SwitchCase;
-import org.rumbledb.expressions.control.SwitchExpression;
-import org.rumbledb.expressions.control.TryCatchExpression;
-import org.rumbledb.expressions.control.TypeSwitchExpression;
-import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
@@ -79,7 +80,6 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.flowr.WindowClause;
-import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -1147,29 +1147,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitArrowExpr(XQueryParser.ArrowExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
-        Expression functionExpression = null;
-
-        for (int i = 0; i < ctx.function.size(); ++i) {
-            XQueryParser.ArrowFunctionSpecifierContext functionCallContext = ctx.function.get(i);
-            XQueryParser.ArgumentListContext argumentListContext = ctx.arguments.get(i);
-            ExceptionMetadata metadata =
-                    createMetadataFromRange(ctx.main_expr.getStart(), argumentListContext.getStop());
-            List<Expression> children = new ArrayList<Expression>();
-            children.add(mainExpression);
-            children.addAll(getArgumentsFromArgumentListContext(argumentListContext));
-            if (functionCallContext.eqName() != null) {
-                Name name = parseEqName(functionCallContext.eqName(), NameRole.FUNCTION);
-                mainExpression = processFunctionCall(name, children, metadata);
-                continue;
-            } else if (functionCallContext.varRef() != null) {
-                functionExpression = (Expression) this.visitVarRef(functionCallContext.varRef());
-            } else {
-                functionExpression = (Expression) this.visitParenthesizedExpr(functionCallContext.parenthesizedExpr());
-            }
-            mainExpression = new DynamicFunctionCallExpression(functionExpression, children, metadata);
-        }
-        return mainExpression;
+        return Translation.arrowExpr(
+                ArrowExprContext.from(ctx),
+                this.translationContext,
+                this::visitUnaryExpr,
+                this::parseEqName,
+                this::visitVarRef,
+                this::visitParenthesizedExpr,
+                this::getArgumentsFromArgumentListContext);
     }
 
     @Override
@@ -1179,14 +1164,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Node visitValueExpr(XQueryParser.ValueExprContext ctx) {
-        if (ctx.simpleMap_expr != null) {
-            return this.visitSimpleMapExpr(ctx.simpleMap_expr);
-        }
-        if (ctx.validate_expr != null) {
-            return this.visitValidateExpr(ctx.validate_expr);
-        }
-        // TODO: extension expression still unsupported
-        throw new UnsupportedFeatureException("Extension expression still unsupported", createMetadataFromContext(ctx));
+        return Translation.valueExpr(
+                ValueExprContext.from(ctx), this.translationContext, this::visitSimpleMapExpr, this::visitValidateExpr);
     }
 
     @Override
@@ -2139,135 +2118,43 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region control
     @Override
     public Node visitIfExpr(XQueryParser.IfExprContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.test_condition);
-        Expression branch = (Expression) this.visitExprSingle(ctx.branch);
-        Expression else_branch = (Expression) this.visitExprSingle(ctx.else_branch);
-        return new ConditionalExpression(condition, branch, else_branch, createMetadataFromContext(ctx));
+        return Translation.ifExpr(
+                IfExprContext.from(ctx), this.translationContext, this::visitExpr, this::visitExprSingle);
     }
 
     @Override
     public Node visitSwitchExpr(XQueryParser.SwitchExprContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.cond);
-        List<SwitchCase> cases = new ArrayList<>();
-        for (XQueryParser.SwitchCaseClauseContext expr : ctx.cases) {
-            List<Expression> conditionExpressions = new ArrayList<>();
-            for (int i = 0; i < expr.cond.size(); ++i) {
-                conditionExpressions.add((Expression) this.visitExprSingle(expr.cond.get(i)));
-            }
-            SwitchCase c = new SwitchCase(conditionExpressions, (Expression) this.visitExprSingle(expr.ret));
-            cases.add(c);
-        }
-        Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
-        return new SwitchExpression(condition, cases, defaultCase, createMetadataFromContext(ctx));
+        return Translation.switchExpr(
+                SwitchExprContext.from(ctx), this.translationContext, this::visitExpr, this::visitExprSingle);
     }
     // endregion
 
     // region quantified
     @Override
     public Node visitTypeswitchExpr(XQueryParser.TypeswitchExprContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.cond);
-        List<TypeswitchCase> cases = new ArrayList<>();
-        for (XQueryParser.CaseClauseContext expr : ctx.cses) {
-            List<SequenceType> union = new ArrayList<>();
-            Name variableName = null;
-            if (expr.var_ref != null) {
-                variableName = parseVariableBinding(expr.var_ref);
-            }
-            if (expr.union != null && !expr.union.isEmpty()) {
-                for (XQueryParser.SequenceTypeContext sequenceType : expr.union) {
-                    union.add(this.processSequenceType(sequenceType));
-                }
-            }
-            Expression expression = (Expression) this.visitExprSingle(expr.ret);
-            cases.add(new TypeswitchCase(variableName, union, expression));
-        }
-        Name defaultVariableName = null;
-        if (ctx.var_ref != null) {
-            defaultVariableName = parseVariableBinding(ctx.var_ref);
-        }
-        Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
-        return new TypeSwitchExpression(
-                condition, cases, new TypeswitchCase(defaultVariableName, defaultCase), createMetadataFromContext(ctx));
+        return Translation.typeswitchExpr(
+                TypeswitchExprContext.from(ctx),
+                this.translationContext,
+                this::visitExpr,
+                this::visitExprSingle,
+                this::parseVariableBinding,
+                this::processSequenceType);
     }
 
     @Override
     public Node visitQuantifiedExpr(XQueryParser.QuantifiedExprContext ctx) {
-        Clause lastClause = null;
-        Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
-        boolean isUniversal = false;
-        if (ctx.ev == null) {
-            isUniversal = false;
-        } else {
-            isUniversal = true;
-        }
-        for (XQueryParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
-            Expression varExpression;
-            SequenceType sequenceType = null;
-            Name variableName = parseVariableBinding(currentVariable.varBinding());
-            if (currentVariable.sequenceType() != null) {
-                sequenceType = this.processSequenceType(currentVariable.sequenceType());
-            }
-
-            varExpression = (Expression) this.visitExprSingle(currentVariable.exprSingle());
-            Clause newClause = new ForClause(
-                    variableName, false, sequenceType, null, varExpression, createMetadataFromContext(currentVariable));
-            if (lastClause != null) {
-                lastClause.chainWith(newClause);
-            }
-            lastClause = newClause;
-        }
-        if (lastClause == null) {
-            throw new OurBadException("A quantified expression must bind at least one variable.");
-        }
-        WhereClause whereClause = null;
-        if (!isUniversal) {
-            whereClause = new WhereClause(expression, createMetadataFromContext(ctx.exprSingle()));
-        } else {
-            whereClause = new WhereClause(
-                    new NotExpression(expression, createMetadataFromContext(ctx.exprSingle())),
-                    createMetadataFromContext(ctx.exprSingle()));
-        }
-        lastClause.chainWith(whereClause);
-        ReturnClause returnClause = new ReturnClause(
-                new NullLiteralExpression(createMetadataFromContext(ctx)), createMetadataFromContext(ctx));
-        whereClause.chainWith(returnClause);
-        Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
-        if (!isUniversal) {
-            return new FunctionCallExpression(
-                    Name.createVariableInDefaultFunctionNamespace("exists"),
-                    Collections.singletonList(flworExpression),
-                    createMetadataFromContext(ctx));
-        } else {
-            return new FunctionCallExpression(
-                    Name.createVariableInDefaultFunctionNamespace("empty"),
-                    Collections.singletonList(flworExpression),
-                    createMetadataFromContext(ctx));
-        }
+        return Translation.quantifiedExpr(
+                QuantifiedExprContext.from(ctx),
+                this.translationContext,
+                this::visitExprSingle,
+                this::parseVariableBinding,
+                this::processSequenceType);
     }
 
     @Override
     public Node visitTryCatchExpr(XQueryParser.TryCatchExprContext ctx) {
-        Expression tryExpression = ctx.try_expression == null
-                ? new CommaExpression(createMetadataFromContext(ctx))
-                : (Expression) this.visitExpr(ctx.try_expression);
-        Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
-        for (XQueryParser.CatchClauseContext catchCtx : ctx.catches) {
-            Expression catchExpression = catchCtx.catch_expression == null
-                    ? new CommaExpression(createMetadataFromContext(catchCtx))
-                    : (Expression) this.visitExpr(catchCtx.catch_expression);
-            for (var catchTarget : catchCtx.nameTest()) {
-                var wildcard = catchTarget.wildcard();
-                var errorcode = catchTarget.eqName();
-
-                CatchPattern pattern = wildcard != null
-                        ? this.parseWildcardPattern(wildcard)
-                        : CatchPattern.exact(parseEqName(errorcode, NameRole.NO_DEFAULT_NAMESPACE));
-                if (!catchExpressions.containsKey(pattern)) {
-                    catchExpressions.put(pattern, catchExpression);
-                }
-            }
-        }
-        return new TryCatchExpression(tryExpression, catchExpressions, createMetadataFromContext(ctx));
+        return Translation.tryCatchExpr(
+                TryCatchExprContext.from(ctx), this.translationContext, this::visitExpr, this::parseEqName);
     }
 
     // endregion
@@ -2560,44 +2447,14 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (XQueryParser.CatchCaseStatementContext catchCtx : ctx.catches) {
             BlockStatement catchBlockStatement = (BlockStatement) this.visitBlockStatement(catchCtx.catch_block);
             for (var catchTarget : catchCtx.nameTest()) {
-                var wildcard = catchTarget.wildcard();
-                var errorcode = catchTarget.eqName();
-
-                CatchPattern pattern = wildcard != null
-                        ? this.parseWildcardPattern(wildcard)
-                        : CatchPattern.exact(parseEqName(errorcode, NameRole.NO_DEFAULT_NAMESPACE));
+                CatchPattern pattern = Translation.catchPattern(
+                        NameTestContext.from(catchTarget), this.translationContext, this::parseEqName);
                 if (!catchBlockStatements.containsKey(pattern)) {
                     catchBlockStatements.put(pattern, catchBlockStatement);
                 }
             }
         }
         return new TryCatchStatement(tryBlock, catchBlockStatements, createMetadataFromContext(ctx));
-    }
-
-    private CatchPattern parseWildcardPattern(XQueryParser.WildcardContext wildcardContext) {
-        if (wildcardContext instanceof XQueryParser.AllNamesContext) {
-            return CatchPattern.catchAll();
-        }
-        if (wildcardContext instanceof XQueryParser.AllWithLocalContext) {
-            String wildcardText = wildcardContext.getText();
-            return CatchPattern.namespaceWildcard(wildcardText.substring(2), wildcardText);
-        }
-        if (wildcardContext instanceof XQueryParser.AllWithNSContext) {
-            String wildcardText = wildcardContext.getText();
-            String prefix = wildcardText.substring(0, wildcardText.length() - 2);
-            String namespace = this.translationContext.resolveNamespace(prefix);
-            if (namespace == null) {
-                throw new PrefixCannotBeExpandedException(
-                        "Cannot expand prefix " + prefix, createMetadataFromContext(wildcardContext));
-            }
-            return CatchPattern.localNameWildcard(namespace, wildcardText);
-        }
-        if (wildcardContext instanceof XQueryParser.BracedURILiteralContext) {
-            String wildcardText = wildcardContext.getText();
-            int closingBrace = wildcardText.indexOf('}');
-            return CatchPattern.localNameWildcard(wildcardText.substring(2, closingBrace), wildcardText);
-        }
-        throw new OurBadException("Unsupported catch wildcard pattern: " + wildcardContext.getText());
     }
 
     @Override
