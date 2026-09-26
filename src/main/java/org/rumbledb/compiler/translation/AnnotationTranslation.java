@@ -27,6 +27,7 @@ import org.rumbledb.compiler.context.AnnotationsContext;
 import org.rumbledb.compiler.context.AnnotationsContext.AnnotationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 
@@ -45,14 +46,15 @@ public final class AnnotationTranslation {
         }
         List<Annotation> parsedAnnotations = new ArrayList<>();
         for (AnnotationContext<EqNameCtx, LiteralCtx> annotationContext : ctx.annotations()) {
+            ExceptionMetadata metadata = translationContext.metadata(annotationContext.context());
             // for backwards compatibility, the specification allows for updating without % sign
             if (annotationContext.isUpdating()) {
                 Name name = Name.createNameInDefaultXQueryAnnotationsNamespace("updating");
-                parsedAnnotations.add(new Annotation(name, null));
+                parsedAnnotations.add(new Annotation(name, null, metadata));
                 continue;
             }
             Name name = parseEqName.apply(annotationContext.eqName(), NameRole.ANNOTATION);
-            Annotation.validateAnnotationName(name, translationContext.metadata(annotationContext.context()));
+            Annotation.validateAnnotationName(name, metadata);
             List<Expression> literals = null;
             if (annotationContext.literals() != null
                     && !annotationContext.literals().isEmpty()) {
@@ -61,7 +63,7 @@ public final class AnnotationTranslation {
                     literals.add(visitLiteral.apply(literalContext));
                 }
             }
-            parsedAnnotations.add(new Annotation(name, literals));
+            parsedAnnotations.add(new Annotation(name, literals, metadata));
         }
         return parsedAnnotations;
     }

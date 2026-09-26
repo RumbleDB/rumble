@@ -32,10 +32,12 @@ import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants
 public class Annotation {
     private final Name annotationName;
     private final List<Expression> literals;
+    private final ExceptionMetadata metadata;
 
-    public Annotation(Name annotationName, List<Expression> literals) {
+    public Annotation(Name annotationName, List<Expression> literals, ExceptionMetadata metadata) {
         this.annotationName = annotationName;
         this.literals = literals;
+        this.metadata = metadata;
     }
 
     public static boolean checkAssignable(
