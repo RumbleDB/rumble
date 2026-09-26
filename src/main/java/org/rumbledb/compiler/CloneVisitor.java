@@ -81,6 +81,7 @@ import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.StringConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -474,6 +475,20 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                             : (Expression) visit(expression.getExpression(), argument),
                     expression.getMetadata());
         }
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitStringConstructor(StringConstructorExpression expression, Node argument) {
+        List<Expression> clonedParts = new ArrayList<>();
+        for (Expression part : expression.getParts()) {
+            clonedParts.add(part == null ? null : (Expression) visit(part, argument));
+        }
+        StringConstructorExpression result = new StringConstructorExpression(
+                clonedParts, new ArrayList<>(expression.getIsInterpolated()), expression.getMetadata());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
         result.setSequential(expression.isSequential());
