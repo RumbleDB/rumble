@@ -61,6 +61,7 @@ import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.StringConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -244,6 +245,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitMapConstructor(MapConstructorExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitStringConstructor(StringConstructorExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

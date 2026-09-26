@@ -31,6 +31,7 @@ import org.rumbledb.compiler.context.InlineFunctionExprContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.NamedFunctionRefContext;
 import org.rumbledb.compiler.context.ParenthesizedExprContext;
+import org.rumbledb.compiler.context.StringConstructorContext;
 import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
@@ -55,6 +56,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.StringConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
@@ -282,5 +284,30 @@ public final class PrimaryTranslation {
         }
         Expression content = visitEnclosedExpression.apply(ctx.enclosedExpression());
         return new ArrayConstructorExpression(content, translationContext.metadata(ctx.context()));
+    }
+
+    public static <ExprCtx extends ParserRuleContext> StringConstructorExpression stringConstructor(
+            StringConstructorContext<ExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ExprCtx, Expression> visitExpr) {
+        List<Expression> parts = new ArrayList<>();
+        List<Boolean> isInterpolated = new ArrayList<>();
+        List<String> chars = ctx.literalChars();
+        List<ExprCtx> interps = ctx.interpolations();
+
+        parts.add(new StringLiteralExpression(chars.get(0), translationContext.metadata(ctx.context())));
+        isInterpolated.add(false);
+
+        for (int i = 0; i < interps.size(); i++) {
+            ExprCtx exprCtx = interps.get(i);
+            if (exprCtx != null) {
+                parts.add(visitExpr.apply(exprCtx));
+                isInterpolated.add(true);
+            }
+            parts.add(new StringLiteralExpression(chars.get(i + 1), translationContext.metadata(ctx.context())));
+            isInterpolated.add(false);
+        }
+
+        return new StringConstructorExpression(parts, isInterpolated, translationContext.metadata(ctx.context()));
     }
 }

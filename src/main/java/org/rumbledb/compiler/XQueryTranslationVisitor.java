@@ -67,6 +67,7 @@ import org.rumbledb.compiler.context.SchemaImportContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
+import org.rumbledb.compiler.context.StringConstructorContext;
 import org.rumbledb.compiler.context.SwitchExprContext;
 import org.rumbledb.compiler.context.TryCatchExprContext;
 import org.rumbledb.compiler.context.TypeCheckExprContext;
@@ -906,7 +907,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Expression visitStringConstructor(XQueryParser.StringConstructorContext ctx) {
-        throw new UnsupportedFeatureException("String constructor not yet implemented", createMetadataFromContext(ctx));
+        return PrimaryTranslation.stringConstructor(
+                StringConstructorContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override

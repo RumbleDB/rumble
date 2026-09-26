@@ -87,6 +87,7 @@ import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.StringConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -202,6 +203,7 @@ import org.rumbledb.runtime.primary.IntegerRuntimeIterator;
 import org.rumbledb.runtime.primary.MapConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.NullRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
+import org.rumbledb.runtime.primary.StringConstructorIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.scripting.ProgramIterator;
@@ -837,6 +839,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         }
 
         return runtimeIterator;
+    }
+
+    @Override
+    public ItemRuntimePlan visitStringConstructor(StringConstructorExpression expression, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> childPlans = new ArrayList<>();
+        for (Expression part : expression.getParts()) {
+            childPlans.add(part == null ? null : this.visit(part, argument));
+        }
+        return new StringConstructorIterator(
+                childPlans,
+                expression.getIsInterpolated(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override
