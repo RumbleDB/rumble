@@ -105,7 +105,6 @@ import org.rumbledb.compiler.context.update.RenameExprContext;
 import org.rumbledb.compiler.context.update.ReplaceExprContext;
 import org.rumbledb.compiler.context.update.TransformExprContext;
 import org.rumbledb.compiler.context.update.TruncateCollectionExprContext;
-import org.rumbledb.compiler.context.update.UpdateLocatorContext;
 import org.rumbledb.compiler.context.xml.AttributeTestContext;
 import org.rumbledb.compiler.context.xml.CommonContentContext;
 import org.rumbledb.compiler.context.xml.CompAttrConstructorContext;
@@ -913,30 +912,19 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public DeleteExpression visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
         return UpdateTranslation.deleteExpr(
-                DeleteExprContext.from(ctx),
-                this.translationContext,
-                this::getMainExpressionFromUpdateLocatorContext,
-                this::getLocatorExpressionFromUpdateLocatorContext);
+                DeleteExprContext.from(ctx), this.translationContext, this::visitPostfixExpr);
     }
 
     @Override
     public RenameExpression visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
         return UpdateTranslation.renameExpr(
-                RenameExprContext.from(ctx),
-                this.translationContext,
-                this::getMainExpressionFromUpdateLocatorContext,
-                this::getLocatorExpressionFromUpdateLocatorContext,
-                this::visitExprSingle);
+                RenameExprContext.from(ctx), this.translationContext, this::visitPostfixExpr, this::visitExprSingle);
     }
 
     @Override
     public ReplaceExpression visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
         return UpdateTranslation.replaceExpr(
-                ReplaceExprContext.from(ctx),
-                this.translationContext,
-                this::getMainExpressionFromUpdateLocatorContext,
-                this::getLocatorExpressionFromUpdateLocatorContext,
-                this::visitExprSingle);
+                ReplaceExprContext.from(ctx), this.translationContext, this::visitPostfixExpr, this::visitExprSingle);
     }
 
     @Override
@@ -1003,16 +991,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public TruncateCollectionExpression visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
         return CollectionTranslation.truncateCollectionExpr(
                 TruncateCollectionExprContext.from(ctx), this.translationContext, this::visitExprSimple);
-    }
-
-    public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        return UpdateTranslation.mainExpressionFromUpdateLocator(
-                UpdateLocatorContext.from(ctx), this::visitPostfixExpr);
-    }
-
-    public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        return UpdateTranslation.locatorExpressionFromUpdateLocator(
-                UpdateLocatorContext.from(ctx), this::visitPostfixExpr);
     }
 
     // endregion

@@ -20,14 +20,14 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record DeleteExprContext<UpdateLocatorCtx extends ParserRuleContext>(
-        UpdateLocatorCtx updateLocator, ParserRuleContext context) {
+public record DeleteExprContext<PostfixExprCtx extends ParserRuleContext>(
+        UpdateLocatorContext<PostfixExprCtx> updateLocator, ParserRuleContext context) {
 
-    public static DeleteExprContext<JsoniqParser.UpdateLocatorContext> from(JsoniqParser.DeleteExprContext c) {
-        return new DeleteExprContext<>(c.updateLocator(), c);
+    public static DeleteExprContext<JsoniqParser.PostfixExprContext> from(JsoniqParser.DeleteExprContext c) {
+        return new DeleteExprContext<>(UpdateLocatorContext.from(c.updateLocator()), c);
     }
 
-    public static DeleteExprContext<XQueryParser.UpdateLocatorContext> from(XQueryParser.DeleteExprContext c) {
-        return new DeleteExprContext<>(c.updateLocator(), c);
+    public static DeleteExprContext<XQueryParser.PostfixExprContext> from(XQueryParser.DeleteExprContext c) {
+        return new DeleteExprContext<>(UpdateLocatorContext.from(c.updateLocator()), c);
     }
 }

@@ -20,16 +20,16 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record ReplaceExprContext<UpdateLocatorCtx extends ParserRuleContext, ExprSingleCtx extends ParserRuleContext>(
-        UpdateLocatorCtx updateLocator, ExprSingleCtx replacerExpr, ParserRuleContext context) {
+public record ReplaceExprContext<PostfixExprCtx extends ParserRuleContext, ExprSingleCtx extends ParserRuleContext>(
+        UpdateLocatorContext<PostfixExprCtx> updateLocator, ExprSingleCtx replacerExpr, ParserRuleContext context) {
 
-    public static ReplaceExprContext<JsoniqParser.UpdateLocatorContext, JsoniqParser.ExprSingleContext> from(
+    public static ReplaceExprContext<JsoniqParser.PostfixExprContext, JsoniqParser.ExprSingleContext> from(
             JsoniqParser.ReplaceExprContext c) {
-        return new ReplaceExprContext<>(c.updateLocator(), c.replacer_expr, c);
+        return new ReplaceExprContext<>(UpdateLocatorContext.from(c.updateLocator()), c.replacer_expr, c);
     }
 
-    public static ReplaceExprContext<XQueryParser.UpdateLocatorContext, XQueryParser.ExprSingleContext> from(
+    public static ReplaceExprContext<XQueryParser.PostfixExprContext, XQueryParser.ExprSingleContext> from(
             XQueryParser.ReplaceExprContext c) {
-        return new ReplaceExprContext<>(c.updateLocator(), c.replacer_expr, c);
+        return new ReplaceExprContext<>(UpdateLocatorContext.from(c.updateLocator()), c.replacer_expr, c);
     }
 }
