@@ -32,7 +32,6 @@ import org.rumbledb.exceptions.MoreThanOneCopyNamespacesDeclarationException;
 import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
 import org.rumbledb.exceptions.MultipleBaseURIException;
 import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
-import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.module.FunctionDeclaration;
@@ -42,6 +41,7 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
@@ -73,10 +73,12 @@ public final class PrologBuilder {
     // region State-Manipulating Header Receivers
 
     public void bindNamespace(String prefix, String uri, ExceptionMetadata metadata) {
+        NamespaceBindingUtils.validatePrologNamespaceDeclaration(prefix, uri, metadata);
         this.translationContext.bindNamespace(prefix, uri, metadata);
     }
 
     public void applyDefaultNamespace(boolean function, String uri, ExceptionMetadata metadata) {
+        NamespaceBindingUtils.validateDefaultNamespaceDeclaration(uri, metadata);
         if (function) {
             if (this.defaultFunctionNamespaceSet) {
                 throw new SemanticException("The default function namespace has already been declared.", metadata);
@@ -195,6 +197,7 @@ public final class PrologBuilder {
         }
         String namespace = schema.getTargetNamespace();
         if (schema.getBindingKind() == SchemaImport.BindingKind.DEFAULT_ELEMENT_NAMESPACE) {
+            NamespaceBindingUtils.validateDefaultNamespaceDeclaration(namespace, schema.getMetadata());
             this.translationContext.bindNamespace("", namespace, schema.getMetadata());
             return;
         }
@@ -205,10 +208,7 @@ public final class PrologBuilder {
                     schema.getMetadata());
         }
         String prefix = schema.getPrefix();
-        if (prefix.equals("xml") || prefix.equals("xmlns")) {
-            throw new PredefinedPrefixInNamespaceDeclarationException(
-                    "Schema import prefix " + prefix + " is reserved.", schema.getMetadata());
-        }
+        NamespaceBindingUtils.validatePrologNamespaceDeclaration(prefix, namespace, schema.getMetadata());
         this.translationContext.bindNamespace(prefix, namespace, schema.getMetadata());
     }
 

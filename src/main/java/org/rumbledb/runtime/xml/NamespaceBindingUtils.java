@@ -479,6 +479,10 @@ public final class NamespaceBindingUtils {
     }
 
     public static void validateNamespaceDeclaration(String prefix, String uri) {
+        validateNamespaceDeclaration(prefix, uri, null);
+    }
+
+    public static void validateNamespaceDeclaration(String prefix, String uri, ExceptionMetadata metadata) {
         // XQuery 3.1, 3.9.1.2 Namespace Declaration Attributes:
         // "However, note that namespace declaration attributes (see 3.9.1.2 Namespace Declaration Attributes) do not
         // create attribute nodes."
@@ -505,18 +509,51 @@ public final class NamespaceBindingUtils {
         switch (error) {
             case XML_PREFIX_WRONG_URI:
                 throw new PredefinedPrefixInNamespaceDeclarationException(
-                        "Namespace declaration attribute cannot bind the prefix xml to a non-XML namespace URI.");
+                        "Namespace declaration attribute cannot bind the prefix xml to a non-XML namespace URI.",
+                        metadata);
             case XMLNS_PREFIX:
                 throw new PredefinedPrefixInNamespaceDeclarationException(
-                        "Namespace declaration attribute cannot bind the prefix xmlns.");
+                        "Namespace declaration attribute cannot bind the prefix xmlns.", metadata);
             case NON_XML_PREFIX_XML_URI:
                 throw new PredefinedPrefixInNamespaceDeclarationException(
-                        "Namespace declaration attribute cannot bind a non-xml prefix to the XML namespace URI.");
+                        "Namespace declaration attribute cannot bind a non-xml prefix to the XML namespace URI.",
+                        metadata);
             case XMLNS_URI:
                 throw new PredefinedPrefixInNamespaceDeclarationException(
-                        "Namespace declaration attribute cannot bind any prefix to the xmlns namespace URI.");
+                        "Namespace declaration attribute cannot bind any prefix to the xmlns namespace URI.", metadata);
             default:
                 return;
+        }
+    }
+
+    /**
+     * XQuery 3.1, 4.13 Namespace Declaration:
+     * "It is a static error [err:XQST0070] if a namespace declaration specifies a prefix of xml or xmlns, or a
+     * namespace URI of http://www.w3.org/XML/1998/namespace or http://www.w3.org/2000/xmlns/."
+     */
+    public static void validatePrologNamespaceDeclaration(String prefix, String uri, ExceptionMetadata metadata) {
+        if ("xml".equals(prefix) || "xmlns".equals(prefix)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Prolog namespace declaration cannot specify the reserved prefix \"" + prefix + "\".", metadata);
+        }
+        if (XML_NAMESPACE_URI.equals(uri) || XMLNS_NAMESPACE_URI.equals(uri)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Prolog namespace declaration cannot specify the reserved namespace URI \"" + uri + "\".",
+                    metadata);
+        }
+    }
+
+    /**
+     * XQuery 3.1, 4.14 Default Namespace Declaration:
+     * "A static error [err:XQST0070] is raised if a default element namespace declaration or a default function
+     * namespace declaration specifies the namespace URI http://www.w3.org/XML/1998/namespace or
+     * http://www.w3.org/2000/xmlns/."
+     */
+    public static void validateDefaultNamespaceDeclaration(String uri, ExceptionMetadata metadata) {
+        if (XML_NAMESPACE_URI.equals(uri) || XMLNS_NAMESPACE_URI.equals(uri)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Default namespace declaration cannot specify the reserved namespace URI \"" + uri + "\".",
+                    metadata);
         }
     }
 
