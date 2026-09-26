@@ -478,10 +478,6 @@ public final class NamespaceBindingUtils {
         return null;
     }
 
-    public static void validateNamespaceDeclaration(String prefix, String uri) {
-        validateNamespaceDeclaration(prefix, uri, null);
-    }
-
     public static void validateNamespaceDeclaration(String prefix, String uri, ExceptionMetadata metadata) {
         // XQuery 3.1, 3.9.1.2 Namespace Declaration Attributes:
         // "However, note that namespace declaration attributes (see 3.9.1.2 Namespace Declaration Attributes) do not
@@ -559,7 +555,8 @@ public final class NamespaceBindingUtils {
 
     /**
      * Validates a namespace binding coming from parsed XML rather than from an XQuery namespace declaration
-     * attribute. Unlike {@link #validateNamespaceDeclaration(String, String)}, this permits prefixed empty URIs so
+     * attribute. Unlike {@link #validateNamespaceDeclaration(String, String, ExceptionMetadata)}, this permits prefixed
+     * empty URIs so
      * that XML 1.1 undeclarations such as {@code xmlns:p=""} can be preserved in the data model.
      */
     public static void validateParsedNamespaceBinding(String prefix, String uri) {
