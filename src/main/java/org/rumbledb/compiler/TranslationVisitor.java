@@ -545,7 +545,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (ctx.qname() != null) {
             return parseName(ctx.qname(), role);
         }
-        return URIQualifiedNameParser.parse(ctx.URIQualifiedName().getText(), createMetadataFromContext(ctx));
+        return URIQualifiedNameParser.parse(
+                ctx.URIQualifiedName().getText(),
+                this.translationContext.configuration().semantics().xmlVersion(),
+                createMetadataFromContext(ctx));
     }
 
     /** Adapts the JSONiq QName grammar to the shared role-aware resolver. */
