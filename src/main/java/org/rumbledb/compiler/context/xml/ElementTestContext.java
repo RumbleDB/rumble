@@ -29,34 +29,33 @@ public record ElementTestContext<EqNameCtx extends ParserRuleContext>(
         ParserRuleContext context) {
 
     public static ElementTestContext<JsoniqParser.EqNameContext> from(JsoniqParser.ElementTestContext c) {
-        if (c == null) {
-            return null;
-        }
+        boolean hasElementNameOrWildcard = c.elementNameOrWildcard() != null;
         boolean hasWildcard =
-                c.elementNameOrWildcard() != null && c.elementNameOrWildcard().elementName() == null;
+                hasElementNameOrWildcard && c.elementNameOrWildcard().STAR() != null;
         JsoniqParser.EqNameContext elementName =
-                (c.elementNameOrWildcard() != null && c.elementNameOrWildcard().elementName() != null)
+                (hasElementNameOrWildcard && c.elementNameOrWildcard().elementName() != null)
                         ? c.elementNameOrWildcard().elementName().eqName()
                         : null;
         JsoniqParser.EqNameContext typeName =
                 c.typeName() != null ? c.typeName().eqName() : null;
         return new ElementTestContext<>(
-                c.optional != null, c.elementNameOrWildcard() != null, hasWildcard, elementName, typeName, c);
+                c.optional != null, hasElementNameOrWildcard, hasWildcard, elementName, typeName, c);
     }
 
     public static ElementTestContext<XQueryParser.EqNameContext> from(XQueryParser.ElementTestContext c) {
         if (c == null) {
             return null;
         }
+        boolean hasElementNameOrWildcard = c.elementNameOrWildcard() != null;
         boolean hasWildcard =
-                c.elementNameOrWildcard() != null && c.elementNameOrWildcard().elementName() == null;
+                hasElementNameOrWildcard && c.elementNameOrWildcard().STAR() != null;
         XQueryParser.EqNameContext elementName =
-                (c.elementNameOrWildcard() != null && c.elementNameOrWildcard().elementName() != null)
+                (hasElementNameOrWildcard && c.elementNameOrWildcard().elementName() != null)
                         ? c.elementNameOrWildcard().elementName().eqName()
                         : null;
         XQueryParser.EqNameContext typeName =
                 c.typeName() != null ? c.typeName().eqName() : null;
         return new ElementTestContext<>(
-                c.optional != null, c.elementNameOrWildcard() != null, hasWildcard, elementName, typeName, c);
+                c.optional != null, hasElementNameOrWildcard, hasWildcard, elementName, typeName, c);
     }
 }
