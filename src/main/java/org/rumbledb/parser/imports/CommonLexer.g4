@@ -85,7 +85,7 @@ CDATA
    ;
 
 PRAGMA
-   : '(#' WS? (NCName ':')? NCName (WS .*?)? '#)'
+   : '(#' WS? (URIQualifiedName | FullQName | NCName) (WS .*?)? '#)'
    ;
    // WHITESPACE
    
