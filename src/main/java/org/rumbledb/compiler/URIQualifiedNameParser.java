@@ -15,8 +15,7 @@
  */
 package org.rumbledb.compiler;
 
-import org.apache.commons.text.StringEscapeUtils;
-
+import org.rumbledb.compiler.utils.XmlCharRefUtils;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
@@ -50,7 +49,7 @@ public final class URIQualifiedNameParser {
         if (localName.isEmpty()) {
             throw new ParsingException("Invalid URIQualifiedName (missing local name): " + tokenText, metadata);
         }
-        String uriUnescaped = StringEscapeUtils.unescapeXml(uriRaw);
+        String uriUnescaped = XmlCharRefUtils.unescapeXml(uriRaw, metadata);
         String namespaceUri = normalizeUriForEqName(uriUnescaped);
         if (namespaceUri != null && XMLNS_NAMESPACE_URI.equals(namespaceUri)) {
             throw new PredefinedPrefixInNamespaceDeclarationException(
