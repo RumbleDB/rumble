@@ -423,7 +423,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public Void visitOrderingModeDecl(XQueryParser.OrderingModeDeclContext ctx) {
-            this.builder.applyUnsupportedHeader(createMetadataFromContext(ctx));
+            this.builder.applyOrderingMode(createMetadataFromContext(ctx));
             return null;
         }
 
@@ -875,15 +875,22 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return (Expression) visit(ctx.getChild(0));
     }
 
+    /**
+     * W3C XQuery 3.1 §3.8.4: "If an implementation does not distinguish between ordered and
+     * unordered mode (e.g. if it always preserves document order), an unordered expression can
+     * simply evaluate its enclosed expression as an ordered expression."
+     *
+     * RumbleDB always preserves ordering during evaluation, so ordered and unordered expressions
+     * can simply evaluate their enclosed expression directly.
+     */
     @Override
     public Expression visitOrderedExpr(XQueryParser.OrderedExprContext ctx) {
-        throw new UnsupportedFeatureException("Ordered expression not yet implemented", createMetadataFromContext(ctx));
+        return visitEnclosedExpression(ctx.enclosedExpression());
     }
 
     @Override
     public Expression visitUnorderedExpr(XQueryParser.UnorderedExprContext ctx) {
-        throw new UnsupportedFeatureException(
-                "Unordered expression not yet implemented", createMetadataFromContext(ctx));
+        return visitEnclosedExpression(ctx.enclosedExpression());
     }
 
     @Override
