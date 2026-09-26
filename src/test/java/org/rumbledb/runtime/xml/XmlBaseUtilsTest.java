@@ -28,8 +28,12 @@ public class XmlBaseUtilsTest {
 
     @Test
     public void testAbsoluteUriOverridesBase() {
-        Assertions.assertEquals("http://other.org/file.xml", XmlBaseUtils.resolve("http://example.org/base/", "http://other.org/file.xml"));
-        Assertions.assertEquals("http://other.org/sub/file.xml", XmlBaseUtils.resolve("http://example.org/base/", "http://other.org/sub/../sub/file.xml"));
+        Assertions.assertEquals(
+                "http://other.org/file.xml",
+                XmlBaseUtils.resolve("http://example.org/base/", "http://other.org/file.xml"));
+        Assertions.assertEquals(
+                "http://other.org/sub/file.xml",
+                XmlBaseUtils.resolve("http://example.org/base/", "http://other.org/sub/../sub/file.xml"));
     }
 
     @Test
@@ -40,15 +44,22 @@ public class XmlBaseUtilsTest {
 
     @Test
     public void testRelativeUriResolution() {
-        Assertions.assertEquals("http://example.org/base/sub/file.xml", XmlBaseUtils.resolve("http://example.org/base/", "sub/file.xml"));
-        Assertions.assertEquals("http://example.org/base/sub/file.xml", XmlBaseUtils.resolve("http://example.org/base/dir/", "../sub/file.xml"));
-        Assertions.assertEquals("http://example.org/sub/file.xml", XmlBaseUtils.resolve("http://example.org/base/", "../sub/file.xml"));
+        Assertions.assertEquals(
+                "http://example.org/base/sub/file.xml",
+                XmlBaseUtils.resolve("http://example.org/base/", "sub/file.xml"));
+        Assertions.assertEquals(
+                "http://example.org/base/sub/file.xml",
+                XmlBaseUtils.resolve("http://example.org/base/dir/", "../sub/file.xml"));
+        Assertions.assertEquals(
+                "http://example.org/sub/file.xml", XmlBaseUtils.resolve("http://example.org/base/", "../sub/file.xml"));
     }
 
     @Test
     public void testLeiriResolution() {
-        Assertions.assertEquals("http://example.com/café/résumé.xml", XmlBaseUtils.resolve("http://example.com/café/", "résumé.xml"));
-        Assertions.assertEquals("http://example.com/café/résumé.xml", XmlBaseUtils.resolve(null, "http://example.com/café/résumé.xml"));
+        Assertions.assertEquals(
+                "http://example.com/café/résumé.xml", XmlBaseUtils.resolve("http://example.com/café/", "résumé.xml"));
+        Assertions.assertEquals(
+                "http://example.com/café/résumé.xml", XmlBaseUtils.resolve(null, "http://example.com/café/résumé.xml"));
     }
 
     @Test
