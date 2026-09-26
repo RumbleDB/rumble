@@ -34,8 +34,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.LookupExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.update.AppendExpression;
@@ -45,7 +44,6 @@ import org.rumbledb.expressions.update.InsertExpression;
 import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
-import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.StepExpr;
 
 public final class UpdateTranslation {
@@ -95,11 +93,10 @@ public final class UpdateTranslation {
             DeleteExprContext<PostfixExprCtx> ctx,
             TranslationContext translationContext,
             Function<PostfixExprCtx, Expression> visitPostfixExpr) {
-        Expression locatorTree = visitPostfixExpr.apply(ctx.updateLocator().mainExpr());
+        UpdateTarget target =
+                extractUpdateTarget(visitPostfixExpr.apply(ctx.updateLocator().mainExpr()));
         return new DeleteExpression(
-                extractMainExpression(locatorTree),
-                extractLocatorExpression(locatorTree),
-                translationContext.metadata(ctx.context()));
+                target.mainExpression(), target.locatorExpression(), translationContext.metadata(ctx.context()));
     }
 
     public static <PostfixExprCtx extends ParserRuleContext, ExprSingleCtx extends ParserRuleContext>
@@ -108,11 +105,12 @@ public final class UpdateTranslation {
                     TranslationContext translationContext,
                     Function<PostfixExprCtx, Expression> visitPostfixExpr,
                     Function<ExprSingleCtx, Expression> visitExprSingle) {
-        Expression locatorTree = visitPostfixExpr.apply(ctx.updateLocator().mainExpr());
+        UpdateTarget target =
+                extractUpdateTarget(visitPostfixExpr.apply(ctx.updateLocator().mainExpr()));
         Expression nameExpression = visitExprSingle.apply(ctx.nameExpr());
         return new RenameExpression(
-                extractMainExpression(locatorTree),
-                extractLocatorExpression(locatorTree),
+                target.mainExpression(),
+                target.locatorExpression(),
                 nameExpression,
                 translationContext.metadata(ctx.context()));
     }
@@ -123,11 +121,12 @@ public final class UpdateTranslation {
                     TranslationContext translationContext,
                     Function<PostfixExprCtx, Expression> visitPostfixExpr,
                     Function<ExprSingleCtx, Expression> visitExprSingle) {
-        Expression locatorTree = visitPostfixExpr.apply(ctx.updateLocator().mainExpr());
+        UpdateTarget target =
+                extractUpdateTarget(visitPostfixExpr.apply(ctx.updateLocator().mainExpr()));
         Expression newExpression = visitExprSingle.apply(ctx.replacerExpr());
         return new ReplaceExpression(
-                extractMainExpression(locatorTree),
-                extractLocatorExpression(locatorTree),
+                target.mainExpression(),
+                target.locatorExpression(),
                 newExpression,
                 translationContext.metadata(ctx.context()));
     }
@@ -160,27 +159,12 @@ public final class UpdateTranslation {
         return new AppendExpression(arrayExpression, toAppendExpression, translationContext.metadata(ctx.context()));
     }
 
-    private static Expression extractMainExpression(Expression locatorExpr) {
-        if (locatorExpr instanceof ObjectLookupExpression objectLookupExpression) {
-            return objectLookupExpression.getMainExpression();
-        } else if (locatorExpr instanceof ArrayLookupExpression arrayLookupExpression) {
-            return arrayLookupExpression.getMainExpression();
-        } else if (locatorExpr instanceof PostfixLookupExpression postfixLookupExpression) {
-            return postfixLookupExpression.getMainExpression();
-        } else {
-            throw new OurBadException("Unrecognized main expression found in update expression.");
-        }
-    }
+    private record UpdateTarget(Expression mainExpression, Expression locatorExpression) {}
 
-    private static Expression extractLocatorExpression(Expression locatorExpr) {
-        if (locatorExpr instanceof ObjectLookupExpression objectLookupExpression) {
-            return objectLookupExpression.getLookupExpression();
-        } else if (locatorExpr instanceof ArrayLookupExpression arrayLookupExpression) {
-            return arrayLookupExpression.getLookupExpression();
-        } else if (locatorExpr instanceof PostfixLookupExpression postfixLookupExpression) {
-            return postfixLookupExpression.getLookupExpression();
-        } else {
-            throw new OurBadException("Unrecognized main expression found in update expression.");
+    private static UpdateTarget extractUpdateTarget(Expression locatorExpr) {
+        if (locatorExpr instanceof LookupExpression lookup) {
+            return new UpdateTarget(lookup.getMainExpression(), lookup.getLookupExpression());
         }
+        throw new OurBadException("Unrecognized main expression found in update expression.");
     }
 }

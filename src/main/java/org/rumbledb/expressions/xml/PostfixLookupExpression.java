@@ -25,10 +25,11 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.postfix.LookupExpression;
 
 // clone of ObjectLookupExpression but for xquery lookup
 @Getter
-public class PostfixLookupExpression extends Expression {
+public class PostfixLookupExpression extends Expression implements LookupExpression {
 
     private Expression mainExpression;
     private Expression lookupExpression;
