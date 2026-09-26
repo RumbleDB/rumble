@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.InvalidOptionException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -109,7 +110,8 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             }
         }
 
-        Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(List.of(root));
+        DocumentItem documentItem = ItemFactory.getInstance().createXmlDocumentNode(List.of(root));
+        documentItem.setConstructionBaseUri(this.staticContext.getStaticURI());
         boolean removeParentPointers =
                 context.getRumbleConfiguration().optimization().optimizeParentPointers();
         if (!removeParentPointers) {

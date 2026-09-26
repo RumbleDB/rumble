@@ -26,6 +26,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -81,7 +82,8 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
         List<Item> processedContent = processContentExpression(
                 this.contentIterator == null ? List.of() : materialize.apply(this.contentIterator, contextToUse));
         // Create and return the document node item
-        Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(processedContent);
+        DocumentItem documentItem = ItemFactory.getInstance().createXmlDocumentNode(processedContent);
+        documentItem.setConstructionBaseUri(this.staticContext.getStaticURI());
         // Set the parent of the child nodes to the document node
         documentItem.addParentToDescendants();
         // Set XML document position if this is the top-level runtime iterator

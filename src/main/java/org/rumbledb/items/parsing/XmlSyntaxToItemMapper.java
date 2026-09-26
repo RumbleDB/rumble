@@ -18,6 +18,7 @@ package org.rumbledb.items.parsing;
 import java.io.IOException;
 import java.io.Serial;
 import java.io.StringReader;
+import java.net.URI;
 import java.util.Iterator;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -33,6 +34,7 @@ import scala.Tuple2;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.xml.DocumentItem;
 
 public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<String, String>>, Item> {
 
@@ -67,8 +69,16 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<St
                     documentBuilderFactory.setNamespaceAware(true);
                     DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
                     Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(content)));
-                    return ItemParser.getItemFromXML(
+                    DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                             xmlDocument, path, XmlSyntaxToItemMapper.this.optimizeParentPointers);
+                    try {
+                        URI docUri = URI.create(path);
+                        if (docUri.isAbsolute()) {
+                            documentItem.setConstructionBaseUri(docUri);
+                        }
+                    } catch (IllegalArgumentException ignored) {
+                    }
+                    return documentItem;
                 } catch (ParserConfigurationException e) {
                     throw new OurBadException("Document builder creation failed with: " + e);
                 } catch (IOException e) {
