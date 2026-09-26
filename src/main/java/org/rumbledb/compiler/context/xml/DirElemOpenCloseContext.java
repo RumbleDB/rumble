@@ -28,17 +28,11 @@ public record DirElemOpenCloseContext<QnameCtx extends ParserRuleContext, DirEle
 
     public static DirElemOpenCloseContext<JsoniqParser.QnameContext, JsoniqParser.DirElemContentContext> from(
             JsoniqParser.DirElemConstructorOpenCloseContext c) {
-        if (c == null) {
-            return null;
-        }
         return new DirElemOpenCloseContext<>(c.close_tag_name, c.endOpen, c.dirElemContent(), c);
     }
 
     public static DirElemOpenCloseContext<XQueryParser.QnameContext, XQueryParser.DirElemContentContext> from(
             XQueryParser.DirElemConstructorOpenCloseContext c) {
-        if (c == null) {
-            return null;
-        }
         return new DirElemOpenCloseContext<>(c.close_tag_name, c.endOpen, c.dirElemContent(), c);
     }
 }

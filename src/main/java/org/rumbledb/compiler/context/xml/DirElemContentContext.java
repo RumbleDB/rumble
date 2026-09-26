@@ -30,17 +30,11 @@ public record DirElemContentContext<
 
     public static DirElemContentContext<JsoniqParser.DirectConstructorContext, JsoniqParser.CommonContentContext> from(
             JsoniqParser.DirElemContentContext c) {
-        if (c == null) {
-            return null;
-        }
         return new DirElemContentContext<>(c.directConstructor(), c.commonContent(), c.CDATA(), c);
     }
 
     public static DirElemContentContext<XQueryParser.DirectConstructorContext, XQueryParser.CommonContentContext> from(
             XQueryParser.DirElemContentContext c) {
-        if (c == null) {
-            return null;
-        }
         return new DirElemContentContext<>(c.directConstructor(), c.commonContent(), c.CDATA(), c);
     }
 }

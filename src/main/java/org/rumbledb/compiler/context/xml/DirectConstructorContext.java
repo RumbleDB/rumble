@@ -36,32 +36,26 @@ public record DirectConstructorContext<
     public static DirectConstructorContext<
                     JsoniqParser.QnameContext, JsoniqParser.ExprContext, JsoniqParser.DirElemContentContext>
             from(JsoniqParser.DirectConstructorContext c) {
-        if (c == null) {
-            return null;
-        }
         return new DirectConstructorContext<>(
                 c.COMMENT(),
                 c.PI(),
                 c.open_tag_name,
-                DirAttributeListContext.from(c.attributes),
+                c.attributes != null ? DirAttributeListContext.from(c.attributes) : null,
                 c.single_tag != null,
-                DirElemOpenCloseContext.from(c.open_close),
+                c.open_close != null ? DirElemOpenCloseContext.from(c.open_close) : null,
                 c);
     }
 
     public static DirectConstructorContext<
                     XQueryParser.QnameContext, XQueryParser.ExprContext, XQueryParser.DirElemContentContext>
             from(XQueryParser.DirectConstructorContext c) {
-        if (c == null) {
-            return null;
-        }
         return new DirectConstructorContext<>(
                 c.COMMENT(),
                 c.PI(),
                 c.open_tag_name,
-                DirAttributeListContext.from(c.attributes),
+                c.attributes != null ? DirAttributeListContext.from(c.attributes) : null,
                 c.single_tag != null,
-                DirElemOpenCloseContext.from(c.open_close),
+                c.open_close != null ? DirElemOpenCloseContext.from(c.open_close) : null,
                 c);
     }
 }

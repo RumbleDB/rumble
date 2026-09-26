@@ -28,33 +28,21 @@ public record DirAttributeContentContext<ExprCtx extends ParserRuleContext>(Expr
 
     public static DirAttributeContentContext<JsoniqParser.ExprContext> from(
             JsoniqParser.DirAttributeContentQuotContext c) {
-        if (c == null) {
-            return null;
-        }
         return new DirAttributeContentContext<>(c.expr(), c);
     }
 
     public static DirAttributeContentContext<JsoniqParser.ExprContext> from(
             JsoniqParser.DirAttributeContentAposContext c) {
-        if (c == null) {
-            return null;
-        }
         return new DirAttributeContentContext<>(c.expr(), c);
     }
 
     public static DirAttributeContentContext<XQueryParser.ExprContext> from(
             XQueryParser.DirAttributeContentQuotContext c) {
-        if (c == null) {
-            return null;
-        }
         return new DirAttributeContentContext<>(c.expr(), c);
     }
 
     public static DirAttributeContentContext<XQueryParser.ExprContext> from(
             XQueryParser.DirAttributeContentAposContext c) {
-        if (c == null) {
-            return null;
-        }
         return new DirAttributeContentContext<>(c.expr(), c);
     }
 }

@@ -32,9 +32,6 @@ public record DirAttributeListContext<QnameCtx extends ParserRuleContext, ExprCt
 
     public static DirAttributeListContext<JsoniqParser.QnameContext, JsoniqParser.ExprContext> from(
             JsoniqParser.DirAttributeListContext c) {
-        if (c == null) {
-            return null;
-        }
         if (c.attribute_qname == null || c.attribute_value == null) {
             return new DirAttributeListContext<>(Collections.emptyList(), c);
         }
@@ -50,9 +47,6 @@ public record DirAttributeListContext<QnameCtx extends ParserRuleContext, ExprCt
 
     public static DirAttributeListContext<XQueryParser.QnameContext, XQueryParser.ExprContext> from(
             XQueryParser.DirAttributeListContext c) {
-        if (c == null) {
-            return null;
-        }
         if (c.attribute_qname == null || c.attribute_value == null) {
             return new DirAttributeListContext<>(Collections.emptyList(), c);
         }

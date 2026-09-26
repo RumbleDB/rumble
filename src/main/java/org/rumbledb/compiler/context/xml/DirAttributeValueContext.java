@@ -28,9 +28,6 @@ public record DirAttributeValueContext<ExprCtx extends ParserRuleContext>(
         ParserRuleContext context) {
 
     public static DirAttributeValueContext<JsoniqParser.ExprContext> from(JsoniqParser.DirAttributeValueContext c) {
-        if (c == null) {
-            return null;
-        }
         if (c.dirAttributeValueQuot() != null) {
             return new DirAttributeValueContext<>(
                     c.dirAttributeValueQuot(),
@@ -51,9 +48,6 @@ public record DirAttributeValueContext<ExprCtx extends ParserRuleContext>(
     }
 
     public static DirAttributeValueContext<XQueryParser.ExprContext> from(XQueryParser.DirAttributeValueContext c) {
-        if (c == null) {
-            return null;
-        }
         if (c.dirAttributeValueQuot() != null) {
             return new DirAttributeValueContext<>(
                     c.dirAttributeValueQuot(),

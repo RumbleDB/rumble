@@ -23,16 +23,10 @@ import org.rumbledb.parser.xquery.XQueryParser;
 public record CommonContentContext<ExprCtx extends ParserRuleContext>(ExprCtx expr, ParserRuleContext context) {
 
     public static CommonContentContext<JsoniqParser.ExprContext> from(JsoniqParser.CommonContentContext c) {
-        if (c == null) {
-            return null;
-        }
         return new CommonContentContext<>(c.expr(), c);
     }
 
     public static CommonContentContext<XQueryParser.ExprContext> from(XQueryParser.CommonContentContext c) {
-        if (c == null) {
-            return null;
-        }
         return new CommonContentContext<>(c.expr(), c);
     }
 }
