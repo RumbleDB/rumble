@@ -80,24 +80,25 @@ public final class AnnotationValidator {
      */
     public static boolean checkAssignable(
             List<Annotation> annotations, boolean defaultAssignable, ExceptionMetadata exceptionMetadata) {
-        boolean isAssignable = defaultAssignable;
-        boolean hasAssignableAnnotation = false;
-        boolean hasNonAssignableAnnotation = false;
-        for (Annotation annotation : annotations) {
-            if (annotation.getAnnotationName().equals(AnnotationConstants.ASSIGNABLE)) {
-                isAssignable = true;
-                hasAssignableAnnotation = true;
-            } else if (annotation.getAnnotationName().equals(AnnotationConstants.NON_ASSIGNABLE)) {
-                isAssignable = false;
-                hasNonAssignableAnnotation = true;
-            }
-            if (hasAssignableAnnotation && hasNonAssignableAnnotation) {
-                throw new InvalidAnnotationException(
-                        "Both %an:assignable and %an:nonassignable annotations cannot be used for the same declaration",
-                        exceptionMetadata);
-            }
+        if (annotations == null || annotations.isEmpty()) {
+            return defaultAssignable;
         }
-        return isAssignable;
+        boolean hasAssignable =
+                annotations.stream().anyMatch(a -> AnnotationConstants.ASSIGNABLE.equals(a.getAnnotationName()));
+        boolean hasNonAssignable =
+                annotations.stream().anyMatch(a -> AnnotationConstants.NON_ASSIGNABLE.equals(a.getAnnotationName()));
+        if (hasAssignable && hasNonAssignable) {
+            throw new InvalidAnnotationException(
+                    "Both %an:assignable and %an:nonassignable annotations cannot be used for the same declaration",
+                    exceptionMetadata);
+        }
+        if (hasAssignable) {
+            return true;
+        }
+        if (hasNonAssignable) {
+            return false;
+        }
+        return defaultAssignable;
     }
 
     /**
