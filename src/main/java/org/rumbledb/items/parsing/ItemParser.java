@@ -62,6 +62,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.spark.SparkSessionManager;
@@ -825,14 +826,14 @@ public class ItemParser {
         } else if (currentNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
             return getProcessingInstructionNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
-            return getDocumentNodeItem(currentNode, path, removeParentPointers);
+            return getDocumentItemFromXML(currentNode, path, removeParentPointers);
         }
         return getElementNodeItem(currentNode, path, removeParentPointers);
     }
 
-    private static Item getDocumentNodeItem(Node currentNode, String path, boolean removeParentPointers) {
+    public static DocumentItem getDocumentItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
         List<Item> children = getChildren(currentNode, path, removeParentPointers);
-        Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
+        DocumentItem documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
         if (!removeParentPointers) addParentToChildrenAndAttributes(documentItem);
         documentItem.setXmlDocumentPosition(path, 0);
         return documentItem;

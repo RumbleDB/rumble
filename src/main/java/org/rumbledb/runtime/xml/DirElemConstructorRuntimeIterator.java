@@ -176,8 +176,8 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         }
         validateNoDuplicateAttributes(attributes);
         // create and return the element item
-        ElementItem elementItem =
-                (ElementItem) ItemFactory.getInstance().createXmlElementNode(this.elementName, content, attributes);
+        ElementItem elementItem = ItemFactory.getInstance().createXmlElementNode(this.elementName, content, attributes);
+        elementItem.setConstructionBaseUri(this.staticContext.getStaticURI());
         // Only add namespaces explicitly declared on this element
         for (Item namespace : namespaces) {
             elementItem.addOrReplaceNamespace(namespace);

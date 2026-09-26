@@ -447,7 +447,7 @@ public class ItemFactory {
         return new AttributeItem(nodeName, stringValue);
     }
 
-    public Item createXmlDocumentNode(Node documentNode, List<Item> children) {
+    public DocumentItem createXmlDocumentNode(Node documentNode, List<Item> children) {
         return new DocumentItem(documentNode, children);
     }
 
@@ -457,16 +457,16 @@ public class ItemFactory {
      * @param children The children items of the document
      * @return The document item
      */
-    public Item createXmlDocumentNode(List<Item> children) {
+    public DocumentItem createXmlDocumentNode(List<Item> children) {
         return new DocumentItem(children);
     }
 
-    public Item createXmlElementNode(
+    public ElementItem createXmlElementNode(
             Node elementNode, List<Item> children, List<Item> attributes, Map<String, String> namespaceBindings) {
         return new ElementItem(elementNode, children, attributes, namespaceBindings);
     }
 
-    public Item createXmlElementNode(Name nodeName, List<Item> children, List<Item> attributes) {
+    public ElementItem createXmlElementNode(Name nodeName, List<Item> children, List<Item> attributes) {
         return new ElementItem(nodeName, children, attributes);
     }
 

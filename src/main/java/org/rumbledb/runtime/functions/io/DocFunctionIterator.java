@@ -33,6 +33,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -64,10 +65,12 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
             try (InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getMetadata())) {
                 Document xmlDocument = documentBuilder.parse(xmlFileStream);
-                return ItemParser.getItemFromXML(
+                DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                         xmlDocument,
                         uri.toString(),
                         context.getRumbleConfiguration().optimization().optimizeParentPointers());
+                documentItem.setConstructionBaseUri(uri);
+                return documentItem;
             }
         } catch (ParserConfigurationException e) {
             throw new OurBadException("Document builder creation failed with: " + e);
