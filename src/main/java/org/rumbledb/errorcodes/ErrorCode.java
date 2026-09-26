@@ -233,6 +233,9 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode CharacterReferenceErrorCode = registerBuiltIn("XQST0090");
     public static final ErrorCode InvalidComputedNamespaceConstructorErrorCode = registerBuiltIn("XQDY0101");
     public static final ErrorCode AttributeOrNamespaceAfterNonAttributeErrorCode = registerBuiltIn("XQTY0024");
+    public static final ErrorCode DuplicateFunctionAnnotationErrorCode = registerBuiltIn("XQST0106");
+    public static final ErrorCode DuplicateVariableAnnotationErrorCode = registerBuiltIn("XQST0116");
+    public static final ErrorCode InvalidInlineFunctionAnnotationErrorCode = registerBuiltIn("XQST0125");
 
     public static final ErrorCode DuplicateObjectInsertSourceErrorCode = registerBuiltIn("JNUP0005");
     public static final ErrorCode DuplicateKeyOnUpdateApplyErrorCode = registerBuiltIn("JNUP0006");

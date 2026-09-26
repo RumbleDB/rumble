@@ -33,6 +33,7 @@ import org.rumbledb.compiler.context.ParenthesizedExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
+import org.rumbledb.compiler.utils.AnnotationValidator;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateParamNameException;
@@ -180,6 +181,7 @@ public final class PrimaryTranslation {
                     Function<SeqTypeCtx, SequenceType> processSequenceType,
                     Function<FnBodyCtx, StatementsAndOptionalExpr> visitStatementsAndOptionalExpr) {
         List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
+        AnnotationValidator.validateInlineFunctionAnnotations(annotations);
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = SequenceType.createSequenceType("item*");
         if (ctx.params() != null) {
