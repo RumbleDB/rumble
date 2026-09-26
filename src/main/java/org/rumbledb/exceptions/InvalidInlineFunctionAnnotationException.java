@@ -13,25 +13,21 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.expressions.scripting.annotations;
+package org.rumbledb.exceptions;
 
-import java.util.List;
+import java.io.Serial;
 
-import lombok.Getter;
+import org.rumbledb.errorcodes.ErrorCode;
 
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.Expression;
+/**
+ * Static error for visibility annotations on an inline function expression [err:XQST0125].
+ */
+public class InvalidInlineFunctionAnnotationException extends SemanticException {
 
-@Getter
-public class Annotation {
-    private final Name annotationName;
-    private final List<Expression> literals;
-    private final ExceptionMetadata metadata;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    public Annotation(Name annotationName, List<Expression> literals, ExceptionMetadata metadata) {
-        this.annotationName = annotationName;
-        this.literals = literals;
-        this.metadata = metadata;
+    public InvalidInlineFunctionAnnotationException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCode.InvalidInlineFunctionAnnotationErrorCode, metadata);
     }
 }

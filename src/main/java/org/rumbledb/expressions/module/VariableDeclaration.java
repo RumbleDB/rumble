@@ -33,7 +33,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.types.SequenceType;
 
-import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAssignable;
+import static org.rumbledb.compiler.utils.AnnotationValidator.checkAssignable;
 
 public class VariableDeclaration extends Node {
     // Default is false for variable declaration.
