@@ -475,7 +475,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {
-        return parseStringLiteral(this.xQueryTokenStream.getText(ctx.getSourceInterval()));
+        String source = this.xQueryTokenStream.getText(ctx.getSourceInterval());
+        ExceptionMetadata metadata = createMetadataFromContext(ctx);
+
+        return StringLiteralUtils.parseXQuery(source, metadata);
     }
 
     public Name parseFunctionName(XQueryParser.FunctionNameContext ctx) {
@@ -889,10 +892,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public Expression visitLiteral(XQueryParser.LiteralContext ctx) {
         return PrimaryTranslation.literal(
                 LiteralExprContext.from(ctx), this.translationContext, this::processStringLiteral);
-    }
-
-    private String parseStringLiteral(String source) {
-        return StringLiteralUtils.parseXQuery(source);
     }
 
     @Override

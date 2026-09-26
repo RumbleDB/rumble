@@ -17,6 +17,7 @@ package org.rumbledb.compiler;
 
 import org.apache.commons.text.StringEscapeUtils;
 
+import org.rumbledb.compiler.utils.XmlCharRefUtils;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
@@ -81,13 +82,14 @@ final class StringLiteralUtils {
      * entity references are expanded.
      *
      * @param source the complete literal, including matching delimiters
+     * @param metadata location to attach to a syntax error
      * @return the decoded string value
      */
-    static String parseXQuery(String source) {
+    static String parseXQuery(String source, ExceptionMetadata metadata) {
         char delimiter = getDelimiter(source);
         String raw = source.substring(1, source.length() - 1);
         String escapedDelimiter = String.valueOf(delimiter) + delimiter;
-        return StringEscapeUtils.unescapeXml(raw.replace(escapedDelimiter, String.valueOf(delimiter)));
+        return XmlCharRefUtils.unescapeXml(raw.replace(escapedDelimiter, String.valueOf(delimiter)), metadata);
     }
 
     /**
