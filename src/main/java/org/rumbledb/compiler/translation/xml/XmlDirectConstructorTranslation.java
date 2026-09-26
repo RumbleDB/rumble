@@ -371,8 +371,9 @@ public final class XmlDirectConstructorTranslation {
         if (ctx.expr() != null) {
             return visitExpr.apply(ctx.expr());
         }
+        String xmlVersion = translationContext.configuration().semantics().xmlVersion();
         String processedContent =
-                processLiteralContent(ctx.context().getText(), translationContext.metadata(ctx.context()));
+                processLiteralContent(ctx.context().getText(), xmlVersion, translationContext.metadata(ctx.context()));
         return new TextNodeExpression(processedContent, translationContext.metadata(ctx.context()));
     }
 
@@ -482,9 +483,11 @@ public final class XmlDirectConstructorTranslation {
             TranslationContext translationContext,
             Function<ExprCtx, Expression> visitExpr) {
         if (ctx.quotedValue() != null) {
+            String xmlVersion = translationContext.configuration().semantics().xmlVersion();
             return processQuotedValue(
                     tokenStream,
                     ctx.quotedValue(),
+                    xmlVersion,
                     translationContext::metadata,
                     translationContext::metadata,
                     (DirAttributeContentContext<ExprCtx> c) -> processAttributeContent(
@@ -554,7 +557,8 @@ public final class XmlDirectConstructorTranslation {
         String childText = tokenStream.getText(ctx.context().getSourceInterval());
         validateLiteral(childText, ctx.context(), translationContext::metadata);
         ParseTree child = ctx.context().getChildCount() > 0 ? ctx.context().getChild(0) : ctx.context();
-        String processedContent = processLiteralContent(childText, translationContext.metadata(child));
+        String xmlVersion = translationContext.configuration().semantics().xmlVersion();
+        String processedContent = processLiteralContent(childText, xmlVersion, translationContext.metadata(child));
         return List.of(new AttributeNodeContentExpression(processedContent, translationContext.metadata(child)));
     }
 
@@ -566,6 +570,7 @@ public final class XmlDirectConstructorTranslation {
     private static <ExprCtx extends ParserRuleContext> List<Expression> processQuotedValue(
             CommonTokenStream tokenStream,
             ParserRuleContext ctx,
+            String xmlVersion,
             Function<ParseTree, ExceptionMetadata> metadataFactory,
             BiFunction<ParseTree, ParseTree, ExceptionMetadata> rangeMetadataFactory,
             Function<DirAttributeContentContext<ExprCtx>, List<Expression>> contentProcessor,
@@ -584,7 +589,7 @@ public final class XmlDirectConstructorTranslation {
             if (childText.startsWith("&") && childText.endsWith(";")) {
                 result.append(
                         new AttributeNodeContentExpression(
-                                XmlCharRefUtils.unescapeXml(childText, metadataFactory.apply(child)),
+                                XmlCharRefUtils.unescapeXml(childText, xmlVersion, metadataFactory.apply(child)),
                                 metadataFactory.apply(child)),
                         child);
             } else if (childText.equals(escapeSequence)) {
@@ -665,9 +670,9 @@ public final class XmlDirectConstructorTranslation {
      * @param content the raw literal content
      * @return the processed literal text
      */
-    private static String processLiteralContent(String content, ExceptionMetadata metadata) {
+    private static String processLiteralContent(String content, String xmlVersion, ExceptionMetadata metadata) {
         if (content.startsWith("&") && content.endsWith(";")) {
-            return XmlCharRefUtils.unescapeXml(content, metadata);
+            return XmlCharRefUtils.unescapeXml(content, xmlVersion, metadata);
         }
         if (content.equals("{{")) {
             return "{";

@@ -33,10 +33,11 @@ public final class URIQualifiedNameParser {
 
     /**
      * @param tokenText full lexer text of one {@code URIQualifiedName} token, e.g. {@code Q{http://ex}invoice}
+     * @param xmlVersion XML version ("1.0" or "1.1")
      * @param metadata for errors
      * @return expanded name with absent prefix (per spec)
      */
-    public static Name parse(String tokenText, ExceptionMetadata metadata) {
+    public static Name parse(String tokenText, String xmlVersion, ExceptionMetadata metadata) {
         if (tokenText == null || tokenText.length() < 4 || !tokenText.startsWith("Q{")) {
             throw new ParsingException("Invalid URIQualifiedName: " + tokenText, metadata);
         }
@@ -49,7 +50,7 @@ public final class URIQualifiedNameParser {
         if (localName.isEmpty()) {
             throw new ParsingException("Invalid URIQualifiedName (missing local name): " + tokenText, metadata);
         }
-        String uriUnescaped = XmlCharRefUtils.unescapeXml(uriRaw, metadata);
+        String uriUnescaped = XmlCharRefUtils.unescapeXml(uriRaw, xmlVersion, metadata);
         String namespaceUri = normalizeUriForEqName(uriUnescaped);
         if (namespaceUri != null && XMLNS_NAMESPACE_URI.equals(namespaceUri)) {
             throw new PredefinedPrefixInNamespaceDeclarationException(
