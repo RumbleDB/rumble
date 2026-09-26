@@ -24,12 +24,12 @@ public record ItemTypeContext<
         SeqTypeCtx extends ParserRuleContext,
         ItemTypeCtx extends ParserRuleContext,
         EqNameCtx extends ParserRuleContext,
-        AnnotationCtx extends ParserRuleContext,
+        AnnotationsCtx extends ParserRuleContext,
         StringLiteralCtx extends ParserRuleContext>(
         ItemTypeCtx parenthesizedItemType,
         boolean isItem,
         boolean isNull,
-        FunctionTestContext<SeqTypeCtx, AnnotationCtx> functionTest,
+        FunctionTestContext<SeqTypeCtx, AnnotationsCtx> functionTest,
         MapTestContext<SeqTypeCtx, EqNameCtx> mapTest,
         ArrayTestContext<SeqTypeCtx> arrayTest,
         EqNameCtx eqName,
@@ -40,7 +40,7 @@ public record ItemTypeContext<
                     JsoniqParser.SequenceTypeContext,
                     JsoniqParser.ItemTypeContext,
                     JsoniqParser.EqNameContext,
-                    JsoniqParser.AnnotationContext,
+                    JsoniqParser.AnnotationsContext,
                     JsoniqParser.StringLiteralContext>
             from(JsoniqParser.ItemTypeContext c) {
         return new ItemTypeContext<>(
@@ -59,7 +59,7 @@ public record ItemTypeContext<
                     XQueryParser.SequenceTypeContext,
                     XQueryParser.ItemTypeContext,
                     XQueryParser.EqNameContext,
-                    XQueryParser.AnnotationContext,
+                    XQueryParser.AnnotationsContext,
                     XQueryParser.StringLiteralContext>
             from(XQueryParser.ItemTypeContext c) {
         return new ItemTypeContext<>(

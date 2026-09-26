@@ -17,6 +17,7 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -30,6 +31,7 @@ import lombok.extern.log4j.Log4j2;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
+import org.rumbledb.compiler.context.AnnotationsContext;
 import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.CommaExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
@@ -112,6 +114,7 @@ import org.rumbledb.compiler.context.xml.PiTestContext;
 import org.rumbledb.compiler.context.xml.SchemaAttributeTestContext;
 import org.rumbledb.compiler.context.xml.SchemaElementTestContext;
 import org.rumbledb.compiler.context.xml.StepExprContext;
+import org.rumbledb.compiler.translation.AnnotationTranslation;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -1505,25 +1508,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private List<Annotation> processAnnotations(XQueryParser.AnnotationsContext annotations) {
-        return processAnnotations(annotations.annotation());
-    }
-
-    private List<Annotation> processAnnotations(List<XQueryParser.AnnotationContext> annotations) {
-        List<Annotation> parsedAnnotations = new ArrayList<>();
-        for (XQueryParser.AnnotationContext annotationContext : annotations) {
-            XQueryParser.EqNameContext eqNameContext = annotationContext.eqName();
-            Name name = parseEqName(eqNameContext, NameRole.ANNOTATION);
-            Annotation.validateAnnotationName(name, createMetadataFromContext(annotationContext));
-            List<Expression> literals = null;
-            if (!annotationContext.literal().isEmpty()) {
-                literals = new ArrayList<>();
-                for (XQueryParser.LiteralContext literalContext : annotationContext.literal()) {
-                    literals.add(this.visitLiteral(literalContext));
-                }
-            }
-            parsedAnnotations.add(new Annotation(name, literals));
+        if (annotations == null) {
+            return Collections.emptyList();
         }
-
-        return parsedAnnotations;
+        return AnnotationTranslation.processAnnotations(
+                AnnotationsContext.from(annotations), this.translationContext, this::parseEqName, this::visitLiteral);
     }
 }
