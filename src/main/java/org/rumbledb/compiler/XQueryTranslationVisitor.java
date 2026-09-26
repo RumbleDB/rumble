@@ -205,7 +205,6 @@ import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
-import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
@@ -923,13 +922,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         List<Expression> values = new ArrayList<>();
         for (XQueryParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
             Expression lhs = this.visitExprSingle(currentPair.lhs);
-            if (lhs instanceof StepExpr) {
-                throw new ParsingException(
-                        "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --xquery-version CLI option.",
-                        createMetadataFromContext(ctx));
-            } else {
-                keys.add(lhs);
-            }
+            keys.add(lhs);
             values.add(this.visitExprSingle(currentPair.rhs));
         }
         return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));
