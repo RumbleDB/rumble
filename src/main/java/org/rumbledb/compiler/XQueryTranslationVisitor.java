@@ -19,7 +19,6 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -90,6 +89,9 @@ import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
 import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
 import org.rumbledb.compiler.context.scripting.VarDeclStatementContext;
 import org.rumbledb.compiler.context.scripting.WhileStatementContext;
+import org.rumbledb.compiler.context.type.ItemTypeContext;
+import org.rumbledb.compiler.context.type.SequenceTypeContext;
+import org.rumbledb.compiler.context.type.SingleTypeContext;
 import org.rumbledb.compiler.context.xml.AttributeTestContext;
 import org.rumbledb.compiler.context.xml.CommonContentContext;
 import org.rumbledb.compiler.context.xml.CompAttrConstructorContext;
@@ -204,12 +206,7 @@ import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.parser.xquery.XQueryParser;
 import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ElementNodeItemType;
-import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -1070,220 +1067,22 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public SequenceType processSequenceType(XQueryParser.SequenceTypeContext ctx) {
-        if (ctx.item == null) {
-            return SequenceType.createSequenceType("()");
-        }
-        ItemType itemType = processItemType(ctx.item);
-        if (ctx.question.size() > 0) {
-            return new SequenceType(itemType, SequenceType.Arity.OneOrZero);
-        }
-        if (ctx.star.size() > 0) {
-            return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);
-        }
-        if (ctx.plus.size() > 0) {
-            return new SequenceType(itemType, SequenceType.Arity.OneOrMore);
-        }
-        return new SequenceType(itemType);
+        return TypeTranslation.sequenceType(SequenceTypeContext.from(ctx), this::processItemType);
     }
 
     public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
-        if (ctx.item == null) {
-            return SequenceType.createSequenceType("()");
-        }
-
-        ItemType itemType = processItemType(ctx.item);
-        if (ctx.question.size() > 0) {
-            return new SequenceType(itemType, SequenceType.Arity.OneOrZero);
-        }
-        return new SequenceType(itemType);
+        return TypeTranslation.singleType(SingleTypeContext.from(ctx), this::processItemType);
     }
 
     public ItemType processItemType(XQueryParser.ItemTypeContext itemTypeContext) {
-        if (itemTypeContext.parenthesizedItemTest() != null) {
-            return processItemType(itemTypeContext.parenthesizedItemTest().itemType());
-        }
-        if (itemTypeContext.KW_ITEM() != null) {
-            return BuiltinTypesCatalogue.item;
-        }
-        if (itemTypeContext.functionTest() != null) {
-            processAnnotations(itemTypeContext.functionTest().annotation());
-            // we have a function item type
-            XQueryParser.TypedFunctionTestContext typedFnCtx =
-                    itemTypeContext.functionTest().typedFunctionTest();
-            if (typedFnCtx != null) {
-                SequenceType rt = processSequenceType(typedFnCtx.rt);
-                List<SequenceType> st =
-                        typedFnCtx.st.stream().map(this::processSequenceType).collect(Collectors.toList());
-                FunctionSignature signature = new FunctionSignature(st, rt);
-                // TODO: move item type creation to ItemFactory
-                return ItemTypeFactory.createFunctionItemType(signature);
-
-            } else {
-                return BuiltinTypesCatalogue.anyFunctionItem;
-            }
-        }
-        if (itemTypeContext.mapTest() != null) {
-            XQueryParser.MapTestContext mapTestContext = itemTypeContext.mapTest();
-            if (mapTestContext.anyMapTest() != null) {
-                return BuiltinTypesCatalogue.mapItem;
-            }
-            XQueryParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
-            if (typedMapTestContext != null) {
-                Name keyName = parseEqName(typedMapTestContext.eqName(), NameRole.TYPE);
-                keyName = ItemTypeReference.renameAtomic(this.translationContext.moduleContext(), keyName);
-                ItemType keyType;
-                if (!BuiltinTypesCatalogue.typeExists(keyName)) {
-                    keyType = new ItemTypeReference(keyName);
-                } else {
-                    keyType = BuiltinTypesCatalogue.getItemTypeByName(keyName);
-                }
-                SequenceType valueSequenceType = processSequenceType(typedMapTestContext.sequenceType());
-                return ItemTypeFactory.mapOf(keyType, valueSequenceType);
-            }
-        }
-        if (itemTypeContext.arrayTest() != null) {
-            XQueryParser.ArrayTestContext arrayTestContext = itemTypeContext.arrayTest();
-            if (arrayTestContext.anyArrayTest() != null) {
-                // XQuery 3.1 array(*) is the XDM array type (members are sequences), not js:array().
-                return BuiltinTypesCatalogue.xqueryArrayItem;
-            }
-            XQueryParser.TypedArrayTestContext typedArrayTestContext = arrayTestContext.typedArrayTest();
-            if (typedArrayTestContext != null) {
-                SequenceType contentSequenceType = processSequenceType(typedArrayTestContext.sequenceType());
-                return ItemTypeFactory.xqueryArrayOf(contentSequenceType);
-            }
-        }
-        if (itemTypeContext.eqName() != null) {
-            Name name = parseEqName(itemTypeContext.eqName(), NameRole.TYPE);
-            name = ItemTypeReference.renameAtomic(this.translationContext.moduleContext(), name);
-            if (!BuiltinTypesCatalogue.typeExists(name)) {
-                return new ItemTypeReference(name);
-            }
-            return BuiltinTypesCatalogue.getItemTypeByName(name);
-        }
-        if (itemTypeContext.kindTest() != null) {
-            return processKindTestAsItemType(itemTypeContext.kindTest());
-        }
-        throw new UnsupportedFeatureException("Unsupported itemtype encountered", ExceptionMetadata.EMPTY_METADATA);
-    }
-
-    private ItemType processKindTestAsItemType(XQueryParser.KindTestContext kindTestContext) {
-        if (kindTestContext.schemaElementTest() != null) {
-            return getSchemaElementTestAsItemType(kindTestContext.schemaElementTest());
-        }
-        if (kindTestContext.schemaAttributeTest() != null) {
-            return getSchemaAttributeTestAsItemType(kindTestContext.schemaAttributeTest());
-        }
-        if (kindTestContext.anyKindTest() != null) {
-            return BuiltinTypesCatalogue.nodeItem;
-        }
-        if (kindTestContext.documentTest() != null) {
-            XQueryParser.DocumentTestContext documentTestContext = kindTestContext.documentTest();
-            if (documentTestContext.schemaElementTest() != null) {
-                return ItemTypeFactory.documentNodeItemType(
-                        getSchemaElementTestAsItemType(documentTestContext.schemaElementTest()));
-            }
-            if (documentTestContext.elementTest() != null) {
-                ElementNodeItemType elementTestType = getElementTestAsItemType(documentTestContext.elementTest());
-                return ItemTypeFactory.documentNodeItemType(elementTestType);
-            }
-            return BuiltinTypesCatalogue.documentNode;
-        }
-        if (kindTestContext.elementTest() != null) {
-            return getElementTestAsItemType(kindTestContext.elementTest());
-        }
-        if (kindTestContext.attributeTest() != null) {
-            XQueryParser.AttributeTestContext attributeTestContext = kindTestContext.attributeTest();
-            Name attributeName = attributeTestContext.attributeNameOrWildcard() == null
-                            || attributeTestContext.attributeNameOrWildcard().attributeName() == null
-                    ? null
-                    : parseEqName(
-                            attributeTestContext
-                                    .attributeNameOrWildcard()
-                                    .attributeName()
-                                    .eqName(),
-                            NameRole.NO_DEFAULT_NAMESPACE);
-            if (attributeTestContext.typeName() == null) {
-                return attributeName == null
-                        ? BuiltinTypesCatalogue.attributeNode
-                        : ItemTypeFactory.attributeNodeItemType(attributeName);
-            }
-            Name typeName = parseEqName(attributeTestContext.typeName().eqName(), NameRole.TYPE);
-            return ItemTypeFactory.attributeNodeItemType(
-                    attributeName,
-                    typeName,
-                    this.translationContext
-                            .moduleContext()
-                            .getInScopeSchemaTypes()
-                            .getXmlSchemaCatalog()
-                            .getTypeHierarchy(typeName, createMetadataFromContext(attributeTestContext)));
-        }
-        if (kindTestContext.commentTest() != null) {
-            return BuiltinTypesCatalogue.commentNode;
-        }
-        if (kindTestContext.textTest() != null) {
-            return BuiltinTypesCatalogue.textNode;
-        }
-        if (kindTestContext.namespaceNodeTest() != null) {
-            return BuiltinTypesCatalogue.namespaceNode;
-        }
-        if (kindTestContext.piTest() != null) {
-            XQueryParser.PiTestContext piTestContext = kindTestContext.piTest();
-            if (piTestContext.ncName() != null) {
-                return ItemTypeFactory.processingInstructionNodeItemType(
-                        piTestContext.ncName().getText());
-            }
-            if (piTestContext.stringLiteral() != null) {
-                String targetName = processStringLiteral(piTestContext.stringLiteral());
-                return ItemTypeFactory.processingInstructionNodeItemType(targetName);
-            }
-            return BuiltinTypesCatalogue.processingInstructionNode;
-        }
-        throw new UnsupportedFeatureException(
-                "Unsupported kind test in item type: " + kindTestContext.getText(),
-                createMetadataFromContext(kindTestContext));
-    }
-
-    private ElementNodeItemType getSchemaElementTestAsItemType(XQueryParser.SchemaElementTestContext ctx) {
-        Name name = parseEqName(ctx.elementDeclaration().elementName().eqName(), NameRole.ELEMENT_CONSTRUCTOR);
-        return this.translationContext
-                .moduleContext()
-                .getInScopeSchemaTypes()
-                .getXmlSchemaCatalog()
-                .getSchemaElementTest(name, createMetadataFromContext(ctx));
-    }
-
-    private ItemType getSchemaAttributeTestAsItemType(XQueryParser.SchemaAttributeTestContext ctx) {
-        Name name = parseEqName(ctx.attributeDeclaration().attributeName().eqName(), NameRole.NO_DEFAULT_NAMESPACE);
-        return this.translationContext
-                .moduleContext()
-                .getInScopeSchemaTypes()
-                .getXmlSchemaCatalog()
-                .getSchemaAttributeTest(name, createMetadataFromContext(ctx));
-    }
-
-    private ElementNodeItemType getElementTestAsItemType(XQueryParser.ElementTestContext elementTestContext) {
-        Name elementName = elementTestContext.elementNameOrWildcard() == null
-                        || elementTestContext.elementNameOrWildcard().elementName() == null
-                ? null
-                : parseEqName(
-                        elementTestContext.elementNameOrWildcard().elementName().eqName(),
-                        NameRole.ELEMENT_CONSTRUCTOR);
-        if (elementTestContext.typeName() == null) {
-            return elementName == null
-                    ? (ElementNodeItemType) BuiltinTypesCatalogue.elementNode
-                    : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
-        }
-        Name typeName = parseEqName(elementTestContext.typeName().eqName(), NameRole.TYPE);
-        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(
-                elementName,
-                typeName,
-                this.translationContext
-                        .moduleContext()
-                        .getInScopeSchemaTypes()
-                        .getXmlSchemaCatalog()
-                        .getTypeHierarchy(typeName, createMetadataFromContext(elementTestContext)),
-                elementTestContext.optional != null);
+        return TypeTranslation.itemType(
+                ItemTypeContext.from(itemTypeContext),
+                this.translationContext,
+                this::parseEqName,
+                this::processAnnotations,
+                this::processStringLiteral,
+                this::processSequenceType,
+                this::processItemType);
     }
 
     @Override
