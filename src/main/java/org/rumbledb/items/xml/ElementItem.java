@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.w3c.dom.Node;
 
@@ -41,6 +42,8 @@ import org.rumbledb.types.ItemTypeFactory;
 public class ElementItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
+
+    private static final Pattern ABSOLUTE_URI_SCHEME = Pattern.compile("^[A-Za-z][A-Za-z0-9+.-]*:");
 
     private List<Item> children;
     private List<Item> attributes;
@@ -205,11 +208,11 @@ public class ElementItem extends AbstractNodeItem {
      */
     @Override
     public List<Item> baseUri() {
-        URI inherited = this.constructionBaseUri;
+        String inherited = this.constructionBaseUri == null ? null : this.constructionBaseUri.toString();
         if (this.parent != null) {
             List<Item> parentBase = this.parent.baseUri();
             if (!parentBase.isEmpty()) {
-                inherited = URI.create(parentBase.get(0).getStringValue());
+                inherited = parentBase.get(0).getStringValue();
             }
         }
         for (Item attribute : this.attributes) {
@@ -217,16 +220,29 @@ public class ElementItem extends AbstractNodeItem {
             if (name != null && Name.XML_NS.equals(name.getNamespace()) && "base".equals(name.getLocalName())) {
                 String value = attribute.getStringValue();
                 if (!value.isEmpty()) {
-                    URI specified = URI.create(value);
-                    inherited = inherited == null ? specified : inherited.resolve(specified);
+                    if (ABSOLUTE_URI_SCHEME.matcher(value).find()) {
+                        // xs:anyURI and xml:base allow LEIRI characters that java.net.URI rejects.
+                        inherited = value;
+                    } else {
+                        try {
+                            URI specified = URI.create(value);
+                            inherited = inherited == null
+                                    ? specified.normalize().toString()
+                                    : URI.create(inherited)
+                                            .resolve(specified)
+                                            .normalize()
+                                            .toString();
+                        } catch (IllegalArgumentException e) {
+                            return Collections.emptyList();
+                        }
+                    }
                 }
                 break;
             }
         }
         return inherited == null
                 ? Collections.emptyList()
-                : List.of(ItemFactory.getInstance()
-                        .createAnyURIItem(inherited.normalize().toString()));
+                : List.of(ItemFactory.getInstance().createAnyURIItem(inherited));
     }
 
     /**
