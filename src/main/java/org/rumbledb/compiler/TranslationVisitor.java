@@ -92,6 +92,20 @@ import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
 import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
 import org.rumbledb.compiler.context.scripting.VarDeclStatementContext;
 import org.rumbledb.compiler.context.scripting.WhileStatementContext;
+import org.rumbledb.compiler.context.update.AppendExprContext;
+import org.rumbledb.compiler.context.update.CreateCollectionExprContext;
+import org.rumbledb.compiler.context.update.DeleteExprContext;
+import org.rumbledb.compiler.context.update.DeleteIndexExprContext;
+import org.rumbledb.compiler.context.update.DeleteSearchExprContext;
+import org.rumbledb.compiler.context.update.EditCollectionExprContext;
+import org.rumbledb.compiler.context.update.InsertExprContext;
+import org.rumbledb.compiler.context.update.InsertIndexExprContext;
+import org.rumbledb.compiler.context.update.InsertSearchExprContext;
+import org.rumbledb.compiler.context.update.RenameExprContext;
+import org.rumbledb.compiler.context.update.ReplaceExprContext;
+import org.rumbledb.compiler.context.update.TransformExprContext;
+import org.rumbledb.compiler.context.update.TruncateCollectionExprContext;
+import org.rumbledb.compiler.context.update.UpdateLocatorContext;
 import org.rumbledb.compiler.context.xml.AttributeTestContext;
 import org.rumbledb.compiler.context.xml.CommonContentContext;
 import org.rumbledb.compiler.context.xml.CompAttrConstructorContext;
@@ -133,6 +147,8 @@ import org.rumbledb.compiler.translation.scripting.ControlStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.DeclarationStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.LoopStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.MutationStatementTranslation;
+import org.rumbledb.compiler.translation.update.CollectionTranslation;
+import org.rumbledb.compiler.translation.update.UpdateTranslation;
 import org.rumbledb.compiler.translation.xml.XmlComputedConstructorTranslation;
 import org.rumbledb.compiler.translation.xml.XmlDirectConstructorTranslation;
 import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
@@ -201,7 +217,6 @@ import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.AppendExpression;
-import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.expressions.update.DeleteExpression;
 import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
@@ -230,7 +245,6 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
 import org.rumbledb.parser.jsoniq.JsoniqParserBaseVisitor;
-import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FunctionSignature;
@@ -892,179 +906,113 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public InsertExpression visitInsertExpr(JsoniqParser.InsertExprContext ctx) {
-        Expression toInsertExpr;
-        Expression posExpr = null;
-        if (ctx.pairConstructor() != null && !ctx.pairConstructor().isEmpty()) {
-            List<Expression> keys = new ArrayList<>();
-            List<Expression> values = new ArrayList<>();
-            for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
-                Expression lhs = this.visitExprSingle(currentPair.lhs);
-                if (lhs instanceof StepExpr stepExpr) {
-                    if (this.translationContext
-                            .moduleContext()
-                            .getQueryLanguage()
-                            .equals("jsoniq10")) {
-                        keys.add(new StringLiteralExpression(
-                                stepExpr.getNodeTest().toString(), lhs.getMetadata()));
-                    } else {
-                        throw new ParsingException(
-                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --default-language jsoniq10 CLI option.",
-                                lhs.getMetadata());
-                    }
-                } else {
-                    keys.add(lhs);
-                }
-                values.add(this.visitExprSingle(currentPair.rhs));
-            }
-            toInsertExpr = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
-        } else if (ctx.to_insert_expr != null) {
-            toInsertExpr = this.visitExprSingle(ctx.to_insert_expr);
-            if (ctx.pos_expr != null) {
-                posExpr = this.visitExprSingle(ctx.pos_expr);
-            }
-        } else {
-            throw new OurBadException("Unrecognised expression to insert in Insert Expression");
-        }
-        Expression mainExpr = this.visitExprSingle(ctx.main_expr);
-
-        return new InsertExpression(mainExpr, toInsertExpr, posExpr, createMetadataFromContext(ctx));
+        return UpdateTranslation.insertExpr(
+                InsertExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public DeleteExpression visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
-        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        return new DeleteExpression(mainExpression, locatorExpression, createMetadataFromContext(ctx));
+        return UpdateTranslation.deleteExpr(
+                DeleteExprContext.from(ctx),
+                this.translationContext,
+                this::getMainExpressionFromUpdateLocatorContext,
+                this::getLocatorExpressionFromUpdateLocatorContext);
     }
 
     @Override
     public RenameExpression visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
-        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression nameExpression = this.visitExprSingle(ctx.name_expr);
-        return new RenameExpression(mainExpression, locatorExpression, nameExpression, createMetadataFromContext(ctx));
+        return UpdateTranslation.renameExpr(
+                RenameExprContext.from(ctx),
+                this.translationContext,
+                this::getMainExpressionFromUpdateLocatorContext,
+                this::getLocatorExpressionFromUpdateLocatorContext,
+                this::visitExprSingle);
     }
 
     @Override
     public ReplaceExpression visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
-        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression newExpression = this.visitExprSingle(ctx.replacer_expr);
-        return new ReplaceExpression(mainExpression, locatorExpression, newExpression, createMetadataFromContext(ctx));
+        return UpdateTranslation.replaceExpr(
+                ReplaceExprContext.from(ctx),
+                this.translationContext,
+                this::getMainExpressionFromUpdateLocatorContext,
+                this::getLocatorExpressionFromUpdateLocatorContext,
+                this::visitExprSingle);
     }
 
     @Override
     public TransformExpression visitTransformExpr(JsoniqParser.TransformExprContext ctx) {
-        List<CopyDeclaration> copyDecls = ctx.copyDecl().stream()
-                .map(copyDeclCtx -> {
-                    Name var = parseVariableBinding(copyDeclCtx.var_ref);
-                    Expression expr = this.visitExprSingle(copyDeclCtx.src_expr);
-                    return new CopyDeclaration(var, expr);
-                })
-                .collect(Collectors.toList());
-        Expression modifyExpression = this.visitExprSingle(ctx.mod_expr);
-        Expression returnExpression = this.visitExprSingle(ctx.ret_expr);
-        return new TransformExpression(copyDecls, modifyExpression, returnExpression, createMetadataFromContext(ctx));
+        return UpdateTranslation.transformExpr(
+                TransformExprContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::visitExprSingle);
     }
 
     @Override
     public AppendExpression visitAppendExpr(JsoniqParser.AppendExprContext ctx) {
-        Expression arrayExpression = this.visitExprSingle(ctx.array_expr);
-        Expression toAppendExpression = this.visitExprSingle(ctx.to_append_expr);
-        return new AppendExpression(arrayExpression, toAppendExpression, createMetadataFromContext(ctx));
+        return UpdateTranslation.appendExpr(
+                AppendExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public CreateCollectionExpression visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
-        Expression collection = this.visitExprSimple(ctx.collection_name);
-        Expression contentExpression;
-        if (ctx.content != null) {
-            contentExpression = this.visitExprSingle(ctx.content);
-        } else {
-            // use a CommaExpression as placeholder if the collection is created empty
-            contentExpression = new CommaExpression(createMetadataFromContext(ctx));
-        }
-        Mode mode = Mode.fromString(ctx.collectionMode.getText());
-        return new CreateCollectionExpression(collection, contentExpression, mode, createMetadataFromContext(ctx));
+        return CollectionTranslation.createCollectionExpr(
+                CreateCollectionExprContext.from(ctx),
+                this.translationContext,
+                this::visitExprSimple,
+                this::visitExprSingle);
     }
 
     @Override
     public DeleteIndexFromCollectionExpression visitDeleteIndexExpr(JsoniqParser.DeleteIndexExprContext ctx) {
-        Expression collection = this.visitExprSimple(ctx.collection_name);
-        Mode mode = Mode.fromString(ctx.collectionMode.getText());
-        boolean isFirst = (ctx.first != null);
-
-        Expression numDelete = null;
-        if (ctx.num != null) {
-            numDelete = this.visitExprSingle(ctx.num);
-        }
-
-        return new DeleteIndexFromCollectionExpression(
-                collection, numDelete, isFirst, mode, createMetadataFromContext(ctx));
+        return CollectionTranslation.deleteIndexExpr(
+                DeleteIndexExprContext.from(ctx),
+                this.translationContext,
+                this::visitExprSimple,
+                this::visitExprSingle);
     }
 
     @Override
     public DeleteSearchFromCollectionExpression visitDeleteSearchExpr(JsoniqParser.DeleteSearchExprContext ctx) {
-        Expression contentExpression = this.visitExprSingle(ctx.content);
-        return new DeleteSearchFromCollectionExpression(contentExpression, createMetadataFromContext(ctx));
+        return CollectionTranslation.deleteSearchExpr(
+                DeleteSearchExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public EditCollectionExpression visitEditCollectionExpr(JsoniqParser.EditCollectionExprContext ctx) {
-        Expression targetExpression = this.visitExprSingle(ctx.target);
-        Expression contentExpression = this.visitExprSingle(ctx.content);
-        return new EditCollectionExpression(targetExpression, contentExpression, createMetadataFromContext(ctx));
+        return CollectionTranslation.editCollectionExpr(
+                EditCollectionExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public InsertIndexIntoCollectionExpression visitInsertIndexExpr(JsoniqParser.InsertIndexExprContext ctx) {
-        Expression collection = this.visitExprSimple(ctx.collection_name);
-        Expression contentExpression = this.visitExprSingle(ctx.content);
-        Expression pos = ctx.pos != null ? this.visitExprSingle(ctx.pos) : null;
-        Mode mode = Mode.fromString(ctx.collectionMode.getText());
-        boolean isLast = (ctx.last != null);
-        boolean isFirst = (ctx.first != null);
-
-        return new InsertIndexIntoCollectionExpression(
-                collection, contentExpression, pos, mode, isFirst, isLast, createMetadataFromContext(ctx));
+        return CollectionTranslation.insertIndexExpr(
+                InsertIndexExprContext.from(ctx),
+                this.translationContext,
+                this::visitExprSimple,
+                this::visitExprSingle);
     }
 
     @Override
     public InsertSearchIntoCollectionExpression visitInsertSearchExpr(JsoniqParser.InsertSearchExprContext ctx) {
-        Expression targetExpression = this.visitExprSingle(ctx.target);
-        Expression contentExpression = this.visitExprSingle(ctx.content);
-        boolean isBefore = (ctx.before != null);
-        return new InsertSearchIntoCollectionExpression(
-                targetExpression, contentExpression, isBefore, createMetadataFromContext(ctx));
+        return CollectionTranslation.insertSearchExpr(
+                InsertSearchExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public TruncateCollectionExpression visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
-        Expression collectionName = this.visitExprSimple(ctx.collection_name);
-        Mode mode = Mode.fromString(ctx.collectionMode.getText());
-        return new TruncateCollectionExpression(collectionName, mode, createMetadataFromContext(ctx));
+        return CollectionTranslation.truncateCollectionExpr(
+                TruncateCollectionExprContext.from(ctx), this.translationContext, this::visitExprSimple);
     }
 
     public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = this.visitPostfixExpr(ctx.main_expr);
-        if (mainExpression instanceof ObjectLookupExpression objectLookupExpression) {
-            return objectLookupExpression.getMainExpression();
-        } else if (mainExpression instanceof ArrayLookupExpression arrayLookupExpression) {
-            return arrayLookupExpression.getMainExpression();
-        } else {
-            throw new OurBadException("Unrecognized main expression found in update expression.");
-        }
+        return UpdateTranslation.mainExpressionFromUpdateLocator(
+                UpdateLocatorContext.from(ctx), this::visitPostfixExpr);
     }
 
     public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = this.visitPostfixExpr(ctx.main_expr);
-        if (mainExpression instanceof ObjectLookupExpression objectLookupExpression) {
-            return objectLookupExpression.getLookupExpression();
-        } else if (mainExpression instanceof ArrayLookupExpression arrayLookupExpression) {
-            return arrayLookupExpression.getLookupExpression();
-        } else {
-            throw new OurBadException("Unrecognized main expression found in update expression.");
-        }
+        return UpdateTranslation.locatorExpressionFromUpdateLocator(
+                UpdateLocatorContext.from(ctx), this::visitPostfixExpr);
     }
 
     // endregion
