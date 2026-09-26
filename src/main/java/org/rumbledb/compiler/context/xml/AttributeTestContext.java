@@ -28,32 +28,29 @@ public record AttributeTestContext<EqNameCtx extends ParserRuleContext>(
         ParserRuleContext context) {
 
     public static AttributeTestContext<JsoniqParser.EqNameContext> from(JsoniqParser.AttributeTestContext c) {
-        if (c == null) {
-            return null;
-        }
-        boolean hasWildcard = c.attributeNameOrWildcard() != null
-                && c.attributeNameOrWildcard().attributeName() == null;
-        JsoniqParser.EqNameContext attributeName = (c.attributeNameOrWildcard() != null
-                        && c.attributeNameOrWildcard().attributeName() != null)
-                ? c.attributeNameOrWildcard().attributeName().eqName()
-                : null;
+        boolean hasAttributeNameOrWildcard = c.attributeNameOrWildcard() != null;
+
+        boolean hasWildcard =
+                hasAttributeNameOrWildcard && c.attributeNameOrWildcard().STAR() != null;
+        JsoniqParser.EqNameContext attributeName =
+                hasAttributeNameOrWildcard && c.attributeNameOrWildcard().attributeName() != null
+                        ? c.attributeNameOrWildcard().attributeName().eqName()
+                        : null;
         JsoniqParser.EqNameContext typeName =
                 c.typeName() != null ? c.typeName().eqName() : null;
-        return new AttributeTestContext<>(c.attributeNameOrWildcard() != null, hasWildcard, attributeName, typeName, c);
+        return new AttributeTestContext<>(hasAttributeNameOrWildcard, hasWildcard, attributeName, typeName, c);
     }
 
     public static AttributeTestContext<XQueryParser.EqNameContext> from(XQueryParser.AttributeTestContext c) {
-        if (c == null) {
-            return null;
-        }
-        boolean hasWildcard = c.attributeNameOrWildcard() != null
-                && c.attributeNameOrWildcard().attributeName() == null;
-        XQueryParser.EqNameContext attributeName = (c.attributeNameOrWildcard() != null
-                        && c.attributeNameOrWildcard().attributeName() != null)
-                ? c.attributeNameOrWildcard().attributeName().eqName()
-                : null;
+        boolean hasAttributeNameOrWildcard = c.attributeNameOrWildcard() != null;
+        boolean hasWildcard =
+                hasAttributeNameOrWildcard && c.attributeNameOrWildcard().STAR() != null;
+        XQueryParser.EqNameContext attributeName =
+                hasAttributeNameOrWildcard && c.attributeNameOrWildcard().attributeName() != null
+                        ? c.attributeNameOrWildcard().attributeName().eqName()
+                        : null;
         XQueryParser.EqNameContext typeName =
                 c.typeName() != null ? c.typeName().eqName() : null;
-        return new AttributeTestContext<>(c.attributeNameOrWildcard() != null, hasWildcard, attributeName, typeName, c);
+        return new AttributeTestContext<>(hasAttributeNameOrWildcard, hasWildcard, attributeName, typeName, c);
     }
 }
