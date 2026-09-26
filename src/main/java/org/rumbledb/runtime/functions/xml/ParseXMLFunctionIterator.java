@@ -33,6 +33,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidXmlDocumentException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -56,10 +57,12 @@ public class ParseXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             documentBuilderFactory.setNamespaceAware(true);
             DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
             Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(arg.getStringValue())));
-            return ItemParser.getItemFromXML(
+            DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                     xmlDocument,
                     XMLDocumentPosition.generateConstructedTreePath(),
                     context.getRumbleConfiguration().optimization().optimizeParentPointers());
+            documentItem.setConstructionBaseUri(this.staticContext.getStaticURI());
+            return documentItem;
         } catch (ParserConfigurationException e) {
             throw new OurBadException("Document builder creation failed with: " + e);
         } catch (SAXException | IOException e) {

@@ -201,7 +201,7 @@ public class DocumentItem extends AbstractNodeItem {
      */
     @Override
     public List<Item> baseUri() {
-        return this.constructionBaseUri == null
+        return this.constructionBaseUri == null || !this.constructionBaseUri.isAbsolute()
                 ? Collections.emptyList()
                 : List.of(ItemFactory.getInstance().createAnyURIItem(this.constructionBaseUri.toString()));
     }

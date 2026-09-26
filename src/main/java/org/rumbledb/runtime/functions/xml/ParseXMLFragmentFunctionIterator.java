@@ -37,6 +37,7 @@ import org.rumbledb.exceptions.InvalidXmlDocumentException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -77,7 +78,8 @@ public class ParseXMLFragmentFunctionIterator extends AbstractAtMostOneItemRunti
                 }
             }
 
-            Item documentItem = ItemFactory.getInstance().createXmlDocumentNode(children);
+            DocumentItem documentItem = ItemFactory.getInstance().createXmlDocumentNode(children);
+            documentItem.setConstructionBaseUri(this.staticContext.getStaticURI());
             if (!removeParentPointers) {
                 documentItem.addParentToDescendants();
             }

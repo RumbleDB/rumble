@@ -49,7 +49,7 @@ public class IRIToURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         return ItemFactory.getInstance().createStringItem(encodeIri(inputItem.getStringValue()));
     }
 
-    private static String encodeIri(String value) {
+    public static String encodeIri(String value) {
         StringBuilder result = new StringBuilder(value.length());
         value.codePoints().forEach(codePoint -> appendEncodedCodePoint(result, codePoint));
         return result.toString();
