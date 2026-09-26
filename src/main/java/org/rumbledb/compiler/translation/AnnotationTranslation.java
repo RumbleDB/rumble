@@ -26,6 +26,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.compiler.context.AnnotationsContext;
 import org.rumbledb.compiler.context.AnnotationsContext.AnnotationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
+import org.rumbledb.compiler.utils.AnnotationValidator;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
@@ -54,7 +55,7 @@ public final class AnnotationTranslation {
                 continue;
             }
             Name name = parseEqName.apply(annotationContext.eqName(), NameRole.ANNOTATION);
-            Annotation.validateAnnotationName(name, metadata);
+            AnnotationValidator.validateAnnotationName(name, metadata);
             List<Expression> literals = null;
             if (annotationContext.literals() != null
                     && !annotationContext.literals().isEmpty()) {

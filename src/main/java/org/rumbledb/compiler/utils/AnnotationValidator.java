@@ -22,16 +22,83 @@ import java.util.Set;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateFunctionAnnotationException;
 import org.rumbledb.exceptions.DuplicateVariableAnnotationException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidAnnotationException;
+import org.rumbledb.exceptions.InvalidAnnotationNamespaceException;
 import org.rumbledb.exceptions.InvalidInlineFunctionAnnotationException;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.annotations.AnnotationConstants;
 
 /**
- * Static validation of annotations on function declarations, variable declarations, and inline function expressions.
+ * Static validation and resolution of annotations on function declarations, variable declarations,
+ * and inline function expressions.
  */
 public final class AnnotationValidator {
 
     private AnnotationValidator() {}
+
+    /**
+     * Validates an annotation name against reserved namespaces according to W3C XQuery 3.1 §4.17/§4.18 [err:XQST0045].
+     *
+     * @param annotationName the annotation name to validate
+     * @param metadata the source location metadata
+     */
+    public static void validateAnnotationName(Name annotationName, ExceptionMetadata metadata) {
+        String namespace = annotationName.getNamespace();
+        if (namespace == null) {
+            return;
+        }
+        if (namespace.equals(Name.XQUERY_ANNOTATIONS_NS)) {
+            String localName = annotationName.getLocalName();
+            if ("updating".equals(localName)
+                    || "simple".equals(localName)
+                    || "public".equals(localName)
+                    || "private".equals(localName)) {
+                return;
+            }
+        }
+        if (namespace.equals(Name.XML_NS)
+                || namespace.equals(Name.XS_NS)
+                || namespace.equals(Name.XSI_NS)
+                || namespace.equals(Name.FN_NS)
+                || namespace.equals(Name.MATH_NS)
+                || namespace.equals(Name.MAP_NS)
+                || namespace.equals(Name.ARRAY_NS)
+                || namespace.equals(Name.XQUERY_ANNOTATIONS_NS)) {
+            throw new InvalidAnnotationNamespaceException(
+                    "Annotations cannot be declared in the reserved namespace " + namespace + ".", metadata);
+        }
+    }
+
+    /**
+     * Checks assignable annotations for exclusivity and returns whether the declaration is assignable.
+     *
+     * @param annotations the list of annotations
+     * @param defaultAssignable default assignable state if not specified
+     * @param exceptionMetadata the source location metadata
+     * @return true if assignable, false otherwise
+     */
+    public static boolean checkAssignable(
+            List<Annotation> annotations, boolean defaultAssignable, ExceptionMetadata exceptionMetadata) {
+        boolean isAssignable = defaultAssignable;
+        boolean hasAssignableAnnotation = false;
+        boolean hasNonAssignableAnnotation = false;
+        for (Annotation annotation : annotations) {
+            if (annotation.getAnnotationName().equals(AnnotationConstants.ASSIGNABLE)) {
+                isAssignable = true;
+                hasAssignableAnnotation = true;
+            } else if (annotation.getAnnotationName().equals(AnnotationConstants.NON_ASSIGNABLE)) {
+                isAssignable = false;
+                hasNonAssignableAnnotation = true;
+            }
+            if (hasAssignableAnnotation && hasNonAssignableAnnotation) {
+                throw new InvalidAnnotationException(
+                        "Both %an:assignable and %an:nonassignable annotations cannot be used for the same declaration",
+                        exceptionMetadata);
+            }
+        }
+        return isAssignable;
+    }
 
     /**
      * Validates annotations on a function declaration according to W3C XQuery 3.1 §4.18 [err:XQST0106].
