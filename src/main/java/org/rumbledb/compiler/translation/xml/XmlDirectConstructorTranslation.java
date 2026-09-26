@@ -43,6 +43,7 @@ import org.rumbledb.compiler.utils.TokenStreamUtils;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DirectElementConstructorTagMismatchException;
 import org.rumbledb.exceptions.DuplicateDirectAttributeException;
+import org.rumbledb.exceptions.DuplicateNamespaceDeclarationAttributeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NamespaceDeclarationAttributeEnclosedExpressionException;
 import org.rumbledb.exceptions.ParsingException;
@@ -401,6 +402,7 @@ public final class XmlDirectConstructorTranslation {
         List<Expression> attributes = new ArrayList<>();
         List<NamespaceDeclaration> namespaceDeclarations = new ArrayList<>();
         Set<Name> attributeNames = new HashSet<>();
+        Set<String> declaredPrefixes = new HashSet<>();
 
         // Namespace declarations are in scope for the entire element start tag,
         // including attributes that occur lexically before the declaration.
@@ -409,6 +411,10 @@ public final class XmlDirectConstructorTranslation {
             String lexical = qnameCtx.getText();
             if (isNamespaceDeclaration(lexical)) {
                 String declaredPrefix = "xmlns".equals(lexical) ? "" : lexical.substring("xmlns:".length());
+                if (!declaredPrefixes.add(declaredPrefix)) {
+                    throw new DuplicateNamespaceDeclarationAttributeException(
+                            declaredPrefix, translationContext.metadata(qnameCtx));
+                }
                 String uri = getNamespaceDeclarationUri(attr.value(), tokenStream, translationContext, visitExpr);
                 namespaceDeclarations.add(
                         new NamespaceDeclaration(declaredPrefix, uri, translationContext.metadata(qnameCtx)));
