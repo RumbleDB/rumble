@@ -705,30 +705,12 @@ stringConstructorContent
    : stringConstructorChars (stringConstructorInterpolation stringConstructorChars)*
    ;
 
-charNoGrave
-   : BASIC_CHAR
-   | LBRACE
-   | RBRACKET
-   ;
-
-charNoLBrace
-   : BASIC_CHAR
-   | GRAVE
-   | RBRACKET
-   ;
-
-charNoRBrack
-   : BASIC_CHAR
-   | GRAVE
-   | LBRACE
-   ;
-
 stringConstructorChars
-   : (BASIC_CHAR | charNoGrave charNoLBrace | charNoRBrack charNoGrave charNoGrave | charNoGrave | LBRACE)*
+   : (BASIC_CHAR | GRAVE | RBRACKET | LBRACE)*
    ;
 
 stringConstructorInterpolation
-   : ENTER_INTERPOLATION expr EXIT_INTERPOLATION
+   : ENTER_INTERPOLATION expr? EXIT_INTERPOLATION
    ;
 
 unaryLookup
