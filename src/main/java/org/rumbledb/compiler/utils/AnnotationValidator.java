@@ -15,9 +15,7 @@
  */
 package org.rumbledb.compiler.utils;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateFunctionAnnotationException;
@@ -100,6 +98,7 @@ public final class AnnotationValidator {
 
     /**
      * Validates annotations on a function declaration according to W3C XQuery 3.1 §4.18 [err:XQST0106].
+     * A function declaration cannot contain more than one visibility annotation (%public, %private).
      *
      * @param annotations the list of annotations
      */
@@ -107,14 +106,9 @@ public final class AnnotationValidator {
         if (annotations == null || annotations.isEmpty()) {
             return;
         }
-        Set<Name> seen = new HashSet<>();
         boolean hasVisibility = false;
         for (Annotation annotation : annotations) {
             Name name = annotation.getAnnotationName();
-            if (!seen.add(name)) {
-                throw new DuplicateFunctionAnnotationException(
-                        "Duplicate annotation '" + name + "' on function declaration.", annotation.getMetadata());
-            }
             if (isVisibilityAnnotation(name)) {
                 if (hasVisibility) {
                     throw new DuplicateFunctionAnnotationException(
@@ -128,6 +122,7 @@ public final class AnnotationValidator {
 
     /**
      * Validates annotations on a variable declaration according to W3C XQuery 3.1 §4.17 [err:XQST0116].
+     * A variable declaration cannot contain more than one visibility annotation (%public, %private).
      *
      * @param annotations the list of annotations
      */
@@ -135,14 +130,9 @@ public final class AnnotationValidator {
         if (annotations == null || annotations.isEmpty()) {
             return;
         }
-        Set<Name> seen = new HashSet<>();
         boolean hasVisibility = false;
         for (Annotation annotation : annotations) {
             Name name = annotation.getAnnotationName();
-            if (!seen.add(name)) {
-                throw new DuplicateVariableAnnotationException(
-                        "Duplicate annotation '" + name + "' on variable declaration.", annotation.getMetadata());
-            }
             if (isVisibilityAnnotation(name)) {
                 if (hasVisibility) {
                     throw new DuplicateVariableAnnotationException(
