@@ -367,7 +367,7 @@ unaryExpr
 
 valueExpr
    : validate_expr = validateExpr
-   | extensionExpr
+   | extension_expr = extensionExpr
    | simpleMap_expr = simpleMapExpr
    ;
 
@@ -407,7 +407,11 @@ validationMode
    ;
 
 extensionExpr
-   : PRAGMA+ LBRACE expr RBRACE
+   : pragma+ LBRACE expr? RBRACE
+   ;
+
+pragma
+   : PRAGMA
    ;
 
 simpleMapExpr

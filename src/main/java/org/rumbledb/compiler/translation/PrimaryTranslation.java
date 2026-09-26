@@ -25,6 +25,7 @@ import java.util.function.Function;
 import org.antlr.v4.runtime.ParserRuleContext;
 
 import org.rumbledb.compiler.context.ArrayConstructorContext;
+import org.rumbledb.compiler.context.ExtensionExprContext;
 import org.rumbledb.compiler.context.FunctionCallContext;
 import org.rumbledb.compiler.context.InlineFunctionExprContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
@@ -38,7 +39,9 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.NoFallbackForUnsupportedPragmaException;
 import org.rumbledb.exceptions.NumericOverflowOrUnderflow;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -62,21 +65,54 @@ public final class PrimaryTranslation {
 
     private PrimaryTranslation() {}
 
-    public static <SimpleMapExprCtx extends ParserRuleContext, ValidateExprCtx extends ParserRuleContext>
+    public static <
+                    SimpleMapExprCtx extends ParserRuleContext,
+                    ValidateExprCtx extends ParserRuleContext,
+                    ExtensionExprCtx extends ParserRuleContext>
             Expression valueExpr(
-                    ValueExprContext<SimpleMapExprCtx, ValidateExprCtx> ctx,
+                    ValueExprContext<SimpleMapExprCtx, ValidateExprCtx, ExtensionExprCtx> ctx,
                     TranslationContext translationContext,
                     Function<SimpleMapExprCtx, Expression> visitSimpleMapExpr,
-                    Function<ValidateExprCtx, Expression> visitValidateExpr) {
+                    Function<ValidateExprCtx, Expression> visitValidateExpr,
+                    Function<ExtensionExprCtx, Expression> visitExtensionExpr) {
         if (ctx.simpleMapExpr() != null) {
             return visitSimpleMapExpr.apply(ctx.simpleMapExpr());
         }
         if (ctx.validateExpr() != null) {
             return visitValidateExpr.apply(ctx.validateExpr());
         }
-        // TODO: extension expression still unsupported
-        throw new UnsupportedFeatureException(
-                "Extension expression still unsupported", translationContext.metadata(ctx.context()));
+        if (ctx.extensionExpr() != null) {
+            return visitExtensionExpr.apply(ctx.extensionExpr());
+        }
+        throw new ParsingException("Invalid value expression", translationContext.metadata(ctx.context()));
+    }
+
+    public static <PragmaCtx extends ParserRuleContext, ExprCtx extends ParserRuleContext> Expression extensionExpr(
+            ExtensionExprContext<PragmaCtx, ExprCtx> ctx,
+            TranslationContext translationContext,
+            Function<ExprCtx, Expression> visitExpr) {
+        if (ctx.pragmas() != null) {
+            for (PragmaCtx pragmaCtx : ctx.pragmas()) {
+                parseAndValidatePragma(pragmaCtx.getText(), translationContext, translationContext.metadata(pragmaCtx));
+            }
+        }
+        if (ctx.expr() != null) {
+            return visitExpr.apply(ctx.expr());
+        }
+        throw new NoFallbackForUnsupportedPragmaException(
+                "No fallback expression was provided for unsupported pragmas.",
+                translationContext.metadata(ctx.context()));
+    }
+
+    private static void parseAndValidatePragma(
+            String pragmaText, TranslationContext translationContext, ExceptionMetadata metadata) {
+        String content = pragmaText.substring(2, pragmaText.length() - 2).stripLeading();
+        int nameEnd = content.startsWith("Q{") ? content.indexOf('}') + 1 : 0;
+        while (nameEnd < content.length() && !Character.isWhitespace(content.charAt(nameEnd))) {
+            nameEnd++;
+        }
+        String eqName = content.substring(0, nameEnd);
+        translationContext.names().resolveEQName(eqName, NameRole.NO_DEFAULT_NAMESPACE, metadata);
     }
 
     public static <ExprCtx extends ParserRuleContext> Expression parenthesizedExpr(

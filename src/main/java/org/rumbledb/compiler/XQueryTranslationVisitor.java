@@ -38,6 +38,7 @@ import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.ContextItemDeclContext;
 import org.rumbledb.compiler.context.CountClauseContext;
 import org.rumbledb.compiler.context.EnclosedExprContext;
+import org.rumbledb.compiler.context.ExtensionExprContext;
 import org.rumbledb.compiler.context.FlworExprContext;
 import org.rumbledb.compiler.context.ForClauseContext;
 import org.rumbledb.compiler.context.ForVarContext;
@@ -779,7 +780,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     @Override
     public Expression visitValueExpr(XQueryParser.ValueExprContext ctx) {
         return PrimaryTranslation.valueExpr(
-                ValueExprContext.from(ctx), this.translationContext, this::visitSimpleMapExpr, this::visitValidateExpr);
+                ValueExprContext.from(ctx),
+                this.translationContext,
+                this::visitSimpleMapExpr,
+                this::visitValidateExpr,
+                this::visitExtensionExpr);
+    }
+
+    @Override
+    public Expression visitExtensionExpr(XQueryParser.ExtensionExprContext ctx) {
+        return PrimaryTranslation.extensionExpr(
+                ExtensionExprContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override
