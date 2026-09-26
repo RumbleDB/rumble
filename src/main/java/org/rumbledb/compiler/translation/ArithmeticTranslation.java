@@ -22,10 +22,10 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 
-import org.rumbledb.compiler.DirectConstructorUtils;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.UnaryExprContext;
+import org.rumbledb.compiler.utils.TokenStreamUtils;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
@@ -96,7 +96,7 @@ public final class ArithmeticTranslation {
         if (!operatorText.equals("div") && !operatorText.equals("idiv") && !operatorText.equals("mod")) {
             return;
         }
-        if (DirectConstructorUtils.getHiddenTextAfter(
+        if (TokenStreamUtils.getHiddenTextAfter(
                                 tokenStream,
                                 translationContext.stopToken(leftExpression).getTokenIndex())
                         .isEmpty()
@@ -106,7 +106,7 @@ public final class ArithmeticTranslation {
                     "Keyword operator '" + operatorText + "' must be separated from the left operand.",
                     translationContext.metadata(translationContext.startToken(leftExpression), operator));
         }
-        if (DirectConstructorUtils.getHiddenTextAfter(tokenStream, operator.getTokenIndex())
+        if (TokenStreamUtils.getHiddenTextAfter(tokenStream, operator.getTokenIndex())
                         .isEmpty()
                 && !hasKeywordOperatorBoundary(
                         translationContext.startToken(rightExpression).getText(), true)) {
