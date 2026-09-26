@@ -24,16 +24,10 @@ public record PiTestContext<StringLiteralCtx extends ParserRuleContext>(
         String ncName, StringLiteralCtx stringLiteral, ParserRuleContext context) {
 
     public static PiTestContext<JsoniqParser.StringLiteralContext> from(JsoniqParser.PiTestContext c) {
-        if (c == null) {
-            return null;
-        }
         return new PiTestContext<>(c.ncName() != null ? c.ncName().getText() : null, c.stringLiteral(), c);
     }
 
     public static PiTestContext<XQueryParser.StringLiteralContext> from(XQueryParser.PiTestContext c) {
-        if (c == null) {
-            return null;
-        }
         return new PiTestContext<>(c.ncName() != null ? c.ncName().getText() : null, c.stringLiteral(), c);
     }
 }

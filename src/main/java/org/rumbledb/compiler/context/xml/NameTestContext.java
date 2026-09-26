@@ -24,17 +24,11 @@ public record NameTestContext<EqNameCtx extends ParserRuleContext>(
         EqNameCtx eqName, String wildcard, ParserRuleContext context) {
 
     public static NameTestContext<JsoniqParser.EqNameContext> from(JsoniqParser.NameTestContext c) {
-        if (c == null) {
-            return null;
-        }
         return new NameTestContext<>(
                 c.eqName(), c.wildcard() != null ? c.wildcard().getText() : null, c);
     }
 
     public static NameTestContext<XQueryParser.EqNameContext> from(XQueryParser.NameTestContext c) {
-        if (c == null) {
-            return null;
-        }
         return new NameTestContext<>(
                 c.eqName(), c.wildcard() != null ? c.wildcard().getText() : null, c);
     }
