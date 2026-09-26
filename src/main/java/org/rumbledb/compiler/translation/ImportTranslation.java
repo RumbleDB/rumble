@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.SchemaImport;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 /** Translates grammar-neutral import contexts into imported modules and schema declarations. */
 public final class ImportTranslation {
@@ -67,6 +68,11 @@ public final class ImportTranslation {
                 throw new PredefinedPrefixInNamespaceDeclarationException(
                         "Module import prefix " + prefix + " is reserved.", metadata);
             }
+        }
+        if (NamespaceBindingUtils.XML_NAMESPACE_URI.equals(namespace)
+                || NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespace)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Module import cannot specify the reserved namespace URI " + namespace + ".", metadata);
         }
         namespace = URILiteralUtils.normalizeAsAnyURI(namespace);
         List<String> locationHints = ctx.locations().stream()
