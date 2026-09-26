@@ -238,7 +238,7 @@ public final class XmlDirectConstructorTranslation {
         Expression contentExpression = null;
         if (whitespaceIndex != -1) {
             int contentStart = whitespaceIndex;
-            while (contentStart < inner.length() && Character.isWhitespace(inner.charAt(contentStart))) {
+            while (contentStart < inner.length() && isXmlWhitespace(inner.charAt(contentStart))) {
                 contentStart++;
             }
             String content = inner.substring(contentStart);
@@ -248,14 +248,14 @@ public final class XmlDirectConstructorTranslation {
     }
 
     /**
-     * Finds the index of the first whitespace character in a string.
+     * Finds the index of the first XML whitespace character in a string.
      *
      * @param value the string to search
-     * @return the 0-based index of the first whitespace character, or -1 if none is found
+     * @return the 0-based index of the first XML whitespace character, or -1 if none is found
      */
     private static int indexOfWhitespace(String value) {
         for (int i = 0; i < value.length(); i++) {
-            if (Character.isWhitespace(value.charAt(i))) {
+            if (isXmlWhitespace(value.charAt(i))) {
                 return i;
             }
         }
@@ -614,14 +614,25 @@ public final class XmlDirectConstructorTranslation {
     }
 
     /**
-     * Checks if a string consists exclusively of whitespace characters and is non-empty.
+     * Checks if a character is an XML whitespace character according to XML 1.0 Section 2.3
+     * ({@code S ::= (#x20 | #x9 | #xD | #xA)+}).
+     *
+     * @param c the character to check
+     * @return {@code true} if {@code c} is space (0x20), tab (0x9), carriage return (0xD), or line feed (0xA)
+     */
+    private static boolean isXmlWhitespace(char c) {
+        return c == ' ' || c == '\t' || c == '\r' || c == '\n';
+    }
+
+    /**
+     * Checks if a string consists exclusively of XML whitespace characters and is non-empty.
      *
      * @param value the string to check
-     * @return {@code true} if non-empty and all whitespace, {@code false} otherwise
+     * @return {@code true} if non-empty and all XML whitespace, {@code false} otherwise
      */
     private static boolean isWhitespaceOnly(String value) {
         for (int i = 0; i < value.length(); i++) {
-            if (!Character.isWhitespace(value.charAt(i))) {
+            if (!isXmlWhitespace(value.charAt(i))) {
                 return false;
             }
         }
