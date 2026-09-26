@@ -164,7 +164,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                     throw new DuplicateNamespaceDeclarationAttributeException(prefix, getMetadata());
                 }
                 String uri = declaration.getUri();
-                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri, getMetadata());
                 namespaces.add(ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri));
             }
         }
