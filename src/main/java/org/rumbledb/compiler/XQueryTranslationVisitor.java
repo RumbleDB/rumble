@@ -477,8 +477,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {
         String source = this.xQueryTokenStream.getText(ctx.getSourceInterval());
         ExceptionMetadata metadata = createMetadataFromContext(ctx);
-
-        return StringLiteralUtils.parseXQuery(source, metadata);
+        String xmlVersion = this.translationContext.configuration().semantics().xmlVersion();
+        return StringLiteralUtils.parseXQuery(source, xmlVersion, metadata);
     }
 
     public Name parseFunctionName(XQueryParser.FunctionNameContext ctx) {
@@ -493,7 +493,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         if (ctx.qname() != null) {
             return parseName(ctx.qname(), role);
         }
-        return URIQualifiedNameParser.parse(ctx.URIQualifiedName().getText(), createMetadataFromContext(ctx));
+        return URIQualifiedNameParser.parse(
+                ctx.URIQualifiedName().getText(),
+                this.translationContext.configuration().semantics().xmlVersion(),
+                createMetadataFromContext(ctx));
     }
 
     /** Adapts the XQuery QName grammar to the shared role-aware resolver. */
