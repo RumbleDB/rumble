@@ -80,9 +80,6 @@ public final class AnnotationValidator {
      */
     public static boolean checkAssignable(
             List<Annotation> annotations, boolean defaultAssignable, ExceptionMetadata exceptionMetadata) {
-        if (annotations == null || annotations.isEmpty()) {
-            return defaultAssignable;
-        }
         boolean hasAssignable =
                 annotations.stream().anyMatch(a -> AnnotationConstants.ASSIGNABLE.equals(a.getAnnotationName()));
         boolean hasNonAssignable =
