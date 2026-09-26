@@ -29,9 +29,11 @@ public class NodeBaseUriTest {
 
     @Test
     public void testNamespaceItemBaseUriAlwaysEmpty() {
-        ElementItem parent = ItemFactory.getInstance().createXmlElementNode(new Name("", "", "elem"), List.of(), List.of());
+        ElementItem parent =
+                ItemFactory.getInstance().createXmlElementNode(new Name("", "", "elem"), List.of(), List.of());
         parent.setConstructionBaseUri(URI.create("http://example.org/base/"));
-        NamespaceItem ns = (NamespaceItem) ItemFactory.getInstance().createXmlNamespaceNode("p", "http://example.org/ns");
+        NamespaceItem ns =
+                (NamespaceItem) ItemFactory.getInstance().createXmlNamespaceNode("p", "http://example.org/ns");
         ns.setParent(parent);
 
         Assertions.assertTrue(ns.baseUri().isEmpty());
@@ -47,28 +49,28 @@ public class NodeBaseUriTest {
 
         doc.setConstructionBaseUri(URI.create("http://example.org/doc.xml"));
         Assertions.assertFalse(doc.baseUri().isEmpty());
-        Assertions.assertEquals("http://example.org/doc.xml", doc.baseUri().get(0).getStringValue());
+        Assertions.assertEquals(
+                "http://example.org/doc.xml", doc.baseUri().get(0).getStringValue());
     }
 
     @Test
     public void testElementItemRelativeBaseWithoutBaseReturnsEmpty() {
-        Item baseAttr = ItemFactory.getInstance().createXmlAttributeNode(
-                new Name(Name.XML_NS, "xml", "base"),
-                "relative/dir/");
-        ElementItem elem = ItemFactory.getInstance().createXmlElementNode(
-                new Name("", "", "elem"),
-                List.of(),
-                List.of(baseAttr));
+        Item baseAttr =
+                ItemFactory.getInstance().createXmlAttributeNode(new Name(Name.XML_NS, "xml", "base"), "relative/dir/");
+        ElementItem elem =
+                ItemFactory.getInstance().createXmlElementNode(new Name("", "", "elem"), List.of(), List.of(baseAttr));
 
         Assertions.assertTrue(elem.baseUri().isEmpty());
     }
 
     @Test
     public void testElementItemParentWithNoBaseDoesNotFallbackToConstructionBaseUri() {
-        ElementItem parent = ItemFactory.getInstance().createXmlElementNode(new Name("", "", "parent"), List.of(), List.of());
+        ElementItem parent =
+                ItemFactory.getInstance().createXmlElementNode(new Name("", "", "parent"), List.of(), List.of());
         // parent has no base URI
 
-        ElementItem child = ItemFactory.getInstance().createXmlElementNode(new Name("", "", "child"), List.of(), List.of());
+        ElementItem child =
+                ItemFactory.getInstance().createXmlElementNode(new Name("", "", "child"), List.of(), List.of());
         child.setConstructionBaseUri(URI.create("http://example.org/child-base/"));
         child.setParent(parent);
 

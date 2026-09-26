@@ -44,9 +44,7 @@ public class IriUtilsTest {
     @Test
     public void testSpacesAndDisallowedChars() {
         Assertions.assertEquals(
-            "http://example.org/~%C3%A9%20and%20%3Cx%3E",
-            IriUtils.encodeIri("http://example.org/~é and <x>")
-        );
+                "http://example.org/~%C3%A9%20and%20%3Cx%3E", IriUtils.encodeIri("http://example.org/~é and <x>"));
     }
 
     @Test
