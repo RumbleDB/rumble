@@ -176,15 +176,11 @@ public class NamespaceItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.4 Namespace Node Accessors — base-uri.
      *
-     * For a Namespace Node, dm:base-uri returns the base URI of the parent node, if it has one;
-     * otherwise it returns the empty sequence.
+     * For a Namespace Node, dm:base-uri always returns the empty sequence.
      */
     @Override
     public List<Item> baseUri() {
-        if (this.parent == null) {
-            return Collections.emptyList();
-        }
-        return this.parent.baseUri();
+        return Collections.emptyList();
     }
 
     /**
