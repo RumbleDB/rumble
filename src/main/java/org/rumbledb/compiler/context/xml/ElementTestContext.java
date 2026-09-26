@@ -43,9 +43,6 @@ public record ElementTestContext<EqNameCtx extends ParserRuleContext>(
     }
 
     public static ElementTestContext<XQueryParser.EqNameContext> from(XQueryParser.ElementTestContext c) {
-        if (c == null) {
-            return null;
-        }
         boolean hasElementNameOrWildcard = c.elementNameOrWildcard() != null;
         boolean hasWildcard =
                 hasElementNameOrWildcard && c.elementNameOrWildcard().STAR() != null;
