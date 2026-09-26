@@ -17,6 +17,7 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -1793,11 +1794,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {
-        return AnnotationTranslation.processAnnotations(
-                AnnotationsContext.from(annotations), this.translationContext, this::parseEqName, this::visitLiteral);
-    }
-
-    private List<Annotation> processAnnotations(List<JsoniqParser.AnnotationContext> annotations) {
+        if (annotations == null) {
+            return Collections.emptyList();
+        }
         return AnnotationTranslation.processAnnotations(
                 AnnotationsContext.from(annotations), this.translationContext, this::parseEqName, this::visitLiteral);
     }

@@ -17,6 +17,7 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -1507,15 +1508,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     private List<Annotation> processAnnotations(XQueryParser.AnnotationsContext annotations) {
+        if (annotations == null) {
+            return Collections.emptyList();
+        }
         return AnnotationTranslation.processAnnotations(
                 AnnotationsContext.from(annotations), this.translationContext, this::parseEqName, this::visitLiteral);
-    }
-
-    private List<Annotation> processAnnotations(List<XQueryParser.AnnotationContext> annotations) {
-        return AnnotationTranslation.processAnnotations(
-                AnnotationsContext.fromXQuery(annotations),
-                this.translationContext,
-                this::parseEqName,
-                this::visitLiteral);
     }
 }

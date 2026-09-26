@@ -15,7 +15,6 @@
  */
 package org.rumbledb.compiler.context;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,37 +28,13 @@ public record AnnotationsContext<EqNameCtx extends ParserRuleContext, LiteralCtx
 
     public static AnnotationsContext<JsoniqParser.EqNameContext, JsoniqParser.LiteralContext> from(
             JsoniqParser.AnnotationsContext c) {
-        if (c == null || c.annotation() == null) {
-            return new AnnotationsContext<>(Collections.emptyList(), c);
-        }
         return new AnnotationsContext<>(
                 c.annotation().stream().map(AnnotationContext::from).collect(Collectors.toList()), c);
     }
 
     public static AnnotationsContext<XQueryParser.EqNameContext, XQueryParser.LiteralContext> from(
             XQueryParser.AnnotationsContext c) {
-        if (c == null || c.annotation() == null) {
-            return new AnnotationsContext<>(Collections.emptyList(), c);
-        }
         return new AnnotationsContext<>(
                 c.annotation().stream().map(AnnotationContext::from).collect(Collectors.toList()), c);
-    }
-
-    public static AnnotationsContext<JsoniqParser.EqNameContext, JsoniqParser.LiteralContext> from(
-            List<JsoniqParser.AnnotationContext> list) {
-        if (list == null) {
-            return new AnnotationsContext<>(Collections.emptyList(), null);
-        }
-        return new AnnotationsContext<>(
-                list.stream().map(AnnotationContext::from).collect(Collectors.toList()), null);
-    }
-
-    public static AnnotationsContext<XQueryParser.EqNameContext, XQueryParser.LiteralContext> fromXQuery(
-            List<XQueryParser.AnnotationContext> list) {
-        if (list == null) {
-            return new AnnotationsContext<>(Collections.emptyList(), null);
-        }
-        return new AnnotationsContext<>(
-                list.stream().map(AnnotationContext::from).collect(Collectors.toList()), null);
     }
 }

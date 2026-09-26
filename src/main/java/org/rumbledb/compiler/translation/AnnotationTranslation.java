@@ -43,20 +43,8 @@ public final class AnnotationTranslation {
         if (ctx == null || ctx.annotations() == null) {
             return Collections.emptyList();
         }
-        return processAnnotations(ctx.annotations(), translationContext, parseEqName, visitLiteral);
-    }
-
-    public static <EqNameCtx extends ParserRuleContext, LiteralCtx extends ParserRuleContext>
-            List<Annotation> processAnnotations(
-                    List<AnnotationContext<EqNameCtx, LiteralCtx>> annotations,
-                    TranslationContext translationContext,
-                    BiFunction<EqNameCtx, NameRole, Name> parseEqName,
-                    Function<LiteralCtx, Expression> visitLiteral) {
         List<Annotation> parsedAnnotations = new ArrayList<>();
-        if (annotations == null) {
-            return parsedAnnotations;
-        }
-        for (AnnotationContext<EqNameCtx, LiteralCtx> annotationContext : annotations) {
+        for (AnnotationContext<EqNameCtx, LiteralCtx> annotationContext : ctx.annotations()) {
             // for backwards compatibility, the specification allows for updating without % sign
             if (annotationContext.isUpdating()) {
                 Name name = Name.createNameInDefaultXQueryAnnotationsNamespace("updating");

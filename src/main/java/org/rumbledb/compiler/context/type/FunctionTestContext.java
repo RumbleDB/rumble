@@ -23,26 +23,26 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record FunctionTestContext<SeqTypeCtx extends ParserRuleContext, AnnotationCtx extends ParserRuleContext>(
+public record FunctionTestContext<SeqTypeCtx extends ParserRuleContext, AnnotationsCtx extends ParserRuleContext>(
         boolean isAnyFunction,
         SeqTypeCtx returnType,
         List<SeqTypeCtx> parameterTypes,
-        List<AnnotationCtx> annotations,
+        AnnotationsCtx annotations,
         ParserRuleContext context) {
 
-    public static FunctionTestContext<JsoniqParser.SequenceTypeContext, JsoniqParser.AnnotationContext> from(
+    public static FunctionTestContext<JsoniqParser.SequenceTypeContext, JsoniqParser.AnnotationsContext> from(
             JsoniqParser.FunctionTestContext c) {
         boolean isAny = c.typedFunctionTest() == null;
         JsoniqParser.SequenceTypeContext returnType = isAny ? null : c.typedFunctionTest().rt;
         List<JsoniqParser.SequenceTypeContext> paramTypes = isAny ? Collections.emptyList() : c.typedFunctionTest().st;
-        return new FunctionTestContext<>(isAny, returnType, paramTypes, c.annotation(), c);
+        return new FunctionTestContext<>(isAny, returnType, paramTypes, c.annotations(), c);
     }
 
-    public static FunctionTestContext<XQueryParser.SequenceTypeContext, XQueryParser.AnnotationContext> from(
+    public static FunctionTestContext<XQueryParser.SequenceTypeContext, XQueryParser.AnnotationsContext> from(
             XQueryParser.FunctionTestContext c) {
         boolean isAny = c.typedFunctionTest() == null;
         XQueryParser.SequenceTypeContext returnType = isAny ? null : c.typedFunctionTest().rt;
         List<XQueryParser.SequenceTypeContext> paramTypes = isAny ? Collections.emptyList() : c.typedFunctionTest().st;
-        return new FunctionTestContext<>(isAny, returnType, paramTypes, c.annotation(), c);
+        return new FunctionTestContext<>(isAny, returnType, paramTypes, c.annotations(), c);
     }
 }
