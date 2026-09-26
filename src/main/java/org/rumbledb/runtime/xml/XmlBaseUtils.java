@@ -20,7 +20,7 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
-import org.rumbledb.runtime.functions.strings.IRIToURIFunctionIterator;
+import org.rumbledb.runtime.functions.strings.IriUtils;
 
 /**
  * Utility methods for resolving XML Base URIs according to W3C XML Base (Second Edition)
@@ -70,7 +70,7 @@ public final class XmlBaseUtils {
             return URI.create(str);
         } catch (IllegalArgumentException e) {
             try {
-                return URI.create(IRIToURIFunctionIterator.encodeIri(str));
+                return URI.create(IriUtils.encodeIri(str));
             } catch (IllegalArgumentException ex) {
                 return null;
             }
