@@ -17,15 +17,12 @@ package org.rumbledb.items.xml;
 
 import java.io.Serial;
 import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import org.w3c.dom.Node;
 
@@ -37,16 +34,14 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.TypedValueUnavailableException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.strings.IRIToURIFunctionIterator;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.runtime.xml.XmlBaseUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
 public class ElementItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
-
-    private static final Pattern ABSOLUTE_URI_SCHEME = Pattern.compile("^[A-Za-z][A-Za-z0-9+.-]*:");
 
     private List<Item> children;
     private List<Item> attributes;
@@ -223,59 +218,13 @@ public class ElementItem extends AbstractNodeItem {
         for (Item attribute : this.attributes) {
             Name name = attribute.nodeName();
             if (name != null && Name.XML_NS.equals(name.getNamespace()) && "base".equals(name.getLocalName())) {
-                String value = attribute.getStringValue();
-                if (!value.isEmpty()) {
-                    inherited = resolveXmlBase(inherited, value);
-                }
+                inherited = XmlBaseUtils.resolve(inherited, attribute.getStringValue());
                 break;
             }
         }
         return inherited == null
                 ? Collections.emptyList()
                 : List.of(ItemFactory.getInstance().createAnyURIItem(inherited));
-    }
-
-    private static String resolveXmlBase(String base, String value) {
-        if (ABSOLUTE_URI_SCHEME.matcher(value).find()) {
-            try {
-                URI uri = URI.create(value).normalize();
-                return uri.isAbsolute() ? uri.toString() : null;
-            } catch (IllegalArgumentException e) {
-                try {
-                    URI uri = URI.create(IRIToURIFunctionIterator.encodeIri(value)).normalize();
-                    if (!uri.isAbsolute()) {
-                        return null;
-                    }
-                    return URLDecoder.decode(uri.toString().replace("+", "%2B"), StandardCharsets.UTF_8);
-                } catch (IllegalArgumentException ex) {
-                    return null;
-                }
-            }
-        }
-
-        // Relative URI cannot be resolved without an absolute base URI
-        if (base == null) {
-            return null;
-        }
-
-        try {
-            URI baseUri = URI.create(base);
-            URI relUri = URI.create(value);
-            URI resolved = baseUri.resolve(relUri).normalize();
-            return resolved.isAbsolute() ? resolved.toString() : null;
-        } catch (IllegalArgumentException e) {
-            try {
-                URI baseUri = URI.create(IRIToURIFunctionIterator.encodeIri(base));
-                URI relUri = URI.create(IRIToURIFunctionIterator.encodeIri(value));
-                URI resolved = baseUri.resolve(relUri).normalize();
-                if (!resolved.isAbsolute()) {
-                    return null;
-                }
-                return URLDecoder.decode(resolved.toString().replace("+", "%2B"), StandardCharsets.UTF_8);
-            } catch (IllegalArgumentException ex) {
-                return null;
-            }
-        }
     }
 
     /**
