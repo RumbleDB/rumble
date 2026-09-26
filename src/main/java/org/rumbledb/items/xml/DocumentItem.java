@@ -16,11 +16,14 @@
 package org.rumbledb.items.xml;
 
 import java.io.Serial;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import org.w3c.dom.Node;
+
+import lombok.Setter;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -36,7 +39,10 @@ public class DocumentItem extends AbstractNodeItem {
     private List<Item> children;
     private XMLDocumentPosition documentPos;
     private Item documentElement;
-    // TODO: add base-uri, document-uri
+
+    @Setter
+    private URI constructionBaseUri;
+    // TODO: add document-uri
 
     public DocumentItem(Node documentNode, List<Item> children) {
         this.children = children;
@@ -70,7 +76,9 @@ public class DocumentItem extends AbstractNodeItem {
         for (Item child : this.children) {
             copiedChildren.add(child.copy(mutable));
         }
-        return new DocumentItem(copiedChildren);
+        DocumentItem copy = new DocumentItem(copiedChildren);
+        copy.constructionBaseUri = this.constructionBaseUri;
+        return copy;
     }
 
     /**
@@ -190,12 +198,12 @@ public class DocumentItem extends AbstractNodeItem {
      * "For a Document Node, dm:base-uri returns the base URI of the document node, if it has
      * one; otherwise it returns the empty sequence."
      *
-     * RumbleDB does not currently track base URIs for document nodes, so this implementation
-     * returns null to represent the empty sequence.
      */
     @Override
     public List<Item> baseUri() {
-        return Collections.emptyList();
+        return this.constructionBaseUri == null
+                ? Collections.emptyList()
+                : List.of(ItemFactory.getInstance().createAnyURIItem(this.constructionBaseUri.toString()));
     }
 
     /**

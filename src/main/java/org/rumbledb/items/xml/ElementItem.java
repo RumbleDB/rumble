@@ -16,6 +16,7 @@
 package org.rumbledb.items.xml;
 
 import java.io.Serial;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -54,8 +55,11 @@ public class ElementItem extends AbstractNodeItem {
     private boolean idRefs;
 
     @Setter
+    private URI constructionBaseUri;
+
+    @Setter
     private boolean inheritNamespacesFromParent;
-    // TODO: add base-uri
+
     private XMLDocumentPosition documentPos;
 
     /**
@@ -127,6 +131,7 @@ public class ElementItem extends AbstractNodeItem {
         copy.id = this.id;
         copy.idRefs = this.idRefs;
         copy.inheritNamespacesFromParent = this.inheritNamespacesFromParent;
+        copy.constructionBaseUri = this.constructionBaseUri;
         return copy;
     }
 
@@ -197,12 +202,31 @@ public class ElementItem extends AbstractNodeItem {
      * "For an Element Node, dm:base-uri returns the base URI of the element node, if it has one;
      * otherwise it returns the empty sequence."
      *
-     * RumbleDB does not currently track base URIs for element nodes, so this implementation
-     * returns null to represent the empty sequence.
      */
     @Override
     public List<Item> baseUri() {
-        return Collections.emptyList();
+        URI inherited = this.constructionBaseUri;
+        if (this.parent != null) {
+            List<Item> parentBase = this.parent.baseUri();
+            if (!parentBase.isEmpty()) {
+                inherited = URI.create(parentBase.get(0).getStringValue());
+            }
+        }
+        for (Item attribute : this.attributes) {
+            Name name = attribute.nodeName();
+            if (name != null && Name.XML_NS.equals(name.getNamespace()) && "base".equals(name.getLocalName())) {
+                String value = attribute.getStringValue();
+                if (!value.isEmpty()) {
+                    URI specified = URI.create(value);
+                    inherited = inherited == null ? specified : inherited.resolve(specified);
+                }
+                break;
+            }
+        }
+        return inherited == null
+                ? Collections.emptyList()
+                : List.of(ItemFactory.getInstance()
+                        .createAnyURIItem(inherited.normalize().toString()));
     }
 
     /**
