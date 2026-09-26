@@ -23,8 +23,8 @@ import java.util.function.Function;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import org.rumbledb.compiler.context.AnnotationContext;
 import org.rumbledb.compiler.context.AnnotationsContext;
+import org.rumbledb.compiler.context.AnnotationsContext.AnnotationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;

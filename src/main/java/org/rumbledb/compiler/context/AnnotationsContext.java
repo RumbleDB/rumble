@@ -15,6 +15,7 @@
  */
 package org.rumbledb.compiler.context;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +26,22 @@ import org.rumbledb.parser.xquery.XQueryParser;
 
 public record AnnotationsContext<EqNameCtx extends ParserRuleContext, LiteralCtx extends ParserRuleContext>(
         List<AnnotationContext<EqNameCtx, LiteralCtx>> annotations, ParserRuleContext context) {
+
+    public record AnnotationContext<EqNameCtx extends ParserRuleContext, LiteralCtx extends ParserRuleContext>(
+            boolean isUpdating, EqNameCtx eqName, List<LiteralCtx> literals, ParserRuleContext context) {
+
+        public static AnnotationContext<JsoniqParser.EqNameContext, JsoniqParser.LiteralContext> from(
+                JsoniqParser.AnnotationContext c) {
+            return new AnnotationContext<>(
+                    c.updating != null, c.eqName(), c.literal() != null ? c.literal() : Collections.emptyList(), c);
+        }
+
+        public static AnnotationContext<XQueryParser.EqNameContext, XQueryParser.LiteralContext> from(
+                XQueryParser.AnnotationContext c) {
+            return new AnnotationContext<>(
+                    c.updating != null, c.eqName(), c.literal() != null ? c.literal() : Collections.emptyList(), c);
+        }
+    }
 
     public static AnnotationsContext<JsoniqParser.EqNameContext, JsoniqParser.LiteralContext> from(
             JsoniqParser.AnnotationsContext c) {
