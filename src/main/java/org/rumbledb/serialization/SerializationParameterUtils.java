@@ -307,13 +307,13 @@ public final class SerializationParameterUtils {
         Item value = values.get(0);
         return switch (parameterName) {
             case "omit-xml-declaration",
+                    "standalone",
                     "undeclare-prefixes",
                     "include-content-type",
                     "escape-uri-attributes",
                     "byte-order-mark",
                     "indent",
                     "allow-duplicate-names" -> itemToYesNo(parameterName, value, metadata);
-            case "standalone" -> itemToStandalone(parameterName, value, metadata);
             case "html-version" -> itemToHtmlVersion(parameterName, value, metadata);
             case "method", "json-node-output-method" -> itemToMethodString(parameterName, value, metadata);
             default -> itemToString(parameterName, value, metadata);
@@ -353,28 +353,6 @@ public final class SerializationParameterUtils {
             throw new UnexpectedTypeException(parameterName + " must be a boolean.", metadata);
         }
         return value.getBooleanValue() ? "yes" : "no";
-    }
-
-    /**
-     * Converts an XQuery item to the standalone parameter string ("yes", "no", or "omit").
-     */
-    private static String itemToStandalone(String parameterName, Item value, ExceptionMetadata metadata) {
-        // An xs:boolean maps to yes/no; the string "omit" is also accepted.
-        if (value.isUntypedAtomic()) {
-            value = CastIterator.castItemToType(value, BuiltinTypesCatalogue.booleanItem, metadata);
-        }
-        if (value.isBoolean()) {
-            return value.getBooleanValue() ? "yes" : "no";
-        }
-        if (value.isString() || value.isAnyURI()) {
-            String s = value.getStringValue().trim();
-            if ("yes".equals(s) || "no".equals(s) || "omit".equals(s)) {
-                return s;
-            }
-            throw new InvalidSerializationParameterValueException(
-                    parameterName, value.getStringValue(), "'yes', 'no', or 'omit'", metadata);
-        }
-        throw new UnexpectedTypeException(parameterName + " must be a boolean or 'omit'.", metadata);
     }
 
     private static String itemToHtmlVersion(String parameterName, Item value, ExceptionMetadata metadata) {
