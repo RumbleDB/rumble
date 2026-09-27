@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="[ "hello", "world" ]" :)
+(:JIQS: ShouldRun; Output="hello world" :)
 serialize(["hello","world"])
 
 (: Array :)
