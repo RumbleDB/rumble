@@ -516,17 +516,10 @@ public class HtmlSerializer extends XmlSerializer {
 
     private void appendInjectedMetaElement(StringBuilder sb) {
         sb.append("<meta http-equiv=\"Content-Type\" content=\"");
-        sb.append(escapeAttribute(getEffectiveMediaType()));
+        sb.append(escapeAttribute(this.params.getMediaType()));
         sb.append("; charset=");
         sb.append(this.params.getEncoding() == null ? "UTF-8" : this.params.getEncoding());
         sb.append("\">");
-    }
-
-    private String getEffectiveMediaType() {
-        if (this.params.getMediaType() != null && !this.params.getMediaType().isEmpty()) {
-            return this.params.getMediaType();
-        }
-        return "text/html";
     }
 
     private boolean isRawTextElement(Item item) {

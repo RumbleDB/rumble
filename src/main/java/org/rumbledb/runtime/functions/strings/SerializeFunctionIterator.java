@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.functions.strings;
 
 import java.io.Serial;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -45,25 +46,31 @@ public class SerializeFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     public Item evaluateAtMostOne(DynamicContext context) {
         List<Item> options =
                 this.getChildren().size() < 2 ? null : this.getChild(1).materialize(context);
-        SerializationParameters params =
-                SerializationParameterUtils.defaultsForSerializeFunction(this.staticContext.getQueryLanguage());
+        SerializationParameters params = new SerializationParameters();
         if (options != null) {
             SerializationParameterUtils.applyParameterItems(params, options, getMetadata());
         }
 
         List<Item> items = this.getChild(0).materialize(context);
+        String method = params.getMethod();
+        // Serialization 3.1 normalizes arrays before joining items, with or without a separator.
+        if ("xml".equalsIgnoreCase(method)
+                || "xhtml".equalsIgnoreCase(method)
+                || "html".equalsIgnoreCase(method)
+                || "text".equalsIgnoreCase(method)) {
+            List<Item> flattenedItems = new ArrayList<>();
+            flattenArrays(items, flattenedItems);
+            items = flattenedItems;
+        }
         SerializationParameters itemParams = SerializationParameters.copy(params);
-        if ("xml".equalsIgnoreCase(params.getMethod())) {
+        if ("xml".equalsIgnoreCase(method)) {
             itemParams.setOmitXmlDeclaration(true);
         }
         Serializer serializer = Serializers.from(itemParams);
         String itemSeparator = params.getItemSeparator();
-        if (itemSeparator == null) {
-            itemSeparator = "adaptive".equalsIgnoreCase(params.getMethod()) ? "\n" : "";
-        }
 
         StringBuilder result = new StringBuilder();
-        if ("json".equalsIgnoreCase(params.getMethod())) {
+        if ("json".equalsIgnoreCase(method)) {
             if (items.isEmpty()) {
                 result.append("null");
             } else if (items.size() == 1) {
@@ -75,16 +82,35 @@ public class SerializeFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                         getMetadata());
             }
         } else {
-            if ("xml".equalsIgnoreCase(params.getMethod()) && !params.getOmitXmlDeclaration() && !items.isEmpty()) {
+            if ("xml".equalsIgnoreCase(method) && !params.getOmitXmlDeclaration() && !items.isEmpty()) {
                 SerializerUtils.appendXmlDeclaration(result, params);
             }
             for (int i = 0; i < items.size(); i++) {
                 if (i > 0) {
-                    result.append(itemSeparator);
+                    if (itemSeparator != null) {
+                        result.append(itemSeparator);
+                    } else if ("adaptive".equalsIgnoreCase(method)) {
+                        result.append('\n');
+                    } else if (items.get(i - 1).isAtomic() && items.get(i).isAtomic()) {
+                        // An absent separator inserts a space only between adjacent atomic values.
+                        result.append(' ');
+                    }
                 }
                 result.append(serializer.serialize(items.get(i)));
             }
         }
         return ItemFactory.getInstance().createStringItem(result.toString());
+    }
+
+    private static void flattenArrays(List<Item> items, List<Item> flattenedItems) {
+        for (Item item : items) {
+            if (item.isArray()) {
+                for (List<Item> member : item.getSequenceMembers()) {
+                    flattenArrays(member, flattenedItems);
+                }
+            } else {
+                flattenedItems.add(item);
+            }
+        }
     }
 }

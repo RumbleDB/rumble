@@ -415,7 +415,7 @@ public class XhtmlSerializer extends XmlSerializer {
         sb.append("<");
         sb.append(metaName);
         sb.append(" http-equiv=\"Content-Type\" content=\"");
-        sb.append(escapeAttribute(getEffectiveMediaType()));
+        sb.append(escapeAttribute(this.params.getMediaType()));
         sb.append("; charset=");
         sb.append(this.params.getEncoding() == null ? "UTF-8" : this.params.getEncoding());
         sb.append("\"");
@@ -447,13 +447,6 @@ public class XhtmlSerializer extends XmlSerializer {
             return isHtml5Mode() ? HTML5_VOID_ELEMENTS.contains("meta") : XHTML_EMPTY_ELEMENTS.contains("meta");
         }
         return true;
-    }
-
-    private String getEffectiveMediaType() {
-        if (this.params.getMediaType() != null && !this.params.getMediaType().isEmpty()) {
-            return this.params.getMediaType();
-        }
-        return "application/xhtml+xml";
     }
 
     private Item findFirstElementChild(List<Item> children) {
