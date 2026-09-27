@@ -24,6 +24,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
 public class ItemComparator implements Comparator<Item>, Serializable {
@@ -32,13 +33,18 @@ public class ItemComparator implements Comparator<Item>, Serializable {
     private static final long serialVersionUID = 1L;
 
     private final RumbleException exception;
+    private final String collationUri;
+    private final ExceptionMetadata metadata;
     // For min(), NaN is returned if it appears in the input sequence. It must thus compare to less
     // than any other number for this purpose.
-    private boolean compareMin = false;
+    private final boolean compareMin;
 
-    public ItemComparator(boolean compareMin, RumbleException exception) {
+    public ItemComparator(
+            boolean compareMin, RumbleException exception, String collationUri, ExceptionMetadata metadata) {
         this.compareMin = compareMin;
         this.exception = exception;
+        this.collationUri = collationUri;
+        this.metadata = metadata;
     }
 
     /**
@@ -61,6 +67,12 @@ public class ItemComparator implements Comparator<Item>, Serializable {
                             || (v2.isFloat() && Float.isNaN(v2.getFloatValue())))) {
                 return 1;
             }
+        }
+        if (this.collationUri != null
+                && CollationSupport.isStringCollationType(v1)
+                && CollationSupport.isStringCollationType(v2)) {
+            return CollationSupport.compareStrings(
+                    v1.getStringValue(), v2.getStringValue(), this.collationUri, this.metadata);
         }
         try {
             long comparison = ComparisonIterator.compareItems(

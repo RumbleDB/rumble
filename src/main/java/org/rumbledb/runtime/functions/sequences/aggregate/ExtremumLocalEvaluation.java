@@ -21,7 +21,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -39,34 +38,24 @@ final class ExtremumLocalEvaluation {
         MAX
     }
 
-    private static final String CODEPOINT_COLLATION = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
-
     private ExtremumLocalEvaluation() {}
 
     public static Item min(
-            ItemRuntimePlan childPlan,
-            ItemRuntimePlan collationPlan,
-            DynamicContext context,
-            ExceptionMetadata metadata) {
-        return evaluate(childPlan, collationPlan, context, metadata, Kind.MIN);
+            ItemRuntimePlan childPlan, String collation, DynamicContext context, ExceptionMetadata metadata) {
+        return evaluate(childPlan, collation, context, metadata, Kind.MIN);
     }
 
     public static Item max(
-            ItemRuntimePlan childPlan,
-            ItemRuntimePlan collationPlan,
-            DynamicContext context,
-            ExceptionMetadata metadata) {
-        return evaluate(childPlan, collationPlan, context, metadata, Kind.MAX);
+            ItemRuntimePlan childPlan, String collation, DynamicContext context, ExceptionMetadata metadata) {
+        return evaluate(childPlan, collation, context, metadata, Kind.MAX);
     }
 
     private static Item evaluate(
             @NonNull ItemRuntimePlan childPlan,
-            ItemRuntimePlan collationPlan,
+            @NonNull String collation,
             @NonNull DynamicContext context,
             @NonNull ExceptionMetadata metadata,
             @NonNull Kind kind) {
-        validateCollation(collationPlan, context, metadata);
-
         Item selected = null;
         boolean sawNull = false;
         boolean sawFloat = false;
@@ -77,7 +66,9 @@ final class ExtremumLocalEvaluation {
                 new InvalidArgumentTypeException(
                         functionName(kind)
                                 + " expression input error. Input has to be non-null atomics of matching types",
-                        metadata));
+                        metadata),
+                collation,
+                metadata);
 
         try (Cursor<Item> childCursor = childPlan.getCursor(context)) {
             while (childCursor.hasNext()) {
@@ -134,17 +125,6 @@ final class ExtremumLocalEvaluation {
 
     private static boolean isNaN(Item item) {
         return (item.isFloat() || item.isDouble()) && item.isNaN();
-    }
-
-    private static void validateCollation(
-            ItemRuntimePlan collationPlan, DynamicContext context, ExceptionMetadata metadata) {
-        if (collationPlan == null) {
-            return;
-        }
-        Item collation = collationPlan.materializeFirstOrNull(context);
-        if (!CODEPOINT_COLLATION.equals(collation.getStringValue())) {
-            throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-        }
     }
 
     private static void ensureSupported(Item item, Kind kind, ExceptionMetadata metadata) {
