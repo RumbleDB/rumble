@@ -201,10 +201,10 @@ public final class CollationSupport {
         if (target.isEmpty()) {
             return new int[] {0, 0};
         }
-        if (source.isEmpty()) {
-            return null;
-        }
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
+            if (source.isEmpty()) {
+                return null;
+            }
             int idx = source.indexOf(target);
             return idx == -1 ? null : new int[] {idx, target.length()};
         }
@@ -212,6 +212,9 @@ public final class CollationSupport {
             RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
             if (collator.compare(target, "") == 0) {
                 return new int[] {0, 0};
+            }
+            if (source.isEmpty()) {
+                return null;
             }
             try {
                 StringSearch stringSearch = new StringSearch(target, new StringCharacterIterator(source), collator);
@@ -224,6 +227,9 @@ public final class CollationSupport {
                 throw new CollationDoesNotSupportCollationUnitsException(
                         "Collation does not support collation units: " + e.getMessage(), metadata);
             }
+        }
+        if (source.isEmpty()) {
+            return null;
         }
         String normSource = CollationCatalogue.normalizeString(source, collationUri);
         String normTarget = CollationCatalogue.normalizeString(target, collationUri);
@@ -243,12 +249,6 @@ public final class CollationSupport {
      */
     public static boolean contains(String source, String target, String collationUri, ExceptionMetadata metadata) {
         checkCollationSupported(collationUri, metadata);
-        if (target.isEmpty()) {
-            return true;
-        }
-        if (source.isEmpty()) {
-            return false;
-        }
         return indexOf(source, target, collationUri, metadata) != null;
     }
 
@@ -269,7 +269,7 @@ public final class CollationSupport {
             return "";
         }
         int[] match = indexOf(source, target, collationUri, metadata);
-        if (match == null) {
+        if (match == null || match[1] == 0) {
             return "";
         }
         return source.substring(0, match[0]);
@@ -297,6 +297,9 @@ public final class CollationSupport {
         if (match == null) {
             return "";
         }
+        if (match[1] == 0) {
+            return source;
+        }
         return source.substring(match[0] + match[1]);
     }
 
@@ -314,9 +317,6 @@ public final class CollationSupport {
         checkCollationSupported(collationUri, metadata);
         if (prefix.isEmpty()) {
             return true;
-        }
-        if (value.isEmpty()) {
-            return false;
         }
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
             return value.startsWith(prefix);
@@ -340,9 +340,6 @@ public final class CollationSupport {
         if (suffix.isEmpty()) {
             return true;
         }
-        if (value.isEmpty()) {
-            return false;
-        }
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
             return value.endsWith(suffix);
         }
@@ -350,6 +347,9 @@ public final class CollationSupport {
             RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
             if (collator.compare(suffix, "") == 0) {
                 return true;
+            }
+            if (value.isEmpty()) {
+                return false;
             }
             try {
                 StringSearch stringSearch = new StringSearch(suffix, new StringCharacterIterator(value), collator);
@@ -359,6 +359,9 @@ public final class CollationSupport {
                 throw new CollationDoesNotSupportCollationUnitsException(
                         "Collation does not support collation units: " + e.getMessage(), metadata);
             }
+        }
+        if (value.isEmpty()) {
+            return false;
         }
         return CollationCatalogue.normalizeString(value, collationUri)
                 .endsWith(CollationCatalogue.normalizeString(suffix, collationUri));
