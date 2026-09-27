@@ -1392,6 +1392,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         public NodeTest visitNameTest(XQueryParser.NameTestContext ctx) {
             return XmlNodeTestTranslation.nameTest(
                     NameTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
                     this.unprefixedUsesDefaultElementNamespace,
                     XQueryTranslationVisitor.this::parseEqName);
         }

@@ -1673,6 +1673,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         public NodeTest visitNameTest(JsoniqParser.NameTestContext ctx) {
             return XmlNodeTestTranslation.nameTest(
                     NameTestContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
                     this.unprefixedUsesDefaultElementNamespace,
                     TranslationVisitor.this::parseEqName);
         }
