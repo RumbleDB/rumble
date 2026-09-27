@@ -32,7 +32,6 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -73,24 +72,12 @@ public final class SerializationParameterUtils {
             "use-character-maps",
             "cdata-section-elements",
             "suppress-indentation");
-    private static final Set<String> BOOLEAN_PARAMETERS = Set.of(
-            "omit-xml-declaration",
-            "undeclare-prefixes",
-            "include-content-type",
-            "escape-uri-attributes",
-            "byte-order-mark",
-            "indent",
-            "standalone",
-            "allow-duplicate-names");
 
     private SerializationParameterUtils() {}
 
-    public static SerializationParameters defaultsForSerializeFunction(String queryLanguage) {
-        SerializationParameters params = SerializationParameters.defaults(queryLanguage);
-        params.setItemSeparator(" ");
-        params.setOmitXmlDeclaration(true);
-        return params;
-    }
+    // -------------------------------------------------------------------------
+    // Public API — fn:serialize / element-document paths
+    // -------------------------------------------------------------------------
 
     public static void applyParameterItems(
             SerializationParameters params, List<Item> optionsItems, ExceptionMetadata metadata) {
@@ -169,6 +156,72 @@ public final class SerializationParameterUtils {
         }
     }
 
+    // -------------------------------------------------------------------------
+    // Public API — CLI / Spark DataFrameWriter path (lenient parsing)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Builds a fresh {@link SerializationParameters} from a map of string options.
+     * Uses lenient boolean parsing (accepts "yes"/"no"/"true"/"false"/"1"/"0").
+     * Intended for CLI / Spark DataFrameWriter options.
+     */
+    public static SerializationParameters buildFromConfig(Map<String, String> options) {
+        return buildFromConfig(options, null);
+    }
+
+    /**
+     * Builds a fresh {@link SerializationParameters} from a map of string options, using the
+     * given query language to determine the default serialization method.
+     * Uses lenient boolean parsing. Intended for CLI / Spark DataFrameWriter options.
+     */
+    public static SerializationParameters buildFromConfig(Map<String, String> options, String queryLanguage) {
+        SerializationParameters params = SerializationParameters.defaults(queryLanguage);
+        if (options != null) {
+            options.forEach((k, v) -> applyConfigOption(params, k, v));
+        }
+        return params;
+    }
+
+    /**
+     * Applies a single string-valued option using lenient parsing.
+     * Intended for CLI / Spark DataFrameWriter options.
+     */
+    public static void applyConfigOption(SerializationParameters params, String name, String value) {
+        if (value == null) {
+            return;
+        }
+        switch (name) {
+            case "method" -> params.setMethod(value.trim());
+            case "encoding" -> params.setEncoding(value);
+            case "version" -> params.setVersion(value);
+            case "omit-xml-declaration" -> params.setOmitXmlDeclaration(parseLenientBoolean(name, value));
+            case "standalone" -> params.setStandalone(parseStandaloneConfig(name, value));
+            case "doctype-system" -> params.setDoctypeSystem(value);
+            case "doctype-public" -> params.setDoctypePublic(value);
+            case "media-type" -> params.setMediaType(value);
+            case "normalization-form" -> params.setNormalizationForm(value);
+            case "undeclare-prefixes" -> params.setUndeclarePrefixes(parseLenientBoolean(name, value));
+            case "include-content-type" -> params.setIncludeContentType(parseLenientBoolean(name, value));
+            case "escape-uri-attributes" -> params.setEscapeUriAttributes(parseLenientBoolean(name, value));
+            case "html-version" -> params.setHtmlVersion(value);
+            case "byte-order-mark" -> params.setByteOrderMark(parseLenientBoolean(name, value));
+            case "indent" -> params.setIndent(parseLenientBoolean(name, value));
+            case "indent-spaces" -> params.setIndentSpaces(parseIndentSpaces(name, value));
+            case "item-separator" -> params.setItemSeparator(value);
+            case "allow-duplicate-names" -> params.setAllowDuplicateNames(parseLenientBoolean(name, value));
+            case "json-node-output-method" -> params.setJsonNodeOutputMethod(
+                    parseJsonNodeOutputMethodConfig(name, value));
+            case "use-character-maps" -> params.setCharacterMaps(parseCharacterMapsConfig(name, value));
+            case "cdata-section-elements" -> params.setCdataSectionElements(parseExpandedQNameSet(value));
+            case "suppress-indentation" -> params.setSuppressIndentation(parseExpandedQNameSet(value));
+            default -> params.getSparkOptions().put(name, value);
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // Private — item / element dispatch
+    // -------------------------------------------------------------------------
+
     private static void applyParameterItem(
             SerializationParameters params,
             Item options,
@@ -223,102 +276,344 @@ public final class SerializationParameterUtils {
                 continue;
             }
             List<Item> valueSequence = options.getSequenceByKey(key);
-            boolean standardParameter = STANDARD_PARAMETERS.contains(parameterName);
-            if (standardParameter && (valueSequence == null || valueSequence.isEmpty())) {
-                continue;
-            }
             if ("use-character-maps".equals(parameterName)) {
                 params.setCharacterMaps(characterMapsFromMapValue(valueSequence, metadata));
                 continue;
             }
+            boolean standardParameter = STANDARD_PARAMETERS.contains(parameterName);
+            if (standardParameter && (valueSequence == null || valueSequence.isEmpty())) {
+                continue;
+            }
             String value = standardParameter
-                    ? mapParameterValue(parameterName, valueSequence, metadata)
+                    ? itemValuesToString(parameterName, valueSequence, metadata)
                     : sequenceToParameterValue(parameterName, valueSequence, null, metadata);
-            applyNormalizedParameter(params, parameterName, value, metadata);
+            applySpecString(params, parameterName, value, metadata);
         }
     }
 
-    private static String mapParameterValue(String parameterName, List<Item> values, ExceptionMetadata metadata) {
-        if ("cdata-section-elements".equals(parameterName) || "suppress-indentation".equals(parameterName)) {
-            List<Item> qnames = new ArrayList<>();
-            for (Item value : values) {
-                if (value.isArray()) {
-                    for (List<Item> member : value.getSequenceMembers()) {
-                        qnames.addAll(member);
-                    }
-                } else {
-                    qnames.add(value);
-                }
-            }
-            List<String> names = new ArrayList<>();
-            for (Item qname : qnames) {
-                if (!qname.isQName()) {
-                    throw new UnexpectedTypeException(parameterName + " must contain QNames.", metadata);
-                }
-                names.add(expandedQName(qname.getQNameValue()));
-            }
-            return String.join(" ", names);
-        }
+    // -------------------------------------------------------------------------
+    // Private — item-to-string conversions (map-value path, strict/spec rules)
+    // -------------------------------------------------------------------------
 
+    private static String itemValuesToString(String parameterName, List<Item> values, ExceptionMetadata metadata) {
+        // Multi-value QName list parameters:
+        if ("cdata-section-elements".equals(parameterName) || "suppress-indentation".equals(parameterName)) {
+            return joinQNameItems(parameterName, values, metadata);
+        }
+        // All other parameters expect exactly one item:
         if (values.size() != 1) {
             throw new UnexpectedTypeException(parameterName + " must contain one item.", metadata);
         }
         Item value = values.get(0);
-        if (BOOLEAN_PARAMETERS.contains(parameterName)) {
-            if (value.isUntypedAtomic()) {
-                value = CastIterator.castItemToType(value, BuiltinTypesCatalogue.booleanItem, metadata);
+        return switch (parameterName) {
+            case "omit-xml-declaration",
+                    "undeclare-prefixes",
+                    "include-content-type",
+                    "escape-uri-attributes",
+                    "byte-order-mark",
+                    "indent",
+                    "allow-duplicate-names" -> itemToYesNo(parameterName, value, metadata);
+            case "standalone" -> itemToStandalone(parameterName, value, metadata);
+            case "html-version" -> itemToHtmlVersion(parameterName, value, metadata);
+            case "method", "json-node-output-method" -> itemToMethodString(parameterName, value, metadata);
+            default -> itemToString(parameterName, value, metadata);
+        };
+    }
+
+    private static String joinQNameItems(String parameterName, List<Item> values, ExceptionMetadata metadata) {
+        List<Item> qnames = new ArrayList<>();
+        for (Item value : values) {
+            if (value.isArray()) {
+                for (List<Item> member : value.getSequenceMembers()) {
+                    qnames.addAll(member);
+                }
+            } else {
+                qnames.add(value);
             }
-            if (!value.isBoolean()) {
-                throw new UnexpectedTypeException(parameterName + " must be a boolean.", metadata);
+        }
+        List<String> names = new ArrayList<>();
+        for (Item qname : qnames) {
+            if (!qname.isQName()) {
+                throw new UnexpectedTypeException(parameterName + " must contain QNames.", metadata);
             }
+            names.add(expandedQName(qname.getQNameValue()));
+        }
+        return String.join(" ", names);
+    }
+
+    /**
+     * Converts an XQuery item to "yes" or "no" for boolean serialization parameters.
+     * Accepts xs:boolean or xs:untypedAtomic (cast to boolean).
+     */
+    private static String itemToYesNo(String parameterName, Item value, ExceptionMetadata metadata) {
+        if (value.isUntypedAtomic()) {
+            value = CastIterator.castItemToType(value, BuiltinTypesCatalogue.booleanItem, metadata);
+        }
+        if (!value.isBoolean()) {
+            throw new UnexpectedTypeException(parameterName + " must be a boolean.", metadata);
+        }
+        return value.getBooleanValue() ? "yes" : "no";
+    }
+
+    /**
+     * Converts an XQuery item to the standalone parameter string ("yes", "no", or "omit").
+     */
+    private static String itemToStandalone(String parameterName, Item value, ExceptionMetadata metadata) {
+        // An xs:boolean maps to yes/no; the string "omit" is also accepted.
+        if (value.isUntypedAtomic()) {
+            value = CastIterator.castItemToType(value, BuiltinTypesCatalogue.booleanItem, metadata);
+        }
+        if (value.isBoolean()) {
             return value.getBooleanValue() ? "yes" : "no";
         }
-        if ("html-version".equals(parameterName)) {
-            if (value.isUntypedAtomic()) {
-                value = CastIterator.castItemToType(value, BuiltinTypesCatalogue.decimalItem, metadata);
+        if (value.isString() || value.isAnyURI()) {
+            String s = value.getStringValue();
+            if ("yes".equals(s) || "no".equals(s) || "omit".equals(s)) {
+                return s;
             }
-            if (!(value.isDecimal() || value.isInteger())) {
-                throw new UnexpectedTypeException("html-version must be a decimal.", metadata);
-            }
-            return value.getStringValue();
+            throw new InvalidSerializationParameterValueException(parameterName, s, "'yes', 'no', or 'omit'", metadata);
         }
-        if (("method".equals(parameterName) || "json-node-output-method".equals(parameterName)) && value.isQName()) {
+        throw new UnexpectedTypeException(parameterName + " must be a boolean or 'omit'.", metadata);
+    }
+
+    private static String itemToHtmlVersion(String parameterName, Item value, ExceptionMetadata metadata) {
+        if (value.isUntypedAtomic()) {
+            value = CastIterator.castItemToType(value, BuiltinTypesCatalogue.decimalItem, metadata);
+        }
+        if (!(value.isDecimal() || value.isInteger())) {
+            throw new UnexpectedTypeException("html-version must be a decimal.", metadata);
+        }
+        return value.getStringValue();
+    }
+
+    private static String itemToMethodString(String parameterName, Item value, ExceptionMetadata metadata) {
+        if (value.isQName()) {
             Name name = value.getQNameValue();
+            // QName with no namespace is treated as a no-namespace method name
             if (name.getNamespace() == null || name.getNamespace().isEmpty()) {
-                throw new UnexpectedTypeException(parameterName + " QName must have a namespace.", metadata);
+                return name.getLocalName();
             }
             return expandedQName(name);
         }
+        return itemToString(parameterName, value, metadata);
+    }
+
+    private static String itemToString(String parameterName, Item value, ExceptionMetadata metadata) {
         if (value.isString() || value.isUntypedAtomic() || value.isAnyURI()) {
             return value.getStringValue();
         }
         throw new UnexpectedTypeException(parameterName + " must be a string.", metadata);
     }
 
-    private static Map<String, String> characterMapsFromMapValue(List<Item> valueSequence, ExceptionMetadata metadata) {
-        if (valueSequence.size() != 1
-                || !(valueSequence.get(0).isMap() || valueSequence.get(0).isObject())) {
-            throw new UnexpectedTypeException("use-character-maps must be a map.", metadata);
+    // -------------------------------------------------------------------------
+    // Private — apply string value to SerializationParameters (spec-strict)
+    // -------------------------------------------------------------------------
+
+    /**
+     * Applies a single string-valued serialization parameter using strict spec rules.
+     * Called from element-document and fn:serialize paths.
+     * Only accepts "yes"/"no" for boolean parameters (not "true"/"false").
+     */
+    private static void applySpecString(
+            SerializationParameters params, String name, String value, ExceptionMetadata metadata) {
+        switch (name) {
+            case "method" -> params.setMethod(value);
+            case "encoding" -> params.setEncoding(value);
+            case "version" -> params.setVersion(value);
+            case "omit-xml-declaration" -> params.setOmitXmlDeclaration(parseYesNo(name, value, metadata));
+            case "standalone" -> params.setStandalone(parseStandalone(name, value, metadata));
+            case "doctype-system" -> params.setDoctypeSystem(value);
+            case "doctype-public" -> params.setDoctypePublic(value);
+            case "media-type" -> params.setMediaType(value);
+            case "normalization-form" -> params.setNormalizationForm(validateNonEmpty(name, value, metadata));
+            case "undeclare-prefixes" -> params.setUndeclarePrefixes(parseYesNo(name, value, metadata));
+            case "include-content-type" -> params.setIncludeContentType(parseYesNo(name, value, metadata));
+            case "escape-uri-attributes" -> params.setEscapeUriAttributes(parseYesNo(name, value, metadata));
+            case "html-version" -> params.setHtmlVersion(value);
+            case "byte-order-mark" -> params.setByteOrderMark(parseYesNo(name, value, metadata));
+            case "indent" -> params.setIndent(parseYesNo(name, value, metadata));
+            case "item-separator" -> params.setItemSeparator(value);
+            case "allow-duplicate-names" -> params.setAllowDuplicateNames(parseYesNo(name, value, metadata));
+            case "json-node-output-method" -> params.setJsonNodeOutputMethod(
+                    parseJsonNodeOutputMethod(name, value, metadata));
+            case "cdata-section-elements" -> params.setCdataSectionElements(parseExpandedQNameSet(value));
+            case "suppress-indentation" -> params.setSuppressIndentation(parseExpandedQNameSet(value));
+                // use-character-maps: handled separately via applyCharacterMapsParameter / characterMapsFromMapValue
+            default -> params.getExtensionParameters().put(name, value);
         }
-        Item map = valueSequence.get(0);
-        Map<String, String> mappings = new HashMap<>();
-        for (Item character : map.getItemKeys()) {
-            if (!character.isString()) {
-                throw new UnexpectedTypeException("Character map keys must be strings.", metadata);
-            }
-            String keyValue = character.getStringValue();
-            if (!isSingleCharacter(keyValue)) {
-                throw new InvalidSerializationParameterValueException(
-                        "use-character-maps", keyValue, "a single character", metadata);
-            }
-            List<Item> mapped = map.getSequenceByKey(character);
-            if (mapped == null || mapped.size() != 1 || !mapped.get(0).isString()) {
-                throw new UnexpectedTypeException("Character map values must be strings.", metadata);
-            }
-            mappings.put(keyValue, mapped.get(0).getStringValue());
-        }
-        return mappings;
     }
+
+    /** Parses "yes"/"no" strictly. Throws SEPM0016 for anything else. */
+    private static boolean parseYesNo(String name, String value, ExceptionMetadata metadata) {
+        if ("yes".equals(value)) {
+            return true;
+        }
+        if ("no".equals(value)) {
+            return false;
+        }
+        throw new InvalidSerializationParameterValueException(name, value, "'yes' or 'no'", metadata);
+    }
+
+    /** Parses standalone: "yes", "no", or "omit". */
+    private static SerializationParameters.Standalone parseStandalone(
+            String name, String value, ExceptionMetadata metadata) {
+        return switch (value) {
+            case "yes" -> SerializationParameters.Standalone.YES;
+            case "no" -> SerializationParameters.Standalone.NO;
+            case "omit" -> SerializationParameters.Standalone.OMIT;
+            default -> throw new InvalidSerializationParameterValueException(
+                    name, value, "'yes', 'no', or 'omit'", metadata);
+        };
+    }
+
+    /** Validates non-empty string. */
+    private static String validateNonEmpty(String name, String value, ExceptionMetadata metadata) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new InvalidSerializationParameterValueException(
+                    name, value == null ? "null" : "''", "a non-empty string", metadata);
+        }
+        return value.trim();
+    }
+
+    private static SerializationParameters.JsonNodeOutputMethod parseJsonNodeOutputMethod(
+            String name, String value, ExceptionMetadata metadata) {
+        if (value.startsWith("Q{")) {
+            // EQName form: Q{namespace}localname
+            int close = value.indexOf('}');
+            if (close >= 0) {
+                String localPart = value.substring(close + 1);
+                try {
+                    return SerializationParameters.JsonNodeOutputMethod.valueOf(localPart.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    // fall through
+                }
+            }
+        }
+        try {
+            return SerializationParameters.JsonNodeOutputMethod.valueOf(value.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidSerializationParameterValueException(
+                    name, value, "'xml', 'xhtml', 'html', 'text', or 'json'", metadata);
+        }
+    }
+
+    private static Set<String> parseExpandedQNameSet(String value) {
+        Set<String> result = new HashSet<>();
+        if (value != null && !value.trim().isEmpty()) {
+            for (String token : value.trim().split("[,\\s]+")) {
+                if (!token.isEmpty()) {
+                    result.add(token);
+                }
+            }
+        }
+        return result;
+    }
+
+    // -------------------------------------------------------------------------
+    // Private — lenient parsers for CLI / config path
+    // -------------------------------------------------------------------------
+
+    /**
+     * Lenient boolean: accepts yes/no/true/false/1/0 (case-insensitive).
+     */
+    private static boolean parseLenientBoolean(String name, String value) {
+        String lower = value.toLowerCase().trim();
+        return switch (lower) {
+            case "yes", "true", "1" -> true;
+            case "no", "false", "0" -> false;
+            default -> throw new InvalidSerializationParameterValueException(
+                    name, value, "'yes', 'no', 'true', or 'false'");
+        };
+    }
+
+    /**
+     * Lenient standalone: yes/no/true/false/1/0/omit.
+     */
+    private static SerializationParameters.Standalone parseStandaloneConfig(String name, String value) {
+        String lower = value.toLowerCase().trim();
+        return switch (lower) {
+            case "yes", "true", "1" -> SerializationParameters.Standalone.YES;
+            case "no", "false", "0" -> SerializationParameters.Standalone.NO;
+            case "omit" -> SerializationParameters.Standalone.OMIT;
+            default -> throw new InvalidSerializationParameterValueException(name, value, "'yes', 'no', or 'omit'");
+        };
+    }
+
+    private static SerializationParameters.JsonNodeOutputMethod parseJsonNodeOutputMethodConfig(
+            String name, String value) {
+        String normalized = value.trim();
+        if (normalized.startsWith("Q{")) {
+            int close = normalized.indexOf('}');
+            if (close >= 0) {
+                try {
+                    return SerializationParameters.JsonNodeOutputMethod.valueOf(
+                            normalized.substring(close + 1).toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    // fall through
+                }
+            }
+        }
+        try {
+            return SerializationParameters.JsonNodeOutputMethod.valueOf(normalized.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidSerializationParameterValueException(
+                    name, value, "'xml', 'xhtml', 'html', 'text', or 'json'");
+        }
+    }
+
+    private static int parseIndentSpaces(String name, String value) {
+        try {
+            int spaces = Integer.parseInt(value.trim());
+            if (spaces < 0) {
+                throw new InvalidSerializationParameterValueException(name, value, "a non-negative integer");
+            }
+            return spaces;
+        } catch (NumberFormatException e) {
+            throw new InvalidSerializationParameterValueException(name, value, "a non-negative integer");
+        }
+    }
+
+    private static Map<String, String> parseCharacterMapsConfig(String name, String value) {
+        Map<String, String> result = new HashMap<>();
+        if (value != null && !value.trim().isEmpty()) {
+            for (String pair : value.split(",")) {
+                String trimmed = pair.trim();
+                int eq = trimmed.indexOf('=');
+                if (eq <= 0 || eq == trimmed.length() - 1) {
+                    throw new InvalidSerializationParameterValueException(name, trimmed, "key=value pairs");
+                }
+                result.put(
+                        trimmed.substring(0, eq).trim(),
+                        trimmed.substring(eq + 1).trim());
+            }
+        }
+        return result;
+    }
+
+    // -------------------------------------------------------------------------
+    // Private — parameter-name extraction
+    // -------------------------------------------------------------------------
+
+    private static String parameterNameFromKey(Item key, ExceptionMetadata metadata) {
+        if (key.isQName()) {
+            Name qName = key.getQNameValue();
+            String namespace = qName.getNamespace();
+            // Per F&O 3.1 §22.2: QName keys with no namespace or the serialization namespace
+            // map to their local name. Keys with other namespaces are ignored.
+            if (namespace == null || namespace.isEmpty() || SERIALIZATION_NAMESPACE.equals(namespace)) {
+                return qName.getLocalName();
+            }
+            return null; // ignored: implementation-defined namespace
+        }
+        if (key.isString() || key.isUntypedAtomic() || key.isAnyURI()) {
+            return key.getStringValue();
+        }
+        throw new InvalidArgumentTypeException("Serialization parameter map keys must be strings or QNames.", metadata);
+    }
+
+    // -------------------------------------------------------------------------
+    // Private — element path
+    // -------------------------------------------------------------------------
 
     private static void applyParameterElements(
             SerializationParameters params,
@@ -383,7 +678,7 @@ public final class SerializationParameterUtils {
                 value = expandLexicalQNames(value, element, false);
             }
             try {
-                applyNormalizedParameter(params, name.getLocalName(), value, metadata);
+                applySpecString(params, name.getLocalName(), value, metadata);
             } catch (InvalidSerializationParameterValueException e) {
                 throw invalidParameterDocument(e.getMessage(), metadata);
             }
@@ -436,34 +731,34 @@ public final class SerializationParameterUtils {
         params.setCharacterMaps(characterMaps);
     }
 
-    private static boolean isSingleCharacter(String value) {
-        return value.codePointCount(0, value.length()) == 1;
+    private static Map<String, String> characterMapsFromMapValue(List<Item> valueSequence, ExceptionMetadata metadata) {
+        if (valueSequence.size() != 1
+                || !(valueSequence.get(0).isMap() || valueSequence.get(0).isObject())) {
+            throw new UnexpectedTypeException("use-character-maps must be a map.", metadata);
+        }
+        Item map = valueSequence.get(0);
+        Map<String, String> mappings = new HashMap<>();
+        for (Item character : map.getItemKeys()) {
+            if (!character.isString()) {
+                throw new UnexpectedTypeException("Character map keys must be strings.", metadata);
+            }
+            String keyValue = character.getStringValue();
+            if (!isSingleCharacter(keyValue)) {
+                throw new InvalidSerializationParameterValueException(
+                        "use-character-maps", keyValue, "a single character", metadata);
+            }
+            List<Item> mapped = map.getSequenceByKey(character);
+            if (mapped == null || mapped.size() != 1 || !mapped.get(0).isString()) {
+                throw new UnexpectedTypeException("Character map values must be strings.", metadata);
+            }
+            mappings.put(keyValue, mapped.get(0).getStringValue());
+        }
+        return mappings;
     }
 
-    private static RumbleException invalidParameterDocument(String message, ExceptionMetadata metadata) {
-        return new RumbleException(message, ErrorCode.InvalidSerializationParameterDocument, metadata);
-    }
-
-    private static void applyNormalizedParameter(
-            SerializationParameters params, String parameterName, String value, ExceptionMetadata metadata) {
-        if (value == null && "standalone".equals(parameterName)) {
-            return;
-        }
-        if (value == null) {
-            throw new InvalidSerializationParameterValueException(parameterName, "()", "a valid value", metadata);
-        }
-        SerializationParameterBuilder.update(params, parameterName, value);
-    }
-
-    private static String parameterNameFromKey(Item key, ExceptionMetadata metadata) {
-        if (key.isQName()) {
-            return null;
-        }
-        if (key.isString() || key.isUntypedAtomic() || key.isAnyURI()) {
-            return key.getStringValue();
-        }
-        throw new InvalidArgumentTypeException("Serialization parameter map keys must be strings or QNames.", metadata);
-    }
+    // -------------------------------------------------------------------------
+    // Private — non-standard parameter value extraction
+    // -------------------------------------------------------------------------
 
     private static String sequenceToParameterValue(
             String parameterName, List<Item> valueSequence, Item namespaceContext, ExceptionMetadata metadata) {
@@ -500,6 +795,10 @@ public final class SerializationParameterUtils {
         }
         return List.of(item.getStringValue());
     }
+
+    // -------------------------------------------------------------------------
+    // Private — QName / namespace utilities
+    // -------------------------------------------------------------------------
 
     private static String expandedQName(Name name) {
         String namespace = name.getNamespace();
@@ -584,5 +883,13 @@ public final class SerializationParameterUtils {
             current = current.parent();
         }
         return namespaces.get(prefix);
+    }
+
+    private static boolean isSingleCharacter(String value) {
+        return value.codePointCount(0, value.length()) == 1;
+    }
+
+    private static RumbleException invalidParameterDocument(String message, ExceptionMetadata metadata) {
+        return new RumbleException(message, ErrorCode.InvalidSerializationParameterDocument, metadata);
     }
 }
