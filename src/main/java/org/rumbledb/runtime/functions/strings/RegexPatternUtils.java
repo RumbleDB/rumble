@@ -135,7 +135,7 @@ public final class RegexPatternUtils {
             pattern = Pattern.quote(pattern);
         } else {
             pattern = translatePattern(pattern, caseInsensitive);
-            pattern = translateUnicodeBlockEscapes(pattern);
+            pattern = translateUnicodeBlockEscapes(pattern, caseInsensitive);
             if (!multiline) {
                 pattern = translateDollarAnchors(pattern);
             }
@@ -484,34 +484,71 @@ public final class RegexPatternUtils {
      * &sect;5.6.1.5, e.g. \p{IsBasicLatin}), whereas java.util.regex reserves "Is" for scripts and
      * binary properties and requires the "In" prefix for blocks (e.g. \p{InBasicLatin}). Translate
      * every \p{Is...}/\P{Is...} escape accordingly before compiling with Pattern.compile.
+     * <p>
+     * Additionally, per W3C F&amp;O 3.1 &sect;5.6.1.1, Unicode character property escapes
+     * ({@code \p{...}} and {@code \P{...}}) are not affected by the {@code 'i'} flag.
+     * When {@code caseInsensitive} is active, property escapes outside character classes are wrapped
+     * with {@code (?-i:...)} so that Java's case-insensitive matching does not fold properties like {@code \p{Lu}}.
      */
-    static String translateUnicodeBlockEscapes(String pattern) {
+    static String translateUnicodeBlockEscapes(String pattern, boolean caseInsensitive) {
         StringBuilder result = new StringBuilder(pattern.length());
+        boolean inClass = false;
+        int classDepth = 0;
         int i = 0;
         while (i < pattern.length()) {
             char current = pattern.charAt(i);
-            if (current == '\\'
-                    && i + 2 < pattern.length()
-                    && (pattern.charAt(i + 1) == 'p' || pattern.charAt(i + 1) == 'P')
-                    && pattern.charAt(i + 2) == '{') {
-                int end = pattern.indexOf('}', i + 3);
-                if (end < 0) {
-                    result.append(current);
-                    i++;
+            if (current == '\\' && i + 1 < pattern.length()) {
+                if (i + 2 < pattern.length()
+                        && (pattern.charAt(i + 1) == 'p' || pattern.charAt(i + 1) == 'P')
+                        && pattern.charAt(i + 2) == '{') {
+                    int end = pattern.indexOf('}', i + 3);
+                    if (end < 0) {
+                        result.append(current);
+                        i++;
+                        continue;
+                    }
+                    String name = pattern.substring(i + 3, end).replaceAll("\\s+", "");
+                    boolean wrapCase = caseInsensitive && !inClass;
+                    if (wrapCase) {
+                        result.append("(?-i:");
+                    }
+                    result.append('\\').append(pattern.charAt(i + 1)).append('{');
+                    if (name.startsWith("Is") && name.length() > 2) {
+                        result.append("In").append(name, 2, name.length());
+                    } else {
+                        result.append(name);
+                    }
+                    result.append('}');
+                    if (wrapCase) {
+                        result.append(')');
+                    }
+                    i = end + 1;
                     continue;
                 }
-                String name = pattern.substring(i + 3, end).replaceAll("\\s+", "");
-                result.append(pattern, i, i + 3);
-                if (name.startsWith("Is") && name.length() > 2) {
-                    result.append("In").append(name, 2, name.length());
-                } else {
-                    result.append(name);
-                }
-                result.append('}');
-                i = end + 1;
+                result.append(current);
+                result.append(pattern.charAt(i + 1));
+                i += 2;
                 continue;
             }
-            result.append(current);
+            if (inClass) {
+                result.append(current);
+                if (current == '[') {
+                    classDepth++;
+                } else if (current == ']') {
+                    classDepth--;
+                    if (classDepth == 0) {
+                        inClass = false;
+                    }
+                }
+            } else {
+                if (current == '[') {
+                    inClass = true;
+                    classDepth = 1;
+                    result.append(current);
+                } else {
+                    result.append(current);
+                }
+            }
             i++;
         }
         return result.toString();
