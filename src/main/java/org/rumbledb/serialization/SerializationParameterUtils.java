@@ -78,6 +78,7 @@ public final class SerializationParameterUtils {
             "escape-uri-attributes",
             "byte-order-mark",
             "indent",
+            "standalone",
             "allow-duplicate-names");
 
     private SerializationParameterUtils() {}
@@ -254,11 +255,6 @@ public final class SerializationParameterUtils {
                                 || (("method".equals(parameterName) || "json-node-output-method".equals(parameterName))
                                         && valueSequence.get(0).isQName()))) {
                     throw new UnexpectedTypeException(parameterName + " must be a string.", metadata);
-                }
-                if ("standalone".equals(parameterName)
-                        && !Set.of("yes", "no", "omit")
-                                .contains(valueSequence.get(0).getStringValue())) {
-                    throw new UnexpectedTypeException("standalone must be yes, no, or omit.", metadata);
                 }
             }
             applyNormalizedParameter(
