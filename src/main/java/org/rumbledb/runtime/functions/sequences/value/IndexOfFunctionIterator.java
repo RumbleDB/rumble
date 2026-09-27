@@ -64,7 +64,7 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         String collation = resolveCollation(context);
         Item search = this.searchIterator.materializeFirstOrNull(context);
-        boolean searchIsNaN = isSearchNaN(search);
+        boolean searchIsNaN = isItemNaN(search);
         ExceptionMetadata metadata = getMetadata();
 
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
@@ -79,7 +79,7 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
             throw new NonAtomicKeyException(
                     "Invalid args. index-of can't be performed with a non-atomic in the input sequence", metadata);
         }
-        if (search == null || searchIsNaN) {
+        if (search == null || searchIsNaN || isItemNaN(item)) {
             return false;
         }
         if (CollationSupport.isStringCollationType(item) && CollationSupport.isStringCollationType(search)) {
@@ -89,8 +89,8 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
         return AtomicDeepEqual.deepEqual(item, search);
     }
 
-    private static boolean isSearchNaN(Item search) {
-        return search != null && (search.isDouble() || search.isFloat()) && search.isNaN();
+    private static boolean isItemNaN(Item item) {
+        return item != null && (item.isDouble() || item.isFloat()) && item.isNaN();
     }
 
     private final class IndexOfLocalCursor extends AbstractLocalCursor<Item> {
@@ -112,7 +112,7 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
         protected void openLocal() {
             this.collation = IndexOfFunctionIterator.this.resolveCollation(this.context);
             this.search = IndexOfFunctionIterator.this.searchIterator.materializeFirstOrNull(this.context);
-            this.searchIsNaN = isSearchNaN(this.search);
+            this.searchIsNaN = isItemNaN(this.search);
             this.sequenceCursor = IndexOfFunctionIterator.this.sequenceIterator.getCursor(this.context);
             this.index = 0;
             advance();
