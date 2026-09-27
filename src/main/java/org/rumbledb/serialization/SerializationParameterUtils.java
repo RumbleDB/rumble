@@ -367,11 +367,12 @@ public final class SerializationParameterUtils {
             return value.getBooleanValue() ? "yes" : "no";
         }
         if (value.isString() || value.isAnyURI()) {
-            String s = value.getStringValue();
+            String s = value.getStringValue().trim();
             if ("yes".equals(s) || "no".equals(s) || "omit".equals(s)) {
                 return s;
             }
-            throw new InvalidSerializationParameterValueException(parameterName, s, "'yes', 'no', or 'omit'", metadata);
+            throw new InvalidSerializationParameterValueException(
+                    parameterName, value.getStringValue(), "'yes', 'no', or 'omit'", metadata);
         }
         throw new UnexpectedTypeException(parameterName + " must be a boolean or 'omit'.", metadata);
     }
@@ -417,19 +418,19 @@ public final class SerializationParameterUtils {
     private static void applySpecString(
             SerializationParameters params, String name, String value, ExceptionMetadata metadata) {
         switch (name) {
-            case "method" -> params.setMethod(value);
-            case "encoding" -> params.setEncoding(value);
-            case "version" -> params.setVersion(value);
+            case "method" -> params.setMethod(value == null ? null : value.trim());
+            case "encoding" -> params.setEncoding(value == null ? null : value.trim());
+            case "version" -> params.setVersion(value == null ? null : value.trim());
             case "omit-xml-declaration" -> params.setOmitXmlDeclaration(parseYesNo(name, value, metadata));
             case "standalone" -> params.setStandalone(parseStandalone(name, value, metadata));
             case "doctype-system" -> params.setDoctypeSystem(value);
             case "doctype-public" -> params.setDoctypePublic(value);
-            case "media-type" -> params.setMediaType(value);
+            case "media-type" -> params.setMediaType(value == null ? null : value.trim());
             case "normalization-form" -> params.setNormalizationForm(validateNonEmpty(name, value, metadata));
             case "undeclare-prefixes" -> params.setUndeclarePrefixes(parseYesNo(name, value, metadata));
             case "include-content-type" -> params.setIncludeContentType(parseYesNo(name, value, metadata));
             case "escape-uri-attributes" -> params.setEscapeUriAttributes(parseYesNo(name, value, metadata));
-            case "html-version" -> params.setHtmlVersion(value);
+            case "html-version" -> params.setHtmlVersion(value == null ? null : value.trim());
             case "byte-order-mark" -> params.setByteOrderMark(parseYesNo(name, value, metadata));
             case "indent" -> params.setIndent(parseYesNo(name, value, metadata));
             case "item-separator" -> params.setItemSeparator(value);
@@ -445,10 +446,11 @@ public final class SerializationParameterUtils {
 
     /** Parses "yes"/"no" strictly. Throws SEPM0016 for anything else. */
     private static boolean parseYesNo(String name, String value, ExceptionMetadata metadata) {
-        if ("yes".equals(value)) {
+        String trimmed = value == null ? null : value.trim();
+        if ("yes".equals(trimmed)) {
             return true;
         }
-        if ("no".equals(value)) {
+        if ("no".equals(trimmed)) {
             return false;
         }
         throw new InvalidSerializationParameterValueException(name, value, "'yes' or 'no'", metadata);
@@ -457,13 +459,17 @@ public final class SerializationParameterUtils {
     /** Parses standalone: "yes", "no", or "omit". */
     private static SerializationParameters.Standalone parseStandalone(
             String name, String value, ExceptionMetadata metadata) {
-        return switch (value) {
-            case "yes" -> SerializationParameters.Standalone.YES;
-            case "no" -> SerializationParameters.Standalone.NO;
-            case "omit" -> SerializationParameters.Standalone.OMIT;
-            default -> throw new InvalidSerializationParameterValueException(
-                    name, value, "'yes', 'no', or 'omit'", metadata);
-        };
+        String trimmed = value == null ? null : value.trim();
+        if ("yes".equals(trimmed)) {
+            return SerializationParameters.Standalone.YES;
+        }
+        if ("no".equals(trimmed)) {
+            return SerializationParameters.Standalone.NO;
+        }
+        if ("omit".equals(trimmed)) {
+            return SerializationParameters.Standalone.OMIT;
+        }
+        throw new InvalidSerializationParameterValueException(name, value, "'yes', 'no', or 'omit'", metadata);
     }
 
     /** Validates non-empty string. */
@@ -477,11 +483,12 @@ public final class SerializationParameterUtils {
 
     private static SerializationParameters.JsonNodeOutputMethod parseJsonNodeOutputMethod(
             String name, String value, ExceptionMetadata metadata) {
-        if (value.startsWith("Q{")) {
+        String trimmed = value == null ? "" : value.trim();
+        if (trimmed.startsWith("Q{")) {
             // EQName form: Q{namespace}localname
-            int close = value.indexOf('}');
+            int close = trimmed.indexOf('}');
             if (close >= 0) {
-                String localPart = value.substring(close + 1);
+                String localPart = trimmed.substring(close + 1);
                 try {
                     return SerializationParameters.JsonNodeOutputMethod.valueOf(localPart.toUpperCase());
                 } catch (IllegalArgumentException e) {
@@ -490,7 +497,7 @@ public final class SerializationParameterUtils {
             }
         }
         try {
-            return SerializationParameters.JsonNodeOutputMethod.valueOf(value.toUpperCase());
+            return SerializationParameters.JsonNodeOutputMethod.valueOf(trimmed.toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new InvalidSerializationParameterValueException(
                     name, value, "'xml', 'xhtml', 'html', 'text', or 'json'", metadata);
@@ -598,9 +605,14 @@ public final class SerializationParameterUtils {
         if (key.isQName()) {
             Name qName = key.getQNameValue();
             String namespace = qName.getNamespace();
-            // Per F&O 3.1 §22.2: QName keys with no namespace or the serialization namespace
-            // map to their local name. Keys with other namespaces are ignored.
-            if (namespace == null || namespace.isEmpty() || SERIALIZATION_NAMESPACE.equals(namespace)) {
+            // Per F&O 3.1 §22.2: The key of the entry is an xs:string value in the cases of parameter names
+            // defined in these specifications, or an xs:QName (with non-absent namespace) in the case of
+            // implementation-defined serialization parameters.
+            // A QName with no namespace is not a valid parameter key and is ignored.
+            if (namespace == null || namespace.isEmpty()) {
+                return null;
+            }
+            if (SERIALIZATION_NAMESPACE.equals(namespace)) {
                 return qName.getLocalName();
             }
             return null; // ignored: implementation-defined namespace

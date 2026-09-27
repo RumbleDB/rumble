@@ -184,8 +184,7 @@ public class AdaptiveSerializer implements Serializer, Serializable {
             return;
         }
         if (item.isDateTime()) {
-            String typeName = type.equals(BuiltinTypesCatalogue.dateTimeStampItem) ? "xs:dateTimeStamp" : "xs:dateTime";
-            appendTypedAtomic(typeName, item, sb);
+            appendTypedAtomic("xs:dateTime", item, sb);
             return;
         }
         if (item.isDate()) {
