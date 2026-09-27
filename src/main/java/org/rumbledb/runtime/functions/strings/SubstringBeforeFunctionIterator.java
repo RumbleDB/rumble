@@ -21,9 +21,9 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class SubstringBeforeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -37,24 +37,16 @@ public class SubstringBeforeFunctionIterator extends AbstractAtMostOneItemRuntim
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
+        String explicitCollation = this.getChildren().size() == 3
+                ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
+                : null;
+        String collation =
+                CollationSupport.resolveAndCheckCollation(explicitCollation, getRuntimeStaticContext(), getMetadata());
         Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         Item substringItem = this.getChild(1).materializeFirstOrNull(context);
-        if (this.getChildren().size() == 3) {
-            String collation = this.getChild(2).materializeFirstOrNull(context).getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
-            }
-        }
-        if (substringItem == null
-                || substringItem.getStringValue().isEmpty()
-                || stringItem == null
-                || stringItem.getStringValue().isEmpty()) {
-            return ItemFactory.getInstance().createStringItem("");
-        }
-        int indexOfOccurrence = stringItem.getStringValue().indexOf(substringItem.getStringValue());
-        return indexOfOccurrence == -1
-                ? ItemFactory.getInstance().createStringItem("")
-                : ItemFactory.getInstance()
-                        .createStringItem(stringItem.getStringValue().substring(0, indexOfOccurrence));
+        String source = stringItem == null ? "" : stringItem.getStringValue();
+        String target = substringItem == null ? "" : substringItem.getStringValue();
+        String result = CollationSupport.substringBefore(source, target, collation, getMetadata());
+        return ItemFactory.getInstance().createStringItem(result);
     }
 }

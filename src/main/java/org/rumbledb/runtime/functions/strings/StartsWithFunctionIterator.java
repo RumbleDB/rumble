@@ -37,20 +37,16 @@ public class StartsWithFunctionIterator extends AbstractAtMostOneItemRuntimePlan
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        String collation = this.getChildren().size() == 3
+        String explicitCollation = this.getChildren().size() == 3
                 ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
-                : getRuntimeStaticContext().getDefaultCollation();
-
-        Item substringItem = this.getChild(1).materializeFirstOrNull(context);
-        if (substringItem == null || substringItem.getStringValue().isEmpty()) {
-            return ItemFactory.getInstance().createBooleanItem(true);
-        }
+                : null;
+        String collation =
+                CollationSupport.resolveAndCheckCollation(explicitCollation, getRuntimeStaticContext(), getMetadata());
         Item stringItem = this.getChild(0).materializeFirstOrNull(context);
-        if (stringItem == null || stringItem.getStringValue().isEmpty()) {
-            return ItemFactory.getInstance().createBooleanItem(false);
-        }
-        boolean result = CollationSupport.startsWith(
-                stringItem.getStringValue(), substringItem.getStringValue(), collation, getMetadata());
+        Item substringItem = this.getChild(1).materializeFirstOrNull(context);
+        String source = stringItem == null ? "" : stringItem.getStringValue();
+        String target = substringItem == null ? "" : substringItem.getStringValue();
+        boolean result = CollationSupport.startsWith(source, target, collation, getMetadata());
         return ItemFactory.getInstance().createBooleanItem(result);
     }
 }
