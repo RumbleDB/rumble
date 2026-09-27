@@ -170,15 +170,12 @@ public final class RegexPatternUtils {
         int classDepth = 0;
         for (int i = 0; i < pattern.length(); i++) {
             char current = pattern.charAt(i);
-            if (current == '\\' && i + 1 < pattern.length()) {
-                result.append(current);
-                result.append(pattern.charAt(i + 1));
-                i++;
-                continue;
-            }
             if (inClass) {
                 result.append(current);
-                if (current == '[') {
+                if (current == '\\' && i + 1 < pattern.length()) {
+                    result.append(pattern.charAt(i + 1));
+                    i++;
+                } else if (current == '[') {
                     classDepth++;
                 } else if (current == ']') {
                     classDepth--;
@@ -187,12 +184,22 @@ public final class RegexPatternUtils {
                     }
                 }
             } else {
+                if (isWhitespace(current)) {
+                    // Ignored per XQuery flag 'x'
+                    continue;
+                }
+                if (current == '\\' && i + 1 < pattern.length()) {
+                    if (!isWhitespace(pattern.charAt(i + 1))) {
+                        result.append(current);
+                        result.append(pattern.charAt(i + 1));
+                        i++;
+                        continue;
+                    }
+                }
                 if (current == '[') {
                     inClass = true;
                     classDepth = 1;
                     result.append(current);
-                } else if (isWhitespace(current)) {
-                    // Ignored per XQuery flag 'x'
                 } else {
                     result.append(current);
                 }
@@ -246,6 +253,7 @@ public final class RegexPatternUtils {
                         throw new InvalidRegexPatternException(
                                 "Unterminated Unicode category or block escape", metadata);
                     }
+                    validateUnicodePropertyEscape(pattern.substring(i + 3, end), metadata);
                     i = end;
                     previousWasAtom = true;
                     continue;
@@ -336,7 +344,6 @@ public final class RegexPatternUtils {
      */
     private static boolean isLegalRegexEscape(char c) {
         switch (c) {
-            case ' ':
             case 'n':
             case 'r':
             case 't':
@@ -368,6 +375,19 @@ public final class RegexPatternUtils {
                 return true;
             default:
                 return false;
+        }
+    }
+
+    private static void validateUnicodePropertyEscape(String name, ExceptionMetadata metadata) {
+        if (name.isEmpty()) {
+            throw new InvalidRegexPatternException("Empty Unicode property escape", metadata);
+        }
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (isWhitespace(c)) {
+                throw new InvalidRegexPatternException(
+                        "Whitespace is not allowed in Unicode property escape: \\p{" + name + "}", metadata);
+            }
         }
     }
 
@@ -507,7 +527,7 @@ public final class RegexPatternUtils {
                         i++;
                         continue;
                     }
-                    String name = pattern.substring(i + 3, end).replaceAll("\\s+", "");
+                    String name = pattern.substring(i + 3, end);
                     boolean wrapCase = caseInsensitive && !inClass;
                     if (wrapCase) {
                         result.append("(?-i:");
@@ -633,6 +653,36 @@ public final class RegexPatternUtils {
                 }
                 if (next == 'C') {
                     result.append("[^").append(XML_C).append("]");
+                    i++;
+                    continue;
+                }
+                if (next == 'd') {
+                    result.append("\\p{Nd}");
+                    i++;
+                    continue;
+                }
+                if (next == 'D') {
+                    result.append("\\P{Nd}");
+                    i++;
+                    continue;
+                }
+                if (next == 'w') {
+                    result.append("[^\\p{P}\\p{Z}\\p{C}]");
+                    i++;
+                    continue;
+                }
+                if (next == 'W') {
+                    result.append("[\\p{P}\\p{Z}\\p{C}]");
+                    i++;
+                    continue;
+                }
+                if (next == 's') {
+                    result.append("[ \\t\\n\\r]");
+                    i++;
+                    continue;
+                }
+                if (next == 'S') {
+                    result.append("[^ \\t\\n\\r]");
                     i++;
                     continue;
                 }
@@ -775,6 +825,18 @@ public final class RegexPatternUtils {
                     return "[" + XML_C + "]";
                 case "\\C":
                     return "[^" + XML_C + "]";
+                case "\\d":
+                    return "\\p{Nd}";
+                case "\\D":
+                    return "\\P{Nd}";
+                case "\\w":
+                    return "[^\\p{P}\\p{Z}\\p{C}]";
+                case "\\W":
+                    return "[\\p{P}\\p{Z}\\p{C}]";
+                case "\\s":
+                    return "[ \\t\\n\\r]";
+                case "\\S":
+                    return "[^ \\t\\n\\r]";
                 default:
                     return token.text;
             }
@@ -939,7 +1001,7 @@ public final class RegexPatternUtils {
             char current = pattern.charAt(index);
             if (current == '\\') {
                 if (index + 1 >= pattern.length()) {
-                    return index;
+                    throw new InvalidRegexPatternException("Trailing unescaped backslash in character class", metadata);
                 }
                 char next = pattern.charAt(index + 1);
                 if (next == 'p' || next == 'P') {
@@ -952,6 +1014,7 @@ public final class RegexPatternUtils {
                         throw new InvalidRegexPatternException(
                                 "Unterminated Unicode category or block escape in character class", metadata);
                     }
+                    validateUnicodePropertyEscape(pattern.substring(index + 3, end), metadata);
                     index = end;
                 } else if (!isLegalRegexEscape(next)) {
                     throw new InvalidRegexPatternException(
@@ -972,13 +1035,14 @@ public final class RegexPatternUtils {
             } else if (current == '[') {
                 throw new InvalidRegexPatternException("Invalid nested '[' in character class", metadata);
             } else if (current == ']') {
-                // XSD Appendix F: ']' is not a valid character range on its own (unlike '-', it has no
-                // "literal at the start of the group" exception), so it always closes the class here.
+                if (index == contentStart) {
+                    throw new InvalidRegexPatternException("Empty character class", metadata);
+                }
                 return index;
             }
             index++;
         }
-        return pattern.length() - 1;
+        throw new InvalidRegexPatternException("Unterminated character class", metadata);
     }
 
     private static boolean isAsciiUppercase(int codePoint) {

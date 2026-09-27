@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidRegexPatternException;
 import org.rumbledb.runtime.functions.strings.RegexPatternUtils;
 
 public class RegexPatternUtilsTest {
@@ -122,5 +123,63 @@ public class RegexPatternUtilsTest {
         Assertions.assertArrayEquals(
                 new String[] {"abc", "def", "ghi", "jkl"},
                 RegexPatternUtils.tokenizeOnXmlWhitespace(" abc\tdef\nghi\rjkl "));
+    }
+
+    @Test
+    public void emptyCharacterClassThrowsInvalidRegexPatternException() {
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("a[]b", null, ExceptionMetadata.EMPTY_METADATA));
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("[^]", null, ExceptionMetadata.EMPTY_METADATA));
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("[a-f-[]]+", null, ExceptionMetadata.EMPTY_METADATA));
+    }
+
+    @Test
+    public void unterminatedCharacterClassThrowsInvalidRegexPatternException() {
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("[\\]", null, ExceptionMetadata.EMPTY_METADATA));
+    }
+
+    @Test
+    public void whitespaceInUnicodePropertyEscapeThrowsInvalidRegexPatternException() {
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("\\p{ IsBasicLatin}+", null, ExceptionMetadata.EMPTY_METADATA));
+    }
+
+    @Test
+    public void flagXCollapsesWhitespaceFollowingBackslashOutsideClasses() {
+        RegexPatternUtils.CompiledRegex compiledRegex =
+                RegexPatternUtils.compileRegex("hello\\ sworld", "x", ExceptionMetadata.EMPTY_METADATA);
+        Assertions.assertTrue(compiledRegex.getPattern().matcher("hello world").matches());
+    }
+
+    @Test
+    public void multiCharacterEscapesSupportUnicodeSets() {
+        RegexPatternUtils.CompiledRegex digitRegex =
+                RegexPatternUtils.compileRegex("^(?:\\d)$", null, ExceptionMetadata.EMPTY_METADATA);
+        Assertions.assertTrue(digitRegex.getPattern().matcher("۰").matches());
+
+        RegexPatternUtils.CompiledRegex nonDigitRegex =
+                RegexPatternUtils.compileRegex("^(?:\\D)$", null, ExceptionMetadata.EMPTY_METADATA);
+        Assertions.assertTrue(nonDigitRegex.getPattern().matcher("a").matches());
+        Assertions.assertFalse(nonDigitRegex.getPattern().matcher("۰").matches());
+
+        RegexPatternUtils.CompiledRegex wordRegex =
+                RegexPatternUtils.compileRegex("^(?:[\\w\\-\\.]+@.*)$", null, ExceptionMetadata.EMPTY_METADATA);
+        Assertions.assertTrue(
+                wordRegex.getPattern().matcher("first-last@seznam.cz").matches());
+        Assertions.assertFalse(
+                wordRegex.getPattern().matcher("first_last@seznam.cz").matches());
+
+        RegexPatternUtils.CompiledRegex nonWordRegex =
+                RegexPatternUtils.compileRegex("^(?:\\W)$", null, ExceptionMetadata.EMPTY_METADATA);
+        Assertions.assertTrue(nonWordRegex.getPattern().matcher("_").matches());
+        Assertions.assertFalse(nonWordRegex.getPattern().matcher("a").matches());
     }
 }
