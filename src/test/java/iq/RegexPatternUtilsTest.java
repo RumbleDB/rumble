@@ -29,7 +29,7 @@ public class RegexPatternUtilsTest {
         RegexPatternUtils.CompiledRegex compiledRegex =
                 RegexPatternUtils.compileRegex("[^i]", "i", ExceptionMetadata.EMPTY_METADATA);
 
-        Assertions.assertEquals("I", compiledRegex.getPattern().matcher("I").replaceAll("x"));
+        Assertions.assertEquals("I", compiledRegex.pattern().matcher("I").replaceAll("x"));
     }
 
     @Test
@@ -37,7 +37,7 @@ public class RegexPatternUtilsTest {
         RegexPatternUtils.CompiledRegex compiledRegex =
                 RegexPatternUtils.compileRegex("[A-Z-[OI]]", "i", ExceptionMetadata.EMPTY_METADATA);
 
-        Assertions.assertEquals("O", compiledRegex.getPattern().matcher("O").replaceAll("x"));
+        Assertions.assertEquals("O", compiledRegex.pattern().matcher("O").replaceAll("x"));
     }
 
     @Test
@@ -46,7 +46,7 @@ public class RegexPatternUtilsTest {
                 RegexPatternUtils.compileRegex("[A-Z]", "i", ExceptionMetadata.EMPTY_METADATA);
 
         Assertions.assertEquals(
-                "x", compiledRegex.getPattern().matcher("\u212A").replaceAll("x"));
+                "x", compiledRegex.pattern().matcher("\u212A").replaceAll("x"));
     }
 
     @Test
@@ -55,7 +55,7 @@ public class RegexPatternUtilsTest {
                 RegexPatternUtils.compileRegex("q", "i", ExceptionMetadata.EMPTY_METADATA);
 
         Assertions.assertArrayEquals(
-                new String[] {"A", "Ba", ""}, RegexPatternUtils.tokenize("AqBaQ", compiledRegex.getPattern()));
+                new String[] {"A", "Ba", ""}, RegexPatternUtils.tokenize("AqBaQ", compiledRegex.pattern()));
     }
 
     @Test
@@ -64,7 +64,7 @@ public class RegexPatternUtilsTest {
                 RegexPatternUtils.compileRegex("[^q]é", "i", ExceptionMetadata.EMPTY_METADATA);
 
         Assertions.assertArrayEquals(
-                new String[] {"", ""}, RegexPatternUtils.tokenize("xÉ", compiledRegex.getPattern()));
+                new String[] {"", ""}, RegexPatternUtils.tokenize("xÉ", compiledRegex.pattern()));
     }
 
     @Test
@@ -72,7 +72,7 @@ public class RegexPatternUtilsTest {
         RegexPatternUtils.CompiledRegex compiledRegex =
                 RegexPatternUtils.compileRegex("\\s+", null, ExceptionMetadata.EMPTY_METADATA);
 
-        Assertions.assertArrayEquals(new String[0], RegexPatternUtils.tokenize("", compiledRegex.getPattern()));
+        Assertions.assertArrayEquals(new String[0], RegexPatternUtils.tokenize("", compiledRegex.pattern()));
     }
 
     @Test
@@ -82,7 +82,7 @@ public class RegexPatternUtilsTest {
 
         Assertions.assertArrayEquals(
                 new String[] {"", "r", "c", "d", "r", ""},
-                RegexPatternUtils.tokenize("abracadabra", compiledRegex.getPattern()));
+                RegexPatternUtils.tokenize("abracadabra", compiledRegex.pattern()));
     }
 
     @Test
@@ -90,7 +90,7 @@ public class RegexPatternUtilsTest {
         RegexPatternUtils.CompiledRegex compiledRegex =
                 RegexPatternUtils.compileRegex("^", "m", ExceptionMetadata.EMPTY_METADATA);
 
-        Assertions.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+        Assertions.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.pattern()));
     }
 
     @Test
@@ -98,7 +98,7 @@ public class RegexPatternUtilsTest {
         RegexPatternUtils.CompiledRegex compiledRegex =
                 RegexPatternUtils.compileRegex("^[\\s]*$", "m", ExceptionMetadata.EMPTY_METADATA);
 
-        Assertions.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern()));
+        Assertions.assertTrue(RegexPatternUtils.matchesEmptyString(compiledRegex.pattern()));
     }
 
     @Test
@@ -113,7 +113,7 @@ public class RegexPatternUtilsTest {
                 RegexPatternUtils.compileRegex("(a)\\" + backReferenceDigits, null, ExceptionMetadata.EMPTY_METADATA);
 
         Assertions.assertTrue(compiledRegex
-                .getPattern()
+                .pattern()
                 .matcher("aa" + backReferenceDigits.substring(1))
                 .matches());
     }
@@ -156,30 +156,30 @@ public class RegexPatternUtilsTest {
     public void flagXCollapsesWhitespaceFollowingBackslashOutsideClasses() {
         RegexPatternUtils.CompiledRegex compiledRegex =
                 RegexPatternUtils.compileRegex("hello\\ sworld", "x", ExceptionMetadata.EMPTY_METADATA);
-        Assertions.assertTrue(compiledRegex.getPattern().matcher("hello world").matches());
+        Assertions.assertTrue(compiledRegex.pattern().matcher("hello world").matches());
     }
 
     @Test
     public void multiCharacterEscapesSupportUnicodeSets() {
         RegexPatternUtils.CompiledRegex digitRegex =
                 RegexPatternUtils.compileRegex("^(?:\\d)$", null, ExceptionMetadata.EMPTY_METADATA);
-        Assertions.assertTrue(digitRegex.getPattern().matcher("۰").matches());
+        Assertions.assertTrue(digitRegex.pattern().matcher("۰").matches());
 
         RegexPatternUtils.CompiledRegex nonDigitRegex =
                 RegexPatternUtils.compileRegex("^(?:\\D)$", null, ExceptionMetadata.EMPTY_METADATA);
-        Assertions.assertTrue(nonDigitRegex.getPattern().matcher("a").matches());
-        Assertions.assertFalse(nonDigitRegex.getPattern().matcher("۰").matches());
+        Assertions.assertTrue(nonDigitRegex.pattern().matcher("a").matches());
+        Assertions.assertFalse(nonDigitRegex.pattern().matcher("۰").matches());
 
         RegexPatternUtils.CompiledRegex wordRegex =
                 RegexPatternUtils.compileRegex("^(?:[\\w\\-\\.]+@.*)$", null, ExceptionMetadata.EMPTY_METADATA);
         Assertions.assertTrue(
-                wordRegex.getPattern().matcher("first-last@seznam.cz").matches());
+                wordRegex.pattern().matcher("first-last@seznam.cz").matches());
         Assertions.assertFalse(
-                wordRegex.getPattern().matcher("first_last@seznam.cz").matches());
+                wordRegex.pattern().matcher("first_last@seznam.cz").matches());
 
         RegexPatternUtils.CompiledRegex nonWordRegex =
                 RegexPatternUtils.compileRegex("^(?:\\W)$", null, ExceptionMetadata.EMPTY_METADATA);
-        Assertions.assertTrue(nonWordRegex.getPattern().matcher("_").matches());
-        Assertions.assertFalse(nonWordRegex.getPattern().matcher("a").matches());
+        Assertions.assertTrue(nonWordRegex.pattern().matcher("_").matches());
+        Assertions.assertFalse(nonWordRegex.pattern().matcher("a").matches());
     }
 }
