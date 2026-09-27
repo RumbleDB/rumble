@@ -46,7 +46,8 @@ public class SerializeFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     public Item evaluateAtMostOne(DynamicContext context) {
         List<Item> options =
                 this.getChildren().size() < 2 ? null : this.getChild(1).materialize(context);
-        SerializationParameters params = new SerializationParameters();
+        SerializationParameters params =
+                SerializationParameterUtils.defaultsForSerializeFunction(this.staticContext.getQueryLanguage());
         if (options != null) {
             SerializationParameterUtils.applyParameterItems(params, options, getMetadata());
         }
