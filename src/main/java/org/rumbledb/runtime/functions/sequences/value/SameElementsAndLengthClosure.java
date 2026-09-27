@@ -23,17 +23,26 @@ import java.util.List;
 import org.apache.spark.api.java.function.FlatMapFunction2;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.misc.AtomicDeepEqual;
 
 public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final String collation;
+
+    public SameElementsAndLengthClosure(String collation) {
+        this.collation = collation;
+    }
+
     @Override
     public Iterator<Boolean> call(Iterator<Item> iterator1, Iterator<Item> iterator2) throws Exception {
         List<Boolean> list = new ArrayList<>();
         while (iterator1.hasNext() && iterator2.hasNext()) {
-            if (!(iterator1.next().equals(iterator2.next()))) {
+            if (!AtomicDeepEqual.deepEqual(
+                    iterator1.next(), iterator2.next(), this.collation, ExceptionMetadata.EMPTY_METADATA)) {
                 list.add(true);
                 return list.iterator();
             }
@@ -44,4 +53,3 @@ public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<I
         return list.iterator();
     }
 }
-;

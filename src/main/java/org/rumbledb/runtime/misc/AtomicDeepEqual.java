@@ -17,6 +17,7 @@ package org.rumbledb.runtime.misc;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
 
@@ -35,8 +36,30 @@ public final class AtomicDeepEqual {
      * (NaN float/double pairs compare equal, as required by FO 3.1).
      */
     public static boolean deepEqual(Item item1, Item item2) {
+        return deepEqual(item1, item2, null, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    /**
+     * Deep equality for individual items with collation support for string-participating types.
+     *
+     * @param item1 the first item
+     * @param item2 the second item
+     * @param collation the collation URI, or null for default comparison
+     * @param metadata exception metadata for error reporting
+     * @return true if items are deep-equal, false otherwise
+     */
+    public static boolean deepEqual(Item item1, Item item2, String collation, ExceptionMetadata metadata) {
+        if (!item1.isAtomic() || !item2.isAtomic()) {
+            return false;
+        }
         if (bothFloatOrDoubleNaN(item1, item2)) {
             return true;
+        }
+        if (collation != null
+                && CollationSupport.isStringCollationType(item1)
+                && CollationSupport.isStringCollationType(item2)) {
+            return CollationSupport.compareStrings(item1.getStringValue(), item2.getStringValue(), collation, metadata)
+                    == 0;
         }
         if (item1.isUntypedAtomic()) {
             item1 = ItemFactory.getInstance().createStringItem(item1.getStringValue());
@@ -44,10 +67,14 @@ public final class AtomicDeepEqual {
         if (item2.isUntypedAtomic()) {
             item2 = ItemFactory.getInstance().createStringItem(item2.getStringValue());
         }
-        long comparison = ComparisonIterator.compareItems(
-                item1, item2, ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
-        // The low-level comparator reports non-comparable types with Long.MIN_VALUE.
-        return comparison != Long.MIN_VALUE && comparison == 0;
+        try {
+            long comparison = ComparisonIterator.compareItems(
+                    item1, item2, ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
+            // The low-level comparator reports non-comparable types with Long.MIN_VALUE.
+            return comparison != Long.MIN_VALUE && comparison == 0;
+        } catch (RumbleException e) {
+            return false;
+        }
     }
 
     private static boolean bothFloatOrDoubleNaN(Item item1, Item item2) {
