@@ -62,8 +62,12 @@ public class StringConcatIterator extends AbstractAtMostOneItemRuntimePlan {
                 if (item.isAtomic()) {
                     singleAtomic = recordAtomic(singleAtomic, item, side);
                 } else {
-                    for (Item atomicItem : item.atomizedValue()) {
-                        singleAtomic = recordAtomic(singleAtomic, atomicItem, side);
+                    try {
+                        for (Item atomicItem : item.atomizedValue()) {
+                            singleAtomic = recordAtomic(singleAtomic, atomicItem, side);
+                        }
+                    } catch (CannotAtomizeException e) {
+                        throw new CannotAtomizeException(e.getMessage(), getMetadata());
                     }
                 }
             }
