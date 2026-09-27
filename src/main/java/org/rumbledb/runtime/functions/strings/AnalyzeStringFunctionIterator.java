@@ -66,20 +66,20 @@ public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimeP
         }
 
         RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
-        if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
+        if (RegexPatternUtils.matchesEmptyString(compiledRegex.pattern())) {
             throw new MatchesEmptyStringException(
-                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string", getMetadata());
+                    "'" + compiledRegex.effectivePattern() + "' matches empty string", getMetadata());
         }
 
         List<Item> resultChildren = new ArrayList<>();
-        Matcher matcher = compiledRegex.getPattern().matcher(input);
+        Matcher matcher = compiledRegex.pattern().matcher(input);
         int currentPosition = 0;
         while (matcher.find()) {
             if (currentPosition < matcher.start()) {
                 resultChildren.add(createTextContainer(
                         factory, NON_MATCH_NAME, input.substring(currentPosition, matcher.start())));
             }
-            resultChildren.add(createMatchElement(factory, input, matcher, compiledRegex.isQuote()));
+            resultChildren.add(createMatchElement(factory, input, matcher, compiledRegex.quote()));
             currentPosition = matcher.end();
         }
         if (currentPosition < input.length()) {

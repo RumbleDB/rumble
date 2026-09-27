@@ -49,11 +49,11 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
             return RegexPatternUtils.tokenizeOnXmlWhitespace(input);
         }
         RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(separator, flags, metadata);
-        if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
+        if (RegexPatternUtils.matchesEmptyString(compiledRegex.pattern())) {
             throw new MatchesEmptyStringException(
-                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string", metadata);
+                    "'" + compiledRegex.effectivePattern() + "' matches empty string", metadata);
         }
-        return RegexPatternUtils.tokenize(input, compiledRegex.getPattern());
+        return RegexPatternUtils.tokenize(input, compiledRegex.pattern());
     }
 
     private static final class TokenizeLocalCursor extends AbstractLocalCursor<Item> {

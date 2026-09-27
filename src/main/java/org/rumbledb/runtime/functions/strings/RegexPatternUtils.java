@@ -23,8 +23,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import lombok.Getter;
-
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRegexFlagException;
 import org.rumbledb.exceptions.InvalidRegexPatternException;
@@ -409,7 +407,7 @@ public final class RegexPatternUtils {
         int referencedGroupNumber = Integer.parseInt(groupNumberText.substring(0, longestExistingPrefixLength));
 
         for (GroupContext groupContext : openGroups) {
-            if (groupContext.isCapturing() && groupContext.getNumber() == referencedGroupNumber) {
+            if (groupContext.capturing() && groupContext.number() == referencedGroupNumber) {
                 throw new InvalidRegexPatternException("Invalid back-reference " + token, metadata);
             }
         }
@@ -1061,61 +1059,15 @@ public final class RegexPatternUtils {
         return codePoint - ('a' - 'A');
     }
 
-    @Getter
-    public static final class CompiledRegex {
-        private final Pattern pattern;
-        private final boolean quote;
-        private final String effectivePattern;
+    public record CompiledRegex(Pattern pattern, boolean quote, String effectivePattern) {}
 
-        private CompiledRegex(Pattern pattern, boolean quote, String effectivePattern) {
-            this.pattern = pattern;
-            this.quote = quote;
-            this.effectivePattern = effectivePattern;
-        }
-    }
+    private record ClassRewriteResult(String rewrittenClass, int endIndex) {}
 
-    private static final class ClassRewriteResult {
-        private final String rewrittenClass;
-        private final int endIndex;
+    private record ClassToken(String text, boolean isLiteral, int codePoint, int nextIndex) {}
 
-        private ClassRewriteResult(String rewrittenClass, int endIndex) {
-            this.rewrittenClass = rewrittenClass;
-            this.endIndex = endIndex;
-        }
-    }
+    private record EscapedToken(String text, int endIndex) {}
 
-    private static final class ClassToken {
-        private final String text;
-        private final boolean isLiteral;
-        private final int codePoint;
-        private final int nextIndex;
-
-        private ClassToken(String text, boolean isLiteral, int codePoint, int nextIndex) {
-            this.text = text;
-            this.isLiteral = isLiteral;
-            this.codePoint = codePoint;
-            this.nextIndex = nextIndex;
-        }
-    }
-
-    private static final class EscapedToken {
-        private final String text;
-        private final int endIndex;
-
-        private EscapedToken(String text, int endIndex) {
-            this.text = text;
-            this.endIndex = endIndex;
-        }
-    }
-
-    private static final class GroupContext {
-        private final boolean capturing;
-        private final int number;
-
-        private GroupContext(boolean capturing, int number) {
-            this.capturing = capturing;
-            this.number = number;
-        }
+    private record GroupContext(boolean capturing, int number) {
 
         private GroupContext(int number) {
             this(true, number);
@@ -1123,14 +1075,6 @@ public final class RegexPatternUtils {
 
         private static GroupContext nonCapturingGroup() {
             return new GroupContext(false, -1);
-        }
-
-        private boolean isCapturing() {
-            return this.capturing;
-        }
-
-        private int getNumber() {
-            return this.number;
         }
     }
 }

@@ -55,14 +55,14 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             }
         }
         RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
-        if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
+        if (RegexPatternUtils.matchesEmptyString(compiledRegex.pattern())) {
             throw new MatchesEmptyStringException(
-                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string", getMetadata());
+                    "'" + compiledRegex.effectivePattern() + "' matches empty string", getMetadata());
         }
 
         Item replacementStringItem = this.getChild(2).materializeFirstOrNull(context);
         String replacement = replacementStringItem.getStringValue();
-        if (compiledRegex.isQuote()) {
+        if (compiledRegex.quote()) {
             replacement = Matcher.quoteReplacement(replacement);
         } else if (!(checkReplacementStringForValidity(replacement))) {
             throw new InvalidReplacementStringException(
@@ -76,7 +76,7 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             input = stringItem.getStringValue();
         }
 
-        Matcher m = compiledRegex.getPattern().matcher(input);
+        Matcher m = compiledRegex.pattern().matcher(input);
         return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
     }
 

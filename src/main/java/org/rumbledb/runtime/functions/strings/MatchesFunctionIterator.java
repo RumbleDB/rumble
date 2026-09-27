@@ -51,7 +51,7 @@ public class MatchesFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             }
         }
         Matcher matcher = RegexPatternUtils.compileRegex(pattern, flags, getMetadata())
-                .getPattern()
+                .pattern()
                 .matcher(stringItem.getStringValue());
         boolean result = matcher.find();
         return ItemFactory.getInstance().createBooleanItem(result);
