@@ -45,8 +45,7 @@ public class RegexPatternUtilsTest {
         RegexPatternUtils.CompiledRegex compiledRegex =
                 RegexPatternUtils.compileRegex("[A-Z]", "i", ExceptionMetadata.EMPTY_METADATA);
 
-        Assertions.assertEquals(
-                "x", compiledRegex.pattern().matcher("\u212A").replaceAll("x"));
+        Assertions.assertEquals("x", compiledRegex.pattern().matcher("\u212A").replaceAll("x"));
     }
 
     @Test
@@ -63,8 +62,7 @@ public class RegexPatternUtilsTest {
         RegexPatternUtils.CompiledRegex compiledRegex =
                 RegexPatternUtils.compileRegex("[^q]é", "i", ExceptionMetadata.EMPTY_METADATA);
 
-        Assertions.assertArrayEquals(
-                new String[] {"", ""}, RegexPatternUtils.tokenize("xÉ", compiledRegex.pattern()));
+        Assertions.assertArrayEquals(new String[] {"", ""}, RegexPatternUtils.tokenize("xÉ", compiledRegex.pattern()));
     }
 
     @Test
