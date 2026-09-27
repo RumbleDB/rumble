@@ -16,7 +16,6 @@
 package org.rumbledb.serialization;
 
 import java.io.Serial;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 
@@ -422,7 +421,9 @@ public class XhtmlSerializer extends XmlSerializer {
     private boolean isExpectedToBeEmptyMeta(Item headElement) {
         if (headElement.nodeName() == null
                 || hasNoNamespace(headElement.nodeName().getNamespace())) {
-            return isHtml5Mode() ? SerializerUtils.HTML5_VOID_ELEMENTS.contains("meta") : XHTML_EMPTY_ELEMENTS.contains("meta");
+            return isHtml5Mode()
+                    ? SerializerUtils.HTML5_VOID_ELEMENTS.contains("meta")
+                    : XHTML_EMPTY_ELEMENTS.contains("meta");
         }
         return true;
     }

@@ -16,7 +16,6 @@
 package org.rumbledb.serialization;
 
 import java.io.Serial;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
 

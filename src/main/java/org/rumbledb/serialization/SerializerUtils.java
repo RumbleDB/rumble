@@ -54,21 +54,8 @@ public final class SerializerUtils {
             "usemap");
 
     public static final Set<String> HTML5_VOID_ELEMENTS = Set.of(
-            "area",
-            "base",
-            "br",
-            "col",
-            "embed",
-            "hr",
-            "img",
-            "input",
-            "keygen",
-            "link",
-            "meta",
-            "param",
-            "source",
-            "track",
-            "wbr");
+            "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source",
+            "track", "wbr");
 
     private SerializerUtils() {}
 
