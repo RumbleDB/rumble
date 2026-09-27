@@ -28,12 +28,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Serialization parameters with the fixed fn:serialize map defaults from F&O 3.1.
+ * Serialization parameters with the fixed fn:serialize map defaults from F&amp;O 3.1.
  * RumbleDB also uses these defaults for fn:serialize with omitted or XML parameters.
  * Field initializers apply to every new instance; mutable collections belong to that instance.
  * Application output defaults are selected separately by {@link #defaults(String)}.
  *
- * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-serialize">F&O 3.1 fn:serialize</a>
+ * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-serialize">F&amp;O 3.1 fn:serialize</a>
  *
  *      Specification references:
  *
