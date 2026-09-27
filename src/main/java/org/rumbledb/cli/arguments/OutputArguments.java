@@ -19,8 +19,8 @@ import java.util.Map;
 
 import picocli.CommandLine.Option;
 
-import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.config.model.OutputConfig;
+import org.rumbledb.serialization.SerializationParameterUtils;
 
 public final class OutputArguments {
     @Option(
@@ -81,7 +81,7 @@ public final class OutputArguments {
         OptionConversion.applyIfPresent(this.shellFilter, builder::shellFilter);
         OptionConversion.applyIfPresent(
                 this.outputFormatOptions,
-                options -> builder.serializationParameters(SerializationParameterBuilder.build(options)));
+                options -> builder.serializationParameters(SerializationParameterUtils.buildFromConfig(options)));
 
         return builder.build();
     }
