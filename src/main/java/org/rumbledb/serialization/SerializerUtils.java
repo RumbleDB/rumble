@@ -150,8 +150,11 @@ public final class SerializerUtils {
         sb.append("]");
     }
 
-    public static void appendJsonEscapedString(StringBuilder sb, String value, SerializationParameters params) {
-        CharsetEncoder encoder = getCharsetEncoder(params);
+    /**
+     * Appends the JSON-escaped form of {@code value} to {@code sb}, using the provided cached encoder
+     * to decide whether non-ASCII code points can be represented directly or must be Unicode-escaped.
+     */
+    public static void appendJsonEscapedString(StringBuilder sb, String value, CharsetEncoder encoder) {
         for (int i = 0; i < value.length(); ) {
             int codePoint = value.codePointAt(i);
             i += Character.charCount(codePoint);
@@ -159,11 +162,23 @@ public final class SerializerUtils {
         }
     }
 
-    private static CharsetEncoder getCharsetEncoder(SerializationParameters params) {
-        String encoding = params.getEncoding() == null ? "UTF-8" : params.getEncoding();
+    /**
+     * Convenience overload that builds a throwaway encoder from {@code params}.
+     * Prefer {@link #appendJsonEscapedString(StringBuilder, String, CharsetEncoder)} when a cached
+     * encoder is available (e.g. from {@link #buildEncodingChecker}).
+     */
+    public static void appendJsonEscapedString(StringBuilder sb, String value, SerializationParameters params) {
+        appendJsonEscapedString(sb, value, buildEncodingChecker(params));
+    }
+
+    /**
+     * Creates a {@link CharsetEncoder} for the encoding declared in {@code params}.
+     * Callers that perform many string escapes should call this once and reuse the result.
+     */
+    static CharsetEncoder buildEncodingChecker(SerializationParameters params) {
+        String encoding = params == null || params.getEncoding() == null ? "UTF-8" : params.getEncoding();
         try {
-            Charset charset = Charset.forName(encoding);
-            return charset.newEncoder();
+            return Charset.forName(encoding).newEncoder();
         } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
             throw new RumbleException(
                     "Unsupported serialization encoding: " + encoding,
