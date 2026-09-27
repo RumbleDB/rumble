@@ -20,6 +20,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,17 +35,50 @@ import org.rumbledb.api.Item;
 import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.InvalidSerializationParameterValueException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 public final class SerializationParameterUtils {
 
     public static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
+    private static final Set<String> STANDARD_PARAMETERS = Set.of(
+            "method",
+            "encoding",
+            "version",
+            "omit-xml-declaration",
+            "standalone",
+            "doctype-system",
+            "doctype-public",
+            "media-type",
+            "normalization-form",
+            "undeclare-prefixes",
+            "include-content-type",
+            "escape-uri-attributes",
+            "html-version",
+            "byte-order-mark",
+            "indent",
+            "item-separator",
+            "allow-duplicate-names",
+            "json-node-output-method",
+            "use-character-maps",
+            "cdata-section-elements",
+            "suppress-indentation");
+    private static final Set<String> BOOLEAN_PARAMETERS = Set.of(
+            "omit-xml-declaration",
+            "undeclare-prefixes",
+            "include-content-type",
+            "escape-uri-attributes",
+            "byte-order-mark",
+            "indent",
+            "allow-duplicate-names");
 
     private SerializationParameterUtils() {}
 
@@ -57,7 +91,21 @@ public final class SerializationParameterUtils {
 
     public static void applyParameterItems(
             SerializationParameters params, List<Item> optionsItems, ExceptionMetadata metadata) {
-        applyParameterItems(params, optionsItems, null, metadata);
+        if (optionsItems == null || optionsItems.isEmpty()) {
+            return;
+        }
+        if (optionsItems.size() != 1) {
+            throw new UnexpectedTypeException(
+                    "The second argument of fn:serialize must be a serialization-parameters element or map.", metadata);
+        }
+        Item options = optionsItems.get(0);
+        if (!(options.isMap()
+                || options.isObject()
+                || (options.isElementNode() && isSerializationParametersElement(options)))) {
+            throw new UnexpectedTypeException(
+                    "The second argument of fn:serialize must be a serialization-parameters element or map.", metadata);
+        }
+        applyParameterItem(params, options, null, metadata);
     }
 
     private static void applyParameterItems(
@@ -135,6 +183,9 @@ public final class SerializationParameterUtils {
         }
         if (options.isElementNode()) {
             if (isSerializationParametersElement(options)) {
+                if (options.attributes().iterator().hasNext()) {
+                    throw invalidParameterDocument("Unexpected serialization-parameters attribute.", metadata);
+                }
                 List<Item> childElements = new ArrayList<>();
                 for (Item child : options.children()) {
                     if (child.isElementNode()) {
@@ -169,6 +220,47 @@ public final class SerializationParameterUtils {
                 continue;
             }
             List<Item> valueSequence = options.getSequenceByKey(key);
+            if ("use-character-maps".equals(parameterName)) {
+                if (valueSequence == null || valueSequence.isEmpty()) {
+                    continue;
+                }
+                params.setCharacterMaps(characterMapsFromMapValue(valueSequence, metadata));
+                continue;
+            }
+            if (STANDARD_PARAMETERS.contains(parameterName) && valueSequence != null && !valueSequence.isEmpty()) {
+                if (BOOLEAN_PARAMETERS.contains(parameterName)) {
+                    if (valueSequence.size() != 1 || !valueSequence.get(0).isBoolean()) {
+                        throw new UnexpectedTypeException(parameterName + " must be a boolean.", metadata);
+                    }
+                    applyNormalizedParameter(
+                            params, parameterName, valueSequence.get(0).getBooleanValue() ? "yes" : "no", metadata);
+                    continue;
+                }
+                if (valueSequence.size() != 1
+                        && !"cdata-section-elements".equals(parameterName)
+                        && !"suppress-indentation".equals(parameterName)) {
+                    throw new UnexpectedTypeException(parameterName + " must contain one item.", metadata);
+                }
+                if ("html-version".equals(parameterName)) {
+                    if (!(valueSequence.get(0).isDecimal()
+                            || valueSequence.get(0).isInteger())) {
+                        throw new UnexpectedTypeException("html-version must be a decimal.", metadata);
+                    }
+                } else if (!"cdata-section-elements".equals(parameterName)
+                        && !"suppress-indentation".equals(parameterName)
+                        && !(valueSequence.get(0).isString()
+                                || valueSequence.get(0).isUntypedAtomic()
+                                || valueSequence.get(0).isAnyURI()
+                                || (("method".equals(parameterName) || "json-node-output-method".equals(parameterName))
+                                        && valueSequence.get(0).isQName()))) {
+                    throw new UnexpectedTypeException(parameterName + " must be a string.", metadata);
+                }
+                if ("standalone".equals(parameterName)
+                        && !Set.of("yes", "no", "omit")
+                                .contains(valueSequence.get(0).getStringValue())) {
+                    throw new UnexpectedTypeException("standalone must be yes, no, or omit.", metadata);
+                }
+            }
             applyNormalizedParameter(
                     params,
                     parameterName,
@@ -177,11 +269,37 @@ public final class SerializationParameterUtils {
         }
     }
 
+    private static Map<String, String> characterMapsFromMapValue(List<Item> valueSequence, ExceptionMetadata metadata) {
+        if (valueSequence.size() != 1
+                || !(valueSequence.get(0).isMap() || valueSequence.get(0).isObject())) {
+            throw new UnexpectedTypeException("use-character-maps must be a map.", metadata);
+        }
+        Item map = valueSequence.get(0);
+        Map<String, String> mappings = new HashMap<>();
+        for (Item character : map.getItemKeys()) {
+            if (!character.isString()) {
+                throw new UnexpectedTypeException("Character map keys must be strings.", metadata);
+            }
+            String keyValue = character.getStringValue();
+            if (!isSingleCharacter(keyValue)) {
+                throw new InvalidSerializationParameterValueException(
+                        "use-character-maps", keyValue, "a single character", metadata);
+            }
+            List<Item> mapped = map.getSequenceByKey(character);
+            if (mapped == null || mapped.size() != 1 || !mapped.get(0).isString()) {
+                throw new UnexpectedTypeException("Character map values must be strings.", metadata);
+            }
+            mappings.put(keyValue, mapped.get(0).getStringValue());
+        }
+        return mappings;
+    }
+
     private static void applyParameterElements(
             SerializationParameters params,
             List<Item> elements,
             Set<String> explicitParameterNames,
             ExceptionMetadata metadata) {
+        Set<Name> seen = new HashSet<>();
         for (Item element : elements) {
             if (!element.isElementNode()) {
                 continue;
@@ -191,25 +309,58 @@ public final class SerializationParameterUtils {
                 continue;
             }
             String namespace = name.getNamespace();
-            if (namespace != null && !namespace.isEmpty() && !SERIALIZATION_NAMESPACE.equals(namespace)) {
-                continue;
+            if (!seen.add(name)) {
+                throw new RumbleException(
+                        "Duplicate serialization parameter: " + name.getLocalName(),
+                        ErrorCode.DuplicateSerializationParameter,
+                        metadata);
+            }
+            if (!SERIALIZATION_NAMESPACE.equals(namespace)) {
+                if (namespace != null && !namespace.isEmpty()) {
+                    continue;
+                }
+                throw invalidParameterDocument("Invalid serialization parameter: " + name.getLocalName(), metadata);
+            }
+            if (!STANDARD_PARAMETERS.contains(name.getLocalName())) {
+                throw invalidParameterDocument("Invalid serialization parameter: " + name.getLocalName(), metadata);
             }
             if (explicitParameterNames != null && explicitParameterNames.contains(name.getLocalName())) {
                 continue;
             }
             if ("use-character-maps".equals(name.getLocalName())) {
+                if (element.attributes().iterator().hasNext()) {
+                    throw invalidParameterDocument("Unexpected use-character-maps attribute.", metadata);
+                }
                 applyCharacterMapsParameter(params, element, metadata);
                 continue;
             }
+            for (Item attribute : element.attributes()) {
+                Name attributeName = attribute.nodeName();
+                if (attributeName == null
+                        || !"value".equals(attributeName.getLocalName())
+                        || (attributeName.getNamespace() != null
+                                && !attributeName.getNamespace().isEmpty())) {
+                    throw invalidParameterDocument("Unexpected serialization parameter attribute.", metadata);
+                }
+            }
+            for (Item child : element.children()) {
+                if (child.isElementNode()) {
+                    throw invalidParameterDocument("Unexpected serialization parameter child element.", metadata);
+                }
+            }
             String value = attributeValue(element, "value");
             if (value == null) {
-                value = element.getStringValue();
+                throw invalidParameterDocument("Missing serialization parameter value.", metadata);
             }
             if ("cdata-section-elements".equals(name.getLocalName())
                     || "suppress-indentation".equals(name.getLocalName())) {
                 value = expandLexicalQNames(value, element, false);
             }
-            applyNormalizedParameter(params, name.getLocalName(), value, metadata);
+            try {
+                applyNormalizedParameter(params, name.getLocalName(), value, metadata);
+            } catch (InvalidSerializationParameterValueException e) {
+                throw invalidParameterDocument(e.getMessage(), metadata);
+            }
         }
     }
 
@@ -222,26 +373,49 @@ public final class SerializationParameterUtils {
             }
             Name childName = child.nodeName();
             if (childName == null || !"character-map".equals(childName.getLocalName())) {
-                continue;
+                throw invalidParameterDocument("Invalid character-map child.", metadata);
             }
-            String childNamespace = childName.getNamespace();
-            if (childNamespace != null
-                    && !childNamespace.isEmpty()
-                    && !SERIALIZATION_NAMESPACE.equals(childNamespace)) {
-                continue;
+            if (!SERIALIZATION_NAMESPACE.equals(childName.getNamespace())) {
+                throw invalidParameterDocument("Invalid character-map namespace.", metadata);
+            }
+            for (Item attribute : child.attributes()) {
+                Name attributeName = attribute.nodeName();
+                if (attributeName == null
+                        || (attributeName.getNamespace() != null
+                                && !attributeName.getNamespace().isEmpty())
+                        || !("character".equals(attributeName.getLocalName())
+                                || "map-string".equals(attributeName.getLocalName()))) {
+                    throw invalidParameterDocument("Unexpected character-map attribute.", metadata);
+                }
+            }
+            for (Item grandchild : child.children()) {
+                if (grandchild.isElementNode()) {
+                    throw invalidParameterDocument("Unexpected character-map child element.", metadata);
+                }
             }
             String character = attributeValue(child, "character");
             String mapString = attributeValue(child, "map-string");
             if (character == null || mapString == null) {
-                throw new InvalidSerializationParameterValueException(
-                        "use-character-maps",
-                        child.getStringValue(),
-                        "character-map elements with character and map-string attributes",
-                        metadata);
+                throw invalidParameterDocument("character-map requires character and map-string attributes.", metadata);
+            }
+            if (!isSingleCharacter(character)) {
+                throw invalidParameterDocument("Character-map keys must be single characters.", metadata);
+            }
+            if (characterMaps.containsKey(character)) {
+                throw new RumbleException(
+                        "Duplicate character-map entry: " + character, ErrorCode.DuplicateCharacterMap, metadata);
             }
             characterMaps.put(character, mapString);
         }
         params.setCharacterMaps(characterMaps);
+    }
+
+    private static boolean isSingleCharacter(String value) {
+        return value.codePointCount(0, value.length()) == 1;
+    }
+
+    private static RumbleException invalidParameterDocument(String message, ExceptionMetadata metadata) {
+        return new RumbleException(message, ErrorCode.InvalidSerializationParameterDocument, metadata);
     }
 
     private static void applyNormalizedParameter(
@@ -257,11 +431,6 @@ public final class SerializationParameterUtils {
 
     private static String parameterNameFromKey(Item key, ExceptionMetadata metadata) {
         if (key.isQName()) {
-            Name qName = key.getQNameValue();
-            String namespace = qName.getNamespace();
-            if (namespace == null || namespace.isEmpty() || SERIALIZATION_NAMESPACE.equals(namespace)) {
-                return qName.getLocalName();
-            }
             return null;
         }
         if (key.isString() || key.isUntypedAtomic() || key.isAnyURI()) {
