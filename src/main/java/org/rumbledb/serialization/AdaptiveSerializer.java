@@ -18,14 +18,12 @@ package org.rumbledb.serialization;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
-
-import org.apache.commons.text.StringEscapeUtils;
+import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -37,8 +35,16 @@ public class AdaptiveSerializer implements Serializer, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final SerializationParameters params;
+    private final XmlSerializer nodeSerializer;
+
     public AdaptiveSerializer(SerializationParameters params) {
-        // reserved for future adaptive serialization parameters
+        this.params = params != null ? params : SerializationParameters.defaults();
+        SerializationParameters xmlParams = SerializationParameters.copy(this.params);
+        xmlParams.setMethod("xml");
+        xmlParams.setOmitXmlDeclaration(true);
+        xmlParams.setIndent(false);
+        this.nodeSerializer = new XmlSerializer(xmlParams);
     }
 
     @Override
@@ -67,7 +73,7 @@ public class AdaptiveSerializer implements Serializer, Serializable {
             return;
         }
         if (item.isNode()) {
-            appendNode(item, sb, false);
+            appendNode(item, sb);
             return;
         }
         if (item.isAtomic()) {
@@ -256,12 +262,33 @@ public class AdaptiveSerializer implements Serializer, Serializable {
     }
 
     private String quoteAsLiteral(String value) {
-        int singleQuotes = count(value, '\'');
-        int doubleQuotes = count(value, '"');
+        String mappedValue = applyCharacterMaps(value);
+        int singleQuotes = count(mappedValue, '\'');
+        int doubleQuotes = count(mappedValue, '"');
         if (doubleQuotes <= singleQuotes) {
-            return "\"" + value.replace("\"", "\"\"") + "\"";
+            return "\"" + mappedValue.replace("\"", "\"\"") + "\"";
         }
-        return "'" + value.replace("'", "''") + "'";
+        return "'" + mappedValue.replace("'", "''") + "'";
+    }
+
+    private String applyCharacterMaps(String value) {
+        Map<String, String> characterMaps = this.params.getCharacterMaps();
+        if (characterMaps == null || characterMaps.isEmpty() || value == null || value.isEmpty()) {
+            return value;
+        }
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < value.length(); ) {
+            int codePoint = value.codePointAt(i);
+            String current = new String(Character.toChars(codePoint));
+            String replacement = characterMaps.get(current);
+            if (replacement != null) {
+                result.append(replacement);
+            } else {
+                result.append(current);
+            }
+            i += Character.charCount(codePoint);
+        }
+        return result.toString();
     }
 
     private int count(String value, char ch) {
@@ -302,79 +329,7 @@ public class AdaptiveSerializer implements Serializer, Serializable {
         sb.append(identifier.getArity());
     }
 
-    private void appendNode(Item item, StringBuilder sb, boolean inElementMarkup) {
-        if (item.isDocumentNode()) {
-            for (Item child : item.children()) {
-                appendNode(child, sb, false);
-            }
-            return;
-        }
-        if (item.isElementNode()) {
-            sb.append("<");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            for (Item attribute : item.attributes()) {
-                appendNode(attribute, sb, true);
-            }
-            for (Item namespace : item.declaredNamespaceNodes()) {
-                appendNode(namespace, sb, true);
-            }
-            List<Item> children = item.children();
-            if (children.isEmpty()) {
-                sb.append("/>");
-                return;
-            }
-            sb.append(">");
-            for (Item child : children) {
-                appendNode(child, sb, false);
-            }
-            sb.append("</");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            sb.append(">");
-            return;
-        }
-        if (item.isAttributeNode()) {
-            if (inElementMarkup) {
-                sb.append(" ");
-            }
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            sb.append("=\"");
-            sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
-            sb.append("\"");
-            return;
-        }
-        if (item.isNamespaceNode()) {
-            NamespaceItem ns = (NamespaceItem) item;
-            if (inElementMarkup) {
-                sb.append(" ");
-            }
-            String nsPrefix = ns.getPrefix();
-            if (nsPrefix == null || nsPrefix.isEmpty()) {
-                sb.append("xmlns=\"");
-            } else {
-                sb.append("xmlns:").append(nsPrefix).append("=\"");
-            }
-            sb.append(StringEscapeUtils.escapeXml11(ns.getUri()));
-            sb.append("\"");
-            return;
-        }
-        if (item.isTextNode()) {
-            sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
-            return;
-        }
-        if (item.isCommentNode()) {
-            sb.append("<!--").append(item.getStringValue()).append("-->");
-            return;
-        }
-        if (item.isProcessingInstructionNode()) {
-            sb.append("<?");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            String content = item.getStringValue();
-            if (content != null && !content.isEmpty()) {
-                sb.append(" ").append(content);
-            }
-            sb.append("?>");
-            return;
-        }
-        throw new OurBadException("Unsupported node kind for adaptive serialization.");
+    private void appendNode(Item item, StringBuilder sb) {
+        this.nodeSerializer.serialize(item, sb, "", false);
     }
 }

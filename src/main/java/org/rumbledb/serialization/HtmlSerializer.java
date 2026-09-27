@@ -31,28 +31,8 @@ public class HtmlSerializer extends XmlSerializer {
     private static final String XHTML_NS = "http://www.w3.org/1999/xhtml";
     private static final String SVG_NS = "http://www.w3.org/2000/svg";
     private static final String MATHML_NS = "http://www.w3.org/1998/Math/MathML";
-    private static final Set<String> URI_ATTRIBUTES = Set.of(
-            "action",
-            "archive",
-            "background",
-            "cite",
-            "classid",
-            "codebase",
-            "data",
-            "formaction",
-            "href",
-            "icon",
-            "longdesc",
-            "manifest",
-            "poster",
-            "profile",
-            "src",
-            "usemap");
     private static final Set<String> HTML4_EMPTY_ELEMENTS = Set.of(
             "area", "base", "br", "col", "embed", "frame", "hr", "img", "input", "isindex", "link", "meta", "param");
-    private static final Set<String> HTML5_VOID_ELEMENTS = Set.of(
-            "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source",
-            "track", "wbr");
     private static final Set<String> HTML_BOOLEAN_ATTRIBUTES = Set.of(
             "allowfullscreen",
             "async",
@@ -215,10 +195,10 @@ public class HtmlSerializer extends XmlSerializer {
         }
         String localName =
                 attribute.nodeName() == null ? null : attribute.nodeName().getLocalName();
-        if (localName == null || !URI_ATTRIBUTES.contains(localName.toLowerCase())) {
+        if (localName == null || !SerializerUtils.URI_ATTRIBUTES.contains(localName.toLowerCase())) {
             return value;
         }
-        return escapeHtmlUriAttribute(value);
+        return SerializerUtils.escapeUriAttribute(value);
     }
 
     @Override
@@ -661,26 +641,6 @@ public class HtmlSerializer extends XmlSerializer {
         return false;
     }
 
-    private String escapeHtmlUriAttribute(String value) {
-        StringBuilder result = new StringBuilder(value.length());
-        value.codePoints().forEach(codePoint -> appendEscapedUriCodePoint(result, codePoint));
-        return result.toString();
-    }
-
-    private void appendEscapedUriCodePoint(StringBuilder result, int codePoint) {
-        if (codePoint >= 0x20 && codePoint <= 0x7E) {
-            result.appendCodePoint(codePoint);
-            return;
-        }
-        byte[] utf8Bytes = new String(Character.toChars(codePoint)).getBytes(StandardCharsets.UTF_8);
-        for (byte currentByte : utf8Bytes) {
-            int unsigned = currentByte & 0xFF;
-            result.append('%');
-            result.append(Character.toUpperCase(Character.forDigit((unsigned >>> 4) & 0xF, 16)));
-            result.append(Character.toUpperCase(Character.forDigit(unsigned & 0xF, 16)));
-        }
-    }
-
     private boolean isHtmlEmptyElement(Item item) {
         if (!item.isElementNode() || item.nodeName() == null) {
             return false;
@@ -694,7 +654,7 @@ public class HtmlSerializer extends XmlSerializer {
         }
         String lower = localName.toLowerCase();
         if (isHtml5Version()) {
-            return HTML5_VOID_ELEMENTS.contains(lower);
+            return SerializerUtils.HTML5_VOID_ELEMENTS.contains(lower);
         }
         return HTML4_EMPTY_ELEMENTS.contains(lower);
     }
