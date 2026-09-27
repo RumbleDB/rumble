@@ -45,6 +45,8 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 public final class SerializationParameterUtils {
 
@@ -221,48 +223,76 @@ public final class SerializationParameterUtils {
                 continue;
             }
             List<Item> valueSequence = options.getSequenceByKey(key);
+            boolean standardParameter = STANDARD_PARAMETERS.contains(parameterName);
+            if (standardParameter && (valueSequence == null || valueSequence.isEmpty())) {
+                continue;
+            }
             if ("use-character-maps".equals(parameterName)) {
-                if (valueSequence == null || valueSequence.isEmpty()) {
-                    continue;
-                }
                 params.setCharacterMaps(characterMapsFromMapValue(valueSequence, metadata));
                 continue;
             }
-            if (STANDARD_PARAMETERS.contains(parameterName) && valueSequence != null && !valueSequence.isEmpty()) {
-                if (BOOLEAN_PARAMETERS.contains(parameterName)) {
-                    if (valueSequence.size() != 1 || !valueSequence.get(0).isBoolean()) {
-                        throw new UnexpectedTypeException(parameterName + " must be a boolean.", metadata);
+            String value = standardParameter
+                    ? mapParameterValue(parameterName, valueSequence, metadata)
+                    : sequenceToParameterValue(parameterName, valueSequence, null, metadata);
+            applyNormalizedParameter(params, parameterName, value, metadata);
+        }
+    }
+
+    private static String mapParameterValue(String parameterName, List<Item> values, ExceptionMetadata metadata) {
+        if ("cdata-section-elements".equals(parameterName) || "suppress-indentation".equals(parameterName)) {
+            List<Item> qnames = new ArrayList<>();
+            for (Item value : values) {
+                if (value.isArray()) {
+                    for (List<Item> member : value.getSequenceMembers()) {
+                        qnames.addAll(member);
                     }
-                    applyNormalizedParameter(
-                            params, parameterName, valueSequence.get(0).getBooleanValue() ? "yes" : "no", metadata);
-                    continue;
-                }
-                if (valueSequence.size() != 1
-                        && !"cdata-section-elements".equals(parameterName)
-                        && !"suppress-indentation".equals(parameterName)) {
-                    throw new UnexpectedTypeException(parameterName + " must contain one item.", metadata);
-                }
-                if ("html-version".equals(parameterName)) {
-                    if (!(valueSequence.get(0).isDecimal()
-                            || valueSequence.get(0).isInteger())) {
-                        throw new UnexpectedTypeException("html-version must be a decimal.", metadata);
-                    }
-                } else if (!"cdata-section-elements".equals(parameterName)
-                        && !"suppress-indentation".equals(parameterName)
-                        && !(valueSequence.get(0).isString()
-                                || valueSequence.get(0).isUntypedAtomic()
-                                || valueSequence.get(0).isAnyURI()
-                                || (("method".equals(parameterName) || "json-node-output-method".equals(parameterName))
-                                        && valueSequence.get(0).isQName()))) {
-                    throw new UnexpectedTypeException(parameterName + " must be a string.", metadata);
+                } else {
+                    qnames.add(value);
                 }
             }
-            applyNormalizedParameter(
-                    params,
-                    parameterName,
-                    sequenceToParameterValue(parameterName, valueSequence, null, metadata),
-                    metadata);
+            List<String> names = new ArrayList<>();
+            for (Item qname : qnames) {
+                if (!qname.isQName()) {
+                    throw new UnexpectedTypeException(parameterName + " must contain QNames.", metadata);
+                }
+                names.add(expandedQName(qname.getQNameValue()));
+            }
+            return String.join(" ", names);
         }
+
+        if (values.size() != 1) {
+            throw new UnexpectedTypeException(parameterName + " must contain one item.", metadata);
+        }
+        Item value = values.get(0);
+        if (BOOLEAN_PARAMETERS.contains(parameterName)) {
+            if (value.isUntypedAtomic()) {
+                value = CastIterator.castItemToType(value, BuiltinTypesCatalogue.booleanItem, metadata);
+            }
+            if (!value.isBoolean()) {
+                throw new UnexpectedTypeException(parameterName + " must be a boolean.", metadata);
+            }
+            return value.getBooleanValue() ? "yes" : "no";
+        }
+        if ("html-version".equals(parameterName)) {
+            if (value.isUntypedAtomic()) {
+                value = CastIterator.castItemToType(value, BuiltinTypesCatalogue.decimalItem, metadata);
+            }
+            if (!(value.isDecimal() || value.isInteger())) {
+                throw new UnexpectedTypeException("html-version must be a decimal.", metadata);
+            }
+            return value.getStringValue();
+        }
+        if (("method".equals(parameterName) || "json-node-output-method".equals(parameterName)) && value.isQName()) {
+            Name name = value.getQNameValue();
+            if (name.getNamespace() == null || name.getNamespace().isEmpty()) {
+                throw new UnexpectedTypeException(parameterName + " QName must have a namespace.", metadata);
+            }
+            return expandedQName(name);
+        }
+        if (value.isString() || value.isUntypedAtomic() || value.isAnyURI()) {
+            return value.getStringValue();
+        }
+        throw new UnexpectedTypeException(parameterName + " must be a string.", metadata);
     }
 
     private static Map<String, String> characterMapsFromMapValue(List<Item> valueSequence, ExceptionMetadata metadata) {
