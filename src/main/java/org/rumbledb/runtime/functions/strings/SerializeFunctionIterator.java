@@ -21,7 +21,8 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -68,8 +69,9 @@ public class SerializeFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             } else if (items.size() == 1) {
                 result.append(serializer.serialize(items.get(0)));
             } else {
-                throw new InvalidArgumentTypeException(
+                throw new RumbleException(
                         "JSON serialization requires the top-level sequence to contain at most one item.",
+                        ErrorCode.JsonSerializationSequence,
                         getMetadata());
             }
         } else {

@@ -318,8 +318,13 @@ public class AdaptiveSerializer implements Serializer, Serializable {
             for (Item namespace : item.declaredNamespaceNodes()) {
                 appendNode(namespace, sb, true);
             }
+            List<Item> children = item.children();
+            if (children.isEmpty()) {
+                sb.append("/>");
+                return;
+            }
             sb.append(">");
-            for (Item child : item.children()) {
+            for (Item child : children) {
                 appendNode(child, sb, false);
             }
             sb.append("</");
