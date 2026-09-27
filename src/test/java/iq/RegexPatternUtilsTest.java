@@ -180,4 +180,32 @@ public class RegexPatternUtilsTest {
         Assertions.assertTrue(nonWordRegex.pattern().matcher("_").matches());
         Assertions.assertFalse(nonWordRegex.pattern().matcher("a").matches());
     }
+
+    @Test
+    public void invalidCharacterRangeEndpointsThrowInvalidRegexPatternException() {
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("foo([6-\\s]*)bar", null, ExceptionMetadata.EMPTY_METADATA));
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("foo([c-\\S]*)", null, ExceptionMetadata.EMPTY_METADATA));
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("foo([7-\\w]*)", null, ExceptionMetadata.EMPTY_METADATA));
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("foo([a-\\W]*)bar", null, ExceptionMetadata.EMPTY_METADATA));
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("foo([a-\\d]*)bar", null, ExceptionMetadata.EMPTY_METADATA));
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("([5-\\D]*)bar", null, ExceptionMetadata.EMPTY_METADATA));
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("([f-\\p{Lu}]\\w*)", null, ExceptionMetadata.EMPTY_METADATA));
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("([\\s-6]*)", null, ExceptionMetadata.EMPTY_METADATA));
+    }
 }

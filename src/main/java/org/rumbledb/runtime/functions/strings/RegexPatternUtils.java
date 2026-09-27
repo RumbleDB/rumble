@@ -341,6 +341,10 @@ public final class RegexPatternUtils {
      * {@code \p{...}}/{@code \P{...}} and digit back-references are validated separately by their callers.
      */
     private static boolean isLegalRegexEscape(char c) {
+        return isSingleCharEsc(c) || isMultiCharEsc(c);
+    }
+
+    private static boolean isSingleCharEsc(char c) {
         switch (c) {
             case 'n':
             case 'r':
@@ -360,6 +364,14 @@ public final class RegexPatternUtils {
             case ']':
             case '^':
             case '$':
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private static boolean isMultiCharEsc(char c) {
+        switch (c) {
             case 's':
             case 'S':
             case 'i':
@@ -995,32 +1007,18 @@ public final class RegexPatternUtils {
             index++;
         }
         int contentStart = index;
+        boolean lastWasSingleChar = false;
+        int lastCodePoint = -1;
+
         while (index < pattern.length()) {
             char current = pattern.charAt(index);
-            if (current == '\\') {
-                if (index + 1 >= pattern.length()) {
-                    throw new InvalidRegexPatternException("Trailing unescaped backslash in character class", metadata);
+            if (current == ']') {
+                if (index == contentStart) {
+                    throw new InvalidRegexPatternException("Empty character class", metadata);
                 }
-                char next = pattern.charAt(index + 1);
-                if (next == 'p' || next == 'P') {
-                    if (index + 2 >= pattern.length() || pattern.charAt(index + 2) != '{') {
-                        throw new InvalidRegexPatternException(
-                                "Invalid Unicode category or block escape \\" + next + " in character class", metadata);
-                    }
-                    int end = skipUnicodeEscape(pattern, index);
-                    if (pattern.charAt(end) != '}') {
-                        throw new InvalidRegexPatternException(
-                                "Unterminated Unicode category or block escape in character class", metadata);
-                    }
-                    validateUnicodePropertyEscape(pattern.substring(index + 3, end), metadata);
-                    index = end;
-                } else if (!isLegalRegexEscape(next)) {
-                    throw new InvalidRegexPatternException(
-                            "Invalid regular expression escape \\" + next + " in character class", metadata);
-                } else {
-                    index++;
-                }
-            } else if (current == '-' && index + 1 < pattern.length() && pattern.charAt(index + 1) == '[') {
+                return index;
+            }
+            if (current == '-' && index + 1 < pattern.length() && pattern.charAt(index + 1) == '[') {
                 if (index == contentStart) {
                     throw new InvalidRegexPatternException("Invalid character class subtraction", metadata);
                 }
@@ -1030,17 +1028,89 @@ public final class RegexPatternUtils {
                             "Character class subtraction must be the last element of the class", metadata);
                 }
                 return nestedEnd + 1;
-            } else if (current == '[') {
-                throw new InvalidRegexPatternException("Invalid nested '[' in character class", metadata);
-            } else if (current == ']') {
-                if (index == contentStart) {
-                    throw new InvalidRegexPatternException("Empty character class", metadata);
-                }
-                return index;
             }
-            index++;
+            if (current == '-'
+                    && index != contentStart
+                    && (index + 1 >= pattern.length() || pattern.charAt(index + 1) != ']')) {
+                if (!lastWasSingleChar) {
+                    throw new InvalidRegexPatternException(
+                            "Invalid character range: left endpoint must be a single character", metadata);
+                }
+                index++;
+                if (index >= pattern.length() || pattern.charAt(index) == ']') {
+                    throw new InvalidRegexPatternException("Invalid character range: missing right endpoint", metadata);
+                }
+                ClassAtom right = readClassAtom(pattern, index, metadata);
+                if (!right.isSingleChar()) {
+                    throw new InvalidRegexPatternException(
+                            "Invalid character range: right endpoint must be a single character", metadata);
+                }
+                if (lastCodePoint > right.codePoint()) {
+                    throw new InvalidRegexPatternException(
+                            "Invalid character range: start code point "
+                                    + lastCodePoint
+                                    + " is greater than end code point "
+                                    + right.codePoint(),
+                            metadata);
+                }
+                index = right.endIndex() + 1;
+                lastWasSingleChar = false;
+                continue;
+            }
+            ClassAtom atom = readClassAtom(pattern, index, metadata);
+            index = atom.endIndex() + 1;
+            lastWasSingleChar = atom.isSingleChar();
+            lastCodePoint = atom.codePoint();
         }
         throw new InvalidRegexPatternException("Unterminated character class", metadata);
+    }
+
+    private static ClassAtom readClassAtom(String pattern, int index, ExceptionMetadata metadata) {
+        char current = pattern.charAt(index);
+        if (current == '\\') {
+            if (index + 1 >= pattern.length()) {
+                throw new InvalidRegexPatternException("Trailing unescaped backslash in character class", metadata);
+            }
+            char next = pattern.charAt(index + 1);
+            if (next == 'p' || next == 'P') {
+                if (index + 2 >= pattern.length() || pattern.charAt(index + 2) != '{') {
+                    throw new InvalidRegexPatternException(
+                            "Invalid Unicode category or block escape \\" + next + " in character class", metadata);
+                }
+                int end = skipUnicodeEscape(pattern, index);
+                if (pattern.charAt(end) != '}') {
+                    throw new InvalidRegexPatternException(
+                            "Unterminated Unicode category or block escape in character class", metadata);
+                }
+                validateUnicodePropertyEscape(pattern.substring(index + 3, end), metadata);
+                return new ClassAtom(false, -1, end);
+            }
+            if (isMultiCharEsc(next)) {
+                return new ClassAtom(false, -1, index + 1);
+            }
+            if (isSingleCharEsc(next)) {
+                int cp = next;
+                if (next == 'n') {
+                    cp = '\n';
+                } else if (next == 'r') {
+                    cp = '\r';
+                } else if (next == 't') {
+                    cp = '\t';
+                }
+                return new ClassAtom(true, cp, index + 1);
+            }
+            throw new InvalidRegexPatternException(
+                    "Invalid regular expression escape \\" + next + " in character class", metadata);
+        }
+        if (current == '[') {
+            throw new InvalidRegexPatternException("Invalid nested '[' in character class", metadata);
+        }
+        if (Character.isHighSurrogate(current)
+                && index + 1 < pattern.length()
+                && Character.isLowSurrogate(pattern.charAt(index + 1))) {
+            return new ClassAtom(true, Character.toCodePoint(current, pattern.charAt(index + 1)), index + 1);
+        }
+        return new ClassAtom(true, current, index);
     }
 
     private static boolean isAsciiUppercase(int codePoint) {
@@ -1077,4 +1147,6 @@ public final class RegexPatternUtils {
             return new GroupContext(false, -1);
         }
     }
+
+    private record ClassAtom(boolean isSingleChar, int codePoint, int endIndex) {}
 }
