@@ -98,11 +98,7 @@ public class XmlSerializer implements Serializer, Serializable {
             return;
         }
         if (item.isAttributeNode() || item.isNamespaceNode()) {
-            if (isTopLevel) {
-                throw serializationError("Top-level attribute and namespace nodes cannot be serialized.", "SENR0001");
-            }
-            appendAttributeOrNamespaceNode(item, sb);
-            return;
+            throw serializationError("Top-level attribute and namespace nodes cannot be serialized.", "SENR0001");
         }
         if (item.isProcessingInstructionNode()) {
             sb.append("<?");
@@ -188,10 +184,6 @@ public class XmlSerializer implements Serializer, Serializable {
     }
 
     protected void appendAttributeOrNamespaceNode(Item item, StringBuilder sb) {
-        appendAttributeOrNamespaceNode(item, sb, true);
-    }
-
-    protected void appendAttributeOrNamespaceNode(Item item, StringBuilder sb, boolean prependSpace) {
         if (item.isNamespaceNode()) {
             NamespaceItem ns = (NamespaceItem) item;
             String prefix = ns.getPrefix();
@@ -202,9 +194,7 @@ public class XmlSerializer implements Serializer, Serializable {
             if (!shouldSerializeNamespace(prefix, uri)) {
                 return;
             }
-            if (prependSpace) {
-                sb.append(" ");
-            }
+            sb.append(" ");
             if (prefix == null || prefix.isEmpty()) {
                 sb.append("xmlns=\"");
             } else {
@@ -214,9 +204,7 @@ public class XmlSerializer implements Serializer, Serializable {
             sb.append("\"");
             return;
         }
-        if (prependSpace) {
-            sb.append(" ");
-        }
+        sb.append(" ");
         SerializerUtils.appendDmNodeNameLexical(sb, item);
         sb.append("=\"");
         sb.append(escapeAttribute(prepareAttributeValue(item)));

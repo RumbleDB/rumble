@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.xml.NamespaceItem;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -329,10 +330,33 @@ public class AdaptiveSerializer implements Serializer, Serializable {
     }
 
     private void appendNode(Item item, StringBuilder sb) {
-        if (item.isAttributeNode() || item.isNamespaceNode()) {
-            this.nodeSerializer.appendAttributeOrNamespaceNode(item, sb, false);
+        if (item.isAttributeNode()) {
+            appendAttribute(item, sb);
+            return;
+        }
+        if (item.isNamespaceNode()) {
+            appendNamespace((NamespaceItem) item, sb);
             return;
         }
         this.nodeSerializer.serialize(item, sb, "", false);
+    }
+
+    private void appendAttribute(Item item, StringBuilder sb) {
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        sb.append("=\"");
+        sb.append(this.nodeSerializer.escapeAttribute(this.nodeSerializer.prepareAttributeValue(item)));
+        sb.append("\"");
+    }
+
+    private void appendNamespace(NamespaceItem ns, StringBuilder sb) {
+        String prefix = ns.getPrefix();
+        if (prefix == null || prefix.isEmpty()) {
+            sb.append("xmlns=\"");
+        } else {
+            sb.append("xmlns:").append(prefix).append("=\"");
+        }
+        String uri = ns.getUri() == null ? "" : ns.getUri();
+        sb.append(this.nodeSerializer.escapeAttribute(uri));
+        sb.append("\"");
     }
 }
