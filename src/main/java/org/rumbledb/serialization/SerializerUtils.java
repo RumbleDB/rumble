@@ -19,8 +19,10 @@ import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.List;
+import java.util.Set;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -33,7 +35,65 @@ import org.rumbledb.exceptions.RumbleException;
  */
 public final class SerializerUtils {
 
+    public static final Set<String> URI_ATTRIBUTES = Set.of(
+            "action",
+            "archive",
+            "background",
+            "cite",
+            "classid",
+            "codebase",
+            "data",
+            "formaction",
+            "href",
+            "icon",
+            "longdesc",
+            "manifest",
+            "poster",
+            "profile",
+            "src",
+            "usemap");
+
+    public static final Set<String> HTML5_VOID_ELEMENTS = Set.of(
+            "area",
+            "base",
+            "br",
+            "col",
+            "embed",
+            "hr",
+            "img",
+            "input",
+            "keygen",
+            "link",
+            "meta",
+            "param",
+            "source",
+            "track",
+            "wbr");
+
     private SerializerUtils() {}
+
+    /**
+     * Escapes URI attribute values using percent-encoding for non-ASCII characters.
+     */
+    public static String escapeUriAttribute(String value) {
+        StringBuilder result = new StringBuilder(value.length());
+        value.codePoints().forEach(codePoint -> appendEscapedUriCodePoint(result, codePoint));
+        return result.toString();
+    }
+
+    private static void appendEscapedUriCodePoint(StringBuilder result, int codePoint) {
+        if (codePoint >= 0x20 && codePoint <= 0x7E) {
+            result.appendCodePoint(codePoint);
+            return;
+        }
+        byte[] utf8Bytes = new String(Character.toChars(codePoint)).getBytes(StandardCharsets.UTF_8);
+        for (byte currentByte : utf8Bytes) {
+            int unsigned = currentByte & 0xFF;
+            result.append('%');
+            result.append(Character.toUpperCase(Character.forDigit((unsigned >>> 4) & 0xF, 16)));
+            result.append(Character.toUpperCase(Character.forDigit(unsigned & 0xF, 16)));
+        }
+    }
 
     public static void appendDmNodeNameLexical(StringBuilder sb, Item item) {
         Name n = item.nodeName();

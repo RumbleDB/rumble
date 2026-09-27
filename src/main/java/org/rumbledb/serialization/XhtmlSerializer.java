@@ -32,24 +32,6 @@ public class XhtmlSerializer extends XmlSerializer {
     private static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
     private static final String MATHML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
 
-    private static final Set<String> URI_ATTRIBUTES = Set.of(
-            "action",
-            "archive",
-            "background",
-            "cite",
-            "classid",
-            "codebase",
-            "data",
-            "formaction",
-            "href",
-            "icon",
-            "longdesc",
-            "manifest",
-            "poster",
-            "profile",
-            "src",
-            "usemap");
-
     private static final Set<String> XHTML_EMPTY_ELEMENTS = Set.of(
             "area",
             "base",
@@ -65,10 +47,6 @@ public class XhtmlSerializer extends XmlSerializer {
             "frame",
             "isindex",
             "param");
-
-    private static final Set<String> HTML5_VOID_ELEMENTS = Set.of(
-            "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source",
-            "track", "wbr");
 
     private static final Set<String> HTML5_ELEMENTS = Set.of(
             "a",
@@ -276,10 +254,10 @@ public class XhtmlSerializer extends XmlSerializer {
         }
         Name attributeName = attribute.nodeName();
         String localName = attributeName == null ? null : attributeName.getLocalName();
-        if (localName == null || !URI_ATTRIBUTES.contains(localName.toLowerCase())) {
+        if (localName == null || !SerializerUtils.URI_ATTRIBUTES.contains(localName.toLowerCase())) {
             return value;
         }
-        return escapeUriAttribute(value);
+        return SerializerUtils.escapeUriAttribute(value);
     }
 
     @Override
@@ -444,7 +422,7 @@ public class XhtmlSerializer extends XmlSerializer {
     private boolean isExpectedToBeEmptyMeta(Item headElement) {
         if (headElement.nodeName() == null
                 || hasNoNamespace(headElement.nodeName().getNamespace())) {
-            return isHtml5Mode() ? HTML5_VOID_ELEMENTS.contains("meta") : XHTML_EMPTY_ELEMENTS.contains("meta");
+            return isHtml5Mode() ? SerializerUtils.HTML5_VOID_ELEMENTS.contains("meta") : XHTML_EMPTY_ELEMENTS.contains("meta");
         }
         return true;
     }
@@ -515,7 +493,7 @@ public class XhtmlSerializer extends XmlSerializer {
         }
         String localName = item.nodeName().getLocalName().toLowerCase();
         if (isHtml5Mode()) {
-            return HTML5_VOID_ELEMENTS.contains(localName);
+            return SerializerUtils.HTML5_VOID_ELEMENTS.contains(localName);
         }
         return XHTML_EMPTY_ELEMENTS.contains(localName);
     }
@@ -543,25 +521,5 @@ public class XhtmlSerializer extends XmlSerializer {
 
     private boolean hasNoNamespace(String namespace) {
         return namespace == null || namespace.isEmpty();
-    }
-
-    private String escapeUriAttribute(String value) {
-        StringBuilder result = new StringBuilder(value.length());
-        value.codePoints().forEach(codePoint -> appendEscapedUriCodePoint(result, codePoint));
-        return result.toString();
-    }
-
-    private void appendEscapedUriCodePoint(StringBuilder result, int codePoint) {
-        if (codePoint >= 0x20 && codePoint <= 0x7E) {
-            result.appendCodePoint(codePoint);
-            return;
-        }
-        byte[] utf8Bytes = new String(Character.toChars(codePoint)).getBytes(StandardCharsets.UTF_8);
-        for (byte currentByte : utf8Bytes) {
-            int unsigned = currentByte & 0xFF;
-            result.append('%');
-            result.append(Character.toUpperCase(Character.forDigit((unsigned >>> 4) & 0xF, 16)));
-            result.append(Character.toUpperCase(Character.forDigit(unsigned & 0xF, 16)));
-        }
     }
 }
