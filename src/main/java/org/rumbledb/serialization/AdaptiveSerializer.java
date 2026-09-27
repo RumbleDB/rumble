@@ -329,6 +329,10 @@ public class AdaptiveSerializer implements Serializer, Serializable {
     }
 
     private void appendNode(Item item, StringBuilder sb) {
+        if (item.isAttributeNode() || item.isNamespaceNode()) {
+            this.nodeSerializer.appendAttributeOrNamespaceNode(item, sb, false);
+            return;
+        }
         this.nodeSerializer.serialize(item, sb, "", false);
     }
 }

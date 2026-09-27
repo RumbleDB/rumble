@@ -188,6 +188,10 @@ public class XmlSerializer implements Serializer, Serializable {
     }
 
     protected void appendAttributeOrNamespaceNode(Item item, StringBuilder sb) {
+        appendAttributeOrNamespaceNode(item, sb, true);
+    }
+
+    protected void appendAttributeOrNamespaceNode(Item item, StringBuilder sb, boolean prependSpace) {
         if (item.isNamespaceNode()) {
             NamespaceItem ns = (NamespaceItem) item;
             String prefix = ns.getPrefix();
@@ -198,7 +202,9 @@ public class XmlSerializer implements Serializer, Serializable {
             if (!shouldSerializeNamespace(prefix, uri)) {
                 return;
             }
-            sb.append(" ");
+            if (prependSpace) {
+                sb.append(" ");
+            }
             if (prefix == null || prefix.isEmpty()) {
                 sb.append("xmlns=\"");
             } else {
@@ -208,7 +214,9 @@ public class XmlSerializer implements Serializer, Serializable {
             sb.append("\"");
             return;
         }
-        sb.append(" ");
+        if (prependSpace) {
+            sb.append(" ");
+        }
         SerializerUtils.appendDmNodeNameLexical(sb, item);
         sb.append("=\"");
         sb.append(escapeAttribute(prepareAttributeValue(item)));
