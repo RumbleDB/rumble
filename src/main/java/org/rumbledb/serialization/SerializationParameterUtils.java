@@ -79,6 +79,14 @@ public final class SerializationParameterUtils {
     // Public API — fn:serialize / element-document paths
     // -------------------------------------------------------------------------
 
+    public static SerializationParameters defaultsForSerializeFunction(String queryLanguage) {
+        SerializationParameters params = new SerializationParameters();
+        if (queryLanguage == null || !queryLanguage.startsWith("xquery")) {
+            params.setMethod("xml-json-hybrid");
+        }
+        return params;
+    }
+
     public static void applyParameterItems(
             SerializationParameters params, List<Item> optionsItems, ExceptionMetadata metadata) {
         if (optionsItems == null || optionsItems.isEmpty()) {
