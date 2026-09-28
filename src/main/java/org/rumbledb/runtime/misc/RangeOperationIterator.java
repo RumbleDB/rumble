@@ -27,6 +27,7 @@ import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.types.DecimalType;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -76,6 +77,9 @@ public class RangeOperationIterator extends ItemRuntimePlan
      * counting, comparisons, and subsequence slicing; longValue() would silently wrap them.
      */
     public record Bounds(BigInteger first, BigInteger last) implements Serializable {
+        private static final BigInteger MAX_DECIMAL38 =
+                BigInteger.TEN.pow(DecimalType.MAX_PRECISION()).subtract(BigInteger.ONE);
+
         public Bounds(long first, long last) {
             this(BigInteger.valueOf(first), BigInteger.valueOf(last));
         }
@@ -87,6 +91,11 @@ public class RangeOperationIterator extends ItemRuntimePlan
         public boolean fitsLong() {
             // BigInteger.bitLength excludes the sign bit, including for negative values.
             return this.first.bitLength() < 64 && this.last.bitLength() < 64;
+        }
+
+        public boolean fitsSparkPrecision() {
+            return this.first.abs().compareTo(MAX_DECIMAL38) <= 0
+                    && this.last.abs().compareTo(MAX_DECIMAL38) <= 0;
         }
 
         public Iterator<Item> items() {
@@ -145,8 +154,7 @@ public class RangeOperationIterator extends ItemRuntimePlan
                     bounds.first().longValueExact(), bounds.last().longValueExact(), staticContext);
         }
         // Spark represents xs:integer as decimal(38, 0). Never silently narrow a value.
-        if (bounds.first().abs().toString().length() > 38
-                || bounds.last().abs().toString().length() > 38) {
+        if (!bounds.fitsSparkPrecision()) {
             throw new RumbleException(
                     "Range endpoints exceed Spark's supported integer precision (38 digits).",
                     staticContext.getMetadata());
