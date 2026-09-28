@@ -18,7 +18,6 @@ package org.rumbledb.compiler;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
 
 import org.antlr.v4.runtime.CommonTokenStream;
@@ -34,6 +33,7 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.AnnotationsContext;
+import org.rumbledb.compiler.context.ArrayConstructorContext;
 import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.CommaExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
@@ -47,6 +47,7 @@ import org.rumbledb.compiler.context.FunctionCallContext;
 import org.rumbledb.compiler.context.FunctionDeclContext;
 import org.rumbledb.compiler.context.GroupByClauseContext;
 import org.rumbledb.compiler.context.IfExprContext;
+import org.rumbledb.compiler.context.InlineFunctionExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.LetClauseContext;
 import org.rumbledb.compiler.context.LetVarContext;
@@ -162,7 +163,6 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.ConditionalExpression;
@@ -1295,36 +1295,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public ArrayConstructorExpression visitSquareArrayConstructor(JsoniqParser.SquareArrayConstructorContext ctx) {
-        List<JsoniqParser.ExprSingleContext> memberCtxs = ctx.exprSingle();
-        if (memberCtxs == null || memberCtxs.isEmpty()) {
-            return new ArrayConstructorExpression(new ArrayList<>(), true, createMetadataFromContext(ctx));
-        }
-        List<Expression> memberExpressions = new ArrayList<>();
-        if (this.translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
-            // In JSONiq 1.0, the square array constructor behaves like the curly array constructor.
-            // Thus, we concatenate all expressions into a single comma expression.
-            for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
-                memberExpressions.add(this.visitExprSingle(memberCtx));
-            }
-            Expression commaExpression = new CommaExpression(memberExpressions, createMetadataFromContext(ctx));
-            return new ArrayConstructorExpression(commaExpression, createMetadataFromContext(ctx));
-        } else {
-            log.debug("Not concatenating to comma.");
-            // In JSONiq 4.0, the square array constructor behaves like in XQuery 4.0.
-            for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
-                memberExpressions.add(this.visitExprSingle(memberCtx));
-            }
-            return new ArrayConstructorExpression(memberExpressions, true, createMetadataFromContext(ctx));
-        }
+        return PrimaryTranslation.squareArrayConstructor(
+                ArrayConstructorContext.Square.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public ArrayConstructorExpression visitCurlyArrayConstructor(JsoniqParser.CurlyArrayConstructorContext ctx) {
-        if (ctx.enclosedExpression() == null) {
-            return new ArrayConstructorExpression(createMetadataFromContext(ctx));
-        }
-        Expression content = this.visitEnclosedExpression(ctx.enclosedExpression());
-        return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
+        return PrimaryTranslation.curlyArrayConstructor(
+                ArrayConstructorContext.Curly.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
@@ -1412,38 +1390,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public InlineFunctionExpression visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
-        List<Annotation> annotations = processAnnotations(ctx.annotations());
-        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.createSequenceType("item*");
-        Name paramName;
-        SequenceType paramType;
-        if (ctx.paramList() != null) {
-            for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseVariableBinding(param.name);
-                paramType = SequenceType.createSequenceType("item*");
-                if (fnParams.containsKey(paramName)) {
-                    throw new DuplicateParamNameException(
-                            Name.createVariableInDefaultFunctionNamespace("inline-function`"),
-                            paramName,
-                            createMetadataFromContext(param));
-                }
-                if (param.sequenceType() != null) {
-                    paramType = this.processSequenceType(param.sequenceType());
-                } else {
-                    paramType = SequenceType.createSequenceType("item*");
-                }
-                fnParams.put(paramName, paramType);
-            }
-        }
-
-        if (ctx.return_type != null) {
-            fnReturnType = this.processSequenceType(ctx.return_type);
-        }
-
-        StatementsAndOptionalExpr funcBody = this.visitStatementsAndOptionalExpr(ctx.fn_body);
-
-        return new InlineFunctionExpression(
-                annotations, null, fnParams, fnReturnType, funcBody, createMetadataFromContext(ctx));
+        return PrimaryTranslation.inlineFunctionExpr(
+                InlineFunctionExprContext.from(ctx),
+                this.translationContext,
+                this::processAnnotations,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitStatementsAndOptionalExpr);
     }
     // endregion
 
