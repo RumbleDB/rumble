@@ -208,4 +208,91 @@ public class RegexPatternUtilsTest {
                 InvalidRegexPatternException.class,
                 () -> RegexPatternUtils.compileRegex("([\\s-6]*)", null, ExceptionMetadata.EMPTY_METADATA));
     }
+
+    private static boolean matches(String input, String regex, String flags) {
+        return RegexPatternUtils.compileRegex(regex, flags, ExceptionMetadata.EMPTY_METADATA)
+                .pattern()
+                .matcher(input)
+                .find();
+    }
+
+    @Test
+    public void propertiesRemainCaseSensitiveInsideMixedAndSubtractedClasses() {
+        Assertions.assertFalse(matches("m", "[\\p{Lu}]", "i"));
+        Assertions.assertTrue(matches("m", "[\\P{Lu}]", "i"));
+        Assertions.assertTrue(matches("M", "[m\\p{Nd}]", "i"));
+        Assertions.assertTrue(matches("a", "[a-z-[\\p{Lu}]]", "i"));
+        Assertions.assertFalse(matches("A", "[a-z-[\\p{Lu}]]", "i"));
+    }
+
+    @Test
+    public void hyphensAfterRangesAreLiteralClassMembers() {
+        // QT3 K2-MatchesFunc-16, re00056a, re00086a and re00102 (XSD 1.1).
+        Assertions.assertTrue(matches("-", "[0-9-.]", ""));
+        Assertions.assertTrue(matches("a-x", "^[a-a-x-x]+$", ""));
+        Assertions.assertTrue(matches("a-1x-7", "^[a-c-1-4x-z-7-9]*$", ""));
+        Assertions.assertFalse(matches("-", "[^a-d-b-c]", ""));
+        Assertions.assertTrue(matches("-", "[a--[a]]", ""));
+    }
+
+    @Test
+    public void whitespaceAfterEscapeDoesNotStartACharacterClass() {
+        Assertions.assertTrue(matches("[a", "\\ [ a", "x"));
+        Assertions.assertTrue(matches(" ", "[ ]", "x"));
+        Assertions.assertTrue(matches("#", "#", "x"));
+    }
+
+    @Test
+    public void classLiteralsCannotIntroduceJavaOperators() {
+        Assertions.assertTrue(matches("&", "[a&&b]", ""));
+        Assertions.assertTrue(matches("a", "[a&&b]", ""));
+        Assertions.assertFalse(matches("c", "[a&&b]", ""));
+        Assertions.assertTrue(matches("]", "[\\[-\\]]", ""));
+    }
+
+    @Test
+    public void caseExpansionDoesNotInventRanges() {
+        Assertions.assertFalse(matches("\u00f7", "[\u00c0-\u00de]", "i"));
+        Assertions.assertTrue(matches("\u00e0", "[\u00c0-\u00de]", "i"));
+        Assertions.assertTrue(matches("\u1e9e", "[\u00df]", "i"));
+        Assertions.assertTrue(matches("\u212a", "k", "i"));
+        Assertions.assertTrue(matches("\ud801\udc28", "[\ud801\udc00-\ud801\udc27]", "i"));
+    }
+
+    @Test
+    public void anchorsAndDotUseXQueryLineTerminators() {
+        Assertions.assertTrue(matches("\u2028", ".", ""));
+        Assertions.assertFalse(matches("\r", ".", ""));
+        Assertions.assertTrue(matches("\r", ".", "s"));
+        Assertions.assertFalse(matches("a\rb", "^b", "m"));
+        Assertions.assertTrue(matches("a\nb", "^b", "m"));
+        Assertions.assertFalse(matches("a\n", "a$", ""));
+        Assertions.assertTrue(matches("a\n", "a$", "m"));
+        Assertions.assertTrue(matches("", "^$", "m"));
+    }
+
+    @Test
+    public void parserRejectsJavaOnlySyntaxAndUnescapedBraces() {
+        for (String regex : new String[] {"}", "\\p{javaLowerCase}", "[--z]", "a++", "(?=a)", "(a)\\0", "[\\1]"}) {
+            Assertions.assertThrows(
+                    InvalidRegexPatternException.class,
+                    () -> RegexPatternUtils.compileRegex(regex, "", ExceptionMetadata.EMPTY_METADATA),
+                    regex);
+        }
+    }
+
+    @Test
+    public void backReferenceDigitsCannotReferToLaterGroups() {
+        Assertions.assertTrue(matches("aa0bcdefghij", "(a)\\10(b)(c)(d)(e)(f)(g)(h)(i)(j)", ""));
+        Assertions.assertTrue(matches("aA", "(a)\\1", "i"));
+        Assertions.assertThrows(
+                InvalidRegexPatternException.class,
+                () -> RegexPatternUtils.compileRegex("(a\\1)", "", ExceptionMetadata.EMPTY_METADATA));
+    }
+
+    @Test
+    public void quotedPatternsIgnoreWhitespaceAndMetacharacters() {
+        Assertions.assertTrue(matches("[ A ]", "[ a ]", "qixms"));
+        Assertions.assertFalse(matches("a", " a ", "qx"));
+    }
 }
