@@ -163,9 +163,10 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
         ProcessedContent processedContent = processContentExpression(
                 this.contentIterator == null ? List.of() : materialize.apply(this.contentIterator, contextToUse));
         // Create and return the element item
-        ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
+        ElementItem elementItem = ItemFactory.getInstance()
                 .createXmlElementNode(
                         elementName.getQNameValue(), processedContent.children, processedContent.attributes);
+        elementItem.setConstructionBaseUri(this.staticContext.getStaticURI());
         // Only add namespaces explicitly declared on this element
         for (Item namespace : processedContent.namespaces) {
             elementItem.addOrReplaceNamespace(namespace);
