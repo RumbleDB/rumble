@@ -25,7 +25,6 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
 
 import lombok.extern.log4j.Log4j2;
 
@@ -91,6 +90,7 @@ import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
 import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
 import org.rumbledb.compiler.context.scripting.VarDeclStatementContext;
 import org.rumbledb.compiler.context.scripting.WhileStatementContext;
+import org.rumbledb.compiler.context.xml.CommonContentContext;
 import org.rumbledb.compiler.context.xml.CompAttrConstructorContext;
 import org.rumbledb.compiler.context.xml.CompCommentConstructorContext;
 import org.rumbledb.compiler.context.xml.CompDocConstructorContext;
@@ -98,6 +98,8 @@ import org.rumbledb.compiler.context.xml.CompElemConstructorContext;
 import org.rumbledb.compiler.context.xml.CompNamespaceConstructorContext;
 import org.rumbledb.compiler.context.xml.CompPIConstructorContext;
 import org.rumbledb.compiler.context.xml.CompTextConstructorContext;
+import org.rumbledb.compiler.context.xml.DirElemContentContext;
+import org.rumbledb.compiler.context.xml.DirectConstructorContext;
 import org.rumbledb.compiler.context.xml.EnclosedContentExprContext;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
@@ -121,6 +123,7 @@ import org.rumbledb.compiler.translation.scripting.DeclarationStatementTranslati
 import org.rumbledb.compiler.translation.scripting.LoopStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.MutationStatementTranslation;
 import org.rumbledb.compiler.translation.xml.XmlComputedConstructorTranslation;
+import org.rumbledb.compiler.translation.xml.XmlDirectConstructorTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
@@ -176,24 +179,17 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
-import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
-import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
-import org.rumbledb.expressions.xml.DirElemConstructorExpression;
-import org.rumbledb.expressions.xml.DirPIConstructorExpression;
-import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
-import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
-import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.expressions.xml.axis.ForwardAxis;
 import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
@@ -1046,140 +1042,37 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Expression visitNodeConstructor(XQueryParser.NodeConstructorContext ctx) {
-        return (Expression) visit(ctx.getChild(0));
+        if (ctx.directConstructor() != null) {
+            return visitDirectConstructor(ctx.directConstructor());
+        }
+        return visitComputedConstructor(ctx.computedConstructor());
     }
 
     @Override
     public Expression visitDirectConstructor(XQueryParser.DirectConstructorContext ctx) {
-        if (ctx.COMMENT() != null) {
-            String commentText = ctx.COMMENT().getText();
-            String commentContent = commentText.substring(4, commentText.length() - 3);
-            return new DirectCommentConstructorExpression(commentContent, createMetadataFromContext(ctx));
-        }
-        if (ctx.open_close != null) {
-            return this.visitDirElemConstructorOpenClose(ctx);
-        } else if (ctx.single_tag != null) {
-            return this.visitDirElemConstructorSingleTag(ctx);
-        } else if (ctx.PI() != null) {
-            return this.visitDirPIConstructor(ctx.PI(), createMetadataFromContext(ctx));
-        }
-        throw new UnsupportedFeatureException("Direct constructor not yet implemented", createMetadataFromContext(ctx));
-    }
-
-    private DirPIConstructorExpression visitDirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
-        String tokenText = piToken.getText();
-        String inner = tokenText.substring(2, tokenText.length() - 2);
-        int whitespaceIndex = indexOfWhitespace(inner);
-        String target = whitespaceIndex == -1 ? inner : inner.substring(0, whitespaceIndex);
-        Expression contentExpression = null;
-        if (whitespaceIndex != -1) {
-            int contentStart = whitespaceIndex;
-            while (contentStart < inner.length() && Character.isWhitespace(inner.charAt(contentStart))) {
-                contentStart++;
-            }
-            String content = inner.substring(contentStart);
-            contentExpression = new StringLiteralExpression(content, metadata);
-        }
-        return new DirPIConstructorExpression(target, contentExpression, metadata);
-    }
-
-    private int indexOfWhitespace(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            if (Character.isWhitespace(value.charAt(i))) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private DirElemConstructorExpression visitDirElemConstructorOpenClose(XQueryParser.DirectConstructorContext ctx) {
-        XQueryParser.DirElemConstructorOpenCloseContext openClose = ctx.open_close;
-        // check that the start and end tags are the same
-        if (openClose.close_tag_name != null
-                && !openClose.close_tag_name.getText().equals(ctx.open_tag_name.getText())) {
-            throw new DirectElementConstructorTagMismatchException(
-                    "The name used in the end tag must exactly match the name used in the corresponding start tag.",
-                    createMetadataFromContext(ctx));
-        }
-
-        this.translationContext.pushConstructorNamespaceFrame();
-        try {
-            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
-            if (ctx.attributes != null) {
-                attributeResult = this.getAttributesExpressionsList(ctx.attributes);
-            }
-
-            List<Expression> content = DirectConstructorUtils.mergeElementContent(
-                    this.xQueryTokenStream,
-                    openClose.endOpen,
-                    openClose.dirElemContent(),
-                    this.translationContext.moduleContext().isBoundarySpacePreserve(),
-                    this::visitDirElemContent);
-
-            return new DirElemConstructorExpression(
-                    parseName(ctx.open_tag_name, NameRole.ELEMENT_CONSTRUCTOR),
-                    content,
-                    attributeResult.attributes,
-                    attributeResult.namespaceDeclarations,
-                    createMetadataFromContext(ctx));
-        } finally {
-            this.translationContext.popConstructorNamespaceFrame();
-        }
-    }
-
-    private DirElemConstructorExpression visitDirElemConstructorSingleTag(XQueryParser.DirectConstructorContext ctx) {
-        this.translationContext.pushConstructorNamespaceFrame();
-        try {
-            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
-            if (ctx.attributes != null) {
-                attributeResult = this.getAttributesExpressionsList(ctx.attributes);
-            }
-
-            return new DirElemConstructorExpression(
-                    parseName(ctx.open_tag_name, NameRole.ELEMENT_CONSTRUCTOR),
-                    new ArrayList<>(),
-                    attributeResult.attributes,
-                    attributeResult.namespaceDeclarations,
-                    createMetadataFromContext(ctx));
-        } finally {
-            this.translationContext.popConstructorNamespaceFrame();
-        }
+        return XmlDirectConstructorTranslation.directConstructor(
+                DirectConstructorContext.from(ctx),
+                this.xQueryTokenStream,
+                this.translationContext,
+                this::parseName,
+                this::visitDirElemContent,
+                this::visitExpr);
     }
 
     @Override
     public Expression visitDirElemContent(XQueryParser.DirElemContentContext ctx) {
-        ParseTree child = ctx.children.get(0);
-        if (child instanceof XQueryParser.DirectConstructorContext directConstructorContext) {
-            return this.visitDirectConstructor(directConstructorContext);
-        } else if (child instanceof XQueryParser.CommonContentContext commonContentContext) {
-            return this.visitCommonContent(commonContentContext);
-        } else {
-            // Include lexer hidden-channel characters (e.g. spaces) in this fragment; ParseTree#getText() drops them.
-            String text = this.xQueryTokenStream.getText(ctx.getSourceInterval());
-            if (ctx.CDATA() != null) {
-                // filter out the <![CDATA[ and ]]>, and return the text
-                return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
-            }
-            return new TextNodeExpression(text, createMetadataFromContext(ctx), isWhitespaceOnly(text));
-        }
+        return XmlDirectConstructorTranslation.dirElemContent(
+                DirElemContentContext.from(ctx),
+                this.xQueryTokenStream,
+                this.translationContext,
+                this::visitDirectConstructor,
+                this::visitCommonContent);
     }
 
     @Override
     public Expression visitCommonContent(XQueryParser.CommonContentContext ctx) {
-        if (ctx.expr() != null) {
-            return this.visitExpr(ctx.expr());
-        }
-        String processedContent = DirectConstructorUtils.processLiteralContent(ctx.getText());
-        return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
-    }
-
-    private boolean isWhitespaceOnly(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            if (!Character.isWhitespace(value.charAt(i))) {
-                return false;
-            }
-        }
-        return !value.isEmpty();
+        return XmlDirectConstructorTranslation.commonContent(
+                CommonContentContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override
@@ -1642,16 +1535,8 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return this.translationContext.metadata(context);
     }
 
-    private ExceptionMetadata createMetadataFromTree(ParseTree tree) {
-        return this.translationContext.metadata(tree);
-    }
-
     private ExceptionMetadata createMetadataFromRange(Token start, Token end) {
         return this.translationContext.metadata(start, end);
-    }
-
-    private ExceptionMetadata createMetadataFromTrees(ParseTree startTree, ParseTree endTree) {
-        return this.translationContext.metadata(startTree, endTree);
     }
 
     // region scripting
@@ -2150,125 +2035,5 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
 
         return parsedAnnotations;
-    }
-
-    private static class DirAttributeProcessingResult {
-        private final List<Expression> attributes;
-        private final List<NamespaceDeclaration> namespaceDeclarations;
-
-        private DirAttributeProcessingResult() {
-            this.attributes = new ArrayList<>();
-            this.namespaceDeclarations = new ArrayList<>();
-        }
-    }
-
-    private DirAttributeProcessingResult getAttributesExpressionsList(XQueryParser.DirAttributeListContext ctx) {
-        DirAttributeProcessingResult result = new DirAttributeProcessingResult();
-
-        List<XQueryParser.QnameContext> attributeNames = ctx.attribute_qname;
-        List<XQueryParser.DirAttributeValueContext> attributeValues = ctx.attribute_value;
-
-        // Namespace declarations are in scope for the entire element start tag,
-        // including attributes that occur lexically before the declaration.
-        for (int i = 0; i < attributeNames.size(); i++) {
-            XQueryParser.QnameContext qnameCtx = attributeNames.get(i);
-            String lexical = qnameCtx.getText();
-            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
-                String declaredPrefix = "xmlns".equals(lexical) ? "" : lexical.substring("xmlns:".length());
-                String uri = getNamespaceDeclarationUri(attributeValues.get(i));
-                result.namespaceDeclarations.add(
-                        new NamespaceDeclaration(declaredPrefix, uri, createMetadataFromContext(qnameCtx)));
-                this.translationContext.bindConstructorNamespace(declaredPrefix, uri);
-            }
-        }
-
-        // Translate non-namespace attributes after the complete namespace frame
-        // has been established, while retaining their original source order.
-        for (int i = 0; i < attributeNames.size(); i++) {
-            XQueryParser.QnameContext qnameCtx = attributeNames.get(i);
-            String lexical = qnameCtx.getText();
-            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
-                continue;
-            }
-            Name attributeName = parseName(qnameCtx, NameRole.NO_DEFAULT_NAMESPACE);
-
-            List<Expression> value = this.getAttributeValuesExpressionsList(attributeValues.get(i), true);
-            AttributeNodeExpression attributeNode = new AttributeNodeExpression(
-                    attributeName,
-                    value,
-                    createMetadataFromRange(
-                            qnameCtx.getStart(), attributeValues.get(i).getStop()));
-            result.attributes.add(attributeNode);
-        }
-
-        return result;
-    }
-
-    private List<Expression> getAttributeValuesExpressionsList(
-            XQueryParser.DirAttributeValueContext ctx, boolean allowEnclosedExpressions) {
-        ParseTree child = ctx.children.get(0);
-        ParserRuleContext quotedValue;
-        if (child instanceof XQueryParser.DirAttributeValueQuotContext doubleQuotedValue) {
-            quotedValue = doubleQuotedValue;
-        } else if (child instanceof XQueryParser.DirAttributeValueAposContext singleQuotedValue) {
-            quotedValue = singleQuotedValue;
-        } else {
-            throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
-        }
-        return processQuotedAttributeValue(quotedValue, allowEnclosedExpressions);
-    }
-
-    private String getNamespaceDeclarationUri(XQueryParser.DirAttributeValueContext ctx) {
-        List<Expression> uriExpressions = this.getAttributeValuesExpressionsList(ctx, false);
-        StringBuilder uriBuilder = new StringBuilder();
-        for (Expression expression : uriExpressions) {
-            if (!(expression instanceof AttributeNodeContentExpression attributeContent)) {
-                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
-                        "Namespace declaration attributes cannot contain enclosed expressions.",
-                        createMetadataFromContext(ctx));
-            }
-            uriBuilder.append(attributeContent.getContent());
-        }
-        return uriBuilder.toString();
-    }
-
-    private List<Expression> processQuotedAttributeValue(ParserRuleContext ctx, boolean allowEnclosedExpressions) {
-        return DirectConstructorUtils.processQuotedValue(
-                this.xQueryTokenStream,
-                ctx,
-                allowEnclosedExpressions,
-                this::createMetadataFromTree,
-                this::createMetadataFromTrees,
-                this::processAttributeContent);
-    }
-
-    private List<Expression> processAttributeContent(ParserRuleContext ctx, boolean allowEnclosedExpressions) {
-        ParseTree child = ctx.children.get(0);
-
-        if (ctx instanceof XQueryParser.DirAttributeContentQuotContext dirAttributeContentQuotContext
-                && dirAttributeContentQuotContext.expr() != null) {
-            // Evaluate an enclosed expression in a double-quoted attribute.
-            if (!allowEnclosedExpressions) {
-                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
-                        "Namespace declaration attributes cannot contain enclosed expressions.",
-                        createMetadataFromContext(ctx));
-            }
-            return List.of(this.visitExpr(dirAttributeContentQuotContext.expr()));
-        } else if (ctx instanceof XQueryParser.DirAttributeContentAposContext dirAttributeContentAposContext
-                && dirAttributeContentAposContext.expr() != null) {
-            // Evaluate an enclosed expression in an apostrophe-quoted attribute.
-            if (!allowEnclosedExpressions) {
-                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
-                        "Namespace declaration attributes cannot contain enclosed expressions.",
-                        createMetadataFromContext(ctx));
-            }
-            return List.of(this.visitExpr(dirAttributeContentAposContext.expr()));
-        }
-
-        // Preserve literal content after validating direct attribute restrictions.
-        String childText = this.xQueryTokenStream.getText(ctx.getSourceInterval());
-        DirectConstructorUtils.validateLiteral(childText, ctx, this::createMetadataFromTree);
-        String processedContent = DirectConstructorUtils.processLiteralContent(childText);
-        return List.of(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
     }
 }
