@@ -18,6 +18,7 @@ package org.rumbledb.runtime.functions.sequences.general;
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.stream.LongStream;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -34,6 +35,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
@@ -69,59 +71,18 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         if (this.rangeOperationIterator != null) {
-            return new RangeSliceCursor(context);
+            // Generate only the selected values, without walking the skipped prefix.
+            return new IteratorLocalCursor<>(
+                    () -> {
+                        RangeOperationIterator.Bounds bounds = getRangeSliceBounds(context);
+                        return LongStream.rangeClosed(bounds.first(), bounds.last())
+                                .mapToObj(ItemFactory.getInstance()::createLongItem)
+                                .iterator();
+                    },
+                    getMetadata());
         }
         return new EvaluationCursor(
                 this.sequenceIterator, this.positionIterator, this.lengthIterator, context, getMetadata());
-    }
-
-    /**
-     * A cursor that iterates over a range of items.
-     */
-    private final class RangeSliceCursor extends AbstractLocalCursor<Item> {
-
-        private final DynamicContext context;
-        private long current;
-        private long end;
-        private boolean hasNext;
-
-        private RangeSliceCursor(DynamicContext context) {
-            super(SubsequenceFunctionIterator.this.getMetadata());
-            this.context = context;
-        }
-
-        @Override
-        protected void openLocal() {
-            RangeOperationIterator.Bounds bounds = getRangeSliceBounds(this.context);
-            this.current = bounds.first();
-            this.end = bounds.last();
-            this.hasNext = this.current <= this.end;
-        }
-
-        @Override
-        protected boolean hasNextLocal() {
-            return this.hasNext;
-        }
-
-        @Override
-        protected Item nextLocal() {
-            if (!this.hasNext) {
-                throw new IteratorFlowException(
-                        IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "subsequence function", getMetadata());
-            }
-            Item result = ItemFactory.getInstance().createLongItem(this.current);
-            if (this.current == this.end) {
-                this.hasNext = false;
-            } else {
-                this.current++;
-            }
-            return result;
-        }
-
-        @Override
-        protected void closeLocal() {
-            this.hasNext = false;
-        }
     }
 
     private SubsequenceBounds getBounds(DynamicContext context) {
