@@ -18,12 +18,10 @@ package org.rumbledb.runtime.functions.strings;
 import java.io.Serial;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidReplacementStringException;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
@@ -62,12 +60,7 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
         Item replacementStringItem = this.getChild(2).materializeFirstOrNull(context);
         String replacement = replacementStringItem.getStringValue();
-        if (compiledRegex.quote()) {
-            replacement = Matcher.quoteReplacement(replacement);
-        } else if (!(checkReplacementStringForValidity(replacement))) {
-            throw new InvalidReplacementStringException(
-                    "'" + replacement + "' contains a disallowed sequence of characters", getMetadata());
-        }
+        replacement = compiledRegex.replacement(replacement, getMetadata());
 
         String input;
         if (stringItem == null) {
@@ -78,31 +71,5 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
         Matcher m = compiledRegex.pattern().matcher(input);
         return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
-    }
-
-    private static boolean checkReplacementStringForValidity(String repl) {
-        int i = 0;
-        Pattern p = Pattern.compile("\\d");
-
-        while (i < repl.length()) {
-            if (repl.charAt(i) == '\\') { // '\' must be followed by another '\' or '$'
-                if (i + 1 >= repl.length()) {
-                    return false;
-                }
-                if ((!(repl.charAt(i + 1) == '\\')) && (!(repl.charAt(i + 1) == '$'))) {
-                    return false;
-                }
-                i += 2;
-            } else if (repl.charAt(i) == '$') { // '$' must always be followed by a digit
-                if ((i + 1 >= repl.length())
-                        || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
-                    return false;
-                }
-                i += 2;
-            } else {
-                i++;
-            }
-        }
-        return true;
     }
 }

@@ -15,17 +15,20 @@
  */
 package org.rumbledb.runtime.functions.strings;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRegexPatternException;
+import org.rumbledb.runtime.functions.strings.RegexPatternUtils.CaptureGroup;
 import org.rumbledb.runtime.functions.strings.RegexPatternUtils.RegexFlags;
 
 /**
  * Parses F&O 3.1 §5.6 / XSD character classes and emits Java regex syntax.
  * Input is consumed once. In particular, generated Java syntax is never reparsed as XQuery.
- * Generated groups are non-capturing, preserving user capture numbers.
+ * User captures have stable names; empty internal captures track participation for back-references.
  */
 final class XQueryRegexCompiler {
     private final String source;
@@ -35,6 +38,7 @@ final class XQueryRegexCompiler {
     private int position;
     private int classDepth;
     private int captures;
+    private final List<CaptureGroup> groups = new ArrayList<>();
 
     XQueryRegexCompiler(String source, RegexFlags flags, ExceptionMetadata metadata) {
         this.source = source;
@@ -43,27 +47,33 @@ final class XQueryRegexCompiler {
     }
 
     String compile() {
-        String result = expression();
+        String result = expression(0);
         if (peek() != -1) {
             throw error("Unmatched closing parenthesis");
         }
         return result;
     }
 
-    private String expression() {
+    List<CaptureGroup> groups() {
+        return List.copyOf(groups);
+    }
+
+    private String expression(int parent) {
+        int branch = 0;
         StringBuilder result = new StringBuilder();
         while (peek() != -1 && peek() != ')') {
             if (take('|')) {
                 result.append('|');
+                branch++;
                 continue;
             }
-            result.append(atom());
+            result.append(atom(parent, branch));
             result.append(quantifier());
         }
         return result.toString();
     }
 
-    private String atom() {
+    private String atom(int parent, int branch) {
         int cp = read();
         switch (cp) {
             case '(':
@@ -74,11 +84,13 @@ final class XQueryRegexCompiler {
                 int group = capturing ? ++captures : 0;
                 if (capturing) {
                     openGroups.add(group);
+                    groups.add(new CaptureGroup(group, parent, branch));
                 }
-                String body = expression();
+                String body = expression(capturing ? group : parent);
                 expect(')');
                 openGroups.remove(group);
-                return (capturing ? "(" : "(?:") + body + ")";
+                // The marker follows the WHOLE body, including all alternatives.
+                return capturing ? "(?<u" + group + ">(?:" + body + ")(?<p" + group + ">))" : "(?:" + body + ")";
             case '[':
                 return characterClass();
             case '\\':
@@ -153,9 +165,15 @@ final class XQueryRegexCompiler {
         if (openGroups.contains(group)) {
             throw error("Back-reference refers to an unclosed group");
         }
-        // Java still fails a reference to a group that did not participate in the match.
-        // Supporting XQuery's empty-string semantics requires an execution-engine change.
-        return (flags.ignoreCase() ? "(?iu:" : "(?:") + "\\" + group + ")";
+        // An empty marker participates exactly when its user group does. Its back-reference
+        // succeeds at every position if set, and fails if unset. The negative lookahead is
+        // therefore an empty fallback ONLY for an unmatched group, not an optional reference.
+        // Java's normal capture restoration also restores the marker during backtracking.
+        String reference = "\\k<u" + group + ">";
+        if (flags.ignoreCase()) {
+            reference = "(?iu:" + reference + ")";
+        }
+        return "(?:" + reference + "|(?!\\k<p" + group + ">))";
     }
 
     /** Called after '['. Each iteration consumes a complete character-group part. */

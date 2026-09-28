@@ -295,4 +295,68 @@ public class RegexPatternUtilsTest {
         Assertions.assertTrue(matches("[ A ]", "[ a ]", "qixms"));
         Assertions.assertFalse(matches("a", " a ", "qx"));
     }
+
+    @Test
+    public void unmatchedBackReferencesMatchEmptyButParticipatingGroupsRemainMandatory() {
+        Assertions.assertTrue(matches("", "(a)?\\1", ""));
+        Assertions.assertTrue(matches("b", "^(a)?b\\1$", ""));
+        Assertions.assertTrue(matches("aba", "^(a)?b\\1$", ""));
+        Assertions.assertFalse(matches("ab", "^(a)?b\\1$", ""));
+        Assertions.assertTrue(matches("a", "^(a|(b))\\2$", ""));
+        Assertions.assertTrue(matches("bb", "^(a|(b))\\2$", ""));
+        Assertions.assertFalse(matches("b", "^(a|(b))\\2$", ""));
+        Assertions.assertTrue(matches("b", "^(a)?b\\1$", "i"));
+        Assertions.assertTrue(matches("abA", "^(a)?b\\1$", "i"));
+        Assertions.assertFalse(matches("ab", "^(a)?b\\1$", "i"));
+    }
+
+    @Test
+    public void participationIsRestoredWhenBacktracking() {
+        Assertions.assertTrue(matches("ab", "^(?:(a)c|ab)\\1$", ""));
+        Assertions.assertTrue(matches("a", "^(a)?a\\1$", ""));
+        Assertions.assertTrue(matches("b", "^(a*)b\\1$", ""));
+        Assertions.assertTrue(matches("", "^(a)?\\1*$", ""));
+        Assertions.assertTrue(matches("abb", "^(a|b)+\\1$", ""));
+        Assertions.assertFalse(matches("abb", "^(a|b)\\1$", ""));
+    }
+
+    @Test
+    public void internalMarkersDoNotChangeUserCapturesOrReplacementReferences() {
+        var regex = RegexPatternUtils.compileRegex("((a)?b)(c)\\2", "", ExceptionMetadata.EMPTY_METADATA);
+        var matcher = regex.pattern().matcher("bc");
+        Assertions.assertTrue(matcher.matches());
+        Assertions.assertEquals(3, regex.groupCount());
+        Assertions.assertEquals("b", regex.group(matcher, 1));
+        Assertions.assertNull(regex.group(matcher, 2));
+        Assertions.assertEquals("c", regex.group(matcher, 3));
+        Assertions.assertEquals(-1, regex.start(matcher, 2));
+        Assertions.assertEquals(1, regex.start(matcher, 3));
+        Assertions.assertEquals(2, regex.end(matcher, 3));
+        Assertions.assertEquals(1, regex.groups().get(1).parentNumber());
+        Assertions.assertEquals(0, regex.groups().get(2).parentNumber());
+        Assertions.assertEquals(
+                "bc|b||c||b0",
+                matcher.replaceAll(regex.replacement("$0|$1|$2|$3|$9|$10", ExceptionMetadata.EMPTY_METADATA)));
+        Assertions.assertEquals(
+                "|bc||b2",
+                matcher.replaceAll(regex.replacement("$0002|$00|$0009|$012", ExceptionMetadata.EMPTY_METADATA)));
+    }
+
+    @Test
+    public void multiDigitReferencesUseUserGroupNumbers() {
+        var regex = RegexPatternUtils.compileRegex(
+                "(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\\10", "", ExceptionMetadata.EMPTY_METADATA);
+        var matcher = regex.pattern().matcher("abcdefghijj");
+        Assertions.assertTrue(matcher.matches());
+        Assertions.assertEquals("ja", matcher.replaceAll(regex.replacement("$10$1", ExceptionMetadata.EMPTY_METADATA)));
+    }
+
+    @Test
+    public void unmatchedBackReferencesAreIncludedInEmptyStringDetection() {
+        var regex = RegexPatternUtils.compileRegex("(a)?\\1", "", ExceptionMetadata.EMPTY_METADATA);
+        Assertions.assertTrue(RegexPatternUtils.matchesEmptyString(regex.pattern()));
+        var nonEmpty = RegexPatternUtils.compileRegex("(a)?b\\1", "", ExceptionMetadata.EMPTY_METADATA);
+        Assertions.assertFalse(RegexPatternUtils.matchesEmptyString(nonEmpty.pattern()));
+        Assertions.assertArrayEquals(new String[] {"", "x", ""}, RegexPatternUtils.tokenize("bxb", nonEmpty.pattern()));
+    }
 }
