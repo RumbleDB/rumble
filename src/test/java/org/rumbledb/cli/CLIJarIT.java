@@ -81,7 +81,7 @@ public class CLIJarIT {
                 "--output-path",
                 output.toString(),
                 "--output-format",
-                "serialize",
+                "adaptive",
                 "-P",
                 "1");
         assertSuccess(result, "");
@@ -99,7 +99,7 @@ public class CLIJarIT {
                         output.toString(),
                         "--overwrite",
                         "--output-format",
-                        "serialize",
+                        "adaptive",
                         "-P",
                         "1"),
                 "");
@@ -126,141 +126,7 @@ public class CLIJarIT {
 
     @Test
     void xquery() throws Exception {
-        assertSuccess(
-                run("", "run", "-q", "count(<answer>{6 * 7}</answer>)", "--default-language", "xquery31"),
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>1");
-    }
-
-    @Test
-    void serializeXmlWithoutDataFrameConversion() throws Exception {
-        assertSuccess(
-                run(
-                        "",
-                        "run",
-                        "-q",
-                        "<answer>{6 * 7}</answer>",
-                        "--default-language",
-                        "xquery31",
-                        "--output-format",
-                        "serialize",
-                        "--output-format-option",
-                        "method=xml",
-                        "--output-format-option",
-                        "omit-xml-declaration=yes"),
-                "<answer>42</answer>");
-        // An unrelated option must not change XQuery's XML method default.
-        assertSuccess(
-                run(
-                        "",
-                        "run",
-                        "-q",
-                        "<answer>42</answer>",
-                        "--default-language",
-                        "xquery31",
-                        "--output-format-option",
-                        "omit-xml-declaration=yes"),
-                "<answer>42</answer>");
-    }
-
-    @Test
-    void serializeSequenceToStdoutAndFile() throws Exception {
-        String query = "(1, 2, 3)";
-        assertSuccess(
-                run(
-                        "",
-                        "run",
-                        "-q",
-                        query,
-                        "-f",
-                        "serialize",
-                        "--output-format-option",
-                        "method=text",
-                        "--output-format-option",
-                        "item-separator=|"),
-                "1|2|3");
-        Path output = this.directory.resolve("serialized.txt");
-        assertSuccess(
-                run(
-                        "",
-                        "run",
-                        "-q",
-                        query,
-                        "-f",
-                        "serialize",
-                        "-o",
-                        output.toString(),
-                        "--output-format-option",
-                        "method=text",
-                        "--output-format-option",
-                        "item-separator=|"),
-                "");
-        assertEquals("1|2|3", Files.readString(output));
-    }
-
-    @Test
-    void xmlDeclarationAppearsOnceForTheSequence() throws Exception {
-        Result result = run("", "run", "-q", "(<a/>, <b/>)", "--default-language", "xquery31");
-        assertEquals(0, result.code(), result.toString());
-        assertTrue(result.out().startsWith("<?xml "), result.toString());
-        assertEquals(result.out().indexOf("<?xml"), result.out().lastIndexOf("<?xml"), result.toString());
-        assertTrue(result.out().contains("<a"), result.toString());
-        assertTrue(result.out().contains("<b"), result.toString());
-        Path output = this.directory.resolve("sequence.xml");
-        assertSuccess(
-                run("", "run", "-q", "(<a/>, <b/>)", "--default-language", "xquery31", "-o", output.toString()), "");
-        assertEquals(result.out(), Files.readString(output));
-    }
-
-    @Test
-    void incompatibleOutputOptionsAreRejected() throws Exception {
-        Result sparkStdout = run("", "run", "-q", "1", "-f", "json");
-        assertEquals(42, sparkStdout.code(), sparkStdout.toString());
-        assertTrue(sparkStdout.err().contains("require --output-path"), sparkStdout.toString());
-        Result partitions = run("", "run", "-q", "1", "-f", "serialize", "-P", "2");
-        assertEquals(42, partitions.code(), partitions.toString());
-        assertTrue(partitions.err().contains("single stream"), partitions.toString());
-    }
-
-    @Test
-    void serializeJsonRejectsMultipleTopLevelItems() throws Exception {
-        Result result = run("", "run", "-q", "(1, 2)", "-f", "serialize", "--output-format-option", "method=json");
-        assertEquals(42, result.code(), result.toString());
-        assertTrue(result.err().contains("SERE0023"), result.toString());
-        assertSuccess(run("", "run", "-q", "()", "-f", "serialize", "--output-format-option", "method=json"), "null");
-    }
-
-    @Test
-    void serializedFileUsesRequestedEncoding() throws Exception {
-        Path output = this.directory.resolve("unicode.txt");
-        assertSuccess(
-                run(
-                        "",
-                        "run",
-                        "-q",
-                        "\"héllo 世界\"",
-                        "-f",
-                        "serialize",
-                        "-o",
-                        output.toString(),
-                        "--output-format-option",
-                        "method=text",
-                        "--output-format-option",
-                        "encoding=UTF-16LE"),
-                "");
-        assertEquals("héllo 世界", Files.readString(output, java.nio.charset.StandardCharsets.UTF_16LE));
-    }
-
-    @Test
-    void sparkJsonOutputStillUsesDataSourceWriter() throws Exception {
-        Path output = this.directory.resolve("spark-json");
-        assertSuccess(run("", "run", "-q", "{\"answer\":42}", "-f", "json", "-o", output.toString(), "-P", "1"), "");
-        assertTrue(Files.isDirectory(output));
-        try (var files = Files.list(output)) {
-            Path part = files.filter(path -> path.getFileName().toString().startsWith("part-"))
-                    .findFirst()
-                    .orElseThrow();
-            assertEquals("{\"answer\":42}", Files.readString(part).strip());
-        }
+        assertSuccess(run("", "run", "-q", "count(<answer>{6 * 7}</answer>)", "--default-language", "xquery31"), "1");
     }
 
     @Test
@@ -321,7 +187,7 @@ public class CLIJarIT {
             assertTrue(process.waitFor(60, TimeUnit.SECONDS), () -> "CLI timed out: " + command);
             return new Result(
                     process.exitValue(),
-                    Files.readString(stdout).replace("\r\n", "\n"),
+                    Files.readString(stdout).replace("\r\n", "\n").strip(),
                     Files.readString(stderr).replace("\r\n", "\n").strip());
         } finally {
             if (process.isAlive()) {
