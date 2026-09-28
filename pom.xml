@@ -212,7 +212,7 @@
         </dependency>
         <dependency>
             <groupId>org.apache.iceberg</groupId>
-            <artifactId>iceberg-spark-runtime-4.1</artifactId>
+            <artifactId>iceberg-spark-runtime-4.1_2.13</artifactId>
             <version>1.11.0</version>
         </dependency>
         <dependency>
