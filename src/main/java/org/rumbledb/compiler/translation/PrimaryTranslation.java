@@ -185,18 +185,16 @@ public final class PrimaryTranslation {
         if (ctx.params() != null) {
             for (InlineFunctionExprContext.InlineFunctionParam<VarBindingCtx, SeqTypeCtx> param : ctx.params()) {
                 Name paramName = parseVariableBinding.apply(param.name());
-                SequenceType paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInDefaultFunctionNamespace("inline-function`"),
                             paramName,
                             translationContext.metadata(param.context()));
                 }
-                if (param.sequenceType() != null) {
-                    paramType = processSequenceType.apply(param.sequenceType());
-                } else {
-                    paramType = SequenceType.createSequenceType("item*");
-                }
+
+                SequenceType paramType = param.sequenceType() != null
+                        ? processSequenceType.apply(param.sequenceType())
+                        : SequenceType.createSequenceType("item*");
                 fnParams.put(paramName, paramType);
             }
         }
