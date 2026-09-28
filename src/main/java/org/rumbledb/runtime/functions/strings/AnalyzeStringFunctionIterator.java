@@ -16,10 +16,8 @@
 package org.rumbledb.runtime.functions.strings;
 
 import java.io.Serial;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,20 +64,19 @@ public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimeP
         }
 
         RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
-        if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
-            throw new MatchesEmptyStringException(
-                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string", getMetadata());
+        if (RegexPatternUtils.matchesEmptyString(compiledRegex.pattern())) {
+            throw new MatchesEmptyStringException("'" + pattern + "' matches empty string", getMetadata());
         }
 
         List<Item> resultChildren = new ArrayList<>();
-        Matcher matcher = compiledRegex.getPattern().matcher(input);
+        Matcher matcher = compiledRegex.pattern().matcher(input);
         int currentPosition = 0;
         while (matcher.find()) {
             if (currentPosition < matcher.start()) {
                 resultChildren.add(createTextContainer(
                         factory, NON_MATCH_NAME, input.substring(currentPosition, matcher.start())));
             }
-            resultChildren.add(createMatchElement(factory, input, matcher, compiledRegex.isQuote()));
+            resultChildren.add(createMatchElement(factory, input, matcher, compiledRegex));
             currentPosition = matcher.end();
         }
         if (currentPosition < input.length()) {
@@ -93,27 +90,30 @@ public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimeP
         return root;
     }
 
-    private Item createMatchElement(ItemFactory factory, String input, Matcher matcher, boolean quotedPattern) {
+    private Item createMatchElement(
+            ItemFactory factory, String input, Matcher matcher, RegexPatternUtils.CompiledRegex compiledRegex) {
         int matchStart = matcher.start();
         int matchEnd = matcher.end();
-        RegexStructure regexStructure =
-                buildRegexStructure(matcher.pattern().pattern(), matcher.groupCount(), quotedPattern);
         Map<Integer, GroupCapture> captures = new LinkedHashMap<>();
         GroupCapture rootCapture = new GroupCapture(0, matchStart, matchEnd, true, 0);
         captures.put(0, rootCapture);
 
-        for (Integer number : regexStructure.orderedGroups) {
-            GroupSpec spec = regexStructure.groupSpecs.get(number);
-            int start = matcher.start(number);
+        for (RegexPatternUtils.CaptureGroup spec : compiledRegex.groups()) {
+            int number = spec.number();
+            int start = compiledRegex.start(matcher, number);
             captures.put(
                     number,
                     new GroupCapture(
-                            number, start, start == -1 ? -1 : matcher.end(number), start != -1, spec.branchIndex));
+                            number,
+                            start,
+                            start == -1 ? -1 : compiledRegex.end(matcher, number),
+                            start != -1,
+                            spec.branchIndex()));
         }
-        for (Integer number : regexStructure.orderedGroups) {
-            GroupSpec spec = regexStructure.groupSpecs.get(number);
+        for (RegexPatternUtils.CaptureGroup spec : compiledRegex.groups()) {
+            int number = spec.number();
             GroupCapture capture = captures.get(number);
-            GroupCapture parent = captures.get(spec.parentNumber);
+            GroupCapture parent = captures.get(spec.parentNumber());
             if (parent != null) {
                 parent.children.add(capture);
             }
@@ -181,72 +181,6 @@ public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimeP
         }
     }
 
-    private RegexStructure buildRegexStructure(String pattern, int groupCount, boolean quotedPattern) {
-        if (quotedPattern || groupCount == 0) {
-            return new RegexStructure(Collections.emptyMap(), Collections.emptyList());
-        }
-        Map<Integer, GroupSpec> groupSpecs = new LinkedHashMap<>();
-        Deque<ParseFrame> stack = new ArrayDeque<>();
-        stack.push(new ParseFrame(0));
-        int nextGroupNumber = 1;
-
-        for (int i = 0; i < pattern.length(); i++) {
-            char current = pattern.charAt(i);
-            if (current == '[') {
-                i = skipCharacterClass(pattern, i);
-                continue;
-            }
-            if (current == '\\') {
-                if (i + 1 < pattern.length()) {
-                    i++;
-                }
-                continue;
-            }
-            if (current == '(') {
-                boolean capturing = !(i + 1 < pattern.length() && pattern.charAt(i + 1) == '?');
-                ParseFrame currentFrame = stack.peek();
-                int parentCaptureNumber = currentFrame.nearestCapturingAncestor;
-                if (capturing && nextGroupNumber <= groupCount) {
-                    int groupNumber = nextGroupNumber++;
-                    groupSpecs.put(groupNumber, new GroupSpec(parentCaptureNumber, currentFrame.currentBranch));
-                    stack.push(new ParseFrame(groupNumber));
-                } else {
-                    stack.push(new ParseFrame(parentCaptureNumber));
-                }
-                continue;
-            }
-            if (current == '|') {
-                stack.peek().currentBranch++;
-                continue;
-            }
-            if (current == ')' && stack.size() > 1) {
-                stack.pop();
-            }
-        }
-
-        List<Integer> orderedGroups = new ArrayList<>(groupSpecs.keySet());
-        return new RegexStructure(groupSpecs, orderedGroups);
-    }
-
-    private int skipCharacterClass(String pattern, int start) {
-        int i = start + 1;
-        if (i < pattern.length() && pattern.charAt(i) == '^') {
-            i++;
-        }
-        while (i < pattern.length()) {
-            char current = pattern.charAt(i);
-            if (current == '\\' && i + 1 < pattern.length()) {
-                i += 2;
-                continue;
-            }
-            if (current == ']') {
-                return i;
-            }
-            i++;
-        }
-        return pattern.length() - 1;
-    }
-
     private static final class GroupCapture {
         private final int number;
         private final int start;
@@ -274,36 +208,6 @@ public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimeP
 
         private int getEnd() {
             return this.end;
-        }
-    }
-
-    private static final class GroupSpec {
-        private final int parentNumber;
-        private final int branchIndex;
-
-        private GroupSpec(int parentNumber, int branchIndex) {
-            this.parentNumber = parentNumber;
-            this.branchIndex = branchIndex;
-        }
-    }
-
-    private static final class ParseFrame {
-        private final int nearestCapturingAncestor;
-        private int currentBranch;
-
-        private ParseFrame(int nearestCapturingAncestor) {
-            this.nearestCapturingAncestor = nearestCapturingAncestor;
-            this.currentBranch = 0;
-        }
-    }
-
-    private static final class RegexStructure {
-        private final Map<Integer, GroupSpec> groupSpecs;
-        private final List<Integer> orderedGroups;
-
-        private RegexStructure(Map<Integer, GroupSpec> groupSpecs, List<Integer> orderedGroups) {
-            this.groupSpecs = groupSpecs;
-            this.orderedGroups = orderedGroups;
         }
     }
 }
