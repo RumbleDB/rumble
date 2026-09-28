@@ -60,10 +60,7 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
         this.sequenceIterator = this.getChild(0);
         this.positionIterator = this.getChild(1);
         this.lengthIterator = this.getChildren().size() == 3 ? this.getChild(2) : null;
-
-        if (this.sequenceIterator instanceof RangeOperationIterator rangeOperationIterator) {
-            this.rangeOperationIterator = rangeOperationIterator;
-        } else this.rangeOperationIterator = null;
+        this.rangeOperationIterator = this.sequenceIterator instanceof RangeOperationIterator range ? range : null;
     }
 
     @Override
