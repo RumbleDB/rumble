@@ -13,25 +13,21 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.expressions.scripting.annotations;
+package org.rumbledb.exceptions;
 
-import java.util.List;
+import java.io.Serial;
 
-import lombok.Getter;
+import org.rumbledb.errorcodes.ErrorCode;
 
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.Expression;
+/**
+ * Static error for duplicate or conflicting annotations on a variable declaration [err:XQST0116].
+ */
+public class DuplicateVariableAnnotationException extends SemanticException {
 
-@Getter
-public class Annotation {
-    private final Name annotationName;
-    private final List<Expression> literals;
-    private final ExceptionMetadata metadata;
+    @Serial
+    private static final long serialVersionUID = 1L;
 
-    public Annotation(Name annotationName, List<Expression> literals, ExceptionMetadata metadata) {
-        this.annotationName = annotationName;
-        this.literals = literals;
-        this.metadata = metadata;
+    public DuplicateVariableAnnotationException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCode.DuplicateVariableAnnotationErrorCode, metadata);
     }
 }
