@@ -58,7 +58,7 @@ public final class Serializers {
         throw new OurBadException("Unsupported serialization method: " + method);
     }
 
-    private static String normalizeMethodName(String method) {
+    static String normalizeMethodName(String method) {
         if (method == null) {
             return null;
         }

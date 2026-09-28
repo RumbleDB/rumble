@@ -24,7 +24,6 @@ import java.net.ConnectException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.spark.SparkException;
@@ -47,8 +46,8 @@ import org.rumbledb.cli.Main;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.serialization.Serializer;
-import org.rumbledb.serialization.Serializers;
+import org.rumbledb.serialization.SequenceSerializer;
+import org.rumbledb.serialization.SerializationParameters;
 
 public class RumbleJLineShell {
     private static final String EXIT_COMMAND = "exit";
@@ -103,9 +102,12 @@ public class RumbleJLineShell {
         List<Item> results = new ArrayList<>();
         try {
             long count = this.jsoniqQueryExecutor.runInteractive(query, results);
-            Serializer serializer = Serializers.from(this.configuration.output().serializationParameters());
-            String result = String.join(
-                    "\n", results.stream().map(x -> serializer.serialize(x)).collect(Collectors.toList()));
+            String result = SequenceSerializer.serialize(
+                    results,
+                    this.configuration.output().serializationParameters() == null
+                            ? SerializationParameters.defaults(
+                                    this.configuration.semantics().queryLanguage())
+                            : this.configuration.output().serializationParameters());
             String shell = this.configuration.output().shellFilter();
             if (shell != null) {
                 Process process = new ProcessBuilder(shell.split("\\s+")).start();

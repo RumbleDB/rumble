@@ -16,12 +16,16 @@
 package org.rumbledb.runtime.functions.input;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -211,6 +215,21 @@ public class FileSystemUtil {
         } catch (Exception e) {
             handleException(e, locator, metadata);
             return null;
+        }
+    }
+
+    /** Opens a single encoded output stream without injecting record delimiters. */
+    public static Writer openWriter(URI locator, String encoding, ExceptionMetadata metadata) {
+        checkForAbsoluteAndNoWildcards(locator, metadata);
+        try {
+            Charset charset = Charset.forName(encoding);
+            FileContext fileContext = FileContext.getFileContext();
+            return new BufferedWriter(new OutputStreamWriter(
+                    fileContext.create(new Path(locator), EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE)),
+                    charset));
+        } catch (Exception e) {
+            handleException(e, locator, metadata);
+            throw new OurBadException("Could not open serialization output.", metadata);
         }
     }
 

@@ -28,22 +28,16 @@ import lombok.Getter;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
-import org.rumbledb.serialization.SerializationParameters;
-import org.rumbledb.serialization.Serializer;
-import org.rumbledb.serialization.SerializerUtils;
-import org.rumbledb.serialization.Serializers;
+import org.rumbledb.serialization.SequenceSerializer;
 import org.rumbledb.spark.SparkSessionManager;
 
 /**
@@ -342,41 +336,8 @@ public class SequenceOfItems {
             throw new RuntimeException("Cannot serialize a sequence if the iterator is open.");
         }
 
-        SerializationParameters params =
-                SerializationParameters.copy(this.getRuntimeStaticContext().getSerializationParameters());
-        SerializationParameters itemParams = SerializationParameters.copy(params);
-        if ("xml".equalsIgnoreCase(params.getMethod())) {
-            itemParams.setOmitXmlDeclaration(true);
-        }
-        Serializer serializer = Serializers.from(itemParams);
-        String itemSeparator = params.getItemSeparator();
-        if (itemSeparator == null) {
-            itemSeparator = "adaptive".equalsIgnoreCase(params.getMethod()) ? "\n" : "";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        List<Item> items = this.getAsList();
-        if ("xml".equalsIgnoreCase(params.getMethod()) && !params.getOmitXmlDeclaration() && !items.isEmpty()) {
-            SerializerUtils.appendXmlDeclaration(sb, params);
-        }
-        if ("json".equalsIgnoreCase(params.getMethod())) {
-            if (items.isEmpty()) {
-                return "null";
-            }
-            if (items.size() > 1) {
-                throw new RumbleException(
-                        "JSON serialization requires the top-level sequence to contain at most one item.",
-                        new ErrorCode(new Name(Name.ERROR_NS, "err", "SERE0023")),
-                        ExceptionMetadata.EMPTY_METADATA);
-            }
-        }
-        for (int i = 0; i < items.size(); i++) {
-            if (i > 0) {
-                sb.append(itemSeparator);
-            }
-            sb.append(serializer.serialize(items.get(i)));
-        }
-        return sb.toString();
+        return SequenceSerializer.serialize(
+                this.getAsList(), this.getRuntimeStaticContext().getSerializationParameters());
     }
 
     /**
