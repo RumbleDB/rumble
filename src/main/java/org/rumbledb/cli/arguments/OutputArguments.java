@@ -21,6 +21,7 @@ import picocli.CommandLine.Option;
 
 import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.config.model.OutputConfig;
+import org.rumbledb.serialization.SerializationParameters;
 
 public final class OutputArguments {
     @Option(
@@ -36,8 +37,8 @@ public final class OutputArguments {
             names = {"-f", "--output-format"},
             paramLabel = "format",
             description = {
-                "An output format to use for the output.",
-                "Formats other than json can only be output if the query outputs a highly structured sequence of objects."
+                "Use serialize (the default) for sequence serialization, or a Spark data-source format such as json, csv, or parquet.",
+                "With serialize, select the serialization method using --output-format-option method=xml (or json, text, adaptive, etc.)."
             })
     private String outputFormat;
 
@@ -67,21 +68,27 @@ public final class OutputArguments {
             names = "--output-format-option",
             paramLabel = "name=value",
             description =
-                    "Options to further specify the output format, for example a separator character for CSV or a compression format.")
+                    "Serialization parameters for serialize (method=xml, indent=yes, item-separator=...), or Spark writer options for other formats.")
     private Map<String, String> outputFormatOptions;
 
-    public OutputConfig toConfig() {
+    public OutputConfig toConfig(String queryLanguage) {
         OutputConfig.OutputConfigBuilder builder = OutputConfig.builder();
 
         OptionConversion.applyBooleanIfPresent(this.overwrite, builder::allowOverwrite);
         OptionConversion.applyIfPresent(this.outputPath, builder::outputPath);
-        OptionConversion.applyIfPresent(this.outputFormat, builder::outputFormat);
+        builder.outputFormat(this.outputFormat == null ? "serialize" : this.outputFormat);
         OptionConversion.applyIfPresent(this.logPath, builder::logPath);
         OptionConversion.applyIntIfPresent(this.numberOfOutputPartitions, builder::numberOfOutputPartitions);
         OptionConversion.applyIfPresent(this.shellFilter, builder::shellFilter);
-        OptionConversion.applyIfPresent(
-                this.outputFormatOptions,
-                options -> builder.serializationParameters(SerializationParameterBuilder.build(options)));
+        OptionConversion.applyIfPresent(this.outputFormatOptions, options -> {
+            if (this.outputFormat == null || this.outputFormat.equals("serialize")) {
+                builder.serializationParameters(SerializationParameterBuilder.build(options, queryLanguage));
+            } else {
+                SerializationParameters parameters = SerializationParameters.defaults(queryLanguage);
+                parameters.getSparkOptions().putAll(options);
+                builder.serializationParameters(parameters);
+            }
+        });
 
         return builder.build();
     }

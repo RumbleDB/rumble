@@ -16,12 +16,17 @@
 package org.rumbledb.cli;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.stream.Collectors;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
 
 import org.rumbledb.api.Item;
@@ -33,7 +38,8 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.serialization.Serializer;
+import org.rumbledb.serialization.SequenceSerializer;
+import org.rumbledb.serialization.SerializationParameters;
 
 public class JsoniqQueryExecutor {
     private final RumbleConfiguration configuration;
@@ -69,7 +75,6 @@ public class JsoniqQueryExecutor {
         URI outputUri = null;
         if (outputPath != null) {
             outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(outputPath, ExceptionMetadata.EMPTY_METADATA);
-            checkOutputFile(outputUri);
         }
 
         String logPath = this.configuration.output().logPath();
@@ -96,19 +101,62 @@ public class JsoniqQueryExecutor {
             sequence = rumble.runQuery(queryUri, this.externalBindings);
         }
 
+        String format = this.configuration.output().outputFormat();
+        boolean serialize = format == null || format.equals("serialize");
+        SerializationParameters parameters = sequence.getRuntimeStaticContext().getSerializationParameters();
+        if (!serialize && outputPath == null) {
+            throw new CliException(
+                    "Spark output formats require --output-path. Use --output-format serialize for standard output.");
+        }
+        if (serialize && this.configuration.output().numberOfOutputPartitions() > 1) {
+            throw new CliException(
+                    "--output-format serialize writes a single stream; --number-of-output-partitions must be 1 or omitted.");
+        }
         if (outputPath != null) {
-            sequence.write().save(outputPath);
+            checkOutputFile(outputUri);
+        }
+        if (outputPath != null && serialize) {
+            sequence.open();
+            try (Writer writer =
+                    FileSystemUtil.openWriter(outputUri, parameters.getEncoding(), ExceptionMetadata.EMPTY_METADATA)) {
+                SequenceOfItems result = sequence;
+                SequenceSerializer.write(
+                        new Iterator<Item>() {
+                            public boolean hasNext() {
+                                return result.hasNext();
+                            }
+
+                            public Item next() {
+                                return result.next();
+                            }
+                        },
+                        parameters,
+                        writer);
+            } finally {
+                sequence.close();
+            }
+        } else if (outputPath != null) {
+            Dataset<Row> dataFrame = sequence.getAsDataFrame();
+            int partitions = this.configuration.output().numberOfOutputPartitions();
+            if (partitions > 0) {
+                dataFrame = dataFrame.repartition(partitions);
+            }
+            dataFrame
+                    .write()
+                    .format(format)
+                    .options(parameters.getSparkOptions())
+                    .mode(this.configuration.output().allowOverwrite() ? SaveMode.Overwrite : SaveMode.ErrorIfExists)
+                    .save(FileSystemUtil.convertURIToStringForSpark(outputUri));
         } else {
             // No output path specified, we serialize to the standard output.
             outputList = new ArrayList<>();
             long materializationCount = sequence.populateList(
                     outputList, this.configuration.runtime().resultsSizeCap());
 
-            Serializer serializer =
-                    sequence.write().mode(SaveMode.ErrorIfExists).getSerializer();
-
-            List<String> lines = outputList.stream().map(serializer::serialize).collect(Collectors.toList());
-            ConsoleOutput.out(String.join("\n", lines));
+            String serialized = SequenceSerializer.serialize(outputList, parameters);
+            Writer writer = new OutputStreamWriter(System.out, Charset.forName(parameters.getEncoding()));
+            writer.write(serialized);
+            writer.flush();
             if (materializationCount != -1) {
                 issueMaterializationWarning(
                         materializationCount, this.configuration.runtime().resultsSizeCap());

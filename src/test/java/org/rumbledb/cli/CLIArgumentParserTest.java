@@ -102,7 +102,7 @@ public class CLIArgumentParserTest {
                 "--output-path",
                 "output.json",
                 "--output-format",
-                "json",
+                "serialize",
                 "--log-path",
                 "execution.log",
                 "--overwrite",
@@ -156,7 +156,7 @@ public class CLIArgumentParserTest {
         Assertions.assertEquals("en", configuration.formatting().defaultFormattingLanguage());
 
         Assertions.assertEquals("output.json", configuration.output().outputPath());
-        Assertions.assertEquals("json", configuration.output().outputFormat());
+        Assertions.assertEquals("serialize", configuration.output().outputFormat());
         Assertions.assertEquals("execution.log", configuration.output().logPath());
         Assertions.assertTrue(configuration.output().allowOverwrite());
         Assertions.assertEquals(4, configuration.output().numberOfOutputPartitions());
@@ -168,6 +168,46 @@ public class CLIArgumentParserTest {
         Assertions.assertEquals(2, serializationParameters.getIndentSpaces());
         Assertions.assertEquals(
                 "gzip", serializationParameters.getSparkOptions().get("compression"));
+    }
+
+    @Test
+    public void serializationOptionsPreserveLanguageDefaults() {
+        CLIInvocation invocation = CLIArgumentParser.parse(
+                "run", "-q", "<a/>", "--default-language", "xquery31", "--output-format-option", "indent=yes");
+        Assertions.assertEquals("serialize", invocation.configuration().output().outputFormat());
+        Assertions.assertEquals(
+                "xml",
+                invocation.configuration().output().serializationParameters().getMethod());
+    }
+
+    @Test
+    public void sparkOptionsAreNotParsedAsSerializationParameters() {
+        CLIInvocation invocation = CLIArgumentParser.parse(
+                "run",
+                "-q",
+                "1",
+                "-f",
+                "csv",
+                "--output-format-option",
+                "encoding=UTF-16",
+                "--output-format-option",
+                "header=true");
+        Assertions.assertEquals(
+                "UTF-16",
+                invocation
+                        .configuration()
+                        .output()
+                        .serializationParameters()
+                        .getSparkOptions()
+                        .get("encoding"));
+        Assertions.assertEquals(
+                "true",
+                invocation
+                        .configuration()
+                        .output()
+                        .serializationParameters()
+                        .getSparkOptions()
+                        .get("header"));
     }
 
     @Test

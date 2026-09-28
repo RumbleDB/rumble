@@ -248,3 +248,53 @@ Further steps could involve:
 - Write JSONiq code, and share it on the Web, as others can import it from HTTP in just one line from within their queries (no package publication or installation required) or specify an HTTP URL as an input query to RumbleDB!
 
 
+
+## Serializing CLI results
+
+Use `--output-format serialize` (the default) to serialize a query result with
+RumbleDB's serialization methods and parameters, without converting it to a Spark
+DataFrame. For example, with the standalone distribution:
+
+```sh
+java -jar rumbledb.jar run --default-language xquery31 \
+  --query '<answer>{6 * 7}</answer>' \
+  --output-format serialize \
+  --output-format-option method=xml \
+  --output-format-option omit-xml-declaration=yes
+```
+
+Set parameters by repeating `--output-format-option name=value`. The `method`
+parameter selects `xml`, `html`, `xhtml`, `text`, `json`, `adaptive`, or a RumbleDB
+extension such as `xml-json-hybrid`. If omitted, the method defaults to `xml` for
+XQuery and `xml-json-hybrid` for JSONiq. Setting another parameter, such as
+`indent=yes`, preserves that language default. Query serialization declarations
+continue to participate in the existing serialization-parameter resolution.
+
+`serialize` treats the output as a sequence: an XML declaration is emitted once,
+`item-separator` is used between items, and JSON serialization accepts at most one
+top-level item (use an array for multiple values). No extra newline is appended.
+An empty sequence serialized as JSON produces `null`.
+
+Add `--output-path result.xml` to write a single encoded file. File serialization
+iterates the result instead of collecting the entire result in a list; stdout
+continues to respect the result-size cap. `encoding=UTF-8` is the default.
+Serialized output accepts an omitted partition count or `-P 1`; multiple output
+partitions are rejected because this mode produces one stream. Existing files
+require `--overwrite`.
+
+Other output formats select Spark's data-source writer and require
+`--output-path`. For example:
+
+```sh
+java -jar rumbledb.jar run --query '{"answer":42}' \
+  --output-format json --output-path results --number-of-output-partitions 1
+```
+
+This writes a Spark output directory. Options are passed to Spark unchanged,
+for example `--output-format-option compression=gzip`. For W3C text serialization,
+use `--output-format serialize --output-format-option method=text`; an output
+format of `text` selects Spark's text writer.
+
+Previously ignored `--output-format` values now select the requested writer.
+To keep item serialization when migrating commands that used `-f adaptive` or
+`-f xml-json-hybrid`, use `-f serialize` and specify the method as an option.
