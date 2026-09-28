@@ -17,7 +17,9 @@ package org.rumbledb.compiler.translation.xml;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -40,6 +42,7 @@ import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.utils.TokenStreamUtils;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DirectElementConstructorTagMismatchException;
+import org.rumbledb.exceptions.DuplicateDirectAttributeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NamespaceDeclarationAttributeEnclosedExpressionException;
 import org.rumbledb.exceptions.ParsingException;
@@ -397,6 +400,7 @@ public final class XmlDirectConstructorTranslation {
                     Function<ExprCtx, Expression> visitExpr) {
         List<Expression> attributes = new ArrayList<>();
         List<NamespaceDeclaration> namespaceDeclarations = new ArrayList<>();
+        Set<Name> attributeNames = new HashSet<>();
 
         // Namespace declarations are in scope for the entire element start tag,
         // including attributes that occur lexically before the declaration.
@@ -421,6 +425,10 @@ public final class XmlDirectConstructorTranslation {
                 continue;
             }
             Name attributeName = parseName.apply(qnameCtx, NameRole.NO_DEFAULT_NAMESPACE);
+            if (!attributeNames.add(attributeName)) {
+                throw new DuplicateDirectAttributeException(
+                        attributeName.toString(), translationContext.metadata(qnameCtx));
+            }
 
             List<Expression> value =
                     getAttributeValuesExpressionsList(attr.value(), true, tokenStream, translationContext, visitExpr);
