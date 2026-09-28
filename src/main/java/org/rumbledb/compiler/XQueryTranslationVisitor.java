@@ -887,10 +887,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     /**
-     * W3C XQuery 3.1 §3.8.4: "If an implementation does not distinguish between ordered and
-     * unordered mode (e.g. if it always preserves document order), an unordered expression can
-     * simply evaluate its enclosed expression as an ordered expression."
-     *
      * RumbleDB always preserves ordering during evaluation, so ordered and unordered expressions
      * can simply evaluate their enclosed expression directly.
      */
