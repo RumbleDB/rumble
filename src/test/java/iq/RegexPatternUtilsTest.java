@@ -209,6 +209,19 @@ public class RegexPatternUtilsTest {
                 () -> RegexPatternUtils.compileRegex("([\\s-6]*)", null, ExceptionMetadata.EMPTY_METADATA));
     }
 
+    @org.junit.jupiter.api.Disabled("Known conformance gap: Java back-reference case folding equates dotted I with i")
+    @Test
+    public void caseInsensitiveBackReferencesDistinguishDottedI() {
+        Assertions.assertFalse(matches("\u0130i", "^(\u0130)\\1$", "i"));
+    }
+
+    @org.junit.jupiter.api.Disabled(
+            "Known conformance gap: Java back-reference case folding misses equal uppercase expansions")
+    @Test
+    public void caseInsensitiveBackReferencesMatchLigatureVariants() {
+        Assertions.assertTrue(matches("\ufb05\ufb06", "^(\ufb05)\\1$", "i"));
+    }
+
     private static boolean matches(String input, String regex, String flags) {
         return RegexPatternUtils.compileRegex(regex, flags, ExceptionMetadata.EMPTY_METADATA)
                 .pattern()

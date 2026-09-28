@@ -75,18 +75,20 @@ public class RegexBackReferenceFunctionsTest {
 
     @Test
     public void zeroLengthBackReferencesRaiseForx0003InAllThreeFunctions() {
-        Assertions.assertThrows(MatchesEmptyStringException.class, () -> new ReplaceFunctionIterator(
-                        arguments("x", "(a)?\\1", "y"), staticContext)
-                .evaluateAtMostOne(context));
-        Assertions.assertThrows(MatchesEmptyStringException.class, () -> new AnalyzeStringFunctionIterator(
-                        arguments("x", "(a)?\\1"), staticContext)
-                .evaluateAtMostOne(context));
-        Assertions.assertThrows(MatchesEmptyStringException.class, () -> {
-            try (var cursor =
-                    new TokenizeFunctionIterator(arguments("x", "(a)?\\1"), staticContext).getCursor(context)) {
-                cursor.hasNext();
-            }
-        });
+        for (String flags : new String[] {"", "i"}) {
+            Assertions.assertThrows(MatchesEmptyStringException.class, () -> new ReplaceFunctionIterator(
+                            arguments("x", "(a)?\\1", "y", flags), staticContext)
+                    .evaluateAtMostOne(context));
+            Assertions.assertThrows(MatchesEmptyStringException.class, () -> new AnalyzeStringFunctionIterator(
+                            arguments("x", "(a)?\\1", flags), staticContext)
+                    .evaluateAtMostOne(context));
+            Assertions.assertThrows(MatchesEmptyStringException.class, () -> {
+                try (var cursor = new TokenizeFunctionIterator(arguments("x", "(a)?\\1", flags), staticContext)
+                        .getCursor(context)) {
+                    cursor.hasNext();
+                }
+            });
+        }
     }
 
     @Test

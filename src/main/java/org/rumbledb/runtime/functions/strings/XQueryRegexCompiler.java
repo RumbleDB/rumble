@@ -30,6 +30,9 @@ import org.rumbledb.runtime.functions.strings.RegexPatternUtils.RegexFlags;
  * Parses F&O 3.1 §5.6 / XSD character classes and emits Java regex syntax.
  * Input is consumed once. In particular, generated Java syntax is never reparsed as XQuery.
  * User captures have stable names; empty internal captures track participation for back-references.
+ * Matching and backtracking are delegated to java.util.regex.Pattern. Unicode sets and literal
+ * case variants are handled by XQueryRegexUnicode before compilation; case-insensitive
+ * back-references still use Java case folding (see backReference and its conformance tests).
  */
 final class XQueryRegexCompiler {
     private final String source;
