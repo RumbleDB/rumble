@@ -218,19 +218,21 @@ public final class PrimaryTranslation {
             return new ArrayConstructorExpression(new ArrayList<>(), true, translationContext.metadata(ctx.context()));
         }
         List<Expression> memberExpressions = new ArrayList<>();
+
         if (translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
             for (ExprSingleCtx memberCtx : memberCtxs) {
                 memberExpressions.add(visitExprSingle.apply(memberCtx));
             }
             Expression commaExpression =
                     new CommaExpression(memberExpressions, translationContext.metadata(ctx.context()));
+
             return new ArrayConstructorExpression(commaExpression, translationContext.metadata(ctx.context()));
-        } else {
-            for (ExprSingleCtx memberCtx : memberCtxs) {
-                memberExpressions.add(visitExprSingle.apply(memberCtx));
-            }
-            return new ArrayConstructorExpression(memberExpressions, true, translationContext.metadata(ctx.context()));
         }
+
+        for (ExprSingleCtx memberCtx : memberCtxs) {
+            memberExpressions.add(visitExprSingle.apply(memberCtx));
+        }
+        return new ArrayConstructorExpression(memberExpressions, true, translationContext.metadata(ctx.context()));
     }
 
     public static <EnclosedExprCtx extends ParserRuleContext> ArrayConstructorExpression curlyArrayConstructor(
