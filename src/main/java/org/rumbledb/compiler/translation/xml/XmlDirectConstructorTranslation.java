@@ -57,6 +57,7 @@ import org.rumbledb.expressions.xml.DirPIConstructorExpression;
 import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.expressions.xml.TextNodeExpression;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 /**
  * Translation logic for XML direct constructors (elements, comments, processing instructions, attributes, and content).
@@ -416,6 +417,8 @@ public final class XmlDirectConstructorTranslation {
                             declaredPrefix, translationContext.metadata(qnameCtx));
                 }
                 String uri = getNamespaceDeclarationUri(attr.value(), tokenStream, translationContext, visitExpr);
+                NamespaceBindingUtils.validateNamespaceDeclaration(
+                        declaredPrefix, uri, translationContext.metadata(qnameCtx));
                 namespaceDeclarations.add(
                         new NamespaceDeclaration(declaredPrefix, uri, translationContext.metadata(qnameCtx)));
                 translationContext.bindConstructorNamespace(declaredPrefix, uri);

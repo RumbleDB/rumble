@@ -241,7 +241,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
             if (namespaceBinding != null) {
                 String prefix = namespaceBinding[0];
                 String uri = namespaceBinding[1];
-                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri, this.getMetadata());
                 namespaces.add(ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri));
             } else {
                 filteredAttributes.add(attribute);
