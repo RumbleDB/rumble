@@ -121,12 +121,10 @@ public final class PrologBuilder {
     }
 
     /**
-     * Applies the ordering mode declaration (W3C XQuery 3.1 §4.9).
+     * Applies the ordering mode declaration (W3C XQuery 3.1 §4.7).
      *
-     * RumbleDB always preserves order during evaluation, so per W3C XQuery 3.1 §3.8.4
-     * ("If an implementation does not distinguish between ordered and unordered mode...
-     * an unordered expression can simply evaluate its enclosed expression as an ordered expression"),
-     * ordering mode does not need to be tracked in the static context.
+     * RumbleDB always preserves the order of sequences, we do not need to store the ordering mode in the module
+     * context.
      * We only record that it was declared in the prolog to detect duplicates ([err:XQST0065]).
      *
      * @param metadata the location metadata
