@@ -40,6 +40,7 @@ import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.ContextItemDeclContext;
 import org.rumbledb.compiler.context.CountClauseContext;
 import org.rumbledb.compiler.context.EnclosedExprContext;
+import org.rumbledb.compiler.context.ExtensionExprContext;
 import org.rumbledb.compiler.context.FlworExprContext;
 import org.rumbledb.compiler.context.ForClauseContext;
 import org.rumbledb.compiler.context.ForVarContext;
@@ -887,7 +888,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Expression visitValueExpr(JsoniqParser.ValueExprContext ctx) {
         return PrimaryTranslation.valueExpr(
-                ValueExprContext.from(ctx), this.translationContext, this::visitSimpleMapExpr, this::visitValidateExpr);
+                ValueExprContext.from(ctx),
+                this.translationContext,
+                this::visitSimpleMapExpr,
+                this::visitValidateExpr,
+                this::visitExtensionExpr);
+    }
+
+    @Override
+    public Expression visitExtensionExpr(JsoniqParser.ExtensionExprContext ctx) {
+        return PrimaryTranslation.extensionExpr(
+                ExtensionExprContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override
