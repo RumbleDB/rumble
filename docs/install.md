@@ -48,6 +48,25 @@ You can compile the entire project like so:
     
 After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `rumbledb-1.24.0-jar-with-dependencies.jar`.
     
+## Testing the assembled CLI
+
+Run the CLI integration suite with Java 17 or 21:
+
+    $ mvn -Pcli-tests test
+
+This profile runs `assembly:single` after compilation and then starts separate Java
+processes against the resulting `target/*-jar-with-dependencies.jar`. Only Maven's
+`provided` dependencies (including Spark) are added to the child classpath; project
+classes and test dependencies are not added. The entry point is read from the
+JAR manifest. This checks the assembly intended for a Spark installation, not a
+standalone `java -jar` distribution.
+
+The suite checks help, inline and file queries, XQuery, external variables, stdin
+context items, output files and overwrite protection, and error exit codes. Each
+command has a timeout and runs in a temporary directory. The profile runs only
+these integration tests; ordinary `mvn test` keeps running the unit/query suites.
+Both GitHub and GitLab CI run the CLI suite separately.
+
 ## Running locally
 
 The most straightforward to test if the above steps were successful is to run the RumbleDB shell locally, like so:
