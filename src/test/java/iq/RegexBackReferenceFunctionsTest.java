@@ -118,4 +118,31 @@ public class RegexBackReferenceFunctionsTest {
                         .evaluateAtMostOne(context)
                         .getStringValue());
     }
+
+    @Test
+    public void quotedUnicodeCaseVariantsWorkAcrossAllRegexFunctions() {
+        Assertions.assertTrue(new MatchesFunctionIterator(arguments("\ufb05", "\ufb06", "iq"), staticContext)
+                .evaluateAtMostOne(context)
+                .getBooleanValue());
+        Assertions.assertFalse(new MatchesFunctionIterator(arguments("\u0130", "i", "iq"), staticContext)
+                .evaluateAtMostOne(context)
+                .getBooleanValue());
+        Assertions.assertEquals(
+                "$1",
+                new ReplaceFunctionIterator(arguments("\ufb05", "\ufb06", "$1", "iq"), staticContext)
+                        .evaluateAtMostOne(context)
+                        .getStringValue());
+        try (var cursor =
+                new TokenizeFunctionIterator(arguments("a\ufb05b", "\ufb06", "iq"), staticContext).getCursor(context)) {
+            Assertions.assertEquals("a", cursor.next().getStringValue());
+            Assertions.assertEquals("b", cursor.next().getStringValue());
+            Assertions.assertFalse(cursor.hasNext());
+        }
+        Item result = new AnalyzeStringFunctionIterator(arguments("\ufb05", "\ufb06", "iq"), staticContext)
+                .evaluateAtMostOne(context);
+        Assertions.assertEquals(1, result.children().size());
+        Assertions.assertEquals("match", result.children().get(0).nodeName().getLocalName());
+        Assertions.assertEquals("\ufb05", result.children().get(0).getStringValue());
+        Assertions.assertTrue(result.children().get(0).children().get(0).isTextNode());
+    }
 }

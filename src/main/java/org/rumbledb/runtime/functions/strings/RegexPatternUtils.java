@@ -34,11 +34,9 @@ public final class RegexPatternUtils {
     public static CompiledRegex compileRegex(String pattern, String flagsString, ExceptionMetadata metadata) {
         RegexFlags flags = RegexFlags.parse(flagsString, metadata);
         XQueryRegexCompiler compiler = new XQueryRegexCompiler(pattern, flags, metadata);
-        String translated = flags.quote() ? Pattern.quote(pattern) : compiler.compile();
-        int javaFlags = flags.quote() && flags.ignoreCase() ? Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE : 0;
+        String translated = compiler.compile();
         try {
-            return new CompiledRegex(
-                    Pattern.compile(translated, javaFlags), flags.quote(), translated, compiler.groups());
+            return new CompiledRegex(Pattern.compile(translated), flags.quote(), translated, compiler.groups());
         } catch (PatternSyntaxException e) {
             throw new InvalidRegexPatternException(e.getDescription(), metadata);
         }

@@ -359,4 +359,54 @@ public class RegexPatternUtilsTest {
         Assertions.assertFalse(RegexPatternUtils.matchesEmptyString(nonEmpty.pattern()));
         Assertions.assertArrayEquals(new String[] {"", "x", ""}, RegexPatternUtils.tokenize("bxb", nonEmpty.pattern()));
     }
+
+    @Test
+    public void quotedAndUnquotedLiteralsUseTheSameUnicodeCaseVariants() {
+        String[] characters = {
+            "I",
+            "i",
+            "\u0130",
+            "\u0131",
+            "S",
+            "s",
+            "\u017f",
+            "K",
+            "k",
+            "\u212a",
+            "\u00df",
+            "\u1e9e",
+            "\ufb05",
+            "\ufb06",
+            "\u03a3",
+            "\u03c3",
+            "\u03c2",
+            "\ud801\udc00",
+            "\ud801\udc28"
+        };
+        for (String pattern : characters) {
+            for (String input : characters) {
+                boolean expected = pattern.toLowerCase(java.util.Locale.ROOT)
+                                .equals(input.toLowerCase(java.util.Locale.ROOT))
+                        || pattern.toUpperCase(java.util.Locale.ROOT).equals(input.toUpperCase(java.util.Locale.ROOT));
+                Assertions.assertEquals(expected, matches(input, pattern, "iq"), "quoted " + pattern + " / " + input);
+                Assertions.assertEquals(expected, matches(input, pattern, "i"), "literal " + pattern + " / " + input);
+                Assertions.assertEquals(
+                        expected, matches(input, "[" + pattern + "]", "i"), "class " + pattern + " / " + input);
+            }
+        }
+    }
+
+    @Test
+    public void quotedCaseInsensitivePatternsKeepWhitespaceAndSyntaxLiteral() {
+        String pattern = " [\ufb05]$\\ ";
+        String input = " [\ufb06]$\\ ";
+        Assertions.assertTrue(matches(input, pattern, "iqxms"));
+        Assertions.assertFalse(matches(input.trim(), pattern, "iqxms"));
+        Assertions.assertFalse(matches("ss", "\u00df", "iq"));
+        var regex = RegexPatternUtils.compileRegex(pattern, "iq", ExceptionMetadata.EMPTY_METADATA);
+        Assertions.assertEquals(0, regex.groupCount());
+        Assertions.assertEquals(
+                "$1\\",
+                regex.pattern().matcher(input).replaceAll(regex.replacement("$1\\", ExceptionMetadata.EMPTY_METADATA)));
+    }
 }

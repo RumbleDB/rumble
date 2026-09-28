@@ -94,7 +94,17 @@ final class XQueryRegexUnicode {
         if (first != last) {
             result.append('-').append(hex(last));
         }
-        if (ignoreCase) {
+        if (ignoreCase && first == last) {
+            // Literal atoms are common: avoid scanning every cased code point for each one.
+            int[] variants = CaseVariants.VALUES.get(first);
+            if (variants != null) {
+                for (int variant : variants) {
+                    if (variant != first) {
+                        result.append(hex(variant));
+                    }
+                }
+            }
+        } else if (ignoreCase) {
             BitSet extra = new BitSet();
             CaseVariants.VALUES.forEach((cp, variants) -> {
                 if (cp >= first && cp <= last) {

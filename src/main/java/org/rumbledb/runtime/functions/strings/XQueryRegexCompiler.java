@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRegexPatternException;
@@ -47,11 +48,25 @@ final class XQueryRegexCompiler {
     }
 
     String compile() {
+        if (flags.quote()) {
+            return quotedPattern();
+        }
         String result = expression(0);
         if (peek() != -1) {
             throw error("Unmatched closing parenthesis");
         }
         return result;
+    }
+
+    private String quotedPattern() {
+        if (!flags.ignoreCase()) {
+            return Pattern.quote(source);
+        }
+        StringBuilder result = new StringBuilder();
+        source.codePoints().forEach(cp -> result.append('[')
+                .append(XQueryRegexUnicode.range(cp, cp, true))
+                .append(']'));
+        return result.toString();
     }
 
     List<CaptureGroup> groups() {
@@ -171,6 +186,9 @@ final class XQueryRegexCompiler {
         // Java's normal capture restoration also restores the marker during backtracking.
         String reference = "\\k<u" + group + ">";
         if (flags.ignoreCase()) {
+            // Remaining engine limitation: Java case folding differs from F&O's full-string
+            // case variants (e.g. dotted I, and U+FB05/U+FB06). Unlike literal operands,
+            // this operand is captured at runtime and cannot be expanded into a static set.
             reference = "(?iu:" + reference + ")";
         }
         return "(?:" + reference + "|(?!\\k<p" + group + ">))";
