@@ -17,11 +17,15 @@ package org.rumbledb.serialization;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 import org.apache.commons.text.StringEscapeUtils;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.items.xml.NamespaceItem;
 
@@ -153,26 +157,7 @@ public class XmlJsonHybridSerializer implements Serializer, Serializable {
             return;
         }
         if (item.isElementNode()) {
-            sb.append(indent);
-            sb.append("<");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            for (Item attribute : item.attributes()) {
-                serialize(attribute, sb, indent, isTopLevel);
-            }
-            for (Item namespace : item.declaredNamespaceNodes()) {
-                serialize(namespace, sb, indent, isTopLevel);
-            }
-            sb.append(">");
-            sb.append("\n");
-
-            for (Item child : item.children()) {
-                serialize(child, sb, indent + "  ", isTopLevel);
-            }
-            sb.append(indent);
-            sb.append("</");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            sb.append(">");
-            sb.append("\n");
+            serializeElementNode(item, sb, indent, isTopLevel, Map.of());
             return;
         }
         if (item.isNamespaceNode()) {
@@ -226,6 +211,43 @@ public class XmlJsonHybridSerializer implements Serializer, Serializable {
             sb.append("\n");
             return;
         }
+    }
+
+    private void serializeElementNode(
+            Item item, StringBuilder sb, String indent, boolean isTopLevel, Map<String, String> parentScope) {
+        sb.append(indent);
+        sb.append("<");
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        for (Item attribute : item.attributes()) {
+            serialize(attribute, sb, indent, isTopLevel);
+        }
+        Map<String, String> currentScope = new LinkedHashMap<>();
+        for (Item namespace : item.namespaceNodes()) {
+            NamespaceItem binding = (NamespaceItem) namespace;
+            currentScope.put(binding.getPrefix(), binding.getUri());
+            if (!Objects.equals(parentScope.get(binding.getPrefix()), binding.getUri())
+                    && (!"xml".equals(binding.getPrefix()) || !Name.XML_NS.equals(binding.getUri()))) {
+                serialize(namespace, sb, indent, isTopLevel);
+            }
+        }
+        if (parentScope.containsKey("") && !currentScope.containsKey("")) {
+            sb.append(" xmlns=\"\"");
+        }
+        sb.append(">");
+        sb.append("\n");
+
+        for (Item child : item.children()) {
+            if (child.isElementNode()) {
+                serializeElementNode(child, sb, indent + "  ", isTopLevel, currentScope);
+            } else {
+                serialize(child, sb, indent + "  ", isTopLevel);
+            }
+        }
+        sb.append(indent);
+        sb.append("</");
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        sb.append(">");
+        sb.append("\n");
     }
 
     private void appendJSONAtomicItem(Item item, StringBuilder sb) {

@@ -19,7 +19,9 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,6 +40,12 @@ public class XmlSerializer implements Serializer, Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    private static final ThreadLocal<Deque<NamespaceSerializationFrame>> SERIALIZATION_FRAMES =
+            ThreadLocal.withInitial(ArrayDeque::new);
+
+    private record NamespaceSerializationFrame(
+            XmlSerializer serializer, Map<String, String> scope, Map<String, String> parentScope) {}
 
     protected final SerializationParameters params;
     // Cached once per serializer instance — encoding is fixed for the lifetime of a serialization pass.
@@ -94,7 +102,18 @@ public class XmlSerializer implements Serializer, Serializable {
             return;
         }
         if (item.isElementNode()) {
-            serializeElementNode(item, sb, indent, isTopLevel);
+            Deque<NamespaceSerializationFrame> frames = SERIALIZATION_FRAMES.get();
+            NamespaceSerializationFrame parent = frames.peek();
+            Map<String, String> parentScope = parent != null && parent.serializer() == this ? parent.scope() : Map.of();
+            frames.push(new NamespaceSerializationFrame(this, getEffectiveNamespaceScope(item), parentScope));
+            try {
+                serializeElementNode(item, sb, indent, isTopLevel);
+            } finally {
+                frames.pop();
+                if (frames.isEmpty()) {
+                    SERIALIZATION_FRAMES.remove();
+                }
+            }
             return;
         }
         if (item.isAttributeNode() || item.isNamespaceNode()) {
@@ -231,7 +250,11 @@ public class XmlSerializer implements Serializer, Serializable {
 
     protected List<Item> getNamespaceNodesToSerialize(Item element) {
         Map<String, String> currentScope = getEffectiveNamespaceScope(element);
-        Map<String, String> parentScope = getEffectiveNamespaceScope(getParentElement(element));
+        NamespaceSerializationFrame frame = SERIALIZATION_FRAMES.get().peek();
+        // A selected subtree may retain an original parent that is absent from the serialized result.
+        Map<String, String> parentScope = frame != null && frame.serializer() == this
+                ? frame.parentScope()
+                : getEffectiveNamespaceScope(getParentElement(element));
         List<Item> result = new ArrayList<>();
 
         for (Map.Entry<String, String> entry : currentScope.entrySet()) {
