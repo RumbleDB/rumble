@@ -40,7 +40,8 @@ public final class TranslationNameResolver {
 
     public Name resolveFunctionName(String lexicalName, ExceptionMetadata metadata) {
         if (lexicalName.startsWith("Q{")) {
-            return URIQualifiedNameParser.parse(lexicalName, metadata);
+            return URIQualifiedNameParser.parse(
+                    lexicalName, this.context.configuration().semantics().xmlVersion(), metadata);
         }
         int colonIndex = lexicalName.indexOf(':');
         if (colonIndex >= 0) {
