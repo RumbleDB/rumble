@@ -30,8 +30,8 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 /**
  * General comparison of an integer singleton with a direct integer range.
  *
- * General comparisons are existential: x < (a to b) asks whether any range value exceeds x.
- * For a nonempty range this is simply x < b, so no range items or Spark join are needed.
+ * General comparisons are existential: x {@literal <} (a to b) asks whether any range value exceeds x.
+ * For a nonempty range this is simply x {@literal <} b, so no range items or Spark join are needed.
  * The compiler selects this plan only for integer singletons; other numeric types retain
  * the ordinary comparison path and its numeric-promotion rules.
  */
