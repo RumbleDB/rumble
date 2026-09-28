@@ -16,27 +16,28 @@
 package org.rumbledb.runtime.misc;
 
 import java.io.Serial;
+import java.io.Serializable;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import org.apache.spark.api.java.JavaRDD;
-
-import lombok.NonNull;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -55,8 +56,6 @@ public class RangeOperationIterator extends ItemRuntimePlan
 
     private final ItemRuntimePlan leftIterator;
     private final ItemRuntimePlan rightIterator;
-    private long left;
-    private long right;
     public static final int PARTITION_SIZE = 1000000;
 
     public RangeOperationIterator(
@@ -68,81 +67,106 @@ public class RangeOperationIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new EvaluationCursor(this.leftIterator, this.rightIterator, context, getMetadata());
+        return new IteratorLocalCursor<>(() -> getBounds(context).items(), getMetadata());
     }
 
     /**
-     * Initializes the boundaries of the range.
-     *
-     * @param context the dynamic context.
-     * @return true if the two bounds are defined, false if one of them is the empty sequence.
+     * Exact inclusive endpoints; an empty range has first greater than last.
+     * xs:integer can exceed Java's long range. Keep endpoints exact for generation,
+     * counting, comparisons, and subsequence slicing; longValue() would silently wrap them.
      */
-    public Boolean init(DynamicContext context) {
-        Item left;
-        Item right;
-        try {
-            left = this.leftIterator.materializeAtMostOne(context);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "Range expression must have integer input, but instead received more than one item", getMetadata());
+    public record Bounds(BigInteger first, BigInteger last) implements Serializable {
+        public Bounds(long first, long last) {
+            this(BigInteger.valueOf(first), BigInteger.valueOf(last));
         }
-        try {
-            right = this.rightIterator.materializeAtMostOne(context);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "Range expression must have integer input, but instead received more than one item", getMetadata());
+
+        public BigInteger size() {
+            return this.last.subtract(this.first).add(BigInteger.ONE).max(BigInteger.ZERO);
         }
+
+        public boolean fitsLong() {
+            // BigInteger.bitLength excludes the sign bit, including for negative values.
+            return this.first.bitLength() < 64 && this.last.bitLength() < 64;
+        }
+
+        public Iterator<Item> items() {
+            // Both iterators are lazy. Keep primitive iteration when every value fits in long.
+            if (fitsLong()) {
+                return LongStream.rangeClosed(this.first.longValueExact(), this.last.longValueExact())
+                        .mapToObj(ItemFactory.getInstance()::createLongItem)
+                        .iterator();
+            }
+            return Stream.iterate(
+                            this.first, value -> value.compareTo(this.last) <= 0, value -> value.add(BigInteger.ONE))
+                    .map(ItemFactory.getInstance()::createIntegerItem)
+                    .iterator();
+        }
+    }
+
+    /** Evaluates endpoints once, without constructing or scanning the range. */
+    public Bounds getBounds(DynamicContext context) {
+        Item left = materializeBound(this.leftIterator, context);
+        Item right = materializeBound(this.rightIterator, context);
         if (left == null || right == null) {
-            return false;
+            return new Bounds(1, 0);
         }
-        if (left.isUntypedAtomic()) {
-            left = ItemFactory.getInstance().createIntegerItem(left.castToIntegerValue());
-        }
-        if (right.isUntypedAtomic()) {
-            right = ItemFactory.getInstance().createIntegerItem(right.castToIntegerValue());
-        }
-        if (!(left.isInteger()) || !(right.isInteger())) {
+        return new Bounds(integerBound(left), integerBound(right));
+    }
+
+    private Item materializeBound(ItemRuntimePlan plan, DynamicContext context) {
+        try {
+            return plan.materializeAtMostOne(context);
+        } catch (MoreThanOneItemException exception) {
             throw new UnexpectedTypeException(
-                    "Range expression must have integer input, but instead received "
-                            + left.getDynamicType()
-                            + " and "
-                            + right.getDynamicType(),
+                    "Range expression must have integer input, but instead received more than one item", getMetadata());
+        }
+    }
+
+    private BigInteger integerBound(Item item) {
+        if (!item.isInteger() && !item.isUntypedAtomic()) {
+            throw new UnexpectedTypeException(
+                    "Range expression must have integer input, but instead received " + item.getDynamicType(),
                     getMetadata());
         }
-        try {
-            this.left = left.castToIntegerValue().longValue();
-            this.right = right.castToIntegerValue().longValue();
-        } catch (IteratorFlowException e) {
-            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-        }
-        return true;
-    }
-
-    /**
-     * Returns the inclusive bounds of the range without constructing the range.
-     */
-    public record Bounds(long first, long last) {
-        public BigInteger size() {
-            return BigInteger.valueOf(this.last)
-                    .subtract(BigInteger.valueOf(this.first))
-                    .add(BigInteger.ONE)
-                    .max(BigInteger.ZERO);
-        }
-    }
-
-    /** Returns the inclusive bounds without constructing the range. */
-    public Bounds getBounds(DynamicContext context) {
-        return init(context) ? new Bounds(this.left, this.right) : new Bounds(1, 0);
+        return item.castToIntegerValue();
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        if (!init(context)) {
-            return new HomogeneousItemDataFrame(
-                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
-                    BuiltinTypesCatalogue.item);
+        return createInterval(getBounds(context), getRuntimeStaticContext());
+    }
+
+    public static HomogeneousItemDataFrame createInterval(Bounds bounds, RuntimeStaticContext staticContext) {
+        if (bounds.size().signum() == 0) {
+            return createLongInterval(1, 0, staticContext);
         }
-        return createLongInterval(this.left, this.right, this.getRuntimeStaticContext());
+        if (bounds.fitsLong()) {
+            return createLongInterval(
+                    bounds.first().longValueExact(), bounds.last().longValueExact(), staticContext);
+        }
+        // Spark represents xs:integer as decimal(38, 0). Never silently narrow a value.
+        if (bounds.first().abs().toString().length() > 38
+                || bounds.last().abs().toString().length() > 38) {
+            throw new RumbleException(
+                    "Range endpoints exceed Spark's supported integer precision (38 digits).",
+                    staticContext.getMetadata());
+        }
+        BigInteger partitionSize = BigInteger.valueOf(PARTITION_SIZE);
+        // Send partition starts to Spark; each worker generates its own values lazily.
+        List<BigInteger> starts = new ArrayList<>();
+        for (BigInteger start = bounds.first(); start.compareTo(bounds.last()) <= 0; start = start.add(partitionSize)) {
+            starts.add(start);
+        }
+        JavaRDD<BigDecimal> values = SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .parallelize(starts, starts.size())
+                .flatMap(start -> {
+                    BigInteger end = start.add(partitionSize).min(bounds.last().add(BigInteger.ONE));
+                    return Stream.iterate(start, value -> value.compareTo(end) < 0, value -> value.add(BigInteger.ONE))
+                            .map(BigDecimal::new)
+                            .iterator();
+                });
+        return TreatIterator.convertToDataFrame(values, BuiltinTypesCatalogue.integerItem, staticContext);
     }
 
     /**
@@ -178,88 +202,6 @@ public class RangeOperationIterator extends ItemRuntimePlan
         return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem, staticContext);
     }
 
-    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
-
-        private final ItemRuntimePlan leftPlan;
-        private final ItemRuntimePlan rightPlan;
-        private final DynamicContext context;
-        private long rightBound;
-        private long position;
-        private boolean hasNext;
-
-        private EvaluationCursor(
-                @NonNull ItemRuntimePlan leftPlan,
-                @NonNull ItemRuntimePlan rightPlan,
-                @NonNull DynamicContext context,
-                @NonNull ExceptionMetadata metadata) {
-            super(metadata);
-            this.leftPlan = leftPlan;
-            this.rightPlan = rightPlan;
-            this.context = context;
-        }
-
-        @Override
-        protected void openLocal() {
-            Item left = materializeBound(this.leftPlan);
-            Item right = materializeBound(this.rightPlan);
-            if (left == null || right == null) {
-                this.hasNext = false;
-                return;
-            }
-            if (left.isUntypedAtomic()) {
-                left = ItemFactory.getInstance().createIntegerItem(left.castToIntegerValue());
-            }
-            if (right.isUntypedAtomic()) {
-                right = ItemFactory.getInstance().createIntegerItem(right.castToIntegerValue());
-            }
-            if (!left.isInteger() || !right.isInteger()) {
-                throw new UnexpectedTypeException(
-                        "Range expression must have integer input, but instead received "
-                                + left.getDynamicType()
-                                + " and "
-                                + right.getDynamicType(),
-                        this.getMetadata());
-            }
-            this.position = left.castToIntegerValue().longValue();
-            this.rightBound = right.castToIntegerValue().longValue();
-            this.hasNext = this.position <= this.rightBound;
-        }
-
-        @Override
-        protected boolean hasNextLocal() {
-            return this.hasNext;
-        }
-
-        @Override
-        protected Item nextLocal() {
-            if (!this.hasNext) {
-                throw new IteratorFlowException("Invalid next call in Range Operation", this.getMetadata());
-            }
-            long result = this.position;
-            if (this.position == this.rightBound) {
-                this.hasNext = false;
-            } else {
-                this.position++;
-            }
-            return ItemFactory.getInstance().createLongItem(result);
-        }
-
-        @Override
-        protected void closeLocal() {
-            this.hasNext = false;
-        }
-
-        private Item materializeBound(ItemRuntimePlan plan) {
-            try {
-                return plan.materializeAtMostOne(this.context);
-            } catch (MoreThanOneItemException exception) {
-                throw new UnexpectedTypeException(
-                        "Range expression must have integer input, but instead received more than one item",
-                        this.getMetadata());
-            }
-        }
-    }
-
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext leftContext = NativeQueryRuntimePlan.generate(this.leftIterator, nativeClauseContext);
@@ -269,6 +211,11 @@ public class RangeOperationIterator extends ItemRuntimePlan
         NativeClauseContext rightContext =
                 NativeQueryRuntimePlan.generate(this.rightIterator, new NativeClauseContext(leftContext, null, null));
         if (rightContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        // Spark sequence() cannot represent arbitrary-precision integer endpoints.
+        if (!leftContext.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.longItem)
+                || !rightContext.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.longItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
         return new NativeClauseContext(

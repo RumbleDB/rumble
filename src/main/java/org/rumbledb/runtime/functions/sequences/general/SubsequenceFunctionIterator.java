@@ -18,7 +18,6 @@ package org.rumbledb.runtime.functions.sequences.general;
 import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
-import java.util.stream.LongStream;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -31,7 +30,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -75,9 +73,7 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
             return new IteratorLocalCursor<>(
                     () -> {
                         RangeOperationIterator.Bounds bounds = getRangeSliceBounds(context);
-                        return LongStream.rangeClosed(bounds.first(), bounds.last())
-                                .mapToObj(ItemFactory.getInstance()::createLongItem)
-                                .iterator();
+                        return bounds.items();
                     },
                     getMetadata());
         }
@@ -121,7 +117,7 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         if (this.rangeOperationIterator != null) {
             RangeOperationIterator.Bounds bounds = getRangeSliceBounds(context);
-            return RangeOperationIterator.createLongInterval(bounds.first(), bounds.last(), getRuntimeStaticContext());
+            return RangeOperationIterator.createInterval(bounds, getRuntimeStaticContext());
         }
         SubsequenceBounds.Slice slice = getBounds(context).slice(BigInteger.valueOf(Long.MAX_VALUE));
         long offset = slice.offset().longValueExact();
@@ -159,10 +155,11 @@ public class SubsequenceFunctionIterator extends ItemRuntimePlan
         if (slice.length().signum() == 0) {
             return new RangeOperationIterator.Bounds(1, 0);
         }
-        BigInteger first = BigInteger.valueOf(range.first()).add(slice.offset());
+        // The slice describes positions; translate them back to exact integer values.
+        // A small slice can still contain values outside the long range.
+        BigInteger first = range.first().add(slice.offset());
         return new RangeOperationIterator.Bounds(
-                first.longValueExact(),
-                first.add(slice.length()).subtract(BigInteger.ONE).longValueExact());
+                first, first.add(slice.length()).subtract(BigInteger.ONE));
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
