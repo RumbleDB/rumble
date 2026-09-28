@@ -50,8 +50,7 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
         }
         RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(separator, flags, metadata);
         if (RegexPatternUtils.matchesEmptyString(compiledRegex.pattern())) {
-            throw new MatchesEmptyStringException(
-                    "'" + compiledRegex.effectivePattern() + "' matches empty string", metadata);
+            throw new MatchesEmptyStringException("'" + separator + "' matches empty string", metadata);
         }
         return RegexPatternUtils.tokenize(input, compiledRegex.pattern());
     }

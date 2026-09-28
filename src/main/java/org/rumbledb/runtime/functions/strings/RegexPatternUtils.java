@@ -36,9 +36,9 @@ public final class RegexPatternUtils {
         XQueryRegexCompiler compiler = new XQueryRegexCompiler(pattern, flags, metadata);
         String translated = compiler.compile();
         try {
-            return new CompiledRegex(Pattern.compile(translated), flags.quote(), translated, compiler.groups());
+            return new CompiledRegex(Pattern.compile(translated), flags.quote(), compiler.groups());
         } catch (PatternSyntaxException e) {
-            throw new InvalidRegexPatternException(e.getDescription(), metadata);
+            throw new InvalidRegexPatternException("Invalid regex '" + pattern + "': " + e.getDescription(), metadata);
         }
     }
 
@@ -78,7 +78,7 @@ public final class RegexPatternUtils {
      * Capture numbers here are XQuery numbers, excluding internal participation markers.
      * The underlying Pattern has extra Java groups: use start/end/group below for user captures.
      */
-    public record CompiledRegex(Pattern pattern, boolean quote, String effectivePattern, List<CaptureGroup> groups) {
+    public record CompiledRegex(Pattern pattern, boolean quote, List<CaptureGroup> groups) {
         public CompiledRegex {
             groups = List.copyOf(groups);
         }

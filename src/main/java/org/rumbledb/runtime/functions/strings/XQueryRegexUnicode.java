@@ -26,8 +26,14 @@ import java.util.Map;
 final class XQueryRegexUnicode {
     private XQueryRegexUnicode() {}
 
-    // XML 1.0 legacy NameStartChar / NameChar sets, preserved from the previous compiler.
-    // Keep the XML-version policy separate from regex parsing.
+    // Legacy XML 1.0 (pre-Fifth Edition) name sets, moved unchanged from RegexPatternUtils
+    // in commit 668ac7e8c. Reference: XML 1.0 Fourth Edition, sections 2.3 and B:
+    // https://www.w3.org/TR/2006/REC-xml-20060816/#NT-NameChar
+    // https://www.w3.org/TR/2006/REC-xml-20060816/#CharClasses
+    // XML_I combines Letter, ':' and '_'; XML_C also includes Digit, '.', '-',
+    // CombiningChar and Extender. These fixed tables are independent of the JDK Unicode
+    // data used for categories and case variants below. Updating the XML edition is a
+    // separate compatibility change; these are not the Fifth Edition name ranges.
     static final String XML_I =
             ":A-Z_a-z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u0131\u0134-\u013E\u0141-\u0148\u014A-\u017E\u0180-\u01C3"
                     + "\u01CD-\u01F0\u01F4-\u01F5\u01FA-\u0217\u0250-\u02A8\u02BB-\u02C1\u0386\u0388-\u038A\u038C\u038E-\u03A1"

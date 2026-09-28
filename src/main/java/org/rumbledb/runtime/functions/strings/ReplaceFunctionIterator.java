@@ -54,8 +54,7 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
         if (RegexPatternUtils.matchesEmptyString(compiledRegex.pattern())) {
-            throw new MatchesEmptyStringException(
-                    "'" + compiledRegex.effectivePattern() + "' matches empty string", getMetadata());
+            throw new MatchesEmptyStringException("'" + pattern + "' matches empty string", getMetadata());
         }
 
         Item replacementStringItem = this.getChild(2).materializeFirstOrNull(context);
