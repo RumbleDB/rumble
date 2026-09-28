@@ -84,7 +84,7 @@ public final class RegexPatternUtils {
         }
 
         public int groupCount() {
-            return groups.size();
+            return this.groups.size();
         }
 
         public int start(Matcher matcher, int group) {
@@ -101,7 +101,7 @@ public final class RegexPatternUtils {
 
         /** Validate and translate F&O §5.6.4 replacement references to stable Java group names. */
         public String replacement(String replacement, ExceptionMetadata metadata) {
-            if (quote) {
+            if (this.quote) {
                 return Matcher.quoteReplacement(replacement);
             }
             StringBuilder result = new StringBuilder();

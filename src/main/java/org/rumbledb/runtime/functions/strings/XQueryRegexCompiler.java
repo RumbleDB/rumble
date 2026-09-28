@@ -51,7 +51,7 @@ final class XQueryRegexCompiler {
     }
 
     String compile() {
-        if (flags.quote()) {
+        if (this.flags.quote()) {
             return quotedPattern();
         }
         String result = expression(0);
@@ -62,18 +62,18 @@ final class XQueryRegexCompiler {
     }
 
     private String quotedPattern() {
-        if (!flags.ignoreCase()) {
-            return Pattern.quote(source);
+        if (!this.flags.ignoreCase()) {
+            return Pattern.quote(this.source);
         }
         StringBuilder result = new StringBuilder();
-        source.codePoints().forEach(cp -> result.append('[')
+        this.source.codePoints().forEach(cp -> result.append('[')
                 .append(XQueryRegexUnicode.range(cp, cp, true))
                 .append(']'));
         return result.toString();
     }
 
     List<CaptureGroup> groups() {
-        return List.copyOf(groups);
+        return List.copyOf(this.groups);
     }
 
     private String expression(int parent) {
@@ -99,14 +99,14 @@ final class XQueryRegexCompiler {
                 if (!capturing) {
                     expect(':');
                 }
-                int group = capturing ? ++captures : 0;
+                int group = capturing ? ++this.captures : 0;
                 if (capturing) {
-                    openGroups.add(group);
-                    groups.add(new CaptureGroup(group, parent, branch));
+                    this.openGroups.add(group);
+                    this.groups.add(new CaptureGroup(group, parent, branch));
                 }
                 String body = expression(capturing ? group : parent);
                 expect(')');
-                openGroups.remove(group);
+                this.openGroups.remove(group);
                 // The marker follows the WHOLE body, including all alternatives.
                 return capturing ? "(?<u" + group + ">(?:" + body + ")(?<p" + group + ">))" : "(?:" + body + ")";
             case '[':
@@ -117,11 +117,11 @@ final class XQueryRegexCompiler {
                 }
                 return "[" + escape().text() + "]";
             case '.':
-                return flags.dotAll() ? "(?s:.)" : "[^\\n\\r]";
+                return this.flags.dotAll() ? "(?s:.)" : "[^\\n\\r]";
             case '^':
-                return flags.multiline() ? "(?:\\A|(?<=\\n)(?!\\z))" : "\\A";
+                return this.flags.multiline() ? "(?:\\A|(?<=\\n)(?!\\z))" : "\\A";
             case '$':
-                return flags.multiline() ? "(?:(?=\\n)|(?<!\\n)\\z)" : "\\z";
+                return this.flags.multiline() ? "(?:(?=\\n)|(?<!\\n)\\z)" : "\\z";
             case '?':
             case '*':
             case '+':
@@ -131,7 +131,7 @@ final class XQueryRegexCompiler {
             case ']':
                 throw error("Unescaped metacharacter " + (char) cp);
             default:
-                return "[" + XQueryRegexUnicode.range(cp, cp, flags.ignoreCase()) + "]";
+                return "[" + XQueryRegexUnicode.range(cp, cp, this.flags.ignoreCase()) + "]";
         }
     }
 
@@ -172,15 +172,15 @@ final class XQueryRegexCompiler {
 
     private String backReference() {
         int group = read() - '0';
-        if (group == 0 || group > captures) {
+        if (group == 0 || group > this.captures) {
             throw error("Invalid back-reference");
         }
         // Only digits naming a previously opened group belong to the reference.
         // Leave remaining digits to be parsed as literal atoms, even if later groups exist.
-        while (isDigit(peek()) && group <= (captures - (peek() - '0')) / 10) {
+        while (isDigit(peek()) && group <= (this.captures - (peek() - '0')) / 10) {
             group = group * 10 + read() - '0';
         }
-        if (openGroups.contains(group)) {
+        if (this.openGroups.contains(group)) {
             throw error("Back-reference refers to an unclosed group");
         }
         // An empty marker participates exactly when its user group does. Its back-reference
@@ -188,7 +188,7 @@ final class XQueryRegexCompiler {
         // therefore an empty fallback ONLY for an unmatched group, not an optional reference.
         // Java's normal capture restoration also restores the marker during backtracking.
         String reference = "\\k<u" + group + ">";
-        if (flags.ignoreCase()) {
+        if (this.flags.ignoreCase()) {
             // Remaining engine limitation: Java case folding differs from F&O's full-string
             // case variants (e.g. dotted I, and U+FB05/U+FB06). Unlike literal operands,
             // this operand is captured at runtime and cannot be expanded into a static set.
@@ -199,7 +199,7 @@ final class XQueryRegexCompiler {
 
     /** Called after '['. Each iteration consumes a complete character-group part. */
     private String characterClass() {
-        classDepth++;
+        this.classDepth++;
         boolean negative = take('^');
         StringBuilder parts = new StringBuilder();
         while (peek() != ']' && peek() != -1) {
@@ -211,7 +211,7 @@ final class XQueryRegexCompiler {
                 expect('[');
                 String excluded = characterClass();
                 expect(']');
-                classDepth--;
+                this.classDepth--;
                 return "[" + (negative ? "[^" : "[") + parts + "]&&[^" + excluded + "]]";
             }
             ClassAtom left = classAtom();
@@ -227,7 +227,7 @@ final class XQueryRegexCompiler {
                 if (left.codePoint() > right.codePoint()) {
                     throw error("Character range is in descending code point order");
                 }
-                parts.append(XQueryRegexUnicode.range(left.codePoint(), right.codePoint(), flags.ignoreCase()));
+                parts.append(XQueryRegexUnicode.range(left.codePoint(), right.codePoint(), this.flags.ignoreCase()));
                 // A following '-' starts a new part; it is not a second range operator.
             } else {
                 parts.append(left.text());
@@ -237,16 +237,16 @@ final class XQueryRegexCompiler {
             throw error("Empty character class");
         }
         expect(']');
-        classDepth--;
+        this.classDepth--;
         return (negative ? "[^" : "[") + parts + "]";
     }
 
     private boolean startsSubtraction() {
-        return source.startsWith("-[", position);
+        return this.source.startsWith("-[", this.position);
     }
 
     private boolean startsTrailingHyphen() {
-        return source.startsWith("-]", position) || source.startsWith("--[", position);
+        return this.source.startsWith("-]", this.position) || this.source.startsWith("--[", this.position);
     }
 
     private ClassAtom classAtom() {
@@ -261,7 +261,7 @@ final class XQueryRegexCompiler {
     }
 
     private ClassAtom literal(int cp, boolean unescapedHyphen) {
-        return new ClassAtom(XQueryRegexUnicode.range(cp, cp, flags.ignoreCase()), cp, unescapedHyphen);
+        return new ClassAtom(XQueryRegexUnicode.range(cp, cp, this.flags.ignoreCase()), cp, unescapedHyphen);
     }
 
     /** Escapes have a single shared interpretation inside and outside character classes. */
@@ -330,18 +330,18 @@ final class XQueryRegexCompiler {
      * Inside a class it remains significant. No separate preprocessing pass is needed.
      */
     private int peek() {
-        if (flags.whitespace() && classDepth == 0) {
-            while (position < source.length() && " \t\n\r".indexOf(source.charAt(position)) >= 0) {
-                position++;
+        if (this.flags.whitespace() && this.classDepth == 0) {
+            while (this.position < this.source.length() && " \t\n\r".indexOf(this.source.charAt(this.position)) >= 0) {
+                this.position++;
             }
         }
-        return position == source.length() ? -1 : source.codePointAt(position);
+        return this.position == this.source.length() ? -1 : this.source.codePointAt(this.position);
     }
 
     private int read() {
         int cp = peek();
         if (cp != -1) {
-            position += Character.charCount(cp);
+            this.position += Character.charCount(cp);
         }
         return cp;
     }
@@ -365,7 +365,7 @@ final class XQueryRegexCompiler {
     }
 
     private InvalidRegexPatternException error(String message) {
-        return new InvalidRegexPatternException(message + " at regex offset " + position, metadata);
+        return new InvalidRegexPatternException(message + " at regex offset " + this.position, this.metadata);
     }
 
     private record ClassAtom(String text, int codePoint, boolean unescapedHyphen) {}
