@@ -828,7 +828,7 @@ typeName
    ;
 
 functionTest
-   : annotation* (anyFunctionTest | typedFunctionTest)
+   : annotations (anyFunctionTest | typedFunctionTest)
    ;
 
 anyFunctionTest

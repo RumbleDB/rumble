@@ -167,13 +167,13 @@ public final class TypeTranslation {
                     SeqTypeCtx extends ParserRuleContext,
                     ItemTypeCtx extends ParserRuleContext,
                     EqNameCtx extends ParserRuleContext,
-                    AnnotationCtx extends ParserRuleContext,
+                    AnnotationsCtx extends ParserRuleContext,
                     StringLiteralCtx extends ParserRuleContext>
             ItemType itemType(
-                    ItemTypeContext<SeqTypeCtx, ItemTypeCtx, EqNameCtx, AnnotationCtx, StringLiteralCtx> ctx,
+                    ItemTypeContext<SeqTypeCtx, ItemTypeCtx, EqNameCtx, AnnotationsCtx, StringLiteralCtx> ctx,
                     TranslationContext translationContext,
                     BiFunction<EqNameCtx, NameRole, Name> parseEqName,
-                    Consumer<List<AnnotationCtx>> processAnnotations,
+                    Consumer<AnnotationsCtx> processAnnotations,
                     Function<StringLiteralCtx, String> processStringLiteral,
                     Function<SeqTypeCtx, SequenceType> processSequenceType,
                     Function<ItemTypeCtx, ItemType> processItemType) {
@@ -187,8 +187,8 @@ public final class TypeTranslation {
             return BuiltinTypesCatalogue.nullItem;
         }
         if (ctx.functionTest() != null) {
-            FunctionTestContext<SeqTypeCtx, AnnotationCtx> fnCtx = ctx.functionTest();
-            if (fnCtx.annotations() != null && !fnCtx.annotations().isEmpty()) {
+            FunctionTestContext<SeqTypeCtx, AnnotationsCtx> fnCtx = ctx.functionTest();
+            if (fnCtx.annotations() != null) {
                 processAnnotations.accept(fnCtx.annotations());
             }
             if (!fnCtx.isAnyFunction()) {

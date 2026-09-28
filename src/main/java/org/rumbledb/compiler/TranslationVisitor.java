@@ -17,6 +17,7 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -32,6 +33,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
+import org.rumbledb.compiler.context.AnnotationsContext;
 import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.CommaExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
@@ -127,6 +129,7 @@ import org.rumbledb.compiler.context.xml.PiTestContext;
 import org.rumbledb.compiler.context.xml.SchemaAttributeTestContext;
 import org.rumbledb.compiler.context.xml.SchemaElementTestContext;
 import org.rumbledb.compiler.context.xml.StepExprContext;
+import org.rumbledb.compiler.translation.AnnotationTranslation;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -1791,31 +1794,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {
-        return processAnnotations(annotations.annotation());
-    }
-
-    private List<Annotation> processAnnotations(List<JsoniqParser.AnnotationContext> annotations) {
-        List<Annotation> parsedAnnotations = new ArrayList<>();
-        for (JsoniqParser.AnnotationContext annotationContext : annotations) {
-            // for backwards compatibility, the specification allows for updating without % sign
-            if (annotationContext.updating != null) {
-                Name name = Name.createNameInDefaultXQueryAnnotationsNamespace("updating");
-                parsedAnnotations.add(new Annotation(name, null));
-                continue;
-            }
-            JsoniqParser.EqNameContext eqNameContext = annotationContext.eqName();
-            Name name = parseEqName(eqNameContext, NameRole.ANNOTATION);
-            Annotation.validateAnnotationName(name, createMetadataFromContext(annotationContext));
-            List<Expression> literals = null;
-            if (!annotationContext.literal().isEmpty()) {
-                literals = new ArrayList<>();
-                for (JsoniqParser.LiteralContext literalContext : annotationContext.literal()) {
-                    literals.add(this.visitLiteral(literalContext));
-                }
-            }
-            parsedAnnotations.add(new Annotation(name, literals));
+        if (annotations == null) {
+            return Collections.emptyList();
         }
-
-        return parsedAnnotations;
+        return AnnotationTranslation.processAnnotations(
+                AnnotationsContext.from(annotations), this.translationContext, this::parseEqName, this::visitLiteral);
     }
 }
