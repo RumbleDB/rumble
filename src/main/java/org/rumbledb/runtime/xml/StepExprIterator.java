@@ -136,10 +136,10 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
     }
 
     private Item nameKindTest(Item node, NameTest nameTest) {
+        if (!isPrincipalNodeKind(node)) {
+            return null;
+        }
         if (nameTest.hasQName()) {
-            if (!isPrincipalNodeKind(node)) {
-                return null;
-            }
             Name qItem = node.nodeName();
             if (qItem == null) {
                 return null;
@@ -152,28 +152,29 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
             return null;
         }
         if (nameTest.hasWildcardOnly()) {
-            if (!isPrincipalNodeKind(node)) {
-                return null;
-            }
             return node;
         }
-        if (!isPrincipalNodeKind(node)) {
-            return null;
-        }
-        String wildcard = nameTest.getWildcardQName();
         Name nodeName = node.nodeName();
         if (nodeName == null) {
             return null;
         }
-        if (wildcard.startsWith("*:")) {
-            String localName = wildcard.substring(2);
-            if (localName.equals(nodeName.getLocalName())) {
+        if (nameTest.hasWildcardNamespace()) {
+            if (nameTest.getLocalName().equals(nodeName.getLocalName())) {
                 return node;
             }
             return null;
         }
-        if (wildcard.equals(nodeNameLexical(node))) {
-            return node;
+        if (nameTest.hasWildcardLocalName()) {
+            String targetNamespace = nameTest.getNamespaceURI();
+            String nodeNamespace = nodeName.getNamespace();
+            if (targetNamespace == null || targetNamespace.isEmpty()) {
+                if (nodeNamespace == null || nodeNamespace.isEmpty()) {
+                    return node;
+                }
+            } else if (targetNamespace.equals(nodeNamespace)) {
+                return node;
+            }
+            return null;
         }
         return null;
     }

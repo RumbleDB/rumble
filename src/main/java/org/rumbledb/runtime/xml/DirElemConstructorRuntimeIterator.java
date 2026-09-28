@@ -29,6 +29,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
 import org.rumbledb.exceptions.DuplicateAttributeException;
+import org.rumbledb.exceptions.DuplicateNamespaceDeclarationAttributeException;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.ElementItem;
@@ -156,10 +157,14 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         }
         // process namespace declaration attributes (they create namespace nodes, not attribute nodes)
         if (this.namespaceDeclarations != null) {
+            Set<String> declaredPrefixes = new HashSet<>();
             for (NamespaceDeclaration declaration : this.namespaceDeclarations) {
                 String prefix = declaration.getPrefix();
+                if (!declaredPrefixes.add(prefix)) {
+                    throw new DuplicateNamespaceDeclarationAttributeException(prefix, getMetadata());
+                }
                 String uri = declaration.getUri();
-                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri, getMetadata());
                 namespaces.add(ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri));
             }
         }
@@ -176,8 +181,8 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         }
         validateNoDuplicateAttributes(attributes);
         // create and return the element item
-        ElementItem elementItem =
-                (ElementItem) ItemFactory.getInstance().createXmlElementNode(this.elementName, content, attributes);
+        ElementItem elementItem = ItemFactory.getInstance().createXmlElementNode(this.elementName, content, attributes);
+        elementItem.setConstructionBaseUri(this.staticContext.getStaticURI());
         // Only add namespaces explicitly declared on this element
         for (Item namespace : namespaces) {
             elementItem.addOrReplaceNamespace(namespace);

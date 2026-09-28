@@ -191,12 +191,14 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode MoreThanOneCopyNamespacesDeclarationErrorCode = registerBuiltIn("XQST0055");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
     public static final ErrorCode SchemaImportErrorCode = ModuleNotFoundErrorCode;
+    public static final ErrorCode MoreThanOneOrderingModeDeclarationErrorCode = registerBuiltIn("XQST0065");
     public static final ErrorCode MoreThanOneConstructionDeclarationErrorCode = registerBuiltIn("XQST0067");
     public static final ErrorCode NamespaceSensitiveConstructionErrorCode = registerBuiltIn("XQTY0086");
     public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");
     public static final ErrorCode MoreThanOneEmptyOrderDeclarationErrorCode = registerBuiltIn("XQST0069");
     public static final ErrorCode PredefinedPrefixInNamespaceDeclarationErrorCode = registerBuiltIn("XQST0070");
     public static final ErrorCode UnknownCollationInQueryPrologOrClause = registerBuiltIn("XQST0076");
+    public static final ErrorCode NoFallbackForUnsupportedPragmaErrorCode = registerBuiltIn("XQST0079");
     public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode = registerBuiltIn("XQST0085");
     public static final ErrorCode EmptyModuleURIErrorCode = registerBuiltIn("XQST0088");
     public static final ErrorCode PositionalVariableNameSameAsForVariable = registerBuiltIn("XQST0089");
@@ -228,8 +230,14 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidCommentContentErrorCode = registerBuiltIn("XQDY0072");
     public static final ErrorCode InvalidNodeNameErrorCode = registerBuiltIn("XQDY0096");
     public static final ErrorCode DuplicateAttributeErrorCode = registerBuiltIn("XQDY0025");
+    public static final ErrorCode DuplicateDirectAttributeErrorCode = registerBuiltIn("XQST0040");
+    public static final ErrorCode DuplicateNamespaceDeclarationAttributeErrorCode = registerBuiltIn("XQST0071");
+    public static final ErrorCode CharacterReferenceErrorCode = registerBuiltIn("XQST0090");
     public static final ErrorCode InvalidComputedNamespaceConstructorErrorCode = registerBuiltIn("XQDY0101");
     public static final ErrorCode AttributeOrNamespaceAfterNonAttributeErrorCode = registerBuiltIn("XQTY0024");
+    public static final ErrorCode DuplicateFunctionAnnotationErrorCode = registerBuiltIn("XQST0106");
+    public static final ErrorCode DuplicateVariableAnnotationErrorCode = registerBuiltIn("XQST0116");
+    public static final ErrorCode InvalidInlineFunctionAnnotationErrorCode = registerBuiltIn("XQST0125");
 
     public static final ErrorCode DuplicateObjectInsertSourceErrorCode = registerBuiltIn("JNUP0005");
     public static final ErrorCode DuplicateKeyOnUpdateApplyErrorCode = registerBuiltIn("JNUP0006");

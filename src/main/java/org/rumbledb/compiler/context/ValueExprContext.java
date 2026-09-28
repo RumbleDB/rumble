@@ -20,16 +20,28 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
-public record ValueExprContext<SimpleMapExprCtx extends ParserRuleContext, ValidateExprCtx extends ParserRuleContext>(
-        SimpleMapExprCtx simpleMapExpr, ValidateExprCtx validateExpr, ParserRuleContext context) {
+public record ValueExprContext<
+        SimpleMapExprCtx extends ParserRuleContext,
+        ValidateExprCtx extends ParserRuleContext,
+        ExtensionExprCtx extends ParserRuleContext>(
+        SimpleMapExprCtx simpleMapExpr,
+        ValidateExprCtx validateExpr,
+        ExtensionExprCtx extensionExpr,
+        ParserRuleContext context) {
 
-    public static ValueExprContext<JsoniqParser.SimpleMapExprContext, JsoniqParser.ValidateExprContext> from(
-            JsoniqParser.ValueExprContext c) {
-        return new ValueExprContext<>(c.simpleMap_expr, c.validate_expr, c);
+    public static ValueExprContext<
+                    JsoniqParser.SimpleMapExprContext,
+                    JsoniqParser.ValidateExprContext,
+                    JsoniqParser.ExtensionExprContext>
+            from(JsoniqParser.ValueExprContext c) {
+        return new ValueExprContext<>(c.simpleMap_expr, c.validate_expr, c.extension_expr, c);
     }
 
-    public static ValueExprContext<XQueryParser.SimpleMapExprContext, XQueryParser.ValidateExprContext> from(
-            XQueryParser.ValueExprContext c) {
-        return new ValueExprContext<>(c.simpleMap_expr, c.validate_expr, c);
+    public static ValueExprContext<
+                    XQueryParser.SimpleMapExprContext,
+                    XQueryParser.ValidateExprContext,
+                    XQueryParser.ExtensionExprContext>
+            from(XQueryParser.ValueExprContext c) {
+        return new ValueExprContext<>(c.simpleMap_expr, c.validate_expr, c.extension_expr, c);
     }
 }

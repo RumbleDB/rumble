@@ -16,6 +16,7 @@
 package org.rumbledb.items.xml;
 
 import java.io.Serial;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -34,6 +35,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.TypedValueUnavailableException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.runtime.xml.XmlBaseUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
@@ -49,13 +51,16 @@ public class ElementItem extends AbstractNodeItem {
     private Item parent;
     private XmlSchemaTypeAnnotation typeAnnotation;
     private NodeTypedValue nodeTypedValue;
-    private Boolean schemaNilled;
+    private boolean schemaNilled;
     private boolean id;
     private boolean idRefs;
 
     @Setter
+    private URI constructionBaseUri;
+
+    @Setter
     private boolean inheritNamespacesFromParent;
-    // TODO: add base-uri
+
     private XMLDocumentPosition documentPos;
 
     /**
@@ -68,7 +73,7 @@ public class ElementItem extends AbstractNodeItem {
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
         this.nodeTypedValue = NodeTypedValue.untyped();
-        this.schemaNilled = null;
+        this.schemaNilled = false;
         this.inheritNamespacesFromParent = true;
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
@@ -88,7 +93,7 @@ public class ElementItem extends AbstractNodeItem {
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
         this.nodeTypedValue = NodeTypedValue.untyped();
-        this.schemaNilled = null;
+        this.schemaNilled = false;
         this.inheritNamespacesFromParent = true;
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
@@ -127,6 +132,7 @@ public class ElementItem extends AbstractNodeItem {
         copy.id = this.id;
         copy.idRefs = this.idRefs;
         copy.inheritNamespacesFromParent = this.inheritNamespacesFromParent;
+        copy.constructionBaseUri = this.constructionBaseUri;
         return copy;
     }
 
@@ -197,12 +203,28 @@ public class ElementItem extends AbstractNodeItem {
      * "For an Element Node, dm:base-uri returns the base URI of the element node, if it has one;
      * otherwise it returns the empty sequence."
      *
-     * RumbleDB does not currently track base URIs for element nodes, so this implementation
-     * returns null to represent the empty sequence.
      */
     @Override
     public List<Item> baseUri() {
-        return Collections.emptyList();
+        String inherited;
+        if (this.parent != null) {
+            List<Item> parentBase = this.parent.baseUri();
+            inherited = parentBase.isEmpty() ? null : parentBase.get(0).getStringValue();
+        } else {
+            inherited = this.constructionBaseUri == null || !this.constructionBaseUri.isAbsolute()
+                    ? null
+                    : this.constructionBaseUri.toString();
+        }
+        for (Item attribute : this.attributes) {
+            Name name = attribute.nodeName();
+            if (name != null && Name.XML_NS.equals(name.getNamespace()) && "base".equals(name.getLocalName())) {
+                inherited = XmlBaseUtils.resolve(inherited, attribute.getStringValue());
+                break;
+            }
+        }
+        return inherited == null
+                ? Collections.emptyList()
+                : List.of(ItemFactory.getInstance().createAnyURIItem(inherited));
     }
 
     /**
@@ -323,16 +345,14 @@ public class ElementItem extends AbstractNodeItem {
      * XDM 3.1 Section 6.2 Element Node Accessors — nilled.
      *
      * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
-     * not nilled, or the empty sequence if the concept of nilled does not apply."
+     * not nilled."
      *
-     * Schema-validated elements return the boolean value supplied by the PSVI.
-     * Stripping a schema annotation resets that value to false.
+     * Schema-validated elements return true if marked as nilled in the PSVI.
+     * Untyped or unvalidated elements always return false per XDM 3.1 Section 6.2.1 constraint 10.
      */
     @Override
     public List<Item> nilled() {
-        return this.schemaNilled == null
-                ? Collections.emptyList()
-                : Collections.singletonList(ItemFactory.getInstance().createBooleanItem(this.schemaNilled));
+        return Collections.singletonList(ItemFactory.getInstance().createBooleanItem(this.schemaNilled));
     }
 
     @Override
@@ -420,8 +440,8 @@ public class ElementItem extends AbstractNodeItem {
 
     @Override
     public void setXmlSchemaNilled(boolean nilled) {
-        if (this.typeAnnotation == null) {
-            throw new IllegalStateException("An untyped element does not have a nilled property.");
+        if (nilled && this.typeAnnotation == null) {
+            throw new IllegalStateException("An untyped element cannot be nilled.");
         }
         this.schemaNilled = nilled;
     }

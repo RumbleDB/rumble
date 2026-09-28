@@ -38,16 +38,21 @@ public final class TranslationNameResolver {
         this.context = context;
     }
 
-    public Name resolveFunctionName(String lexicalName, ExceptionMetadata metadata) {
+    public Name resolveEQName(String lexicalName, NameRole role, ExceptionMetadata metadata) {
         if (lexicalName.startsWith("Q{")) {
-            return URIQualifiedNameParser.parse(lexicalName, metadata);
+            return URIQualifiedNameParser.parse(
+                    lexicalName, this.context.configuration().semantics().xmlVersion(), metadata);
         }
         int colonIndex = lexicalName.indexOf(':');
         if (colonIndex >= 0) {
             return this.resolvePrefixedName(
                     lexicalName.substring(0, colonIndex), lexicalName.substring(colonIndex + 1), metadata);
         }
-        return this.resolveUnprefixedName(lexicalName, NameRole.FUNCTION);
+        return this.resolveUnprefixedName(lexicalName, role);
+    }
+
+    public Name resolveFunctionName(String lexicalName, ExceptionMetadata metadata) {
+        return this.resolveEQName(lexicalName, NameRole.FUNCTION, metadata);
     }
 
     public Name resolveQName(
@@ -92,7 +97,7 @@ public final class TranslationNameResolver {
 
     private Name resolvePrefixedName(String prefix, String localName, ExceptionMetadata metadata) {
         String namespace = this.context.resolveNamespace(prefix);
-        if (namespace == null) {
+        if (namespace == null || namespace.isEmpty()) {
             throw new PrefixCannotBeExpandedException("Cannot expand prefix " + prefix, metadata);
         }
         return new Name(namespace, prefix, localName);

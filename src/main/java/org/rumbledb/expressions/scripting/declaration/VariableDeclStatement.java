@@ -30,7 +30,7 @@ import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.types.SequenceType;
 
-import static org.rumbledb.expressions.scripting.annotations.Annotation.checkAssignable;
+import static org.rumbledb.compiler.utils.AnnotationValidator.checkAssignable;
 
 // TODO: Update specification document to reflect this definition:
 // A variable decl statement will be visible to subsequent comma declarations.
