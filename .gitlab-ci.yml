@@ -13,6 +13,17 @@ Build:
   script:
     - mvn clean compile assembly:single
 
+CLIJarTests:
+  stage: tests
+  script:
+    - mvn --batch-mode -Pcli-tests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/
+    reports:
+      junit: target/surefire-reports/TEST-org.rumbledb.cli.CLIJarIT.xml
+
 SparkRuntimeTest:
   stage: tests
   script:
