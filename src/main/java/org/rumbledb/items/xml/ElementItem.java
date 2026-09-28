@@ -51,7 +51,7 @@ public class ElementItem extends AbstractNodeItem {
     private Item parent;
     private XmlSchemaTypeAnnotation typeAnnotation;
     private NodeTypedValue nodeTypedValue;
-    private Boolean schemaNilled;
+    private boolean schemaNilled;
     private boolean id;
     private boolean idRefs;
 
@@ -73,7 +73,7 @@ public class ElementItem extends AbstractNodeItem {
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
         this.nodeTypedValue = NodeTypedValue.untyped();
-        this.schemaNilled = null;
+        this.schemaNilled = false;
         this.inheritNamespacesFromParent = true;
         StringBuilder sb = new StringBuilder();
         computeStringValue(children, sb);
@@ -93,7 +93,7 @@ public class ElementItem extends AbstractNodeItem {
         this.namespaces = new HashMap<>();
         this.typeAnnotation = null;
         this.nodeTypedValue = NodeTypedValue.untyped();
-        this.schemaNilled = null;
+        this.schemaNilled = false;
         this.inheritNamespacesFromParent = true;
         if (namespaceBindings != null) {
             for (Map.Entry<String, String> entry : namespaceBindings.entrySet()) {
@@ -345,16 +345,14 @@ public class ElementItem extends AbstractNodeItem {
      * XDM 3.1 Section 6.2 Element Node Accessors — nilled.
      *
      * "For an Element Node, dm:nilled returns true if the element is nilled, false if it is
-     * not nilled, or the empty sequence if the concept of nilled does not apply."
+     * not nilled."
      *
-     * Schema-validated elements return the boolean value supplied by the PSVI.
-     * Stripping a schema annotation resets that value to false.
+     * Schema-validated elements return true if marked as nilled in the PSVI.
+     * Untyped or unvalidated elements always return false per XDM 3.1 Section 6.2.1 constraint 10.
      */
     @Override
     public List<Item> nilled() {
-        return this.schemaNilled == null
-                ? Collections.emptyList()
-                : Collections.singletonList(ItemFactory.getInstance().createBooleanItem(this.schemaNilled));
+        return Collections.singletonList(ItemFactory.getInstance().createBooleanItem(this.schemaNilled));
     }
 
     @Override
@@ -442,8 +440,8 @@ public class ElementItem extends AbstractNodeItem {
 
     @Override
     public void setXmlSchemaNilled(boolean nilled) {
-        if (this.typeAnnotation == null) {
-            throw new IllegalStateException("An untyped element does not have a nilled property.");
+        if (nilled && this.typeAnnotation == null) {
+            throw new IllegalStateException("An untyped element cannot be nilled.");
         }
         this.schemaNilled = nilled;
     }
