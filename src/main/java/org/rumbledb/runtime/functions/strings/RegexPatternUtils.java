@@ -99,7 +99,7 @@ public final class RegexPatternUtils {
             return group == 0 ? matcher.group() : matcher.group("u" + group);
         }
 
-        /** Validate and translate F&O §5.6.4 replacement references to stable Java group names. */
+        /** Validate and translate Functions and Operators §5.6.4 replacement references to stable Java group names. */
         public String replacement(String replacement, ExceptionMetadata metadata) {
             if (this.quote) {
                 return Matcher.quoteReplacement(replacement);
