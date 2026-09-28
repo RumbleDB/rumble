@@ -32,6 +32,7 @@ import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -44,6 +45,23 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 public class ComparisonVisitor extends CloneVisitor {
+    /**
+     * Retain this shape before the general-comparison rewrite turns it into an exists/FLWOR join.
+     * Runtime compilation uses IntegerRangeComparisonIterator to inspect only the endpoints.
+     * Restrict this to integer singletons: floating-point promotion and multi-item operands
+     * need the ordinary general-comparison semantics.
+     */
+    static boolean isIntegerRangeComparison(
+            Expression left, Expression right, ComparisonExpression.ComparisonOperator operator) {
+        if (operator.isValueComparison()) {
+            return false;
+        }
+        Expression scalar = right instanceof RangeExpression ? left : left instanceof RangeExpression ? right : null;
+        return scalar != null
+                && scalar.getStaticSequenceType().getArity() == SequenceType.Arity.One
+                && scalar.getStaticSequenceType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.integerItem);
+    }
+
     @Override
     public Node visitComparisonExpr(ComparisonExpression expression, Node argument) {
         Expression leftChild = (Expression) visit(expression.getChildren().get(0), argument);
@@ -60,8 +78,9 @@ public class ComparisonVisitor extends CloneVisitor {
             rightChild = normalized[1];
         }
 
-        // if it's already value comparison, return it
-        if (expression.getComparisonOperator().isValueComparison()) {
+        // Keep value comparisons and endpoint-comparable integer ranges intact.
+        if (expression.getComparisonOperator().isValueComparison()
+                || isIntegerRangeComparison(leftChild, rightChild, expression.getComparisonOperator())) {
             ComparisonExpression result = new ComparisonExpression(
                     leftChild, rightChild, expression.getComparisonOperator(), expression.getMetadata());
             result.setStaticSequenceType(expression.getStaticSequenceType());
