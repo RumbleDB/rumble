@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.misc;
 
 import java.io.Serial;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -117,6 +118,23 @@ public class RangeOperationIterator extends ItemRuntimePlan
         return true;
     }
 
+    /**
+     * Returns the inclusive bounds of the range without constructing the range.
+     */
+    public record Bounds(long first, long last) {
+        public BigInteger size() {
+            return BigInteger.valueOf(last)
+                    .subtract(BigInteger.valueOf(first))
+                    .add(BigInteger.ONE)
+                    .max(BigInteger.ZERO);
+        }
+    }
+
+    /** Returns the inclusive bounds without constructing the range. */
+    public Bounds getBounds(DynamicContext context) {
+        return init(context) ? new Bounds(this.left, this.right) : new Bounds(1, 0);
+    }
+
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         if (!init(context)) {
@@ -136,14 +154,27 @@ public class RangeOperationIterator extends ItemRuntimePlan
      */
     public static HomogeneousItemDataFrame createLongInterval(
             long left, long right, RuntimeStaticContext staticContext) {
+        if (left > right) {
+            return TreatIterator.convertToDataFrame(
+                    SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD(),
+                    BuiltinTypesCatalogue.longItem,
+                    staticContext);
+        }
         List<Long> list = new ArrayList<>();
-        for (long i = left; i <= right; i += PARTITION_SIZE) {
-            list.add(i);
+        long start = left;
+        while (true) {
+            list.add(start);
+            if (start > Long.MAX_VALUE - PARTITION_SIZE || start + PARTITION_SIZE > right) {
+                break;
+            }
+            start += PARTITION_SIZE;
         }
         JavaRDD<Long> rdd =
                 SparkSessionManager.getInstance().getJavaSparkContext().parallelize(list, list.size());
-        rdd = rdd.flatMap(i ->
-                LongStream.range(i, Math.min(right + 1, i + PARTITION_SIZE)).iterator());
+        rdd = rdd.flatMap(i -> {
+            long end = i > Long.MAX_VALUE - (PARTITION_SIZE - 1) ? right : Math.min(right, i + PARTITION_SIZE - 1);
+            return LongStream.rangeClosed(i, end).iterator();
+        });
         return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem, staticContext);
     }
 
