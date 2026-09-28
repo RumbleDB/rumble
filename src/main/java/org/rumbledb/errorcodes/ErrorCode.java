@@ -191,6 +191,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode MoreThanOneCopyNamespacesDeclarationErrorCode = registerBuiltIn("XQST0055");
     public static final ErrorCode ModuleNotFoundErrorCode = registerBuiltIn("XQST0059");
     public static final ErrorCode SchemaImportErrorCode = ModuleNotFoundErrorCode;
+    public static final ErrorCode MoreThanOneOrderingModeDeclarationErrorCode = registerBuiltIn("XQST0065");
     public static final ErrorCode MoreThanOneConstructionDeclarationErrorCode = registerBuiltIn("XQST0067");
     public static final ErrorCode NamespaceSensitiveConstructionErrorCode = registerBuiltIn("XQTY0086");
     public static final ErrorCode MoreThanOneBoundarySpaceDeclarationErrorCode = registerBuiltIn("XQST0068");

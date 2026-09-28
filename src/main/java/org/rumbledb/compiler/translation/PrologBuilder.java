@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneBoundarySpaceDeclarationException;
 import org.rumbledb.exceptions.MoreThanOneCopyNamespacesDeclarationException;
 import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
+import org.rumbledb.exceptions.MoreThanOneOrderingModeDeclarationException;
 import org.rumbledb.exceptions.MultipleBaseURIException;
 import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
 import org.rumbledb.exceptions.SemanticException;
@@ -53,6 +54,7 @@ public final class PrologBuilder {
     private boolean constructionSet;
     private boolean boundarySpaceSet;
     private boolean emptyOrderSet;
+    private boolean orderingModeSet;
     private boolean copyNamespacesSet;
     private boolean baseUriSet;
     private boolean defaultCollationSet;
@@ -116,6 +118,22 @@ public final class PrologBuilder {
         }
         this.translationContext.moduleContext().setEmptySequenceOrderLeast(least);
         this.emptyOrderSet = true;
+    }
+
+    /**
+     * Applies the ordering mode declaration (W3C XQuery 3.1 §4.7).
+     *
+     * RumbleDB always preserves the order of sequences, we do not need to store the ordering mode in the module
+     * context.
+     * We only record that it was declared in the prolog to detect duplicates ([err:XQST0065]).
+     *
+     * @param metadata the location metadata
+     */
+    public void applyOrderingMode(ExceptionMetadata metadata) {
+        if (this.orderingModeSet) {
+            throw new MoreThanOneOrderingModeDeclarationException("The ordering mode was already set.", metadata);
+        }
+        this.orderingModeSet = true;
     }
 
     public void applyDecimalFormat(
