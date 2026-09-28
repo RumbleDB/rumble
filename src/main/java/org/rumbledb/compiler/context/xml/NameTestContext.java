@@ -17,19 +17,18 @@ package org.rumbledb.compiler.context.xml;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import org.rumbledb.compiler.context.WildcardContext;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
 public record NameTestContext<EqNameCtx extends ParserRuleContext>(
-        EqNameCtx eqName, String wildcard, ParserRuleContext context) {
+        EqNameCtx eqName, WildcardContext wildcard, ParserRuleContext context) {
 
     public static NameTestContext<JsoniqParser.EqNameContext> from(JsoniqParser.NameTestContext c) {
-        return new NameTestContext<>(
-                c.eqName(), c.wildcard() != null ? c.wildcard().getText() : null, c);
+        return new NameTestContext<>(c.eqName(), c.wildcard() != null ? WildcardContext.from(c.wildcard()) : null, c);
     }
 
     public static NameTestContext<XQueryParser.EqNameContext> from(XQueryParser.NameTestContext c) {
-        return new NameTestContext<>(
-                c.eqName(), c.wildcard() != null ? c.wildcard().getText() : null, c);
+        return new NameTestContext<>(c.eqName(), c.wildcard() != null ? WildcardContext.from(c.wildcard()) : null, c);
     }
 }

@@ -20,6 +20,7 @@ import java.util.function.Function;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
+import org.rumbledb.compiler.context.WildcardContext;
 import org.rumbledb.compiler.context.xml.AttributeTestContext;
 import org.rumbledb.compiler.context.xml.DocumentTestContext;
 import org.rumbledb.compiler.context.xml.ElementTestContext;
@@ -30,6 +31,7 @@ import org.rumbledb.compiler.context.xml.SchemaElementTestContext;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
@@ -51,6 +53,7 @@ public final class XmlNodeTestTranslation {
 
     public static <EqNameCtx extends ParserRuleContext> NodeTest nameTest(
             NameTestContext<EqNameCtx> ctx,
+            TranslationContext translationContext,
             boolean unprefixedUsesDefaultElementNamespace,
             BiFunction<EqNameCtx, NameRole, Name> parseEqName) {
         if (ctx.wildcard() == null) {
@@ -59,9 +62,26 @@ public final class XmlNodeTestTranslation {
                     : NameRole.NO_DEFAULT_NAMESPACE;
             Name name = parseEqName.apply(ctx.eqName(), role);
             return new NameTest(name);
-        } else {
-            return new NameTest(ctx.wildcard());
         }
+        WildcardContext wildcard = ctx.wildcard();
+        return switch (wildcard.type()) {
+            case ALL -> NameTest.all();
+            case ALL_WITH_LOCAL -> NameTest.anyNamespace(wildcard.localName(), wildcard.text());
+            case ALL_WITH_NS -> {
+                String prefix = wildcard.prefix();
+                if ("xmlns".equals(prefix)) {
+                    throw new PrefixCannotBeExpandedException(
+                            "Cannot expand prefix xmlns", translationContext.metadata(wildcard.context()));
+                }
+                String namespace = translationContext.resolveNamespace(prefix);
+                if (namespace == null) {
+                    throw new PrefixCannotBeExpandedException(
+                            "Cannot expand prefix " + prefix, translationContext.metadata(wildcard.context()));
+                }
+                yield NameTest.anyLocalName(namespace, wildcard.text());
+            }
+            case BRACED_URI_LITERAL -> NameTest.anyLocalName(wildcard.uri(), wildcard.text());
+        };
     }
 
     public static <EqNameCtx extends ParserRuleContext> NodeTest elementTest(
