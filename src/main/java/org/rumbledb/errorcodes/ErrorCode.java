@@ -229,6 +229,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidNodeNameErrorCode = registerBuiltIn("XQDY0096");
     public static final ErrorCode DuplicateAttributeErrorCode = registerBuiltIn("XQDY0025");
     public static final ErrorCode DuplicateDirectAttributeErrorCode = registerBuiltIn("XQST0040");
+    public static final ErrorCode DuplicateNamespaceDeclarationAttributeErrorCode = registerBuiltIn("XQST0071");
     public static final ErrorCode InvalidComputedNamespaceConstructorErrorCode = registerBuiltIn("XQDY0101");
     public static final ErrorCode AttributeOrNamespaceAfterNonAttributeErrorCode = registerBuiltIn("XQTY0024");
 
