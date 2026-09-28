@@ -72,7 +72,7 @@ final class SubsequenceBounds {
 
     record Slice(BigInteger offset, BigInteger length) {
         BigInteger end() {
-            return offset.add(length);
+            return this.offset.add(this.length);
         }
     }
 }

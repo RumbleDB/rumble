@@ -123,8 +123,8 @@ public class RangeOperationIterator extends ItemRuntimePlan
      */
     public record Bounds(long first, long last) {
         public BigInteger size() {
-            return BigInteger.valueOf(last)
-                    .subtract(BigInteger.valueOf(first))
+            return BigInteger.valueOf(this.last)
+                    .subtract(BigInteger.valueOf(this.first))
                     .add(BigInteger.ONE)
                     .max(BigInteger.ZERO);
         }
