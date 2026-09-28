@@ -185,18 +185,16 @@ public final class PrimaryTranslation {
         if (ctx.params() != null) {
             for (InlineFunctionExprContext.InlineFunctionParam<VarBindingCtx, SeqTypeCtx> param : ctx.params()) {
                 Name paramName = parseVariableBinding.apply(param.name());
-                SequenceType paramType = SequenceType.createSequenceType("item*");
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInDefaultFunctionNamespace("inline-function`"),
                             paramName,
                             translationContext.metadata(param.context()));
                 }
-                if (param.sequenceType() != null) {
-                    paramType = processSequenceType.apply(param.sequenceType());
-                } else {
-                    paramType = SequenceType.createSequenceType("item*");
-                }
+
+                SequenceType paramType = param.sequenceType() != null
+                        ? processSequenceType.apply(param.sequenceType())
+                        : SequenceType.createSequenceType("item*");
                 fnParams.put(paramName, paramType);
             }
         }
@@ -220,19 +218,21 @@ public final class PrimaryTranslation {
             return new ArrayConstructorExpression(new ArrayList<>(), true, translationContext.metadata(ctx.context()));
         }
         List<Expression> memberExpressions = new ArrayList<>();
+
         if (translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
             for (ExprSingleCtx memberCtx : memberCtxs) {
                 memberExpressions.add(visitExprSingle.apply(memberCtx));
             }
             Expression commaExpression =
                     new CommaExpression(memberExpressions, translationContext.metadata(ctx.context()));
+
             return new ArrayConstructorExpression(commaExpression, translationContext.metadata(ctx.context()));
-        } else {
-            for (ExprSingleCtx memberCtx : memberCtxs) {
-                memberExpressions.add(visitExprSingle.apply(memberCtx));
-            }
-            return new ArrayConstructorExpression(memberExpressions, true, translationContext.metadata(ctx.context()));
         }
+
+        for (ExprSingleCtx memberCtx : memberCtxs) {
+            memberExpressions.add(visitExprSingle.apply(memberCtx));
+        }
+        return new ArrayConstructorExpression(memberExpressions, true, translationContext.metadata(ctx.context()));
     }
 
     public static <EnclosedExprCtx extends ParserRuleContext> ArrayConstructorExpression curlyArrayConstructor(
