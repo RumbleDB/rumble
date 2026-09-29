@@ -17,6 +17,7 @@ package org.rumbledb.serialization;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.nio.charset.CharsetEncoder;
 import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.List;
@@ -36,9 +37,12 @@ public class JsonSerializer implements Serializer, Serializable {
     private static final long serialVersionUID = 1L;
 
     private final SerializationParameters params;
+    // Cached once per serializer instance — encoding is fixed for the lifetime of a serialization pass.
+    private final CharsetEncoder encodingChecker;
 
     public JsonSerializer(SerializationParameters params) {
         this.params = params;
+        this.encodingChecker = SerializerUtils.buildEncodingChecker(params);
     }
 
     @Override
@@ -315,7 +319,7 @@ public class JsonSerializer implements Serializer, Serializable {
         }
         String normalized = applyNormalization(pendingUnmapped.toString());
         pendingUnmapped.setLength(0);
-        SerializerUtils.appendJsonEscapedString(sb, normalized, this.params);
+        SerializerUtils.appendJsonEscapedString(sb, normalized, this.encodingChecker);
     }
 
     private RumbleException jsonSerializationError(String message, String errorCode) {

@@ -263,4 +263,8 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode UnsupportedNormalizationFormSerialization = registerBuiltIn("SESU0011");
     public static final ErrorCode InvalidSerializationParameterValue = registerBuiltIn("SEPM0016");
+    public static final ErrorCode InvalidSerializationParameterDocument = registerBuiltIn("SEPM0017");
+    public static final ErrorCode DuplicateCharacterMap = registerBuiltIn("SEPM0018");
+    public static final ErrorCode DuplicateSerializationParameter = registerBuiltIn("SEPM0019");
+    public static final ErrorCode JsonSerializationSequence = registerBuiltIn("SERE0023");
 }

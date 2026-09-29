@@ -18,8 +18,7 @@ package org.rumbledb.serialization;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
-
-import org.apache.commons.text.StringEscapeUtils;
+import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.FunctionIdentifier;
@@ -37,8 +36,16 @@ public class AdaptiveSerializer implements Serializer, Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final SerializationParameters params;
+    private final XmlSerializer nodeSerializer;
+
     public AdaptiveSerializer(SerializationParameters params) {
-        // reserved for future adaptive serialization parameters
+        this.params = params != null ? params : SerializationParameters.defaults();
+        SerializationParameters xmlParams = SerializationParameters.copy(this.params);
+        xmlParams.setMethod("xml");
+        xmlParams.setOmitXmlDeclaration(true);
+        xmlParams.setIndent(false);
+        this.nodeSerializer = new XmlSerializer(xmlParams);
     }
 
     @Override
@@ -67,7 +74,7 @@ public class AdaptiveSerializer implements Serializer, Serializable {
             return;
         }
         if (item.isNode()) {
-            appendNode(item, sb, false);
+            appendNode(item, sb);
             return;
         }
         if (item.isAtomic()) {
@@ -178,8 +185,7 @@ public class AdaptiveSerializer implements Serializer, Serializable {
             return;
         }
         if (item.isDateTime()) {
-            appendTypedAtomic(
-                    type.equals(BuiltinTypesCatalogue.dateTimeStampItem) ? "xs:dateTime" : "xs:dateTime", item, sb);
+            appendTypedAtomic("xs:dateTime", item, sb);
             return;
         }
         if (item.isDate()) {
@@ -256,12 +262,33 @@ public class AdaptiveSerializer implements Serializer, Serializable {
     }
 
     private String quoteAsLiteral(String value) {
-        int singleQuotes = count(value, '\'');
-        int doubleQuotes = count(value, '"');
+        String mappedValue = applyCharacterMaps(value);
+        int singleQuotes = count(mappedValue, '\'');
+        int doubleQuotes = count(mappedValue, '"');
         if (doubleQuotes <= singleQuotes) {
-            return "\"" + value.replace("\"", "\"\"") + "\"";
+            return "\"" + mappedValue.replace("\"", "\"\"") + "\"";
         }
-        return "'" + value.replace("'", "''") + "'";
+        return "'" + mappedValue.replace("'", "''") + "'";
+    }
+
+    private String applyCharacterMaps(String value) {
+        Map<String, String> characterMaps = this.params.getCharacterMaps();
+        if (characterMaps == null || characterMaps.isEmpty() || value == null || value.isEmpty()) {
+            return value;
+        }
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < value.length(); ) {
+            int codePoint = value.codePointAt(i);
+            String current = new String(Character.toChars(codePoint));
+            String replacement = characterMaps.get(current);
+            if (replacement != null) {
+                result.append(replacement);
+            } else {
+                result.append(current);
+            }
+            i += Character.charCount(codePoint);
+        }
+        return result.toString();
     }
 
     private int count(String value, char ch) {
@@ -302,74 +329,34 @@ public class AdaptiveSerializer implements Serializer, Serializable {
         sb.append(identifier.getArity());
     }
 
-    private void appendNode(Item item, StringBuilder sb, boolean inElementMarkup) {
-        if (item.isDocumentNode()) {
-            for (Item child : item.children()) {
-                appendNode(child, sb, false);
-            }
-            return;
-        }
-        if (item.isElementNode()) {
-            sb.append("<");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            for (Item attribute : item.attributes()) {
-                appendNode(attribute, sb, true);
-            }
-            for (Item namespace : item.declaredNamespaceNodes()) {
-                appendNode(namespace, sb, true);
-            }
-            sb.append(">");
-            for (Item child : item.children()) {
-                appendNode(child, sb, false);
-            }
-            sb.append("</");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            sb.append(">");
-            return;
-        }
+    private void appendNode(Item item, StringBuilder sb) {
         if (item.isAttributeNode()) {
-            if (inElementMarkup) {
-                sb.append(" ");
-            }
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            sb.append("=\"");
-            sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
-            sb.append("\"");
+            appendAttribute(item, sb);
             return;
         }
         if (item.isNamespaceNode()) {
-            NamespaceItem ns = (NamespaceItem) item;
-            if (inElementMarkup) {
-                sb.append(" ");
-            }
-            String nsPrefix = ns.getPrefix();
-            if (nsPrefix == null || nsPrefix.isEmpty()) {
-                sb.append("xmlns=\"");
-            } else {
-                sb.append("xmlns:").append(nsPrefix).append("=\"");
-            }
-            sb.append(StringEscapeUtils.escapeXml11(ns.getUri()));
-            sb.append("\"");
+            appendNamespace((NamespaceItem) item, sb);
             return;
         }
-        if (item.isTextNode()) {
-            sb.append(StringEscapeUtils.escapeXml11(item.getStringValue()));
-            return;
+        this.nodeSerializer.serialize(item, sb, "", false);
+    }
+
+    private void appendAttribute(Item item, StringBuilder sb) {
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        sb.append("=\"");
+        sb.append(this.nodeSerializer.escapeAttribute(this.nodeSerializer.prepareAttributeValue(item)));
+        sb.append("\"");
+    }
+
+    private void appendNamespace(NamespaceItem ns, StringBuilder sb) {
+        String prefix = ns.getPrefix();
+        if (prefix == null || prefix.isEmpty()) {
+            sb.append("xmlns=\"");
+        } else {
+            sb.append("xmlns:").append(prefix).append("=\"");
         }
-        if (item.isCommentNode()) {
-            sb.append("<!--").append(item.getStringValue()).append("-->");
-            return;
-        }
-        if (item.isProcessingInstructionNode()) {
-            sb.append("<?");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            String content = item.getStringValue();
-            if (content != null && !content.isEmpty()) {
-                sb.append(" ").append(content);
-            }
-            sb.append("?>");
-            return;
-        }
-        throw new OurBadException("Unsupported node kind for adaptive serialization.");
+        String uri = ns.getUri() == null ? "" : ns.getUri();
+        sb.append(this.nodeSerializer.escapeAttribute(uri));
+        sb.append("\"");
     }
 }

@@ -40,9 +40,17 @@ public class XmlSerializer implements Serializer, Serializable {
     private static final long serialVersionUID = 1L;
 
     protected final SerializationParameters params;
+    // Cached once per serializer instance — encoding is fixed for the lifetime of a serialization pass.
+    private final CharsetEncoder encodingChecker;
 
     public XmlSerializer(SerializationParameters params) {
         this.params = params != null ? params : SerializationParameters.defaults();
+        this.encodingChecker = buildEncodingChecker(this.params);
+    }
+
+    private static CharsetEncoder buildEncodingChecker(SerializationParameters params) {
+        String encoding = params.getEncoding() == null ? "UTF-8" : params.getEncoding();
+        return Charset.forName(encoding).newEncoder();
     }
 
     @Override
@@ -90,11 +98,7 @@ public class XmlSerializer implements Serializer, Serializable {
             return;
         }
         if (item.isAttributeNode() || item.isNamespaceNode()) {
-            if (isTopLevel) {
-                throw serializationError("Top-level attribute and namespace nodes cannot be serialized.", "SENR0001");
-            }
-            appendAttributeOrNamespaceNode(item, sb);
-            return;
+            throw serializationError("Top-level attribute and namespace nodes cannot be serialized.", "SENR0001");
         }
         if (item.isProcessingInstructionNode()) {
             sb.append("<?");
@@ -574,9 +578,7 @@ public class XmlSerializer implements Serializer, Serializable {
     }
 
     private boolean isEncodableInSelectedEncoding(int codePoint) {
-        String encoding = this.params.getEncoding() == null ? "UTF-8" : this.params.getEncoding();
-        CharsetEncoder encoder = Charset.forName(encoding).newEncoder();
-        return encoder.canEncode(new String(Character.toChars(codePoint)));
+        return this.encodingChecker.canEncode(new String(Character.toChars(codePoint)));
     }
 
     private void appendDecimalCharacterReference(StringBuilder result, int codePoint) {
