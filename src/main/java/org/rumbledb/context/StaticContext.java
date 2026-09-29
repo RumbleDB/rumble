@@ -27,7 +27,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.config.SerializationParameterBuilder;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
@@ -440,7 +439,7 @@ public class StaticContext {
         }
         getExplicitSerializationParameterNames().add(name);
         // update the local copy of theserialization parameters with the provided parameter name and value
-        SerializationParameterBuilder.update(this.serializationParameters, name, value);
+        SerializationParameterUtils.applyConfigOption(this.serializationParameters, name, value);
     }
 
     private Set<String> getExplicitSerializationParameterNames() {
