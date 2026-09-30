@@ -77,6 +77,20 @@ public final class XmlSchemaCatalog {
         return Optional.ofNullable(this.schemaModel.getTypeDefinition(name.getLocalName(), name.getNamespace()));
     }
 
+    /**
+     * Returns all global named types in the catalog, including built-in types, lists, unions, and complex types.
+     * The names have no prefix; callers can use {@link #isSchemaCastTarget(Name)} to select constructor candidates.
+     */
+    public List<Name> getNamedTypeNames() {
+        XSNamedMap types = this.schemaModel.getComponents(XSConstants.TYPE_DEFINITION);
+        List<Name> names = new ArrayList<>();
+        for (int index = 0; index < types.getLength(); index++) {
+            XSTypeDefinition type = (XSTypeDefinition) types.item(index);
+            names.add(new Name(type.getNamespace(), null, type.getName()));
+        }
+        return List.copyOf(names);
+    }
+
     /** Resolves a global declaration and the substitutions allowed by its blocking constraints. */
     public SchemaElementNodeItemType getSchemaElementTest(Name name, ExceptionMetadata metadata) {
         XSElementDeclaration declaration = this.schemaModel.getElementDeclaration(
