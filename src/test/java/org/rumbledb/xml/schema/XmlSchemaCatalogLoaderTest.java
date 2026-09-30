@@ -67,18 +67,24 @@ public class XmlSchemaCatalogLoaderTest {
 
     @Test
     public void enumeratesNamedTypesIncludingListsAndComplexTypes(@TempDir Path directory) throws Exception {
-        Files.writeString(directory.resolve("main.xsd"), schema(NAMESPACE, """
-            <xs:simpleType name="Count"><xs:restriction base="xs:integer"/></xs:simpleType>
-            <xs:simpleType name="Counts"><xs:list itemType="t:Count"/></xs:simpleType>
-            <xs:simpleType name="CountOrString"><xs:union memberTypes="t:Count xs:string"/></xs:simpleType>
-            <xs:complexType name="Record"><xs:sequence/></xs:complexType>
-            <xs:element name="anonymous"><xs:complexType><xs:sequence/></xs:complexType></xs:element>
-            """));
+        Files.writeString(
+                directory.resolve("main.xsd"),
+                schema(
+                        NAMESPACE,
+                        """
+                        <xs:simpleType name="Count"><xs:restriction base="xs:integer"/></xs:simpleType>
+                        <xs:simpleType name="Counts"><xs:list itemType="t:Count"/></xs:simpleType>
+                        <xs:simpleType name="CountOrString"><xs:union memberTypes="t:Count xs:string"/></xs:simpleType>
+                        <xs:complexType name="Record"><xs:sequence/></xs:complexType>
+                        <xs:element name="anonymous"><xs:complexType><xs:sequence/></xs:complexType></xs:element>
+                        """));
 
         MainModule module = compile(
                 "import schema namespace t = \"urn:test\" at \"main.xsd\"; 1",
-                directory.resolve("query.xq").toUri(), new ResourceResolver());
-        XmlSchemaCatalog catalog = module.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
+                directory.resolve("query.xq").toUri(),
+                new ResourceResolver());
+        XmlSchemaCatalog catalog =
+                module.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
         List<Name> names = catalog.getNamedTypeNames();
         Set<String> importedNames = names.stream()
                 .filter(name -> NAMESPACE.equals(name.getNamespace()))
