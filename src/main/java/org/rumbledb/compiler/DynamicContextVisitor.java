@@ -77,7 +77,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     private ExternalBindings externalBindings;
     private Map<String, DynamicContext> importedModuleContexts;
 
-    DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
+    public DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
         this.configuration = configuration;
         this.externalBindings = externalBindings;
         this.importedModuleContexts = new HashMap<>();
@@ -108,7 +108,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (!expression.getReturnType().isResolved()) {
             expression.getReturnType().resolve(argument, expression.getMetadata());
         }
-        ItemRuntimePlan bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+        ItemRuntimePlan bodyIterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
         List<Item> functionInList = bodyIterator.materialize(argument);
         if (functionInList.size() != 1) {
             throw new OurBadException("A function declaration should produce exactly one function");
@@ -123,23 +123,6 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         return defaultAction(expression, argument);
     }
 
-    // @Override
-    // public DynamicContext visitTransformExpression(TransformExpression expression, DynamicContext argument) {
-    //
-    // for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
-    // Expression child = copyDecl.getSourceExpression();
-    // this.visit(child, argument);
-    // ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
-    // iterator.bindToVariableInDynamicContext(argument, copyDecl.getVariableName(), argument);
-    // }
-    //
-    // this.visit(expression.getModifyExpression(), argument);
-    //
-    // this.visit(expression.getReturnExpression(), argument);
-    //
-    // return argument;
-    // }
-
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
         Name name = variableDeclaration.getVariableName();
@@ -147,7 +130,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Variable is not external: we use the expression.
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
-            ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+            ItemRuntimePlan iterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
             RuntimePlanBindings.bind(iterator, argument, name, argument);
             return argument;
         }
@@ -296,7 +279,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Variable is external and we do not have any supplied value: we fall back to expression, if any.
         Expression expression = variableDeclaration.getExpression();
         if (expression != null) {
-            ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+            ItemRuntimePlan iterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
             RuntimePlanBindings.bind(iterator, argument, name, argument);
             return argument;
         }

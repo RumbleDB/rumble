@@ -20,7 +20,10 @@ import java.net.URI;
 
 import org.apache.spark.sql.SparkSession;
 
-import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.compiler.CompilationPipeline;
+import org.rumbledb.compiler.DynamicContextVisitor;
+import org.rumbledb.compiler.EffectiveConfigurationVisitor;
+import org.rumbledb.compiler.RuntimeIteratorVisitor;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
@@ -109,7 +112,8 @@ public class Rumble {
      */
     public SequenceOfItems runQuery(String query, URI baseUri) {
         org.rumbledb.bindings.ExternalBindings bindings = org.rumbledb.bindings.ExternalBindings.empty();
-        MainModule mainModule = VisitorHelpers.parseMainModule(query, baseUri, this.compilationConfiguration, bindings);
+        MainModule mainModule =
+                CompilationPipeline.compileMainModule(query, baseUri, this.compilationConfiguration, bindings);
         return createSequence(mainModule, bindings);
     }
 
@@ -133,7 +137,8 @@ public class Rumble {
      */
     public SequenceOfItems runQuery(String query, org.rumbledb.bindings.ExternalBindings bindings) {
         org.rumbledb.bindings.ExternalBindings snapshot = bindings.snapshot();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(query, this.compilationConfiguration, snapshot);
+        MainModule mainModule =
+                CompilationPipeline.compileMainModuleFromQuery(query, this.compilationConfiguration, snapshot);
         return createSequence(mainModule, snapshot);
     }
 
@@ -186,16 +191,17 @@ public class Rumble {
     public SequenceOfItems runQuery(URI location, org.rumbledb.bindings.ExternalBindings bindings) throws IOException {
         org.rumbledb.bindings.ExternalBindings snapshot = bindings.snapshot();
         MainModule mainModule =
-                VisitorHelpers.parseMainModuleFromLocation(location, this.compilationConfiguration, snapshot);
+                CompilationPipeline.compileMainModuleFromLocation(location, this.compilationConfiguration, snapshot);
         return createSequence(mainModule, snapshot);
     }
 
     private SequenceOfItems createSequence(MainModule mainModule, org.rumbledb.bindings.ExternalBindings bindings) {
-        var effectiveConfiguration = VisitorHelpers.getEffectiveConfiguration(
-                mainModule, this.compilationConfiguration.runtimeConfiguration().toBuilder());
+        var effectiveConfiguration = new EffectiveConfigurationVisitor()
+                .getEffectiveConfiguration(
+                        mainModule, this.compilationConfiguration.runtimeConfiguration().toBuilder());
         DynamicContext dynamicContext =
-                VisitorHelpers.createDynamicContext(mainModule, effectiveConfiguration, bindings);
-        ItemRuntimePlan plan = VisitorHelpers.generateRuntimeIterator(mainModule, effectiveConfiguration);
+                new DynamicContextVisitor(effectiveConfiguration, bindings).visit(mainModule, null);
+        ItemRuntimePlan plan = new RuntimeIteratorVisitor(effectiveConfiguration).generateRuntimePlan(mainModule);
 
         return new SequenceOfItems(plan, dynamicContext, effectiveConfiguration);
     }
@@ -223,7 +229,7 @@ public class Rumble {
      * @return serialization of the JSONiq Expression Tree.
      */
     public String serializeToJSONiq(String query) {
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+        MainModule mainModule = CompilationPipeline.compileMainModuleFromQuery(
                 query, this.compilationConfiguration, ExternalBindings.empty().getInternalBindings());
         StringBuilder sb = new StringBuilder();
         mainModule.serializeToJSONiq(sb, 0);

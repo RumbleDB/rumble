@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
@@ -269,6 +271,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
+@Log4j2
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan> {
 
     private final VisitorConfig visitorConfig;
@@ -277,6 +280,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     public RuntimeIteratorVisitor(RumbleConfiguration config) {
         this.visitorConfig = VisitorConfig.RUNTIME_PLAN_GENERATION;
         this.config = config;
+    }
+
+    /** Generates a runtime plan and renders it when debug output is enabled. */
+    public ItemRuntimePlan generateRuntimePlan(Node node) {
+        ItemRuntimePlan result = visit(node, null);
+        if (this.config.debug().printIteratorTree() || this.config.debug().logging()) {
+            StringBuilder sb = new StringBuilder();
+            result.print(sb, 0);
+            log.debug(sb);
+        }
+        return result;
     }
 
     @Override
