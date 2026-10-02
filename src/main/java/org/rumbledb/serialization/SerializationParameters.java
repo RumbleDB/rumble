@@ -19,63 +19,84 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
- * Default serialization parameters stored in the XQuery static context.
+ * Serialization parameters with the fixed fn:serialize map defaults from F&amp;O 3.1.
+ * RumbleDB also uses these defaults for fn:serialize with omitted or XML parameters.
+ * Field initializers apply to every new instance; mutable collections belong to that instance.
+ * Application output defaults are selected separately by {@link #defaults(String)}.
  *
- * Specification references:
+ * @see <a href="https://www.w3.org/TR/xpath-functions-31/#func-serialize">F&amp;O 3.1 fn:serialize</a>
  *
- * <ul>
- * <li>XQuery 3.1 Static Context Components — default serialization parameters (link:
- * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
- * <li>XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
- * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)</li>
- * </ul>
+ *      Specification references:
+ *
+ *      <ul>
+ *      <li>XQuery 3.1 Static Context Components — default serialization parameters (link:
+ *      https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
+ *      <li>XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
+ *      https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)</li>
+ *      </ul>
  *
  */
+@Getter
 @Setter
 public class SerializationParameters implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    // Getters and setters
     /**
      * Serialization method.
      * "method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      * Note: RumbleDB supports additional methods in addition to the XQuery 3.1 specification.
      */
-    @Getter
-    private String method;
+    private String method = "xml";
+
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private boolean useLanguageDefaultMethod;
+
+    public void setMethod(String method) {
+        this.method = method;
+        this.useLanguageDefaultMethod = false;
+    }
+
+    /** Reapplies language defaults when parsing detects a different language; explicit options are preserved. */
+    public void applyLanguageDefaults(String queryLanguage) {
+        if (this.useLanguageDefaultMethod) {
+            this.method = defaultMethod(queryLanguage);
+        }
+    }
 
     /**
      * Character encoding.
      * "encoding" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String encoding;
+    private String encoding = "UTF-8";
 
     /**
      * Output version (for example XML 1.0/1.1 or HTML 4.0/5.0 depending on the method).
      * "version" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String version;
+    private String version = "1.0";
 
     /**
      * Whether to omit the XML declaration.
      * "omit-xml-declaration" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    private boolean omitXmlDeclaration;
+    @Getter(AccessLevel.NONE)
+    private boolean omitXmlDeclaration = true;
 
     public enum Standalone {
         YES,
@@ -88,15 +109,13 @@ public class SerializationParameters implements Serializable {
      * "standalone" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private Standalone standalone;
+    private Standalone standalone = Standalone.OMIT;
 
     /**
      * DocType system identifier.
      * "doctype-system" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
     private String doctypeSystem;
 
     /**
@@ -104,7 +123,6 @@ public class SerializationParameters implements Serializable {
      * "doctype-public" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
     private String doctypePublic;
 
     /**
@@ -112,22 +130,21 @@ public class SerializationParameters implements Serializable {
      * "media-type" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String mediaType;
+    private String mediaType; // null selects a default for the current method
 
     /**
      * Normalize characters using a Unicode normalization form.
      * "normalization-form" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String normalizationForm;
+    private String normalizationForm = "none";
 
     /**
      * Whether to declare namespace undeclarations.
      * "undeclare-prefixes" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter(AccessLevel.NONE)
     private boolean undeclarePrefixes;
 
     /**
@@ -135,44 +152,44 @@ public class SerializationParameters implements Serializable {
      * "use-character-maps" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private Map<String, String> characterMaps;
+    private Map<String, String> characterMaps = new HashMap<>();
 
     /**
      * Element QNames to output using CDATA sections.
      * "cdata-section-elements" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private Set<String> cdataSectionElements;
+    private Set<String> cdataSectionElements = new HashSet<>();
 
     /**
      * Include meta http-equiv content-type.
      * "include-content-type" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    private boolean includeContentType;
+    @Getter(AccessLevel.NONE)
+    private boolean includeContentType = true;
 
     /**
      * Escape URI attributes.
      * "escape-uri-attributes" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    private boolean escapeUriAttributes;
+    @Getter(AccessLevel.NONE)
+    private boolean escapeUriAttributes = true;
 
     /**
-     * HTML version (implementation-defined default).
+     * HTML version.
      * "html-version" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private String htmlVersion;
+    private String htmlVersion = "5";
 
     /**
      * Insert byte-order mark.
      * "byte-order-mark" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter(AccessLevel.NONE)
     private boolean byteOrderMark;
 
     /**
@@ -180,6 +197,7 @@ public class SerializationParameters implements Serializable {
      * "indent" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter(AccessLevel.NONE)
     private boolean indent;
 
     /**
@@ -187,23 +205,20 @@ public class SerializationParameters implements Serializable {
      * "indent-spaces" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private int indentSpaces; // -1 means unspecified
+    private int indentSpaces = -1; // -1 means unspecified
 
     /**
      * Elements whose content should not be indented.
      * "suppress-indentation" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private Set<String> suppressIndentation;
+    private Set<String> suppressIndentation = new HashSet<>();
 
     /**
-     * Separator between items of the top-level sequence.
+     * Separator between items of the top-level sequence; null means absent, not an empty separator.
      * "item-separator" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
     private String itemSeparator;
 
     /**
@@ -211,6 +226,7 @@ public class SerializationParameters implements Serializable {
      * "allow-duplicate-names" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
+    @Getter(AccessLevel.NONE)
     private boolean allowDuplicateNames;
 
     public enum JsonNodeOutputMethod {
@@ -227,54 +243,67 @@ public class SerializationParameters implements Serializable {
      * "json-node-output-method" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
      * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)
      */
-    @Getter
-    private JsonNodeOutputMethod jsonNodeOutputMethod;
+    private JsonNodeOutputMethod jsonNodeOutputMethod = JsonNodeOutputMethod.XML;
 
     /**
      * Extension/unknown parameters preserved for forward compatibility.
      */
-    @Getter
-    private Map<String, String> extensionParameters;
+    private Map<String, String> extensionParameters = new HashMap<>();
 
     /**
      * Spark-specific options for DataFrameWriter (e.g., CSV delimiter, compression, etc.).
      * These are passed directly to Spark's DataFrameWriter.option() method.
      */
-    @Getter
-    private Map<String, String> sparkOptions;
+    private Map<String, String> sparkOptions = new HashMap<>();
 
     public static SerializationParameters defaults() {
         return defaults(null);
     }
 
+    /**
+     * Application output defaults. JSONiq uses the hybrid method and XQuery uses XML.
+     * Both leave item-separator absent so sequence normalization supplies atomic-value spaces.
+     * fn:serialize uses the standard field defaults through the no-argument constructor instead.
+     */
     public static SerializationParameters defaults(String queryLanguage) {
         SerializationParameters p = new SerializationParameters();
-        // Spec-aligned conservative defaults; implementation-defined noted explicitly
-        p.method = defaultMethod(queryLanguage); // implementation defined default
-        p.encoding = "UTF-8";
+        p.method = defaultMethod(queryLanguage);
         p.version = null;
         p.omitXmlDeclaration = false;
-        p.standalone = Standalone.OMIT;
-        p.doctypeSystem = null;
-        p.doctypePublic = null;
-        p.mediaType = null;
-        p.normalizationForm = "none";
-        p.undeclarePrefixes = false;
-        p.characterMaps = new HashMap<>();
-        p.cdataSectionElements = new HashSet<>();
-        p.includeContentType = true;
-        p.escapeUriAttributes = true;
-        p.htmlVersion = null; // implementation-defined
-        p.byteOrderMark = false;
-        p.indent = false;
-        p.indentSpaces = -1; // implementation-defined/unspecified
-        p.suppressIndentation = new HashSet<>();
-        p.itemSeparator = "\n"; // implementation-defined
-        p.allowDuplicateNames = false;
+        p.htmlVersion = null;
+        p.useLanguageDefaultMethod = true;
         p.jsonNodeOutputMethod = JsonNodeOutputMethod.UNSPECIFIED;
-        p.extensionParameters = new HashMap<>();
-        p.sparkOptions = new HashMap<>();
         return p;
+    }
+
+    /** Returns the method name, accepting the equivalent Q{}name spelling for standard methods. */
+    public String getMethod() {
+        if (this.method == null) {
+            return null;
+        }
+        String name = this.method.trim();
+        return name.startsWith("Q{}") ? name.substring(3) : name;
+    }
+
+    /**
+     * An explicit media type takes precedence. Otherwise choose a suitable type for the current
+     * method, so overriding the method never leaves a stale default media type behind.
+     */
+    public String getMediaType() {
+        if (this.mediaType != null && !this.mediaType.isEmpty()) {
+            return this.mediaType;
+        }
+        String methodName = getMethod();
+        if (methodName == null) {
+            return "application/json";
+        }
+        return switch (methodName.toLowerCase(Locale.ROOT)) {
+            case "xml" -> "application/xml";
+            case "xhtml" -> "application/xhtml+xml";
+            case "html" -> "text/html";
+            case "json" -> "application/json";
+            default -> "text/plain"; // text, adaptive, and implementation-defined text formats
+        };
     }
 
     private static String defaultMethod(String queryLanguage) {
@@ -352,6 +381,7 @@ public class SerializationParameters implements Serializable {
     public static SerializationParameters copy(SerializationParameters parameters) {
         SerializationParameters copy = new SerializationParameters();
         copy.method = parameters.method;
+        copy.useLanguageDefaultMethod = parameters.useLanguageDefaultMethod;
         copy.encoding = parameters.encoding;
         copy.version = parameters.version;
         copy.omitXmlDeclaration = parameters.omitXmlDeclaration;

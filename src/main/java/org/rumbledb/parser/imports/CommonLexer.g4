@@ -85,7 +85,7 @@ CDATA
    ;
 
 PRAGMA
-   : '(#' WS? (NCName ':')? NCName (WS .*?)? '#)'
+   : '(#' WS? (URIQualifiedName | FullQName | NCName) (WS .*?)? '#)'
    ;
    // WHITESPACE
    
@@ -936,7 +936,8 @@ ENTER_STRING
    ;
 
 EXIT_INTERPOLATION
-   : RBRACE GRAVE -> popMode
+   :
+   { !_modeStack.isEmpty() && _modeStack.peek() == STRING_MODE }? RBRACE GRAVE -> popMode
    ;
 
 ContentChar

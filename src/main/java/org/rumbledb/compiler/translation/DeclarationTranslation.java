@@ -27,6 +27,7 @@ import org.rumbledb.compiler.context.FunctionDeclContext;
 import org.rumbledb.compiler.context.OptionDeclContext;
 import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
+import org.rumbledb.compiler.utils.AnnotationValidator;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -70,6 +71,7 @@ public final class DeclarationTranslation {
                     Function<SeqTypeCtx, SequenceType> processSequenceType,
                     Function<ExprSingleCtx, Expression> visitExprSingle) {
         List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
+        AnnotationValidator.validateVariableAnnotations(annotations);
         SequenceType seq = null;
         Name var = parseVariableBinding.apply(ctx.varBinding());
         if (ctx.sequenceType() != null) {
@@ -139,6 +141,7 @@ public final class DeclarationTranslation {
                     Function<ReturnTypeCtx, SequenceType> processReturnType,
                     Function<FnBodyCtx, StatementsAndOptionalExpr> visitStatementsAndOptionalExpr) {
         List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
+        AnnotationValidator.validateFunctionAnnotations(annotations);
         Name name = parseFunctionName.apply(ctx.functionName());
         FunctionDeclarationValidator.validateFunctionName(name, translationContext.metadata(ctx.functionName()));
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();

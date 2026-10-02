@@ -48,7 +48,7 @@ public class FormattingConfig implements Serializable {
      *
      * <p>
      * The default place is used by date/time formatting functions when no explicit
-     * place is supplied. The initial default is {@code UTC}.
+     * place is supplied. When unset, formatting preserves the value's timezone.
      * </p>
      */
     String defaultFormattingPlace;
@@ -80,7 +80,7 @@ public class FormattingConfig implements Serializable {
     @Builder(toBuilder = true)
     private FormattingConfig(
             String defaultFormattingPlace, String defaultFormattingCalendar, String defaultFormattingLanguage) {
-        this.defaultFormattingPlace = Objects.requireNonNullElse(defaultFormattingPlace, "UTC");
+        this.defaultFormattingPlace = defaultFormattingPlace;
         this.defaultFormattingCalendar =
                 Objects.requireNonNullElse(defaultFormattingCalendar, FormattingCalendarModeSupport.DEFAULT);
         this.defaultFormattingLanguage = Objects.requireNonNullElse(
@@ -107,7 +107,7 @@ public class FormattingConfig implements Serializable {
 
     private static String normalizeFormattingPlace(String place) {
         if (place == null) {
-            return "UTC";
+            return null;
         }
         try {
             java.time.ZoneId.of(place);

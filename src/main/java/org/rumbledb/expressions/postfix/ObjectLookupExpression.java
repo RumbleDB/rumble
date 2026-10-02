@@ -27,7 +27,7 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
 @Getter
-public class ObjectLookupExpression extends Expression {
+public class ObjectLookupExpression extends Expression implements LookupExpression {
 
     private Expression mainExpression;
     private Expression lookupExpression;

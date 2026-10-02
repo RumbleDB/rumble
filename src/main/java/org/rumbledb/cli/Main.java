@@ -57,7 +57,7 @@ public class Main {
 
             configuration =
                     Objects.requireNonNull(invocation.configuration(), "CLI invocation must provide a configuration");
-            LoggingConfiguration.configure(configuration.debug());
+            LoggingConfiguration.configure(configuration);
         } catch (Exception e) {
             ConsoleOutput.error("⚠️ CLI Error: " + e.getMessage());
             System.exit(42);
@@ -123,7 +123,7 @@ public class Main {
                 ConsoleOutput.error(
                         """
                             ⚠️  There was a problem with the connection to the cluster.
-                            For more debug info including the exact exception and a stacktrace, please try again using --show-error-info yes in your command line.\
+                            For more debug info including the exact exception and a stacktrace, please try again using --show-error-info in your command line.\
                             """);
                 if (showErrorInfo) {
                     ConsoleOutput.stackTrace(ex);
@@ -135,7 +135,7 @@ public class Main {
                             Oh my oh my, we are very embarrassed, because there was a null pointer exception. 🙈
                             We would like to investigate this and make sure to fix it in a subsequent release. We would be very grateful if you could contact us or file an issue on GitHub with your query.
                             Link: https://github.com/RumbleDB/rumble/issues
-                            For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line.\
+                            For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info in your command line.\
                             """);
                 if (showErrorInfo) {
                     ConsoleOutput.stackTrace(ex);
@@ -147,7 +147,7 @@ public class Main {
                             We are very embarrassed, because an error has occured that we did not anticipate 🙈: %s
                             We would like to investigate this and make sure to fix it. We would be very grateful if you could contact us or file an issue on GitHub with your query.
                             Link: https://github.com/RumbleDB/rumble/issues
-                            For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line.\
+                            For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info in your command line.\
                             """
                                 .formatted(ex.getMessage()));
                 if (showErrorInfo) {

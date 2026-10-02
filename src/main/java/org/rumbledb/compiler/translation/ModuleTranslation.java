@@ -31,6 +31,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 /**
  * Translates module-level constructs: MainModule, LibraryModule, and Program.
@@ -77,6 +78,8 @@ public final class ModuleTranslation {
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", translationContext.metadata(ctx.context()));
         }
+        NamespaceBindingUtils.validatePrologNamespaceDeclaration(
+                prefix, namespace, translationContext.metadata(ctx.context()));
         translationContext.setLibraryModuleNamespace(namespace);
         translationContext.bindNamespace(prefix, namespace, translationContext.metadata(ctx.context()));
 

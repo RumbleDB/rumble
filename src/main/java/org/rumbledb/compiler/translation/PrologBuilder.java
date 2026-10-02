@@ -30,9 +30,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneBoundarySpaceDeclarationException;
 import org.rumbledb.exceptions.MoreThanOneCopyNamespacesDeclarationException;
 import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
+import org.rumbledb.exceptions.MoreThanOneOrderingModeDeclarationException;
 import org.rumbledb.exceptions.MultipleBaseURIException;
 import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
-import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.module.FunctionDeclaration;
@@ -42,6 +42,7 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
@@ -53,6 +54,7 @@ public final class PrologBuilder {
     private boolean constructionSet;
     private boolean boundarySpaceSet;
     private boolean emptyOrderSet;
+    private boolean orderingModeSet;
     private boolean copyNamespacesSet;
     private boolean baseUriSet;
     private boolean defaultCollationSet;
@@ -73,10 +75,12 @@ public final class PrologBuilder {
     // region State-Manipulating Header Receivers
 
     public void bindNamespace(String prefix, String uri, ExceptionMetadata metadata) {
+        NamespaceBindingUtils.validatePrologNamespaceDeclaration(prefix, uri, metadata);
         this.translationContext.bindNamespace(prefix, uri, metadata);
     }
 
     public void applyDefaultNamespace(boolean function, String uri, ExceptionMetadata metadata) {
+        NamespaceBindingUtils.validateDefaultNamespaceDeclaration(uri, metadata);
         if (function) {
             if (this.defaultFunctionNamespaceSet) {
                 throw new SemanticException("The default function namespace has already been declared.", metadata);
@@ -114,6 +118,22 @@ public final class PrologBuilder {
         }
         this.translationContext.moduleContext().setEmptySequenceOrderLeast(least);
         this.emptyOrderSet = true;
+    }
+
+    /**
+     * Applies the ordering mode declaration (W3C XQuery 3.1 §4.7).
+     *
+     * RumbleDB always preserves the order of sequences, we do not need to store the ordering mode in the module
+     * context.
+     * We only record that it was declared in the prolog to detect duplicates ([err:XQST0065]).
+     *
+     * @param metadata the location metadata
+     */
+    public void applyOrderingMode(ExceptionMetadata metadata) {
+        if (this.orderingModeSet) {
+            throw new MoreThanOneOrderingModeDeclarationException("The ordering mode was already set.", metadata);
+        }
+        this.orderingModeSet = true;
     }
 
     public void applyDecimalFormat(
@@ -195,6 +215,7 @@ public final class PrologBuilder {
         }
         String namespace = schema.getTargetNamespace();
         if (schema.getBindingKind() == SchemaImport.BindingKind.DEFAULT_ELEMENT_NAMESPACE) {
+            NamespaceBindingUtils.validateDefaultNamespaceDeclaration(namespace, schema.getMetadata());
             this.translationContext.bindNamespace("", namespace, schema.getMetadata());
             return;
         }
@@ -205,10 +226,7 @@ public final class PrologBuilder {
                     schema.getMetadata());
         }
         String prefix = schema.getPrefix();
-        if (prefix.equals("xml") || prefix.equals("xmlns")) {
-            throw new PredefinedPrefixInNamespaceDeclarationException(
-                    "Schema import prefix " + prefix + " is reserved.", schema.getMetadata());
-        }
+        NamespaceBindingUtils.validatePrologNamespaceDeclaration(prefix, namespace, schema.getMetadata());
         this.translationContext.bindNamespace(prefix, namespace, schema.getMetadata());
     }
 

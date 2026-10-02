@@ -90,7 +90,7 @@ public class XmlJsonHybridSerializer implements Serializer, Serializable {
                         sb.append(separator);
                         if (firstTimeInner) {
                             separator = "," + separator;
-                            firstTime = false;
+                            firstTimeInner = false;
                         }
                         serialize(member, sb, "", false);
                     }

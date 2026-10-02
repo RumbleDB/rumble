@@ -95,6 +95,7 @@ public class EffectiveConfigurationVisitor extends AbstractNodeVisitor<RumbleCon
                 || ("idref".equals(localName) && (arity == 1 || arity == 2))
                 || ("element-with-id".equals(localName) && (arity == 1 || arity == 2))
                 || ("path".equals(localName) && (arity == 0 || arity == 1))
-                || ("resolve-QName".equals(localName) && arity == 2);
+                || ("resolve-QName".equals(localName) && arity == 2)
+                || ("base-uri".equals(localName) && (arity == 0 || arity == 1));
     }
 }

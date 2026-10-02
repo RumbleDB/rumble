@@ -17,6 +17,7 @@ package org.rumbledb.serialization;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.nio.charset.CharsetEncoder;
 import java.text.Normalizer;
 import java.util.HashSet;
 import java.util.List;
@@ -36,9 +37,14 @@ public class JsonSerializer implements Serializer, Serializable {
     private static final long serialVersionUID = 1L;
 
     private final SerializationParameters params;
+    private final String indentUnit;
+    // Cached once per serializer instance — encoding is fixed for the lifetime of a serialization pass.
+    private final CharsetEncoder encodingChecker;
 
     public JsonSerializer(SerializationParameters params) {
         this.params = params;
+        this.indentUnit = " ".repeat(params.getIndentSpaces() < 0 ? 2 : params.getIndentSpaces());
+        this.encodingChecker = SerializerUtils.buildEncodingChecker(params);
     }
 
     @Override
@@ -82,7 +88,7 @@ public class JsonSerializer implements Serializer, Serializable {
             sb.append("{");
             String separator = "";
             if (this.params.getIndent()) {
-                separator = "\n" + indent + "  ";
+                separator = "\n" + indent + this.indentUnit;
             }
             boolean firstTime = true;
             for (String key : item.getStringKeys()) {
@@ -96,7 +102,7 @@ public class JsonSerializer implements Serializer, Serializable {
                 sb.append(":");
                 if (this.params.getIndent()) {
                     sb.append(" ");
-                    serialize(value, sb, indent + "  ", false);
+                    serialize(value, sb, indent + this.indentUnit, false);
                 } else {
                     serialize(value, sb, "", false);
                 }
@@ -158,7 +164,7 @@ public class JsonSerializer implements Serializer, Serializable {
     private void appendArrayMembers(List<Item> members, StringBuilder sb, String indent) {
         String separator = "";
         if (this.params.getIndent()) {
-            separator = "\n" + indent + "  ";
+            separator = "\n" + indent + this.indentUnit;
         }
         boolean firstTime = true;
         for (Item member : members) {
@@ -168,7 +174,7 @@ public class JsonSerializer implements Serializer, Serializable {
                 firstTime = false;
             }
             if (this.params.getIndent()) {
-                serialize(member, sb, indent + "  ", false);
+                serialize(member, sb, indent + this.indentUnit, false);
             } else {
                 serialize(member, sb, "", false);
             }
@@ -178,7 +184,7 @@ public class JsonSerializer implements Serializer, Serializable {
     private void appendArraySequenceMembers(List<List<Item>> memberSequences, StringBuilder sb, String indent) {
         String separator = "";
         if (this.params.getIndent()) {
-            separator = "\n" + indent + "  ";
+            separator = "\n" + indent + this.indentUnit;
         }
         boolean firstTime = true;
         for (List<Item> memberSequence : memberSequences) {
@@ -192,7 +198,7 @@ public class JsonSerializer implements Serializer, Serializable {
                         "JSON serialization does not allow sequences of length greater than one inside arrays.",
                         "SERE0023");
             }
-            appendJsonSequenceAsValue(memberSequence, sb, indent + "  ");
+            appendJsonSequenceAsValue(memberSequence, sb, indent + this.indentUnit);
         }
     }
 
@@ -217,7 +223,7 @@ public class JsonSerializer implements Serializer, Serializable {
         sb.append("{");
         String separator = "";
         if (this.params.getIndent()) {
-            separator = "\n" + indent + "  ";
+            separator = "\n" + indent + this.indentUnit;
         }
         boolean firstTime = true;
         Set<String> serializedKeys = this.params.getAllowDuplicateNames() ? null : new HashSet<>();
@@ -237,7 +243,7 @@ public class JsonSerializer implements Serializer, Serializable {
             if (this.params.getIndent()) {
                 sb.append(" ");
             }
-            appendJsonSequenceAsValue(mapItem.getSequenceByKey(key), sb, indent + "  ");
+            appendJsonSequenceAsValue(mapItem.getSequenceByKey(key), sb, indent + this.indentUnit);
         }
         if (this.params.getIndent()) {
             sb.append("\n").append(indent);
@@ -315,7 +321,7 @@ public class JsonSerializer implements Serializer, Serializable {
         }
         String normalized = applyNormalization(pendingUnmapped.toString());
         pendingUnmapped.setLength(0);
-        SerializerUtils.appendJsonEscapedString(sb, normalized, this.params);
+        SerializerUtils.appendJsonEscapedString(sb, normalized, this.encodingChecker);
     }
 
     private RumbleException jsonSerializationError(String message, String errorCode) {

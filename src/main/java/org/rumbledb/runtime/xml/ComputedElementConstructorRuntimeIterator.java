@@ -163,9 +163,10 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
         ProcessedContent processedContent = processContentExpression(
                 this.contentIterator == null ? List.of() : materialize.apply(this.contentIterator, contextToUse));
         // Create and return the element item
-        ElementItem elementItem = (ElementItem) ItemFactory.getInstance()
+        ElementItem elementItem = ItemFactory.getInstance()
                 .createXmlElementNode(
                         elementName.getQNameValue(), processedContent.children, processedContent.attributes);
+        elementItem.setConstructionBaseUri(this.staticContext.getStaticURI());
         // Only add namespaces explicitly declared on this element
         for (Item namespace : processedContent.namespaces) {
             elementItem.addOrReplaceNamespace(namespace);
@@ -240,7 +241,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
             if (namespaceBinding != null) {
                 String prefix = namespaceBinding[0];
                 String uri = namespaceBinding[1];
-                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri);
+                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri, this.getMetadata());
                 namespaces.add(ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri));
             } else {
                 filteredAttributes.add(attribute);
