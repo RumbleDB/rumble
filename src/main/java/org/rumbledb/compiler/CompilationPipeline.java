@@ -37,6 +37,22 @@ public final class CompilationPipeline {
 
     private CompilationPipeline() {}
 
+    /** Loads and compiles a main module using its resolved source URI. */
+    public static MainModule compileMainModuleFromLocation(
+            URI location, CompilationConfiguration configuration, ExternalBindings externalBindings)
+            throws IOException {
+        ModuleSourceLoader.ModuleSource source =
+                ModuleSourceLoader.readModuleSource(location, configuration, ExceptionMetadata.EMPTY_METADATA);
+        return compileMainModule(source.query(), source.systemId(), configuration, externalBindings);
+    }
+
+    /** Compiles query text using the configured static base URI. */
+    public static MainModule compileMainModuleFromQuery(
+            String query, CompilationConfiguration configuration, ExternalBindings externalBindings) {
+        URI location = ModuleSourceLoader.queryLocation(configuration.runtimeConfiguration());
+        return compileMainModule(query, location, configuration, externalBindings);
+    }
+
     static LibraryModule prepareLibraryModuleFromLocation(
             URI location,
             StaticContext importingContext,
