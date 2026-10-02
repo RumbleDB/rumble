@@ -33,8 +33,6 @@ import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.serialization.SequenceSerializer;
 import org.rumbledb.serialization.SerializationParameters;
-import org.rumbledb.serialization.Serializer;
-import org.rumbledb.serialization.Serializers;
 
 public class JsoniqQueryExecutor {
     private final RumbleConfiguration configuration;
@@ -47,6 +45,18 @@ public class JsoniqQueryExecutor {
     public JsoniqQueryExecutor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
         this.configuration = configuration;
         this.externalBindings = externalBindings.snapshot();
+        if (configuration.output().outputPath() == null
+                && configuration.output().outputFormat() != null) {
+            requireSerializationFormatForStdout(configuration.output().outputFormat());
+        }
+    }
+
+    private static void requireSerializationFormatForStdout(String format) {
+        if (!format.equals("serialize") && !format.equals("serialize-each-item")) {
+            throw new CliException("Output format "
+                    + format
+                    + " requires --output-path; use serialize or serialize-each-item for serialized output on screen.");
+        }
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
@@ -146,26 +156,15 @@ public class JsoniqQueryExecutor {
 
     private String displayItems(SequenceOfItems sequence, List<Item> items) {
         String format = outputFormat(sequence);
-        if (format != null && !format.equals("json") && !format.equals("serialize-each-item")) {
-            throw new CliException("Output format "
-                    + format
-                    + " requires --output-path; use serialize or serialize-each-item for serialized output on screen.");
-        }
+        requireSerializationFormatForStdout(format);
         SerializationParameters params =
                 SerializationParameters.copy(sequence.getRuntimeStaticContext().getSerializationParameters());
-        if ("json".equals(format)) {
-            params.setMethod("json");
-        }
-        if ("serialize-each-item".equals(format)) {
-            return items.stream()
-                    .map(item -> SequenceSerializer.serialize(
-                            List.of(item),
-                            params,
-                            sequence.getRuntimeStaticContext().getMetadata()))
-                    .collect(Collectors.joining("\n"));
-        }
-        Serializer serializer = Serializers.from(params);
-        return items.stream().map(serializer::serialize).collect(Collectors.joining("\n"));
+        return items.stream()
+                .map(item -> SequenceSerializer.serialize(
+                        List.of(item),
+                        params,
+                        sequence.getRuntimeStaticContext().getMetadata()))
+                .collect(Collectors.joining("\n"));
     }
 
     public record InteractiveResult(String output, long count) {}

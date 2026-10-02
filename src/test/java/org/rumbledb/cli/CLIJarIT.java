@@ -111,6 +111,20 @@ public class CLIJarIT {
 
     @Nested
     class OutputFormatsAndRoundTrips {
+        @ParameterizedTest(name = "{0} requires an output path in run and repl")
+        @ValueSource(strings = {"json", "csv", "parquet", "avro"})
+        void sparkFormatsRequireAnOutputPath(String format) throws Exception {
+            for (String[] arguments :
+                    List.of(new String[] {"run", "-q", "()", "-f", format}, new String[] {"repl", "-f", format})) {
+                Result result = run("", arguments);
+                assertEquals(42, result.code(), result.toString());
+                assertEquals("", result.out(), result.toString());
+                assertTrue(
+                        result.err().contains("Output format " + format + " requires --output-path"),
+                        result.toString());
+            }
+        }
+
         @ParameterizedTest(name = "serialize-each-item with method {0}")
         @ValueSource(strings = {"text", "adaptive", "xml", "xml-json-hybrid"})
         void eachItemSerializationAlwaysUsesNewlinesBetweenItems(String method) throws Exception {
@@ -333,7 +347,15 @@ public class CLIJarIT {
             assertTrue(Files.isRegularFile(output));
             assertEquals(List.of("1", "2", "3"), Files.readAllLines(output));
             assertSuccess(
-                    run("", "run", "-q", "json-lines(" + quote(output.toUri().toString()) + ")", "-f", "json"),
+                    run(
+                            "",
+                            "run",
+                            "-q",
+                            "json-lines(" + quote(output.toUri().toString()) + ")",
+                            "-f",
+                            "serialize-each-item",
+                            "--output-format-option",
+                            "method=json"),
                     "1\n2\n3");
         }
 
@@ -369,7 +391,17 @@ public class CLIJarIT {
 
         @Test
         void stdoutUsesRequestedFormatAndQuerySerializationDeclarations() throws Exception {
-            assertSuccess(run("", "run", "-q", "\"hello\"", "-f", "json"), "\"hello\"");
+            assertSuccess(
+                    run(
+                            "",
+                            "run",
+                            "-q",
+                            "\"hello\"",
+                            "-f",
+                            "serialize-each-item",
+                            "--output-format-option",
+                            "method=json"),
+                    "\"hello\"");
             assertSuccess(
                     run("", "run", "-q", "\"hello\"", "-f", "serialize", "--output-format-option", "method=text"),
                     "hello");
@@ -1000,7 +1032,8 @@ public class CLIJarIT {
                 + reader
                 + " order by integer($s.storeid) "
                 + "return {\"storeid\":integer($s.storeid), \"state\":$s.state}";
-        Result readBack = run("", "run", "-q", query, "-f", "json");
+        Result readBack =
+                run("", "run", "-q", query, "-f", "serialize-each-item", "--output-format-option", "method=json");
         assertEquals(0, readBack.code(), readBack.toString());
         List<JsonNode> expected = new ArrayList<>();
         for (String line : Files.readAllLines(fixture("stores.jsonl"))) {

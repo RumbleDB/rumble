@@ -37,6 +37,7 @@ public final class OutputArguments {
             paramLabel = "format",
             description = {
                 "Output file format (json, csv, parquet, avro, or another Spark format).",
+                "Spark file formats, including json, require --output-path.",
                 "Use serialize to write the whole sequence as one string using the serialization method.",
                 "Use serialize-each-item to serialize items independently, separated by newlines.",
                 "Default: serialize-each-item for JSONiq; serialize for XQuery.",
