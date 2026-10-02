@@ -18,17 +18,18 @@ package org.rumbledb.runtime.functions.sequences.value;
 import java.io.Serial;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -40,7 +41,6 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
 
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan searchIterator;
-    private Item search;
 
     public IndexOfFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
@@ -50,72 +50,70 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new IndexOfLocalCursor(
-                this.sequenceIterator,
-                this.searchIterator,
-                this.getChildren().size() == 3 ? this.getChild(2) : null,
-                context,
-                getMetadata());
+        return new IndexOfLocalCursor(context);
     }
 
-    private void checkCollation(DynamicContext context) {
-        if (this.getChildren().size() == 3) {
-            String collation = this.getChild(2).materializeFirstOrNull(context).getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
-            }
-        }
+    private String resolveCollation(DynamicContext context) {
+        String explicitCollation = this.getChildren().size() == 3
+                ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
+                : null;
+        return CollationSupport.resolveAndCheckCollation(explicitCollation, getRuntimeStaticContext(), getMetadata());
     }
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        checkCollation(context);
-        JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
-        this.search = this.searchIterator.materializeFirstOrNull(context);
+        String collation = resolveCollation(context);
+        Item search = this.searchIterator.materializeFirstOrNull(context);
+        boolean searchIsNaN = isItemNaN(search);
+        ExceptionMetadata metadata = getMetadata();
 
-        JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
-        JavaPairRDD<Item, Long> filteredRDD =
-                zippedRDD.filter((item) -> item._1().equals(this.search));
-        return filteredRDD.map((item) -> ItemFactory.getInstance().createIntItem(item._2.intValue() + 1));
+        JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
+        return childRDD.zipWithIndex()
+                .filter(item -> matches(item._1(), search, searchIsNaN, collation, metadata))
+                .map(item -> ItemFactory.getInstance().createIntItem(item._2.intValue() + 1));
     }
 
-    private static final class IndexOfLocalCursor extends AbstractLocalCursor<Item> {
+    private static boolean matches(
+            Item item, Item search, boolean searchIsNaN, String collation, ExceptionMetadata metadata) {
+        if (!item.isAtomic()) {
+            throw new NonAtomicKeyException(
+                    "Invalid args. index-of can't be performed with a non-atomic in the input sequence", metadata);
+        }
+        if (search == null || searchIsNaN || isItemNaN(item)) {
+            return false;
+        }
+        if (CollationSupport.isStringCollationType(item) && CollationSupport.isStringCollationType(search)) {
+            return CollationSupport.compareStrings(item.getStringValue(), search.getStringValue(), collation, metadata)
+                    == 0;
+        }
+        return AtomicDeepEqual.deepEqual(item, search);
+    }
 
-        private final ItemRuntimePlan sequencePlan;
-        private final ItemRuntimePlan searchPlan;
-        private final ItemRuntimePlan collationPlan;
+    private static boolean isItemNaN(Item item) {
+        return item != null && (item.isDouble() || item.isFloat()) && item.isNaN();
+    }
+
+    private final class IndexOfLocalCursor extends AbstractLocalCursor<Item> {
+
         private final DynamicContext context;
-        private final ExceptionMetadata metadata;
         private Cursor<Item> sequenceCursor;
         private Item search;
+        private boolean searchIsNaN;
+        private String collation;
         private Item nextResult;
         private int index;
 
-        private IndexOfLocalCursor(
-                ItemRuntimePlan sequencePlan,
-                ItemRuntimePlan searchPlan,
-                ItemRuntimePlan collationPlan,
-                DynamicContext context,
-                ExceptionMetadata metadata) {
-            super(metadata);
-            this.sequencePlan = sequencePlan;
-            this.searchPlan = searchPlan;
-            this.collationPlan = collationPlan;
+        private IndexOfLocalCursor(DynamicContext context) {
+            super(IndexOfFunctionIterator.this.getMetadata());
             this.context = context;
-            this.metadata = metadata;
         }
 
         @Override
         protected void openLocal() {
-            if (this.collationPlan != null) {
-                String collation =
-                        this.collationPlan.materializeFirstOrNull(this.context).getStringValue();
-                if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                    throw new UnsupportedCollationException("Wrong collation parameter", this.metadata);
-                }
-            }
-            this.search = this.searchPlan.materializeFirstOrNull(this.context);
-            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
+            this.collation = IndexOfFunctionIterator.this.resolveCollation(this.context);
+            this.search = IndexOfFunctionIterator.this.searchIterator.materializeFirstOrNull(this.context);
+            this.searchIsNaN = isItemNaN(this.search);
+            this.sequenceCursor = IndexOfFunctionIterator.this.sequenceIterator.getCursor(this.context);
             this.index = 0;
             advance();
         }
@@ -125,13 +123,7 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
             while (this.sequenceCursor.hasNext()) {
                 Item item = this.sequenceCursor.next();
                 this.index++;
-                if (!item.isAtomic()) {
-                    throw new NonAtomicKeyException(
-                            "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
-                            this.metadata);
-                }
-                boolean searchIsNaN = (this.search.isDouble() || this.search.isFloat()) && this.search.isNaN();
-                if (!searchIsNaN && AtomicDeepEqual.deepEqual(item, this.search)) {
+                if (matches(item, this.search, this.searchIsNaN, this.collation, getMetadata())) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.index);
                     return;
                 }
@@ -161,6 +153,7 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
             }
             this.search = null;
             this.nextResult = null;
+            this.collation = null;
             this.index = 0;
         }
     }

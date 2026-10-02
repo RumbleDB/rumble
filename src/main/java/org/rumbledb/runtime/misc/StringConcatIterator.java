@@ -21,11 +21,11 @@ import java.util.Arrays;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class StringConcatIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -45,43 +45,42 @@ public class StringConcatIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        Item left = null;
-        try {
-            left = this.leftIterator.materializeAtMostOne(dynamicContext);
-            if (left == null) {
-                left = ItemFactory.getInstance().createStringItem("");
-            }
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "String concatenation expression requires at most one item in its left input sequence.",
-                    getMetadata());
-        }
-        Item right = null;
-        try {
-            right = this.rightIterator.materializeAtMostOne(dynamicContext);
-            if (right == null) {
-                right = ItemFactory.getInstance().createStringItem("");
-            }
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "String concatenation expression requires at most one item in its right input sequence.",
-                    getMetadata());
-        }
-        return concatenate(left, right, getMetadata());
+        String leftString = atomizeOperandToString(this.leftIterator, dynamicContext, "left");
+        String rightString = atomizeOperandToString(this.rightIterator, dynamicContext, "right");
+        return ItemFactory.getInstance().createStringItem(leftString.concat(rightString));
     }
 
-    private static Item concatenate(Item left, Item right, ExceptionMetadata metadata) {
-        if (!left.isAtomic() || !right.isAtomic()) {
-            throw new UnexpectedTypeException(
-                    "String concat expression has arguments that can't be converted to a string "
-                            + left.serialize()
-                            + ", "
-                            + right.serialize(),
-                    metadata);
+    private String atomizeOperandToString(ItemRuntimePlan iterator, DynamicContext dynamicContext, String side) {
+        Item singleAtomic = null;
+        try (Cursor<Item> cursor = iterator.getCursor(dynamicContext)) {
+            while (cursor.hasNext()) {
+                Item item = cursor.next();
+                if (item.isFunction()) {
+                    throw new CannotAtomizeException(
+                            "Cannot atomize a function item in string concatenation expression.", getMetadata());
+                }
+                if (item.isAtomic()) {
+                    singleAtomic = recordAtomic(singleAtomic, item, side);
+                } else {
+                    try {
+                        for (Item atomicItem : item.atomizedValue()) {
+                            singleAtomic = recordAtomic(singleAtomic, atomicItem, side);
+                        }
+                    } catch (CannotAtomizeException e) {
+                        throw new CannotAtomizeException(e.getMessage(), getMetadata());
+                    }
+                }
+            }
         }
+        return singleAtomic == null ? "" : singleAtomic.getStringValue();
+    }
 
-        String leftStringValue = left.getStringValue();
-        String rightStringValue = right.getStringValue();
-        return ItemFactory.getInstance().createStringItem(leftStringValue.concat(rightStringValue));
+    private Item recordAtomic(Item current, Item next, String side) {
+        if (current != null) {
+            throw new UnexpectedTypeException(
+                    "String concatenation expression requires at most one item in its " + side + " input sequence.",
+                    getMetadata());
+        }
+        return next;
     }
 }
