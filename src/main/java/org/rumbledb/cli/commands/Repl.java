@@ -30,7 +30,7 @@ public final class Repl extends BaseCommand {
     @Override
     public CLIInvocation call() {
         return this.invocation(this.baseConfiguration(RumbleMode.REPL)
-                .output(this.output.toConfig())
+                .output(this.output.toConfig(this.semantics.toConfig().queryLanguage()))
                 .build());
     }
 }
