@@ -1,26 +1,55 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.api;
 
 import java.net.URI;
-
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Spliterators;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SaveMode;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.apache.spark.sql.util.CaseInsensitiveStringMap;
+
+import lombok.extern.log4j.Log4j2;
+import scala.Tuple2;
+
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.serialization.SequenceSerializer;
+import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.SerializedItemOutputFormat;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.Serializers;
+import org.rumbledb.spark.SparkSessionManager;
 
 /**
  * Helper class to configure and materialize the output of a {@link SequenceOfItems}.
@@ -30,46 +59,56 @@ import org.rumbledb.serialization.Serializers;
  * instead of mutating the current one.
  *
  * There are two mutually exclusive internal modes:
- * - DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.
- * In this case, the sequence can be represented as a Spark {@link Dataset} /
- * {@link DataFrameWriter} and is written using Spark's native writers (json/csv/parquet/...).
- * - RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.
- * In this case, the sequence is serialized item-by-item via {@link Serializer}
- * and saved as text files.
  *
- * The serialization method (json, tyson, xml-json-hybrid, yaml, delta, ...) is always taken from
- * {@link SerializationParameters#getMethod()}, which is the single source of truth for the output
- * format.
+ * <ul>
+ * <li>DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.
+ * In this case, the sequence can be represented as a Spark {@link Dataset} /
+ * {@link DataFrameWriter} and is written using Spark's native writers (json/csv/parquet/...).</li>
+ * <li>RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.
+ * In this case, the sequence is serialized item-by-item via {@link Serializer}
+ * and saved as text files.</li>
+ * </ul>
+ *
+ * Output formats (json/csv/parquet/...) select a file writer, independently of the W3C
+ * serialization method. The special output format {@code serialize} writes the entire
+ * sequence as one string using its serialization parameters. {@code serialize-each-item}
+ * serializes each item independently and separates the resulting strings with newlines.
  */
+@Log4j2
 public class SequenceWriter {
 
     private static final int SINGLE_PARTITION_CAP = 1000000000;
 
     private final SequenceOfItems sequence;
-    private final RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
     private final DataFrameWriter<Row> dataFrameWriter;
     private SaveMode mode;
     private final SerializationParameters serializationParameters;
+    private final String outputFormat;
 
     /**
      * Internal constructor used by all builder-style methods.
      *
      * Invariants:
-     * - Either DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.
-     * - Or RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.
-     * - {@code serializationParameters} is never {@code null}.
-     * - {@code serializationParameters.getMethod()} is never {@code null}; serialization uses a predefined method.
+     * <ul>
+     * <li>Either DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.</li>
+     * <li>Or RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.</li>
+     * <li>{@code serializationParameters} is never {@code null}.</li>
+     * <li>{@code serializationParameters.getMethod()} is never {@code null}; serialization uses a predefined
+     * method.</li>
+     * </ul>
      */
     private SequenceWriter(
             SequenceOfItems sequence,
             DataFrameWriter<Row> dataFrameWriter,
             SaveMode mode,
             SerializationParameters serializationParameters,
-            RumbleRuntimeConfiguration configuration
-    ) {
+            RumbleConfiguration configuration,
+            String outputFormat) {
         this.sequence = sequence;
         this.configuration = configuration;
         this.serializationParameters = serializationParameters;
+        this.outputFormat = outputFormat;
         this.dataFrameWriter = dataFrameWriter;
         this.mode = mode;
         if (dataFrameWriter == null && mode == null) {
@@ -77,8 +116,7 @@ public class SequenceWriter {
         }
         if (dataFrameWriter != null && mode != null) {
             throw new OurBadException(
-                    "Internal error: it is not possible for both the writer and the mode to be non null"
-            );
+                    "Internal error: it is not possible for both the writer and the mode to be non null");
         }
         if (serializationParameters == null) {
             throw new OurBadException("Internal error: serializationParameters must not be null");
@@ -88,89 +126,84 @@ public class SequenceWriter {
         }
     }
 
-    /**
-     * Public entry-point constructor used by {@link SequenceOfItems#write()}.
-     * TODO: update comment here
-     * It determines the initial mode:
-     * - If the method is {@code xml-json-hybrid} or {@code tyson}, or if obtaining a DataFrame
-     * fails, the writer is created in RDD mode.
-     * - Otherwise, the writer is created in DataFrame mode based on the DataFrame returned by
-     * {@link SequenceOfItems#getAsDataFrame()}.
-     */
+    /** Chooses the file writer from the output format, without changing the serialization method. */
     SequenceWriter(SequenceOfItems sequence) {
         this.sequence = sequence;
         this.configuration = sequence.getRuntimeStaticContext().getConfiguration();
-        SerializationParameters params = sequence
-            .getRuntimeStaticContext()
-            .getSerializationParameters();
-        this.serializationParameters = SerializationParameters.copy(params);
-        DataFrameWriter<Row> w = null;
-        String method = this.serializationParameters.getMethod();
-        if (method != null && (method.equals("xml-json-hybrid") || method.equals("tyson"))) {
-            this.mode = SaveMode.ErrorIfExists; // Default save mode
-        } else {
-            try {
-                Dataset<Row> dataFrame = sequence.getAsDataFrame();
-                int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
-                if (requestedPartitions > 0) {
-                    dataFrame = dataFrame.repartition(requestedPartitions);
-                }
-                w = dataFrame.write();
-                this.mode = null;
-            } catch (CannotInferSchemaOnNonStructuredDataException e) {
-                this.serializationParameters.setMethod("xml-json-hybrid"); // Default method
-                this.mode = SaveMode.ErrorIfExists; // Default save mode
-            }
+        this.serializationParameters =
+                SerializationParameters.copy(sequence.getRuntimeStaticContext().getSerializationParameters());
+        this.outputFormat = this.configuration
+                .output()
+                .effectiveOutputFormat(sequence.getRuntimeStaticContext().getQueryLanguage());
+        this.dataFrameWriter = createDataFrameWriter(this.outputFormat);
+        this.mode = this.dataFrameWriter == null ? SaveMode.ErrorIfExists : null;
+    }
+
+    private DataFrameWriter<Row> createDataFrameWriter(String format) {
+        if (isSerializationFormat(format)
+                || (format.equals("json")
+                        && !this.sequence
+                                .getRuntimeStaticContext()
+                                .getStaticType()
+                                .getItemType()
+                                .isObjectItemType())) {
+            return null;
         }
-        this.dataFrameWriter = w;
+        try {
+            Dataset<Row> dataFrame = this.sequence.getAsDataFrame();
+            int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
+            if (requestedPartitions > 0) {
+                dataFrame = dataFrame.repartition(requestedPartitions);
+            }
+            return dataFrame.write().format(format);
+        } catch (CannotInferSchemaOnNonStructuredDataException e) {
+            return null;
+        }
     }
 
     public SequenceWriter mode(String saveMode) {
         if (this.dataFrameWriter != null) {
             return createNewInstance(
-                this.dataFrameWriter.mode(saveMode),
-                null,
-                SerializationParameters.copy(this.serializationParameters)
-            );
+                    this.dataFrameWriter.mode(saveMode),
+                    null,
+                    SerializationParameters.copy(this.serializationParameters));
         } else {
             SaveMode mode = parseSaveMode(saveMode);
             return createNewInstance(null, mode, this.serializationParameters);
         }
     }
 
-    public SequenceWriter mode(org.apache.spark.sql.SaveMode saveMode) {
+    public SequenceWriter mode(SaveMode saveMode) {
         if (this.dataFrameWriter != null) {
             return createNewInstance(
-                this.dataFrameWriter.mode(saveMode),
-                null,
-                SerializationParameters.copy(this.serializationParameters)
-            );
+                    this.dataFrameWriter.mode(saveMode),
+                    null,
+                    SerializationParameters.copy(this.serializationParameters));
         } else {
             return createNewInstance(null, saveMode, this.serializationParameters);
         }
     }
 
     public SequenceWriter format(String source) {
-        SerializationParameters params = SerializationParameters.copy(this.serializationParameters);
-        params.setMethod(source);
-        if (this.dataFrameWriter != null && !source.equals("xml-json-hybrid") && !source.equals("tyson")) {
-            return createNewInstance(
-                this.dataFrameWriter.format(source),
-                null,
-                params
-            );
-        } else {
-            SaveMode newMode = (this.dataFrameWriter == null) ? this.mode : this.dataFrameWriter.curmode();
-            return createNewInstance(null, newMode, params);
-        }
+        Objects.requireNonNull(source, "Output format cannot be null.");
+        DataFrameWriter<Row> writer = this.dataFrameWriter != null && !isSerializationFormat(source)
+                ? this.dataFrameWriter.format(source)
+                : createDataFrameWriter(source);
+        SaveMode saveMode = this.dataFrameWriter == null ? this.mode : this.dataFrameWriter.curmode();
+        return new SequenceWriter(
+                this.sequence,
+                writer == null ? null : writer.mode(saveMode),
+                writer == null ? saveMode : null,
+                SerializationParameters.copy(this.serializationParameters),
+                this.configuration,
+                source);
     }
 
     public SequenceWriter option(String key, String value) {
         SerializationParameters newParams = SerializationParameters.copy(this.serializationParameters);
-        newParams.getSparkOptions().put(key, value);
-        DataFrameWriter<Row> newWriter = (this.dataFrameWriter != null)
-            ? this.dataFrameWriter.option(key, value)
-            : null;
+        SerializationParameterUtils.applyConfigOption(newParams, key, value);
+        DataFrameWriter<Row> newWriter =
+                (this.dataFrameWriter != null) ? this.dataFrameWriter.option(key, value) : null;
         return createNewInstance(newWriter, this.mode, newParams);
     }
 
@@ -186,139 +219,159 @@ public class SequenceWriter {
         return option(key, Double.toString(value));
     }
 
-    public SequenceWriter options(java.util.Map<String, String> options) {
-        SerializationParameters newParams = SerializationParameters.copy(this.serializationParameters);
-        newParams.getSparkOptions().putAll(options);
-        DataFrameWriter<Row> newWriter = (this.dataFrameWriter != null)
-            ? this.dataFrameWriter.options(options)
-            : null;
-        return createNewInstance(newWriter, this.mode, newParams);
+    public SequenceWriter options(Map<String, String> options) {
+        SequenceWriter writer = this;
+        for (Map.Entry<String, String> option : options.entrySet()) {
+            writer = writer.option(option.getKey(), option.getValue());
+        }
+        return writer;
     }
 
-    public SequenceWriter options(org.apache.spark.sql.util.CaseInsensitiveStringMap options) {
-        SerializationParameters newParams = SerializationParameters.copy(this.serializationParameters);
-        newParams.getSparkOptions().putAll(options);
-        DataFrameWriter<Row> newWriter = (this.dataFrameWriter != null)
-            ? this.dataFrameWriter.options(options)
-            : null;
-        return createNewInstance(newWriter, this.mode, newParams);
+    public SequenceWriter options(CaseInsensitiveStringMap options) {
+        return options(options.asCaseSensitiveMap());
     }
 
     public SequenceWriter partitionBy(String... colNames) {
         if (this.dataFrameWriter != null) {
-            return createNewInstance(
-                this.dataFrameWriter.partitionBy(colNames),
-                null,
-                this.serializationParameters
-            );
+            return createNewInstance(this.dataFrameWriter.partitionBy(colNames), null, this.serializationParameters);
         } else {
             throw new CliException(
-                    "RumbleDB currently does not support repartitioning when the output is not internally a DataFrame."
-            );
+                    "RumbleDB currently does not support repartitioning when the output is not internally a DataFrame.");
         }
     }
 
     public SequenceWriter bucketBy(int numBuckets, String colName, String... colNames) {
         if (this.dataFrameWriter != null) {
             return createNewInstance(
-                this.dataFrameWriter.bucketBy(numBuckets, colName, colNames),
-                null,
-                this.serializationParameters
-            );
+                    this.dataFrameWriter.bucketBy(numBuckets, colName, colNames), null, this.serializationParameters);
         } else {
             throw new CliException(
-                    "RumbleDB currently does not support bucketBy when the output is not internally a DataFrame."
-            );
+                    "RumbleDB currently does not support bucketBy when the output is not internally a DataFrame.");
         }
     }
 
     public SequenceWriter sortBy(String colName, String... colNames) {
         if (this.dataFrameWriter != null) {
             return createNewInstance(
-                this.dataFrameWriter.sortBy(colName, colNames),
-                null,
-                this.serializationParameters
-            );
+                    this.dataFrameWriter.sortBy(colName, colNames), null, this.serializationParameters);
         } else {
             throw new CliException(
-                    "RumbleDB currently does not support sortBy when the output is not internally a DataFrame."
-            );
+                    "RumbleDB currently does not support sortBy when the output is not internally a DataFrame.");
         }
     }
 
     public void save(String path) {
         URI outputUri = null;
-        outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-            path,
-            this.configuration,
-            ExceptionMetadata.EMPTY_METADATA
-        );
-        String method = this.serializationParameters.getMethod();
-        // DataFrame mode: delegate to Spark's DataFrameWriter, using the serialization method
-        // as the Spark output format (json/csv/parquet/other).
+        outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, ExceptionMetadata.EMPTY_METADATA);
+        String format = this.outputFormat;
+        // Structured output formats use Spark writers; serialization methods do not select these writers.
         if (this.dataFrameWriter != null) {
-            Logger logger = LogManager.getLogger(SequenceWriter.class);
-            for (Map.Entry<String, String> option : this.serializationParameters.getSparkOptions().entrySet()) {
-                logger.info("Writing with option " + option.getKey() + " : " + option.getValue());
+            for (Map.Entry<String, String> option :
+                    this.serializationParameters.getSparkOptions().entrySet()) {
+                log.info("Writing with option " + option.getKey() + " : " + option.getValue());
             }
-            logger.info("Writing to format " + method);
+            log.info("Writing to format " + format);
             DataFrameWriter<Row> writerWithOptions = applyStoredSparkOptions(this.dataFrameWriter);
             String target = FileSystemUtil.convertURIToStringForSpark(outputUri);
-            if (method.equalsIgnoreCase("json")) {
+            if (format.equalsIgnoreCase("json")) {
                 writerWithOptions.json(target);
-            } else if (method.equalsIgnoreCase("csv")) {
+            } else if (format.equalsIgnoreCase("csv")) {
                 writerWithOptions.csv(target);
-            } else if (method.equalsIgnoreCase("parquet")) {
+            } else if (format.equalsIgnoreCase("parquet")) {
                 writerWithOptions.parquet(target);
             } else {
-                writerWithOptions.format(method).save(target);
+                writerWithOptions.format(format).save(target);
             }
             return;
         }
-        // RDD mode: serialize each item via Serializer and save as text.
-        if (
-            !(method.equals("json")
-                || method.equals("tyson")
-                || method.equals("xml-json-hybrid")
-                || method.equals("yaml")
-                || method.equals("delta"))
-        ) {
-            throw new CliException(
-                    "Rumble cannot output another format than json or tyson or xml-json-hybrid or yaml if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
-            );
+        if (!format.equals("json") && !isSerializationFormat(format)) {
+            throw new CliException("Output format "
+                    + format
+                    + " requires a structured collection. "
+                    + "Use annotate() to supply a schema, or select serialize or serialize-each-item.");
         }
-        if (FileSystemUtil.exists(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
+        if (format.equals("serialize") && this.configuration.output().numberOfOutputPartitions() > 1) {
+            throw new CliException(
+                    "Output format serialize writes a single string and does not support multiple output partitions.");
+        }
+        if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
             switch (this.mode) {
                 case Overwrite:
-                    FileSystemUtil.delete(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+                    FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
                     break;
                 case Ignore:
                     return;
                 case ErrorIfExists:
-                    throw new CliException(
-                            "Output path "
-                                + outputUri
-                                + " already exists. Please change the mode or use --overwrite yes to overwrite."
-                    );
+                    throw new CliException("Output path "
+                            + outputUri
+                            + " already exists. Please change the mode or use --overwrite to overwrite.");
                 case Append:
-                    throw new CliException(
-                            "Append currently not supported when the output is not a DataFrame."
-                    );
+                    throw new CliException("Append currently not supported when the output is not a DataFrame.");
             }
         }
+        if (format.equals("serialize")) {
+            String result = SequenceSerializer.serialize(
+                    this.sequence.getAsList(),
+                    this.serializationParameters,
+                    this.sequence.getRuntimeStaticContext().getMetadata());
+            FileSystemUtil.writeBytes(
+                    outputUri,
+                    result.getBytes(Charset.forName(this.serializationParameters.getEncoding())),
+                    ExceptionMetadata.EMPTY_METADATA);
+            return;
+        }
         JavaRDD<Item> rdd = this.sequence.getAsRDD();
-        Serializer serializer = getSerializer();
-        JavaRDD<String> outputRDD = rdd.map(o -> serializer.serialize(o));
-        int requestedPartitions = this.configuration.getNumberOfOutputPartitions();
+        SerializationParameters itemParameters = SerializationParameters.copy(this.serializationParameters);
+        boolean serializeEachItem = format.equals("serialize-each-item");
+        if (!serializeEachItem) {
+            itemParameters.setMethod("json");
+        }
+        // Encoders inside serializers are not Java-serializable. Construct one serializer per executor partition.
+        JavaRDD<String> outputRDD = rdd.mapPartitions(items -> {
+            Serializer serializer = serializeEachItem ? null : Serializers.from(itemParameters);
+            return StreamSupport.stream(Spliterators.spliteratorUnknownSize(items, 0), false)
+                    .map(item -> serializeEachItem
+                            ? SequenceSerializer.serialize(
+                                    List.of(item), itemParameters, ExceptionMetadata.EMPTY_METADATA)
+                            : serializer.serialize(item))
+                    .iterator();
+        });
+        int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
         if (requestedPartitions == 1) {
             List<String> lines = outputRDD.take(SINGLE_PARTITION_CAP);
-            FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
+            if (serializeEachItem) {
+                String content = lines.stream().map(line -> line + "\n").collect(Collectors.joining());
+                FileSystemUtil.writeBytes(
+                        outputUri,
+                        content.getBytes(Charset.forName(itemParameters.getEncoding())),
+                        ExceptionMetadata.EMPTY_METADATA);
+            } else {
+                FileSystemUtil.write(outputUri, lines, ExceptionMetadata.EMPTY_METADATA);
+            }
             return;
         }
         if (requestedPartitions > 0) {
             outputRDD = outputRDD.repartition(requestedPartitions);
         }
-        outputRDD.saveAsTextFile(FileSystemUtil.convertURIToStringForSpark(outputUri));
+        if (serializeEachItem) {
+            Configuration hadoopConfiguration = new Configuration(
+                    SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
+            hadoopConfiguration.set(SerializedItemOutputFormat.ENCODING, itemParameters.getEncoding());
+            outputRDD
+                    .mapToPair(value -> new Tuple2<>(NullWritable.get(), new Text(value)))
+                    .saveAsNewAPIHadoopFile(
+                            FileSystemUtil.convertURIToStringForSpark(outputUri),
+                            NullWritable.class,
+                            Text.class,
+                            SerializedItemOutputFormat.class,
+                            hadoopConfiguration);
+        } else {
+            outputRDD.saveAsTextFile(FileSystemUtil.convertURIToStringForSpark(outputUri));
+        }
+    }
+
+    private static boolean isSerializationFormat(String format) {
+        return format.equals("serialize") || format.equals("serialize-each-item");
     }
 
     public Serializer getSerializer() {
@@ -329,7 +382,8 @@ public class SequenceWriter {
         if (writer == null || this.serializationParameters == null) {
             return writer;
         }
-        for (Map.Entry<String, String> option : this.serializationParameters.getSparkOptions().entrySet()) {
+        for (Map.Entry<String, String> option :
+                this.serializationParameters.getSparkOptions().entrySet()) {
             writer = writer.option(option.getKey(), option.getValue());
         }
         return writer;
@@ -346,27 +400,21 @@ public class SequenceWriter {
      * @return a new SequenceWriter instance
      */
     private SequenceWriter createNewInstance(
-            DataFrameWriter<Row> newWriter,
-            SaveMode newMode,
-            SerializationParameters newParams
-    ) {
-        return new SequenceWriter(
-                this.sequence,
-                newWriter,
-                newMode,
-                newParams,
-                this.configuration
-        );
+            DataFrameWriter<Row> newWriter, SaveMode newMode, SerializationParameters newParams) {
+        return new SequenceWriter(this.sequence, newWriter, newMode, newParams, this.configuration, this.outputFormat);
     }
 
     /**
      * Parses a string into a Spark SaveMode.
      *
      * Accepted values (case-insensitive):
-     * - overwrite
-     * - append
-     * - ignore
-     * - error, errorifexists, default → ErrorIfExists
+     *
+     * <ul>
+     * <li>overwrite</li>
+     * <li>append</li>
+     * <li>ignore</li>
+     * <li>error, errorifexists, default → ErrorIfExists</li>
+     * </ul>
      *
      * @param saveMode the string representation of the save mode
      * @return the corresponding SaveMode
@@ -388,12 +436,10 @@ public class SequenceWriter {
             case "default":
                 return SaveMode.ErrorIfExists;
             default:
-                throw new IllegalArgumentException(
-                        "Unknown save mode: "
-                            + saveMode
-                            + ". Accepted "
-                            + "save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists', 'default'."
-                );
+                throw new IllegalArgumentException("Unknown save mode: "
+                        + saveMode
+                        + ". Accepted "
+                        + "save modes are 'overwrite', 'append', 'ignore', 'error', 'errorifexists', 'default'.");
         }
     }
 
@@ -403,8 +449,7 @@ public class SequenceWriter {
             return;
         }
         throw new CliException(
-                "Calling save() without a target path is only supported when writing through a DataFrameWriter."
-        );
+                "Calling save() without a target path is only supported when writing through a DataFrameWriter.");
     }
 
     public void insertInto(String tableName) {
@@ -419,12 +464,19 @@ public class SequenceWriter {
         }
     }
 
+    private SequenceWriter serializeWith(String method) {
+        SequenceWriter writer = format("serialize");
+        SerializationParameters params = SerializationParameters.copy(writer.serializationParameters);
+        params.setMethod(method);
+        return writer.createNewInstance(null, writer.mode, params);
+    }
+
     public void tyson(String path) {
-        format("tyson").save(path);
+        serializeWith("tyson").save(path);
     }
 
     public void yaml(String path) {
-        format("yaml").save(path);
+        serializeWith("yaml").save(path);
     }
 
     public void json(String path) {
@@ -436,7 +488,7 @@ public class SequenceWriter {
     }
 
     public void text(String path) {
-        format("xml-json-hybrid").save(path);
+        serializeWith("text").save(path);
     }
 
     public void orc(String path) {

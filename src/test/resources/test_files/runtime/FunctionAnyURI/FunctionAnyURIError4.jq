@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="FORG0001"; ErrorMetadata="LINE:2:COLUMN:0:" :)
+(:JIQS: ShouldRun; Output="mailto:" :)
 anyURI("mailto:")
 
-(: non-conformant URI string :)
+(: xs:anyURI allows this lexical form; processors need not reject scheme-specific URI oddities :)

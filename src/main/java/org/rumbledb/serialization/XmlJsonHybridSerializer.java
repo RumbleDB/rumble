@@ -1,15 +1,36 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.serialization;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+
 import org.apache.commons.text.StringEscapeUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.items.xml.NamespaceItem;
 
-public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable {
+public class XmlJsonHybridSerializer implements Serializer, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.serialization.SerializationParameters params;
+    private final SerializationParameters params;
 
     public XmlJsonHybridSerializer(SerializationParameters params) {
         this.params = params;
@@ -17,13 +38,13 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
 
     @Override
     public String serialize(Item i) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         serialize(i, sb, "", true);
         return sb.toString();
     }
 
     @Override
-    public void serialize(Item item, StringBuffer sb, String indent, boolean isTopLevel) {
+    public void serialize(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         if (item.isFunction()) {
             throw new FunctionsNonSerializableException();
         }
@@ -43,16 +64,37 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
                 separator = "\n" + indent + "  ";
             }
             boolean firstTime = true;
-            for (Item member : item.getItemMembers()) {
-                sb.append(separator);
-                if (firstTime) {
-                    separator = "," + separator;
-                    firstTime = false;
+            if (item.isArrayOfItems()) {
+                for (Item member : item.getItemMembers()) {
+                    sb.append(separator);
+                    if (firstTime) {
+                        separator = "," + separator;
+                        firstTime = false;
+                    }
+                    if (this.params.getIndent()) {
+                        serialize(member, sb, indent + "  ", false);
+                    } else {
+                        serialize(member, sb, "", false);
+                    }
                 }
-                if (this.params.getIndent()) {
-                    serialize(member, sb, indent + "  ", false);
-                } else {
-                    serialize(member, sb, "", false);
+            } else {
+                for (List<Item> memberSequence : item.getSequenceMembers()) {
+                    sb.append(separator);
+                    if (firstTime) {
+                        separator = "," + separator;
+                        firstTime = false;
+                    }
+                    sb.append("(");
+                    boolean firstTimeInner = true;
+                    for (Item member : memberSequence) {
+                        sb.append(separator);
+                        if (firstTimeInner) {
+                            separator = "," + separator;
+                            firstTimeInner = false;
+                        }
+                        serialize(member, sb, "", false);
+                    }
+                    sb.append(")");
                 }
             }
             if (this.params.getIndent()) {
@@ -77,7 +119,10 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
                     firstTime = false;
                 }
                 Item value = item.getItemByKey(key);
-                sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
+                sb.append("\"")
+                        .append(StringEscapeUtils.escapeJson(key))
+                        .append("\"")
+                        .append(" : ");
                 if (this.params.getIndent()) {
                     serialize(value, sb, indent + "  ", false);
                 } else {
@@ -98,7 +143,7 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
         }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
-                StringBuffer childBuffer = new StringBuffer();
+                StringBuilder childBuffer = new StringBuilder();
                 serialize(child, childBuffer, indent, isTopLevel);
                 if (childBuffer.length() > 0 && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
                     childBuffer.setLength(childBuffer.length() - 1);
@@ -183,7 +228,7 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
         }
     }
 
-    private void appendJSONAtomicItem(Item item, StringBuffer sb) {
+    private void appendJSONAtomicItem(Item item, StringBuilder sb) {
         boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
         if (item.isDouble()) {
             if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
@@ -204,5 +249,3 @@ public class XmlJsonHybridSerializer implements Serializer, java.io.Serializable
         }
     }
 }
-
-

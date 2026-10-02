@@ -1,37 +1,55 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.input;
 
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.spark.SparkSessionManager;
-
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
+
+public class IcebergTableFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public IcebergTableFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public IcebergTableFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        RuntimeIterator collectionNameIterator = this.children.get(0);
-        String collectionName = collectionNameIterator.materializeFirstItemOrNull(context).getStringValue();
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        ItemRuntimePlan collectionNameIterator = this.getChild(0);
+        String collectionName =
+                collectionNameIterator.materializeFirstOrNull(context).getStringValue();
 
         String metadataName = qualifyForMetadata(collectionName);
-        Dataset<Row> dataFrame = SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);
+        Dataset<Row> dataFrame =
+                SparkSessionManager.getInstance().getOrCreateSession().table(collectionName);
         return DeltaTableFunctionIterator.postProcess(dataFrame, metadataName);
     }
 
@@ -49,25 +67,21 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
             return collectionName;
         }
 
-        String currentCatalog = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .catalog()
-            .currentCatalog();
-        String currentNamespace = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .catalog()
-            .currentDatabase();
+        String currentCatalog =
+                SparkSessionManager.getInstance().getOrCreateSession().catalog().currentCatalog();
+        String currentNamespace =
+                SparkSessionManager.getInstance().getOrCreateSession().catalog().currentDatabase();
 
         if (parts.size() == 1) {
             assertIcebergCatalog(currentCatalog, collectionName);
-            return joinIdentifier(currentCatalog, new String[] { currentNamespace }, parts.get(0));
+            return joinIdentifier(currentCatalog, new String[] {currentNamespace}, parts.get(0));
         }
 
         if (isKnownCatalog(parts.get(0))) {
             String catalog = parts.get(0);
             if (parts.size() == 2) {
                 assertIcebergCatalog(catalog, collectionName);
-                return joinIdentifier(catalog, new String[] { currentNamespace }, parts.get(1));
+                return joinIdentifier(catalog, new String[] {currentNamespace}, parts.get(1));
             }
             String[] namespace = parts.subList(1, parts.size() - 1).toArray(new String[0]);
             assertIcebergCatalog(catalog, collectionName);
@@ -80,14 +94,10 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     private static boolean isKnownCatalog(String name) {
-        Set<String> catalogs = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .catalog()
-            .listCatalogs()
-            .collectAsList()
-            .stream()
-            .map(c -> c.name())
-            .collect(Collectors.toSet());
+        Set<String> catalogs =
+                SparkSessionManager.getInstance().getOrCreateSession().catalog().listCatalogs().collectAsList().stream()
+                        .map(c -> c.name())
+                        .collect(Collectors.toSet());
         return catalogs.contains(name);
     }
 
@@ -95,37 +105,27 @@ public class IcebergTableFunctionIterator extends DataFrameRuntimeIterator {
         if (isIcebergCatalog(catalogName)) {
             return;
         }
-        Set<String> icebergCatalogs = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .catalog()
-            .listCatalogs()
-            .collectAsList()
-            .stream()
-            .map(c -> c.name())
-            .filter(IcebergTableFunctionIterator::isIcebergCatalog)
-            .collect(Collectors.toSet());
-        throw new RuntimeException(
-                "Iceberg catalog '"
-                    + catalogName
-                    + "' is not configured for iceberg-table(\""
-                    + collectionName
-                    + "\"). Use a configured Iceberg catalog ("
-                    + String.join(", ", icebergCatalogs)
-                    + ") and fully qualify as <catalog>.<namespace>.<table>."
-        );
+        Set<String> icebergCatalogs =
+                SparkSessionManager.getInstance().getOrCreateSession().catalog().listCatalogs().collectAsList().stream()
+                        .map(c -> c.name())
+                        .filter(IcebergTableFunctionIterator::isIcebergCatalog)
+                        .collect(Collectors.toSet());
+        throw new RuntimeException("Iceberg catalog '"
+                + catalogName
+                + "' is not configured for iceberg-table(\""
+                + collectionName
+                + "\"). Use a configured Iceberg catalog ("
+                + String.join(", ", icebergCatalogs)
+                + ") and fully qualify as <catalog>.<namespace>.<table>.");
     }
 
     private static boolean isIcebergCatalog(String catalogName) {
         String key = "spark.sql.catalog." + catalogName;
-        String impl = SparkSessionManager.getInstance()
-            .getOrCreateSession()
-            .conf()
-            .get(key, "");
+        String impl =
+                SparkSessionManager.getInstance().getOrCreateSession().conf().get(key, "");
         return "org.apache.iceberg.spark.SparkCatalog".equals(impl)
-            || "org.apache.iceberg.spark.SparkSessionCatalog".equals(impl);
+                || "org.apache.iceberg.spark.SparkSessionCatalog".equals(impl);
     }
-
-
 
     private static List<String> splitIdentifier(String identifier) {
         List<String> parts = new ArrayList<>();

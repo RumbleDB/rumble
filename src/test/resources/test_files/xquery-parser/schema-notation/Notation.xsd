@@ -1,0 +1,17 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:n="urn:notation"
+    targetNamespace="urn:notation" elementFormDefault="qualified">
+    <xs:notation name="jpeg" public="image/jpeg" />
+    <xs:notation name="png" public="image/png" />
+    <xs:simpleType name="Image">
+        <xs:restriction base="xs:NOTATION">
+            <xs:enumeration value="n:jpeg" />
+            <xs:enumeration value="n:png" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:simpleType name="Jpeg">
+        <xs:restriction base="n:Image">
+            <xs:enumeration value="n:jpeg" />
+        </xs:restriction>
+    </xs:simpleType>
+    <xs:element name="image" type="n:Image" />
+</xs:schema>

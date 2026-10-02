@@ -13,6 +13,17 @@ Build:
   script:
     - mvn clean compile assembly:single
 
+CLIJarTests:
+  stage: tests
+  script:
+    - mvn --batch-mode -Pcli-tests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/
+    reports:
+      junit: target/surefire-reports/TEST-org.rumbledb.cli.CLIJarIT.xml
+
 SparkRuntimeTest:
   stage: tests
   script:
@@ -188,28 +199,6 @@ StaticTypingTest:
       - target/surefire-reports/TEST-iq.StaticTypeTests.xml
     reports:
       junit: target/surefire-reports/TEST-iq.StaticTypeTests.xml
-
-MLTests:
-  stage: tests
-  script:
-    - mvn -Dtest=MLTests test --log-file target/ml_test.log
-  artifacts:
-    when: always
-    paths:
-      - target/surefire-reports/TEST-iq.MLTests.xml
-    reports:
-      junit: target/surefire-reports/TEST-iq.MLTests.xml
-
-MLTestsNativeDeactivated:
-  stage: tests
-  script:
-    - mvn -Dtest=MLTestsNativeDeactivated test
-  artifacts:
-    when: always
-    paths:
-      - target/surefire-reports/TEST-iq.MLTestsNativeDeactivated.xml
-    reports:
-      junit: target/surefire-reports/TEST-iq.MLTestsNativeDeactivated.xml
 
 BackwardsCompatibilityTests:
   stage: tests

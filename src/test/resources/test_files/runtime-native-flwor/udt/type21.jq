@@ -30,14 +30,14 @@ try {
   validate type local:x {
     []
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
     validate type local:y {
       { "foo" : ["foo", "bar", "foobar", "foobarfoo"], "bar" : "bar" }
     }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
    "Success"
 }
 

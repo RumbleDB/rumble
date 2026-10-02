@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,54 +11,56 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.strings;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.util.List;
+public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
-public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public StringJoinFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public StringJoinFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public Item evaluateAtMostOne(DynamicContext context) {
         Item joinString = ItemFactory.getInstance().createStringItem("");
-        if (this.children.size() > 1) {
-            joinString = this.children.get(1).materializeFirstItemOrNull(context);
+        if (this.getChildren().size() > 1) {
+            joinString = this.getChild(1).materializeFirstOrNull(context);
         }
-        List<Item> strings = this.children.get(0).materialize(context);
+        List<Item> strings = this.getChild(0).materialize(context);
+        return join(strings, joinString);
+    }
 
+    private Item join(List<Item> strings, Item joinString) {
         StringBuilder stringBuilder = new StringBuilder();
+        boolean first = true;
         for (Item item : strings) {
             if (!(item.isString())) {
-                throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
+                throw new UnexpectedTypeException(
+                        "String item expected",
+                        this.getChild(0).getRuntimeStaticContext().getMetadata());
             }
-            if (!stringBuilder.toString().isEmpty()) {
+            if (!first) {
                 stringBuilder.append(joinString.getStringValue());
             }
             stringBuilder.append(item.getStringValue());
+            first = false;
         }
 
         return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
     }
-
-
 }

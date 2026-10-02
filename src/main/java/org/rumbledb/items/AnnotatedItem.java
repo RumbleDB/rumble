@@ -1,48 +1,55 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
-import java.time.OffsetDateTime;
-import java.time.OffsetTime;
-import java.time.Duration;
-import java.time.Period;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.items.xml.XMLDocumentPosition;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-
 public class AnnotatedItem implements Item {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private Item itemToAnnotate;
-    private ItemType type;
-
-    public AnnotatedItem() {
-        super();
-    }
+    private final Item itemToAnnotate;
+    private final ItemType type;
 
     public AnnotatedItem(Item itemToAnnotate, ItemType type) {
         this.itemToAnnotate = itemToAnnotate;
@@ -53,16 +60,18 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            if (((Item) otherItem).isAtomic()) {
-                long c = ComparisonIterator.compareItems(
-                    this,
-                    (Item) otherItem,
-                    ComparisonOperator.VC_EQ,
-                    ExceptionMetadata.EMPTY_METADATA
-                );
-                return c == 0;
+    public Item copy(boolean mutable) {
+        return new AnnotatedItem(this.itemToAnnotate.copy(mutable), this.type);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other instanceof Item otherItem) {
+            if (otherItem.isAtomic()) {
+                return AtomicItemEquivalence.equivalent(this, otherItem);
             }
             return this.itemToAnnotate.equals(otherItem);
         }
@@ -71,19 +80,7 @@ public class AnnotatedItem implements Item {
 
     @Override
     public int hashCode() {
-        return Objects.hash(this.itemToAnnotate, this.type);
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, this.itemToAnnotate);
-        kryo.writeClassAndObject(output, this.type);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.itemToAnnotate = (Item) kryo.readClassAndObject(input);
-        this.type = (ItemType) kryo.readClassAndObject(input);// kryo.readObject(input, Name.class);
+        return this.isAtomic() ? AtomicItemEquivalence.hash(this) : this.itemToAnnotate.hashCode();
     }
 
     @Override
@@ -222,6 +219,16 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public boolean isNotation() {
+        return this.itemToAnnotate.isNotation();
+    }
+
+    @Override
+    public Name getNotationValue() {
+        return this.itemToAnnotate.getNotationValue();
+    }
+
+    @Override
     public boolean isBinary() {
         return this.itemToAnnotate.isBinary();
     }
@@ -294,11 +301,6 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
-        return this.itemToAnnotate.getKeys();
-    }
-
-    @Override
     public List<String> getStringKeys() {
         return this.itemToAnnotate.getStringKeys();
     }
@@ -306,11 +308,6 @@ public class AnnotatedItem implements Item {
     @Override
     public List<Item> getItemKeys() {
         return this.itemToAnnotate.getItemKeys();
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.itemToAnnotate.getValues();
     }
 
     @Override
@@ -360,9 +357,7 @@ public class AnnotatedItem implements Item {
 
     @Override
     public void putSequenceByKey(Item key, List<Item> valueSequence)
-            throws UnsupportedOperationException,
-                OurBadException,
-                DuplicateObjectKeyException {
+            throws UnsupportedOperationException, OurBadException, DuplicateObjectKeyException {
         this.itemToAnnotate.putSequenceByKey(key, valueSequence);
     }
 
@@ -377,16 +372,10 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public void putLazyItemByKey(
-            String key,
-            RuntimeIterator iterator,
-            DynamicContext context,
-            boolean isArray
-    )
+    public void putLazyItemByKey(String key, ItemRuntimePlan iterator, DynamicContext context, boolean isArray)
             throws UnsupportedOperationException {
         this.itemToAnnotate.putLazyItemByKey(key, iterator, context, isArray);
     }
-
 
     // endregion maps
 
@@ -408,11 +397,6 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public List<Item> getItems() {
-        return this.itemToAnnotate.getItems();
-    }
-
-    @Override
     public List<Item> getItemMembers() throws UnsupportedOperationException, OurBadException {
         return this.itemToAnnotate.getItemMembers();
     }
@@ -430,11 +414,6 @@ public class AnnotatedItem implements Item {
     @Override
     public List<Item> getSequenceAt(int position) throws UnsupportedOperationException {
         return this.itemToAnnotate.getSequenceAt(position);
-    }
-
-    @Override
-    public void append(Item item) throws UnsupportedOperationException {
-        this.itemToAnnotate.append(item);
     }
 
     @Override
@@ -464,8 +443,7 @@ public class AnnotatedItem implements Item {
 
     @Override
     public void putSequencesAt(List<List<Item>> sequences, int index)
-            throws UnsupportedOperationException,
-                OurBadException {
+            throws UnsupportedOperationException, OurBadException {
         this.itemToAnnotate.putSequencesAt(sequences, index);
     }
 
@@ -607,7 +585,7 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public RuntimeIterator getBodyIterator() {
+    public ItemRuntimePlan getBodyIterator() {
         return this.itemToAnnotate.getBodyIterator();
     }
 
@@ -622,7 +600,7 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
+    public Map<Name, HomogeneousItemDataFrame> getDFVariablesInClosure() {
         return this.itemToAnnotate.getDFVariablesInClosure();
     }
 
@@ -703,8 +681,8 @@ public class AnnotatedItem implements Item {
 
     @Override
     public boolean physicalEquals(Object other) {
-        if (other instanceof AnnotatedItem) {
-            return this.itemToAnnotate.physicalEquals(((AnnotatedItem) other).itemToAnnotate);
+        if (other instanceof AnnotatedItem annotatedItem) {
+            return this.itemToAnnotate.physicalEquals(annotatedItem.itemToAnnotate);
         }
         return this.itemToAnnotate.physicalEquals(other);
     }
@@ -797,6 +775,16 @@ public class AnnotatedItem implements Item {
     @Override
     public List<Item> typedValue() {
         return this.itemToAnnotate.typedValue();
+    }
+
+    @Override
+    public void setXmlSchemaNilled(boolean nilled) {
+        this.itemToAnnotate.setXmlSchemaNilled(nilled);
+    }
+
+    @Override
+    public void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        this.itemToAnnotate.setXmlSchemaIdentityProperties(id, idRefs);
     }
 
     @Override
@@ -896,7 +884,9 @@ public class AnnotatedItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        return this.itemToAnnotate.atomizedValue();
+        // An annotated atomic item atomizes to itself. Delegating to the
+        // wrapped item would discard the annotation and lose its subtype.
+        return this.isAtomic() ? List.of(this) : this.itemToAnnotate.atomizedValue();
     }
 
     @Override

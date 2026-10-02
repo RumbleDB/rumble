@@ -1,20 +1,40 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.serialization;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+public class YamlSerializer implements Serializer, Serializable {
 
-public class YamlSerializer implements Serializer, java.io.Serializable {
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @SuppressWarnings("unused")
-    private final org.rumbledb.serialization.SerializationParameters params;
+    private final SerializationParameters params;
 
     public YamlSerializer(SerializationParameters params) {
         this.params = params;
@@ -22,13 +42,13 @@ public class YamlSerializer implements Serializer, java.io.Serializable {
 
     @Override
     public String serialize(Item i) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         serialize(i, sb, "", true);
         return sb.toString();
     }
 
     @Override
-    public void serialize(Item item, StringBuffer sb, String indent, boolean isTopLevel) {
+    public void serialize(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         YAMLFactory yamlFactory = new YAMLFactory();
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         try {
@@ -80,7 +100,7 @@ public class YamlSerializer implements Serializer, java.io.Serializable {
     }
 
     private void appendMapValue(Item mapItem, Item key, YAMLGenerator yamlGenerator) throws IOException {
-        java.util.List<Item> sequence = mapItem.getSequenceByKey(key);
+        List<Item> sequence = mapItem.getSequenceByKey(key);
         if (sequence == null || sequence.isEmpty()) {
             yamlGenerator.writeStartArray();
             yamlGenerator.writeEndArray();
@@ -113,5 +133,3 @@ public class YamlSerializer implements Serializer, java.io.Serializable {
         }
     }
 }
-
-

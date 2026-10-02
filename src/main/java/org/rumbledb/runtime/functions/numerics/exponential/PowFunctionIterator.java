@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,48 +11,54 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.numerics.exponential;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.util.List;
+public class PowFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
-public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public PowFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    private final ItemRuntimePlan baseIterator;
+    private final ItemRuntimePlan exponentIterator;
+
+    public PowFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
+        this.baseIterator = arguments.get(0);
+        this.exponentIterator = arguments.get(1);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item base = this.children.get(0).materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item base = this.baseIterator.materializeFirstOrNull(context);
         if (base == null) {
             return null;
         }
-        Item exponent = this.children.get(1)
-            .materializeFirstItemOrNull(context);
+        Item exponent = this.exponentIterator.materializeFirstOrNull(context);
         if (exponent == null) {
             return null;
         }
+        return evaluate(base, exponent, getMetadata());
+    }
+
+    private static Item evaluate(Item base, Item exponent, ExceptionMetadata metadata) {
         try {
             double baseDouble = base.castToDoubleValue();
             double exponentDouble = exponent.castToDoubleValue();
@@ -71,45 +74,36 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             return ItemFactory.getInstance()
-                .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
+                    .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
         } catch (IteratorFlowException e) {
-            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), metadata);
         }
-
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext baseQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext baseQuery = NativeQueryRuntimePlan.generate(this.baseIterator, nativeClauseContext);
         if (baseQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        NativeClauseContext exponentQuery = this.children.get(1)
-            .generateNativeQuery(new NativeClauseContext(baseQuery, null, null));
+        NativeClauseContext exponentQuery =
+                NativeQueryRuntimePlan.generate(this.exponentIterator, new NativeClauseContext(baseQuery, null, null));
         if (exponentQuery == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (
-            SequenceType.Arity.OneOrMore.isSubtypeOf(baseQuery.getResultingType().getArity())
-                ||
-                SequenceType.Arity.OneOrMore.isSubtypeOf(exponentQuery.getResultingType().getArity())
-        ) {
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                        baseQuery.getResultingType().getArity())
+                || SequenceType.Arity.OneOrMore.isSubtypeOf(
+                        exponentQuery.getResultingType().getArity())) {
             return NativeClauseContext.NoNativeQuery;
         }
         SequenceType.Arity resultingArity = (baseQuery.getResultingType().getArity() == SequenceType.Arity.One
-            && exponentQuery.getResultingType().getArity() == SequenceType.Arity.One)
+                        && exponentQuery.getResultingType().getArity() == SequenceType.Arity.One)
                 ? SequenceType.Arity.One
                 : SequenceType.Arity.OneOrZero;
-        String resultingQuery = "pow( "
-            + baseQuery.getResultingQuery()
-            + ", "
-            + exponentQuery.getResultingQuery()
-            + " )";
+        String resultingQuery =
+                "pow( " + baseQuery.getResultingQuery() + ", " + exponentQuery.getResultingQuery() + " )";
         return new NativeClauseContext(
-                exponentQuery,
-                resultingQuery,
-                new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity)
-        );
+                exponentQuery, resultingQuery, new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity));
     }
-
 }

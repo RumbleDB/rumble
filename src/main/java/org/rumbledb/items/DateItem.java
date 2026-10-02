@@ -1,11 +1,25 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
+import java.io.Serial;
 import java.sql.Date;
-import java.time.*;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.regex.Pattern;
@@ -13,27 +27,20 @@ import java.util.regex.Pattern;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
-public class DateItem implements Item {
+public class DateItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private OffsetDateTime value;
     private boolean hasTimeZone = false;
-    Pattern dayRegex = Pattern.compile(
-        "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
-    );
-
-    @SuppressWarnings("unused")
-    public DateItem() {
-        super();
-    }
+    private static final Pattern dayRegex = Pattern.compile(
+            "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
 
     DateItem(OffsetDateTime value, boolean hasTimeZone) {
-        super();
         this.value = value.toLocalDate().atStartOfDay(value.getOffset()).toOffsetDateTime();
         this.hasTimeZone = hasTimeZone;
     }
@@ -42,8 +49,13 @@ public class DateItem implements Item {
         getDateFromString(dateTimeString);
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new DateItem(this.value, this.hasTimeZone);
+    }
+
     private void getDateFromString(String dateString) {
-        if (!this.dayRegex.matcher(dateString).matches()) {
+        if (!dayRegex.matcher(dateString).matches()) {
             throw new IllegalArgumentException("Invalid xs:date: \"" + dateString + "\"");
         }
         int yearIncrement = 0;
@@ -62,13 +74,13 @@ public class DateItem implements Item {
             }
             if (dateString.contains("Z") || dateString.contains(":")) {
                 this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE)
-                    .atStartOfDay()
-                    .atOffset(ZoneOffset.of(dateString.substring(10)));
+                        .atStartOfDay()
+                        .atOffset(ZoneOffset.of(dateString.substring(10)));
                 this.hasTimeZone = true;
             } else {
                 this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_LOCAL_DATE)
-                    .atStartOfDay(ZoneOffset.UTC)
-                    .toOffsetDateTime();
+                        .atStartOfDay(ZoneOffset.UTC)
+                        .toOffsetDateTime();
                 this.hasTimeZone = false;
             }
             // Those operations need to be in separate lines,
@@ -79,31 +91,14 @@ public class DateItem implements Item {
             throw new IllegalArgumentException("Invalid xs:date: \"" + dateString + "\"");
         } catch (NumberFormatException e) {
             throw new DatetimeOverflowOrUnderflow(
-                    "Invalid xs:date: \"" + dateString + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Invalid xs:date: \"" + dateString + "\"", ExceptionMetadata.EMPTY_METADATA);
         }
-    }
-
-    @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     @Override
     public String getStringValue() {
         String stringValue = this.value.format(
-            this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE : DateTimeFormatter.ISO_LOCAL_DATE
-        );
+                this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE : DateTimeFormatter.ISO_LOCAL_DATE);
         if (this.value.toString().startsWith("+")) {
             return stringValue.substring(1);
         }
@@ -121,32 +116,8 @@ public class DateItem implements Item {
     }
 
     @Override
-    public int hashCode() {
-        return this.value.hashCode();
-    }
-
-    @Override
     public boolean hasDateTime() {
         return true;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        String formatted = this.value.format(
-            !this.hasTimeZone ? DateTimeFormatter.ISO_LOCAL_DATE : DateTimeFormatter.ISO_OFFSET_DATE
-        );
-        if (formatted.startsWith("+")) {
-            formatted = formatted.substring(1);
-        }
-        output.writeString(formatted);
-        output.writeBoolean(this.hasTimeZone);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        String dateString = input.readString();
-        this.hasTimeZone = input.readBoolean();
-        getDateFromString(dateString);
     }
 
     @Override

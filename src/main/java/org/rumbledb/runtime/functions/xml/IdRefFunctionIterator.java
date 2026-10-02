@@ -1,0 +1,116 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.functions.xml;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.NodeNotInDocumentException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+
+public class IdRefFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    public IdRefFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
+    }
+
+    @Override
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> computeResults(context).iterator(), getMetadata());
+    }
+
+    private List<Item> computeResults(DynamicContext context) {
+        List<Item> argument = this.getChild(0).materialize(context);
+        Set<String> candidateIds = new HashSet<>();
+        for (Item item : argument) {
+            String value = item.getStringValue();
+            if (NamespaceBindingUtils.isValidNcName(value)) {
+                candidateIds.add(value);
+            }
+        }
+
+        Item node = getContextNode(context);
+        if (node == null || !node.isNode()) {
+            throw new UnexpectedTypeException("The argument to fn:idref must be a node", getMetadata());
+        }
+        Item root = node;
+        while (root.parent() != null) {
+            root = root.parent();
+        }
+        if (!root.isDocumentNode()) {
+            throw new NodeNotInDocumentException(
+                    "fn:idref: the node is not part of a tree rooted in a document node", getMetadata());
+        }
+
+        List<Item> matches = new ArrayList<>();
+        collectIdrefs(root, candidateIds, matches);
+        matches.sort((left, right) -> left.getXmlDocumentPosition().compareTo(right.getXmlDocumentPosition()));
+        return matches;
+    }
+
+    private static void collectIdrefs(Item node, Set<String> candidateIds, List<Item> matches) {
+        if ((node.isElementNode() || node.isAttributeNode())
+                && node.isIdrefs()
+                && containsCandidate(node.getStringValue(), candidateIds)) {
+            matches.add(node);
+        }
+        if (node.isElementNode()) {
+            for (Item attribute : node.attributes()) {
+                collectIdrefs(attribute, candidateIds, matches);
+            }
+        }
+        // Lookup starts at a document node, so descend through documents as well as elements.
+        for (Item child : node.children()) {
+            collectIdrefs(child, candidateIds, matches);
+        }
+    }
+
+    private static boolean containsCandidate(String value, Set<String> candidateIds) {
+        String normalized = value.trim().replaceAll("\\s+", " ");
+        if (normalized.isEmpty()) {
+            return false;
+        }
+        for (String token : normalized.split(" ")) {
+            if (candidateIds.contains(token)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private Item getContextNode(DynamicContext context) {
+        if (this.getChildren().size() == 2) {
+            return this.getChild(1).materializeFirstOrNull(context);
+        }
+        return context.getVariableValues()
+                .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0);
+    }
+}

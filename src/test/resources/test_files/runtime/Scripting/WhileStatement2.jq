@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="{ "b" : 2, "c" : [ 3, "abc" ], "d" : 500 }" :)
-declare %assignable variable $x := {"c": 5};
+declare %an:assignable variable $x := {"c": 5};
 while ($x.c gt 3) {
     $x := {"c": $x.c - 1};
 }

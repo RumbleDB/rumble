@@ -1,0 +1,447 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.flwor.clauses;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Stack;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
+
+import lombok.extern.log4j.Log4j2;
+
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.DynamicContext.VariableDependency;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.runtime.CommaExpressionIterator;
+import org.rumbledb.runtime.TupleRuntimePlan;
+import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.flwor.FlworDataFrame;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
+import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
+import org.rumbledb.runtime.logics.AndOperationIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
+import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.SequenceType;
+
+@Log4j2
+public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    // Properties
+    @SuppressWarnings("unused")
+    private final boolean isLeftOuterJoin;
+
+    @SuppressWarnings("unused")
+    private final DataFrameContext dataFrameContext;
+
+    public JoinClauseIterator(
+            TupleRuntimePlan leftChild,
+            TupleRuntimePlan rightChild,
+            boolean isLeftOuterJoin,
+            RuntimeStaticContext staticContext) {
+        super(leftChild, staticContext);
+        this.isLeftOuterJoin = isLeftOuterJoin;
+        this.dataFrameContext = new DataFrameContext();
+    }
+
+    @Override
+    public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
+        return new AtMostOneLocalCursor<>(null, this.getRuntimeStaticContext().getMetadata());
+    }
+
+    /**
+     * Joins two input tuples.
+     *
+     * Warning: if the two tuples collide in their columns, unexpected things may happen for now.
+     *
+     * @param context the dynamic context for the evaluation of the predicate expression.
+     * @param leftInputTuple the left tuple.
+     * @param rightInputTuple the right tuple.
+     * @param outputTupleVariableDependencies the necessary and sufficient variable dependencies that the output tuple
+     *        should contain.
+     * @param variablesInLeftInputTuple a list of the variables in the left tuple.
+     * @param variablesInRightInputTuple a list of the variables in the right tuple.
+     * @param predicateIterator the predicate iterator.
+     * @param isLeftOuterJoin true if it is a left outer join, false otherwise.
+     * @param newRightSideVariableName the new name of the variable to rename the context item in the output (null if no
+     *        rename).
+     * @param metadata the metadata.
+     * @return the joined tuple.
+     */
+    public static FlworDataFrame joinInputTupleWithSequenceOnPredicate(
+            DynamicContext context,
+            Dataset<Row> leftInputTuple,
+            Dataset<Row> rightInputTuple,
+            Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
+            List<Name> variablesInLeftInputTuple, // really needed?
+            List<Name> variablesInRightInputTuple, // really needed?
+            ItemRuntimePlan predicateIterator,
+            boolean isLeftOuterJoin,
+            Name newRightSideVariableName, // really needed?
+            ExceptionMetadata metadata,
+            RuntimeStaticContext staticContext) {
+        FlworDataFrame result = tryNativeQueryStatically(
+                context,
+                leftInputTuple,
+                rightInputTuple,
+                outputTupleVariableDependencies,
+                predicateIterator,
+                isLeftOuterJoin,
+                newRightSideVariableName,
+                metadata);
+        if (result != null) {
+            return result;
+        }
+        String leftInputDFTableName = "leftInputTuples";
+        String rightInputDFTableName = "rightInputTuples";
+
+        // TODO project away from the left all variables from the right
+
+        // Is this a join that we can optimize as an actual Spark join?
+        List<ItemRuntimePlan> leftTupleSideEqualityCriteria = new ArrayList<>();
+        List<ItemRuntimePlan> rightTupleSideEqualityCriteria = new ArrayList<>();
+
+        boolean optimizableJoin = extractEqualityComparisonsForHashing(
+                predicateIterator,
+                leftTupleSideEqualityCriteria,
+                rightTupleSideEqualityCriteria,
+                variablesInLeftInputTuple,
+                variablesInRightInputTuple);
+
+        if (isLeftOuterJoin) {
+            optimizableJoin = false;
+        }
+
+        // for (org.rumbledb.runtime.plan.RuntimePlan<org.rumbledb.api.Item> r : rightHandSideEqualityCriteria) {
+        // StringBuilder sb = new StringBuilder();
+        // org.rumbledb.runtime.plan.r.print(sb, 2);
+        // System.out.println(sb.toString());
+        // }
+
+        Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
+        if (newRightSideVariableName != null && outputTupleVariableDependencies.containsKey(newRightSideVariableName)) {
+            predicateDependencies.put(Name.CONTEXT_ITEM, outputTupleVariableDependencies.get(newRightSideVariableName));
+        }
+
+        // System.out.println("Old right side variable name : " + oldRightSideVariableName);
+        // System.out.println("New right side variable name: " + newRightSideVariableName);
+        // for (Name n : predicateDependencies.keySet()) {
+        // System.out.println(n.toString() + " -> " + predicateDependencies.get(n));
+        // }
+
+        // If the join criterion uses the context count, then we need to add it to the expression side (it is a
+        // constant).
+
+        // for (Name n : variablesInRightInputTuple) {
+        // System.out.println(n.toString() + " in expression side tuple.");
+        // }
+
+        if (optimizableJoin) {
+            log.info("Rumble detected that it can optimize your query and make it faster with an equi-join.");
+        }
+
+        // Now we prepare the iterators for the two sides of the equality criterion.
+        ItemRuntimePlan rightHandSideEqualityCriterion;
+        ItemRuntimePlan leftHandSideEqualityCriterion;
+
+        if (rightTupleSideEqualityCriteria.size() == 1) {
+            rightHandSideEqualityCriterion = rightTupleSideEqualityCriteria.get(0);
+        } else {
+            RuntimeStaticContext rhsStaticContext = staticContext.toBuilder()
+                    .staticType(SequenceType.createSequenceType("item*"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(metadata)
+                    .build();
+
+            rightHandSideEqualityCriterion = new ArrayRuntimeIterator(
+                    new CommaExpressionIterator(rightTupleSideEqualityCriteria, rhsStaticContext),
+                    rhsStaticContext,
+                    false);
+        }
+        if (leftTupleSideEqualityCriteria.size() == 1) {
+            leftHandSideEqualityCriterion = leftTupleSideEqualityCriteria.get(0);
+        } else {
+            RuntimeStaticContext lhsStaticContext = staticContext.toBuilder()
+                    .staticType(SequenceType.createSequenceType("item*"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(metadata)
+                    .build();
+            leftHandSideEqualityCriterion = new ArrayRuntimeIterator(
+                    new CommaExpressionIterator(leftTupleSideEqualityCriteria, lhsStaticContext),
+                    lhsStaticContext,
+                    false);
+        }
+
+        // And we extend the expression and input tuple views with the hashes.
+        if (optimizableJoin) {
+            rightInputTuple = LetClauseIterator.bindLetVariableInDataFrame(
+                    rightInputTuple,
+                    Name.createVariableInNoNamespace(SparkSessionManager.rightHandSideHashColumnName),
+                    null,
+                    rightHandSideEqualityCriterion,
+                    context,
+                    variablesInRightInputTuple,
+                    null,
+                    true,
+                    staticContext.getConfiguration());
+            leftInputTuple = LetClauseIterator.bindLetVariableInDataFrame(
+                    leftInputTuple,
+                    Name.createVariableInNoNamespace(SparkSessionManager.leftHandSideHashColumnName),
+                    null,
+                    leftHandSideEqualityCriterion,
+                    context,
+                    variablesInLeftInputTuple,
+                    null,
+                    true,
+                    staticContext.getConfiguration());
+        }
+
+        // Now we prepare the two views that we want to compute the Cartesian product of.
+        leftInputDFTableName = FlworDataFrameUtils.createTempView(leftInputTuple);
+        rightInputDFTableName = FlworDataFrameUtils.createTempView(rightInputTuple);
+
+        StructType leftSchema = leftInputTuple.schema();
+        StructType rightSchema = rightInputTuple.schema();
+        StructType jointSchema = FlworDataFrameUtils.schemaUnion(leftSchema, rightSchema);
+
+        // We gather the columns to select from the previous clause.
+        // We need to project away the clause's variables from the previous clause.
+        // One variable gets renamed. We need to remove it from the projection.
+        List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(
+                jointSchema,
+                outputTupleVariableDependencies,
+                null,
+                (newRightSideVariableName != null)
+                        ? Collections.singletonList(newRightSideVariableName)
+                        : Collections.emptyList());
+        String projectionVariables =
+                FlworDataFrameUtils.getSQLColumnProjection(columnsToSelect, newRightSideVariableName != null);
+        if (newRightSideVariableName != null) {
+            projectionVariables += String.format(
+                    " `%s`.`%s` AS `%s`",
+                    rightInputDFTableName, Name.CONTEXT_ITEM.getLocalName(), newRightSideVariableName);
+        }
+
+        // We need to prepare the parameters fed into the predicate UDF.
+        List<Name> variablesInJointTuple = new ArrayList<>();
+        variablesInJointTuple.addAll(variablesInLeftInputTuple);
+        variablesInJointTuple.addAll(variablesInRightInputTuple);
+        List<FlworDataFrameColumn> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumns(
+                jointSchema, predicateIterator.getVariableDependencies(), variablesInJointTuple, null);
+
+        // Now we need to register or join predicate as a UDF.
+        leftInputTuple
+                .sparkSession()
+                .udf()
+                .register(
+                        "joinUDF",
+                        new WhereClauseUDF(predicateIterator, context, joinCriterionUDFcolumns),
+                        DataTypes.BooleanType);
+
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(joinCriterionUDFcolumns);
+
+        // If we allow empty, we need a LEFT OUTER JOIN.
+        if (isLeftOuterJoin) {
+            Dataset<Row> resultDF = leftInputTuple
+                    .sparkSession()
+                    .sql(String.format(
+                            "SELECT %s FROM %s LEFT OUTER JOIN %s ON joinUDF(%s) = 'true'",
+                            projectionVariables, leftInputDFTableName, rightInputDFTableName, UDFParameters));
+            return new FlworDataFrame(resultDF);
+        }
+
+        if (optimizableJoin) {
+            // Otherwise, it's a regular join.
+            Dataset<Row> resultDF = leftInputTuple
+                    .sparkSession()
+                    .sql(String.format(
+                            "SELECT %s FROM %s JOIN %s ON `%s` = `%s` WHERE joinUDF(%s) = 'true'",
+                            projectionVariables,
+                            leftInputDFTableName,
+                            rightInputDFTableName,
+                            SparkSessionManager.rightHandSideHashColumnName,
+                            SparkSessionManager.leftHandSideHashColumnName,
+                            UDFParameters));
+            return new FlworDataFrame(resultDF);
+        }
+        // Otherwise, it's a regular join.
+        Dataset<Row> resultDF = leftInputTuple
+                .sparkSession()
+                .sql(String.format(
+                        "SELECT %s FROM %s JOIN %s ON joinUDF(%s) = 'true'",
+                        projectionVariables, leftInputDFTableName, rightInputDFTableName, UDFParameters));
+        return new FlworDataFrame(resultDF);
+    }
+
+    private static boolean extractEqualityComparisonsForHashing(
+            ItemRuntimePlan predicateIterator,
+            List<ItemRuntimePlan> leftTupleSideEqualityCriteria,
+            List<ItemRuntimePlan> rightTupleSideEqualityCriteria,
+            List<Name> leftTupleSideVariableNames,
+            List<Name> rightTupleSideVariableNames) {
+        boolean optimizableJoin = false;
+        Stack<ItemRuntimePlan> candidateIterators = new Stack<>();
+        candidateIterators.push(predicateIterator);
+        while (!candidateIterators.isEmpty()) {
+            ItemRuntimePlan iterator = candidateIterators.pop();
+            if (iterator instanceof AndOperationIterator andOperationIterator) {
+                AndOperationIterator andIterator = andOperationIterator;
+                candidateIterators.push(andIterator.getLeftIterator());
+                candidateIterators.push(andIterator.getRightIterator());
+            } else if (iterator instanceof ComparisonIterator comparisonIterator) {
+                if (comparisonIterator.isValueEquality()) {
+                    ItemRuntimePlan lhs = comparisonIterator.getLeftIterator();
+                    ItemRuntimePlan rhs = comparisonIterator.getRightIterator();
+
+                    Set<Name> leftComparisonDependencies =
+                            new HashSet<>(lhs.getVariableDependencies().keySet());
+                    Set<Name> rightComparisonDependencies =
+                            new HashSet<>(rhs.getVariableDependencies().keySet());
+                    // TODO it would be nice to be more generic and also allow dependencies on the
+                    // dynamic context on any side.
+                    if (leftTupleSideVariableNames.containsAll(leftComparisonDependencies)
+                            && rightTupleSideVariableNames.containsAll(rightComparisonDependencies)) {
+                        optimizableJoin = true;
+                        leftTupleSideEqualityCriteria.add(lhs);
+                        rightTupleSideEqualityCriteria.add(rhs);
+                    }
+                    if (leftTupleSideVariableNames.containsAll(rightComparisonDependencies)
+                            && rightTupleSideVariableNames.containsAll(leftComparisonDependencies)) {
+                        optimizableJoin = true;
+                        leftTupleSideEqualityCriteria.add(rhs);
+                        rightTupleSideEqualityCriteria.add(lhs);
+                    }
+                }
+            }
+        }
+        return optimizableJoin;
+    }
+
+    @Override
+    public FlworDataFrame createNativeDataFrame(DynamicContext context) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    protected Map<Name, VariableDependency> getInputTupleVariableDependencies(
+            Map<Name, VariableDependency> parentProjection) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public boolean containsClause(FLWOR_CLAUSES kind) {
+        return false;
+    }
+
+    /**
+     * Try to generate the native query for the group by clause and run it, if successful return the resulting
+     * dataframe,
+     * otherwise it returns null (expect `input` table to be already available)
+     *
+     * @param dataFrame input dataframe for the query
+     * @param groupingVariables group by variables
+     * @param dependencies dependencies to forward to the next clause (select variables)
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the group by clause if successful, null otherwise
+     */
+    private static FlworDataFrame tryNativeQueryStatically(
+            DynamicContext context,
+            Dataset<Row> leftInputTuple,
+            Dataset<Row> rightInputTuple,
+            Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
+            ItemRuntimePlan predicateIterator,
+            boolean isLeftOuterJoin,
+            Name newRightSideVariableName, // really needed?
+            ExceptionMetadata metadata) {
+        if (isLeftOuterJoin) {
+            return null;
+        }
+        if (newRightSideVariableName != null) {
+            return null;
+        }
+        StructType leftSchema = leftInputTuple.schema();
+        StructType rightSchema = rightInputTuple.schema();
+        StructType unionSchema = FlworDataFrameUtils.schemaUnion(leftSchema, rightSchema);
+        NativeClauseContext nativeContext = new NativeClauseContext(FLWOR_CLAUSES.WHERE, unionSchema, context);
+        NativeClauseContext nativeQuery = NativeQueryRuntimePlan.generate(predicateIterator, nativeContext);
+        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+            return null;
+        }
+        log.info("Rumble was able to optimize a join to a native SQL query.");
+        String left = FlworDataFrameUtils.createTempView(leftInputTuple);
+        String right = FlworDataFrameUtils.createTempView(rightInputTuple);
+        List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(
+                unionSchema, outputTupleVariableDependencies, null, Collections.emptyList());
+        String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(columnsToSelect, false);
+        Dataset<Row> result = leftInputTuple
+                .sparkSession()
+                .sql(String.format(
+                        "SELECT %s FROM %s JOIN %s ON %s",
+                        projectionVariables, left, right, nativeQuery.getResultingQuery()));
+        return new FlworDataFrame(result);
+    }
+
+    /**
+     * Says whether this expression evaluation triggers a Spark job.
+     *
+     * @return true if the execution triggers a Spark, false otherwise, null if undetermined yet.
+     */
+    @Override
+    public boolean isSparkJobNeeded() {
+        if (this.child.isSparkJobNeeded()) {
+            return true;
+        }
+        switch (this.staticContext.getExecutionMode()) {
+            case DATAFRAME:
+                return true;
+            case LOCAL:
+                return false;
+            case RDD:
+                return true;
+            case UNSET:
+                return false;
+            default:
+                return false;
+        }
+    }
+}

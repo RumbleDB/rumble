@@ -1,34 +1,47 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
-
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class UntypedAtomicItem implements Item {
+import lombok.Getter;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.CastException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+
+@Getter
+public class UntypedAtomicItem extends AbstractAtomicItem {
+
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private String value;
 
-    public UntypedAtomicItem() {
-        super();
-    }
-
     public UntypedAtomicItem(String value) {
-        super();
         this.value = value;
     }
 
-    public String getValue() {
-        return this.value;
+    @Override
+    public Item copy(boolean mutable) {
+        return new UntypedAtomicItem(this.value);
     }
 
     @Override
@@ -53,7 +66,13 @@ public class UntypedAtomicItem implements Item {
         if (trimmedValue.equals("NaN")) {
             return Double.NaN;
         }
-        return Double.parseDouble(this.getValue());
+        try {
+            return Double.parseDouble(trimmedValue);
+        } catch (NumberFormatException e) {
+            throw new CastException(
+                    "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:double.",
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
     }
 
     @Override
@@ -68,25 +87,50 @@ public class UntypedAtomicItem implements Item {
         if (trimmedValue.equals("NaN")) {
             return Float.NaN;
         }
-        if (trimmedValue.startsWith("-") && Float.parseFloat(this.getValue()) == -0f) {
-            return -0f;
+        try {
+            float parsedValue = Float.parseFloat(trimmedValue);
+            if (trimmedValue.startsWith("-") && parsedValue == -0f) {
+                return -0f;
+            }
+            return parsedValue;
+        } catch (NumberFormatException e) {
+            throw new CastException(
+                    "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:float.",
+                    ExceptionMetadata.EMPTY_METADATA);
         }
-        return Float.parseFloat(this.getValue());
     }
 
     @Override
     public BigDecimal castToDecimalValue() {
-        return new BigDecimal(this.value.trim());
+        try {
+            return new BigDecimal(this.value.trim());
+        } catch (NumberFormatException e) {
+            throw new CastException(
+                    "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:decimal.",
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
     }
 
     @Override
     public BigInteger castToIntegerValue() {
-        return new BigInteger(this.value.trim());
+        try {
+            return new BigInteger(this.value.trim());
+        } catch (NumberFormatException e) {
+            throw new CastException(
+                    "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:integer.",
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
     }
 
     @Override
     public int castToIntValue() {
-        return Integer.parseInt(this.value.trim());
+        try {
+            return Integer.parseInt(this.value.trim());
+        } catch (NumberFormatException e) {
+            throw new CastException(
+                    "Cannot cast xs:untypedAtomic value \"" + this.value + "\" to xs:int.",
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
     }
 
     @Override
@@ -100,35 +144,8 @@ public class UntypedAtomicItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readString();
-    }
-
-    public int hashCode() {
-        return getStringValue().hashCode();
     }
 
     @Override
@@ -151,5 +168,3 @@ public class UntypedAtomicItem implements Item {
         return "STRING";
     }
 }
-
-

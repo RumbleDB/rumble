@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.xml;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -26,15 +26,13 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * Expression representing a computed element constructor.
- * 
+ *
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-computedElements">XQuery 3.1, 3.9.3.1: Computed Element
  *      Constructors</a>
  */
+@Getter
 public class ComputedElementConstructorExpression extends Expression {
     /** The static element name (if specified) */
     private final Name elementName;
@@ -45,16 +43,13 @@ public class ComputedElementConstructorExpression extends Expression {
 
     /**
      * Constructor for static element name: element elementName { content }
-     * 
+     *
      * @param elementName The static element name
      * @param contentExpression The content expression
      * @param metadata The exception metadata
      */
     public ComputedElementConstructorExpression(
-            Name elementName,
-            Expression contentExpression,
-            ExceptionMetadata metadata
-    ) {
+            Name elementName, Expression contentExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.elementName = elementName;
         this.nameExpression = null;
@@ -63,16 +58,13 @@ public class ComputedElementConstructorExpression extends Expression {
 
     /**
      * Constructor for dynamic element name: element { nameExpression } { content }
-     * 
+     *
      * @param nameExpression The dynamic element name expression
      * @param contentExpression The content expression
      * @param metadata The exception metadata
      */
     public ComputedElementConstructorExpression(
-            Expression nameExpression,
-            Expression contentExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression nameExpression, Expression contentExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.elementName = null;
         this.nameExpression = nameExpression;
@@ -80,35 +72,8 @@ public class ComputedElementConstructorExpression extends Expression {
     }
 
     /**
-     * Get the static element name
-     * 
-     * @return The static element name
-     */
-    public Name getElementName() {
-        return this.elementName;
-    }
-
-    /**
-     * Get the dynamic element name expression
-     * 
-     * @return The dynamic element name expression
-     */
-    public Expression getNameExpression() {
-        return this.nameExpression;
-    }
-
-    /**
-     * Get the content expression
-     * 
-     * @return The content expression
-     */
-    public Expression getContentExpression() {
-        return this.contentExpression;
-    }
-
-    /**
      * Check if the element has a static name
-     * 
+     *
      * @return True if the element has a static name, false otherwise
      */
     public boolean hasStaticName() {
@@ -133,7 +98,7 @@ public class ComputedElementConstructorExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("element ");
         if (this.hasStaticName()) {
