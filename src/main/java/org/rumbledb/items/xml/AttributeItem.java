@@ -1,39 +1,72 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items.xml;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
+import org.w3c.dom.Node;
+
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.TypedValueUnavailableException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import org.w3c.dom.Node;
 
-import java.util.Collections;
-import java.util.List;
-
-public class AttributeItem implements Item {
+public class AttributeItem extends AbstractNodeItem {
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private Name dmNodeName;
     private String stringValue;
     private Item parent;
     private XMLDocumentPosition documentPos;
-    // TODO: add schema-type, typed-value, is-id, is-idrefs
-
-    // needed for kryo
-    public AttributeItem() {
-    }
+    private XmlSchemaTypeAnnotation typeAnnotation;
+    private NodeTypedValue nodeTypedValue;
+    private boolean id;
+    private boolean idRefs;
 
     public AttributeItem(Node attributeNode) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode);
         this.stringValue = attributeNode.getNodeValue();
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
     }
 
     public AttributeItem(Name dmNodeName, String stringValue) {
         this.dmNodeName = dmNodeName;
         this.stringValue = stringValue;
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        AttributeItem copy = new AttributeItem(this.dmNodeName, this.stringValue);
+        copy.typeAnnotation = this.typeAnnotation;
+        copy.nodeTypedValue = this.nodeTypedValue;
+        copy.id = this.id;
+        copy.idRefs = this.idRefs;
+        return copy;
     }
 
     @Override
@@ -45,23 +78,6 @@ public class AttributeItem implements Item {
     @Override
     public XMLDocumentPosition getXmlDocumentPosition() {
         return this.documentPos;
-    }
-
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.documentPos);
-        kryo.writeClassAndObject(output, this.parent);
-        kryo.writeObject(output, this.dmNodeName);
-        output.writeString(this.stringValue);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.documentPos = kryo.readObject(input, XMLDocumentPosition.class);
-        this.parent = (Item) kryo.readClassAndObject(input);
-        this.dmNodeName = kryo.readObject(input, Name.class);
-        this.stringValue = input.readString();
     }
 
     @Override
@@ -82,6 +98,15 @@ public class AttributeItem implements Item {
     @Override
     public void setParent(Item parent) {
         this.parent = parent;
+    }
+
+    public void setNodeName(Name nodeName) {
+        this.dmNodeName = nodeName;
+    }
+
+    @Override
+    public void addParentToDescendants() {
+        // Attribute nodes are leaves and therefore have no descendants to update.
     }
 
     @Override
@@ -124,13 +149,10 @@ public class AttributeItem implements Item {
      *
      * "For an Attribute Node, dm:is-id returns true if the attribute node is of type xs:ID or
      * is derived by restriction from xs:ID; otherwise it returns false."
-     *
-     * RumbleDB does not currently support schema type annotations on attributes, so this
-     * implementation always returns false.
      */
     @Override
     public boolean isId() {
-        return false;
+        return this.id;
     }
 
     /**
@@ -139,22 +161,10 @@ public class AttributeItem implements Item {
      * "For an Attribute Node, dm:is-idrefs returns true if the attribute node is of type
      * xs:IDREF or xs:IDREFS or is derived by restriction from one of these types; otherwise
      * it returns false."
-     *
-     * RumbleDB does not currently support schema type annotations on attributes, so this
-     * implementation always returns false.
      */
     @Override
     public boolean isIdrefs() {
-        return false;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof AttributeItem)) {
-            return false;
-        }
-        AttributeItem otherAttributeItem = (AttributeItem) other;
-        return this.getXmlDocumentPosition().equals(otherAttributeItem.getXmlDocumentPosition());
+        return this.idRefs;
     }
 
     @Override
@@ -168,12 +178,15 @@ public class AttributeItem implements Item {
     }
 
     @Override
-    public int hashCode() {
-        return this.documentPos.hashCode();
-    }
-
-    @Override
     public List<Item> atomizedValue() {
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.AVAILABLE) {
+            return this.nodeTypedValue.getItems();
+        }
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.UNAVAILABLE) {
+            throw new TypedValueUnavailableException(
+                    "The typed value is not available for attribute " + this.dmNodeName + ".",
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
         return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
     }
 
@@ -231,12 +244,40 @@ public class AttributeItem implements Item {
      *
      * For an Attribute Node, dm:type-name returns the name of the dynamic type of the attribute
      * node, or the empty sequence if the node is untyped.
-     *
-     * RumbleDB does not currently support schema-validated attribute types, so this
-     * implementation returns the empty sequence.
      */
     @Override
     public List<Item> typeName() {
-        return Collections.emptyList();
+        if (this.typeAnnotation == null) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.name()));
+    }
+
+    @Override
+    public void setSchemaType(@NonNull XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
+        NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
+        this.typeAnnotation = typeAnnotation;
+        this.nodeTypedValue = newTypedValue;
+        this.id = false;
+        this.idRefs = false;
+    }
+
+    @Override
+    public void clearSchemaType() {
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
+        this.id = false;
+        this.idRefs = false;
+    }
+
+    @Override
+    public XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
+        return this.typeAnnotation;
+    }
+
+    @Override
+    public void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        this.id = id;
+        this.idRefs = idRefs;
     }
 }

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,209 +11,306 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.typing;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
-import org.rumbledb.types.SequenceType;
-
-import java.util.ArrayList;
+import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.spark.api.java.JavaRDD;
 
-public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.AttributeNodeItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.DocumentNodeItemType;
+import org.rumbledb.types.ElementNodeItemType;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SchemaElementNodeItemType;
+import org.rumbledb.types.SequenceType;
 
+public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
+
+    @Serial
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator child;
+
+    private final ItemRuntimePlan child;
     private final SequenceType sequenceType;
 
-    public InstanceOfIterator(
-            RuntimeIterator child,
-            SequenceType sequenceType,
-            RuntimeStaticContext staticContext
-    ) {
+    public InstanceOfIterator(ItemRuntimePlan child, SequenceType sequenceType, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(child), staticContext);
         this.child = child;
         this.sequenceType = sequenceType;
     }
 
-    public Item materializeFirstItemOrNull(
-            DynamicContext dynamicContext
-    ) {
-        if (!this.sequenceType.isResolved()) {
-            this.sequenceType.resolve(dynamicContext, getMetadata());
+    @Override
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        ItemRuntimePlan child = this.child;
+        SequenceType sequenceType = this.sequenceType;
+        ExceptionMetadata metadata = getMetadata();
+        if (!sequenceType.isResolved()) {
+            sequenceType.resolve(dynamicContext, metadata);
         }
-        if (!this.child.isRDDOrDataFrame()) {
-            List<Item> items = new ArrayList<>();
-            this.child.open(dynamicContext);
-
-            while (this.child.hasNext()) {
-                items.add(this.child.next());
-            }
-            this.child.close();
-
-            if (this.sequenceType.isEmptySequence()) {
-                return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
-            }
-
-            if (isInvalidArity(items.size())) {
+        if (!child.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            return evaluateLocal(child, sequenceType, metadata, dynamicContext);
+        }
+        if (child.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            HomogeneousItemDataFrame childDF = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(child, dynamicContext);
+            if (isInvalidArity(childDF.take(2).size(), sequenceType)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
-
-            ItemType itemType = this.sequenceType.getItemType();
-            for (Item item : items) {
-                if (item != null && !item.getDynamicType().isResolved()) {
-                    item.getDynamicType().resolve(dynamicContext, getMetadata());
-                }
-                if (!doesItemTypeMatchItem(itemType, item)) {
-                    return ItemFactory.getInstance().createBooleanItem(false);
-                }
-            }
-
-            return ItemFactory.getInstance().createBooleanItem(true);
-        }
-        if (this.child.isDataFrame()) {
-            JSoundDataFrame childDF = this.child.getDataFrame(dynamicContext);
-            if (isInvalidArity(childDF.take(2).size())) {
-                return ItemFactory.getInstance().createBooleanItem(false);
-            }
-
             ItemType itemType = childDF.getItemType();
-            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(this.sequenceType.getItemType()));
+            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(sequenceType.getItemType()));
         }
-        JavaRDD<Item> childRDD = this.child.getRDD(dynamicContext);
-
-        if (isInvalidArity(childRDD.take(2).size())) {
+        JavaRDD<Item> childRDD = child.getRDD(dynamicContext);
+        if (isInvalidArity(childRDD.take(2).size(), sequenceType)) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-
-        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
+        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(sequenceType.getItemType()));
         return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
     }
 
-    private boolean isInvalidArity(long numOfItems) {
-        return (numOfItems != 0 && this.sequenceType.isEmptySequence())
-            ||
-            (numOfItems == 0
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore))
-            ||
-            (numOfItems > 1
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero));
+    private static Item evaluateLocal(
+            ItemRuntimePlan child,
+            SequenceType sequenceType,
+            ExceptionMetadata metadata,
+            DynamicContext dynamicContext) {
+        List<Item> items = child.materialize(dynamicContext);
+
+        if (sequenceType.isEmptySequence()) {
+            return ItemFactory.getInstance().createBooleanItem(items.isEmpty());
+        }
+        if (isInvalidArity(items.size(), sequenceType)) {
+            return ItemFactory.getInstance().createBooleanItem(false);
+        }
+
+        ItemType itemType = sequenceType.getItemType();
+        for (Item item : items) {
+            if (item != null && !item.getDynamicType().isResolved()) {
+                item.getDynamicType().resolve(dynamicContext, metadata);
+            }
+            if (!doesItemTypeMatchItem(itemType, item)) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+        }
+        return ItemFactory.getInstance().createBooleanItem(true);
+    }
+
+    private static boolean isInvalidArity(long numOfItems, SequenceType sequenceType) {
+        return (numOfItems != 0 && sequenceType.isEmptySequence())
+                || (numOfItems == 0
+                        && (sequenceType.getArity() == SequenceType.Arity.One
+                                || sequenceType.getArity() == SequenceType.Arity.OneOrMore))
+                || (numOfItems > 1
+                        && (sequenceType.getArity() == SequenceType.Arity.One
+                                || sequenceType.getArity() == SequenceType.Arity.OneOrZero));
     }
 
     /**
      * Item type tests. This supersedes the method isTypeOf() formerly located in the Item interface,
      * as part of the efforts to cleanly separate item storage from item manipulation (which is
      * the domain of responsibility of runtime iterators).
-     * 
+     *
      * @param itemType the item type to match against the item.
      * @param itemToMatch the item to match against the type.
      * @return true if itemToMatch matches itemType.
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+        if (itemType instanceof SchemaElementNodeItemType schemaType) {
+            return schemaType.getAlternatives().stream().anyMatch(type -> matchesElementTest(type, itemToMatch));
+        }
+        if (itemType instanceof ElementNodeItemType elementType) {
+            return matchesElementTest(elementType, itemToMatch);
+        }
+        if (itemType instanceof AttributeNodeItemType attributeType) {
+            return matchesAttributeTest(attributeType, itemToMatch);
+        }
+        if (itemType instanceof DocumentNodeItemType documentType && documentType.getElementTestType() != null) {
+            if (!itemToMatch.isDocumentNode()) {
+                return false;
+            }
+            if (itemToMatch.children().stream().anyMatch(Item::isTextNode)) {
+                return false;
+            }
+            List<Item> elementChildren =
+                    itemToMatch.children().stream().filter(Item::isElementNode).toList();
+            return elementChildren.size() == 1
+                    && doesItemTypeMatchItem(documentType.getElementTestType(), elementChildren.get(0));
+        }
         if (itemToMatch.isMap()) {
-            List<Item> keys = itemToMatch.getItemKeys();
-            if (keys.isEmpty()) {
+            if (itemToMatch.getSize() == 0) {
                 // empty map: matches
                 // - all map types
                 // - object types (js:object) WITHOUT a JSound schema attached
-                if (
-                    itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem)
-                        && (!itemType.isObjectItemType() || itemType.equals(BuiltinTypesCatalogue.objectItem))
-                )
+                if (itemType.isSubtypeOf(BuiltinTypesCatalogue.mapItem)
+                        && (!itemType.isObjectItemType() || itemType.equals(BuiltinTypesCatalogue.objectItem))) {
                     return true;
-                // default behavior for object types (js:object) WITH a JSound schema attached
+                }
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
             }
-            ItemType keyType = getLeastCommonSuperItemType(keys, BuiltinTypesCatalogue.atomicItem);
-            SequenceType valueSequenceType = getLeastCommonSuperSequenceType(
-                itemToMatch.getSequenceValues()
-            );
+            if (itemToMatch.getDynamicType().isSubtypeOf(itemType)) {
+                // if the item already has a dynamic type that is a subtype of the required type, we can skip the more
+                // expensive structural check
+                return true;
+            }
+            List<Item> keys = itemToMatch.getItemKeys();
+            ItemType keyType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
+                    keys, ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.STRICT);
+            SequenceType valueSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
+                    itemToMatch.getSequenceValues(), TypeInferrenceUtils.TypeMergeMode.STRICT);
             ItemType runtimeMapType = ItemTypeFactory.mapOf(keyType, valueSequenceType);
+
             // Structural map type vs. UDT: map(xs:string, xs:int) is not a subtype of a named object
             // schema type, but the validated item's dynamic type is (e.g. local:x).
-            return runtimeMapType.isSubtypeOf(itemType)
-                || itemToMatch.getDynamicType().isSubtypeOf(itemType);
+            return runtimeMapType.isSubtypeOf(itemType);
         } else if (itemToMatch.isArray()) {
             List<List<Item>> members = itemToMatch.getSequenceMembers();
             if (members.isEmpty()) {
                 // empty array: matches
                 // - all array types
                 // - js:array()
-                if (
-                    itemType.isSubtypeOf(BuiltinTypesCatalogue.xqueryArrayItem)
-                        && (!itemType.isArrayItemType() || itemType.equals(BuiltinTypesCatalogue.arrayItem))
-                )
+                if (itemType.isSubtypeOf(BuiltinTypesCatalogue.xqueryArrayItem)
+                        && (!itemType.isArrayItemType() || itemType.equals(BuiltinTypesCatalogue.arrayItem)))
                     return true;
                 // default behavior for array types (js:array()) WITH restrictions
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
             }
-            SequenceType memberSequenceType = getLeastCommonSuperSequenceType(
-                members
-            );
+            if (itemType.isXQueryArrayItemType()) {
+                // If the expected type is an array, we can check the members against the expected member type.
+                SequenceType expectedMemberType = itemType.getMemberSequenceType();
+                SequenceType.Arity expectedArity = expectedMemberType.getArity();
+                for (List<Item> memberSequence : members) {
+                    if (expectedArity.equals(SequenceType.Arity.One) && memberSequence.size() != 1) {
+                        return false;
+                    }
+                    if (expectedArity.equals(SequenceType.Arity.Zero) && !memberSequence.isEmpty()) {
+                        return false;
+                    }
+                    if (expectedArity.equals(SequenceType.Arity.OneOrZero) && memberSequence.size() > 1) {
+                        return false;
+                    }
+                    if (expectedArity.equals(SequenceType.Arity.OneOrMore) && memberSequence.isEmpty()) {
+                        return false;
+                    }
+                    for (Item member : memberSequence) {
+                        if (!doesItemTypeMatchItem(expectedMemberType.getItemType(), member)) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+            SequenceType memberSequenceType = TypeInferrenceUtils.inferSequenceTypeOfLocalItemSequences(
+                    members, TypeInferrenceUtils.TypeMergeMode.STRICT);
             ItemType runtimeArrayType = ItemTypeFactory.xqueryArrayOf(memberSequenceType);
             // Structural array type vs. UDT: array(xs:string) is not a subtype of a named object
             // schema type, but the validated item's dynamic type is (e.g. local:x).
             return runtimeArrayType.isSubtypeOf(itemType)
-                || itemToMatch.getDynamicType().isSubtypeOf(itemType);
+                    || itemToMatch.getDynamicType().isSubtypeOf(itemType);
         }
         return itemToMatch.getDynamicType().isSubtypeOf(itemType);
     }
 
-    private static ItemType getLeastCommonSuperItemType(List<Item> items, ItemType defaultType) {
-        ItemType result = items.get(0).getDynamicType();
-        for (int i = 1; i < items.size(); i++) {
-            result = result.findLeastCommonSuperTypeWith(items.get(i).getDynamicType());
+    /**
+     * XQuery 3.1 §2.5.5.3: keep the six forms in specification order.
+     * https://www.w3.org/TR/xquery-31/#id-element-test
+     */
+    private static boolean matchesElementTest(ElementNodeItemType test, Item item) {
+        if (!item.isElementNode()) {
+            return false;
         }
-        return result;
+        Name nodeName = test.getNodeName();
+        Name typeName = test.getSchemaTypeName();
+
+        // 1. element() and element(*)
+        if (nodeName == null && typeName == null) {
+            return true;
+        }
+        // 2. element(N): neither the annotation nor nilled affects this form.
+        if (typeName == null) {
+            return nodeName.equals(item.nodeName());
+        }
+        // 3. element(N, T): name, derivation, then nilled.
+        if (nodeName != null && !test.isNillable()) {
+            return nodeName.equals(item.nodeName())
+                    && matchesElementTypeAnnotation(test, item)
+                    && item.nilled().stream().noneMatch(value -> value.getBooleanValue());
+        }
+        // 4. element(N, T?): name and derivation; nilled is unrestricted.
+        if (nodeName != null) {
+            return nodeName.equals(item.nodeName()) && matchesElementTypeAnnotation(test, item);
+        }
+        // 5. element(*, T): derivation, then nilled.
+        if (!test.isNillable()) {
+            return matchesElementTypeAnnotation(test, item)
+                    && item.nilled().stream().noneMatch(value -> value.getBooleanValue());
+        }
+        // 6. element(*, T?): derivation only.
+        return matchesElementTypeAnnotation(test, item);
     }
 
-    private static SequenceType getLeastCommonSuperSequenceType(
-            List<List<Item>> sequences
-    ) {
-        if (sequences.isEmpty()) {
-            return SequenceType.createSequenceType("item*");
+    private static boolean matchesElementTypeAnnotation(ElementNodeItemType test, Item item) {
+        if (item.getSchemaTypeAnnotation() != null) {
+            // Declaration tests may also accept annotations derived from a pure union's members.
+            return test.getSchemaTypeAlternatives().stream().anyMatch(item.getSchemaTypeAnnotation()::isDerivedFrom);
         }
-        SequenceType result = sequenceTypeFromRuntimeItems(sequences.get(0));
-        for (int i = 1; i < sequences.size(); i++) {
-            result = result.leastCommonSupertypeWith(sequenceTypeFromRuntimeItems(sequences.get(i)));
-        }
-        return result;
+        // Nodes without an explicit annotation have the XDM default xs:untyped.
+        Name typeName = test.getSchemaTypeName();
+        String expected = typeName.getLocalName();
+        return Name.XS_NS.equals(typeName.getNamespace()) && ("untyped".equals(expected) || "anyType".equals(expected));
     }
 
-    private static SequenceType sequenceTypeFromRuntimeItems(List<Item> items) {
-        if (items.isEmpty()) {
-            return SequenceType.createSequenceType("()");
+    /**
+     * XQuery 3.1 §2.5.5.5: keep the four forms in specification order.
+     * https://www.w3.org/TR/xquery-31/#id-attribute-test
+     */
+    private static boolean matchesAttributeTest(AttributeNodeItemType test, Item item) {
+        if (!item.isAttributeNode()) {
+            return false;
         }
-        Item item = items.get(0);
-        ItemType itemType = item.getDynamicType();
-        for (int i = 1; i < items.size(); i++) {
-            itemType = itemType.findLeastCommonSuperTypeWith(items.get(i).getDynamicType());
+        Name nodeName = test.getNodeName();
+        Name typeName = test.getSchemaTypeName();
+
+        // 1. attribute() and attribute(*)
+        if (nodeName == null && typeName == null) {
+            return true;
         }
-        if (items.size() == 1) {
-            return new SequenceType(itemType, SequenceType.Arity.One);
+        // 2. attribute(N): the annotation does not affect this form.
+        if (typeName == null) {
+            return nodeName.equals(item.nodeName());
         }
-        return new SequenceType(itemType, SequenceType.Arity.OneOrMore);
+        // 3. attribute(N, T): name, then derivation.
+        if (nodeName != null) {
+            return nodeName.equals(item.nodeName()) && matchesAttributeTypeAnnotation(test, item);
+        }
+        // 4. attribute(*, T): derivation only.
+        return matchesAttributeTypeAnnotation(test, item);
     }
 
-
+    private static boolean matchesAttributeTypeAnnotation(AttributeNodeItemType test, Item item) {
+        if (item.getSchemaTypeAnnotation() != null) {
+            // Declaration tests may also accept annotations derived from a pure union's members.
+            return test.getSchemaTypeAlternatives().stream().anyMatch(item.getSchemaTypeAnnotation()::isDerivedFrom);
+        }
+        // Attributes without an explicit annotation have the XDM default xs:untypedAtomic.
+        Name typeName = test.getSchemaTypeName();
+        String expected = typeName.getLocalName();
+        return Name.XS_NS.equals(typeName.getNamespace())
+                && ("untypedAtomic".equals(expected)
+                        || "anyAtomicType".equals(expected)
+                        || "anySimpleType".equals(expected)
+                        || "anyType".equals(expected));
+    }
 }

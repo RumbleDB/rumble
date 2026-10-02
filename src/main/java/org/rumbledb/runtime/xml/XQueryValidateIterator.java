@@ -1,0 +1,115 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.xml;
+
+import java.io.Serial;
+import java.util.List;
+
+import lombok.NonNull;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ValidateException;
+import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
+import org.rumbledb.xml.schema.XmlSchemaValidator;
+
+/** Local evaluation of XQuery XML Schema validation expressions. */
+public final class XQueryValidateIterator extends AbstractAtMostOneItemRuntimePlan {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan operand;
+    private final ValidationMode validationMode;
+    private final Name targetTypeName;
+    private final transient XmlSchemaCatalog schemaCatalog;
+
+    public XQueryValidateIterator(
+            ItemRuntimePlan operand,
+            @NonNull ValidationMode validationMode,
+            Name targetTypeName,
+            XmlSchemaCatalog schemaCatalog,
+            RuntimeStaticContext staticContext) {
+        super(List.of(operand), staticContext);
+        this.operand = operand;
+        this.validationMode = validationMode;
+        this.targetTypeName = targetTypeName;
+        this.schemaCatalog = schemaCatalog;
+        if ((validationMode == ValidationMode.TYPE) == (targetTypeName == null)) {
+            throw new OurBadException("Only validate type may specify a target XML Schema type.");
+        }
+    }
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item item;
+        try {
+            item = this.operand.materializeExactlyOne(context);
+        } catch (MoreThanOneItemException exception) {
+            throw this.operandTypeError("The operand contains more than one item.");
+        } catch (NoItemException exception) {
+            throw this.operandTypeError("The operand is an empty sequence.");
+        }
+
+        if (!item.isDocumentNode() && !item.isElementNode()) {
+            throw this.operandTypeError("The operand is neither a document nor an element node.");
+        }
+
+        if (item.isDocumentNode() && !BuiltinTypeValidator.hasValidDocumentStructure(item)) {
+            throw new ValidateException(
+                    "A document node being validated must have exactly one element child and only comment or "
+                            + "processing-instruction siblings.",
+                    ErrorCode.InvalidValidateDocumentStructureErrorCode,
+                    this.getMetadata());
+        }
+
+        if (this.validationMode == ValidationMode.TYPE
+                && Name.XS_NS.equals(this.targetTypeName.getNamespace())
+                && BuiltinTypesCatalogue.typeExists(this.targetTypeName)) {
+            // It's a builtin type, so we can validate it without the schema catalog.
+            return BuiltinTypeValidator.validate(
+                    item, BuiltinTypesCatalogue.getItemTypeByName(this.targetTypeName), this.getMetadata());
+        }
+
+        if (this.schemaCatalog == null) {
+            throw new OurBadException("The XML Schema catalog is unavailable at runtime.", this.getMetadata());
+        }
+
+        XmlSchemaValidator validator = new XmlSchemaValidator(this.schemaCatalog);
+        return switch (this.validationMode) {
+            case STRICT -> validator.validateStrict(item, this.getMetadata());
+            case LAX -> validator.validateLax(item, this.getMetadata());
+            case TYPE -> validator.validateType(item, this.targetTypeName, this.getMetadata());
+        };
+    }
+
+    private ValidateException operandTypeError(String detail) {
+        return new ValidateException(
+                "A validate expression requires exactly one document or element node. " + detail,
+                ErrorCode.ValidateOperandTypeErrorCode,
+                this.getMetadata());
+    }
+}

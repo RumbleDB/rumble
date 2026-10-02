@@ -1,10 +1,27 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.Name;
-
-import java.util.Objects;
+import java.io.Serial;
 import java.util.Set;
+
+import lombok.Getter;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 
 /**
  * Class representing document-node() and document-node(element(...)) item types.
@@ -12,8 +29,10 @@ import java.util.Set;
  * Wildcard document-node() is represented with no element-test restriction.
  * document-node(element(...)) is represented with a concrete inner element node item type.
  */
-public class DocumentNodeItemType implements ItemType {
+@Getter
+public class DocumentNodeItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
@@ -36,43 +55,9 @@ public class DocumentNodeItemType implements ItemType {
         return this.elementTestType == null;
     }
 
-    public ItemType getElementTestType() {
-        return this.elementTestType;
-    }
-
     @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.catalogueName, Name.class);
-        kryo.writeObjectOrNull(output, this.elementTestType, ElementNodeItemType.class);
-    }
-
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.catalogueName = kryo.readObjectOrNull(input, Name.class);
-        this.elementTestType = kryo.readObjectOrNull(input, ElementNodeItemType.class);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType) || !((ItemType) other).isNodeItemType()) {
-            return false;
-        }
-        return isEqualTo((ItemType) other);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.catalogueName, this.elementTestType);
-    }
-
-    @Override
-    public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof DocumentNodeItemType)) {
-            return false;
-        }
-        DocumentNodeItemType other = (DocumentNodeItemType) otherType;
-        return Objects.equals(this.catalogueName, other.catalogueName)
-            && Objects.equals(this.elementTestType, other.elementTestType);
+    protected Object equalityKey() {
+        return structuralTypeKey(DocumentNodeItemType.class, this.catalogueName, this.elementTestType);
     }
 
     @Override
@@ -102,17 +87,14 @@ public class DocumentNodeItemType implements ItemType {
                 }
             }
         }
-        if (
-            this.equals(superType)
+        if (this.equals(superType)
                 || superType.equals(BuiltinTypesCatalogue.item)
-                || superType.equals(BuiltinTypesCatalogue.nodeItem)
-        ) {
+                || superType.equals(BuiltinTypesCatalogue.nodeItem)) {
             return true;
         }
-        if (!(superType instanceof DocumentNodeItemType)) {
+        if (!(superType instanceof DocumentNodeItemType other)) {
             return false;
         }
-        DocumentNodeItemType other = (DocumentNodeItemType) superType;
         if (other.isWildcardDocument()) {
             return true;
         }
@@ -124,14 +106,12 @@ public class DocumentNodeItemType implements ItemType {
         if (this.equals(other)) {
             return this;
         }
-        if (other instanceof DocumentNodeItemType) {
-            DocumentNodeItemType otherDocument = (DocumentNodeItemType) other;
+        if (other instanceof DocumentNodeItemType otherDocument) {
             if (this.isWildcardDocument() || otherDocument.isWildcardDocument()) {
                 return BuiltinTypesCatalogue.documentNode;
             }
-            ItemType innerLeastCommonSuperType = this.elementTestType.findLeastCommonSuperTypeWith(
-                otherDocument.elementTestType
-            );
+            ItemType innerLeastCommonSuperType =
+                    this.elementTestType.findLeastCommonSuperTypeWith(otherDocument.elementTestType);
             return new DocumentNodeItemType((ElementNodeItemType) innerLeastCommonSuperType);
         }
         ItemType current = this;
@@ -178,7 +158,7 @@ public class DocumentNodeItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 }

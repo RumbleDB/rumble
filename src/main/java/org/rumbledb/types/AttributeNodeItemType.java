@@ -1,10 +1,28 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.Name;
-
-import java.util.Objects;
+import java.io.Serial;
+import java.util.List;
 import java.util.Set;
+
+import lombok.Getter;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 
 /**
  * Class representing attribute() and attribute(QName) item types.
@@ -12,16 +30,30 @@ import java.util.Set;
  * Wildcard attribute() is represented with no node-name restriction.
  * attribute(QName) is represented with a concrete node-name restriction.
  */
-public class AttributeNodeItemType implements ItemType {
+public class AttributeNodeItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
+
+    @Getter
     private Name nodeName;
+
+    @Getter
+    private final Name schemaTypeName;
+
+    private final List<Name> schemaTypeHierarchy;
+
+    // Includes member types when the declaration uses a pure union.
+    @Getter
+    private List<Name> schemaTypeAlternatives = List.of();
 
     public AttributeNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("attribute");
         this.nodeName = null;
+        this.schemaTypeName = null;
+        this.schemaTypeHierarchy = List.of();
     }
 
     public AttributeNodeItemType(Name nodeName) {
@@ -30,6 +62,25 @@ public class AttributeNodeItemType implements ItemType {
         }
         this.catalogueName = null;
         this.nodeName = nodeName;
+        this.schemaTypeName = null;
+        this.schemaTypeHierarchy = List.of();
+    }
+
+    public AttributeNodeItemType(Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy) {
+        if (schemaTypeName == null || schemaTypeHierarchy == null || schemaTypeHierarchy.isEmpty()) {
+            throw new IllegalArgumentException("A typed attribute test requires a schema type hierarchy.");
+        }
+        this.catalogueName = null;
+        this.nodeName = nodeName;
+        this.schemaTypeName = schemaTypeName;
+        this.schemaTypeHierarchy = List.copyOf(schemaTypeHierarchy);
+        this.schemaTypeAlternatives = List.of(schemaTypeName);
+    }
+
+    public AttributeNodeItemType(
+            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, List<Name> schemaTypeAlternatives) {
+        this(nodeName, schemaTypeName, schemaTypeHierarchy);
+        this.schemaTypeAlternatives = List.copyOf(schemaTypeAlternatives);
     }
 
     private boolean isWildcardAttribute() {
@@ -37,38 +88,13 @@ public class AttributeNodeItemType implements ItemType {
     }
 
     @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.catalogueName, Name.class);
-        kryo.writeObjectOrNull(output, this.nodeName, Name.class);
-    }
-
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.catalogueName = kryo.readObjectOrNull(input, Name.class);
-        this.nodeName = kryo.readObjectOrNull(input, Name.class);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType) || !((ItemType) other).isNodeItemType()) {
-            return false;
-        }
-        return isEqualTo((ItemType) other);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.catalogueName, this.nodeName);
-    }
-
-    @Override
-    public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof AttributeNodeItemType)) {
-            return false;
-        }
-        AttributeNodeItemType other = (AttributeNodeItemType) otherType;
-        return Objects.equals(this.catalogueName, other.catalogueName)
-            && Objects.equals(this.nodeName, other.nodeName);
+    protected Object equalityKey() {
+        return structuralTypeKey(
+                AttributeNodeItemType.class,
+                this.catalogueName,
+                this.nodeName,
+                this.schemaTypeName,
+                this.schemaTypeAlternatives);
     }
 
     @Override
@@ -82,10 +108,6 @@ public class AttributeNodeItemType implements ItemType {
             throw new UnsupportedOperationException("Named attribute node item type has no builtin QName");
         }
         return this.catalogueName;
-    }
-
-    public Name getNodeName() {
-        return this.nodeName;
     }
 
     @Override
@@ -102,21 +124,25 @@ public class AttributeNodeItemType implements ItemType {
                 }
             }
         }
-        if (
-            this.equals(superType)
+        if (this.equals(superType)
                 || superType.equals(BuiltinTypesCatalogue.item)
-                || superType.equals(BuiltinTypesCatalogue.nodeItem)
-        ) {
+                || superType.equals(BuiltinTypesCatalogue.nodeItem)) {
             return true;
         }
-        if (!(superType instanceof AttributeNodeItemType)) {
+        if (!(superType instanceof AttributeNodeItemType other)) {
             return false;
         }
-        AttributeNodeItemType other = (AttributeNodeItemType) superType;
         if (other.isWildcardAttribute()) {
-            return true;
+            return other.schemaTypeName == null || this.hasCompatibleSchemaType(other);
         }
-        return this.nodeName != null && this.nodeName.equals(other.nodeName);
+        return this.nodeName != null
+                && this.nodeName.equals(other.nodeName)
+                && (other.schemaTypeName == null || this.hasCompatibleSchemaType(other));
+    }
+
+    private boolean hasCompatibleSchemaType(AttributeNodeItemType superType) {
+        return this.schemaTypeName != null
+                && superType.schemaTypeAlternatives.stream().anyMatch(this.schemaTypeHierarchy::contains);
     }
 
     @Override
@@ -159,10 +185,13 @@ public class AttributeNodeItemType implements ItemType {
 
     @Override
     public String toString() {
-        if (isWildcardAttribute()) {
+        if (this.catalogueName != null) {
             return this.catalogueName.toString();
         }
-        return "attribute(" + this.nodeName + ")";
+        String name = this.nodeName == null ? "*" : this.nodeName.toString();
+        return this.schemaTypeName == null
+                ? "attribute(" + name + ")"
+                : "attribute(" + name + ", " + this.schemaTypeName + ")";
     }
 
     @Override
@@ -171,7 +200,7 @@ public class AttributeNodeItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 }

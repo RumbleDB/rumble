@@ -1,20 +1,88 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.serialization;
 
-import org.apache.commons.text.StringEscapeUtils;
+import java.nio.CharBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetEncoder;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
+import java.util.List;
+import java.util.Set;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
-
-import java.util.List;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
 
 /**
  * Shared helpers for {@link Serializer} implementations (map serialization, DM node names).
  */
 public final class SerializerUtils {
 
-    private SerializerUtils() {
+    public static final Set<String> URI_ATTRIBUTES = Set.of(
+            "action",
+            "archive",
+            "background",
+            "cite",
+            "classid",
+            "codebase",
+            "data",
+            "formaction",
+            "href",
+            "icon",
+            "longdesc",
+            "manifest",
+            "poster",
+            "profile",
+            "src",
+            "usemap");
+
+    public static final Set<String> HTML5_VOID_ELEMENTS = Set.of(
+            "area", "base", "br", "col", "embed", "hr", "img", "input", "keygen", "link", "meta", "param", "source",
+            "track", "wbr");
+
+    private SerializerUtils() {}
+
+    /**
+     * Escapes URI attribute values using percent-encoding for non-ASCII characters.
+     */
+    public static String escapeUriAttribute(String value) {
+        StringBuilder result = new StringBuilder(value.length());
+        value.codePoints().forEach(codePoint -> appendEscapedUriCodePoint(result, codePoint));
+        return result.toString();
     }
 
-    public static void appendDmNodeNameLexical(StringBuffer sb, Item item) {
+    private static void appendEscapedUriCodePoint(StringBuilder result, int codePoint) {
+        if (codePoint >= 0x20 && codePoint <= 0x7E) {
+            result.appendCodePoint(codePoint);
+            return;
+        }
+        byte[] utf8Bytes = new String(Character.toChars(codePoint)).getBytes(StandardCharsets.UTF_8);
+        for (byte currentByte : utf8Bytes) {
+            int unsigned = currentByte & 0xFF;
+            result.append('%');
+            result.append(Character.toUpperCase(Character.forDigit((unsigned >>> 4) & 0xF, 16)));
+            result.append(Character.toUpperCase(Character.forDigit(unsigned & 0xF, 16)));
+        }
+    }
+
+    public static void appendDmNodeNameLexical(StringBuilder sb, Item item) {
         Name n = item.nodeName();
         if (n != null) {
             String p = n.getPrefix();
@@ -26,6 +94,24 @@ public final class SerializerUtils {
         }
     }
 
+    public static void appendXmlDeclaration(StringBuilder sb, SerializationParameters params) {
+        sb.append("<?xml version=\"");
+        sb.append(getEffectiveXmlVersion(params));
+        sb.append("\" encoding=\"");
+        sb.append(params.getEncoding() == null ? "UTF-8" : params.getEncoding());
+        sb.append("\"");
+        if (params.getStandalone() == SerializationParameters.Standalone.YES) {
+            sb.append(" standalone=\"yes\"");
+        } else if (params.getStandalone() == SerializationParameters.Standalone.NO) {
+            sb.append(" standalone=\"no\"");
+        }
+        sb.append("?>");
+    }
+
+    public static String getEffectiveXmlVersion(SerializationParameters params) {
+        return params.getVersion() == null || params.getVersion().isEmpty() ? "1.0" : params.getVersion();
+    }
+
     /**
      * Serializes a map item as a JSON object shape (with optional TYSON type prefix before "{").
      *
@@ -35,15 +121,14 @@ public final class SerializerUtils {
             Serializer serializer,
             SerializationParameters params,
             Item mapItem,
-            StringBuffer sb,
+            StringBuilder sb,
             String indent,
-            String optionalPrefixBeforeOpenBrace
-    ) {
+            String optionalPrefixBeforeOpenBrace) {
         if (optionalPrefixBeforeOpenBrace != null && !optionalPrefixBeforeOpenBrace.isEmpty()) {
             sb.append(optionalPrefixBeforeOpenBrace);
         }
         sb.append("{");
-        String separator = " ";
+        String separator = "";
         if (params.getIndent()) {
             separator = "\n" + indent + "  ";
         }
@@ -54,13 +139,16 @@ public final class SerializerUtils {
                 separator = "," + separator;
                 firstTime = false;
             }
-            sb.append("\"").append(StringEscapeUtils.escapeJson(key.getStringValue())).append("\"").append(" : ");
+            sb.append("\"");
+            appendJsonEscapedString(sb, key.getStringValue(), params);
+            sb.append("\"").append(":");
+            if (params.getIndent()) {
+                sb.append(" ");
+            }
             appendMapValue(serializer, params, mapItem, key, sb, indent);
         }
         if (params.getIndent()) {
             sb.append("\n").append(indent);
-        } else {
-            sb.append(" ");
         }
         sb.append("}");
     }
@@ -70,12 +158,11 @@ public final class SerializerUtils {
             SerializationParameters params,
             Item mapItem,
             Item key,
-            StringBuffer sb,
-            String indent
-    ) {
+            StringBuilder sb,
+            String indent) {
         List<Item> sequence = mapItem.getSequenceByKey(key);
         if (sequence == null || sequence.isEmpty()) {
-            sb.append("[]");
+            sb.append("null");
             return;
         }
         if (sequence.size() == 1) {
@@ -87,7 +174,7 @@ public final class SerializerUtils {
             return;
         }
         sb.append("[");
-        String separator = " ";
+        String separator = "";
         if (params.getIndent()) {
             separator = "\n" + indent + "    ";
         }
@@ -106,9 +193,103 @@ public final class SerializerUtils {
         }
         if (params.getIndent()) {
             sb.append("\n").append(indent).append("  ");
-        } else {
-            sb.append(" ");
         }
         sb.append("]");
+    }
+
+    /**
+     * Appends the JSON-escaped form of {@code value} to {@code sb}, using the provided cached encoder
+     * to decide whether non-ASCII code points can be represented directly or must be Unicode-escaped.
+     */
+    public static void appendJsonEscapedString(StringBuilder sb, String value, CharsetEncoder encoder) {
+        for (int i = 0; i < value.length(); ) {
+            int codePoint = value.codePointAt(i);
+            i += Character.charCount(codePoint);
+            appendJsonEscapedCodePoint(sb, codePoint, encoder);
+        }
+    }
+
+    /**
+     * Convenience overload that builds a throwaway encoder from {@code params}.
+     * Prefer {@link #appendJsonEscapedString(StringBuilder, String, CharsetEncoder)} when a cached
+     * encoder is available (e.g. from {@link #buildEncodingChecker}).
+     */
+    public static void appendJsonEscapedString(StringBuilder sb, String value, SerializationParameters params) {
+        appendJsonEscapedString(sb, value, buildEncodingChecker(params));
+    }
+
+    /**
+     * Creates a {@link CharsetEncoder} for the encoding declared in {@code params}.
+     * Callers that perform many string escapes should call this once and reuse the result.
+     */
+    static CharsetEncoder buildEncodingChecker(SerializationParameters params) {
+        String encoding = params == null || params.getEncoding() == null ? "UTF-8" : params.getEncoding();
+        try {
+            return Charset.forName(encoding).newEncoder();
+        } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
+            throw new RumbleException(
+                    "Unsupported serialization encoding: " + encoding,
+                    new ErrorCode(new Name(Name.ERROR_NS, "err", "SESU0007")),
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
+    }
+
+    private static void appendJsonEscapedCodePoint(StringBuilder sb, int codePoint, CharsetEncoder encoder) {
+        switch (codePoint) {
+            case '"':
+                sb.append("\\\"");
+                return;
+            case '\\':
+                sb.append("\\\\");
+                return;
+            case '/':
+                sb.append("\\/");
+                return;
+            case '\b':
+                sb.append("\\b");
+                return;
+            case '\f':
+                sb.append("\\f");
+                return;
+            case '\n':
+                sb.append("\\n");
+                return;
+            case '\r':
+                sb.append("\\r");
+                return;
+            case '\t':
+                sb.append("\\t");
+                return;
+            default:
+                break;
+        }
+
+        if ((codePoint >= 0x00 && codePoint <= 0x1F) || (codePoint >= 0x7F && codePoint <= 0x9F)) {
+            appendJsonUnicodeEscape(sb, codePoint);
+            return;
+        }
+
+        String asString = new String(Character.toChars(codePoint));
+        if (!encoder.canEncode(CharBuffer.wrap(asString))) {
+            if (codePoint <= 0xFFFF) {
+                appendJsonUnicodeEscape(sb, codePoint);
+            } else {
+                for (char surrogate : asString.toCharArray()) {
+                    appendJsonUnicodeEscape(sb, surrogate);
+                }
+            }
+            return;
+        }
+
+        sb.append(asString);
+    }
+
+    private static void appendJsonUnicodeEscape(StringBuilder sb, int codeUnit) {
+        sb.append("\\u");
+        String hex = Integer.toHexString(codeUnit).toUpperCase();
+        for (int i = hex.length(); i < 4; i++) {
+            sb.append('0');
+        }
+        sb.append(hex);
     }
 }

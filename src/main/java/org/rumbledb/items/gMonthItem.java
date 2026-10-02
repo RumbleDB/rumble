@@ -1,37 +1,41 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
+import java.io.Serial;
 import java.time.Month;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
-
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class gMonthItem implements Item {
+import org.rumbledb.api.Item;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
+public class gMonthItem extends AbstractAtomicItem {
+
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private boolean hasTimeZone;
     private Month month;
     private ZoneOffset offset;
-    private final Pattern gMonthRegex = Pattern.compile(
-        "--(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
-    );
-
-    @SuppressWarnings("unused")
-    public gMonthItem() {
-        super();
-    }
+    private static final Pattern gMonthRegex =
+            Pattern.compile("--(0[1-9]|1[0-2])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
 
     gMonthItem(OffsetDateTime dateTime, boolean hasTimeZone) {
         this.month = Month.of(dateTime.getMonthValue());
@@ -49,8 +53,13 @@ public class gMonthItem implements Item {
         getgMonthFromString(gMonthString);
     }
 
+    @Override
+    public Item copy(boolean mutable) {
+        return new gMonthItem(this.getDateTimeValue(), this.hasTimeZone);
+    }
+
     private void getgMonthFromString(String gMonthString) {
-        Matcher matcher = this.gMonthRegex.matcher(gMonthString);
+        Matcher matcher = gMonthRegex.matcher(gMonthString);
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gMonth: \"" + gMonthString + "\"");
         }
@@ -65,24 +74,11 @@ public class gMonthItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
 
+    @Override
     public String getStringValue() {
         return String.format("--%02d%s", this.month.getValue(), this.hasTimeZone ? this.offset : "");
     }
@@ -98,19 +94,6 @@ public class gMonthItem implements Item {
     }
 
     @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-        output.writeBoolean(this.hasTimeZone);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        String dateTimeString = input.readString();
-        this.hasTimeZone = input.readBoolean();
-        getgMonthFromString(dateTimeString);
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.gMonthItem;
     }
@@ -123,14 +106,6 @@ public class gMonthItem implements Item {
     @Override
     public OffsetDateTime getDateTimeValue() {
         return OffsetDateTime.of(
-            0,
-            this.month.getValue(),
-            1,
-            0,
-            0,
-            0,
-            0,
-            this.hasTimeZone ? this.offset : ZoneOffset.UTC
-        );
+                0, this.month.getValue(), 1, 0, 0, 0, 0, this.hasTimeZone ? this.offset : ZoneOffset.UTC);
     }
 }

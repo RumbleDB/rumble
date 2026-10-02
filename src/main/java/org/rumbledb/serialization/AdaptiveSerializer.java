@@ -1,0 +1,362 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.serialization;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.xml.NamespaceItem;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+
+/**
+ * Serializer for the W3C adaptive output method.
+ */
+public class AdaptiveSerializer implements Serializer, Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final SerializationParameters params;
+    private final XmlSerializer nodeSerializer;
+
+    public AdaptiveSerializer(SerializationParameters params) {
+        this.params = params != null ? params : SerializationParameters.defaults();
+        SerializationParameters xmlParams = SerializationParameters.copy(this.params);
+        xmlParams.setMethod("xml");
+        xmlParams.setOmitXmlDeclaration(true);
+        xmlParams.setIndent(false);
+        this.nodeSerializer = new XmlSerializer(xmlParams);
+    }
+
+    @Override
+    public String serialize(Item item) {
+        StringBuilder sb = new StringBuilder();
+        serialize(item, sb, "", true);
+        return sb.toString();
+    }
+
+    @Override
+    public void serialize(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
+        appendItem(item, sb);
+    }
+
+    private void appendItem(Item item, StringBuilder sb) {
+        if (item.isArray()) {
+            appendArray(item, sb);
+            return;
+        }
+        if (item.isMap()) {
+            appendMap(item, sb);
+            return;
+        }
+        if (item.isFunction()) {
+            appendFunctionItem(item, sb);
+            return;
+        }
+        if (item.isNode()) {
+            appendNode(item, sb);
+            return;
+        }
+        if (item.isAtomic()) {
+            appendAtomic(item, sb);
+            return;
+        }
+        throw new OurBadException("Unsupported item kind for adaptive serialization: " + item.getDynamicType());
+    }
+
+    private void appendArray(Item item, StringBuilder sb) {
+        sb.append("[");
+        boolean first = true;
+        if (item.isArrayOfItems()) {
+            for (Item member : item.getItemMembers()) {
+                if (!first) {
+                    sb.append(",");
+                }
+                appendItem(member, sb);
+                first = false;
+            }
+        } else {
+            for (List<Item> memberSequence : item.getSequenceMembers()) {
+                if (!first) {
+                    sb.append(",");
+                }
+                appendSequence(memberSequence, sb);
+                first = false;
+            }
+        }
+        sb.append("]");
+    }
+
+    private void appendMap(Item item, StringBuilder sb) {
+        sb.append("map{");
+        boolean first = true;
+        List<Item> keys = item.getItemKeys();
+        List<List<Item>> values = item.getSequenceValues();
+        for (int i = 0; i < keys.size(); i++) {
+            if (!first) {
+                sb.append(",");
+            }
+            Item key = keys.get(i);
+            appendAtomicKey(key, sb);
+            sb.append(":");
+            appendSequence(values.get(i), sb);
+            first = false;
+        }
+        sb.append("}");
+    }
+
+    private void appendSequence(List<Item> sequence, StringBuilder sb) {
+        if (sequence == null || sequence.isEmpty()) {
+            sb.append("()");
+            return;
+        }
+        if (sequence.size() == 1) {
+            appendItem(sequence.get(0), sb);
+            return;
+        }
+        sb.append("(");
+        for (int i = 0; i < sequence.size(); i++) {
+            if (i > 0) {
+                sb.append(",");
+            }
+            appendItem(sequence.get(i), sb);
+        }
+        sb.append(")");
+    }
+
+    private void appendAtomicKey(Item key, StringBuilder sb) {
+        if (!key.isAtomic()) {
+            throw new OurBadException("Adaptive serialization requires atomic map keys.");
+        }
+        appendAtomic(key, sb);
+    }
+
+    private void appendAtomic(Item item, StringBuilder sb) {
+        ItemType type = item.getDynamicType();
+
+        if (item.isNull()) {
+            sb.append("null");
+            return;
+        }
+        if (item.isBoolean()) {
+            sb.append(item.getBooleanValue() ? "true()" : "false()");
+            return;
+        }
+        if (isAdaptiveQuotedLiteralType(item)) {
+            sb.append(quoteAsLiteral(item.getStringValue()));
+            return;
+        }
+        if (item.isQName()) {
+            appendQName(item.getQNameValue(), sb);
+            return;
+        }
+        if (item.isInteger() || item.isInt() || item.isDecimal()) {
+            sb.append(item.getStringValue());
+            return;
+        }
+        if (item.isDouble()) {
+            sb.append(serializeDouble(item));
+            return;
+        }
+        if (item.isFloat()) {
+            sb.append("xs:float(");
+            sb.append(quoteAsLiteral(item.getStringValue()));
+            sb.append(")");
+            return;
+        }
+        if (item.isDateTime()) {
+            appendTypedAtomic("xs:dateTime", item, sb);
+            return;
+        }
+        if (item.isDate()) {
+            appendTypedAtomic("xs:date", item, sb);
+            return;
+        }
+        if (item.isTime()) {
+            appendTypedAtomic("xs:time", item, sb);
+            return;
+        }
+        if (item.isDuration()) {
+            appendTypedAtomic("xs:duration", item, sb);
+            return;
+        }
+        if (item.isBinary()) {
+            appendTypedAtomic(type.getName().toString(), item, sb);
+            return;
+        }
+        if (item.isGYearMonth() || item.isGYear() || item.isGMonthDay() || item.isGDay() || item.isGMonth()) {
+            appendTypedAtomic(type.getName().toString(), item, sb);
+            return;
+        }
+
+        Name typeName = type.getName();
+        if (typeName != null) {
+            appendTypedAtomic(typeName.toString(), item, sb);
+            return;
+        }
+        sb.append(item.getStringValue());
+    }
+
+    private boolean isAdaptiveQuotedLiteralType(Item item) {
+        ItemType type = item.getDynamicType();
+        return item.isUntypedAtomic()
+                || type.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+                || type.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem);
+    }
+
+    private String serializeDouble(Item item) {
+        double value = item.getDoubleValue();
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            return item.getStringValue();
+        }
+        String s = Double.toString(value).replace("E", "e");
+        if (!s.contains("e")) {
+            if (!s.contains(".")) {
+                s += ".0";
+            }
+            s += "e0";
+            return s;
+        }
+        int e = s.indexOf('e');
+        String mantissa = s.substring(0, e);
+        String exponent = s.substring(e + 1);
+        if (exponent.startsWith("+")) {
+            exponent = exponent.substring(1);
+        }
+        boolean negative = exponent.startsWith("-");
+        if (negative) {
+            exponent = exponent.substring(1);
+        }
+        exponent = exponent.replaceFirst("^0+(?!$)", "");
+        if (exponent.isEmpty()) {
+            exponent = "0";
+        }
+        return mantissa + "e" + (negative ? "-" : "") + exponent;
+    }
+
+    private void appendTypedAtomic(String constructorName, Item item, StringBuilder sb) {
+        sb.append(constructorName);
+        sb.append("(");
+        sb.append(quoteAsLiteral(item.getStringValue()));
+        sb.append(")");
+    }
+
+    private String quoteAsLiteral(String value) {
+        String mappedValue = applyCharacterMaps(value);
+        int singleQuotes = count(mappedValue, '\'');
+        int doubleQuotes = count(mappedValue, '"');
+        if (doubleQuotes <= singleQuotes) {
+            return "\"" + mappedValue.replace("\"", "\"\"") + "\"";
+        }
+        return "'" + mappedValue.replace("'", "''") + "'";
+    }
+
+    private String applyCharacterMaps(String value) {
+        Map<String, String> characterMaps = this.params.getCharacterMaps();
+        if (characterMaps == null || characterMaps.isEmpty() || value == null || value.isEmpty()) {
+            return value;
+        }
+        StringBuilder result = new StringBuilder();
+        for (int i = 0; i < value.length(); ) {
+            int codePoint = value.codePointAt(i);
+            String current = new String(Character.toChars(codePoint));
+            String replacement = characterMaps.get(current);
+            if (replacement != null) {
+                result.append(replacement);
+            } else {
+                result.append(current);
+            }
+            i += Character.charCount(codePoint);
+        }
+        return result.toString();
+    }
+
+    private int count(String value, char ch) {
+        int count = 0;
+        for (int i = 0; i < value.length(); i++) {
+            if (value.charAt(i) == ch) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void appendQName(Name name, StringBuilder sb) {
+        String namespace = name.getNamespace();
+        sb.append("Q{");
+        if (namespace != null) {
+            sb.append(namespace);
+        }
+        sb.append("}");
+        sb.append(name.getLocalName());
+    }
+
+    private void appendFunctionItem(Item item, StringBuilder sb) {
+        FunctionIdentifier identifier = item.getIdentifier();
+        if (item.isBuiltinFunction()) {
+            Name functionName = identifier.getName();
+            if (functionName.getPrefix() != null && !functionName.getPrefix().isEmpty()) {
+                sb.append(functionName.getPrefix()).append(":").append(functionName.getLocalName());
+            } else if (Name.FN_NS.equals(functionName.getNamespace())) {
+                sb.append("fn:").append(functionName.getLocalName());
+            } else {
+                sb.append(functionName.getLocalName());
+            }
+        } else {
+            sb.append("(anonymous-function)");
+        }
+        sb.append("#");
+        sb.append(identifier.getArity());
+    }
+
+    private void appendNode(Item item, StringBuilder sb) {
+        if (item.isAttributeNode()) {
+            appendAttribute(item, sb);
+            return;
+        }
+        if (item.isNamespaceNode()) {
+            appendNamespace((NamespaceItem) item, sb);
+            return;
+        }
+        this.nodeSerializer.serialize(item, sb, "", false);
+    }
+
+    private void appendAttribute(Item item, StringBuilder sb) {
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        sb.append("=\"");
+        sb.append(this.nodeSerializer.escapeAttribute(this.nodeSerializer.prepareAttributeValue(item)));
+        sb.append("\"");
+    }
+
+    private void appendNamespace(NamespaceItem ns, StringBuilder sb) {
+        String prefix = ns.getPrefix();
+        if (prefix == null || prefix.isEmpty()) {
+            sb.append("xmlns=\"");
+        } else {
+            sb.append("xmlns:").append(prefix).append("=\"");
+        }
+        String uri = ns.getUri() == null ? "" : ns.getUri();
+        sb.append(this.nodeSerializer.escapeAttribute(uri));
+        sb.append("\"");
+    }
+}

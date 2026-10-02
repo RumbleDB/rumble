@@ -1,15 +1,40 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.expressions.xml.node_test;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.Serial;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.rumbledb.context.Name;
 
+@NoArgsConstructor(force = true)
 public class AttributeTest implements NodeTest {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Name attributeName;
-    private boolean hasWildcard;
-    private Name typeName;
+    /**
+     * Expanded name from the kind test (namespace URI + local name).
+     * Only valid when isNameWithoutTypeCheck is true.
+     */
+    @Getter
+    private final Name attributeName;
+
+    private final boolean hasWildcard;
+    private final Name typeName;
 
     public AttributeTest(Name attributeName, Name typeName) {
         this.attributeName = attributeName;
@@ -27,12 +52,6 @@ public class AttributeTest implements NodeTest {
         this.attributeName = null;
         this.typeName = null;
         this.hasWildcard = hasWildcard;
-    }
-
-    public AttributeTest() {
-        this.attributeName = null;
-        this.typeName = null;
-        this.hasWildcard = false;
     }
 
     @Override
@@ -59,29 +78,7 @@ public class AttributeTest implements NodeTest {
         return this.attributeName != null && this.typeName == null;
     }
 
-    /**
-     * Expanded name from the kind test (namespace URI + local name). Only valid when
-     * {@link #isNameWithoutTypeCheck()} is true.
-     */
-    public Name getAttributeName() {
-        return this.attributeName;
-    }
-
     public boolean isWildcardOnly() {
         return this.attributeName == null && this.typeName == null && this.hasWildcard;
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.attributeName);
-        kryo.writeObject(output, this.typeName);
-        output.writeBoolean(this.hasWildcard);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.attributeName = kryo.readObject(input, Name.class);
-        this.typeName = kryo.readObject(input, Name.class);
-        this.hasWildcard = input.readBoolean();
     }
 }

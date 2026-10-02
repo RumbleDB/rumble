@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,74 +11,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.strings;
+
+import java.io.Serial;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidRegexPatternException;
-import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.exceptions.InvalidReplacementStringException;
+import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.Matcher;
-import java.util.regex.PatternSyntaxException;
+public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
-public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public ReplaceFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ReplaceFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item stringItem = this.children.get(0)
-            .materializeFirstItemOrNull(context);
-        Item patternStringItem = this.children.get(1)
-            .materializeFirstItemOrNull(context);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
+        Item patternStringItem = this.getChild(1).materializeFirstOrNull(context);
 
         if (patternStringItem == null) {
             return null;
         }
         String pattern = patternStringItem.getStringValue();
-        Pattern p;
-
-        try {
-            p = Pattern.compile(pattern);
-        } catch (PatternSyntaxException e) {
-            throw new InvalidRegexPatternException(
-                    e.getDescription(),
-                    getMetadata()
-            );
+        String flags = null;
+        if (this.getChildren().size() == 4) {
+            Item flagsItem = this.getChild(3).materializeFirstOrNull(context);
+            if (flagsItem != null) {
+                flags = flagsItem.getStringValue();
+            }
         }
-        if ("".matches(pattern)) {
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(pattern, flags, getMetadata());
+        if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
             throw new MatchesEmptyStringException(
-                    "'" + pattern + "' matches empty string",
-                    getMetadata()
-            );
+                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string", getMetadata());
         }
 
-        Item replacementStringItem = this.children.get(2)
-            .materializeFirstItemOrNull(context);
+        Item replacementStringItem = this.getChild(2).materializeFirstOrNull(context);
         String replacement = replacementStringItem.getStringValue();
-        if (!(checkReplacementStringForValidity(replacement))) {
+        if (compiledRegex.isQuote()) {
+            replacement = Matcher.quoteReplacement(replacement);
+        } else if (!(checkReplacementStringForValidity(replacement))) {
             throw new InvalidReplacementStringException(
-                    "'" + replacement + "' contains a disallowed sequence of characters",
-                    getMetadata()
-            );
+                    "'" + replacement + "' contains a disallowed sequence of characters", getMetadata());
         }
 
         String input;
@@ -91,9 +76,8 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             input = stringItem.getStringValue();
         }
 
-        Matcher m = p.matcher(input);
+        Matcher m = compiledRegex.getPattern().matcher(input);
         return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
-
     }
 
     private static boolean checkReplacementStringForValidity(String repl) {
@@ -102,12 +86,16 @@ public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         while (i < repl.length()) {
             if (repl.charAt(i) == '\\') { // '\' must be followed by another '\' or '$'
+                if (i + 1 >= repl.length()) {
+                    return false;
+                }
                 if ((!(repl.charAt(i + 1) == '\\')) && (!(repl.charAt(i + 1) == '$'))) {
                     return false;
                 }
                 i += 2;
             } else if (repl.charAt(i) == '$') { // '$' must always be followed by a digit
-                if ((i + 1 >= repl.length()) || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
+                if ((i + 1 >= repl.length())
+                        || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
                     return false;
                 }
                 i += 2;

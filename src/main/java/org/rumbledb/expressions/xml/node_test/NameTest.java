@@ -1,24 +1,74 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.expressions.xml.node_test;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.Serial;
+
+import lombok.Getter;
+
 import org.rumbledb.context.Name;
 
-// TODO: Add support for name test
 public class NameTest implements NodeTest {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Name qname;
-    private String wildcardWithNCName;
+
+    public enum WildcardType {
+        NONE,
+        ALL, // *
+        ANY_NAMESPACE, // *:localName
+        ANY_LOCAL_NAME // namespaceURI:* (from prefix:* or Q{uri}*)
+    }
+
+    private final Name qname;
+    private final WildcardType wildcardType;
+
+    @Getter
+    private final String localName;
+
+    @Getter
+    private final String namespaceURI;
+
+    private final String wildcardText;
 
     public NameTest(Name qname) {
         this.qname = qname;
-        this.wildcardWithNCName = null;
+        this.wildcardType = WildcardType.NONE;
+        this.localName = qname != null ? qname.getLocalName() : null;
+        this.namespaceURI = qname != null ? qname.getNamespace() : null;
+        this.wildcardText = null;
     }
 
-    public NameTest(String wildcardWithNCName) {
+    public NameTest(WildcardType wildcardType, String localName, String namespaceURI, String wildcardText) {
         this.qname = null;
-        this.wildcardWithNCName = wildcardWithNCName;
+        this.wildcardType = wildcardType;
+        this.localName = localName;
+        this.namespaceURI = namespaceURI;
+        this.wildcardText = wildcardText;
+    }
+
+    public static NameTest all() {
+        return new NameTest(WildcardType.ALL, null, null, "*");
+    }
+
+    public static NameTest anyNamespace(String localName, String wildcardText) {
+        return new NameTest(WildcardType.ANY_NAMESPACE, localName, null, wildcardText);
+    }
+
+    public static NameTest anyLocalName(String namespaceURI, String wildcardText) {
+        return new NameTest(WildcardType.ANY_LOCAL_NAME, null, namespaceURI, wildcardText);
     }
 
     @Override
@@ -26,15 +76,11 @@ public class NameTest implements NodeTest {
         if (this.qname != null) {
             return this.qname.toString();
         }
-        return this.wildcardWithNCName;
+        return this.wildcardText;
     }
 
     public boolean hasQName() {
         return this.qname != null;
-    }
-
-    public String getQName() {
-        return this.qname.toString();
     }
 
     /**
@@ -46,22 +92,14 @@ public class NameTest implements NodeTest {
     }
 
     public boolean hasWildcardOnly() {
-        return this.wildcardWithNCName != null && this.wildcardWithNCName.equals("*");
+        return this.wildcardType == WildcardType.ALL;
     }
 
-    public String getWildcardQName() {
-        return this.wildcardWithNCName;
+    public boolean hasWildcardNamespace() {
+        return this.wildcardType == WildcardType.ANY_NAMESPACE;
     }
 
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.qname);
-        kryo.writeObject(output, this.wildcardWithNCName);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.qname = kryo.readObject(input, Name.class);
-        this.wildcardWithNCName = kryo.readObject(input, String.class);
+    public boolean hasWildcardLocalName() {
+        return this.wildcardType == WildcardType.ANY_LOCAL_NAME;
     }
 }

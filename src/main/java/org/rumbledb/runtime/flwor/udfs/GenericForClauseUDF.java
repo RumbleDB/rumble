@@ -1,39 +1,55 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.flwor.udfs;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
-
-import java.util.List;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class GenericForClauseUDF<T> implements UDF1<Row, List<T>> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private DataFrameContext dataFrameContext;
-    private RuntimeIterator expression;
+    private final DataFrameContext dataFrameContext;
+    private final ItemRuntimePlan expression;
     private String classSimpleName;
 
     private List<T> results;
 
     public GenericForClauseUDF(
-            RuntimeIterator expression,
+            ItemRuntimePlan expression,
             DynamicContext context,
             List<FlworDataFrameColumn> columnNames,
-            String classSimpleName
-    ) {
+            String classSimpleName) {
         this.dataFrameContext = new DataFrameContext(context, columnNames);
         this.expression = expression;
         if (this.expression.isSparkJobNeeded()) {
             throw new JobWithinAJobException(
                     "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                    this.expression.getMetadata()
-            );
+                    this.expression.getRuntimeStaticContext().getMetadata());
         }
 
         this.classSimpleName = classSimpleName;
@@ -45,11 +61,9 @@ public class GenericForClauseUDF<T> implements UDF1<Row, List<T>> {
 
         this.results.clear();
         // apply expression in the dynamic context
-        this.expression.open(this.dataFrameContext.getContext());
-        while (this.expression.hasNext()) {
-            this.results.add(toDFValue(this.expression.next()));
+        for (Item item : this.expression.materialize(this.dataFrameContext.getContext())) {
+            this.results.add(toDFValue(item));
         }
-        this.expression.close();
 
         return this.results;
     }

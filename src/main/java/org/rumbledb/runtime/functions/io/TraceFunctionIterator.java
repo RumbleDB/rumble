@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,104 +11,107 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Ghislain Fourny
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
-
 package org.rumbledb.runtime.functions.io;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
+import java.io.Serial;
 import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
 public class TraceFunctionIterator extends LocalFunctionCallIterator {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator valueIterator;
-    private RuntimeIterator labelIterator;
-    private String label;
-    private int position = 0;
 
-    public TraceFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public TraceFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
-        this.position = 0;
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.valueIterator = this.children.get(0);
-        if (this.children.size() == 2) {
-            this.labelIterator = this.children.get(1);
-            this.label = this.labelIterator.materializeFirstItemOrNull(context).getStringValue();
-        } else {
-            this.label = "";
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new TraceLocalCursor(
+                this.getChild(0), this.getChildren().size() == 2 ? this.getChild(1) : null, context, getMetadata());
+    }
+
+    private static void writeTrace(
+            Item result, String label, int position, DynamicContext context, ExceptionMetadata metadata) {
+        RumbleConfiguration configuration = context.getRumbleConfiguration();
+        if (configuration == null || configuration.output().logPath() == null) {
+            return;
         }
-        this.valueIterator.open(context);
-        this.hasNext = this.valueIterator.hasNext();
-        this.position = 0;
+        URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                configuration.output().logPath(), metadata);
+        FileSystemUtil.append(
+                uri, Collections.singletonList(label + " [" + position + "]: " + result.serialize()), metadata);
     }
 
-    @Override
-    public void reset(DynamicContext context) {
-        super.open(context);
-        if (this.children.size() == 2) {
-            this.label = this.labelIterator.materializeFirstItemOrNull(context).getStringValue();
-        } else {
-            this.label = "";
+    private static final class TraceLocalCursor extends AbstractLocalCursor<Item> {
+
+        private final ItemRuntimePlan valuePlan;
+        private final ItemRuntimePlan labelPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<Item> valueCursor;
+        private String label;
+        private int position;
+
+        private TraceLocalCursor(
+                ItemRuntimePlan valuePlan,
+                ItemRuntimePlan labelPlan,
+                DynamicContext context,
+                ExceptionMetadata metadata) {
+            super(metadata);
+            this.valuePlan = valuePlan;
+            this.labelPlan = labelPlan;
+            this.context = context;
+            this.metadata = metadata;
         }
-        this.valueIterator.reset(context);
-        this.hasNext = this.valueIterator.hasNext();
-        this.position = 0;
-    }
 
+        @Override
+        protected void openLocal() {
+            this.label = this.labelPlan == null
+                    ? ""
+                    : this.labelPlan.materializeFirstOrNull(this.context).getStringValue();
+            this.position = 0;
+            this.valueCursor = this.valuePlan.getCursor(this.context);
+        }
 
-    @Override
-    public void close() {
-        super.close();
-        this.valueIterator.close();
-    }
+        @Override
+        protected boolean hasNextLocal() {
+            return this.valueCursor.hasNext();
+        }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item result = this.valueIterator.next();
-            RumbleRuntimeConfiguration conf = this.currentDynamicContextForLocalExecution
-                .getRumbleRuntimeConfiguration();
-            if (conf != null) {
-                String path = conf.getLogPath();
-                if (path != null) {
-                    URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                        path,
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-                        getMetadata()
-                    );
-                    FileSystemUtil.append(
-                        uri,
-                        Collections.singletonList(this.label + " [" + (++this.position) + "]: " + result.serialize()),
-                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-                        getMetadata()
-                    );
-                }
+        @Override
+        protected Item nextLocal() {
+            if (!this.valueCursor.hasNext()) {
+                throw invalidState("No more trace results are available.");
             }
-            this.hasNext = this.valueIterator.hasNext();
+            Item result = this.valueCursor.next();
+            writeTrace(result, this.label, ++this.position, this.context, this.metadata);
             return result;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " trace function", getMetadata());
+
+        @Override
+        protected void closeLocal() {
+            if (this.valueCursor != null) {
+                this.valueCursor.close();
+                this.valueCursor = null;
+            }
+            this.label = null;
+            this.position = 0;
+        }
     }
-
-
 }

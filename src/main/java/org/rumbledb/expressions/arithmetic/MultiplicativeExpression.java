@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,12 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.arithmetic;
 
+import java.util.Arrays;
+import java.util.List;
+
+import lombok.Getter;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -27,9 +26,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.Arrays;
-import java.util.List;
-
+@Getter
 public class MultiplicativeExpression extends Expression {
 
     public static enum MultiplicativeOperator {
@@ -38,7 +35,7 @@ public class MultiplicativeExpression extends Expression {
         MOD("mod"),
         IDIV("idiv");
 
-        private String name;
+        private final String name;
 
         MultiplicativeOperator(String name) {
             this.name = name;
@@ -66,16 +63,15 @@ public class MultiplicativeExpression extends Expression {
         }
     };
 
-    private Expression leftExpression;
-    private Expression rightExpression;
-    private MultiplicativeOperator multiplicativeOperator;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
+    private final MultiplicativeOperator multiplicativeOperator;
 
     public MultiplicativeExpression(
             Expression leftExpression,
             Expression rightExpression,
             MultiplicativeOperator multiplicativeOperator,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
@@ -92,19 +88,8 @@ public class MultiplicativeExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
-    public Expression getLeftExpression() {
-        return this.leftExpression;
-    }
-
-    public Expression getRightExpression() {
-        return this.rightExpression;
-    }
-
-    public MultiplicativeOperator getMultiplicativeOperator() {
-        return this.multiplicativeOperator;
-    }
-
-    public void print(StringBuffer buffer, int indent) {
+    @Override
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -120,7 +105,7 @@ public class MultiplicativeExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("(\n");
 

@@ -1,21 +1,61 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.Name;
-
+import java.io.Serial;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.rumbledb.types.BuiltinTypesCatalogue.*;
+import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
+
+import static org.rumbledb.types.BuiltinTypesCatalogue.NOTATIONItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.QNameItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.anyURIItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.atomicItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.base64BinaryItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.booleanItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.dateItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.dateTimeItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.dayTimeDurationItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.decimalItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.doubleItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.durationItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.floatItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.gDayItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.gMonthDayItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.gMonthItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.gYearItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.gYearMonthItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.hexBinaryItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.integerItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.numericItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.stringItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.timeItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.untypedAtomicItem;
+import static org.rumbledb.types.BuiltinTypesCatalogue.yearMonthDurationItem;
 
 /**
  * This class describes all the primitive built-in atomic types in the JSONiq data model.
  */
-public class AtomicItemType implements ItemType {
+public class AtomicItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name name;
@@ -32,9 +72,6 @@ public class AtomicItemType implements ItemType {
      */
     private List<String> lexicalSpacePatterns;
 
-    public AtomicItemType() {
-    }
-
     AtomicItemType(Name name, Set<ConstrainingFacetTypes> allowedFacets) {
         this(name, allowedFacets, WhitespaceFacet.COLLAPSE, null);
     }
@@ -42,17 +79,8 @@ public class AtomicItemType implements ItemType {
     AtomicItemType(
             Name name,
             Set<ConstrainingFacetTypes> allowedFacets,
-            WhitespaceFacet whiteSpace
-    ) {
-        this(name, allowedFacets, whiteSpace, null);
-    }
-
-    AtomicItemType(
-            Name name,
-            Set<ConstrainingFacetTypes> allowedFacets,
             WhitespaceFacet whiteSpace,
-            List<String> lexicalSpacePatterns
-    ) {
+            List<String> lexicalSpacePatterns) {
         this.name = name;
         this.allowedFacets = allowedFacets;
         this.whiteSpace = whiteSpace;
@@ -67,8 +95,7 @@ public class AtomicItemType implements ItemType {
             Boolean bounded,
             CardinalityFacetValue cardinality,
             Boolean numeric,
-            List<String> lexicalSpacePatterns
-    ) {
+            List<String> lexicalSpacePatterns) {
         this.name = name;
         this.allowedFacets = allowedFacets;
         this.whiteSpace = whiteSpace;
@@ -77,39 +104,6 @@ public class AtomicItemType implements ItemType {
         this.cardinality = cardinality;
         this.numeric = numeric;
         this.lexicalSpacePatterns = lexicalSpacePatterns == null ? Collections.emptyList() : lexicalSpacePatterns;
-    }
-
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeObjectOrNull(output, this.allowedFacets, HashSet.class);
-        kryo.writeObjectOrNull(output, this.whiteSpace, WhitespaceFacet.class);
-        kryo.writeObjectOrNull(output, this.ordered, OrderedFacetValue.class);
-        kryo.writeObjectOrNull(output, this.bounded, Boolean.class);
-        kryo.writeObjectOrNull(output, this.cardinality, CardinalityFacetValue.class);
-        kryo.writeObjectOrNull(output, this.numeric, Boolean.class);
-        kryo.writeObjectOrNull(output, this.lexicalSpacePatterns, java.util.ArrayList.class);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.allowedFacets = kryo.readObjectOrNull(input, HashSet.class);
-        this.whiteSpace = kryo.readObjectOrNull(input, WhitespaceFacet.class);
-        this.ordered = kryo.readObjectOrNull(input, OrderedFacetValue.class);
-        this.bounded = kryo.readObjectOrNull(input, Boolean.class);
-        this.cardinality = kryo.readObjectOrNull(input, CardinalityFacetValue.class);
-        this.numeric = kryo.readObjectOrNull(input, Boolean.class);
-        this.lexicalSpacePatterns = kryo.readObjectOrNull(input, java.util.ArrayList.class);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
-            return false;
-        }
-        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -215,6 +209,7 @@ public class AtomicItemType implements ItemType {
      * and QName sources are statically castable; numeric sources are not).
      */
     private static final int PRIM_UA = 0;
+
     private static final int PRIM_STR = 1;
     private static final int PRIM_FLT = 2;
     private static final int PRIM_DBL = 3;
@@ -242,557 +237,97 @@ public class AtomicItemType implements ItemType {
     // uA str flt dbl dec int dur yMD dTD dT tim dat gYM gYr gMD gDay gMon bool b64 hxB aURI QN NOT
     private static final char[][] PRIMITIVE_CAST_MATRIX = {
         /* uA */ {
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y' },
+            'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y',
+            'Y', 'Y'
+        },
         /* str */ {
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'Y' },
+            'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y', 'Y',
+            'Y', 'Y'
+        },
         /* flt */ {
-            'M',
-            'M',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dbl */ {
-            'M',
-            'M',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dec */ {
-            'M',
-            'M',
-            'M',
-            'M',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'M', 'M', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* int */ {
-            'M',
-            'M',
-            'M',
-            'M',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'M', 'M', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dur */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* yMD */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dTD */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dT */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* tim */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* dat */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* gYM */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* gYr */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* gMD */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'N', 'Y', 'N', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* gDay */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'N', 'N', 'Y', 'N', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* gMon */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'Y', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* bool */ {
-            'M',
-            'M',
-            'Y',
-            'Y',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'Y', 'Y', 'Y', 'Y', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'N', 'N', 'N',
+            'N', 'N'
+        },
         /* b64 */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'Y', 'N',
+            'N', 'N'
+        },
         /* hxB */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y',
-            'N',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y', 'Y', 'N',
+            'N', 'N'
+        },
         /* aURI */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'N',
-            'N' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'Y',
+            'N', 'N'
+        },
         /* QN */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'Y',
-            'Y' },
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'Y', 'Y'
+        },
         /* NOT */ {
-            'M',
-            'M',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'N',
-            'M',
-            'M' }
+            'M', 'M', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N', 'N',
+            'M', 'M'
+        }
     };
 
     private static int primitiveIndex(ItemType primitiveType) {
@@ -897,12 +432,10 @@ public class AtomicItemType implements ItemType {
 
         // anything can be casted from and to a string or untypedAtomic (or from one of its supertypes),
         // including types derived by restriction from them (via the primitive type).
-        if (
-            sourcePrimitive.equals(stringItem)
+        if (sourcePrimitive.equals(stringItem)
                 || targetPrimitive.equals(stringItem)
                 || sourcePrimitive.equals(untypedAtomicItem)
-                || targetPrimitive.equals(untypedAtomicItem)
-        ) {
+                || targetPrimitive.equals(untypedAtomicItem)) {
             return true;
         }
 
@@ -936,9 +469,7 @@ public class AtomicItemType implements ItemType {
     @Override
     public boolean isNumeric() {
         ItemType primitive = this.getPrimitiveType();
-        return primitive.equals(decimalItem)
-            || primitive.equals(floatItem)
-            || primitive.equals(doubleItem);
+        return primitive.equals(decimalItem) || primitive.equals(floatItem) || primitive.equals(doubleItem);
     }
 
     @Override
@@ -961,8 +492,7 @@ public class AtomicItemType implements ItemType {
     public List<Item> getEnumerationFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.ENUMERATION)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the enumeration facet"
-            );
+                    this.toString() + " item type does not support the enumeration facet");
         }
         return null;
     }
@@ -971,8 +501,7 @@ public class AtomicItemType implements ItemType {
     public List<String> getConstraintsFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.CONSTRAINTS)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the constraints facet"
-            );
+                    this.toString() + " item type does not support the constraints facet");
         }
         return Collections.emptyList();
     }
@@ -981,8 +510,7 @@ public class AtomicItemType implements ItemType {
     public Integer getMinLengthFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MINLENGTH)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the minimum length facet"
-            );
+                    this.toString() + " item type does not support the minimum length facet");
         }
         return null;
     }
@@ -999,8 +527,7 @@ public class AtomicItemType implements ItemType {
     public Integer getMaxLengthFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXLENGTH)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the maximum length facet"
-            );
+                    this.toString() + " item type does not support the maximum length facet");
         }
         return null;
     }
@@ -1009,8 +536,7 @@ public class AtomicItemType implements ItemType {
     public Item getMinExclusiveFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MINEXCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the minimum exclusive facet"
-            );
+                    this.toString() + " item type does not support the minimum exclusive facet");
         }
         return null;
     }
@@ -1019,8 +545,7 @@ public class AtomicItemType implements ItemType {
     public Item getMinInclusiveFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MININCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the minimum inclusive facet"
-            );
+                    this.toString() + " item type does not support the minimum inclusive facet");
         }
         return null;
     }
@@ -1029,19 +554,16 @@ public class AtomicItemType implements ItemType {
     public Item getMaxExclusiveFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXEXCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the maximum exclusive facet"
-            );
+                    this.toString() + " item type does not support the maximum exclusive facet");
         }
         return null;
     }
 
     @Override
-
     public Item getMaxInclusiveFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXINCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the maximum inclusive facet"
-            );
+                    this.toString() + " item type does not support the maximum inclusive facet");
         }
         return null;
     }
@@ -1050,8 +572,7 @@ public class AtomicItemType implements ItemType {
     public Integer getTotalDigitsFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.TOTALDIGITS)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the total digits facet"
-            );
+                    this.toString() + " item type does not support the total digits facet");
         }
         return null;
     }
@@ -1060,8 +581,7 @@ public class AtomicItemType implements ItemType {
     public Integer getFractionDigitsFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.FRACTIONDIGITS)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the fraction digits facet"
-            );
+                    this.toString() + " item type does not support the fraction digits facet");
         }
         return null;
     }
@@ -1070,8 +590,7 @@ public class AtomicItemType implements ItemType {
     public TimezoneFacet getExplicitTimezoneFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.EXPLICITTIMEZONE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the explicit timezone facet"
-            );
+                    this.toString() + " item type does not support the explicit timezone facet");
         }
         return null;
     }
@@ -1084,9 +603,7 @@ public class AtomicItemType implements ItemType {
     @Override
     public List<String> getPatternFacet() {
         if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.PATTERN)) {
-            throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the pattern facet"
-            );
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the pattern facet");
         }
         return null;
     }
@@ -1127,7 +644,7 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         if (this.getPrimitiveType().equals(atomicItem)) {
             return false;
         }
@@ -1135,7 +652,7 @@ public class AtomicItemType implements ItemType {
             return false;
         }
         if (this.getPrimitiveType().equals(dateItem)) {
-            return !configuration.dateWithTimezone(); // xs:date has a time zone but not in DataFrames.
+            return !configuration.semantics().datesWithTimeZone(); // xs:date has a time zone but not in DataFrames.
         }
         if (this.getPrimitiveType().equals(timeItem)) {
             return false;
@@ -1173,5 +690,10 @@ public class AtomicItemType implements ItemType {
             return "DECIMAL";
         }
         throw new UnsupportedOperationException("getSparkSQLType is unsupported for " + this.getPrimitiveType());
+    }
+
+    @Override
+    public boolean canBeNull() {
+        return true;
     }
 }
