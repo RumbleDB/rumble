@@ -277,16 +277,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         this.translationContext =
                 new TranslationContext(moduleContext, compilationConfiguration, externalBindings, isMainModule, code);
         this.jsoniqTokenStream = jsoniqTokenStream;
-
-        String queryLanguage =
-                this.translationContext.configuration().semantics().queryLanguage();
-        if (queryLanguage.equals("jsoniq10")) {
-            this.translationContext.moduleContext().setQueryLanguage("jsoniq10");
-        } else if (queryLanguage.equals("jsoniq31")) {
-            this.translationContext.moduleContext().setQueryLanguage("jsoniq31");
-        } else if (queryLanguage.equals("jsoniq40")) {
-            this.translationContext.moduleContext().setQueryLanguage("jsoniq40");
-        }
     }
 
     // endregion expr
