@@ -117,9 +117,6 @@ final class ModuleParser {
         // File extensions and version declarations can select a language different from the configured default.
         if (language == Language.XQUERY && !moduleContext.getQueryLanguage().startsWith("xquery")) {
             moduleContext.setQueryLanguage("xquery31");
-        } else if (language == Language.JSONIQ
-                && moduleContext.getQueryLanguage().startsWith("xquery")) {
-            moduleContext.setQueryLanguage("jsoniq10");
         }
         Lexer lexer = language == Language.XQUERY
                 ? new XQueryLexer(CharStreams.fromString(query))
