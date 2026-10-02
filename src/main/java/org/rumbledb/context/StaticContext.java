@@ -47,8 +47,14 @@ public class StaticContext {
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private InScopeSchemaTypes inScopeSchemaTypes;
 
-    @Setter
     private String queryLanguage;
+
+    public void setQueryLanguage(String queryLanguage) {
+        this.queryLanguage = queryLanguage;
+        if (this.serializationParameters != null) {
+            this.serializationParameters.applyLanguageDefaults(queryLanguage);
+        }
+    }
 
     private StaticContext parent;
     private URI staticBaseURI;
