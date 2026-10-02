@@ -651,6 +651,9 @@
                         <configuration>
                             <includes>
                                 <include>**/CLIJarIT.java</include>
+                                <include>**/CLIArgumentParserTest.java</include>
+                                <include>**/SequenceSerializerTest.java</include>
+                                <include>**/SequenceWriterTest.java</include>
                             </includes>
                             <systemPropertyVariables>
                                 <cli.jar>${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar</cli.jar>

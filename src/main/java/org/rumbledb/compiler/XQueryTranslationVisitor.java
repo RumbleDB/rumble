@@ -236,18 +236,6 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         this.translationContext =
                 new TranslationContext(moduleContext, compilationConfiguration, externalBindings, isMainModule, code);
         this.xQueryTokenStream = xQueryTokenStream;
-
-        String queryLanguage =
-                this.translationContext.configuration().semantics().queryLanguage();
-        if (queryLanguage.equals("xquery10")) {
-            this.translationContext.moduleContext().setQueryLanguage("xquery10");
-        } else if (queryLanguage.equals("xquery30")) {
-            this.translationContext.moduleContext().setQueryLanguage("xquery30");
-        } else if (queryLanguage.equals("xquery31")) {
-            this.translationContext.moduleContext().setQueryLanguage("xquery31");
-        } else if (queryLanguage.equals("xquery40")) {
-            this.translationContext.moduleContext().setQueryLanguage("xquery40");
-        }
     }
 
     // endregion expr

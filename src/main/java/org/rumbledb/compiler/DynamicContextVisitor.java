@@ -210,7 +210,12 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                         FileSystemUtil.resolveURIAgainstWorkingDirectory(value, ExceptionMetadata.EMPTY_METADATA);
                 item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());
             } else {
-                item = ItemFactory.getInstance().createStringItem(value);
+                boolean jsonFile =
+                        this.externalBindings.get(name, FileBinding.class).isPresent()
+                                && this.getInputFormat(name).equals("json");
+                item = jsonFile
+                        ? parseJSONItem(value, variableDeclaration.getMetadata())
+                        : ItemFactory.getInstance().createStringItem(value);
                 ItemType itemType = variableDeclaration.getSequenceType().getItemType();
                 if (!InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                     Item castItem = CastIterator.castItemToType(item, itemType, variableDeclaration.getMetadata());
