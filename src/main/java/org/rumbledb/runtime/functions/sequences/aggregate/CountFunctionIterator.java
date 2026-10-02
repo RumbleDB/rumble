@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import java.io.Serial;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -25,11 +26,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.functions.sequences.general.SubsequenceFunctionIterator;
+import org.rumbledb.runtime.misc.RangeOperationIterator;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -62,10 +64,21 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
     }
 
     public static Item computeCount(ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
+        // A direct range has max(last - first + 1, 0) items; counting need not generate them.
+        if (iterator instanceof RangeOperationIterator range) {
+            return ItemFactory.getInstance()
+                    .createIntegerItem(range.getBounds(context).size());
+        }
+        if (iterator instanceof SubsequenceFunctionIterator subsequence) {
+            BigInteger rangeCount = subsequence.getRangeCount(context);
+            if (rangeCount != null) {
+                return ItemFactory.getInstance().createIntegerItem(rangeCount);
+            }
+        }
         if (iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-            return computeDataFrame(iterator, context, metadata);
+            return computeDataFrame(iterator, context);
         } else if (iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            return computeRDD(iterator, context, metadata);
+            return computeRDD(iterator, context);
         } else {
             return computeLocalCount(iterator, context);
         }
@@ -82,22 +95,14 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
         return ItemFactory.getInstance().createLongItem(result);
     }
 
-    private static Item computeRDD(ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
+    private static Item computeRDD(ItemRuntimePlan iterator, DynamicContext context) {
         long count = iterator.getRDD(context).count();
-        if (count > (long) Integer.MAX_VALUE) {
-            throw new OurBadException("The count value is too big to convert to integer type.");
-        } else {
-            return ItemFactory.getInstance().createLongItem(count);
-        }
+        return ItemFactory.getInstance().createLongItem(count);
     }
 
-    private static Item computeDataFrame(ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
-        long count = iterator.getDataFrame(context).toRDD(metadata).count();
-        if (count > (long) Integer.MAX_VALUE) {
-            throw new OurBadException("The count value is too big to convert to integer type.");
-        } else {
-            return ItemFactory.getInstance().createLongItem(count);
-        }
+    private static Item computeDataFrame(ItemRuntimePlan iterator, DynamicContext context) {
+        return ItemFactory.getInstance()
+                .createLongItem(iterator.getDataFrame(context).getDataFrame().count());
     }
 
     @Override

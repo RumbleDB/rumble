@@ -87,6 +87,7 @@ import org.rumbledb.expressions.primary.MapConstructorExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.StringConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
@@ -183,6 +184,7 @@ import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.misc.IntegerRangeComparisonIterator;
 import org.rumbledb.runtime.misc.NodeComparisonRuntimeIterator;
 import org.rumbledb.runtime.misc.NodeSetOperationIterator;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
@@ -202,6 +204,7 @@ import org.rumbledb.runtime.primary.IntegerRuntimeIterator;
 import org.rumbledb.runtime.primary.MapConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.NullRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
+import org.rumbledb.runtime.primary.StringConstructorIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.scripting.ProgramIterator;
@@ -840,6 +843,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     }
 
     @Override
+    public ItemRuntimePlan visitStringConstructor(StringConstructorExpression expression, ItemRuntimePlan argument) {
+        List<ItemRuntimePlan> childPlans = new ArrayList<>();
+        for (Expression part : expression.getParts()) {
+            childPlans.add(part == null ? null : this.visit(part, argument));
+        }
+        return new StringConstructorIterator(
+                childPlans,
+                expression.getIsInterpolated(),
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
+    }
+
+    @Override
     public ItemRuntimePlan visitObjectConstructor(ObjectConstructorExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan runtimeIterator;
         if (expression.isMergedConstructor()) {
@@ -1404,6 +1419,26 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
 
         ItemRuntimePlan left = this.visit(leftExpression, argument);
         ItemRuntimePlan right = this.visit(rightExpression, argument);
+        if (ComparisonVisitor.isIntegerRangeComparison(
+                leftExpression, rightExpression, expression.getComparisonOperator())) {
+            if (left instanceof RangeOperationIterator range) {
+                return new IntegerRangeComparisonIterator(
+                        range,
+                        right,
+                        true,
+                        expression.getComparisonOperator(),
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig));
+            }
+            if (right instanceof RangeOperationIterator range) {
+                return new IntegerRangeComparisonIterator(
+                        range,
+                        left,
+                        false,
+                        expression.getComparisonOperator(),
+                        expression.getStaticContextForRuntime(this.config, this.visitorConfig));
+            }
+            throw new OurBadException("Expected a range plan for an integer-range comparison.");
+        }
         if (!(leftExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
             // Atomic comparison operators require atomized operands. If the operands are not atomic, we need to wrap
             // them in a DataFunctionIterator to atomize them.

@@ -17,9 +17,8 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -33,12 +32,15 @@ import org.rumbledb.api.Item;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
+import org.rumbledb.compiler.context.AnnotationsContext;
+import org.rumbledb.compiler.context.ArrayConstructorContext;
 import org.rumbledb.compiler.context.ArrowExprContext;
 import org.rumbledb.compiler.context.CommaExprContext;
 import org.rumbledb.compiler.context.ComparisonExprContext;
 import org.rumbledb.compiler.context.ContextItemDeclContext;
 import org.rumbledb.compiler.context.CountClauseContext;
 import org.rumbledb.compiler.context.EnclosedExprContext;
+import org.rumbledb.compiler.context.ExtensionExprContext;
 import org.rumbledb.compiler.context.FlworExprContext;
 import org.rumbledb.compiler.context.ForClauseContext;
 import org.rumbledb.compiler.context.ForVarContext;
@@ -46,6 +48,7 @@ import org.rumbledb.compiler.context.FunctionCallContext;
 import org.rumbledb.compiler.context.FunctionDeclContext;
 import org.rumbledb.compiler.context.GroupByClauseContext;
 import org.rumbledb.compiler.context.IfExprContext;
+import org.rumbledb.compiler.context.InlineFunctionExprContext;
 import org.rumbledb.compiler.context.IntersectExceptExprContext;
 import org.rumbledb.compiler.context.LetClauseContext;
 import org.rumbledb.compiler.context.LetVarContext;
@@ -66,6 +69,7 @@ import org.rumbledb.compiler.context.SchemaImportContext;
 import org.rumbledb.compiler.context.SimpleMapExprContext;
 import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
 import org.rumbledb.compiler.context.StringConcatExprContext;
+import org.rumbledb.compiler.context.StringConstructorContext;
 import org.rumbledb.compiler.context.SwitchExprContext;
 import org.rumbledb.compiler.context.TryCatchExprContext;
 import org.rumbledb.compiler.context.TypeCheckExprContext;
@@ -92,6 +96,43 @@ import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
 import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
 import org.rumbledb.compiler.context.scripting.VarDeclStatementContext;
 import org.rumbledb.compiler.context.scripting.WhileStatementContext;
+import org.rumbledb.compiler.context.type.ItemTypeContext;
+import org.rumbledb.compiler.context.type.SequenceTypeContext;
+import org.rumbledb.compiler.context.type.SingleTypeContext;
+import org.rumbledb.compiler.context.update.AppendExprContext;
+import org.rumbledb.compiler.context.update.CreateCollectionExprContext;
+import org.rumbledb.compiler.context.update.DeleteExprContext;
+import org.rumbledb.compiler.context.update.DeleteIndexExprContext;
+import org.rumbledb.compiler.context.update.DeleteSearchExprContext;
+import org.rumbledb.compiler.context.update.EditCollectionExprContext;
+import org.rumbledb.compiler.context.update.InsertExprContext;
+import org.rumbledb.compiler.context.update.InsertIndexExprContext;
+import org.rumbledb.compiler.context.update.InsertSearchExprContext;
+import org.rumbledb.compiler.context.update.RenameExprContext;
+import org.rumbledb.compiler.context.update.ReplaceExprContext;
+import org.rumbledb.compiler.context.update.TransformExprContext;
+import org.rumbledb.compiler.context.update.TruncateCollectionExprContext;
+import org.rumbledb.compiler.context.xml.AttributeTestContext;
+import org.rumbledb.compiler.context.xml.CommonContentContext;
+import org.rumbledb.compiler.context.xml.CompAttrConstructorContext;
+import org.rumbledb.compiler.context.xml.CompCommentConstructorContext;
+import org.rumbledb.compiler.context.xml.CompDocConstructorContext;
+import org.rumbledb.compiler.context.xml.CompElemConstructorContext;
+import org.rumbledb.compiler.context.xml.CompNamespaceConstructorContext;
+import org.rumbledb.compiler.context.xml.CompPIConstructorContext;
+import org.rumbledb.compiler.context.xml.CompTextConstructorContext;
+import org.rumbledb.compiler.context.xml.DirElemContentContext;
+import org.rumbledb.compiler.context.xml.DirectConstructorContext;
+import org.rumbledb.compiler.context.xml.DocumentTestContext;
+import org.rumbledb.compiler.context.xml.ElementTestContext;
+import org.rumbledb.compiler.context.xml.EnclosedContentExprContext;
+import org.rumbledb.compiler.context.xml.NameTestContext;
+import org.rumbledb.compiler.context.xml.PathExprContext;
+import org.rumbledb.compiler.context.xml.PiTestContext;
+import org.rumbledb.compiler.context.xml.SchemaAttributeTestContext;
+import org.rumbledb.compiler.context.xml.SchemaElementTestContext;
+import org.rumbledb.compiler.context.xml.StepExprContext;
+import org.rumbledb.compiler.translation.AnnotationTranslation;
 import org.rumbledb.compiler.translation.ArithmeticTranslation;
 import org.rumbledb.compiler.translation.ComparisonTranslation;
 import org.rumbledb.compiler.translation.ControlTranslation;
@@ -113,12 +154,17 @@ import org.rumbledb.compiler.translation.scripting.ControlStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.DeclarationStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.LoopStatementTranslation;
 import org.rumbledb.compiler.translation.scripting.MutationStatementTranslation;
+import org.rumbledb.compiler.translation.update.CollectionTranslation;
+import org.rumbledb.compiler.translation.update.UpdateTranslation;
+import org.rumbledb.compiler.translation.xml.XmlComputedConstructorTranslation;
+import org.rumbledb.compiler.translation.xml.XmlDirectConstructorTranslation;
+import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
+import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.ConditionalExpression;
@@ -177,7 +223,6 @@ import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.expressions.update.AppendExpression;
-import org.rumbledb.expressions.update.CopyDeclaration;
 import org.rumbledb.expressions.update.CreateCollectionExpression;
 import org.rumbledb.expressions.update.DeleteExpression;
 import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
@@ -190,53 +235,24 @@ import org.rumbledb.expressions.update.RenameExpression;
 import org.rumbledb.expressions.update.ReplaceExpression;
 import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.update.TruncateCollectionExpression;
-import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
-import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
 import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
-import org.rumbledb.expressions.xml.DirElemConstructorExpression;
-import org.rumbledb.expressions.xml.DirPIConstructorExpression;
-import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
 import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
-import org.rumbledb.expressions.xml.NamespaceDeclaration;
-import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
-import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
-import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
-import org.rumbledb.expressions.xml.axis.ForwardAxis;
-import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
-import org.rumbledb.expressions.xml.axis.ReverseAxis;
-import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
-import org.rumbledb.expressions.xml.node_test.AnyKindTest;
-import org.rumbledb.expressions.xml.node_test.AttributeTest;
-import org.rumbledb.expressions.xml.node_test.CommentTest;
-import org.rumbledb.expressions.xml.node_test.DocumentTest;
-import org.rumbledb.expressions.xml.node_test.ElementTest;
-import org.rumbledb.expressions.xml.node_test.NameTest;
-import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
-import org.rumbledb.expressions.xml.node_test.PITest;
-import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
-import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.jsoniq.JsoniqParser.UriLiteralContext;
 import org.rumbledb.parser.jsoniq.JsoniqParserBaseVisitor;
-import org.rumbledb.runtime.update.primitives.Mode;
-import org.rumbledb.types.AttributeNodeItemType;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ElementNodeItemType;
-import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -261,16 +277,6 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         this.translationContext =
                 new TranslationContext(moduleContext, compilationConfiguration, externalBindings, isMainModule, code);
         this.jsoniqTokenStream = jsoniqTokenStream;
-
-        String queryLanguage =
-                this.translationContext.configuration().semantics().queryLanguage();
-        if (queryLanguage.equals("jsoniq10")) {
-            this.translationContext.moduleContext().setQueryLanguage("jsoniq10");
-        } else if (queryLanguage.equals("jsoniq31")) {
-            this.translationContext.moduleContext().setQueryLanguage("jsoniq31");
-        } else if (queryLanguage.equals("jsoniq40")) {
-            this.translationContext.moduleContext().setQueryLanguage("jsoniq40");
-        }
     }
 
     // endregion expr
@@ -445,7 +451,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
         @Override
         public Void visitOrderingModeDecl(JsoniqParser.OrderingModeDeclContext ctx) {
-            this.builder.applyUnsupportedHeader(createMetadataFromContext(ctx));
+            this.builder.applyOrderingMode(createMetadataFromContext(ctx));
             return null;
         }
 
@@ -531,7 +537,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         if (ctx.qname() != null) {
             return parseName(ctx.qname(), role);
         }
-        return URIQualifiedNameParser.parse(ctx.URIQualifiedName().getText(), createMetadataFromContext(ctx));
+        return URIQualifiedNameParser.parse(
+                ctx.URIQualifiedName().getText(),
+                this.translationContext.configuration().semantics().xmlVersion(),
+                createMetadataFromContext(ctx));
     }
 
     /** Adapts the JSONiq QName grammar to the shared role-aware resolver. */
@@ -870,7 +879,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     @Override
     public Expression visitValueExpr(JsoniqParser.ValueExprContext ctx) {
         return PrimaryTranslation.valueExpr(
-                ValueExprContext.from(ctx), this.translationContext, this::visitSimpleMapExpr, this::visitValidateExpr);
+                ValueExprContext.from(ctx),
+                this.translationContext,
+                this::visitSimpleMapExpr,
+                this::visitValidateExpr,
+                this::visitExtensionExpr);
+    }
+
+    @Override
+    public Expression visitExtensionExpr(JsoniqParser.ExtensionExprContext ctx) {
+        return PrimaryTranslation.extensionExpr(
+                ExtensionExprContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override
@@ -892,179 +911,92 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public InsertExpression visitInsertExpr(JsoniqParser.InsertExprContext ctx) {
-        Expression toInsertExpr;
-        Expression posExpr = null;
-        if (ctx.pairConstructor() != null && !ctx.pairConstructor().isEmpty()) {
-            List<Expression> keys = new ArrayList<>();
-            List<Expression> values = new ArrayList<>();
-            for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
-                Expression lhs = this.visitExprSingle(currentPair.lhs);
-                if (lhs instanceof StepExpr stepExpr) {
-                    if (this.translationContext
-                            .moduleContext()
-                            .getQueryLanguage()
-                            .equals("jsoniq10")) {
-                        keys.add(new StringLiteralExpression(
-                                stepExpr.getNodeTest().toString(), lhs.getMetadata()));
-                    } else {
-                        throw new ParsingException(
-                                "Parser error: Unquoted keys are not supported in JSONiq versions >1.0. Either quote your keys or revert to JSONiq 1.0 using the --default-language jsoniq10 CLI option.",
-                                lhs.getMetadata());
-                    }
-                } else {
-                    keys.add(lhs);
-                }
-                values.add(this.visitExprSingle(currentPair.rhs));
-            }
-            toInsertExpr = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
-        } else if (ctx.to_insert_expr != null) {
-            toInsertExpr = this.visitExprSingle(ctx.to_insert_expr);
-            if (ctx.pos_expr != null) {
-                posExpr = this.visitExprSingle(ctx.pos_expr);
-            }
-        } else {
-            throw new OurBadException("Unrecognised expression to insert in Insert Expression");
-        }
-        Expression mainExpr = this.visitExprSingle(ctx.main_expr);
-
-        return new InsertExpression(mainExpr, toInsertExpr, posExpr, createMetadataFromContext(ctx));
+        return UpdateTranslation.insertExpr(
+                InsertExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public DeleteExpression visitDeleteExpr(JsoniqParser.DeleteExprContext ctx) {
-        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        return new DeleteExpression(mainExpression, locatorExpression, createMetadataFromContext(ctx));
+        return UpdateTranslation.deleteExpr(
+                DeleteExprContext.from(ctx), this.translationContext, this::visitPostfixExpr);
     }
 
     @Override
     public RenameExpression visitRenameExpr(JsoniqParser.RenameExprContext ctx) {
-        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression nameExpression = this.visitExprSingle(ctx.name_expr);
-        return new RenameExpression(mainExpression, locatorExpression, nameExpression, createMetadataFromContext(ctx));
+        return UpdateTranslation.renameExpr(
+                RenameExprContext.from(ctx), this.translationContext, this::visitPostfixExpr, this::visitExprSingle);
     }
 
     @Override
     public ReplaceExpression visitReplaceExpr(JsoniqParser.ReplaceExprContext ctx) {
-        Expression mainExpression = getMainExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression locatorExpression = getLocatorExpressionFromUpdateLocatorContext(ctx.updateLocator());
-        Expression newExpression = this.visitExprSingle(ctx.replacer_expr);
-        return new ReplaceExpression(mainExpression, locatorExpression, newExpression, createMetadataFromContext(ctx));
+        return UpdateTranslation.replaceExpr(
+                ReplaceExprContext.from(ctx), this.translationContext, this::visitPostfixExpr, this::visitExprSingle);
     }
 
     @Override
     public TransformExpression visitTransformExpr(JsoniqParser.TransformExprContext ctx) {
-        List<CopyDeclaration> copyDecls = ctx.copyDecl().stream()
-                .map(copyDeclCtx -> {
-                    Name var = parseVariableBinding(copyDeclCtx.var_ref);
-                    Expression expr = this.visitExprSingle(copyDeclCtx.src_expr);
-                    return new CopyDeclaration(var, expr);
-                })
-                .collect(Collectors.toList());
-        Expression modifyExpression = this.visitExprSingle(ctx.mod_expr);
-        Expression returnExpression = this.visitExprSingle(ctx.ret_expr);
-        return new TransformExpression(copyDecls, modifyExpression, returnExpression, createMetadataFromContext(ctx));
+        return UpdateTranslation.transformExpr(
+                TransformExprContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::visitExprSingle);
     }
 
     @Override
     public AppendExpression visitAppendExpr(JsoniqParser.AppendExprContext ctx) {
-        Expression arrayExpression = this.visitExprSingle(ctx.array_expr);
-        Expression toAppendExpression = this.visitExprSingle(ctx.to_append_expr);
-        return new AppendExpression(arrayExpression, toAppendExpression, createMetadataFromContext(ctx));
+        return UpdateTranslation.appendExpr(
+                AppendExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public CreateCollectionExpression visitCreateCollectionExpr(JsoniqParser.CreateCollectionExprContext ctx) {
-        Expression collection = this.visitExprSimple(ctx.collection_name);
-        Expression contentExpression;
-        if (ctx.content != null) {
-            contentExpression = this.visitExprSingle(ctx.content);
-        } else {
-            // use a CommaExpression as placeholder if the collection is created empty
-            contentExpression = new CommaExpression(createMetadataFromContext(ctx));
-        }
-        Mode mode = Mode.fromString(ctx.collectionMode.getText());
-        return new CreateCollectionExpression(collection, contentExpression, mode, createMetadataFromContext(ctx));
+        return CollectionTranslation.createCollectionExpr(
+                CreateCollectionExprContext.from(ctx),
+                this.translationContext,
+                this::visitExprSimple,
+                this::visitExprSingle);
     }
 
     @Override
     public DeleteIndexFromCollectionExpression visitDeleteIndexExpr(JsoniqParser.DeleteIndexExprContext ctx) {
-        Expression collection = this.visitExprSimple(ctx.collection_name);
-        Mode mode = Mode.fromString(ctx.collectionMode.getText());
-        boolean isFirst = (ctx.first != null);
-
-        Expression numDelete = null;
-        if (ctx.num != null) {
-            numDelete = this.visitExprSingle(ctx.num);
-        }
-
-        return new DeleteIndexFromCollectionExpression(
-                collection, numDelete, isFirst, mode, createMetadataFromContext(ctx));
+        return CollectionTranslation.deleteIndexExpr(
+                DeleteIndexExprContext.from(ctx),
+                this.translationContext,
+                this::visitExprSimple,
+                this::visitExprSingle);
     }
 
     @Override
     public DeleteSearchFromCollectionExpression visitDeleteSearchExpr(JsoniqParser.DeleteSearchExprContext ctx) {
-        Expression contentExpression = this.visitExprSingle(ctx.content);
-        return new DeleteSearchFromCollectionExpression(contentExpression, createMetadataFromContext(ctx));
+        return CollectionTranslation.deleteSearchExpr(
+                DeleteSearchExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public EditCollectionExpression visitEditCollectionExpr(JsoniqParser.EditCollectionExprContext ctx) {
-        Expression targetExpression = this.visitExprSingle(ctx.target);
-        Expression contentExpression = this.visitExprSingle(ctx.content);
-        return new EditCollectionExpression(targetExpression, contentExpression, createMetadataFromContext(ctx));
+        return CollectionTranslation.editCollectionExpr(
+                EditCollectionExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public InsertIndexIntoCollectionExpression visitInsertIndexExpr(JsoniqParser.InsertIndexExprContext ctx) {
-        Expression collection = this.visitExprSimple(ctx.collection_name);
-        Expression contentExpression = this.visitExprSingle(ctx.content);
-        Expression pos = ctx.pos != null ? this.visitExprSingle(ctx.pos) : null;
-        Mode mode = Mode.fromString(ctx.collectionMode.getText());
-        boolean isLast = (ctx.last != null);
-        boolean isFirst = (ctx.first != null);
-
-        return new InsertIndexIntoCollectionExpression(
-                collection, contentExpression, pos, mode, isFirst, isLast, createMetadataFromContext(ctx));
+        return CollectionTranslation.insertIndexExpr(
+                InsertIndexExprContext.from(ctx),
+                this.translationContext,
+                this::visitExprSimple,
+                this::visitExprSingle);
     }
 
     @Override
     public InsertSearchIntoCollectionExpression visitInsertSearchExpr(JsoniqParser.InsertSearchExprContext ctx) {
-        Expression targetExpression = this.visitExprSingle(ctx.target);
-        Expression contentExpression = this.visitExprSingle(ctx.content);
-        boolean isBefore = (ctx.before != null);
-        return new InsertSearchIntoCollectionExpression(
-                targetExpression, contentExpression, isBefore, createMetadataFromContext(ctx));
+        return CollectionTranslation.insertSearchExpr(
+                InsertSearchExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public TruncateCollectionExpression visitTruncateCollectionExpr(JsoniqParser.TruncateCollectionExprContext ctx) {
-        Expression collectionName = this.visitExprSimple(ctx.collection_name);
-        Mode mode = Mode.fromString(ctx.collectionMode.getText());
-        return new TruncateCollectionExpression(collectionName, mode, createMetadataFromContext(ctx));
-    }
-
-    public Expression getMainExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = this.visitPostfixExpr(ctx.main_expr);
-        if (mainExpression instanceof ObjectLookupExpression objectLookupExpression) {
-            return objectLookupExpression.getMainExpression();
-        } else if (mainExpression instanceof ArrayLookupExpression arrayLookupExpression) {
-            return arrayLookupExpression.getMainExpression();
-        } else {
-            throw new OurBadException("Unrecognized main expression found in update expression.");
-        }
-    }
-
-    public Expression getLocatorExpressionFromUpdateLocatorContext(JsoniqParser.UpdateLocatorContext ctx) {
-        Expression mainExpression = this.visitPostfixExpr(ctx.main_expr);
-        if (mainExpression instanceof ObjectLookupExpression objectLookupExpression) {
-            return objectLookupExpression.getLookupExpression();
-        } else if (mainExpression instanceof ArrayLookupExpression arrayLookupExpression) {
-            return arrayLookupExpression.getLookupExpression();
-        } else {
-            throw new OurBadException("Unrecognized main expression found in update expression.");
-        }
+        return CollectionTranslation.truncateCollectionExpr(
+                TruncateCollectionExprContext.from(ctx), this.translationContext, this::visitExprSimple);
     }
 
     // endregion
@@ -1198,20 +1130,24 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return (Expression) visit(child);
     }
 
+    /**
+     * RumbleDB always preserves ordering during evaluation, so ordered and unordered expressions
+     * can simply evaluate their enclosed expression directly.
+     */
     @Override
     public Expression visitOrderedExpr(JsoniqParser.OrderedExprContext ctx) {
-        throw new UnsupportedFeatureException("Ordered expression not yet implemented", createMetadataFromContext(ctx));
+        return visitEnclosedExpression(ctx.enclosedExpression());
     }
 
     @Override
     public Expression visitUnorderedExpr(JsoniqParser.UnorderedExprContext ctx) {
-        throw new UnsupportedFeatureException(
-                "Unordered expression not yet implemented", createMetadataFromContext(ctx));
+        return visitEnclosedExpression(ctx.enclosedExpression());
     }
 
     @Override
     public Expression visitStringConstructor(JsoniqParser.StringConstructorContext ctx) {
-        throw new UnsupportedFeatureException("String constructor not yet implemented", createMetadataFromContext(ctx));
+        return PrimaryTranslation.stringConstructor(
+                StringConstructorContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override
@@ -1261,140 +1197,37 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Expression visitNodeConstructor(JsoniqParser.NodeConstructorContext ctx) {
-        return (Expression) visit(ctx.getChild(0));
+        if (ctx.directConstructor() != null) {
+            return visitDirectConstructor(ctx.directConstructor());
+        }
+        return visitComputedConstructor(ctx.computedConstructor());
     }
 
     @Override
     public Expression visitDirectConstructor(JsoniqParser.DirectConstructorContext ctx) {
-        if (ctx.COMMENT() != null) {
-            String commentText = ctx.COMMENT().getText();
-            String commentContent = commentText.substring(4, commentText.length() - 3);
-            return new DirectCommentConstructorExpression(commentContent, createMetadataFromContext(ctx));
-        }
-        if (ctx.open_close != null) {
-            return this.visitDirElemConstructorOpenClose(ctx);
-        } else if (ctx.single_tag != null) {
-            return this.visitDirElemConstructorSingleTag(ctx);
-        } else if (ctx.PI() != null) {
-            return this.visitDirPIConstructor(ctx.PI(), createMetadataFromContext(ctx));
-        }
-        throw new UnsupportedFeatureException("Direct constructor not yet implemented", createMetadataFromContext(ctx));
-    }
-
-    private DirPIConstructorExpression visitDirPIConstructor(TerminalNode piToken, ExceptionMetadata metadata) {
-        String tokenText = piToken.getText();
-        String inner = tokenText.substring(2, tokenText.length() - 2);
-        int whitespaceIndex = indexOfWhitespace(inner);
-        String target = whitespaceIndex == -1 ? inner : inner.substring(0, whitespaceIndex);
-        Expression contentExpression = null;
-        if (whitespaceIndex != -1) {
-            int contentStart = whitespaceIndex;
-            while (contentStart < inner.length() && Character.isWhitespace(inner.charAt(contentStart))) {
-                contentStart++;
-            }
-            String content = inner.substring(contentStart);
-            contentExpression = new StringLiteralExpression(content, metadata);
-        }
-        return new DirPIConstructorExpression(target, contentExpression, metadata);
-    }
-
-    private int indexOfWhitespace(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            if (Character.isWhitespace(value.charAt(i))) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
-    private DirElemConstructorExpression visitDirElemConstructorOpenClose(JsoniqParser.DirectConstructorContext ctx) {
-        JsoniqParser.DirElemConstructorOpenCloseContext openClose = ctx.open_close;
-        // check that the start and end tags are the same
-        if (openClose.close_tag_name != null
-                && !openClose.close_tag_name.getText().equals(ctx.open_tag_name.getText())) {
-            throw new DirectElementConstructorTagMismatchException(
-                    "The name used in the end tag must exactly match the name used in the corresponding start tag.",
-                    createMetadataFromContext(ctx));
-        }
-
-        this.translationContext.pushConstructorNamespaceFrame();
-        try {
-            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
-            if (ctx.attributes != null) {
-                attributeResult = this.getAttributesExpressionsList(ctx.attributes);
-            }
-
-            List<Expression> content = DirectConstructorUtils.mergeElementContent(
-                    this.jsoniqTokenStream,
-                    openClose.endOpen,
-                    openClose.dirElemContent(),
-                    this.translationContext.moduleContext().isBoundarySpacePreserve(),
-                    this::visitDirElemContent);
-
-            return new DirElemConstructorExpression(
-                    parseName(ctx.open_tag_name, NameRole.ELEMENT_CONSTRUCTOR),
-                    content,
-                    attributeResult.attributes,
-                    attributeResult.namespaceDeclarations,
-                    createMetadataFromContext(ctx));
-        } finally {
-            this.translationContext.popConstructorNamespaceFrame();
-        }
-    }
-
-    private DirElemConstructorExpression visitDirElemConstructorSingleTag(JsoniqParser.DirectConstructorContext ctx) {
-        this.translationContext.pushConstructorNamespaceFrame();
-        try {
-            DirAttributeProcessingResult attributeResult = new DirAttributeProcessingResult();
-            if (ctx.attributes != null) {
-                attributeResult = this.getAttributesExpressionsList(ctx.attributes);
-            }
-
-            return new DirElemConstructorExpression(
-                    parseName(ctx.open_tag_name, NameRole.ELEMENT_CONSTRUCTOR),
-                    new ArrayList<>(),
-                    attributeResult.attributes,
-                    attributeResult.namespaceDeclarations,
-                    createMetadataFromContext(ctx));
-        } finally {
-            this.translationContext.popConstructorNamespaceFrame();
-        }
+        return XmlDirectConstructorTranslation.directConstructor(
+                DirectConstructorContext.from(ctx),
+                this.jsoniqTokenStream,
+                this.translationContext,
+                this::parseName,
+                this::visitDirElemContent,
+                this::visitExpr);
     }
 
     @Override
     public Expression visitDirElemContent(JsoniqParser.DirElemContentContext ctx) {
-        ParseTree child = ctx.children.get(0);
-        if (child instanceof JsoniqParser.DirectConstructorContext directConstructorContext) {
-            return this.visitDirectConstructor(directConstructorContext);
-        } else if (child instanceof JsoniqParser.CommonContentContext commonContentContext) {
-            return this.visitCommonContent(commonContentContext);
-        } else {
-            // Include lexer hidden-channel characters (e.g. spaces) in this fragment; ParseTree#getText() drops them.
-            String text = this.jsoniqTokenStream.getText(ctx.getSourceInterval());
-            if (ctx.CDATA() != null) {
-                // filter out the <![CDATA[ and ]]>, and return the text
-                return new TextNodeExpression(text.substring(9, text.length() - 3), createMetadataFromContext(ctx));
-            }
-            return new TextNodeExpression(text, createMetadataFromContext(ctx), isWhitespaceOnly(text));
-        }
+        return XmlDirectConstructorTranslation.dirElemContent(
+                DirElemContentContext.from(ctx),
+                this.jsoniqTokenStream,
+                this.translationContext,
+                this::visitDirectConstructor,
+                this::visitCommonContent);
     }
 
     @Override
     public Expression visitCommonContent(JsoniqParser.CommonContentContext ctx) {
-        if (ctx.expr() != null) {
-            return this.visitExpr(ctx.expr());
-        }
-        String processedContent = DirectConstructorUtils.processLiteralContent(ctx.getText());
-        return new TextNodeExpression(processedContent, createMetadataFromContext(ctx));
-    }
-
-    private boolean isWhitespaceOnly(String value) {
-        for (int i = 0; i < value.length(); i++) {
-            if (!Character.isWhitespace(value.charAt(i))) {
-                return false;
-            }
-        }
-        return !value.isEmpty();
+        return XmlDirectConstructorTranslation.commonContent(
+                CommonContentContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override
@@ -1404,110 +1237,64 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public DocumentNodeConstructorExpression visitCompDocConstructor(JsoniqParser.CompDocConstructorContext ctx) {
-        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
-        return new DocumentNodeConstructorExpression(contentExpression, createMetadataFromContext(ctx));
+        return XmlComputedConstructorTranslation.compDocConstructor(
+                CompDocConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
     public TextNodeConstructorExpression visitCompTextConstructor(JsoniqParser.CompTextConstructorContext ctx) {
-        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
-
-        return new TextNodeConstructorExpression(contentExpression, createMetadataFromContext(ctx));
+        return XmlComputedConstructorTranslation.compTextConstructor(
+                CompTextConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
     public CommentNodeConstructorExpression visitCompCommentConstructor(
             JsoniqParser.CompCommentConstructorContext ctx) {
-        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
-
-        return new CommentNodeConstructorExpression(contentExpression, createMetadataFromContext(ctx));
+        return XmlComputedConstructorTranslation.compCommentConstructor(
+                CompCommentConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
     public ComputedPIConstructorExpression visitCompPIConstructor(JsoniqParser.CompPIConstructorContext ctx) {
-        Expression contentExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
-        if (ctx.ncName() != null) {
-            return new ComputedPIConstructorExpression(
-                    ctx.ncName().getText(), contentExpression, createMetadataFromContext(ctx));
-        }
-        if (ctx.expr() != null) {
-            Expression nameExpression = this.visitExpr(ctx.expr());
-            return new ComputedPIConstructorExpression(
-                    nameExpression, contentExpression, createMetadataFromContext(ctx));
-        }
-        throw new ParsingException(
-                "Computed processing instruction constructor must have either a static NCName or a dynamic name expression",
-                createMetadataFromContext(ctx));
+        return XmlComputedConstructorTranslation.compPIConstructor(
+                CompPIConstructorContext.from(ctx),
+                this.translationContext,
+                this::visitExpr,
+                this::visitEnclosedExpression);
     }
 
     @Override
     public ComputedAttributeConstructorExpression visitCompAttrConstructor(
             JsoniqParser.CompAttrConstructorContext ctx) {
-        Expression valueExpression = this.visitEnclosedExpression(ctx.enclosedExpression());
-
-        // Check if we have a static attribute name (eqName) or dynamic name expression (LBRACE expr RBRACE)
-        if (ctx.name != null) {
-            // Static attribute name: attribute attributeName { value }
-            Name attributeName = this.parseEqName(ctx.name, NameRole.NO_DEFAULT_NAMESPACE);
-            return new ComputedAttributeConstructorExpression(
-                    attributeName, valueExpression, createMetadataFromContext(ctx));
-        } else if (ctx.name_expr != null) {
-            // Dynamic attribute name: attribute { nameExpression } { value }
-            Expression nameExpression = this.visitExpr(ctx.name_expr);
-            return new ComputedAttributeConstructorExpression(
-                    nameExpression, valueExpression, createMetadataFromContext(ctx));
-        } else {
-            throw new ParsingException(
-                    "Computed attribute constructor must have either a static name or dynamic name expression",
-                    createMetadataFromContext(ctx));
-        }
+        return XmlComputedConstructorTranslation.compAttrConstructor(
+                CompAttrConstructorContext.from(ctx),
+                this.translationContext,
+                this::parseEqName,
+                this::visitExpr,
+                this::visitEnclosedExpression);
     }
 
     @Override
     public ComputedElementConstructorExpression visitCompElemConstructor(JsoniqParser.CompElemConstructorContext ctx) {
-        Expression contentExpression = this.visitEnclosedContentExpr(ctx.enclosedContentExpr());
-
-        // Check if we have a static element name (eqName) or dynamic name expression (LBRACE expr RBRACE)
-        if (ctx.eqName() != null) {
-            // Static element name: element elementName { content }
-            Name elementName = parseEqName(ctx.eqName(), NameRole.ELEMENT_CONSTRUCTOR);
-            return new ComputedElementConstructorExpression(
-                    elementName, contentExpression, createMetadataFromContext(ctx));
-        } else if (ctx.expr() != null) {
-            // Dynamic element name: element { nameExpression } { content }
-            Expression nameExpression = this.visitExpr(ctx.expr());
-            return new ComputedElementConstructorExpression(
-                    nameExpression, contentExpression, createMetadataFromContext(ctx));
-        } else {
-            throw new ParsingException(
-                    "Computed element constructor must have either a static name or dynamic name expression",
-                    createMetadataFromContext(ctx));
-        }
+        return XmlComputedConstructorTranslation.compElemConstructor(
+                CompElemConstructorContext.from(ctx),
+                this.translationContext,
+                this::parseEqName,
+                this::visitExpr,
+                this::visitEnclosedContentExpr);
     }
 
     @Override
     public ComputedNamespaceConstructorExpression visitCompNamespaceConstructor(
             JsoniqParser.CompNamespaceConstructorContext ctx) {
-        Expression uriExpression =
-                this.visitEnclosedExpression(ctx.enclosedURIExpr().enclosedExpression());
-        if (ctx.ncName() != null) {
-            return new ComputedNamespaceConstructorExpression(
-                    ctx.ncName().getText(), uriExpression, createMetadataFromContext(ctx));
-        }
-        if (ctx.enclosedPrefixExpr() != null) {
-            Expression prefixExpression =
-                    this.visitEnclosedExpression(ctx.enclosedPrefixExpr().enclosedExpression());
-            return new ComputedNamespaceConstructorExpression(
-                    prefixExpression, uriExpression, createMetadataFromContext(ctx));
-        }
-        throw new ParsingException(
-                "Computed namespace constructor must have either a static prefix or a dynamic prefix expression",
-                createMetadataFromContext(ctx));
+        return XmlComputedConstructorTranslation.compNamespaceConstructor(
+                CompNamespaceConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
     public Expression visitEnclosedContentExpr(JsoniqParser.EnclosedContentExprContext ctx) {
-        return this.visitEnclosedExpression(ctx.enclosedExpression());
+        return XmlComputedConstructorTranslation.enclosedContentExpr(
+                EnclosedContentExprContext.from(ctx), this::visitEnclosedExpression);
     }
 
     @Override
@@ -1517,36 +1304,14 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public ArrayConstructorExpression visitSquareArrayConstructor(JsoniqParser.SquareArrayConstructorContext ctx) {
-        List<JsoniqParser.ExprSingleContext> memberCtxs = ctx.exprSingle();
-        if (memberCtxs == null || memberCtxs.isEmpty()) {
-            return new ArrayConstructorExpression(new ArrayList<>(), true, createMetadataFromContext(ctx));
-        }
-        List<Expression> memberExpressions = new ArrayList<>();
-        if (this.translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
-            // In JSONiq 1.0, the square array constructor behaves like the curly array constructor.
-            // Thus, we concatenate all expressions into a single comma expression.
-            for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
-                memberExpressions.add(this.visitExprSingle(memberCtx));
-            }
-            Expression commaExpression = new CommaExpression(memberExpressions, createMetadataFromContext(ctx));
-            return new ArrayConstructorExpression(commaExpression, createMetadataFromContext(ctx));
-        } else {
-            log.debug("Not concatenating to comma.");
-            // In JSONiq 4.0, the square array constructor behaves like in XQuery 4.0.
-            for (JsoniqParser.ExprSingleContext memberCtx : memberCtxs) {
-                memberExpressions.add(this.visitExprSingle(memberCtx));
-            }
-            return new ArrayConstructorExpression(memberExpressions, true, createMetadataFromContext(ctx));
-        }
+        return PrimaryTranslation.squareArrayConstructor(
+                ArrayConstructorContext.Square.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
     public ArrayConstructorExpression visitCurlyArrayConstructor(JsoniqParser.CurlyArrayConstructorContext ctx) {
-        if (ctx.enclosedExpression() == null) {
-            return new ArrayConstructorExpression(createMetadataFromContext(ctx));
-        }
-        Expression content = this.visitEnclosedExpression(ctx.enclosedExpression());
-        return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
+        return PrimaryTranslation.curlyArrayConstructor(
+                ArrayConstructorContext.Curly.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
@@ -1578,211 +1343,22 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     public SequenceType processSequenceType(JsoniqParser.SequenceTypeContext ctx) {
-        if (ctx.item == null) {
-            return SequenceType.createSequenceType("()");
-        }
-        ItemType itemType = processItemType(ctx.item);
-        if (ctx.question.size() > 0) {
-            return new SequenceType(itemType, SequenceType.Arity.OneOrZero);
-        }
-        if (ctx.star.size() > 0) {
-            return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);
-        }
-        if (ctx.plus.size() > 0) {
-            return new SequenceType(itemType, SequenceType.Arity.OneOrMore);
-        }
-        return new SequenceType(itemType);
+        return TypeTranslation.sequenceType(SequenceTypeContext.from(ctx), this::processItemType);
     }
 
     public SequenceType processSingleType(JsoniqParser.SingleTypeContext ctx) {
-        if (ctx.item == null) {
-            return SequenceType.createSequenceType("()");
-        }
-
-        ItemType itemType = processItemType(ctx.item);
-        if (ctx.question.size() > 0) {
-            return new SequenceType(itemType, SequenceType.Arity.OneOrZero);
-        }
-        return new SequenceType(itemType);
+        return TypeTranslation.singleType(SingleTypeContext.from(ctx), this::processItemType);
     }
 
     public ItemType processItemType(JsoniqParser.ItemTypeContext itemTypeContext) {
-        if (itemTypeContext.parenthesizedItemTest() != null) {
-            return processItemType(itemTypeContext.parenthesizedItemTest().itemType());
-        }
-        if (itemTypeContext.KW_ITEM() != null) {
-            return BuiltinTypesCatalogue.item;
-        }
-        if (itemTypeContext.KW_NULL() != null) {
-            return BuiltinTypesCatalogue.nullItem;
-        }
-        JsoniqParser.FunctionTestContext fnCtx = itemTypeContext.functionTest();
-        if (fnCtx != null) {
-            processAnnotations(fnCtx.annotation());
-            // we have a function item type
-            JsoniqParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
-            if (typedFnCtx != null) {
-                SequenceType rt = processSequenceType(typedFnCtx.rt);
-                List<SequenceType> st =
-                        typedFnCtx.st.stream().map(this::processSequenceType).collect(Collectors.toList());
-                FunctionSignature signature = new FunctionSignature(st, rt);
-                // TODO: move item type creation to ItemFactory
-                return ItemTypeFactory.createFunctionItemType(signature);
-
-            } else {
-                return BuiltinTypesCatalogue.anyFunctionItem;
-            }
-        }
-        if (itemTypeContext.mapTest() != null) {
-            JsoniqParser.MapTestContext mapTestContext = itemTypeContext.mapTest();
-            if (mapTestContext.anyMapTest() != null) {
-                return BuiltinTypesCatalogue.mapItem;
-            }
-            JsoniqParser.TypedMapTestContext typedMapTestContext = mapTestContext.typedMapTest();
-            if (typedMapTestContext != null) {
-                Name keyName = parseEqName(typedMapTestContext.eqName(), NameRole.TYPE);
-                keyName = ItemTypeReference.renameAtomic(this.translationContext.moduleContext(), keyName);
-                ItemType keyType;
-                if (!BuiltinTypesCatalogue.typeExists(keyName)) {
-                    keyType = new ItemTypeReference(keyName);
-                } else {
-                    keyType = BuiltinTypesCatalogue.getItemTypeByName(keyName);
-                }
-                SequenceType valueSequenceType = processSequenceType(typedMapTestContext.sequenceType());
-                return ItemTypeFactory.mapOf(keyType, valueSequenceType);
-            }
-        }
-        if (itemTypeContext.arrayTest() != null) {
-            JsoniqParser.ArrayTestContext arrayTestContext = itemTypeContext.arrayTest();
-            if (arrayTestContext.anyArrayTest() != null) {
-                // XQuery 3.1 array(*) is the XDM array type (members are sequences), not js:array().
-                return BuiltinTypesCatalogue.xqueryArrayItem;
-            }
-            JsoniqParser.TypedArrayTestContext typedArrayTestContext = arrayTestContext.typedArrayTest();
-            if (typedArrayTestContext != null) {
-                SequenceType contentSequenceType = processSequenceType(typedArrayTestContext.sequenceType());
-                return ItemTypeFactory.xqueryArrayOf(contentSequenceType);
-            }
-        }
-        if (itemTypeContext.eqName() != null) {
-            Name name = parseEqName(itemTypeContext.eqName(), NameRole.TYPE);
-            name = ItemTypeReference.renameAtomic(this.translationContext.moduleContext(), name);
-            if (!BuiltinTypesCatalogue.typeExists(name)) {
-                return new ItemTypeReference(name);
-            }
-            return BuiltinTypesCatalogue.getItemTypeByName(name);
-        }
-        if (itemTypeContext.kindTest() != null) {
-            return processKindTestAsItemType(itemTypeContext.kindTest());
-        }
-        throw new UnsupportedFeatureException("Unsupported itemtype encountered", ExceptionMetadata.EMPTY_METADATA);
-    }
-
-    private ItemType processKindTestAsItemType(JsoniqParser.KindTestContext kindTestContext) {
-        if (kindTestContext.schemaElementTest() != null) {
-            return getSchemaElementTestAsItemType(kindTestContext.schemaElementTest());
-        }
-        if (kindTestContext.schemaAttributeTest() != null) {
-            return getSchemaAttributeTestAsItemType(kindTestContext.schemaAttributeTest());
-        }
-        if (kindTestContext.anyKindTest() != null) {
-            return BuiltinTypesCatalogue.nodeItem;
-        }
-        if (kindTestContext.documentTest() != null) {
-            JsoniqParser.DocumentTestContext documentTestContext = kindTestContext.documentTest();
-            if (documentTestContext.schemaElementTest() != null) {
-                return ItemTypeFactory.documentNodeItemType(
-                        getSchemaElementTestAsItemType(documentTestContext.schemaElementTest()));
-            }
-            if (documentTestContext.elementTest() != null) {
-                ElementNodeItemType elementTestType = getElementTestAsItemType(documentTestContext.elementTest());
-                return ItemTypeFactory.documentNodeItemType(elementTestType);
-            }
-            return BuiltinTypesCatalogue.documentNode;
-        }
-        if (kindTestContext.elementTest() != null) {
-            return getElementTestAsItemType(kindTestContext.elementTest());
-        }
-        if (kindTestContext.attributeTest() != null) {
-            JsoniqParser.AttributeTestContext attributeTestContext = kindTestContext.attributeTest();
-            if (attributeTestContext.typeName() != null) {
-                throw new UnsupportedFeatureException(
-                        "Typed attribute item tests are not supported yet",
-                        createMetadataFromContext(attributeTestContext));
-            }
-            if (attributeTestContext.attributeNameOrWildcard() == null) {
-                return BuiltinTypesCatalogue.attributeNode;
-            }
-            if (attributeTestContext.attributeNameOrWildcard().attributeName() == null) {
-                return BuiltinTypesCatalogue.attributeNode;
-            }
-            Name attributeName = parseEqName(
-                    attributeTestContext
-                            .attributeNameOrWildcard()
-                            .attributeName()
-                            .eqName(),
-                    NameRole.NO_DEFAULT_NAMESPACE);
-            return ItemTypeFactory.attributeNodeItemType(attributeName);
-        }
-        if (kindTestContext.commentTest() != null) {
-            return BuiltinTypesCatalogue.commentNode;
-        }
-        if (kindTestContext.textTest() != null) {
-            return BuiltinTypesCatalogue.textNode;
-        }
-        if (kindTestContext.namespaceNodeTest() != null) {
-            return BuiltinTypesCatalogue.namespaceNode;
-        }
-        if (kindTestContext.piTest() != null) {
-            JsoniqParser.PiTestContext piTestContext = kindTestContext.piTest();
-            if (piTestContext.ncName() != null) {
-                return ItemTypeFactory.processingInstructionNodeItemType(
-                        piTestContext.ncName().getText());
-            }
-            if (piTestContext.stringLiteral() != null) {
-                String targetName = processStringLiteral(piTestContext.stringLiteral());
-                return ItemTypeFactory.processingInstructionNodeItemType(targetName);
-            }
-            return BuiltinTypesCatalogue.processingInstructionNode;
-        }
-        throw new UnsupportedFeatureException(
-                "Unsupported kind test in item type: " + kindTestContext.getText(),
-                createMetadataFromContext(kindTestContext));
-    }
-
-    private ElementNodeItemType getSchemaElementTestAsItemType(JsoniqParser.SchemaElementTestContext ctx) {
-        Name name = parseEqName(ctx.elementDeclaration().elementName().eqName(), NameRole.ELEMENT_CONSTRUCTOR);
-        return this.translationContext
-                .moduleContext()
-                .getInScopeSchemaTypes()
-                .getXmlSchemaCatalog()
-                .getSchemaElementTest(name, createMetadataFromContext(ctx));
-    }
-
-    private ItemType getSchemaAttributeTestAsItemType(JsoniqParser.SchemaAttributeTestContext ctx) {
-        Name name = parseEqName(ctx.attributeDeclaration().attributeName().eqName(), NameRole.NO_DEFAULT_NAMESPACE);
-        return this.translationContext
-                .moduleContext()
-                .getInScopeSchemaTypes()
-                .getXmlSchemaCatalog()
-                .getSchemaAttributeTest(name, createMetadataFromContext(ctx));
-    }
-
-    private ElementNodeItemType getElementTestAsItemType(JsoniqParser.ElementTestContext elementTestContext) {
-        if (elementTestContext.optional != null || elementTestContext.typeName() != null) {
-            throw new UnsupportedFeatureException(
-                    "Typed or nillable element item tests are not supported yet",
-                    createMetadataFromContext(elementTestContext));
-        }
-        if (elementTestContext.elementNameOrWildcard() == null) {
-            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
-        }
-        if (elementTestContext.elementNameOrWildcard().elementName() == null) {
-            return (ElementNodeItemType) BuiltinTypesCatalogue.elementNode;
-        }
-        Name elementName = parseEqName(
-                elementTestContext.elementNameOrWildcard().elementName().eqName(), NameRole.NO_DEFAULT_NAMESPACE);
-        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
+        return TypeTranslation.itemType(
+                ItemTypeContext.from(itemTypeContext),
+                this.translationContext,
+                this::parseEqName,
+                this::processAnnotations,
+                this::processStringLiteral,
+                this::processSequenceType,
+                this::processItemType);
     }
 
     @Override
@@ -1823,38 +1399,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public InlineFunctionExpression visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
-        List<Annotation> annotations = processAnnotations(ctx.annotations());
-        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.createSequenceType("item*");
-        Name paramName;
-        SequenceType paramType;
-        if (ctx.paramList() != null) {
-            for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseVariableBinding(param.name);
-                paramType = SequenceType.createSequenceType("item*");
-                if (fnParams.containsKey(paramName)) {
-                    throw new DuplicateParamNameException(
-                            Name.createVariableInDefaultFunctionNamespace("inline-function`"),
-                            paramName,
-                            createMetadataFromContext(param));
-                }
-                if (param.sequenceType() != null) {
-                    paramType = this.processSequenceType(param.sequenceType());
-                } else {
-                    paramType = SequenceType.createSequenceType("item*");
-                }
-                fnParams.put(paramName, paramType);
-            }
-        }
-
-        if (ctx.return_type != null) {
-            fnReturnType = this.processSequenceType(ctx.return_type);
-        }
-
-        StatementsAndOptionalExpr funcBody = this.visitStatementsAndOptionalExpr(ctx.fn_body);
-
-        return new InlineFunctionExpression(
-                annotations, null, fnParams, fnReturnType, funcBody, createMetadataFromContext(ctx));
+        return PrimaryTranslation.inlineFunctionExpr(
+                InlineFunctionExprContext.from(ctx),
+                this.translationContext,
+                this::processAnnotations,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitStatementsAndOptionalExpr);
     }
     // endregion
 
@@ -1906,16 +1457,8 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return this.translationContext.metadata(context);
     }
 
-    private ExceptionMetadata createMetadataFromTree(ParseTree tree) {
-        return this.translationContext.metadata(tree);
-    }
-
     private ExceptionMetadata createMetadataFromRange(Token start, Token end) {
         return this.translationContext.metadata(start, end);
-    }
-
-    private ExceptionMetadata createMetadataFromTrees(ParseTree startTree, ParseTree endTree) {
-        return this.translationContext.metadata(startTree, endTree);
     }
 
     // region scripting
@@ -2071,154 +1614,17 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Expression visitPathExpr(JsoniqParser.PathExprContext ctx) {
-        if (ctx.singleslash != null) {
-            return visitSingleSlash(ctx, ctx.singleslash);
-        } else if (ctx.doubleslash != null) {
-            return visitDoubleSlash(ctx, ctx.doubleslash);
-        } else if (ctx.relative != null) {
-            return visitRelativeWithoutSlash(ctx.relative);
-        }
-        return visitSingleSlashNoStepExpr(ctx);
-    }
-
-    private Expression visitSingleSlashNoStepExpr(JsoniqParser.PathExprContext ctx) {
-        // Case: No StepExpr, only dash
-        return new PathRootExpression(createMetadataFromContext(ctx));
-    }
-
-    private Expression visitRelativeWithoutSlash(JsoniqParser.RelativePathExprContext relativeContext) {
-        if (relativeContext.stepExpr().size() == 1
-                && relativeContext.stepExpr(0).postfixExpr() != null) {
-            // We only have a postfix expression, not a path expression
-            return this.visitPostfixExpr(relativeContext.stepExpr(0).postfixExpr());
-        }
-        return getSlashes(relativeContext, null);
-    }
-
-    private Expression visitDoubleSlash(
-            JsoniqParser.PathExprContext pathContext, JsoniqParser.RelativePathExprContext doubleSlashContext) {
-        Token leadingDoubleSlash = pathContext.getStart();
-        PathRootExpression functionCallExpression =
-                new PathRootExpression(createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash));
-        StepExpr stepExpr = new ForwardStepExpr(
-                ForwardAxis.DESCENDANT_OR_SELF,
-                new AnyKindTest(),
-                createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash));
-        Expression starter = new SlashExpr(
-                functionCallExpression, stepExpr, createMetadataFromRange(leadingDoubleSlash, leadingDoubleSlash));
-        return getSlashes(doubleSlashContext, starter, leadingDoubleSlash);
-    }
-
-    private Expression visitSingleSlash(
-            JsoniqParser.PathExprContext pathContext, JsoniqParser.RelativePathExprContext singleSlashContext) {
-        Token leadingSlash = pathContext.getStart();
-        PathRootExpression functionCallExpression =
-                new PathRootExpression(createMetadataFromRange(leadingSlash, leadingSlash));
-        return getSlashes(singleSlashContext, functionCallExpression, leadingSlash);
-    }
-
-    /**
-     * This method takes a leftMost expression and a path and returns a nested tree of slash expressions which
-     * correspond to the steps in the path applied to the leftMost expression
-     */
-    private Expression getSlashes(JsoniqParser.RelativePathExprContext relativePathExprContext, Expression leftMost) {
-        return getSlashes(relativePathExprContext, leftMost, relativePathExprContext.getStart());
-    }
-
-    private Expression getSlashes(
-            JsoniqParser.RelativePathExprContext relativePathExprContext, Expression leftMost, Token expressionStart) {
-        Expression currentTop = leftMost; // can be null
-        Expression currentStepExpr;
-        for (int i = 0; i < relativePathExprContext.stepExpr().size(); ++i) {
-            currentStepExpr = this.visitStepExpr(relativePathExprContext.stepExpr(i));
-            if (i > 0 && relativePathExprContext.sep.get(i - 1).getText().equals("//")) {
-                // Unroll '//' to forward axis
-                StepExpr intermediaryStepExpr = new ForwardStepExpr(
-                        ForwardAxis.DESCENDANT_OR_SELF,
-                        new AnyKindTest(),
-                        createMetadataFromRange(
-                                relativePathExprContext.sep.get(i - 1), relativePathExprContext.sep.get(i - 1)));
-                if (currentTop == null) {
-                    currentTop = intermediaryStepExpr;
-                } else {
-                    currentTop = new SlashExpr(
-                            currentTop,
-                            intermediaryStepExpr,
-                            createMetadataFromRange(expressionStart, relativePathExprContext.sep.get(i - 1)));
-                }
-            }
-            if (currentTop == null) {
-                currentTop = currentStepExpr;
-            } else {
-                currentTop = new SlashExpr(
-                        currentTop,
-                        currentStepExpr,
-                        createMetadataFromRange(
-                                expressionStart,
-                                relativePathExprContext.stepExpr(i).getStop()));
-            }
-        }
-        return currentTop;
+        return XmlPathTranslation.pathExpr(PathExprContext.from(ctx), this.translationContext, this::visitStepExpr);
     }
 
     @Override
     public Expression visitStepExpr(JsoniqParser.StepExprContext ctx) {
-        if (ctx.postfixExpr() == null) {
-            Expression stepExpr = getStep(ctx.axisStep());
-            for (JsoniqParser.PredicateContext predicateContext :
-                    ctx.axisStep().predicateList().predicate()) {
-                Expression predicate = this.visitPredicate(predicateContext);
-                stepExpr = new FilterExpression(
-                        stepExpr, predicate, createMetadataFromRange(ctx.getStart(), predicateContext.getStop()));
-            }
-            return stepExpr;
-        }
-        return this.visitPostfixExpr(ctx.postfixExpr());
-    }
-
-    private StepExpr getStep(JsoniqParser.AxisStepContext ctx) {
-        if (ctx.forwardStep() == null) {
-            return getReverseStep(ctx.reverseStep());
-        }
-        return getForwardStep(ctx.forwardStep());
-    }
-
-    private StepExpr getForwardStep(JsoniqParser.ForwardStepContext ctx) {
-        ForwardAxis forwardAxis;
-        NodeTest nodeTest;
-        if (ctx.nodeTest() == null) {
-            // Abbreviated step: unprefixed names use default element namespace on child axis, not on @attr.
-            boolean unprefixedUsesDefaultElementNs = ctx.abbrevForwardStep().AT() == null;
-            nodeTest = getNodeTest(ctx.abbrevForwardStep().nodeTest(), unprefixedUsesDefaultElementNs);
-            if (ctx.abbrevForwardStep().AT() != null) {
-                // @ equivalent with 'attribute::'
-                forwardAxis = ForwardAxis.ATTRIBUTE;
-            } else if (nodeTest instanceof AttributeTest
-                    || (nodeTest instanceof SchemaNodeTest schemaTest
-                            && schemaTest.itemType() instanceof AttributeNodeItemType)) {
-                forwardAxis = ForwardAxis.ATTRIBUTE;
-            } else {
-                forwardAxis = ForwardAxis.CHILD;
-            }
-            return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
-        }
-        forwardAxis = ForwardAxis.fromString(ctx.forwardAxis().getText());
-        boolean unprefixedUsesDefaultElementNs = forwardAxis != ForwardAxis.ATTRIBUTE;
-        nodeTest = getNodeTest(ctx.nodeTest(), unprefixedUsesDefaultElementNs);
-        return new ForwardStepExpr(forwardAxis, nodeTest, createMetadataFromContext(ctx));
-    }
-
-    private StepExpr getReverseStep(JsoniqParser.ReverseStepContext ctx) {
-        if (ctx.nodeTest() == null) {
-            // .. equivalent with 'parent::node()'
-            ReverseAxis reverseAxis = ReverseAxis.PARENT;
-            NodeTest nodeTest = new AnyKindTest();
-            return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
-        }
-        ReverseAxis reverseAxis = ReverseAxis.fromString(ctx.reverseAxis().getText());
-        // Reverse axes only match element (and similar) nodes; unprefixed QNames use default element namespace.
-        NodeTest nodeTest = getNodeTest(ctx.nodeTest(), true);
-        return new ReverseStepExpr(reverseAxis, nodeTest, createMetadataFromContext(ctx));
+        return XmlPathTranslation.stepExpr(
+                StepExprContext.from(ctx),
+                this.translationContext,
+                this::visitPostfixExpr,
+                this::getNodeTest,
+                this::visitPredicate);
     }
 
     /**
@@ -2228,153 +1634,110 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
      */
     private NodeTest getNodeTest(
             JsoniqParser.NodeTestContext nodeTestContext, boolean unprefixedUsesDefaultElementNamespace) {
-        if (nodeTestContext.nameTest() == null) {
-            // kind test
-            return getKindTest(nodeTestContext.kindTest().children.get(0));
-        }
-        if (nodeTestContext.nameTest().wildcard() == null) {
-            NameRole role = unprefixedUsesDefaultElementNamespace
-                    ? NameRole.ELEMENT_CONSTRUCTOR
-                    : NameRole.NO_DEFAULT_NAMESPACE;
-            Name name = parseEqName(nodeTestContext.nameTest().eqName(), role);
-            return new NameTest(name);
-        } else {
-            String wildcard = nodeTestContext.nameTest().wildcard().getText();
-            return new NameTest(wildcard);
-        }
+        return new NodeTestVisitor(unprefixedUsesDefaultElementNamespace).visit(nodeTestContext);
     }
 
-    // XQuery 3.1 Section 2.5.5 - SequenceType Matching
-    // KindTest ::= DocumentTest | ElementTest | AttributeTest | SchemaElementTest
-    // | SchemaAttributeTest | PITest | CommentTest | TextTest
-    // | NamespaceNodeTest | AnyKindTest
-    private NodeTest getKindTest(ParseTree kindTest) {
-        if (kindTest instanceof JsoniqParser.DocumentTestContext docContext) {
-            // XQuery 3.1 Section 2.5.5.3 - Element Test (used within DocumentTest)
-            // DocumentTest ::= "document-node" "(" (ElementTest | SchemaElementTest)? ")"
-            // document-node() matches any document node.
-            // document-node(element(...)) matches a document node containing an element matching the ElementTest.
-            if (docContext.schemaElementTest() != null) {
-                return new SchemaNodeTest(ItemTypeFactory.documentNodeItemType(
-                        getSchemaElementTestAsItemType(docContext.schemaElementTest())));
+    private class NodeTestVisitor extends JsoniqParserBaseVisitor<NodeTest> {
+        private final boolean unprefixedUsesDefaultElementNamespace;
+
+        NodeTestVisitor(boolean unprefixedUsesDefaultElementNamespace) {
+            this.unprefixedUsesDefaultElementNamespace = unprefixedUsesDefaultElementNamespace;
+        }
+
+        @Override
+        public NodeTest visitNodeTest(JsoniqParser.NodeTestContext ctx) {
+            if (ctx.nameTest() != null) {
+                return visitNameTest(ctx.nameTest());
             }
-            if (docContext.elementTest() == null) {
-                return new DocumentTest(null);
+            if (ctx.kindTest() != null) {
+                return visitKindTest(ctx.kindTest());
             }
-            return new DocumentTest(getKindTest(docContext.elementTest()));
-        } else if (kindTest instanceof JsoniqParser.ElementTestContext elementContext) {
-            // XQuery 3.1 Section 2.5.5.3 - Element Test
-            // ElementTest ::= "element" "(" (ElementNameOrWildcard ("," TypeName "?"?)?)? ")"
-            // element() and element(*) match any single element node.
-            // element(N) matches any element node whose name is N.
-            // element(N, T) matches an element node whose name is N and whose type annotation is T.
-            // element(*, T) matches any element node whose type annotation is T.
-            // element(N, T?) also matches nillable elements (validation-related, unsupported).
-            // Reject the nillable marker "?" (validation-related feature)
-            if (elementContext.optional != null) {
+            throw new ParsingException("Invalid node test", createMetadataFromContext(ctx));
+        }
+
+        @Override
+        public NodeTest visitNameTest(JsoniqParser.NameTestContext ctx) {
+            return XmlNodeTestTranslation.nameTest(
+                    NameTestContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    this.unprefixedUsesDefaultElementNamespace,
+                    TranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitKindTest(JsoniqParser.KindTestContext ctx) {
+            NodeTest result = visit(ctx.getChild(0));
+            if (result == null) {
                 throw new UnsupportedFeatureException(
-                        "Nillable element tests (element(name, type?)) are not supported (validation feature)",
-                        createMetadataFromContext((ParserRuleContext) kindTest));
+                        "Unsupported kind test: " + ctx.getText(), createMetadataFromContext(ctx));
             }
-            Name elementName;
-            if (elementContext.elementNameOrWildcard() != null) {
-                boolean hasWildcard = elementContext.elementNameOrWildcard().elementName() == null;
-                if (!hasWildcard) {
-                    elementName = parseEqName(
-                            elementContext.elementNameOrWildcard().elementName().eqName(),
-                            NameRole.ELEMENT_CONSTRUCTOR);
-                    if (elementContext.typeName() == null) {
-                        return new ElementTest(elementName, null);
-                    }
-                    Name typeName = parseEqName(elementContext.typeName().eqName(), NameRole.TYPE);
-                    return new ElementTest(elementName, typeName);
-                }
-                // Wildcard case: element(*) or element(*, type)
-                if (elementContext.typeName() != null) {
-                    Name typeName = parseEqName(elementContext.typeName().eqName(), NameRole.TYPE);
-                    return new ElementTest(typeName);
-                }
-                return new ElementTest(true);
-            }
-            return new ElementTest();
-        } else if (kindTest instanceof JsoniqParser.AttributeTestContext attributeTestContext) {
-            // XQuery 3.1 Section 2.5.5.5 - Attribute Test
-            // AttributeTest ::= "attribute" "(" (AttribNameOrWildcard ("," TypeName)?)? ")"
-            // attribute() and attribute(*) match any single attribute node.
-            // attribute(N) matches any attribute node whose name is N.
-            // attribute(N, T) matches an attribute node whose name is N and whose type annotation is T.
-            // attribute(*, T) matches any attribute node whose type annotation is T.
-            Name attributeName;
-            if (attributeTestContext.attributeNameOrWildcard() != null) {
-                boolean hasWildcard =
-                        attributeTestContext.attributeNameOrWildcard().attributeName() == null;
-                if (!hasWildcard) {
-                    attributeName = parseEqName(
-                            attributeTestContext
-                                    .attributeNameOrWildcard()
-                                    .attributeName()
-                                    .eqName(),
-                            NameRole.NO_DEFAULT_NAMESPACE);
-                    if (attributeTestContext.typeName() != null) {
-                        Name typeName =
-                                parseEqName(attributeTestContext.typeName().eqName(), NameRole.TYPE);
-                        return new AttributeTest(attributeName, typeName);
-                    } else {
-                        return new AttributeTest(attributeName, null);
-                    }
-                } else {
-                    // Wildcard case: attribute(*) or attribute(*, type)
-                    if (attributeTestContext.typeName() != null) {
-                        Name typeName =
-                                parseEqName(attributeTestContext.typeName().eqName(), NameRole.TYPE);
-                        return new AttributeTest(typeName);
-                    }
-                    return new AttributeTest(true);
-                }
-            }
-            return new AttributeTest();
-        } else if (kindTest instanceof JsoniqParser.TextTestContext) {
-            // XQuery 3.1 Section 2.5.5
-            // TextTest ::= "text" "(" ")"
-            // A TextTest matches any text node.
-            return new TextTest();
-        } else if (kindTest instanceof JsoniqParser.CommentTestContext) {
-            // XQuery 3.1 Section 2.5.5
-            // CommentTest ::= "comment" "(" ")"
-            // A CommentTest matches any comment node.
-            return new CommentTest();
-        } else if (kindTest instanceof JsoniqParser.PiTestContext piContext) {
-            // XQuery 3.1 Section 2.5.5
-            // PITest ::= "processing-instruction" "(" (NCName | StringLiteral)? ")"
-            // processing-instruction() matches any processing-instruction node.
-            // processing-instruction(N) matches any processing-instruction node whose target
-            // name equals fn:normalize-space(N).
-            if (piContext.ncName() != null) {
-                return new PITest(piContext.ncName().getText());
-            }
-            if (piContext.stringLiteral() != null) {
-                String targetName = processStringLiteral(piContext.stringLiteral());
-                return new PITest(targetName);
-            }
-            return new PITest();
-        } else if (kindTest instanceof JsoniqParser.NamespaceNodeTestContext) {
-            // XQuery 3.1 Section 2.5.5
-            // NamespaceNodeTest ::= "namespace-node" "(" ")"
-            // A NamespaceNodeTest matches any namespace node.
-            return new NamespaceNodeTest();
-        } else if (kindTest instanceof JsoniqParser.AnyKindTestContext) {
-            // XQuery 3.1 Section 2.5.5
-            // AnyKindTest ::= "node" "(" ")"
-            // node() matches any node.
-            return new AnyKindTest();
-        } else if (kindTest instanceof JsoniqParser.SchemaElementTestContext ctx) {
-            return new SchemaNodeTest(getSchemaElementTestAsItemType(ctx));
-        } else if (kindTest instanceof JsoniqParser.SchemaAttributeTestContext ctx) {
-            return new SchemaNodeTest(getSchemaAttributeTestAsItemType(ctx));
-        } else {
-            throw new UnsupportedFeatureException(
-                    "Unsupported kind test: " + kindTest.getText(),
-                    createMetadataFromContext((ParserRuleContext) kindTest));
+            return result;
+        }
+
+        @Override
+        public NodeTest visitDocumentTest(JsoniqParser.DocumentTestContext ctx) {
+            return XmlNodeTestTranslation.documentTest(
+                    DocumentTestContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitElementTest(JsoniqParser.ElementTestContext ctx) {
+            return XmlNodeTestTranslation.elementTest(
+                    ElementTestContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitAttributeTest(JsoniqParser.AttributeTestContext ctx) {
+            return XmlNodeTestTranslation.attributeTest(
+                    AttributeTestContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitSchemaElementTest(JsoniqParser.SchemaElementTestContext ctx) {
+            return XmlNodeTestTranslation.schemaElementTest(
+                    SchemaElementTestContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitSchemaAttributeTest(JsoniqParser.SchemaAttributeTestContext ctx) {
+            return XmlNodeTestTranslation.schemaAttributeTest(
+                    SchemaAttributeTestContext.from(ctx),
+                    TranslationVisitor.this.translationContext,
+                    TranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitPiTest(JsoniqParser.PiTestContext ctx) {
+            return XmlNodeTestTranslation.piTest(
+                    PiTestContext.from(ctx), TranslationVisitor.this::processStringLiteral);
+        }
+
+        @Override
+        public NodeTest visitCommentTest(JsoniqParser.CommentTestContext ctx) {
+            return XmlNodeTestTranslation.commentTest();
+        }
+
+        @Override
+        public NodeTest visitTextTest(JsoniqParser.TextTestContext ctx) {
+            return XmlNodeTestTranslation.textTest();
+        }
+
+        @Override
+        public NodeTest visitNamespaceNodeTest(JsoniqParser.NamespaceNodeTestContext ctx) {
+            return XmlNodeTestTranslation.namespaceNodeTest();
+        }
+
+        @Override
+        public NodeTest visitAnyKindTest(JsoniqParser.AnyKindTestContext ctx) {
+            return XmlNodeTestTranslation.anyKindTest();
         }
     }
 
@@ -2394,151 +1757,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private List<Annotation> processAnnotations(JsoniqParser.AnnotationsContext annotations) {
-        return processAnnotations(annotations.annotation());
-    }
-
-    private List<Annotation> processAnnotations(List<JsoniqParser.AnnotationContext> annotations) {
-        List<Annotation> parsedAnnotations = new ArrayList<>();
-        for (JsoniqParser.AnnotationContext annotationContext : annotations) {
-            // for backwards compatibility, the specification allows for updating without % sign
-            if (annotationContext.updating != null) {
-                Name name = Name.createNameInDefaultXQueryAnnotationsNamespace("updating");
-                parsedAnnotations.add(new Annotation(name, null));
-                continue;
-            }
-            JsoniqParser.EqNameContext eqNameContext = annotationContext.eqName();
-            Name name = parseEqName(eqNameContext, NameRole.ANNOTATION);
-            Annotation.validateAnnotationName(name, createMetadataFromContext(annotationContext));
-            List<Expression> literals = null;
-            if (!annotationContext.literal().isEmpty()) {
-                literals = new ArrayList<>();
-                for (JsoniqParser.LiteralContext literalContext : annotationContext.literal()) {
-                    literals.add(this.visitLiteral(literalContext));
-                }
-            }
-            parsedAnnotations.add(new Annotation(name, literals));
+        if (annotations == null) {
+            return Collections.emptyList();
         }
-
-        return parsedAnnotations;
-    }
-
-    private static class DirAttributeProcessingResult {
-        private final List<Expression> attributes;
-        private final List<NamespaceDeclaration> namespaceDeclarations;
-
-        private DirAttributeProcessingResult() {
-            this.attributes = new ArrayList<>();
-            this.namespaceDeclarations = new ArrayList<>();
-        }
-    }
-
-    private DirAttributeProcessingResult getAttributesExpressionsList(JsoniqParser.DirAttributeListContext ctx) {
-        DirAttributeProcessingResult result = new DirAttributeProcessingResult();
-
-        List<JsoniqParser.QnameContext> attributeNames = ctx.attribute_qname;
-        List<JsoniqParser.DirAttributeValueContext> attributeValues = ctx.attribute_value;
-
-        // Namespace declarations are in scope for the entire element start tag,
-        // including attributes that occur lexically before the declaration.
-        for (int i = 0; i < attributeNames.size(); i++) {
-            JsoniqParser.QnameContext qnameCtx = attributeNames.get(i);
-            String lexical = qnameCtx.getText();
-            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
-                String declaredPrefix = "xmlns".equals(lexical) ? "" : lexical.substring("xmlns:".length());
-                String uri = getNamespaceDeclarationUri(attributeValues.get(i));
-                result.namespaceDeclarations.add(
-                        new NamespaceDeclaration(declaredPrefix, uri, createMetadataFromContext(qnameCtx)));
-                this.translationContext.bindConstructorNamespace(declaredPrefix, uri);
-            }
-        }
-
-        // Translate non-namespace attributes after the complete namespace frame
-        // has been established, while retaining their original source order.
-        for (int i = 0; i < attributeNames.size(); i++) {
-            JsoniqParser.QnameContext qnameCtx = attributeNames.get(i);
-            String lexical = qnameCtx.getText();
-            if ("xmlns".equals(lexical) || lexical.startsWith("xmlns:")) {
-                continue;
-            }
-            Name attributeName = parseName(qnameCtx, NameRole.NO_DEFAULT_NAMESPACE);
-
-            List<Expression> value = this.getAttributeValuesExpressionsList(attributeValues.get(i), true);
-            AttributeNodeExpression attributeNode = new AttributeNodeExpression(
-                    attributeName,
-                    value,
-                    createMetadataFromRange(
-                            qnameCtx.getStart(), attributeValues.get(i).getStop()));
-            result.attributes.add(attributeNode);
-        }
-
-        return result;
-    }
-
-    private List<Expression> getAttributeValuesExpressionsList(
-            JsoniqParser.DirAttributeValueContext ctx, boolean allowEnclosedExpressions) {
-        ParseTree child = ctx.children.get(0);
-        if (child instanceof JsoniqParser.DirAttributeValueAposContext
-                || child instanceof JsoniqParser.DirAttributeValueQuotContext) {
-            ParserRuleContext quotedValue = (ParserRuleContext) child;
-            return processQuotedAttributeValue(quotedValue, allowEnclosedExpressions);
-        }
-        throw new UnsupportedOperationException("Unsupported attribute value: " + ctx.getText());
-    }
-
-    private String getNamespaceDeclarationUri(JsoniqParser.DirAttributeValueContext ctx) {
-        List<Expression> uriExpressions = this.getAttributeValuesExpressionsList(ctx, false);
-        StringBuilder uriBuilder = new StringBuilder();
-        for (Expression expression : uriExpressions) {
-            if (!(expression instanceof AttributeNodeContentExpression attributeContent)) {
-                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
-                        "Namespace declaration attributes cannot contain enclosed expressions.",
-                        createMetadataFromContext(ctx));
-            }
-            uriBuilder.append(attributeContent.getContent());
-        }
-        return uriBuilder.toString();
-    }
-
-    private List<Expression> processQuotedAttributeValue(ParserRuleContext ctx, boolean allowEnclosedExpressions) {
-        return DirectConstructorUtils.processQuotedValue(
-                this.jsoniqTokenStream,
-                ctx,
-                allowEnclosedExpressions,
-                this::createMetadataFromTree,
-                this::createMetadataFromTrees,
-                this::processAttributeContent);
-    }
-
-    /**
-     * Helper method to process attribute content (handles nested quotes, expressions, and escaped braces).
-     */
-    private List<Expression> processAttributeContent(ParserRuleContext ctx, boolean allowEnclosedExpressions) {
-        ParseTree child = ctx.children.get(0);
-        List<Expression> expressions = new ArrayList<>();
-
-        if (ctx instanceof JsoniqParser.DirAttributeContentQuotContext dirAttributeContentQuotContext
-                && dirAttributeContentQuotContext.expr() != null) {
-            if (!allowEnclosedExpressions) {
-                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
-                        "Namespace declaration attributes cannot contain enclosed expressions.",
-                        createMetadataFromContext(ctx));
-            }
-            expressions.add(this.visitExpr(dirAttributeContentQuotContext.expr()));
-        } else if (ctx instanceof JsoniqParser.DirAttributeContentAposContext dirAttributeContentAposContext
-                && dirAttributeContentAposContext.expr() != null) {
-            if (!allowEnclosedExpressions) {
-                throw new NamespaceDeclarationAttributeEnclosedExpressionException(
-                        "Namespace declaration attributes cannot contain enclosed expressions.",
-                        createMetadataFromContext(ctx));
-            }
-            expressions.add(this.visitExpr(dirAttributeContentAposContext.expr()));
-        } else {
-            // Preserve literal content after validating direct attribute restrictions.
-            String childText = this.jsoniqTokenStream.getText(ctx.getSourceInterval());
-            DirectConstructorUtils.validateLiteral(childText, ctx, this::createMetadataFromTree);
-            String processedContent = DirectConstructorUtils.processLiteralContent(childText);
-            expressions.add(new AttributeNodeContentExpression(processedContent, createMetadataFromTree(child)));
-        }
-        return expressions;
+        return AnnotationTranslation.processAnnotations(
+                AnnotationsContext.from(annotations), this.translationContext, this::parseEqName, this::visitLiteral);
     }
 }

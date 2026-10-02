@@ -37,6 +37,7 @@ import org.rumbledb.bindings.StandardInputBinding;
 import org.rumbledb.config.model.RumbleMode;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.serialization.SerializationParameters;
 
 public class KryoFieldSerializationTest {
@@ -53,8 +54,8 @@ public class KryoFieldSerializationTest {
                 .configureInput(input -> input.query("1 + 1"))
                 .configureOutput(output -> output.outputPath("output.json")
                         .allowOverwrite(true)
-                        .serializationParameters(
-                                SerializationParameterBuilder.build(Map.of("indent", "yes", "compression", "gzip"))))
+                        .serializationParameters(SerializationParameterUtils.buildFromConfig(
+                                Map.of("indent", "yes", "compression", "gzip"))))
                 .configureRuntime(runtime -> runtime.resultsSizeCap(25).useNativeExecution(false))
                 .configureDebug(debug -> debug.showErrorInfo(true))
                 .configureAnalysis(analysis -> analysis.enableStaticTyping(true))

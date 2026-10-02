@@ -21,15 +21,12 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.serialization.SequenceSerializer;
 import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.serialization.SerializationParameters;
-import org.rumbledb.serialization.Serializer;
-import org.rumbledb.serialization.SerializerUtils;
-import org.rumbledb.serialization.Serializers;
 
 public class SerializeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -51,38 +48,6 @@ public class SerializeFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         }
 
         List<Item> items = this.getChild(0).materialize(context);
-        SerializationParameters itemParams = SerializationParameters.copy(params);
-        if ("xml".equalsIgnoreCase(params.getMethod())) {
-            itemParams.setOmitXmlDeclaration(true);
-        }
-        Serializer serializer = Serializers.from(itemParams);
-        String itemSeparator = params.getItemSeparator();
-        if (itemSeparator == null) {
-            itemSeparator = "adaptive".equalsIgnoreCase(params.getMethod()) ? "\n" : "";
-        }
-
-        StringBuilder result = new StringBuilder();
-        if ("json".equalsIgnoreCase(params.getMethod())) {
-            if (items.isEmpty()) {
-                result.append("null");
-            } else if (items.size() == 1) {
-                result.append(serializer.serialize(items.get(0)));
-            } else {
-                throw new InvalidArgumentTypeException(
-                        "JSON serialization requires the top-level sequence to contain at most one item.",
-                        getMetadata());
-            }
-        } else {
-            if ("xml".equalsIgnoreCase(params.getMethod()) && !params.getOmitXmlDeclaration() && !items.isEmpty()) {
-                SerializerUtils.appendXmlDeclaration(result, params);
-            }
-            for (int i = 0; i < items.size(); i++) {
-                if (i > 0) {
-                    result.append(itemSeparator);
-                }
-                result.append(serializer.serialize(items.get(i)));
-            }
-        }
-        return ItemFactory.getInstance().createStringItem(result.toString());
+        return ItemFactory.getInstance().createStringItem(SequenceSerializer.serialize(items, params, getMetadata()));
     }
 }
