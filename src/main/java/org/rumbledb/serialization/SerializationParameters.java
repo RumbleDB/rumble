@@ -245,7 +245,8 @@ public class SerializationParameters implements Serializable {
     }
 
     /**
-     * Application output defaults, including the JSONiq hybrid method and newline-separated results.
+     * Application output defaults. JSONiq uses the hybrid method and newline-separated results;
+     * XQuery leaves item-separator absent so W3C sequence normalization supplies atomic-value spaces.
      * fn:serialize uses the standard field defaults through the no-argument constructor instead.
      */
     public static SerializationParameters defaults(String queryLanguage) {
@@ -254,7 +255,7 @@ public class SerializationParameters implements Serializable {
         p.version = null;
         p.omitXmlDeclaration = false;
         p.htmlVersion = null;
-        p.itemSeparator = "\n";
+        p.itemSeparator = queryLanguage != null && queryLanguage.startsWith("xquery") ? null : "\n";
         p.jsonNodeOutputMethod = JsonNodeOutputMethod.UNSPECIFIED;
         return p;
     }

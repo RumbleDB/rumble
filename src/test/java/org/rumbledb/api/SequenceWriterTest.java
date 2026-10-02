@@ -21,12 +21,42 @@ import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class SequenceWriterTest {
     @TempDir
     Path directory;
+
+    @ParameterizedTest
+    @CsvSource({"xquery10", "xquery30", "xquery31"})
+    void xqueryTextSerializationUsesW3CSpacingUnlessASeparatorIsExplicit(String language) {
+        Rumble rumble = new Rumble(RumbleConfiguration.builder()
+                .with("semantics.queryLanguage", language)
+                .build());
+        // QT3 ser/method-text.xml:Serialization-text-19: no item-separator declaration.
+        String prolog = "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\"; "
+                + "declare option output:method \"text\"; ";
+        assertEquals("1 2 3 4 5", rumble.runQuery(prolog + "[1, 2, 3, 4, 5]").serialize());
+        assertEquals(
+                "1 2 3 4 5", rumble.runQuery(prolog + "(1, [2, [3, 4]], 5)").serialize());
+        assertEquals(
+                "1|2|3",
+                rumble.runQuery(prolog + "declare option output:item-separator \"|\"; [1, 2, 3]")
+                        .serialize());
+        assertEquals(
+                "123",
+                rumble.runQuery(prolog + "declare option output:item-separator \"\"; [1, 2, 3]")
+                        .serialize());
+    }
+
+    @Test
+    void jsoniqKeepsItsNewlineSeparatedApplicationOutput() {
+        Rumble rumble = new Rumble(new RumbleConfiguration());
+        assertEquals("1\n2\n3", rumble.runQuery("1, 2, 3").serialize());
+    }
 
     @Test
     void changingFileFormatDoesNotChangeTheSerializationMethodOrTheOriginalWriter() {
