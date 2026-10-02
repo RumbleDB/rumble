@@ -18,7 +18,10 @@ package org.rumbledb.xml.schema;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -34,8 +37,9 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.resources.ResourceResolver;
 
 /**
- * Covers schema imports that require a custom {@link ResourceResolver}. Annotation tests cover imports with location
- * hints and import failures, but cannot supply the resolver mapping needed for an import without a location hint.
+ * Covers named type enumeration and schema imports that require a custom {@link ResourceResolver}.
+ * Annotation tests cover imports with location hints and import failures, but cannot supply the resolver mapping needed
+ * for an import without a location hint.
  */
 public class XmlSchemaCatalogLoaderTest {
 
@@ -59,6 +63,38 @@ public class XmlSchemaCatalogLoaderTest {
         Assertions.assertTrue(
                 types.getXmlSchemaCatalog().getTypeDefinition(code).isPresent());
         Assertions.assertNotNull(types.getInScopeSchemaType(code));
+    }
+
+    @Test
+    public void enumeratesNamedTypesIncludingListsAndComplexTypes(@TempDir Path directory) throws Exception {
+        Files.writeString(
+                directory.resolve("main.xsd"),
+                schema(
+                        NAMESPACE,
+                        """
+                        <xs:simpleType name="Count"><xs:restriction base="xs:integer"/></xs:simpleType>
+                        <xs:simpleType name="Counts"><xs:list itemType="t:Count"/></xs:simpleType>
+                        <xs:simpleType name="CountOrString"><xs:union memberTypes="t:Count xs:string"/></xs:simpleType>
+                        <xs:complexType name="Record"><xs:sequence/></xs:complexType>
+                        <xs:element name="anonymous"><xs:complexType><xs:sequence/></xs:complexType></xs:element>
+                        """));
+
+        MainModule module = compile(
+                "import schema namespace t = \"urn:test\" at \"main.xsd\"; 1",
+                directory.resolve("query.xq").toUri(),
+                new ResourceResolver());
+        XmlSchemaCatalog catalog =
+                module.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
+        List<Name> names = catalog.getNamedTypeNames();
+        Set<String> importedNames = names.stream()
+                .filter(name -> NAMESPACE.equals(name.getNamespace()))
+                .map(Name::getLocalName)
+                .collect(Collectors.toSet());
+        Assertions.assertEquals(Set.of("Count", "Counts", "CountOrString", "Record"), importedNames);
+        Assertions.assertTrue(names.contains(new Name(Name.XS_NS, "xs", "string")));
+        Assertions.assertTrue(catalog.isSchemaCastTarget(new Name(NAMESPACE, "t", "Counts")));
+        Assertions.assertFalse(catalog.isSchemaCastTarget(new Name(NAMESPACE, "t", "Record")));
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> names.clear());
     }
 
     private static MainModule compile(String query, URI queryUri, ResourceResolver resolver) {

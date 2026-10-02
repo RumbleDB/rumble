@@ -99,6 +99,21 @@ public class Rumble {
     }
 
     /**
+     * Runs query text using the supplied initial static base URI.
+     * Relative imports and resource references resolve against this URI; a query's
+     * declare base-uri declaration can override it. The URI is not read as a query file.
+     *
+     * @param query the content of the main module
+     * @param baseUri the initial static base URI
+     * @return the resulting sequence
+     */
+    public SequenceOfItems runQuery(String query, URI baseUri) {
+        org.rumbledb.bindings.ExternalBindings bindings = org.rumbledb.bindings.ExternalBindings.empty();
+        MainModule mainModule = VisitorHelpers.parseMainModule(query, baseUri, this.compilationConfiguration, bindings);
+        return createSequence(mainModule, bindings);
+    }
+
+    /**
      * Runs a query and returns an iterator over the resulting sequence of Items.
      *
      * @param query the content of the JSONiq main module.

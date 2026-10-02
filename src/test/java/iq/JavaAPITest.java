@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.io.TempDir;
 
 import org.rumbledb.api.ExternalBindings;
 import org.rumbledb.api.Item;
@@ -116,6 +117,34 @@ public class JavaAPITest {
         } finally {
             Files.deleteIfExists(queryFile);
         }
+    }
+
+    @Test
+    public void testQueryWithBaseUri(@TempDir Path directory) throws Exception {
+        Path schemas = Files.createDirectory(directory.resolve("schemas"));
+        Files.writeString(
+                schemas.resolve("types.xsd"),
+                "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"urn:test\">"
+                        + "<xs:simpleType name=\"Code\"><xs:restriction base=\"xs:string\"/></xs:simpleType>"
+                        + "</xs:schema>");
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        URI baseUri = directory.resolve("unsaved-query.jq").toUri();
+
+        // The URI supplies context for the editor text; no query file exists at that URI.
+        Assertions.assertEquals(
+                "editor value",
+                rumble.runQuery(
+                                "import schema namespace t = \"urn:test\" at \"schemas/types.xsd\"; t:Code(\"editor value\")",
+                                baseUri)
+                        .serialize());
+        // A declaration in the query still overrides the initial base URI.
+        Assertions.assertEquals(
+                "editor value",
+                rumble.runQuery(
+                                "declare base-uri \"schemas/\"; "
+                                        + "import schema namespace t = \"urn:test\" at \"types.xsd\"; t:Code(\"editor value\")",
+                                baseUri)
+                        .serialize());
     }
 
     @Test
