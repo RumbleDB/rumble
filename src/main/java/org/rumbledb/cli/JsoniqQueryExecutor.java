@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.serialization.SequenceSerializer;
 import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.Serializers;
@@ -99,7 +100,7 @@ public class JsoniqQueryExecutor {
         if (outputPath != null) {
             sequence.write().save(outputPath);
         } else {
-            if ("serialize".equals(this.configuration.output().outputFormat())) {
+            if ("serialize".equals(outputFormat(sequence))) {
                 ConsoleOutput.out(sequence.serialize());
             } else {
                 outputList = new ArrayList<>();
@@ -144,16 +145,24 @@ public class JsoniqQueryExecutor {
     }
 
     private String displayItems(SequenceOfItems sequence, List<Item> items) {
-        String format = this.configuration.output().outputFormat();
-        if (format != null && !format.equals("json")) {
+        String format = outputFormat(sequence);
+        if (format != null && !format.equals("json") && !format.equals("serialize-each-item")) {
             throw new CliException("Output format "
                     + format
-                    + " requires --output-path; use serialize for a serialized string on screen.");
+                    + " requires --output-path; use serialize or serialize-each-item for serialized output on screen.");
         }
         SerializationParameters params =
                 SerializationParameters.copy(sequence.getRuntimeStaticContext().getSerializationParameters());
         if ("json".equals(format)) {
             params.setMethod("json");
+        }
+        if ("serialize-each-item".equals(format)) {
+            return items.stream()
+                    .map(item -> SequenceSerializer.serialize(
+                            List.of(item),
+                            params,
+                            sequence.getRuntimeStaticContext().getMetadata()))
+                    .collect(Collectors.joining("\n"));
         }
         Serializer serializer = Serializers.from(params);
         return items.stream().map(serializer::serialize).collect(Collectors.joining("\n"));
@@ -161,11 +170,17 @@ public class JsoniqQueryExecutor {
 
     public record InteractiveResult(String output, long count) {}
 
+    private String outputFormat(SequenceOfItems sequence) {
+        return this.configuration
+                .output()
+                .effectiveOutputFormat(sequence.getRuntimeStaticContext().getQueryLanguage());
+    }
+
     public InteractiveResult runInteractive(String query) {
         Rumble rumble = new Rumble(this.configuration);
         SequenceOfItems sequence = rumble.runQuery(query, this.externalBindings);
         List<Item> results = new ArrayList<>();
-        boolean serialize = "serialize".equals(this.configuration.output().outputFormat());
+        boolean serialize = "serialize".equals(outputFormat(sequence));
         long count = serialize
                 ? -1
                 : sequence.populateList(results, this.configuration.runtime().resultsSizeCap());

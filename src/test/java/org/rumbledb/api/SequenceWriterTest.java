@@ -15,8 +15,10 @@
  */
 package org.rumbledb.api;
 
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
@@ -30,9 +32,97 @@ class SequenceWriterTest {
     @TempDir
     Path directory;
 
+    @Test
+    void defaultWritersFollowTheQueryLanguageAndExplicitFormatsStillOverrideThem() throws Exception {
+        Rumble jsoniq = new Rumble(new RumbleConfiguration());
+        Path each = directory.resolve("jsoniq.txt");
+        jsoniq.runQuery("1, 2, 3")
+                .write()
+                .option("method", "text")
+                .option("item-separator", "|")
+                .save(each.toString());
+        // The unspecified partition count produces partition files without collecting the full sequence.
+        try (var parts = Files.list(each)) {
+            assertEquals(
+                    List.of("1", "2", "3"),
+                    parts.filter(p -> p.getFileName().toString().startsWith("part-"))
+                            .flatMap(p -> {
+                                try {
+                                    return Files.readAllLines(p).stream();
+                                } catch (Exception e) {
+                                    throw new RuntimeException(e);
+                                }
+                            })
+                            .sorted()
+                            .toList());
+        }
+        Rumble xquery = new Rumble(RumbleConfiguration.builder()
+                .with("semantics.queryLanguage", "xquery31")
+                .build());
+        Path whole = directory.resolve("xquery.xml");
+        xquery.runQuery("<a/>, <b/>")
+                .write()
+                .option("omit-xml-declaration", "yes")
+                .save(whole.toString());
+        assertEquals("<a/><b/>", Files.readString(whole));
+        assertEquals(
+                "serialize-each-item",
+                jsoniq.runQuery("1")
+                        .getRuntimeStaticContext()
+                        .getConfiguration()
+                        .output()
+                        .effectiveOutputFormat("jsoniq10"));
+        assertEquals(
+                "serialize",
+                xquery.runQuery("1")
+                        .getRuntimeStaticContext()
+                        .getConfiguration()
+                        .output()
+                        .effectiveOutputFormat("xquery31"));
+    }
+
+    @Test
+    void eachItemFilesHonorEncodingInEveryPartition() throws Exception {
+        Rumble rumble = new Rumble(RumbleConfiguration.builder()
+                .with("output.outputFormat", "serialize-each-item")
+                .with("output.numberOfOutputPartitions", 2)
+                .build());
+        Path output = directory.resolve("encoded-items");
+        rumble.runQuery("\"Grüezi\", \"東京\"")
+                .write()
+                .option("method", "text")
+                .option("encoding", "UTF-16")
+                .save(output.toString());
+        try (var files = Files.list(output)) {
+            List<Path> parts = files.filter(p -> p.getFileName().toString().startsWith("part-"))
+                    .toList();
+            assertEquals(2, parts.size());
+            java.util.ArrayList<String> values = new java.util.ArrayList<>();
+            for (Path part : parts) {
+                values.addAll(Files.readAllLines(part, StandardCharsets.UTF_16));
+            }
+            assertEquals(List.of("Grüezi", "東京"), values.stream().sorted().toList());
+        }
+    }
+
+    @Test
+    void detectedLanguageChangesDefaultsButPreservesExplicitSerializationOptions() throws Exception {
+        Rumble rumble = new Rumble(new RumbleConfiguration());
+        SequenceOfItems xquery = rumble.runQuery("xquery version \"3.1\"; 1, 2");
+        assertEquals(
+                "xml",
+                xquery.getRuntimeStaticContext().getSerializationParameters().getMethod());
+        assertEquals("<?xml version=\"1.0\" encoding=\"UTF-8\"?>1 2", xquery.serialize());
+        Rumble configured = new Rumble(RumbleConfiguration.builder()
+                .with("output.serializationParameters.method", "text")
+                .with("output.serializationParameters.itemSeparator", "|")
+                .build());
+        assertEquals("1|2", configured.runQuery("xquery version \"3.1\"; 1, 2").serialize());
+    }
+
     @ParameterizedTest
-    @CsvSource({"xquery10", "xquery30", "xquery31"})
-    void xqueryTextSerializationUsesW3CSpacingUnlessASeparatorIsExplicit(String language) {
+    @CsvSource({"jsoniq10", "jsoniq31", "jsoniq40", "xquery10", "xquery30", "xquery31"})
+    void textSerializationUsesW3CSpacingInBothLanguagesUnlessASeparatorIsExplicit(String language) {
         Rumble rumble = new Rumble(RumbleConfiguration.builder()
                 .with("semantics.queryLanguage", language)
                 .build());
@@ -53,9 +143,9 @@ class SequenceWriterTest {
     }
 
     @Test
-    void jsoniqKeepsItsNewlineSeparatedApplicationOutput() {
+    void jsoniqWholeSequenceSerializationHasNoDefaultItemSeparator() {
         Rumble rumble = new Rumble(new RumbleConfiguration());
-        assertEquals("1\n2\n3", rumble.runQuery("1, 2, 3").serialize());
+        assertEquals("1 2 3", rumble.runQuery("1, 2, 3").serialize());
     }
 
     @Test
@@ -106,6 +196,7 @@ class SequenceWriterTest {
         rumble.runQuery(
                         "annotate(({\"id\":1, \"state\":\"CA\"}, {\"id\":2, \"state\":\"MA\"}), {\"id\":\"integer\", \"state\":\"string\"})")
                 .write()
+                .format("json")
                 .partitionBy("state")
                 .format("parquet")
                 .save(output.toString());

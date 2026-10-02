@@ -38,7 +38,9 @@ public final class OutputArguments {
             description = {
                 "Output file format (json, csv, parquet, avro, or another Spark format).",
                 "Use serialize to write the whole sequence as one string using the serialization method.",
-                "Formats other than json and serialize require a DataFrame-compatible sequence."
+                "Use serialize-each-item to serialize items independently, separated by newlines.",
+                "Default: serialize-each-item for JSONiq; serialize for XQuery.",
+                "Other formats except json require a DataFrame-compatible sequence."
             })
     private String outputFormat;
 

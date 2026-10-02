@@ -111,6 +111,138 @@ public class CLIJarIT {
 
     @Nested
     class OutputFormatsAndRoundTrips {
+        @ParameterizedTest(name = "serialize-each-item with method {0}")
+        @ValueSource(strings = {"text", "adaptive", "xml", "xml-json-hybrid"})
+        void eachItemSerializationAlwaysUsesNewlinesBetweenItems(String method) throws Exception {
+            Path output = directory.resolve("each-item.txt");
+            String[] options = {
+                "--output-format-option",
+                "method=" + method,
+                "--output-format-option",
+                "item-separator=|",
+                "--output-format-option",
+                "omit-xml-declaration=yes"
+            };
+            List<String> arguments = new ArrayList<>(List.of("run", "-q", "1, 2, 3", "-f", "serialize-each-item"));
+            arguments.addAll(List.of(options));
+            assertSuccess(run("", arguments.toArray(String[]::new)), "1\n2\n3");
+            arguments.addAll(List.of("-o", output.toString(), "-P", "1"));
+            assertSuccess(run("", arguments.toArray(String[]::new)), "");
+            assertEquals("1\n2\n3\n", Files.readString(output));
+            assertSuccess(
+                    run(
+                            "",
+                            "run",
+                            "-q",
+                            "unparsed-text(" + quote(output.toUri().toString()) + ")",
+                            "-f",
+                            "serialize-each-item",
+                            "--output-format-option",
+                            "method=text"),
+                    "1\n2\n3");
+        }
+
+        @Test
+        void eachItemJsonCanSerializeMultipleResultsAndReadThemBack() throws Exception {
+            Path output = directory.resolve("stores serialized");
+            assertSuccess(
+                    run(
+                            "",
+                            "run",
+                            "-q",
+                            storesQuery(),
+                            "-f",
+                            "serialize-each-item",
+                            "--output-format-option",
+                            "method=json",
+                            "--output-format-option",
+                            "item-separator=|",
+                            "-o",
+                            output.toString(),
+                            "-P",
+                            "2"),
+                    "");
+            assertEquals(2, partFiles(output).size());
+            for (Path part : partFiles(output)) {
+                for (String line : Files.readAllLines(part)) {
+                    assertTrue(JSON.readTree(line).has("storeid"), line);
+                }
+            }
+            assertStoresRoundTrip("json-lines(" + quote(output.toUri().toString()) + ")");
+            assertSuccess(
+                    run(
+                            "",
+                            "run",
+                            "-q",
+                            "1, 2, 3",
+                            "-f",
+                            "serialize-each-item",
+                            "--output-format-option",
+                            "method=json"),
+                    "1\n2\n3");
+        }
+
+        @Test
+        void serializationWithinEachItemKeepsItsOwnParametersAndDisplayCap() throws Exception {
+            assertSuccess(
+                    run(
+                            "",
+                            "run",
+                            "-q",
+                            "[1, [2, 3]], 4",
+                            "-f",
+                            "serialize-each-item",
+                            "--output-format-option",
+                            "method=text",
+                            "--output-format-option",
+                            "item-separator=|"),
+                    "1|2|3\n4");
+            assertSuccess(run("", "run", "-q", "1 to 3", "-f", "serialize-each-item", "--result-size", "2"), "1\n2");
+            assertSuccess(
+                    run("", "run", "-q", "()", "-f", "serialize-each-item", "--output-format-option", "method=json"),
+                    "");
+        }
+
+        @Test
+        void languageDefaultsApplyToStdoutFilesAndDetectedXQuerySources() throws Exception {
+            assertSuccess(run("", "run", "-q", "1, 2"), "1\n2");
+            String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><a/><b/>";
+            assertSuccess(run("", "run", "-q", "<a/>, <b/>", "--default-language", "xquery31"), xml);
+            Path output = directory.resolve("default-xquery.xml");
+            assertSuccess(
+                    run("", "run", "-q", "<a/>, <b/>", "--default-language", "xquery31", "-o", output.toString()), "");
+            assertEquals(xml, Files.readString(output));
+            assertSuccess(
+                    run(
+                            "",
+                            "run",
+                            "-q",
+                            "xquery version \"3.1\"; 1, 2",
+                            "--output-format-option",
+                            "omit-xml-declaration=yes"),
+                    "1 2");
+            Path query = directory.resolve("detected.xq");
+            Files.writeString(query, "1, 2");
+            assertSuccess(
+                    run("", "run", query.toString(), "--output-format-option", "omit-xml-declaration=yes"), "1 2");
+            Path jsoniqOutput = directory.resolve("default-jsoniq.txt");
+            assertSuccess(run("", "run", "-q", "1, 2", "-o", jsoniqOutput.toString(), "-P", "1"), "");
+            assertEquals("1\n2\n", Files.readString(jsoniqOutput));
+            assertSuccess(
+                    run(
+                            "",
+                            "run",
+                            "-q",
+                            "1, 2",
+                            "--default-language",
+                            "xquery31",
+                            "-f",
+                            "serialize-each-item",
+                            "--output-format-option",
+                            "method=json"),
+                    "1\n2");
+        }
+
         @ParameterizedTest(name = "{0}: file format, partitions and all records survive read-back")
         @ValueSource(strings = {"json", "csv", "parquet", "avro"})
         void structuredFormatsCanBeReadBack(String format) throws Exception {
@@ -636,7 +768,7 @@ public class CLIJarIT {
                     || option.equals("optimize-parent-pointers")) {
                 query = "let $root := <root><a/><a/></root> return count($root/a/..)";
                 language = "xquery31";
-                expected = "1";
+                expected = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>1";
             }
             assertSuccess(run("", "run", "-q", query, "--default-language", language, "--" + option), expected);
             assertSuccess(run("", "run", "-q", query, "--default-language", language, "--no-" + option), expected);
@@ -669,7 +801,8 @@ public class CLIJarIT {
         @ParameterizedTest(name = "query language {0}")
         @ValueSource(strings = {"jsoniq10", "jsoniq31", "xquery31"})
         void queryLanguages(String language) throws Exception {
-            assertSuccess(run("", "run", "-q", "1 + 1", "--default-language", language), "2");
+            String expected = language.startsWith("xquery") ? "<?xml version=\"1.0\" encoding=\"UTF-8\"?>2" : "2";
+            assertSuccess(run("", "run", "-q", "1 + 1", "--default-language", language), expected);
         }
 
         @ParameterizedTest(name = "XML version {0}")
@@ -685,7 +818,7 @@ public class CLIJarIT {
                             "xquery31",
                             "--xml-version",
                             version),
-                    "1");
+                    "<?xml version=\"1.0\" encoding=\"UTF-8\"?>1");
         }
 
         @Test

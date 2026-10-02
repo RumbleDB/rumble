@@ -21,8 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Spliterators;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.Text;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
@@ -31,6 +35,7 @@ import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.util.CaseInsensitiveStringMap;
 
 import lombok.extern.log4j.Log4j2;
+import scala.Tuple2;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.CannotInferSchemaOnNonStructuredDataException;
@@ -41,8 +46,10 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.serialization.SequenceSerializer;
 import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.serialization.SerializedItemOutputFormat;
 import org.rumbledb.serialization.Serializer;
 import org.rumbledb.serialization.Serializers;
+import org.rumbledb.spark.SparkSessionManager;
 
 /**
  * Helper class to configure and materialize the output of a {@link SequenceOfItems}.
@@ -64,7 +71,8 @@ import org.rumbledb.serialization.Serializers;
  *
  * Output formats (json/csv/parquet/...) select a file writer, independently of the W3C
  * serialization method. The special output format {@code serialize} writes the entire
- * sequence as one string using its serialization parameters.
+ * sequence as one string using its serialization parameters. {@code serialize-each-item}
+ * serializes each item independently and separates the resulting strings with newlines.
  */
 @Log4j2
 public class SequenceWriter {
@@ -124,14 +132,15 @@ public class SequenceWriter {
         this.configuration = sequence.getRuntimeStaticContext().getConfiguration();
         this.serializationParameters =
                 SerializationParameters.copy(sequence.getRuntimeStaticContext().getSerializationParameters());
-        this.outputFormat =
-                Objects.requireNonNullElse(this.configuration.output().outputFormat(), "json");
+        this.outputFormat = this.configuration
+                .output()
+                .effectiveOutputFormat(sequence.getRuntimeStaticContext().getQueryLanguage());
         this.dataFrameWriter = createDataFrameWriter(this.outputFormat);
         this.mode = this.dataFrameWriter == null ? SaveMode.ErrorIfExists : null;
     }
 
     private DataFrameWriter<Row> createDataFrameWriter(String format) {
-        if (format.equals("serialize")
+        if (isSerializationFormat(format)
                 || (format.equals("json")
                         && !this.sequence
                                 .getRuntimeStaticContext()
@@ -177,7 +186,7 @@ public class SequenceWriter {
 
     public SequenceWriter format(String source) {
         Objects.requireNonNull(source, "Output format cannot be null.");
-        DataFrameWriter<Row> writer = this.dataFrameWriter != null && !source.equals("serialize")
+        DataFrameWriter<Row> writer = this.dataFrameWriter != null && !isSerializationFormat(source)
                 ? this.dataFrameWriter.format(source)
                 : createDataFrameWriter(source);
         SaveMode saveMode = this.dataFrameWriter == null ? this.mode : this.dataFrameWriter.curmode();
@@ -275,11 +284,11 @@ public class SequenceWriter {
             }
             return;
         }
-        if (!format.equals("json") && !format.equals("serialize")) {
+        if (!format.equals("json") && !isSerializationFormat(format)) {
             throw new CliException("Output format "
                     + format
                     + " requires a structured collection. "
-                    + "Use annotate() to supply a schema, or --output-format serialize to serialize the sequence.");
+                    + "Use annotate() to supply a schema, or select serialize or serialize-each-item.");
         }
         if (format.equals("serialize") && this.configuration.output().numberOfOutputPartitions() > 1) {
             throw new CliException(
@@ -312,25 +321,57 @@ public class SequenceWriter {
             return;
         }
         JavaRDD<Item> rdd = this.sequence.getAsRDD();
-        SerializationParameters jsonParameters = SerializationParameters.copy(this.serializationParameters);
-        jsonParameters.setMethod("json");
+        SerializationParameters itemParameters = SerializationParameters.copy(this.serializationParameters);
+        boolean serializeEachItem = format.equals("serialize-each-item");
+        if (!serializeEachItem) {
+            itemParameters.setMethod("json");
+        }
         // Encoders inside serializers are not Java-serializable. Construct one serializer per executor partition.
         JavaRDD<String> outputRDD = rdd.mapPartitions(items -> {
-            Serializer serializer = Serializers.from(jsonParameters);
+            Serializer serializer = serializeEachItem ? null : Serializers.from(itemParameters);
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize(items, 0), false)
-                    .map(serializer::serialize)
+                    .map(item -> serializeEachItem
+                            ? SequenceSerializer.serialize(
+                                    List.of(item), itemParameters, ExceptionMetadata.EMPTY_METADATA)
+                            : serializer.serialize(item))
                     .iterator();
         });
         int requestedPartitions = this.configuration.output().numberOfOutputPartitions();
         if (requestedPartitions == 1) {
             List<String> lines = outputRDD.take(SINGLE_PARTITION_CAP);
-            FileSystemUtil.write(outputUri, lines, ExceptionMetadata.EMPTY_METADATA);
+            if (serializeEachItem) {
+                String content = lines.stream().map(line -> line + "\n").collect(Collectors.joining());
+                FileSystemUtil.writeBytes(
+                        outputUri,
+                        content.getBytes(Charset.forName(itemParameters.getEncoding())),
+                        ExceptionMetadata.EMPTY_METADATA);
+            } else {
+                FileSystemUtil.write(outputUri, lines, ExceptionMetadata.EMPTY_METADATA);
+            }
             return;
         }
         if (requestedPartitions > 0) {
             outputRDD = outputRDD.repartition(requestedPartitions);
         }
-        outputRDD.saveAsTextFile(FileSystemUtil.convertURIToStringForSpark(outputUri));
+        if (serializeEachItem) {
+            Configuration hadoopConfiguration = new Configuration(
+                    SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
+            hadoopConfiguration.set(SerializedItemOutputFormat.ENCODING, itemParameters.getEncoding());
+            outputRDD
+                    .mapToPair(value -> new Tuple2<>(NullWritable.get(), new Text(value)))
+                    .saveAsNewAPIHadoopFile(
+                            FileSystemUtil.convertURIToStringForSpark(outputUri),
+                            NullWritable.class,
+                            Text.class,
+                            SerializedItemOutputFormat.class,
+                            hadoopConfiguration);
+        } else {
+            outputRDD.saveAsTextFile(FileSystemUtil.convertURIToStringForSpark(outputUri));
+        }
+    }
+
+    private static boolean isSerializationFormat(String format) {
+        return format.equals("serialize") || format.equals("serialize-each-item");
     }
 
     public Serializer getSerializer() {
