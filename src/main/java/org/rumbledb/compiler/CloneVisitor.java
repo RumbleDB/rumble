@@ -271,13 +271,16 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitForClause(ForClause clause, Node argument) {
-        Clause result = new ForClause(
+        ForClause result = new ForClause(
                 clause.getVariableName(),
                 clause.isAllowEmpty(),
                 clause.getActualSequenceType(),
                 clause.getPositionalVariableName(),
                 (Expression) visit(clause.getExpression(), argument),
-                clause.getMetadata());
+                clause.getMetadata(),
+                clause.getVariableMetadata(),
+                clause.getPositionalVariableMetadata());
+        result.setVariableSequenceType(clause.getVariableSequenceType());
         result.setStaticContext(clause.getStaticContext());
         return result;
     }
@@ -307,7 +310,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 clause.getVariableName(),
                 clause.getActualSequenceType(),
                 (Expression) visit(clause.getExpression(), argument),
-                clause.getMetadata());
+                clause.getMetadata(),
+                clause.getVariableMetadata());
         result.setStaticType(clause.getStaticType());
         result.setStaticContext(clause.getStaticContext());
         return result;
@@ -317,13 +321,16 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     public Node visitGroupByClause(GroupByClause clause, Node argument) {
         List<GroupByVariableDeclaration> groupByVariableDeclarations = new ArrayList<>();
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
-            groupByVariableDeclarations.add(new GroupByVariableDeclaration(
+            GroupByVariableDeclaration copy = new GroupByVariableDeclaration(
                     variable.getVariableName(),
                     variable.getActualSequenceType(),
                     (variable.getExpression() == null)
                             ? variable.getExpression()
                             : (Expression) visit(variable.getExpression(), argument),
-                    variable.getCollationURI()));
+                    variable.getCollationURI(),
+                    variable.getVariableMetadata());
+            copy.setVariableSequenceType(variable.getVariableSequenceType());
+            groupByVariableDeclarations.add(copy);
         }
         Clause result = new GroupByClause(groupByVariableDeclarations, clause.getMetadata());
         result.setStaticContext(clause.getStaticContext());

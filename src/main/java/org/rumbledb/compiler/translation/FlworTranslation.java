@@ -150,7 +150,15 @@ public final class FlworTranslation {
             expr = new TreatExpression(expr, expressionType, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
-        return new ForClause(var, emptyFlag, seq, atVar, expr, translationContext.metadata(ctx.context()));
+        return new ForClause(
+                var,
+                emptyFlag,
+                seq,
+                atVar,
+                expr,
+                translationContext.metadata(ctx.context()),
+                translationContext.metadata(ctx.varRef()),
+                ctx.at() == null ? null : translationContext.metadata(ctx.at()));
     }
 
     public static <
@@ -196,7 +204,8 @@ public final class FlworTranslation {
             expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
-        return new LetClause(var, seq, expr, translationContext.metadata(ctx.context()));
+        return new LetClause(
+                var, seq, expr, translationContext.metadata(ctx.context()), translationContext.metadata(ctx.varRef()));
     }
 
     public static <ExprSingleCtx extends ParserRuleContext> WhereClause whereClause(
@@ -241,7 +250,8 @@ public final class FlworTranslation {
             SequenceType seq = varCtx.seq() != null ? processSequenceType.apply(varCtx.seq()) : null;
             Expression expr = varCtx.exprSingle() != null ? visitExprSingle.apply(varCtx.exprSingle()) : null;
             Name var = parseVariableBinding.apply(varCtx.varRef());
-            vars.add(new GroupByVariableDeclaration(var, seq, expr, collationUri));
+            vars.add(new GroupByVariableDeclaration(
+                    var, seq, expr, collationUri, translationContext.metadata(varCtx.varRef())));
         }
         return new GroupByClause(vars, translationContext.metadata(ctx.context()));
     }

@@ -2373,6 +2373,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getVariableName(),
                 expression.getMetadata());
 
+        expression.setVariableSequenceType(declaredType == null ? inferredType : declaredType);
         return argument;
     }
 
@@ -2490,6 +2491,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                                 + expectedType,
                         expression.getMetadata());
             }
+            groupByVar.setVariableSequenceType(expectedType);
             groupingVars.add(groupByVar.getVariableName());
         }
 

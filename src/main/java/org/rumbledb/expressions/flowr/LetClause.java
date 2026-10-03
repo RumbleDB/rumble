@@ -37,6 +37,10 @@ public class LetClause extends Clause {
     @Getter
     private final Name variableName;
 
+    /** Variable token metadata, or null for compiler-generated clauses. */
+    @Getter
+    private final ExceptionMetadata variableMetadata;
+
     protected SequenceType sequenceType;
 
     @Setter
@@ -56,12 +60,14 @@ public class LetClause extends Clause {
             Name variableName,
             SequenceType sequenceType,
             Expression expression,
-            ExceptionMetadata metadataFromContext) {
+            ExceptionMetadata metadataFromContext,
+            ExceptionMetadata variableMetadata) {
         super(FLWOR_CLAUSES.LET, metadataFromContext);
         if (variableName == null) {
             throw new SemanticException("Let clause must have at least one variable", metadataFromContext);
         }
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
         this.sequenceType = sequenceType;
         this.expression = expression;
         this.isReferenced = true;
@@ -73,6 +79,11 @@ public class LetClause extends Clause {
 
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
+    }
+
+    /** Type visible after this binding; staticType retains the initializer's type for execution. */
+    public SequenceType getVariableSequenceType() {
+        return this.sequenceType == null ? this.staticType : this.sequenceType;
     }
 
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {

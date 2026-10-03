@@ -126,7 +126,9 @@ public class FunctionInliningVisitor extends CloneVisitor {
                     new SequenceType(testType.getItemType(), Arity.One),
                     null,
                     expression,
-                    expression.getMetadata());
+                    expression.getMetadata(),
+                    null,
+                    null);
             Expression castExpression = new CastExpression(
                     new VariableReferenceExpression(variableName, expression.getMetadata()),
                     new SequenceType(targetType.getItemType(), Arity.One),
@@ -474,11 +476,12 @@ public class FunctionInliningVisitor extends CloneVisitor {
             if (isVariableReferenced(expression.getArguments(), paramName, i)) {
                 Name columnName = Name.createVariableInNoNamespace(
                         String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
-                Clause expressionClause = new LetClause(columnName, null, argumentExpression, expression.getMetadata());
+                Clause expressionClause =
+                        new LetClause(columnName, null, argumentExpression, expression.getMetadata(), null);
                 Expression assignmentExpression = createTypePromotion(
                         new VariableReferenceExpression(columnName, expression.getMetadata()), paramType);
                 Clause assignmentClause =
-                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
+                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata(), null);
                 if (assignmentClauses != null) {
                     assignmentClause.chainWith(assignmentClauses);
                 }
@@ -490,7 +493,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
             } else {
                 Expression assignmentExpression = createTypePromotion(argumentExpression, paramType);
                 Clause expressionClause =
-                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
+                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata(), null);
                 if (expressionClauses != null) {
                     expressionClause.chainWith(expressionClauses);
                 }

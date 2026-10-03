@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 import org.rumbledb.context.ConstructorFunctionResolver;
 import org.rumbledb.context.Name;
@@ -227,14 +228,17 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(clause.getExpression(), argument);
 
         StaticContext result = new StaticContext(argument); // add a block level to function declaration body
-        result.addVariable(clause.getVariableName(), clause.getActualSequenceType(), clause.getMetadata());
+        result.addVariable(
+                clause.getVariableName(),
+                clause.getActualSequenceType(),
+                Objects.requireNonNullElse(clause.getVariableMetadata(), clause.getMetadata()));
         clause.getSequenceType().resolve(result, clause.getMetadata());
 
         if (clause.getPositionalVariableName() != null) {
             result.addVariable(
                     clause.getPositionalVariableName(),
-                    new SequenceType(BuiltinTypesCatalogue.integerItem),
-                    clause.getMetadata());
+                    clause.getPositionalVariableSequenceType(),
+                    Objects.requireNonNullElse(clause.getPositionalVariableMetadata(), clause.getMetadata()));
         }
         this.visit(clause.getNextClause(), result);
         return argument;
@@ -288,7 +292,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(clause.getExpression(), argument);
 
         StaticContext result = new StaticContext(argument);
-        result.addVariable(clause.getVariableName(), clause.getActualSequenceType(), clause.getMetadata());
+        result.addVariable(
+                clause.getVariableName(),
+                clause.getActualSequenceType(),
+                Objects.requireNonNullElse(clause.getVariableMetadata(), clause.getMetadata()));
         clause.getSequenceType().resolve(result, clause.getMetadata());
         this.visit(clause.getNextClause(), result);
         return argument;
@@ -310,7 +317,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             if (variable.getExpression() != null) {
                 // if a variable declaration takes place
                 this.visit(variable.getExpression(), argument);
-                result.addVariable(variable.getVariableName(), variable.getActualSequenceType(), clause.getMetadata());
+                result.addVariable(
+                        variable.getVariableName(),
+                        variable.getActualSequenceType(),
+                        Objects.requireNonNullElse(variable.getVariableMetadata(), clause.getMetadata()));
             } else if (!argument.isInScope(variable.getVariableName())) {
                 throw new UndeclaredVariableException(
                         "Uninitialized variable reference: " + variable.getVariableName(), clause.getMetadata());

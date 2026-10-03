@@ -30,6 +30,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 public class ForClause extends Clause {
@@ -42,7 +43,20 @@ public class ForClause extends Clause {
     @Getter
     private final Name positionalVariableName;
 
+    /** Variable token metadata, or null for compiler-generated clauses. */
+    @Getter
+    private final ExceptionMetadata variableMetadata;
+
+    /** Positional variable token metadata, or null when there is no source token. */
+    @Getter
+    private final ExceptionMetadata positionalVariableMetadata;
+
     protected SequenceType sequenceType;
+
+    // The type visible immediately after this binding, before later clauses regroup or shadow it.
+    @Getter
+    @Setter
+    private SequenceType variableSequenceType;
 
     @Getter
     protected Expression expression;
@@ -57,7 +71,9 @@ public class ForClause extends Clause {
             SequenceType sequenceType,
             Name positionalVariableName,
             Expression expression,
-            ExceptionMetadata metadata) {
+            ExceptionMetadata metadata,
+            ExceptionMetadata variableMetadata,
+            ExceptionMetadata positionalVariableMetadata) {
         super(FLWOR_CLAUSES.FOR, metadata);
         if (variableName == null) {
             throw new SemanticException("For clause must have a variable", metadata);
@@ -65,6 +81,8 @@ public class ForClause extends Clause {
         this.variableName = variableName;
         this.allowingEmpty = allowEmpty;
         this.positionalVariableName = positionalVariableName;
+        this.variableMetadata = variableMetadata;
+        this.positionalVariableMetadata = positionalVariableMetadata;
         this.sequenceType = sequenceType;
         this.expression = expression;
     }
@@ -79,6 +97,10 @@ public class ForClause extends Clause {
 
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
+    }
+
+    public SequenceType getPositionalVariableSequenceType() {
+        return this.positionalVariableName == null ? null : new SequenceType(BuiltinTypesCatalogue.integerItem);
     }
 
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
