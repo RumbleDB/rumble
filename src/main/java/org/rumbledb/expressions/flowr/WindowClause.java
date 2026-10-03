@@ -18,6 +18,7 @@ package org.rumbledb.expressions.flowr;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import lombok.Getter;
@@ -27,6 +28,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 public class WindowClause extends Clause {
@@ -76,6 +78,10 @@ public class WindowClause extends Clause {
 
     private final SequenceType sequenceType;
 
+    /** Token metadata for each variable declared by the window, whose names are distinct. */
+    @Getter
+    private final Map<Name, ExceptionMetadata> variableMetadata;
+
     @Getter
     private final Expression expression;
 
@@ -92,9 +98,11 @@ public class WindowClause extends Clause {
             Expression expression,
             WindowCondition startCondition,
             WindowCondition endCondition,
-            ExceptionMetadata metadata) {
+            ExceptionMetadata metadata,
+            Map<Name, ExceptionMetadata> variableMetadata) {
         super(FLWOR_CLAUSES.WINDOW, metadata);
         this.windowType = windowType;
+        this.variableMetadata = Map.copyOf(variableMetadata);
         this.windowVariable = windowVariable;
         this.sequenceType = sequenceType;
         this.expression = expression;
@@ -108,6 +116,19 @@ public class WindowClause extends Clause {
 
     public SequenceType getSequenceType() {
         return this.sequenceType == null ? SequenceType.createSequenceType("item*") : this.sequenceType;
+    }
+
+    public ExceptionMetadata getVariableMetadata(Name name) {
+        return this.variableMetadata.get(name);
+    }
+
+    public SequenceType getConditionVariableSequenceType(Name name) {
+        if (name.equals(this.startCondition.variables().position())
+                || this.endCondition != null
+                        && name.equals(this.endCondition.variables().position())) {
+            return new SequenceType(BuiltinTypesCatalogue.integerItem);
+        }
+        return new SequenceType(getSequenceType().getItemType(), SequenceType.Arity.OneOrZero);
     }
 
     @Override

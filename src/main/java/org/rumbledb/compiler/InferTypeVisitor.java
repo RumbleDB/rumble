@@ -1860,6 +1860,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     variableType = variableType == null ? st : variableType.leastCommonSupertypeWith(st);
                 }
                 returnExpression.getStaticContext().replaceVariableSequenceType(variableName, variableType);
+                typeswitchCase.setVariableSequenceType(variableType);
             }
 
             visit(returnExpression, argument);
@@ -1873,6 +1874,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // if we bind a variable in the default case, we infer testCondition type
         if (variableName != null) {
             returnExpression.getStaticContext().replaceVariableSequenceType(variableName, conditionType);
+            expression.getDefaultCase().setVariableSequenceType(conditionType);
         }
         visit(returnExpression, argument);
         SequenceType defaultType = returnExpression.getStaticSequenceType();
@@ -2373,6 +2375,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getVariableName(),
                 expression.getMetadata());
 
+        expression.setVariableSequenceType(declaredType == null ? inferredType : declaredType);
         return argument;
     }
 
@@ -2490,6 +2493,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                                 + expectedType,
                         expression.getMetadata());
             }
+            groupByVar.setVariableSequenceType(expectedType);
             groupingVars.add(groupByVar.getVariableName());
         }
 
@@ -2953,6 +2957,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     variableType = variableType == null ? st : variableType.leastCommonSupertypeWith(st);
                 }
                 returnStatement.getStaticContext().replaceVariableSequenceType(variableName, variableType);
+                typeswitchCase.setVariableSequenceType(variableType);
             }
 
             visit(returnStatement, argument);
@@ -2966,6 +2971,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // if we bind a variable in the default case, we infer testCondition type
         if (variableName != null) {
             returnStatement.getStaticContext().replaceVariableSequenceType(variableName, conditionType);
+            statement.getDefaultCase().setVariableSequenceType(conditionType);
         }
         visit(returnStatement, argument);
         SequenceType defaultType = returnStatement.getStaticSequenceType();

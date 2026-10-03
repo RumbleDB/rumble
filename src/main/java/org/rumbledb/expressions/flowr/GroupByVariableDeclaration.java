@@ -16,8 +16,10 @@
 package org.rumbledb.expressions.flowr;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
 
@@ -32,14 +34,27 @@ public class GroupByVariableDeclaration {
     protected SequenceType sequenceType;
 
     @Getter
+    private final ExceptionMetadata variableMetadata;
+
+    // The type visible immediately after this grouping binding, independent of later clauses.
+    @Getter
+    @Setter
+    private SequenceType variableSequenceType;
+
+    @Getter
     protected String collationURI;
 
     public GroupByVariableDeclaration(
-            Name variableName, SequenceType sequenceType, Expression expression, String collationURI) {
+            Name variableName,
+            SequenceType sequenceType,
+            Expression expression,
+            String collationURI,
+            ExceptionMetadata variableMetadata) {
         if (variableName == null) {
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
         }
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
         this.sequenceType = sequenceType;
         this.expression = expression;
         this.collationURI = collationURI;
