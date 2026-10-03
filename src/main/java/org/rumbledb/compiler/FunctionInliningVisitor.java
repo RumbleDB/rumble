@@ -111,12 +111,13 @@ public class FunctionInliningVisitor extends CloneVisitor {
     private void addCastCase(
             List<TypeswitchCase> cases, Expression expression, SequenceType testType, SequenceType targetType) {
         if (testType.equals(targetType)) {
-            cases.add(new TypeswitchCase(null, Collections.singletonList(testType), expression));
+            cases.add(new TypeswitchCase(null, Collections.singletonList(testType), expression, null));
         } else if (testType.getArity().isSubtypeOf(Arity.OneOrZero)) {
             cases.add(new TypeswitchCase(
                     null,
                     Collections.singletonList(testType),
-                    new CastExpression(expression, targetType, expression.getMetadata())));
+                    new CastExpression(expression, targetType, expression.getMetadata()),
+                    null));
         } else {
             Name variableName = Name.createVariableInNoNamespace(
                     String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
@@ -138,7 +139,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             cases.add(new TypeswitchCase(
                     null,
                     Collections.singletonList(testType),
-                    new FlworExpression(returnClause, expression.getMetadata())));
+                    new FlworExpression(returnClause, expression.getMetadata()),
+                    null));
         }
     }
 
@@ -236,10 +238,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                     new TypeswitchCase(
                             null,
                             new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata())),
+                                    expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata()),
+                            null),
                     expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
@@ -303,10 +303,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                     new TypeswitchCase(
                             null,
                             new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata())),
+                                    expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata()),
+                            null),
                     expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
@@ -371,10 +369,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                     new TypeswitchCase(
                             null,
                             new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata())),
+                                    expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata()),
+                            null),
                     expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;

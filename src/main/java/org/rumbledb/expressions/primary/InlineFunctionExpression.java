@@ -53,6 +53,11 @@ public class InlineFunctionExpression extends Expression {
     @Getter
     private final Map<Name, SequenceType> params;
 
+    /** Synthetic parameters have no source token and are absent from this map. */
+    @Getter
+    @Setter
+    private Map<Name, ExceptionMetadata> parameterMetadata = Map.of();
+
     private final SequenceType returnType;
 
     @Getter

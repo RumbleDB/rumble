@@ -17,6 +17,7 @@ package org.rumbledb.compiler.translation;
 
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -32,6 +33,7 @@ import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.OptionDeclaration;
@@ -145,6 +147,7 @@ public final class DeclarationTranslation {
         Name name = parseFunctionName.apply(ctx.functionName());
         FunctionDeclarationValidator.validateFunctionName(name, translationContext.metadata(ctx.functionName()));
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        Map<Name, ExceptionMetadata> parameterMetadata = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         for (FunctionDeclContext.FunctionParam<VarBindingCtx, SeqTypeCtx> param : ctx.params()) {
             Name paramName = parseVariableBinding.apply(param.name());
@@ -155,6 +158,7 @@ public final class DeclarationTranslation {
                     ? SequenceType.createSequenceType("item*")
                     : processSequenceType.apply(param.sequenceType());
             fnParams.put(paramName, paramType);
+            parameterMetadata.put(paramName, translationContext.metadata(param.name()));
         }
         if (ctx.returnType() != null) {
             fnReturnType = processReturnType.apply(ctx.returnType());
@@ -169,6 +173,7 @@ public final class DeclarationTranslation {
                 ctx.isExternal(),
                 translationContext.metadata(ctx.context()),
                 translationContext.metadata(ctx.functionName()));
+        inlineFunction.setParameterMetadata(Map.copyOf(parameterMetadata));
         return new FunctionDeclaration(inlineFunction, translationContext.metadata(ctx.context()));
     }
 }
