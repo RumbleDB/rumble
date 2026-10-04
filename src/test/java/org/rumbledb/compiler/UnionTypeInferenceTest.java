@@ -32,6 +32,7 @@ import org.rumbledb.api.Rumble;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -48,7 +49,8 @@ class UnionTypeInferenceTest {
     private record Case(String query, List<ItemType> expectedTypes) {}
 
     static Stream<Arguments> mixedAtomicNodeQueries() {
-        List<ItemType> mixed = List.of(BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.elementNode);
+        ItemType h3 = ItemTypeFactory.elementNodeItemType(Name.createVariableInNoNamespace("h3"));
+        List<ItemType> mixed = List.of(BuiltinTypesCatalogue.stringItem, h3);
         return Stream.of(
                 Arguments.of("for $i in ('3', <h3/>) return $i", mixed, SequenceCardinality.MANY),
                 Arguments.of(
@@ -61,10 +63,7 @@ class UnionTypeInferenceTest {
                         SequenceCardinality.ONE),
                 Arguments.of(
                         "for $i in ('3', <h3/>, 1) return $i",
-                        List.of(
-                                BuiltinTypesCatalogue.stringItem,
-                                BuiltinTypesCatalogue.elementNode,
-                                BuiltinTypesCatalogue.integerItem),
+                        List.of(BuiltinTypesCatalogue.stringItem, h3, BuiltinTypesCatalogue.integerItem),
                         SequenceCardinality.MANY),
                 Arguments.of(
                         "for $i in ('3', <h3/> treat as node()) return $i",
