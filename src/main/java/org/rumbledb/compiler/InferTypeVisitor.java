@@ -183,6 +183,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SchemaElementNodeItemType;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
@@ -304,43 +305,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             SequenceType childExpressionInferredType =
                     requireInferredType(childExpression.getStaticSequenceType(), "CommaExpression");
 
-            // if the child expression is an EMPTY_SEQUENCE it does not affect the comma expression type
-            if (!childExpressionInferredType.isEmptySequence()) {
-                if (inferredType.isEmptySequence()) {
-                    inferredType = childExpressionInferredType;
-                } else {
-                    ItemType resultingItemType;
-                    if (inferredType.getItemType().isObjectItemType()
-                            && childExpressionInferredType.getItemType().isObjectItemType()) {
-                        ItemType currentItemType = inferredType.getItemType();
-                        ItemType childItemType = childExpressionInferredType.getItemType();
-                        final List<String> currentKeys = currentItemType.getObjectKeysFacet();
-                        List<String> childKeys = childItemType.getObjectKeysFacet();
-                        resultingItemType = (currentKeys.size() == childKeys.size()
-                                        && currentKeys.stream()
-                                                .allMatch(key -> childKeys.contains(key)
-                                                        && currentItemType
-                                                                .getObjectContentFacet(key)
-                                                                .getType()
-                                                                .equals(childItemType
-                                                                        .getObjectContentFacet(key)
-                                                                        .getType())))
-                                ? currentItemType
-                                : BuiltinTypesCatalogue.objectItem;
-                    } else {
-                        resultingItemType = inferredType
-                                .getItemType()
-                                .findLeastCommonSuperTypeWith(childExpressionInferredType.getItemType());
-                    }
-                    SequenceType.Arity resultingArity = ((inferredType.getArity() == SequenceType.Arity.OneOrZero
-                                            || inferredType.getArity() == SequenceType.Arity.ZeroOrMore)
-                                    && (childExpressionInferredType.getArity() == SequenceType.Arity.OneOrZero
-                                            || childExpressionInferredType.getArity() == SequenceType.Arity.ZeroOrMore))
-                            ? SequenceType.Arity.ZeroOrMore
-                            : SequenceType.Arity.OneOrMore;
-                    inferredType = new SequenceType(resultingItemType, resultingArity);
-                }
-            }
+            inferredType = inferredType.concatenateWith(childExpressionInferredType);
         }
 
         expression.setStaticSequenceType(inferredType);
@@ -2317,8 +2282,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType rightType = rightExpression.getStaticSequenceType();
         basicChecks(rightType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
 
-        SequenceType.Arity resultingArity = leftType.getArity().multiplyWith(rightType.getArity());
-        expression.setStaticSequenceType(new SequenceType(rightType.getItemType(), resultingArity));
+        SequenceCardinality resultingCardinality = leftType.getCardinality().multiply(rightType.getCardinality());
+        expression.setStaticSequenceType(new SequenceType(rightType.getItemType(), resultingCardinality));
         return argument;
     }
 
@@ -2329,14 +2294,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         Clause clause = expression.getReturnClause().getFirstClause();
-        SequenceType.Arity forArities = SequenceType.Arity.One; // One is arity multiplication's neutral element
+        SequenceCardinality forCardinality = SequenceCardinality.ONE;
         SequenceType forType;
 
         while (clause != null) {
             try {
                 this.visit(clause, clause.getStaticContext());
             } catch (UnexpectedStaticTypeException e) {
-                if (forArities.equals(SequenceType.Arity.Zero)
+                if (forCardinality == SequenceCardinality.EMPTY
                         && clause.getClauseType().equals(FLWOR_CLAUSES.WHERE)) {
                     clause = clause.getNextClause();
                     continue;
@@ -2351,27 +2316,32 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 // therefore this for loop will generate one tuple binding the empty sequence, so as for the arities
                 // count as arity.One
                 if (!forType.isEmptySequence()) {
-                    forArities = forType.getArity().multiplyWith(forArities);
+                    SequenceCardinality sourceCardinality = forType.getCardinality();
+                    if (((ForClause) clause).isAllowEmpty()) {
+                        // An empty source still emits one tuple with an empty binding.
+                        sourceCardinality = sourceCardinality.replaceZeroWithOne();
+                    }
+                    forCardinality = sourceCardinality.multiply(forCardinality);
                 } else if (!((ForClause) clause).isAllowEmpty()) {
-                    forArities = SequenceType.Arity.Zero;
+                    forCardinality = SequenceCardinality.EMPTY;
                 }
+            } else if (clause.getClauseType() == FLWOR_CLAUSES.GROUP_BY) {
+                // Multiple input tuples can collapse into a single group.
+                forCardinality = SequenceCardinality.fromArity(forCardinality.toArity());
             } else if (clause.getClauseType() == FLWOR_CLAUSES.WHERE) {
-                // where clause could reject all tuples so arity change from + => * and 1 => ?
-                if (forArities == SequenceType.Arity.One) {
-                    forArities = SequenceType.Arity.OneOrZero;
-                } else if (forArities == SequenceType.Arity.OneOrMore) {
-                    forArities = SequenceType.Arity.ZeroOrMore;
-                }
+                // Filtering tuples can leave zero, one, or multiple tuples.
+                forCardinality =
+                        SequenceCardinality.fromArity(forCardinality.toArity()).union(SequenceCardinality.EMPTY);
             } else if (clause.getClauseType() == FLWOR_CLAUSES.WINDOW) {
-                forArities = SequenceType.Arity.ZeroOrMore;
+                forCardinality = SequenceCardinality.ANY;
             }
             clause = clause.getNextClause();
         }
 
         SequenceType returnType = expression.getReturnClause().getReturnExpr().getStaticSequenceType();
         basicChecks(returnType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
-        returnType =
-                new SequenceType(returnType.getItemType(), returnType.getArity().multiplyWith(forArities));
+        returnType = new SequenceType(
+                returnType.getItemType(), returnType.getCardinality().multiply(forCardinality));
         expression.setStaticSequenceType(returnType);
         return argument;
     }
@@ -2721,7 +2691,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
         SequenceType sourceType = expression.getMainExpression().getStaticSequenceType();
-        expression.setStaticSequenceType(expression.getSequenceType().refineArityIfSubtype(sourceType.getArity()));
+        expression.setStaticSequenceType(
+                expression.getSequenceType().refineCardinalityIfSubtype(sourceType.getCardinality()));
         return argument;
     }
 
@@ -2774,25 +2745,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // if a child expression has no inferred type throw an error
         if (childSequenceType == null) {
             throwStaticTypeException("A child expression of a BlockStatement has no inferred type", childMetadata);
+            return inferredType;
         }
 
-        // if the child expression is an EMPTY_SEQUENCE it does not affect the comma expression type
-        if (childSequenceType != null && !childSequenceType.isEmptySequence()) {
-            if (inferredType.isEmptySequence()) {
-                inferredType = childSequenceType;
-            } else {
-                ItemType resultingItemType =
-                        inferredType.getItemType().findLeastCommonSuperTypeWith(childSequenceType.getItemType());
-                SequenceType.Arity resultingArity = ((inferredType.getArity() == SequenceType.Arity.OneOrZero
-                                        || inferredType.getArity() == SequenceType.Arity.ZeroOrMore)
-                                && (childSequenceType.getArity() == SequenceType.Arity.OneOrZero
-                                        || childSequenceType.getArity() == SequenceType.Arity.ZeroOrMore))
-                        ? SequenceType.Arity.ZeroOrMore
-                        : SequenceType.Arity.OneOrMore;
-                inferredType = new SequenceType(resultingItemType, resultingArity);
-            }
-        }
-        return inferredType;
+        return inferredType.concatenateWith(childSequenceType);
     }
 
     @Override
@@ -2866,14 +2822,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
         Clause clause = statement.getReturnStatementClause().getFirstClause();
-        SequenceType.Arity forArities = SequenceType.Arity.One; // One is arity multiplication's neutral element
+        SequenceCardinality forCardinality = SequenceCardinality.ONE;
         SequenceType forType;
 
         while (clause != null) {
             try {
                 this.visit(clause, clause.getStaticContext());
             } catch (UnexpectedStaticTypeException e) {
-                if (forArities.equals(SequenceType.Arity.Zero)
+                if (forCardinality == SequenceCardinality.EMPTY
                         && clause.getClauseType().equals(FLWOR_CLAUSES.WHERE)) {
                     clause = clause.getNextClause();
                     continue;
@@ -2888,17 +2844,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 // therefore this for loop will generate one tuple binding the empty sequence, so as for the arities
                 // count as arity.One
                 if (!forType.isEmptySequence()) {
-                    forArities = forType.getArity().multiplyWith(forArities);
+                    SequenceCardinality sourceCardinality = forType.getCardinality();
+                    if (((ForClause) clause).isAllowEmpty()) {
+                        // An empty source still emits one tuple with an empty binding.
+                        sourceCardinality = sourceCardinality.replaceZeroWithOne();
+                    }
+                    forCardinality = sourceCardinality.multiply(forCardinality);
                 } else if (!((ForClause) clause).isAllowEmpty()) {
-                    forArities = SequenceType.Arity.Zero;
+                    forCardinality = SequenceCardinality.EMPTY;
                 }
+            } else if (clause.getClauseType() == FLWOR_CLAUSES.GROUP_BY) {
+                // Multiple input tuples can collapse into a single group.
+                forCardinality = SequenceCardinality.fromArity(forCardinality.toArity());
             } else if (clause.getClauseType() == FLWOR_CLAUSES.WHERE) {
-                // where clause could reject all tuples so arity change from + => * and 1 => ?
-                if (forArities == SequenceType.Arity.One) {
-                    forArities = SequenceType.Arity.OneOrZero;
-                } else if (forArities == SequenceType.Arity.OneOrMore) {
-                    forArities = SequenceType.Arity.ZeroOrMore;
-                }
+                // Filtering tuples can leave zero, one, or multiple tuples.
+                forCardinality =
+                        SequenceCardinality.fromArity(forCardinality.toArity()).union(SequenceCardinality.EMPTY);
             }
             clause = clause.getNextClause();
         }
@@ -3158,6 +3119,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType rightType = requireInferredType(rightExpression.getStaticSequenceType(), "SlashExpr");
         basicChecks(rightType, slashExpr.getClass().getSimpleName(), true, false, slashExpr.getMetadata());
 
+        // XPath removes duplicate nodes, so multiple inputs need not yield multiple results.
         SequenceType.Arity resultingArity = leftType.getArity().multiplyWith(rightType.getArity());
         slashExpr.setStaticSequenceType(new SequenceType(rightType.getItemType(), resultingArity));
         return argument;

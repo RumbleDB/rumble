@@ -1,0 +1,112 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.types;
+
+/**
+ * Possible sequence sizes, with all lengths of two or more represented by MANY.
+ * Unlike the declared occurrence indicators, this can express multiple-only and empty-or-multiple.
+ */
+public enum SequenceCardinality {
+    EMPTY(1),
+    ONE(2),
+    MANY(4),
+    ZERO_OR_ONE(3),
+    ONE_OR_MANY(6),
+    ZERO_OR_MANY(5),
+    ANY(7);
+
+    private final int mask;
+
+    SequenceCardinality(int mask) {
+        this.mask = mask;
+    }
+
+    public boolean allowsZero() {
+        return (this.mask & 1) != 0;
+    }
+
+    public boolean allowsOne() {
+        return (this.mask & 2) != 0;
+    }
+
+    public boolean allowsMany() {
+        return (this.mask & 4) != 0;
+    }
+
+    public boolean isSubtypeOf(SequenceCardinality other) {
+        return (this.mask & other.mask) == this.mask;
+    }
+
+    public boolean overlaps(SequenceCardinality other) {
+        return (this.mask & other.mask) != 0;
+    }
+
+    public SequenceCardinality union(SequenceCardinality other) {
+        return fromMask(this.mask | other.mask);
+    }
+
+    public SequenceCardinality concatenate(SequenceCardinality other) {
+        boolean zero = allowsZero() && other.allowsZero();
+        boolean one = (allowsOne() && other.allowsZero()) || (allowsZero() && other.allowsOne());
+        boolean many = allowsMany() || other.allowsMany() || (allowsOne() && other.allowsOne());
+        return fromPossibilities(zero, one, many);
+    }
+
+    public SequenceCardinality multiply(SequenceCardinality other) {
+        boolean zero = allowsZero() || other.allowsZero();
+        boolean one = allowsOne() && other.allowsOne();
+        boolean many = (allowsMany() && (other.allowsOne() || other.allowsMany()))
+                || (other.allowsMany() && (allowsOne() || allowsMany()));
+        return fromPossibilities(zero, one, many);
+    }
+
+    public SequenceCardinality replaceZeroWithOne() {
+        return fromPossibilities(false, allowsZero() || allowsOne(), allowsMany());
+    }
+
+    public SequenceType.Arity toArity() {
+        return switch (this) {
+            case EMPTY -> SequenceType.Arity.Zero;
+            case ONE -> SequenceType.Arity.One;
+            case ZERO_OR_ONE -> SequenceType.Arity.OneOrZero;
+            case MANY, ONE_OR_MANY -> SequenceType.Arity.OneOrMore;
+            case ZERO_OR_MANY, ANY -> SequenceType.Arity.ZeroOrMore;
+        };
+    }
+
+    public static SequenceCardinality fromArity(SequenceType.Arity arity) {
+        return switch (arity) {
+            case Zero -> EMPTY;
+            case One -> ONE;
+            case OneOrZero -> ZERO_OR_ONE;
+            case OneOrMore -> ONE_OR_MANY;
+            case ZeroOrMore -> ANY;
+        };
+    }
+
+    private static SequenceCardinality fromPossibilities(boolean zero, boolean one, boolean many) {
+        return fromMask((zero ? 1 : 0) | (one ? 2 : 0) | (many ? 4 : 0));
+    }
+
+    private static SequenceCardinality fromMask(int mask) {
+        for (SequenceCardinality cardinality : values()) {
+            if (cardinality.mask == mask) {
+                return cardinality;
+            }
+        }
+        throw new IllegalArgumentException("A sequence cardinality must allow at least one size.");
+    }
+}

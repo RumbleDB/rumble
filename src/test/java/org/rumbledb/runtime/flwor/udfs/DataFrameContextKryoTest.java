@@ -30,8 +30,21 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceCardinality;
+import org.rumbledb.types.SequenceType;
 
 public class DataFrameContextKryoTest {
+
+    @Test
+    public void kryoPreservesInferredSequenceCardinalities() {
+        for (SequenceCardinality cardinality : SequenceCardinality.values()) {
+            SequenceType type = new SequenceType(BuiltinTypesCatalogue.integerItem, cardinality);
+            SequenceType copy = (SequenceType) roundTripObject(type);
+            Assertions.assertEquals(type, copy);
+            Assertions.assertEquals(cardinality, copy.getCardinality());
+            Assertions.assertEquals(type.getArity(), copy.getArity());
+        }
+    }
 
     @Test
     public void kryoRoundTripsItemsWithoutNoArgumentConstructors() {
