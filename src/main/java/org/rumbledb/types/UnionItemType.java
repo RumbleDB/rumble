@@ -139,6 +139,14 @@ public class UnionItemType extends AbstractItemType {
     }
 
     @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (this.equals(superType) || super.isSubtypeOf(superType)) {
+            return true;
+        }
+        return this.types.stream().allMatch(type -> type.isSubtypeOf(superType));
+    }
+
+    @Override
     public String getIdentifierString() {
         if (this.hasName()) {
             return this.name.toString();
@@ -254,6 +262,12 @@ public class UnionItemType extends AbstractItemType {
 
     @Override
     public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (this.isSubtypeOf(other)) {
+            return other;
+        }
+        if (other.isSubtypeOf(this)) {
+            return this;
+        }
         ItemType otherBaseType = other.getBaseType();
         List<ItemType> otherTypes;
         if (other.isUnionType()) {
@@ -266,6 +280,11 @@ public class UnionItemType extends AbstractItemType {
         boolean hasNull = false;
         Set<ItemType> resultTypes = new HashSet<>(this.types);
         resultTypes.addAll(otherTypes);
+        // Scalar/array unions inferred for object values must not be widened to an
+        // atomic type, which would exclude the possible array values.
+        if (resultTypes.stream().anyMatch(type -> !type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))) {
+            return BuiltinTypesCatalogue.item;
+        }
         for (ItemType member : resultTypes) {
             if (member.equals(BuiltinTypesCatalogue.nullItem)) {
                 hasNull = true;
