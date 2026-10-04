@@ -124,6 +124,10 @@ public class SequenceType implements Serializable {
     public boolean hasEffectiveBooleanValue() {
         if (isEmptySequence()) {
             return true;
+        } else if (this.itemType.isUnionType()) {
+            // Every possible member must allow EBV at this sequence's cardinality.
+            return this.itemType.getTypes().stream()
+                    .allMatch(member -> new SequenceType(member, this.cardinality).hasEffectiveBooleanValue());
         } else if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
             return true;
         } else {
