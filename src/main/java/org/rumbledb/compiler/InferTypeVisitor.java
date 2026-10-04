@@ -940,7 +940,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
         XmlSchemaCatalog schemaCatalog = argument.getInScopeSchemaTypes().getXmlSchemaCatalog();
         if (isSchemaCastTarget(expression.getSequenceType(), schemaCatalog)) {
-            checkSchemaCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
+            checkCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
             expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
             return argument;
         }
@@ -974,7 +974,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         XmlSchemaCatalog schemaCatalog = argument.getInScopeSchemaTypes().getXmlSchemaCatalog();
         if (isSchemaCastTarget(expression.getSequenceType(), schemaCatalog)) {
             SequenceType expressionType = expression.getMainExpression().getStaticSequenceType();
-            checkSchemaCastOperand(expressionType, expression);
+            checkCastOperand(expressionType, expression);
 
             if (expressionType.isEmptySequence()) {
                 if (expression.getSequenceType().getArity() != SequenceType.Arity.OneOrZero) {
@@ -1038,7 +1038,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        if (!expressionSequenceType.isAritySubtypeOf(castedSequenceType.getArity())) {
+        boolean nodeOperand = expressionSequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.nodeItem);
+        // Cast cardinality applies after atomization. A source node can have zero, one,
+        // or multiple typed values, so its typed-value checks remain at runtime.
+        if (!nodeOperand && !expressionSequenceType.isAritySubtypeOf(castedSequenceType.getArity())) {
             throwStaticTypeException(
                     "with static type feature it is not possible to cast a "
                             + expressionSequenceType
@@ -1047,15 +1050,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata());
         }
 
-        // ItemType static castability check
-        if (!expressionSequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            throwStaticTypeException(
-                    "It is never possible to cast a non-atomic sequence type: " + expressionSequenceType,
-                    expressionSequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
-                            ? ErrorCode.NonAtomicElementErrorCode
-                            : ErrorCode.AtomizationError,
-                    expression.getMetadata());
-        }
+        checkCastOperand(expressionSequenceType, expression);
         // Non-atomic operands were reported above; with static typing disabled, leave them to runtime.
         if (expressionSequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
                 && !castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.errorItem)
@@ -1065,7 +1060,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     ErrorCode.UnexpectedTypeErrorCode,
                     expression.getMetadata());
         }
-        if (expressionSequenceType.getArity() == SequenceType.Arity.One) {
+        if (!nodeOperand && expressionSequenceType.getArity() == SequenceType.Arity.One) {
             castedSequenceType = new SequenceType(castedSequenceType.getItemType(), SequenceType.Arity.One);
         }
         expression.setStaticSequenceType(castedSequenceType);
@@ -1083,13 +1078,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      * The static node types used here do not say whether atomization succeeds or how many
      * atomic values it produces; the runtime checks those properties after atomization.
      */
-    private void checkSchemaCastOperand(SequenceType operandType, Expression expression) {
+    private void checkCastOperand(SequenceType operandType, Expression expression) {
         basicChecks(operandType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
         if (!operandType.isEmptySequence()
                 && !operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                && !operandType.getItemType().isNodeItemType()) {
+                && !operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.nodeItem)) {
             throwStaticTypeException(
-                    "An XML Schema cast operand must be atomic after atomization, found " + operandType,
+                    "A cast operand must be atomic after atomization, found " + operandType,
                     operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
                             ? ErrorCode.NonAtomicElementErrorCode
                             : ErrorCode.AtomizationError,
@@ -1672,7 +1667,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMetadata());
             }
 
-            if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator)) {
+            boolean sameValue = leftInferredType.getCardinality() == SequenceCardinality.ONE
+                    && childrenExpressions.get(0) instanceof VariableReferenceExpression leftVariable
+                    && childrenExpressions.get(1) instanceof VariableReferenceExpression rightVariable
+                    && leftVariable.getVariableName().equals(rightVariable.getVariableName());
+            if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator, sameValue)) {
                 throwStaticTypeException(
                         "It is not possible to compare these types: "
                                 + leftItemType
@@ -1689,26 +1688,31 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private boolean areComparisonTypesCompatible(
-            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
+            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator, boolean sameValue) {
+        // Equal union types do not imply equal runtime values. Only references to the same
+        // singleton variable let us check matching alternatives instead of every possible pair.
+        if (left.isUnionType()) {
+            if (sameValue && left.equals(right)) {
+                return left.getTypes().stream()
+                        .allMatch(member -> areComparisonTypesCompatible(member, member, operator, true));
+            }
+            return left.getTypes().stream()
+                    .allMatch(member -> areComparisonTypesCompatible(member, right, operator, false));
+        }
+        if (right.isUnionType()) {
+            return right.getTypes().stream()
+                    .allMatch(member -> areComparisonTypesCompatible(left, member, operator, false));
+        }
         // JSONiq null is comparable with every atomic value, including for ordering.
         if (left.equals(BuiltinTypesCatalogue.nullItem) || right.equals(BuiltinTypesCatalogue.nullItem)) {
             return true;
         }
-        // Keep the existing whole-type rules, including comparisons of the same inferred union.
         boolean compatible = left.equals(right)
                 || (left.isNumeric() && right.isNumeric())
                 || (left.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
                         && right.isSubtypeOf(BuiltinTypesCatalogue.durationItem))
                 || (left.canBePromotedTo(BuiltinTypesCatalogue.stringItem)
                         && right.canBePromotedTo(BuiltinTypesCatalogue.stringItem));
-        // Null is an atomic value, not an empty sequence. A nullable union is comparable when
-        // its non-null alternatives are compatible too; one valid alternative cannot hide another.
-        if (!compatible && left.isUnionType()) {
-            return left.getTypes().stream().allMatch(member -> areComparisonTypesCompatible(member, right, operator));
-        }
-        if (!compatible && right.isUnionType()) {
-            return right.getTypes().stream().allMatch(member -> areComparisonTypesCompatible(left, member, operator));
-        }
         if (!compatible) {
             return false;
         }
@@ -1716,31 +1720,44 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && operator != ComparisonExpression.ComparisonOperator.VC_NE
                 && operator != ComparisonExpression.ComparisonOperator.GC_EQ
                 && operator != ComparisonExpression.ComparisonOperator.GC_NE;
-        // Apply ordering restrictions to the members as well when a nullable union is expanded.
+        // XQuery 3.1 supports binary ordering. Durations are ordered only within
+        // the day-time subtype or within the year-month subtype.
         return !ordered
-                || !(left.equals(BuiltinTypesCatalogue.hexBinaryItem)
-                        || left.equals(BuiltinTypesCatalogue.base64BinaryItem)
-                        || left.equals(BuiltinTypesCatalogue.durationItem)
-                        || right.equals(BuiltinTypesCatalogue.durationItem)
-                        || ((left.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
-                                        || left.equals(BuiltinTypesCatalogue.yearMonthDurationItem))
-                                && !right.equals(left)));
+                || !(left.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
+                        || right.isSubtypeOf(BuiltinTypesCatalogue.durationItem))
+                || (left.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem)
+                        && right.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem))
+                || (left.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
+                        && right.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem));
     }
 
     @Override
     public StaticContext visitNodeComparisonExpr(NodeComparisonExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        // TODO: statically check that each operand is a single node or empty; runtime already checks this.
 
         SequenceType leftType =
                 requireInferredType(expression.getLeftExpression().getStaticSequenceType(), "NodeComparisonExpression");
         SequenceType rightType = requireInferredType(
                 expression.getRightExpression().getStaticSequenceType(), "NodeComparisonExpression");
 
+        SequenceType operandType = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceCardinality.ZERO_OR_ONE);
+        for (SequenceType type : List.of(leftType, rightType)) {
+            if (!type.isSubtypeOf(operandType)) {
+                throwStaticTypeException(
+                        "A node comparison operand must be a single node or empty, found " + type,
+                        expression.getMetadata());
+            }
+        }
+
         // XQuery 3.1 section 3.7.3: an empty operand produces an empty result. Otherwise,
         // a successful comparison produces one boolean, even when operand checks are deferred to runtime.
         SequenceCardinality cardinality;
         if (leftType.isEmptySequence() || rightType.isEmptySequence()) {
+            // The strict Static Typing Feature rejects known-empty expressions other than () and data(()).
+            throwStaticTypeException(
+                    "The node comparison is statically inferred to return an empty sequence",
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    expression.getMetadata());
             cardinality = SequenceCardinality.EMPTY;
         } else if (leftType.getCardinality().allowsZero()
                 || rightType.getCardinality().allowsZero()) {
