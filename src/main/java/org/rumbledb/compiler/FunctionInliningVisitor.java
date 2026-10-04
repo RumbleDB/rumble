@@ -65,11 +65,14 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return false;
     }
 
-    private boolean requiresSchemaParameterConversion(InlineFunctionExpression function) {
-        // Inlining runs before schema type references are resolved. Its promotion expressions do not
-        // implement union atomization and untyped conversion, so retain the normal call in these cases.
+    private boolean requiresRuntimeParameterConversion(InlineFunctionExpression function) {
+        // Inlining precedes type inference, so it cannot prove that arguments are
+        // already atomic. Its promotion expressions lack atomization and per-item
+        // untyped conversion; use the normal function conversion for atomic parameters.
         return function.getParams().values().stream()
-                .anyMatch(type -> !type.isResolved() || type.getItemType().isUnionType());
+                .anyMatch(type -> !type.isResolved()
+                        || type.getItemType().isUnionType()
+                        || type.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem));
     }
 
     private boolean isVariableReferenced(Node expression, Name name) {
@@ -409,7 +412,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 || targetFunction == null
                 // Rebuilding an inlined body in the caller's context would change its constructor semantics.
                 || hasDifferentConstructionMode(this.prolog, targetFunction)
-                || requiresSchemaParameterConversion((InlineFunctionExpression) targetFunction.getExpression())
+                || requiresRuntimeParameterConversion((InlineFunctionExpression) targetFunction.getExpression())
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
                 || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {

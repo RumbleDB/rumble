@@ -133,13 +133,15 @@ public class SequenceType implements Serializable {
             // Every possible member must allow EBV at this sequence's cardinality.
             return this.itemType.getTypes().stream()
                     .allMatch(member -> new SequenceType(member, this.cardinality).hasEffectiveBooleanValue());
-        } else if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
+        } else if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.nodeItem)
+                || this.itemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
             return true;
         } else {
             return !this.cardinality.allowsMany()
                     && (this.itemType.isNumeric()
-                            || this.itemType.equals(BuiltinTypesCatalogue.stringItem)
-                            || this.itemType.equals(BuiltinTypesCatalogue.anyURIItem)
+                            || this.itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+                            || this.itemType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)
+                            || this.itemType.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
                             || this.itemType.equals(BuiltinTypesCatalogue.nullItem)
                             || this.itemType.equals(BuiltinTypesCatalogue.booleanItem));
         }
@@ -166,8 +168,21 @@ public class SequenceType implements Serializable {
     public SequenceType leastCommonSupertypeWith(SequenceType other) {
         ItemType itemSupertype = isEmptySequence()
                 ? other.itemType
-                : other.isEmptySequence() ? this.itemType : this.itemType.findLeastCommonSuperTypeWith(other.itemType);
+                : other.isEmptySequence() ? this.itemType : joinItemTypes(other.itemType);
         return new SequenceType(itemSupertype, this.cardinality.union(other.cardinality));
+    }
+
+    private ItemType joinItemTypes(ItemType other) {
+        // Preserve mixed atomic/node alternatives across branches, while retaining
+        // the existing joins for purely atomic and structured types.
+        if (TypeAtomization.isAtomicOrNode(this.itemType)
+                && TypeAtomization.isAtomicOrNode(other)
+                && (TypeAtomization.containsNode(this.itemType) || TypeAtomization.containsNode(other))
+                && !(this.itemType.isSubtypeOf(BuiltinTypesCatalogue.nodeItem)
+                        && other.isSubtypeOf(BuiltinTypesCatalogue.nodeItem))) {
+            return ItemTypeFactory.createInferredUnionType(List.of(this.itemType, other));
+        }
+        return this.itemType.findLeastCommonSuperTypeWith(other);
     }
 
     public SequenceType concatenateWith(SequenceType other) {
@@ -196,8 +211,10 @@ public class SequenceType implements Serializable {
                     ? this.itemType.findLeastCommonSuperTypeLax(other)
                     : this.itemType.findLeastCommonSuperTypeWith(other);
         }
-        if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                && other.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+        if (TypeAtomization.isAtomicOrNode(this.itemType)
+                && TypeAtomization.isAtomicOrNode(other)
+                && !(this.itemType.isSubtypeOf(BuiltinTypesCatalogue.nodeItem)
+                        && other.isSubtypeOf(BuiltinTypesCatalogue.nodeItem))) {
             return ItemTypeFactory.createInferredUnionType(List.of(this.itemType, other));
         }
         // Structured types have existing joins used by navigation and native execution.

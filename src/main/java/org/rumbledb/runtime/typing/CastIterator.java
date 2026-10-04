@@ -89,16 +89,14 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         if (targetItemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             throw new CastableException("Invalid target type for cast expression: xs:anyAtomicType", metadata);
         }
-        Item item;
-        try {
-            item = child.materializeAtMostOne(dynamicContext);
-            if (item != null && !item.getDynamicType().isResolved()) {
-                item.getDynamicType().resolve(dynamicContext, metadata);
-            }
-        } catch (MoreThanOneItemException e) {
+        // A node's typed value can be empty or a list. Cast cardinality is checked
+        // after atomization, including when several source nodes yield one value.
+        List<Item> atomized = CastAtomization.materializeAtomizedAtMostTwo(child, dynamicContext, metadata);
+        if (atomized.size() > 1) {
             throw new UnexpectedTypeException(
                     " Sequence of more than one item can not be treated as type " + sequenceType.toString(), metadata);
         }
+        Item item = atomized.isEmpty() ? null : atomized.get(0);
         if (item == null && !sequenceType.isEmptySequence() && sequenceType.getArity() != Arity.OneOrZero) {
             throw new UnexpectedTypeException(" Empty sequence can not be cast to type with quantifier '1'", metadata);
         }
