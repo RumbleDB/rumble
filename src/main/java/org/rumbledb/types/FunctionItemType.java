@@ -108,6 +108,9 @@ public class FunctionItemType extends AbstractItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            return superType.getTypes().stream().anyMatch(this::isSubtypeOf);
+        }
         if (this.equals(superType)
                 || superType.equals(anyFunctionItem)
                 || superType.equals(BuiltinTypesCatalogue.item)) {

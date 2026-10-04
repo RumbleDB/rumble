@@ -104,18 +104,15 @@ public class UnionItemType extends AbstractItemType {
 
     @Override
     public boolean isStaticallyCastableAs(ItemType other) {
-        if (other.equals(this)) {
-            return true;
-        }
-        if (other.isNumeric()) {
-            return true;
-        }
-        for (ItemType member : this.types) {
-            if (other.isSubtypeOf(member)) {
-                return true;
-            }
-        }
-        return false;
+        return other.equals(this)
+                || this.types.stream()
+                        .allMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                                && member.isStaticallyCastableAs(other));
+    }
+
+    @Override
+    public boolean canBePromotedTo(ItemType other) {
+        return this.types.stream().allMatch(member -> member.isSubtypeOf(other) || member.canBePromotedTo(other));
     }
 
     @Override
