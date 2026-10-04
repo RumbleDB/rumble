@@ -27,6 +27,16 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
+/**
+ * A RumbleDB assertion of the exact inferred item type and declared occurrence indicator.
+ * The comparison uses item-type equality and {@link SequenceType#getArity()}, not subtyping
+ * or equality of internal cardinality refinements. For example, multiple-only cardinality
+ * matches a declared {@code +}, but an inferred anonymous union does not match its wider
+ * common supertype.
+ *
+ * A successful assertion returns the operand unchanged and preserves its precise inferred
+ * sequence type. A mismatch raises an IsStaticallyUnexpectedTypeException during inference.
+ */
 @Getter
 public class IsStaticallyExpression extends Expression {
     private Expression mainExpression;

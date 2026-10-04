@@ -1068,13 +1068,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         SequenceType inferred = expression.getMainExpression().getStaticSequenceType();
         SequenceType expected = expression.getSequenceType();
-        if (!inferred.equals(expected)) {
+        // Assertions use declared occurrence indicators, which cannot express MANY or ZERO_OR_MANY.
+        if (inferred.getArity() != expected.getArity()
+                || !inferred.getItemType().equals(expected.getItemType())) {
             throw new IsStaticallyUnexpectedTypeException(
                     "expected static type is " + expected + " instead " + inferred + " was inferred",
                     expression.getMetadata());
         }
 
-        expression.setStaticSequenceType(expected);
+        // An assertion checks the type without discarding its inference refinements.
+        expression.setStaticSequenceType(inferred);
         return argument;
     }
 

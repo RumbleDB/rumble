@@ -1,6 +1,7 @@
 jsoniq version "3.1";
 (:JIQS: ShouldRun :)
 (: Y cases in the primitive cast matrix :)
+(: Exact inferred union members are checked in IsStaticallyTypeInferenceTest. :)
 (
   3.0e0 cast as float,
   3.0e0 cast as double,
@@ -21,5 +22,4 @@ jsoniq version "3.1";
   "13" cast as double,
   "P2Y" cast as yearMonthDuration,
   "P1D" cast as dayTimeDuration
-) is statically xs:anyAtomicType+
-
+)

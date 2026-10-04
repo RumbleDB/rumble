@@ -276,6 +276,33 @@ complete specification of both syntaxes is available on the [JSound website](htt
 
 In the feature, RumbleDB will support user-defined atomic types and union types via the verbose syntax.
 
+## Static type assertions (`is statically`)
+
+`expression is statically T` is a RumbleDB extension that asserts the exact type inferred by the compiler.
+It compares the inferred item type with the item type in `T` using equality, and compares their declared occurrence
+indicators: exactly one, `?`, `+`, `*`, or the empty sequence. A mismatch raises `RBTY0001` during type inference.
+
+```xquery
+1 is statically xs:integer                 (: succeeds :)
+(1, 2) is statically xs:integer+            (: succeeds :)
+1 is statically xs:decimal                 (: fails: different item type :)
+1 is statically xs:integer+                (: fails: different occurrence indicator :)
+("s", 12) is statically xs:anyAtomicType+   (: fails: inferred item type is a union :)
+```
+
+This asserts exact inference, rather than compatibility with a supertype. For example, `("s", 12)` matches
+`xs:anyAtomicType+` in an `instance of` or `treat as` expression, but its inferred item type is the more precise
+anonymous union `xs:string | xs:integer`.
+
+Inference can distinguish multiple-only cardinality (`MANY`) from one-or-more cardinality (`ONE_OR_MANY`). Both
+have the declared occurrence indicator `+`, so `(1, 2) is statically xs:integer+` succeeds. Internal cardinality
+refinements are not compared directly. A successful assertion returns the expression's value unchanged and
+preserves its precise inferred type, including those refinements, for subsequent inference.
+
+Query type syntax cannot express anonymous unions such as `xs:string | xs:integer`; this notation describes
+the inferred type, not executable type syntax. Tests for their exact members therefore use Java compiler tests.
+The `is statically` comparison does not widen inferred unions to their common supertype.
+
 ## What's next?
 
 Once you have validated your data as a dataframe with a user-defined type, you are all set to use the RumbleDB ML Machine Learning library and feed it through ML pipelines!
