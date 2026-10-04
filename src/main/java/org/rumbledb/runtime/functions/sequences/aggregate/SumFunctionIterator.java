@@ -112,10 +112,11 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
     private static Item computeRDD(
             Item zeroElement, ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
         JavaRDD<Item> rdd = iterator.getRDD(context);
-        if (rdd.count() == 0) {
+        if (rdd.isEmpty()) {
             return zeroElement;
         }
-        return rdd.reduce(new SumClosure(metadata));
+        // Reduction does not call its combiner for a singleton, so convert each input first.
+        return rdd.map(item -> addToSum(null, item, metadata)).reduce(new SumClosure(metadata));
     }
 
     private static Item computeDataFrame(

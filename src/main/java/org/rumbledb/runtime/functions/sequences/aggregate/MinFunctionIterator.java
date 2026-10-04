@@ -20,15 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.spark.api.java.JavaRDD;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.UnsupportedCollationException;
-import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
@@ -57,7 +53,7 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            return ExtremumLocalEvaluation.min(this.iterator, getCollationPlan(), context, getMetadata());
+            return ExtremumEvaluation.min(this.iterator, getCollationPlan(), context, getMetadata());
         }
         validateCollation(context);
 
@@ -77,15 +73,7 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
             return minDF.getExactlyOneItem();
         }
 
-        JavaRDD<Item> rdd = this.iterator.getRDD(context);
-        if (rdd.isEmpty()) {
-            return null;
-        }
-        return rdd.min(new ItemComparator(
-                true,
-                new InvalidArgumentTypeException(
-                        "Min expression input error. Input has to be non-null atomics of matching types",
-                        getMetadata())));
+        return ExtremumEvaluation.minRDD(this.iterator.getRDD(context), getMetadata());
     }
 
     private ItemRuntimePlan getCollationPlan() {
