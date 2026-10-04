@@ -1672,33 +1672,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMetadata());
             }
 
-            // Type must match exactly or be both numeric or both promotable to string or both durations or one must be
-            // null
-            if (!leftItemType.equals(rightItemType)
-                    && !(leftItemType.isNumeric() && rightItemType.isNumeric())
-                    && !(leftItemType.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
-                            && rightItemType.isSubtypeOf(BuiltinTypesCatalogue.durationItem))
-                    && !(leftItemType.canBePromotedTo(BuiltinTypesCatalogue.stringItem)
-                            && rightItemType.canBePromotedTo(BuiltinTypesCatalogue.stringItem))
-                    && !(leftItemType.equals(BuiltinTypesCatalogue.nullItem)
-                            || rightItemType.equals(BuiltinTypesCatalogue.nullItem))) {
-                throwStaticTypeException(
-                        "It is not possible to compare these types: " + leftItemType + " and " + rightItemType,
-                        expression.getMetadata());
-            }
-
-            // Inequality is not defined for hexBinary and base64binary or for duration of different types
-            if ((operator != ComparisonExpression.ComparisonOperator.VC_EQ
-                            && operator != ComparisonExpression.ComparisonOperator.VC_NE
-                            && operator != ComparisonExpression.ComparisonOperator.GC_EQ
-                            && operator != ComparisonExpression.ComparisonOperator.GC_NE)
-                    && (leftItemType.equals(BuiltinTypesCatalogue.hexBinaryItem)
-                            || leftItemType.equals(BuiltinTypesCatalogue.base64BinaryItem)
-                            || leftItemType.equals(BuiltinTypesCatalogue.durationItem)
-                            || rightItemType.equals(BuiltinTypesCatalogue.durationItem)
-                            || ((leftItemType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
-                                            || leftItemType.equals(BuiltinTypesCatalogue.yearMonthDurationItem))
-                                    && !rightItemType.equals(leftItemType)))) {
+            if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator)) {
                 throwStaticTypeException(
                         "It is not possible to compare these types: "
                                 + leftItemType
@@ -1714,17 +1688,67 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    private boolean areComparisonTypesCompatible(
+            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
+        // JSONiq null is comparable with every atomic value, including for ordering.
+        if (left.equals(BuiltinTypesCatalogue.nullItem) || right.equals(BuiltinTypesCatalogue.nullItem)) {
+            return true;
+        }
+        // Keep the existing whole-type rules, including comparisons of the same inferred union.
+        boolean compatible = left.equals(right)
+                || (left.isNumeric() && right.isNumeric())
+                || (left.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
+                        && right.isSubtypeOf(BuiltinTypesCatalogue.durationItem))
+                || (left.canBePromotedTo(BuiltinTypesCatalogue.stringItem)
+                        && right.canBePromotedTo(BuiltinTypesCatalogue.stringItem));
+        // Null is an atomic value, not an empty sequence. A nullable union is comparable when
+        // its non-null alternatives are compatible too; one valid alternative cannot hide another.
+        if (!compatible && left.isUnionType()) {
+            return left.getTypes().stream().allMatch(member -> areComparisonTypesCompatible(member, right, operator));
+        }
+        if (!compatible && right.isUnionType()) {
+            return right.getTypes().stream().allMatch(member -> areComparisonTypesCompatible(left, member, operator));
+        }
+        if (!compatible) {
+            return false;
+        }
+        boolean ordered = operator != ComparisonExpression.ComparisonOperator.VC_EQ
+                && operator != ComparisonExpression.ComparisonOperator.VC_NE
+                && operator != ComparisonExpression.ComparisonOperator.GC_EQ
+                && operator != ComparisonExpression.ComparisonOperator.GC_NE;
+        // Apply ordering restrictions to the members as well when a nullable union is expanded.
+        return !ordered
+                || !(left.equals(BuiltinTypesCatalogue.hexBinaryItem)
+                        || left.equals(BuiltinTypesCatalogue.base64BinaryItem)
+                        || left.equals(BuiltinTypesCatalogue.durationItem)
+                        || right.equals(BuiltinTypesCatalogue.durationItem)
+                        || ((left.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
+                                        || left.equals(BuiltinTypesCatalogue.yearMonthDurationItem))
+                                && !right.equals(left)));
+    }
+
     @Override
     public StaticContext visitNodeComparisonExpr(NodeComparisonExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        // According to XQuery 3.1 specification section 3.7.3:
-        // Each operand must be either a single node or an empty sequence; otherwise a type error is raised
-        // [err:XPTY0004].
-        // TODO: implement static type checking, to exclude evaluation of operands that we can
-        // infer statically that are not empty sequences or nodes (e.g. strings, etc.)
+        // TODO: statically check that each operand is a single node or empty; runtime already checks this.
 
-        // Node comparisons always return a boolean
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
+        SequenceType leftType =
+                requireInferredType(expression.getLeftExpression().getStaticSequenceType(), "NodeComparisonExpression");
+        SequenceType rightType = requireInferredType(
+                expression.getRightExpression().getStaticSequenceType(), "NodeComparisonExpression");
+
+        // XQuery 3.1 section 3.7.3: an empty operand produces an empty result. Otherwise,
+        // a successful comparison produces one boolean, even when operand checks are deferred to runtime.
+        SequenceCardinality cardinality;
+        if (leftType.isEmptySequence() || rightType.isEmptySequence()) {
+            cardinality = SequenceCardinality.EMPTY;
+        } else if (leftType.getCardinality().allowsZero()
+                || rightType.getCardinality().allowsZero()) {
+            cardinality = SequenceCardinality.ZERO_OR_ONE;
+        } else {
+            cardinality = SequenceCardinality.ONE;
+        }
+        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, cardinality));
         return argument;
     }
 
