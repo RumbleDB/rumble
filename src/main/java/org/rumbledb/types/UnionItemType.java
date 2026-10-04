@@ -143,6 +143,7 @@ public class UnionItemType extends AbstractItemType {
         if (this.equals(superType) || super.isSubtypeOf(superType)) {
             return true;
         }
+        // Every possible member must fit the target type; overlap only requires one member to overlap it.
         return this.types.stream().allMatch(type -> type.isSubtypeOf(superType));
     }
 

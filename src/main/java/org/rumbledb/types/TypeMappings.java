@@ -84,7 +84,9 @@ public class TypeMappings {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
             return DataTypes.BinaryType;
         }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
+        // A union can be a subtype of object or array without exposing their facets.
+        // Leave these unions to the union mapping below.
+        if (!itemType.isUnionType() && itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             List<StructField> fields = new ArrayList<>();
             itemType.getObjectKeysFacet()
                     .forEach(key -> fields.add(DataTypes.createStructField(
@@ -97,7 +99,7 @@ public class TypeMappings {
             }
             return DataTypes.BinaryType;
         }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
+        if (!itemType.isUnionType() && itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
             return DataTypes.createArrayType(
                     getDataFrameDataTypeFromItemType(itemType.getArrayContentFacet(), staticContext));
         }

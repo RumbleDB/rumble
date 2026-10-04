@@ -186,6 +186,8 @@ public class ItemTypeFactory {
      * Infers the item stored in an object field from its value expression's sequence type.
      * Object constructors store a singleton as-is, an empty sequence as JSON null,
      * and a sequence of multiple items as an array. The field remains required in all cases.
+     * This conversion is specific to JSONiq objects; XQuery maps retain the original sequence value.
+     * For example, xs:double? becomes (xs:double | js:null), a single stored item with two possible types.
      *
      * @param valueType the sequence type of the value expression
      * @return an item type covering all possible stored values
@@ -199,6 +201,7 @@ public class ItemTypeFactory {
             return itemType;
         }
         if (itemType.isTopmostItemType()) {
+            // item already covers the singleton, null, and wrapped-array possibilities.
             return itemType;
         }
 
@@ -210,6 +213,7 @@ public class ItemTypeFactory {
         }
         if (valueType.getArity() == SequenceType.Arity.OneOrMore
                 || valueType.getArity() == SequenceType.Arity.ZeroOrMore) {
+            // Both arities allow a singleton as well as multiple items, so retain both alternatives.
             alternatives.add(createAnonymousArrayType(itemType));
         }
         if ((valueType.getArity() == SequenceType.Arity.OneOrZero
@@ -220,6 +224,7 @@ public class ItemTypeFactory {
         if (alternatives.size() == 1) {
             return alternatives.get(0);
         }
+        // A scalar/array union cannot have an atomic base: that would exclude valid array results.
         ItemType baseType = alternatives.stream().allMatch(type -> type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))
                 ? BuiltinTypesCatalogue.atomicItem
                 : BuiltinTypesCatalogue.item;
