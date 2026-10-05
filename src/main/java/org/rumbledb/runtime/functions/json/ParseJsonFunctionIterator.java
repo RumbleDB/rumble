@@ -65,6 +65,7 @@ public class ParseJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 options,
                 this.staticContext.getConfiguration().semantics().xmlVersion(),
                 isJSONiq10,
+                "fn:parse-json: JSON input",
                 getMetadata());
     }
 }
