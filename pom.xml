@@ -94,37 +94,49 @@
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.13</artifactId>
-            <version>4.0.1</version>
+            <version>4.2.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.13</artifactId>
-            <version>4.0.1</version>
+            <version>4.2.0</version>
             <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-common</artifactId>
+            <version>3.5.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+          <groupId>org.apache.hadoop</groupId>
+          <artifactId>hadoop-client</artifactId>
+          <version>2.2.0</version>
+          <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.13</artifactId>
-            <version>4.0.1</version>
+            <version>4.2.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-hive_2.13</artifactId>
-            <version>4.0.1</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-aws</artifactId>
-            <version>3.3.6</version>
+            <version>4.2.0</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-avro_2.13</artifactId>
-            <version>4.0.1</version>
+            <version>4.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+            <artifactId>hadoop-aws</artifactId>
+            <version>3.5.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
@@ -197,17 +209,18 @@
         <dependency>
             <groupId>com.fasterxml.jackson.dataformat</groupId>
             <artifactId>jackson-dataformat-yaml</artifactId>
-            <version>2.18.2</version>
+            <version>2.21.2</version>
         </dependency>
         <dependency>
             <groupId>io.delta</groupId>
             <artifactId>delta-spark_2.13</artifactId>
-            <version>4.0.0</version>
+            <version>4.4.0</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.iceberg</groupId>
-            <artifactId>iceberg-spark-runtime-4.0_2.13</artifactId>
-            <version>1.10.0</version>
+            <artifactId>iceberg-spark-runtime-4.1_2.13</artifactId>
+            <version>1.11.0</version>
         </dependency>
         <dependency>
             <groupId>org.skyscreamer</groupId>
@@ -231,6 +244,12 @@
             <groupId>org.mongodb.spark</groupId>
             <artifactId>mongo-spark-connector_2.13</artifactId>
             <version>10.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>2.25.4</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.ibm.icu</groupId>
@@ -387,9 +406,9 @@
                             <mainClass>org.rumbledb.cli.Main</mainClass>
                         </manifest>
                     </archive>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
+                    <descriptors>
+                        <descriptor>src/main/assembly/jar-with-dependencies.xml</descriptor>
+                    </descriptors>
                 </configuration>
             </plugin>
             <plugin>
@@ -643,6 +662,17 @@
                                     <outputFile>${project.build.directory}/cli-provided-classpath.txt</outputFile>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>cli-spark-submit-dependencies</id>
+                                <goals>
+                                    <goal>build-classpath</goal>
+                                </goals>
+                                <phase>process-test-classes</phase>
+                                <configuration>
+                                    <includeScope>compile</includeScope>
+                                    <outputFile>${project.build.directory}/cli-spark-submit-classpath.txt</outputFile>
+                                </configuration>
+                            </execution>
                         </executions>
                     </plugin>
                     <plugin>
@@ -658,6 +688,7 @@
                             <systemPropertyVariables>
                                 <cli.jar>${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar</cli.jar>
                                 <cli.providedClasspath>${project.build.directory}/cli-provided-classpath.txt</cli.providedClasspath>
+                                <cli.sparkSubmitClasspath>${project.build.directory}/cli-spark-submit-classpath.txt</cli.sparkSubmitClasspath>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
