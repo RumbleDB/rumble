@@ -662,6 +662,17 @@
                                     <outputFile>${project.build.directory}/cli-provided-classpath.txt</outputFile>
                                 </configuration>
                             </execution>
+                            <execution>
+                                <id>cli-spark-submit-dependencies</id>
+                                <goals>
+                                    <goal>build-classpath</goal>
+                                </goals>
+                                <phase>process-test-classes</phase>
+                                <configuration>
+                                    <includeScope>compile</includeScope>
+                                    <outputFile>${project.build.directory}/cli-spark-submit-classpath.txt</outputFile>
+                                </configuration>
+                            </execution>
                         </executions>
                     </plugin>
                     <plugin>
@@ -677,6 +688,7 @@
                             <systemPropertyVariables>
                                 <cli.jar>${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar</cli.jar>
                                 <cli.providedClasspath>${project.build.directory}/cli-provided-classpath.txt</cli.providedClasspath>
+                                <cli.sparkSubmitClasspath>${project.build.directory}/cli-spark-submit-classpath.txt</cli.sparkSubmitClasspath>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
