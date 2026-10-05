@@ -33,7 +33,9 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.InScopeSchemaTypes;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.resources.ResourceResolver;
 
 /**
@@ -44,6 +46,56 @@ import org.rumbledb.resources.ResourceResolver;
 public class XmlSchemaCatalogLoaderTest {
 
     private static final String NAMESPACE = "urn:test";
+
+    @Test
+    public void preservesImportPrefixesForTypesAndValuesWithoutChangingIdentity(@TempDir Path directory)
+            throws Exception {
+        Files.writeString(
+                directory.resolve("types.xsd"),
+                schema(NAMESPACE, "<xs:simpleType name=\"Code\"><xs:restriction base=\"xs:string\"/></xs:simpleType>"));
+        Name previous = null;
+        for (String prefix : List.of("t", "app")) {
+            MainModule module = compile(
+                    "import schema namespace "
+                            + prefix
+                            + " = \"urn:test\" at \"types.xsd\"; "
+                            + prefix
+                            + ":Code(\"hello\")",
+                    directory.resolve("query.xq").toUri(),
+                    new ResourceResolver());
+            XmlSchemaCatalog catalog =
+                    module.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
+            Name lookup = new Name(NAMESPACE, null, "Code");
+            var type = module.getStaticContext().getInScopeSchemaTypes().getInScopeSchemaType(lookup);
+            Assertions.assertEquals(prefix, type.getName().getPrefix());
+            Assertions.assertEquals(prefix + ":Code", type.toString());
+            Assertions.assertEquals(
+                    prefix,
+                    catalog.getTypeAnnotation(catalog.getTypeDefinition(lookup).orElseThrow())
+                            .name()
+                            .getPrefix());
+            Name enumerated = catalog.getNamedTypeNames().stream()
+                    .filter(lookup::equals)
+                    .findFirst()
+                    .orElseThrow();
+            Assertions.assertEquals(prefix, enumerated.getPrefix());
+            var value = catalog.castSimpleType(
+                            lookup,
+                            ItemFactory.getInstance().createStringItem("hello"),
+                            module.getStaticContext()::resolveNamespace,
+                            ExceptionMetadata.EMPTY_METADATA)
+                    .get(0);
+            Assertions.assertEquals(prefix, value.getDynamicType().getName().getPrefix());
+            Assertions.assertEquals("hello", value.getStringValue());
+            Assertions.assertEquals(lookup, type.getName());
+            if (previous != null) {
+                Assertions.assertEquals(previous, type.getName());
+                Assertions.assertEquals(previous.hashCode(), type.getName().hashCode());
+                Assertions.assertEquals("t", previous.getPrefix());
+            }
+            previous = type.getName();
+        }
+    }
 
     @Test
     public void usesResourceMappingsWhenTheImportHasNoLocationHint(@TempDir Path directory) throws Exception {
