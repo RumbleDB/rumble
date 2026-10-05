@@ -110,6 +110,76 @@ public class CLIJarIT {
     }
 
     @Nested
+    class LakehouseFormats {
+        @Test
+        void deltaFilePersistsUpdatesAcrossCliInvocations() throws Exception {
+            Path table = directory.resolve("delta table");
+            List<String> conf = List.of(
+                    "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension",
+                    "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog",
+                    "spark.jars.ivy=" + directory.resolve("ivy"));
+            try (JarFile archive = new JarFile(System.getProperty("cli.jar"))) {
+                assertNull(
+                        archive.getJarEntry("org/apache/spark/sql/delta/DeltaLog.class"),
+                        "Delta must be supplied by --packages, not bundled in the application");
+            }
+            assertLakehouseRoundTrip(
+                    "delta-file(" + quote(table.toUri().toString()) + ")", conf, "io.delta:delta-spark_2.13:4.4.0");
+            assertTrue(Files.isDirectory(table.resolve("_delta_log")));
+        }
+
+        @Test
+        void icebergTablePersistsUpdatesWithConfiguredSessionCatalog() throws Exception {
+            Path warehouse = directory.resolve("iceberg warehouse");
+            List<String> conf = List.of(
+                    "spark.sql.extensions=org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions",
+                    "spark.sql.catalog.spark_catalog=org.apache.iceberg.spark.SparkSessionCatalog",
+                    "spark.sql.catalog.spark_catalog.type=hadoop",
+                    "spark.sql.catalog.spark_catalog.warehouse=" + warehouse,
+                    "spark.sql.warehouse.dir=" + warehouse,
+                    "spark.sql.iceberg.check-ordering=false");
+            assertLakehouseRoundTrip("iceberg-table(\"default.cli_roundtrip\")", conf, "");
+            assertTrue(Files.isDirectory(warehouse.resolve("default/cli_roundtrip/metadata")));
+        }
+
+        private void assertLakehouseRoundTrip(String collection, List<String> conf, String packages) throws Exception {
+            assertSuccess(
+                    runWithSparkPackages(
+                            "",
+                            conf,
+                            packages,
+                            "run",
+                            "-q",
+                            "create collection " + collection + " with {\"id\":1}",
+                            "--apply-updates"),
+                    "");
+            assertSuccess(
+                    runWithSparkPackages(
+                            "",
+                            conf,
+                            packages,
+                            "run",
+                            "-q",
+                            "insert {\"id\":2} last into collection " + collection,
+                            "--apply-updates"),
+                    "");
+            assertSuccess(
+                    runWithSparkPackages(
+                            "",
+                            conf,
+                            packages,
+                            "run",
+                            "-q",
+                            "for $row in " + collection + " order by $row.id return $row.id",
+                            "-f",
+                            "serialize-each-item",
+                            "--output-format-option",
+                            "method=json"),
+                    "1\n2");
+        }
+    }
+
+    @Nested
     class OutputFormatsAndRoundTrips {
         @ParameterizedTest(name = "{0} requires an output path in run and repl")
         @ValueSource(strings = {"json", "csv", "parquet", "avro"})
@@ -1052,6 +1122,31 @@ public class CLIJarIT {
     }
 
     private Result run(String input, String... arguments) throws Exception {
+        return runWithSparkConf(input, List.of(), arguments);
+    }
+
+    private Result runWithSparkConf(String input, List<String> sparkConf, String... arguments) throws Exception {
+        return runWithSparkPackages(input, sparkConf, "", arguments);
+    }
+
+    private Result runWithSparkPackages(String input, List<String> sparkConf, String packages, String... arguments)
+            throws Exception {
+        String launchClasspath = classpath;
+        if (!sparkConf.isEmpty() || !packages.isEmpty()) {
+            // Bootstrap Spark itself, including libraries such as Scala that are bundled in the app.
+            // SparkSubmit loads the application JAR and downloaded packages in its application loader.
+            String sparkSubmitClasspath = Files.readString(Path.of(System.getProperty("cli.sparkSubmitClasspath")))
+                    .trim();
+            launchClasspath = String.join(
+                    File.pathSeparator,
+                    Arrays.stream(sparkSubmitClasspath.split(java.util.regex.Pattern.quote(File.pathSeparator)))
+                            .filter(path -> {
+                                String name = Path.of(path).getFileName().toString();
+                                return packages.isEmpty()
+                                        || (!name.startsWith("delta-") && !name.startsWith("unitycatalog-"));
+                            })
+                            .toList());
+        }
         List<String> command = new ArrayList<>(List.of(
                 Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                 "-Dfile.encoding=UTF-8",
@@ -1066,8 +1161,20 @@ public class CLIJarIT {
                 "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
                 "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED",
                 "-cp",
-                classpath,
-                mainClass));
+                launchClasspath));
+        if (sparkConf.isEmpty() && packages.isEmpty()) {
+            command.add(mainClass);
+        } else {
+            // Exercise spark-submit's --conf arguments with the packaged application.
+            command.addAll(List.of("org.apache.spark.deploy.SparkSubmit", "--master", "local[2]"));
+            if (!packages.isEmpty()) {
+                command.addAll(List.of("--packages", packages));
+            }
+            for (String setting : sparkConf) {
+                command.addAll(List.of("--conf", setting));
+            }
+            command.addAll(List.of("--class", mainClass, System.getProperty("cli.jar")));
+        }
         command.addAll(List.of(arguments));
         Path stdout = Files.createTempFile(this.directory, "stdout-", ".txt");
         Path stderr = Files.createTempFile(this.directory, "stderr-", ".txt");
@@ -1081,7 +1188,8 @@ public class CLIJarIT {
             try (var stdin = process.getOutputStream()) {
                 stdin.write(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             }
-            assertTrue(process.waitFor(60, TimeUnit.SECONDS), () -> "CLI timed out: " + command);
+            int timeoutSeconds = packages.isEmpty() ? 60 : 180;
+            assertTrue(process.waitFor(timeoutSeconds, TimeUnit.SECONDS), () -> "CLI timed out: " + command);
             return new Result(
                     process.exitValue(),
                     Files.readString(stdout).replace("\r\n", "\n").strip(),

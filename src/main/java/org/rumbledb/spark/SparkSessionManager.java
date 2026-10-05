@@ -158,8 +158,8 @@ public class SparkSessionManager {
             }
             this.configuration.set("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/test.myCollection");
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
-            this.configuration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
-            this.configuration.set(
+            this.configuration.setIfMissing("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
+            this.configuration.setIfMissing(
                     "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
