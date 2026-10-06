@@ -275,7 +275,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext followingClausesContext = new StaticContext(argument);
         followingClausesContext.addVariable(
                 clause.getWindowVariable(),
-                clause.getSequenceType(),
+                clause.getActualSequenceType(),
                 Objects.requireNonNullElse(
                         clause.getVariableMetadata().get(clause.getWindowVariable()), clause.getMetadata()));
         addWindowVars(start, followingClausesContext, clause);
@@ -288,13 +288,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private static void addWindowVars(WindowClause.WindowVars vars, StaticContext context, WindowClause clause) {
-        // Type inference later refines these types from the window's input.
-        SequenceType optionalItem =
-                new SequenceType(clause.getSequenceType().getItemType(), SequenceType.Arity.OneOrZero);
+        // Type inference sets the item variables' types from the window's input.
         for (Name name : vars.names()) {
             context.addVariable(
                     name,
-                    name.equals(vars.position()) ? new SequenceType(BuiltinTypesCatalogue.integerItem) : optionalItem,
+                    name.equals(vars.position()) ? new SequenceType(BuiltinTypesCatalogue.integerItem) : null,
                     Objects.requireNonNullElse(clause.getVariableMetadata().get(name), clause.getMetadata()));
         }
     }

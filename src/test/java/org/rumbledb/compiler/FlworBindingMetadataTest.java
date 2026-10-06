@@ -40,6 +40,7 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.WindowClause;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
 
 class FlworBindingMetadataTest {
     private static final String QUERY =
@@ -83,9 +84,10 @@ class FlworBindingMetadataTest {
                 """
                     for tumbling window $w in (1, 2, 3)
                     start $s previous $p when $s gt 0
-                    return $w
+                    return ($w, $s, $p)
                     """;
-        WindowClause window = find(compile(query, "jq"), WindowClause.class);
+        List<Node> nodes = compile(query, "jq");
+        WindowClause window = find(nodes, WindowClause.class);
         var start = window.getStartCondition();
         // The condition sees the refined type of its own variables.
         assertEquals(
@@ -97,6 +99,13 @@ class FlworBindingMetadataTest {
         assertType("xs:integer+", window, window.getWindowVariable());
         assertType("xs:integer", window, start.variables().currentItem());
         assertType("xs:integer?", window, start.variables().previousItem());
+        // References see the refined types too, not placeholders from before type inference.
+        for (VariableReferenceExpression reference : findAll(nodes, VariableReferenceExpression.class)) {
+            assertEquals(
+                    reference.getStaticContext().getVariableSequenceType(reference.getVariableName()),
+                    reference.getStaticSequenceType(),
+                    reference.getVariableName().toString());
+        }
     }
 
     /** A binding's type is the one visible to the clauses after it. */
@@ -125,11 +134,11 @@ class FlworBindingMetadataTest {
     }
 
     private static <T extends Clause> T find(List<Node> nodes, Class<T> type) {
-        return nodes.stream()
-                .filter(type::isInstance)
-                .map(type::cast)
-                .findFirst()
-                .orElseThrow();
+        return findAll(nodes, type).get(0);
+    }
+
+    private static <T extends Node> List<T> findAll(List<Node> nodes, Class<T> type) {
+        return nodes.stream().filter(type::isInstance).map(type::cast).toList();
     }
 
     private static void assertRange(String query, String name, ExceptionMetadata metadata) {
