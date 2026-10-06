@@ -172,8 +172,8 @@ public final class DeclarationTranslation {
                 funcBody,
                 ctx.isExternal(),
                 translationContext.metadata(ctx.context()),
-                translationContext.metadata(ctx.functionName()));
-        inlineFunction.setParameterMetadata(Map.copyOf(parameterMetadata));
+                translationContext.metadata(ctx.functionName()),
+                parameterMetadata);
         return new FunctionDeclaration(inlineFunction, translationContext.metadata(ctx.context()));
     }
 }

@@ -248,10 +248,17 @@ public final class PrimaryTranslation {
 
         StatementsAndOptionalExpr funcBody = visitStatementsAndOptionalExpr.apply(ctx.fnBody());
 
-        InlineFunctionExpression function = new InlineFunctionExpression(
-                annotations, null, fnParams, fnReturnType, funcBody, translationContext.metadata(ctx.context()));
-        function.setParameterMetadata(Map.copyOf(parameterMetadata));
-        return function;
+        // An anonymous function has no name token.
+        return new InlineFunctionExpression(
+                annotations,
+                null,
+                fnParams,
+                fnReturnType,
+                funcBody,
+                false,
+                translationContext.metadata(ctx.context()),
+                null,
+                parameterMetadata);
     }
 
     public static <ExprSingleCtx extends ParserRuleContext> ArrayConstructorExpression squareArrayConstructor(

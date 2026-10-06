@@ -794,8 +794,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 (StatementsAndOptionalExpr) visit(expression.getBody(), argument),
                 expression.isExternal(),
                 expression.getMetadata(),
-                expression.getNameMetadata());
-        result.setParameterMetadata(expression.getParameterMetadata());
+                expression.getNameMetadata(),
+                expression.getParameterMetadata());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
         result.setSequential(expression.isSequential());
