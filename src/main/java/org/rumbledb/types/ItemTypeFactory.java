@@ -224,7 +224,8 @@ public class ItemTypeFactory {
         if (alternatives.size() == 1) {
             return alternatives.get(0);
         }
-        // A scalar/array union cannot have an atomic base: that would exclude valid array results.
+        // isSubtypeOf checks the base type before the members, so the base must cover every member:
+        // xs:anyAtomicType only if all members are atomic, otherwise item (e.g. when one is an array).
         ItemType baseType = alternatives.stream().allMatch(type -> type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))
                 ? BuiltinTypesCatalogue.atomicItem
                 : BuiltinTypesCatalogue.item;

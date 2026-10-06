@@ -151,6 +151,13 @@ class ObjectConstructorTypeInferenceTest {
     }
 
     @Test
+    void duplicateLiteralKeysNeverProduceAnObject() {
+        assertEquals(
+                BuiltinTypesCatalogue.errorItem,
+                infer("{\"a\": 1, \"a\": 2}", "jq").getItemType());
+    }
+
+    @Test
     void optionalNullRemainsNull() {
         ItemType type =
                 field(infer("{\"value\": if (true) then null else ()}", "jq").getItemType(), "value");

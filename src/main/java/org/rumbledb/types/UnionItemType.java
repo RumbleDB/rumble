@@ -281,8 +281,8 @@ public class UnionItemType extends AbstractItemType {
         boolean hasNull = false;
         Set<ItemType> resultTypes = new HashSet<>(this.types);
         resultTypes.addAll(otherTypes);
-        // Scalar/array unions inferred for object values must not be widened to an
-        // atomic type, which would exclude the possible array values.
+        // The atomic join below widens to an atomic base type, which cannot cover non-atomic members
+        // (for example, the array alternative of an inferred object field). Fall back to item instead.
         if (resultTypes.stream().anyMatch(type -> !type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))) {
             return BuiltinTypesCatalogue.item;
         }

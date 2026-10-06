@@ -467,14 +467,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 stringLiteralKeys.add(stringLiteralKey);
             }
         }
-        if (expression.getKeys() != null
-                && stringLiteralKeys.size() == expression.getKeys().size()) {
+        List<String> literalKeys = stringLiteralKeys.stream()
+                .map(StringLiteralExpression::getValue)
+                .toList();
+        boolean literalKeysOnly = expression.getKeys() != null
+                && literalKeys.size() == expression.getKeys().size();
+        if (literalKeysOnly && new HashSet<>(literalKeys).size() < literalKeys.size()) {
+            // Duplicate keys always make the constructor fail at runtime, so it returns no value, like fn:error().
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.errorItem));
+        } else if (literalKeysOnly) {
             // Literal keys define the shape even when a value expression can return zero or many items.
             // Infer each stored item after the constructor's null/array conversion.
             expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createAnonymousObjectType(
-                    stringLiteralKeys.stream()
-                            .map(StringLiteralExpression::getValue)
-                            .collect(Collectors.toList()),
+                    literalKeys,
                     expression.getValues().stream()
                             .map(value -> ItemTypeFactory.createObjectFieldType(value.getStaticSequenceType()))
                             .collect(Collectors.toList()))));
