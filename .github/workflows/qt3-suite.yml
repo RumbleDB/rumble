@@ -1,0 +1,216 @@
+name: QT3 Rumble Test Suite
+
+on:
+  workflow_call:
+    inputs:
+      tested_parser:
+        description: Parser to use (jsoniq or xquery)
+        required: false
+        type: string
+        default: jsoniq
+      run_analytics:
+        description: Run analytics and plots
+        required: false
+        type: boolean
+        default: true
+      mvn_args:
+        description: Extra Maven args (e.g. -Dtest=Prod1Test)
+        required: false
+        type: string
+        default: ''
+    secrets: {}
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.tested_parser }}
+  cancel-in-progress: true
+
+env:
+  TESTED_PARSER: ${{ inputs.tested_parser }}
+jobs:
+  build:
+    name: Build RumbleDB
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout caller (RumbleDB)
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build RumbleDB
+        run: mvn -B -q clean compile assembly:single
+
+      - name: Upload RumbleDB target
+        uses: actions/upload-artifact@v4
+        with:
+          name: rumble-target-${{ inputs.tested_parser }}
+          path: target
+          retention-days: 1
+
+  tests:
+    name: Run test suite (${{ matrix.suite }})
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [AppTest, ArrayTest, Fn1Test, Fn2Test, MapTest, MathTest, MiscTest, OpTest, Prod1Test, Prod2Test, SerTest, XsTest]
+    steps:
+      - name: Checkout test harness (this repo)
+        uses: actions/checkout@v4
+        with:
+          repository: RumbleDB/rumble-test-suite
+          ref: 9dff13de693ec8b7346037faac287f3b2aca37be
+          fetch-depth: 2
+      - name: Checkout caller (RumbleDB)
+        uses: actions/checkout@v4
+        with:
+          path: rumble
+          fetch-depth: 2
+      - name: Download RumbleDB target
+        uses: actions/download-artifact@v4
+        with:
+          name: rumble-target-${{ inputs.tested_parser }}
+          path: rumble/target
+      - name: (DEBUG) List rumble/target
+        run: ls -R rumble
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Run Maven tests
+        shell: bash
+        run: |
+          if [[ "${TESTED_PARSER}" == "jsoniq" ]]; then
+            SUITE="${{ matrix.suite }}"
+          else
+            # Prepend XQuery for XQuery parser
+            SUITE="XQuery${{ matrix.suite }}"
+          fi
+          if [[ -n "${{ inputs.mvn_args }}" ]]; then
+            MVN_ARGS="${{ inputs.mvn_args }}"
+          else
+            MVN_ARGS="-Dtest=${SUITE}"
+          fi
+          mvn -B -q ${MVN_ARGS} test || true
+
+      - name: Pre-aggregate analytics for ${{ matrix.suite }}
+        if: always()
+        run: mvn -B exec:java@analytics-pre -Dexec.args="${{ matrix.suite }}"
+
+      - name: Upload reports (per suite)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-${{ inputs.tested_parser }}-${{ matrix.suite }}
+          path: |
+            target/surefire-reports/*.xml
+          retention-days: 7
+      - name: Upload analytics (per suite)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: analytics-pre-${{ inputs.tested_parser }}-${{ matrix.suite }}
+          path: |
+            analytics-pre/*.json
+          retention-days: 7
+
+  collect-artifacts:
+    name: Collect and aggregate
+    needs: [tests]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout test harness (this repo)
+        uses: actions/checkout@v4
+        with:
+          repository: RumbleDB/rumble-test-suite
+          ref: 9dff13de693ec8b7346037faac287f3b2aca37be
+          fetch-depth: 2
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Download analytics artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: analytics-pre-${{ inputs.tested_parser }}-*
+          path: analytics-pre
+          merge-multiple: true
+      
+      - name: Download RumbleDB target
+        uses: actions/download-artifact@v4
+        with:
+          name: rumble-target-${{ inputs.tested_parser }}
+          path: rumble/target
+
+      - name: Compile and aggregate
+        run: |
+          mvn -B compile
+          mvn -B exec:java@analytics-aggregation
+
+      - name: Upload collected artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collected-artifacts-${{ inputs.tested_parser }}
+          path: |
+            analytics-results
+          retention-days: 7
+
+  plot:
+    name: Generate plots
+    needs: collect-artifacts
+    runs-on: ubuntu-latest
+    if: inputs.run_analytics == true
+    steps:
+      - name: Checkout test harness (this repo)
+        uses: actions/checkout@v4
+        with:
+          repository: RumbleDB/rumble-test-suite
+          ref: 9dff13de693ec8b7346037faac287f3b2aca37be
+          fetch-depth: 2
+
+      - name: Download collected artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: collected-artifacts-${{ inputs.tested_parser }}
+          path: analytics-results
+
+      - name: (DEBUG) List analytics-results
+        run: ls -R analytics-results
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install python dependencies
+        run: pip install -r analytics/requirements.txt
+
+      - name: Generate plots
+        run: python analytics/plot.py
+
+      - name: Upload plots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: plots-${{ inputs.tested_parser }}
+          path: |
+            plots
+          retention-days: 7
+
+
