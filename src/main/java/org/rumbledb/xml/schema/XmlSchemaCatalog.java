@@ -15,18 +15,26 @@
  */
 package org.rumbledb.xml.schema;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import javax.xml.validation.Schema;
 
 import org.apache.xerces.xs.XSAttributeDeclaration;
+import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSConstants;
 import org.apache.xerces.xs.XSElementDeclaration;
 import org.apache.xerces.xs.XSModel;
+import org.apache.xerces.xs.XSModelGroup;
 import org.apache.xerces.xs.XSNamedMap;
 import org.apache.xerces.xs.XSObjectList;
+import org.apache.xerces.xs.XSParticle;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.apache.xerces.xs.XSValue;
@@ -65,6 +73,7 @@ public final class XmlSchemaCatalog {
     private final XmlSchemaTypeMapper typeMapper;
     private final XercesTypedValueConverter typedValueConverter;
     private final XercesSimpleTypeCaster simpleTypeCaster;
+    private final List<XSComplexTypeDefinition> complexTypes;
 
     XmlSchemaCatalog(
             @NonNull XSModel schemaModel, @NonNull Schema validationSchema, Map<String, String> namespacePrefixes) {
@@ -73,6 +82,7 @@ public final class XmlSchemaCatalog {
         this.typeMapper = new XmlSchemaTypeMapper(namespacePrefixes);
         this.typedValueConverter = new XercesTypedValueConverter(this.typeMapper);
         this.simpleTypeCaster = new XercesSimpleTypeCaster(this.typeMapper, this.typedValueConverter);
+        this.complexTypes = collectComplexTypes(schemaModel);
     }
 
     public Optional<XSTypeDefinition> getTypeDefinition(@NonNull Name name) {
@@ -92,6 +102,12 @@ public final class XmlSchemaCatalog {
             names.add(this.typeMapper.nameOf(type));
         }
         return List.copyOf(names);
+    }
+
+    public boolean hasElementDeclaration(Name name) {
+        return this.schemaModel.getElementDeclaration(
+                        name.getLocalName(), XmlNameCodec.emptyToNull(name.getNamespace()))
+                != null;
     }
 
     /** Resolves a global declaration and the substitutions allowed by its blocking constraints. */
@@ -124,7 +140,8 @@ public final class XmlSchemaCatalog {
                 annotation.name(),
                 annotation.typeHierarchy(),
                 declaration.getNillable(),
-                matchingTypeNames(declaration.getTypeDefinition())));
+                matchingTypeNames(declaration.getTypeDefinition()),
+                typedValueType(declaration.getTypeDefinition()).orElse(null)));
     }
 
     /** Attribute declaration tests have the same matching rules as a named, typed attribute test. */
@@ -140,7 +157,8 @@ public final class XmlSchemaCatalog {
                 name,
                 annotation.name(),
                 annotation.typeHierarchy(),
-                matchingTypeNames(declaration.getTypeDefinition()));
+                matchingTypeNames(declaration.getTypeDefinition()),
+                typedValueType(declaration.getTypeDefinition()).orElse(null));
     }
 
     /** A pure union also accepts annotations derived from any of its atomic member types. */
@@ -214,7 +232,116 @@ public final class XmlSchemaCatalog {
      * cardinality describe the list's typed-value sequence.
      */
     public SequenceType getSimpleTypeCastResultType(Name name) {
-        XSSimpleTypeDefinition schemaType = this.simpleType(name);
+        return simpleTypedValueType(this.simpleType(name));
+    }
+
+    /**
+     * Returns the typed value of a node annotated with the named type, or empty when it is no narrower than
+     * xs:anyAtomicType*. Some XQuery types, such as xs:untyped, have no Xerces definition.
+     */
+    public Optional<SequenceType> getTypedValueType(Name typeName) {
+        if (Name.XS_NS.equals(typeName.getNamespace())
+                && getTypeDefinition(typeName).isEmpty()) {
+            if ("untyped".equals(typeName.getLocalName())) {
+                return Optional.of(new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem));
+            }
+            if (BuiltinTypesCatalogue.typeExists(typeName)
+                    && BuiltinTypesCatalogue.getItemTypeByName(typeName).isAtomicItemType()) {
+                return Optional.of(new SequenceType(BuiltinTypesCatalogue.getItemTypeByName(typeName)));
+            }
+        }
+        return getTypeDefinition(typeName).flatMap(this::typedValueType);
+    }
+
+    /**
+     * Returns the typed value of a node annotated with this type or with a type derived from it, since an instance
+     * may select one with xsi:type. Derivation keeps simple content within its base simple type, but a derived
+     * complex type can change the content type: for example, an extension of an empty type can add mixed content.
+     */
+    private Optional<SequenceType> typedValueType(XSTypeDefinition type) {
+        if (type instanceof XSSimpleTypeDefinition simpleType) {
+            // Values of xs:anySimpleType may also be lists.
+            return simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_ABSENT
+                    ? Optional.empty()
+                    : Optional.of(simpleTypedValueType(simpleType));
+        }
+        // Simple types are also derived from xs:anyType.
+        if (Name.XS_NS.equals(type.getNamespace()) && "anyType".equals(type.getName())) {
+            return Optional.empty();
+        }
+        SequenceType result = null;
+        for (XSComplexTypeDefinition derived : derivedComplexTypes((XSComplexTypeDefinition) type)) {
+            SequenceType typedValue;
+            switch (derived.getContentType()) {
+                case XSComplexTypeDefinition.CONTENTTYPE_EMPTY:
+                    typedValue = SequenceType.createSequenceType("()");
+                    break;
+                case XSComplexTypeDefinition.CONTENTTYPE_MIXED:
+                    typedValue = new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem);
+                    break;
+                case XSComplexTypeDefinition.CONTENTTYPE_SIMPLE:
+                    Optional<SequenceType> simpleContent = typedValueType(derived.getSimpleType());
+                    if (simpleContent.isEmpty()) {
+                        return Optional.empty();
+                    }
+                    typedValue = simpleContent.get();
+                    break;
+                default:
+                    // Atomizing element-only content raises an error instead of producing values.
+                    continue;
+            }
+            result = result == null ? typedValue : result.leastCommonSupertypeWith(typedValue);
+        }
+        // Atomization callers expect a node's typed value to have an atomic item type.
+        return Optional.ofNullable(result).filter(typedValue -> !typedValue.isEmptySequence());
+    }
+
+    private List<XSComplexTypeDefinition> derivedComplexTypes(XSComplexTypeDefinition type) {
+        List<XSComplexTypeDefinition> result = new ArrayList<>();
+        result.add(type);
+        for (XSComplexTypeDefinition candidate : this.complexTypes) {
+            if (candidate != type && candidate.derivedFromType(type, XSConstants.DERIVATION_NONE)) {
+                result.add(candidate);
+            }
+        }
+        return result;
+    }
+
+    /** Named complex types, and the anonymous complex types of global and local element declarations. */
+    private static List<XSComplexTypeDefinition> collectComplexTypes(XSModel schemaModel) {
+        Set<XSComplexTypeDefinition> complexTypes = Collections.newSetFromMap(new IdentityHashMap<>());
+        Deque<XSTypeDefinition> pending = new ArrayDeque<>();
+        XSNamedMap types = schemaModel.getComponents(XSConstants.TYPE_DEFINITION);
+        for (int index = 0; index < types.getLength(); index++) {
+            pending.add((XSTypeDefinition) types.item(index));
+        }
+        XSNamedMap elements = schemaModel.getComponents(XSConstants.ELEMENT_DECLARATION);
+        for (int index = 0; index < elements.getLength(); index++) {
+            pending.add(((XSElementDeclaration) elements.item(index)).getTypeDefinition());
+        }
+        while (!pending.isEmpty()) {
+            if (pending.pop() instanceof XSComplexTypeDefinition complexType && complexTypes.add(complexType)) {
+                addLocalElementTypes(complexType.getParticle(), pending);
+            }
+        }
+        return List.copyOf(complexTypes);
+    }
+
+    private static void addLocalElementTypes(XSParticle particle, Deque<XSTypeDefinition> pending) {
+        if (particle == null) {
+            return;
+        }
+        if (particle.getTerm() instanceof XSElementDeclaration element) {
+            pending.add(element.getTypeDefinition());
+        } else if (particle.getTerm() instanceof XSModelGroup group) {
+            XSObjectList particles = group.getParticles();
+            for (int index = 0; index < particles.getLength(); index++) {
+                addLocalElementTypes((XSParticle) particles.item(index), pending);
+            }
+        }
+    }
+
+    private SequenceType simpleTypedValueType(XSSimpleTypeDefinition schemaType) {
         if (mayProduceMultipleValues(schemaType)) {
             ItemType itemType = this.typeMapper.getListItemType(schemaType).orElse(BuiltinTypesCatalogue.atomicItem);
             return new SequenceType(itemType, SequenceType.Arity.ZeroOrMore);

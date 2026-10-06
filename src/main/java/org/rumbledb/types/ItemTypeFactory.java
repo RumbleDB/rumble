@@ -658,8 +658,12 @@ public class ItemTypeFactory {
     }
 
     public static ItemType elementNodeItemType(
-            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, boolean nillable) {
-        return new ElementNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy, nillable);
+            Name nodeName,
+            Name schemaTypeName,
+            List<Name> schemaTypeHierarchy,
+            boolean nillable,
+            SequenceType typedValueType) {
+        return new ElementNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy, nillable, typedValueType);
     }
 
     /**
@@ -684,8 +688,9 @@ public class ItemTypeFactory {
         return new AttributeNodeItemType(nodeName);
     }
 
-    public static ItemType attributeNodeItemType(Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy) {
-        return new AttributeNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy);
+    public static ItemType attributeNodeItemType(
+            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, SequenceType typedValueType) {
+        return new AttributeNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy, typedValueType);
     }
 
     /**

@@ -55,22 +55,41 @@ public final class TypeAtomization {
 
     private static SequenceType inferItemType(ItemType type) {
         if (type.isUnionType()) {
-            List<ItemType> alternatives = new ArrayList<>();
-            SequenceCardinality cardinality = null;
-            for (ItemType member : type.getMemberTypes()) {
-                SequenceType atomized = inferItemType(member);
-                alternatives.add(atomized.getItemType());
-                cardinality =
-                        cardinality == null ? atomized.getCardinality() : cardinality.union(atomized.getCardinality());
-            }
-            return new SequenceType(ItemTypeFactory.createInferredUnionType(alternatives), cardinality);
+            return inferAlternativesType(type.getMemberTypes());
         }
         if (type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
             return new SequenceType(type);
         }
-        // Node types do not currently carry inferred typed-value information.
-        // Atomization may produce nothing, one value, a schema list, or an error.
+        if (type instanceof SchemaElementNodeItemType schemaElement
+                && !schemaElement.getAlternatives().isEmpty()) {
+            return inferAlternativesType(schemaElement.getAlternatives());
+        }
+        if (type instanceof ElementNodeItemType element && element.getTypedValueType() != null) {
+            SequenceType typedValue = element.getTypedValueType();
+            // A nilled element has an empty typed value.
+            return element.isNillable()
+                    ? new SequenceType(
+                            typedValue.getItemType(),
+                            typedValue.getCardinality().union(SequenceCardinality.EMPTY))
+                    : typedValue;
+        }
+        if (type instanceof AttributeNodeItemType attribute && attribute.getTypedValueType() != null) {
+            return attribute.getTypedValueType();
+        }
+        // Other nodes may produce nothing, one value, a schema list, or an error.
         // Other item kinds also retain this conservative bound on successful atomization.
         return new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceCardinality.ANY);
+    }
+
+    private static SequenceType inferAlternativesType(List<? extends ItemType> types) {
+        List<ItemType> alternatives = new ArrayList<>();
+        SequenceCardinality cardinality = null;
+        for (ItemType member : types) {
+            SequenceType atomized = inferItemType(member);
+            alternatives.add(atomized.getItemType());
+            cardinality =
+                    cardinality == null ? atomized.getCardinality() : cardinality.union(atomized.getCardinality());
+        }
+        return new SequenceType(ItemTypeFactory.createInferredUnionType(alternatives), cardinality);
     }
 }
