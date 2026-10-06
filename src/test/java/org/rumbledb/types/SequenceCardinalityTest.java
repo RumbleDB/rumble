@@ -15,6 +15,7 @@
  */
 package org.rumbledb.types;
 
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -22,23 +23,32 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.api.Rumble;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.CompilationPipeline;
+import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
+
 class SequenceCardinalityTest {
     @Test
     void operationsAgreeWithConcreteSequenceLengths() {
         for (SequenceCardinality left : SequenceCardinality.values()) {
             for (SequenceCardinality right : SequenceCardinality.values()) {
                 Set<Integer> sums = new HashSet<>();
-                Set<Integer> products = new HashSet<>();
+                Set<Integer> repeated = new HashSet<>();
                 Set<Integer> choices = new HashSet<>(sizes(left));
                 choices.addAll(sizes(right));
                 for (int a : sizes(left)) {
                     for (int b : sizes(right)) {
                         sums.add(Math.min(2, a + b));
-                        products.add(Math.min(2, a * b));
                     }
                 }
+                for (int iterations : sizes(right)) {
+                    repeated.addAll(totals(sizes(left), iterations));
+                }
                 assertEquals(sums, sizes(left.concatenate(right)), left + " concatenated with " + right);
-                assertEquals(products, sizes(left.multiply(right)), left + " repeated " + right + " times");
+                assertEquals(repeated, sizes(left.repeated(right)), left + " repeated " + right + " times");
                 assertEquals(choices, sizes(left.union(right)));
                 assertEquals(sizes(right).containsAll(sizes(left)), left.isSubtypeOf(right));
                 assertEquals(sizes(left).stream().anyMatch(sizes(right)::contains), left.overlaps(right));
@@ -67,6 +77,38 @@ class SequenceCardinalityTest {
         assertEquals(SequenceCardinality.MANY, multiple.incrementArity().getCardinality());
         assertEquals(
                 SequenceCardinality.MANY, singleton.concatenateWith(singleton).getCardinality());
+    }
+
+    @Test
+    void independentIterationsCanProduceExactlyOneItem() {
+        // Only the first of the two iterations returns an item, so the case below matches and returns a string.
+        String query = "switch (for $x in (1, 2) return if ($x eq 1) then $x else ()) "
+                + "case 1 return \"one\" default return 2";
+        URI uri = URI.create("file:///iterations.jq");
+        RumbleConfiguration configuration = RumbleConfiguration.defaultConfiguration();
+        ItemType inferred = CompilationPipeline.compileMainModule(
+                        query, uri, new CompilationConfiguration(configuration), ExternalBindings.empty())
+                .getExpression()
+                .getStaticSequenceType()
+                .getItemType();
+        Item value = new Rumble(configuration).runQuery(query, uri).getAsList().get(0);
+        assertTrue(
+                value.getDynamicType().isSubtypeOf(inferred), () -> value.serialize() + " is excluded by " + inferred);
+    }
+
+    /** Totals of independently sized sequences, capped at 2 like sizes(); two iterations reach every total. */
+    private static Set<Integer> totals(Set<Integer> sizes, int iterations) {
+        Set<Integer> totals = Set.of(0);
+        for (int i = 0; i < iterations; i++) {
+            Set<Integer> next = new HashSet<>();
+            for (int total : totals) {
+                for (int size : sizes) {
+                    next.add(Math.min(2, total + size));
+                }
+            }
+            totals = next;
+        }
+        return totals;
     }
 
     private static Set<Integer> sizes(SequenceCardinality cardinality) {

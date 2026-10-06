@@ -65,11 +65,16 @@ public enum SequenceCardinality {
         return fromPossibilities(zero, one, many);
     }
 
-    public SequenceCardinality multiply(SequenceCardinality other) {
-        boolean zero = allowsZero() || other.allowsZero();
-        boolean one = allowsOne() && other.allowsOne();
-        boolean many = (allowsMany() && (other.allowsOne() || other.allowsMany()))
-                || (other.allowsMany() && (allowsOne() || allowsMany()));
+    /**
+     * The cardinality of concatenating one sequence of this cardinality per iteration, for a number of
+     * iterations with the given cardinality. Each iteration can produce a different size: for example,
+     * two iterations of an optional sequence can produce exactly one item.
+     */
+    public SequenceCardinality repeated(SequenceCardinality iterations) {
+        boolean someIteration = iterations.allowsOne() || iterations.allowsMany();
+        boolean zero = iterations.allowsZero() || allowsZero();
+        boolean one = allowsOne() && (iterations.allowsOne() || (iterations.allowsMany() && allowsZero()));
+        boolean many = (allowsMany() && someIteration) || (iterations.allowsMany() && (allowsOne() || allowsMany()));
         return fromPossibilities(zero, one, many);
     }
 

@@ -2285,7 +2285,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType rightType = rightExpression.getStaticSequenceType();
         basicChecks(rightType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
 
-        SequenceCardinality resultingCardinality = leftType.getCardinality().multiply(rightType.getCardinality());
+        // The right expression is evaluated once per item of the left expression.
+        SequenceCardinality resultingCardinality = rightType.getCardinality().repeated(leftType.getCardinality());
         expression.setStaticSequenceType(new SequenceType(rightType.getItemType(), resultingCardinality));
         return argument;
     }
@@ -2324,7 +2325,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         // An empty source still emits one tuple with an empty binding.
                         sourceCardinality = sourceCardinality.replaceZeroWithOne();
                     }
-                    forCardinality = sourceCardinality.multiply(forCardinality);
+                    forCardinality = sourceCardinality.repeated(forCardinality);
                 } else if (!((ForClause) clause).isAllowEmpty()) {
                     forCardinality = SequenceCardinality.EMPTY;
                 }
@@ -2344,7 +2345,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType returnType = expression.getReturnClause().getReturnExpr().getStaticSequenceType();
         basicChecks(returnType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
         returnType = new SequenceType(
-                returnType.getItemType(), returnType.getCardinality().multiply(forCardinality));
+                returnType.getItemType(), returnType.getCardinality().repeated(forCardinality));
         expression.setStaticSequenceType(returnType);
         return argument;
     }
@@ -2852,7 +2853,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         // An empty source still emits one tuple with an empty binding.
                         sourceCardinality = sourceCardinality.replaceZeroWithOne();
                     }
-                    forCardinality = sourceCardinality.multiply(forCardinality);
+                    forCardinality = sourceCardinality.repeated(forCardinality);
                 } else if (!((ForClause) clause).isAllowEmpty()) {
                     forCardinality = SequenceCardinality.EMPTY;
                 }

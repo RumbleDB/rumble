@@ -217,7 +217,7 @@ public class SequenceType implements Serializable {
 
     // Grouping concatenates one or more sequences for each group.
     public SequenceType incrementArity() {
-        return new SequenceType(this.itemType, this.cardinality.multiply(SequenceCardinality.ONE_OR_MANY));
+        return new SequenceType(this.itemType, this.cardinality.repeated(SequenceCardinality.ONE_OR_MANY));
     }
 
     public SequenceType refineCardinalityIfSubtype(SequenceCardinality other) {
@@ -262,9 +262,10 @@ public class SequenceType implements Serializable {
             return SequenceCardinality.fromArity(this).isSubtypeOf(SequenceCardinality.fromArity(superArity));
         }
 
+        // Declared arities that allow many items also allow one, so the operand order does not matter here.
         public Arity multiplyWith(Arity other) {
             return SequenceCardinality.fromArity(this)
-                    .multiply(SequenceCardinality.fromArity(other))
+                    .repeated(SequenceCardinality.fromArity(other))
                     .toArity();
         }
     }
