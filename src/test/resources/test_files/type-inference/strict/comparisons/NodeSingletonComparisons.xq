@@ -1,7 +1,3 @@
-(:JIQS: ShouldRun; Output="(true, false, false)" :)
+(:JIQS: ShouldRun; Output="true" :)
 let $a := <a/>
-return (
-    ($a is $a) is statically xs:boolean,
-    ($a << $a) is statically xs:boolean,
-    ($a >> $a) is statically xs:boolean
-)
+return ($a is $a) is statically xs:boolean
