@@ -68,23 +68,9 @@ public final class ComparisonTranslation {
         Name variableNameRight = Name.TEMP_VAR2;
 
         Clause firstClause = new ForClause(
-                variableNameLeft,
-                false,
-                null,
-                null,
-                mainExpression,
-                translationContext.metadata(ctx.context()),
-                null,
-                null);
+                variableNameLeft, false, null, null, mainExpression, translationContext.metadata(ctx.context()));
         Clause secondClause = new ForClause(
-                variableNameRight,
-                false,
-                null,
-                null,
-                childExpression,
-                translationContext.metadata(ctx.context()),
-                null,
-                null);
+                variableNameRight, false, null, null, childExpression, translationContext.metadata(ctx.context()));
         firstClause.chainWith(secondClause);
         Expression valueComparison = new ComparisonExpression(
                 new VariableReferenceExpression(variableNameLeft, translationContext.metadata(ctx.context())),

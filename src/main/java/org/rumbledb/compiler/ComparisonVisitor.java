@@ -120,9 +120,7 @@ public class ComparisonVisitor extends CloneVisitor {
                     leftChild.getStaticSequenceType(),
                     null,
                     leftChild,
-                    expression.getMetadata(),
-                    null,
-                    null);
+                    expression.getMetadata());
             firstClause.setStaticContext(leftContext);
             StaticContext rightContext = new StaticContext(leftContext);
             rightContext.addVariable(variableNameRight, rightChild.getStaticSequenceType(), expression.getMetadata());
@@ -132,9 +130,7 @@ public class ComparisonVisitor extends CloneVisitor {
                     rightChild.getStaticSequenceType(),
                     null,
                     rightChild,
-                    expression.getMetadata(),
-                    null,
-                    null);
+                    expression.getMetadata());
             secondClause.setStaticContext(rightContext);
             firstClause.chainWith(secondClause);
             Expression leftReference = new VariableReferenceExpression(variableNameLeft, expression.getMetadata());

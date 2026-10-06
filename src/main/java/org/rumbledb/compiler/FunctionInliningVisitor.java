@@ -111,13 +111,11 @@ public class FunctionInliningVisitor extends CloneVisitor {
     private void addCastCase(
             List<TypeswitchCase> cases, Expression expression, SequenceType testType, SequenceType targetType) {
         if (testType.equals(targetType)) {
-            cases.add(new TypeswitchCase(null, Collections.singletonList(testType), expression, null));
+            cases.add(new TypeswitchCase(Collections.singletonList(testType), expression));
         } else if (testType.getArity().isSubtypeOf(Arity.OneOrZero)) {
             cases.add(new TypeswitchCase(
-                    null,
                     Collections.singletonList(testType),
-                    new CastExpression(expression, targetType, expression.getMetadata()),
-                    null));
+                    new CastExpression(expression, targetType, expression.getMetadata())));
         } else {
             Name variableName = Name.createVariableInNoNamespace(
                     String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
@@ -127,9 +125,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
                     new SequenceType(testType.getItemType(), Arity.One),
                     null,
                     expression,
-                    expression.getMetadata(),
-                    null,
-                    null);
+                    expression.getMetadata());
             Expression castExpression = new CastExpression(
                     new VariableReferenceExpression(variableName, expression.getMetadata()),
                     new SequenceType(targetType.getItemType(), Arity.One),
@@ -137,10 +133,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
             ReturnClause returnClause = new ReturnClause(castExpression, expression.getMetadata());
             forClause.chainWith(returnClause);
             cases.add(new TypeswitchCase(
-                    null,
-                    Collections.singletonList(testType),
-                    new FlworExpression(returnClause, expression.getMetadata()),
-                    null));
+                    Collections.singletonList(testType), new FlworExpression(returnClause, expression.getMetadata())));
         }
     }
 
@@ -235,11 +228,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     expression,
                     cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata()),
-                            null),
+                    new TypeswitchCase(new TreatExpression(
+                            expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata())),
                     expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
@@ -300,11 +290,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     expression,
                     cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata()),
-                            null),
+                    new TypeswitchCase(new TreatExpression(
+                            expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata())),
                     expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
@@ -366,11 +353,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     expression,
                     cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata()),
-                            null),
+                    new TypeswitchCase(new TreatExpression(
+                            expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata())),
                     expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
@@ -472,12 +456,11 @@ public class FunctionInliningVisitor extends CloneVisitor {
             if (isVariableReferenced(expression.getArguments(), paramName, i)) {
                 Name columnName = Name.createVariableInNoNamespace(
                         String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
-                Clause expressionClause =
-                        new LetClause(columnName, null, argumentExpression, expression.getMetadata(), null);
+                Clause expressionClause = new LetClause(columnName, null, argumentExpression, expression.getMetadata());
                 Expression assignmentExpression = createTypePromotion(
                         new VariableReferenceExpression(columnName, expression.getMetadata()), paramType);
                 Clause assignmentClause =
-                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata(), null);
+                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
                 if (assignmentClauses != null) {
                     assignmentClause.chainWith(assignmentClauses);
                 }
@@ -489,7 +472,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
             } else {
                 Expression assignmentExpression = createTypePromotion(argumentExpression, paramType);
                 Clause expressionClause =
-                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata(), null);
+                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
                 if (expressionClauses != null) {
                     expressionClause.chainWith(expressionClauses);
                 }

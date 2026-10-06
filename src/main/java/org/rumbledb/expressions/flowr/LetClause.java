@@ -37,7 +37,7 @@ public class LetClause extends Clause {
     @Getter
     private final Name variableName;
 
-    /** Variable token metadata, or null for compiler-generated clauses. */
+    /** Variable token metadata, or null for compiler-generated clauses, which bind no source variable. */
     @Getter
     private final ExceptionMetadata variableMetadata;
 
@@ -55,6 +55,11 @@ public class LetClause extends Clause {
 
     // Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
+
+    /** Creates a compiler-generated clause, whose variable has no source token. */
+    public LetClause(Name variableName, SequenceType sequenceType, Expression expression, ExceptionMetadata metadata) {
+        this(variableName, sequenceType, expression, metadata, null);
+    }
 
     public LetClause(
             Name variableName,

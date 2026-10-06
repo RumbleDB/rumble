@@ -43,7 +43,7 @@ public class ForClause extends Clause {
     @Getter
     private final Name positionalVariableName;
 
-    /** Variable token metadata, or null for compiler-generated clauses. */
+    /** Variable token metadata, or null for compiler-generated clauses, which bind no source variable. */
     @Getter
     private final ExceptionMetadata variableMetadata;
 
@@ -64,6 +64,17 @@ public class ForClause extends Clause {
     // Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
     @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
+
+    /** Creates a compiler-generated clause, whose variables have no source tokens. */
+    public ForClause(
+            Name variableName,
+            boolean allowEmpty,
+            SequenceType sequenceType,
+            Name positionalVariableName,
+            Expression expression,
+            ExceptionMetadata metadata) {
+        this(variableName, allowEmpty, sequenceType, positionalVariableName, expression, metadata, null, null);
+    }
 
     public ForClause(
             Name variableName,

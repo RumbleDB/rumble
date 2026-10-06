@@ -43,6 +43,16 @@ public class TypeswitchCase {
     private final List<SequenceType> union;
     private final Expression returnExpression;
 
+    /** Creates a compiler-generated case that binds no variable. */
+    public TypeswitchCase(List<SequenceType> union, Expression returnExpression) {
+        this(null, union, returnExpression, null);
+    }
+
+    /** Creates a compiler-generated default case that binds no variable. */
+    public TypeswitchCase(Expression returnExpression) {
+        this(null, returnExpression, null);
+    }
+
     public TypeswitchCase(
             Name variableName,
             List<SequenceType> union,
