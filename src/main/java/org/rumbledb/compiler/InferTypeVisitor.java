@@ -1068,9 +1068,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         SequenceType inferred = expression.getMainExpression().getStaticSequenceType();
         SequenceType expected = expression.getSequenceType();
-        // Assertions use declared occurrence indicators, which cannot express MANY or ZERO_OR_MANY.
-        if (inferred.getArity() != expected.getArity()
-                || !inferred.getItemType().equals(expected.getItemType())) {
+        // Equality compares declared occurrence indicators, which is all an assertion's type can express.
+        if (!inferred.equals(expected)) {
             throw new IsStaticallyUnexpectedTypeException(
                     "expected static type is " + expected + " instead " + inferred + " was inferred",
                     expression.getMetadata());

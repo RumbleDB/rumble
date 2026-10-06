@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
@@ -37,7 +36,6 @@ import org.rumbledb.runtime.functions.FunctionCoercion;
 
 @Log4j2
 @Getter
-@EqualsAndHashCode
 public class SequenceType implements Serializable {
 
     @Serial
@@ -268,6 +266,22 @@ public class SequenceType implements Serializable {
                     .repeated(SequenceCardinality.fromArity(other))
                     .toArity();
         }
+    }
+
+    /**
+     * Equal sequence types have the same item type and declared occurrence indicator, as their notation shows.
+     * Inferred refinements such as MANY are not part of equality; compare getCardinality() where they matter.
+     */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof SequenceType that
+                && this.itemType.equals(that.itemType)
+                && getArity() == that.getArity();
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * this.itemType.hashCode() + getArity().hashCode();
     }
 
     @Override

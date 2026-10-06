@@ -68,6 +68,9 @@ class SequenceCardinalityTest {
         SequenceType empty = SequenceType.createSequenceType("()");
         SequenceType singleton = new SequenceType(BuiltinTypesCatalogue.integerItem);
         assertEquals(SequenceType.Arity.OneOrMore, multiple.getArity());
+        // Equality follows the declared notation, so the refinement is invisible to it.
+        assertEquals(SequenceType.createSequenceType("integer+"), multiple);
+        assertEquals(SequenceType.createSequenceType("integer+").hashCode(), multiple.hashCode());
         assertTrue(multiple.isSubtypeOf(SequenceType.createSequenceType("integer+")));
         assertFalse(SequenceType.createSequenceType("integer+").isSubtypeOf(multiple));
         assertFalse(multiple.hasOverlapWith(singleton));
