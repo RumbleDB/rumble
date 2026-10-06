@@ -244,7 +244,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (clause.getPositionalVariableName() != null) {
             result.addVariable(
                     clause.getPositionalVariableName(),
-                    clause.getPositionalVariableSequenceType(),
+                    new SequenceType(BuiltinTypesCatalogue.integerItem),
                     Objects.requireNonNullElse(clause.getPositionalVariableMetadata(), clause.getMetadata()));
         }
         this.visit(clause.getNextClause(), result);
@@ -288,10 +288,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private static void addWindowVars(WindowClause.WindowVars vars, StaticContext context, WindowClause clause) {
+        // Type inference later refines these types from the window's input.
+        SequenceType optionalItem =
+                new SequenceType(clause.getSequenceType().getItemType(), SequenceType.Arity.OneOrZero);
         for (Name name : vars.names()) {
             context.addVariable(
                     name,
-                    clause.getConditionVariableSequenceType(name),
+                    name.equals(vars.position()) ? new SequenceType(BuiltinTypesCatalogue.integerItem) : optionalItem,
                     Objects.requireNonNullElse(clause.getVariableMetadata(name), clause.getMetadata()));
         }
     }
@@ -355,7 +358,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
                 clause.getCountVariableName(),
-                clause.getVariableSequenceType(),
+                SequenceType.createSequenceType("integer"),
                 Objects.requireNonNullElse(clause.getVariableMetadata(), clause.getMetadata()));
         this.visit(clause.getNextClause(), result);
         return argument;

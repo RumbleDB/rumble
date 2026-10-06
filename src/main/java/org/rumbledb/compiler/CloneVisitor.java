@@ -280,7 +280,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 clause.getMetadata(),
                 clause.getVariableMetadata(),
                 clause.getPositionalVariableMetadata());
-        result.setVariableSequenceType(clause.getVariableSequenceType());
         result.setStaticContext(clause.getStaticContext());
         return result;
     }
@@ -330,7 +329,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                             : (Expression) visit(variable.getExpression(), argument),
                     variable.getCollationURI(),
                     variable.getVariableMetadata());
-            copy.setVariableSequenceType(variable.getVariableSequenceType());
             groupByVariableDeclarations.add(copy);
         }
         Clause result = new GroupByClause(groupByVariableDeclarations, clause.getMetadata());
@@ -1120,7 +1118,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 ? new TypeswitchCase(switchCase.getVariableName(), body, switchCase.getVariableMetadata())
                 : new TypeswitchCase(
                         switchCase.getVariableName(), switchCase.getUnion(), body, switchCase.getVariableMetadata());
-        copy.setVariableSequenceType(switchCase.getVariableSequenceType());
         return copy;
     }
 
@@ -1130,7 +1127,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 ? new TypeSwitchStatementCase(switchCase.getVariableName(), body, switchCase.getVariableMetadata())
                 : new TypeSwitchStatementCase(
                         switchCase.getVariableName(), switchCase.getUnion(), body, switchCase.getVariableMetadata());
-        copy.setVariableSequenceType(switchCase.getVariableSequenceType());
         return copy;
     }
 

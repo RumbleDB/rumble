@@ -86,11 +86,6 @@ public class LetClause extends Clause {
         return this.sequenceType;
     }
 
-    /** Type visible after this binding; staticType retains the initializer's type for execution. */
-    public SequenceType getVariableSequenceType() {
-        return this.sequenceType == null ? this.staticType : this.sequenceType;
-    }
-
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
         if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
                 && this.variableHighestStorageMode == ExecutionMode.UNSET) {

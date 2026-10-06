@@ -1860,7 +1860,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     variableType = variableType == null ? st : variableType.leastCommonSupertypeWith(st);
                 }
                 returnExpression.getStaticContext().replaceVariableSequenceType(variableName, variableType);
-                typeswitchCase.setVariableSequenceType(variableType);
             }
 
             visit(returnExpression, argument);
@@ -1874,7 +1873,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // if we bind a variable in the default case, we infer testCondition type
         if (variableName != null) {
             returnExpression.getStaticContext().replaceVariableSequenceType(variableName, conditionType);
-            expression.getDefaultCase().setVariableSequenceType(conditionType);
         }
         visit(returnExpression, argument);
         SequenceType defaultType = returnExpression.getStaticSequenceType();
@@ -2374,8 +2372,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getClass().getSimpleName(),
                 expression.getVariableName(),
                 expression.getMetadata());
-
-        expression.setVariableSequenceType(declaredType == null ? inferredType : declaredType);
         return argument;
     }
 
@@ -2386,17 +2382,47 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 ? expression.getExpression().getStaticSequenceType()
                 : expression.getActualSequenceType();
         basicChecks(sourceType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
-        visit(
-                expression.getStartCondition().expression(),
-                expression.getStartCondition().expression().getStaticContext());
-        checkWindowConditionType(expression.getStartCondition().expression(), expression);
-        if (expression.getEndCondition() != null) {
-            visit(
-                    expression.getEndCondition().expression(),
-                    expression.getEndCondition().expression().getStaticContext());
-            checkWindowConditionType(expression.getEndCondition().expression(), expression);
+        // Condition variables bind items of the input, while a declared type applies to the window variable.
+        ItemType inputItemType =
+                expression.getExpression().getStaticSequenceType().getItemType();
+        WindowClause.WindowCondition start = expression.getStartCondition();
+        WindowClause.WindowCondition end = expression.getEndCondition();
+        refineWindowConditionVariables(
+                start.variables(), inputItemType, start.expression().getStaticContext());
+        visit(start.expression(), start.expression().getStaticContext());
+        checkWindowConditionType(start.expression(), expression);
+        if (end != null) {
+            refineWindowConditionVariables(
+                    end.variables(), inputItemType, end.expression().getStaticContext());
+            visit(end.expression(), end.expression().getStaticContext());
+            checkWindowConditionType(end.expression(), expression);
+        }
+
+        StaticContext followingContext = expression.getNextClause().getStaticContext();
+        if (expression.getActualSequenceType() == null) {
+            // A window always contains at least one item.
+            followingContext.replaceVariableSequenceType(
+                    expression.getWindowVariable(), new SequenceType(inputItemType, SequenceType.Arity.OneOrMore));
+        }
+        refineWindowConditionVariables(start.variables(), inputItemType, followingContext);
+        if (end != null) {
+            refineWindowConditionVariables(end.variables(), inputItemType, followingContext);
         }
         return argument;
+    }
+
+    // The current item always exists, while the previous and next items may not.
+    private static void refineWindowConditionVariables(
+            WindowClause.WindowVars variables, ItemType inputItemType, StaticContext context) {
+        if (variables.currentItem() != null) {
+            context.replaceVariableSequenceType(variables.currentItem(), new SequenceType(inputItemType));
+        }
+        for (Name item : Arrays.asList(variables.previousItem(), variables.nextItem())) {
+            if (item != null) {
+                context.replaceVariableSequenceType(
+                        item, new SequenceType(inputItemType, SequenceType.Arity.OneOrZero));
+            }
+        }
     }
 
     private void checkWindowConditionType(Expression condition, WindowClause clause) {
@@ -2493,7 +2519,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                                 + expectedType,
                         expression.getMetadata());
             }
-            groupByVar.setVariableSequenceType(expectedType);
             groupingVars.add(groupByVar.getVariableName());
         }
 
@@ -2957,7 +2982,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     variableType = variableType == null ? st : variableType.leastCommonSupertypeWith(st);
                 }
                 returnStatement.getStaticContext().replaceVariableSequenceType(variableName, variableType);
-                typeswitchCase.setVariableSequenceType(variableType);
             }
 
             visit(returnStatement, argument);
@@ -2971,7 +2995,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // if we bind a variable in the default case, we infer testCondition type
         if (variableName != null) {
             returnStatement.getStaticContext().replaceVariableSequenceType(variableName, conditionType);
-            statement.getDefaultCase().setVariableSequenceType(conditionType);
         }
         visit(returnStatement, argument);
         SequenceType defaultType = returnStatement.getStaticSequenceType();

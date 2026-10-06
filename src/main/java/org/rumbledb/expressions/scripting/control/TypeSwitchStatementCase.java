@@ -18,7 +18,6 @@ package org.rumbledb.expressions.scripting.control;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -34,9 +33,6 @@ import org.rumbledb.types.SequenceType;
 public class TypeSwitchStatementCase {
     private final Name variableName;
     private final ExceptionMetadata variableMetadata;
-
-    @Setter
-    private SequenceType variableSequenceType;
 
     private final List<SequenceType> union;
     private final Statement returnStatement;

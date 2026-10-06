@@ -19,6 +19,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -28,6 +29,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SourcePosition;
 import org.rumbledb.exceptions.SourceRange;
@@ -37,6 +39,7 @@ import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 
 class FlworBindingMetadataTest {
     private static final String QUERY =
@@ -54,8 +57,8 @@ class FlworBindingMetadataTest {
         ForClause forClause = find(nodes, ForClause.class);
         assertRange(QUERY, "$i", forClause.getVariableMetadata());
         assertRange(QUERY, "$pos", forClause.getPositionalVariableMetadata());
-        assertEquals("xs:integer", forClause.getVariableSequenceType().toString());
-        assertEquals("xs:integer", forClause.getPositionalVariableSequenceType().toString());
+        assertType("xs:integer", forClause, forClause.getVariableName());
+        assertType("xs:integer", forClause, forClause.getPositionalVariableName());
         assertEquals(
                 forClause.getVariableMetadata(),
                 forClause
@@ -67,10 +70,43 @@ class FlworBindingMetadataTest {
 
         LetClause letClause = find(nodes, LetClause.class);
         assertRange(QUERY, "$value", letClause.getVariableMetadata());
-        assertEquals("xs:integer", letClause.getVariableSequenceType().toString());
-        var groupVariable = find(nodes, GroupByClause.class).getGroupVariables().get(0);
+        assertType("xs:integer", letClause, letClause.getVariableName());
+        GroupByClause groupBy = find(nodes, GroupByClause.class);
+        var groupVariable = groupBy.getGroupVariables().get(0);
         assertRange(QUERY, "$key", groupVariable.getVariableMetadata());
-        assertEquals("xs:integer", groupVariable.getVariableSequenceType().toString());
+        assertType("xs:integer", groupBy, groupVariable.getVariableName());
+    }
+
+    @Test
+    void infersWindowVariableTypesFromTheInput() {
+        String query =
+                """
+                    for tumbling window $w in (1, 2, 3)
+                    start $s previous $p when $s gt 0
+                    return $w
+                    """;
+        WindowClause window = find(compile(query, "jq"), WindowClause.class);
+        var start = window.getStartCondition();
+        // The condition sees the refined type of its own variables.
+        assertEquals(
+                "xs:integer",
+                start.expression()
+                        .getStaticContext()
+                        .getVariableSequenceType(start.variables().currentItem())
+                        .toString());
+        assertType("xs:integer+", window, window.getWindowVariable());
+        assertType("xs:integer", window, start.variables().currentItem());
+        assertType("xs:integer?", window, start.variables().previousItem());
+    }
+
+    /** A binding's type is the one visible to the clauses after it. */
+    private static void assertType(String expected, Clause clause, Name variable) {
+        assertEquals(
+                expected,
+                clause.getNextClause()
+                        .getStaticContext()
+                        .getVariableSequenceType(variable)
+                        .toString());
     }
 
     private static List<Node> compile(String query, String extension) {

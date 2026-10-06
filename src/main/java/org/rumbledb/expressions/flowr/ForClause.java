@@ -30,7 +30,6 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 public class ForClause extends Clause {
@@ -52,11 +51,6 @@ public class ForClause extends Clause {
     private final ExceptionMetadata positionalVariableMetadata;
 
     protected SequenceType sequenceType;
-
-    // The type visible immediately after this binding, before later clauses regroup or shadow it.
-    @Getter
-    @Setter
-    private SequenceType variableSequenceType;
 
     @Getter
     protected Expression expression;
@@ -108,10 +102,6 @@ public class ForClause extends Clause {
 
     public SequenceType getActualSequenceType() {
         return this.sequenceType;
-    }
-
-    public SequenceType getPositionalVariableSequenceType() {
-        return this.positionalVariableName == null ? null : new SequenceType(BuiltinTypesCatalogue.integerItem);
     }
 
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {

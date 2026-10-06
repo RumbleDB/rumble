@@ -16,7 +16,6 @@
 package org.rumbledb.expressions.flowr;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -35,11 +34,6 @@ public class GroupByVariableDeclaration {
 
     @Getter
     private final ExceptionMetadata variableMetadata;
-
-    // The type visible immediately after this grouping binding, independent of later clauses.
-    @Getter
-    @Setter
-    private SequenceType variableSequenceType;
 
     @Getter
     protected String collationURI;

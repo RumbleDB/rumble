@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -36,9 +35,6 @@ public class TypeswitchCase {
 
     private final Name variableName;
     private final ExceptionMetadata variableMetadata;
-
-    @Setter
-    private SequenceType variableSequenceType;
 
     private final List<SequenceType> union;
     private final Expression returnExpression;

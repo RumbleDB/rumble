@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 public class WindowClause extends Clause {
@@ -120,15 +119,6 @@ public class WindowClause extends Clause {
 
     public ExceptionMetadata getVariableMetadata(Name name) {
         return this.variableMetadata.get(name);
-    }
-
-    public SequenceType getConditionVariableSequenceType(Name name) {
-        if (name.equals(this.startCondition.variables().position())
-                || this.endCondition != null
-                        && name.equals(this.endCondition.variables().position())) {
-            return new SequenceType(BuiltinTypesCatalogue.integerItem);
-        }
-        return new SequenceType(getSequenceType().getItemType(), SequenceType.Arity.OneOrZero);
     }
 
     @Override

@@ -24,8 +24,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.SequenceType;
 
 public class CountClause extends Clause {
     private final Name variableName;
@@ -51,10 +49,6 @@ public class CountClause extends Clause {
 
     public Name getCountVariableName() {
         return this.variableName;
-    }
-
-    public SequenceType getVariableSequenceType() {
-        return new SequenceType(BuiltinTypesCatalogue.integerItem);
     }
 
     @Override
