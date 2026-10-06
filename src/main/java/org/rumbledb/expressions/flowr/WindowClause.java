@@ -117,10 +117,6 @@ public class WindowClause extends Clause {
         return this.sequenceType == null ? SequenceType.createSequenceType("item*") : this.sequenceType;
     }
 
-    public ExceptionMetadata getVariableMetadata(Name name) {
-        return this.variableMetadata.get(name);
-    }
-
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();

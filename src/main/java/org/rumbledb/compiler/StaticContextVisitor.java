@@ -277,7 +277,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 clause.getWindowVariable(),
                 clause.getSequenceType(),
                 Objects.requireNonNullElse(
-                        clause.getVariableMetadata(clause.getWindowVariable()), clause.getMetadata()));
+                        clause.getVariableMetadata().get(clause.getWindowVariable()), clause.getMetadata()));
         addWindowVars(start, followingClausesContext, clause);
         if (end != null) {
             addWindowVars(end, followingClausesContext, clause);
@@ -295,7 +295,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             context.addVariable(
                     name,
                     name.equals(vars.position()) ? new SequenceType(BuiltinTypesCatalogue.integerItem) : optionalItem,
-                    Objects.requireNonNullElse(clause.getVariableMetadata(name), clause.getMetadata()));
+                    Objects.requireNonNullElse(clause.getVariableMetadata().get(name), clause.getMetadata()));
         }
     }
 
