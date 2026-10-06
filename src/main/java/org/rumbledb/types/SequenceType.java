@@ -200,13 +200,13 @@ public class SequenceType implements Serializable {
             return this.itemType;
         }
         if (this.itemType.isObjectItemType() && other.isObjectItemType()) {
-            boolean sameShape = !this.itemType.hasName()
+            boolean anonymous = !this.itemType.hasName()
                     && !other.hasName()
                     && this.itemType.getBaseType().equals(BuiltinTypesCatalogue.objectItem)
-                    && other.getBaseType().equals(BuiltinTypesCatalogue.objectItem)
-                    && haveSameObjectFields(this.itemType, other);
-            // Keep objects with the same fields usable as DataFrames; a field is required only if both require it.
-            return sameShape
+                    && other.getBaseType().equals(BuiltinTypesCatalogue.objectItem);
+            // A sequence of anonymous objects keeps the union of their fields, which are optional unless every
+            // object has them. This is the schema DataFrame conversion infers from the items themselves.
+            return anonymous
                     ? this.itemType.findLeastCommonSuperTypeLax(other)
                     : this.itemType.findLeastCommonSuperTypeWith(other);
         }
@@ -221,20 +221,6 @@ public class SequenceType implements Serializable {
                 || (left.isMapItemType() && right.isMapItemType())
                 || (left.isFunctionItemType() && right.isFunctionItemType())
                 || (left.isNodeItemType() && right.isNodeItemType());
-    }
-
-    private static boolean haveSameObjectFields(ItemType left, ItemType right) {
-        if (left.getObjectKeysFacet().size() != right.getObjectKeysFacet().size()) {
-            return false;
-        }
-        for (String key : left.getObjectKeysFacet()) {
-            FieldDescriptor leftField = left.getObjectContentFacet(key);
-            FieldDescriptor rightField = right.getObjectContentFacet(key);
-            if (rightField == null || !leftField.getType().equals(rightField.getType())) {
-                return false;
-            }
-        }
-        return true;
     }
 
     // Grouping concatenates one or more sequences for each group.

@@ -106,6 +106,48 @@ class ObjectConstructorTypeInferenceTest {
     }
 
     @Test
+    void differentObjectShapesKeepTheUnionOfTheirFields() {
+        SequenceType type = infer("({\"id\": 1, \"c\": \"A\"}, {\"c\": \"B\"})", "jq");
+        assertEquals(SequenceCardinality.MANY, type.getCardinality());
+        ItemType objectType = type.getItemType();
+        assertTrue(objectType.isObjectItemType());
+        assertTrue(objectType.getClosedFacet());
+        // A field some object lacks becomes optional; one every object has stays required.
+        FieldDescriptor id = objectType.getObjectContentFacet("id");
+        assertFalse(id.isRequired());
+        assertEquals(BuiltinTypesCatalogue.integerItem, id.getType());
+        assertEquals(BuiltinTypesCatalogue.stringItem, field(objectType, "c"));
+        assertTrue(objectType.isCompatibleWithDataFrames(CONFIGURATION));
+    }
+
+    @Test
+    void objectFieldTypesJoinAcrossShapes() {
+        ItemType objectType = infer("[{\"id\": 1}, {\"id\": 2.5}][]", "jq").getItemType();
+        assertEquals(BuiltinTypesCatalogue.decimalItem, field(objectType, "id"));
+    }
+
+    @Test
+    void lookupsIntoDifferentObjectShapesUseTheirFieldTypes() {
+        String query = "let $x := ({\"id\": 1, \"c\": \"A\"}, {\"c\": \"B\"}) return sum($x.id) + 1";
+        assertEquals(BuiltinTypesCatalogue.integerItem, infer(query, "jq").getItemType());
+        assertEquals(
+                2, new Rumble(CONFIGURATION).runQuery(query).getAsList().get(0).getIntValue());
+    }
+
+    @Test
+    void differentObjectShapesKeepAbsentAndNullFieldsApartInItems() {
+        String query = "for $o in ({\"a\": 1}, {\"a\": null}, {\"b\": 2}) return $o";
+        assertEquals(
+                "{ \"a\" : 1 }\n{ \"a\" : null }\n{ \"b\" : 2 }",
+                String.join(
+                        "\n",
+                        new Rumble(CONFIGURATION)
+                                .runQuery(query).getAsList().stream()
+                                        .map(Item::serialize)
+                                        .toList()));
+    }
+
+    @Test
     void filteringMultipleItemsCanProduceASingleton() {
         ItemType type =
                 infer("let $v := (false, 1) return {\"b\": $v[1]}.b", "jq").getItemType();
