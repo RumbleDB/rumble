@@ -115,6 +115,7 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateExpression;
@@ -178,6 +179,7 @@ import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpressio
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
@@ -1541,6 +1543,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
+    }
+
+    @Override
+    public ItemRuntimePlan visitFunctionArgumentConversion(
+            FunctionArgumentConversionExpression expression, ItemRuntimePlan argument) {
+        return FunctionCallArgumentConversion.wrapArgument(
+                this.visit(expression.getArgument(), argument),
+                expression.getParameterType(),
+                "Invalid argument for " + expression.getFunctionName() + " function. ",
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override

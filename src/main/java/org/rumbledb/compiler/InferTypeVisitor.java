@@ -120,6 +120,7 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
@@ -1187,6 +1188,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             treatedSequenceType = expressionSequenceType;
         }
         expression.setStaticSequenceType(treatedSequenceType);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitFunctionArgumentConversion(
+            FunctionArgumentConversionExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        SequenceType argumentType =
+                requireInferredType(expression.getArgument().getStaticSequenceType(), "FunctionArgumentConversion");
+        SequenceType parameterType = expression.getParameterType();
+        if (!isFunctionArgumentCompatible(argumentType, parameterType)) {
+            throwStaticTypeException(
+                    "Argument requires " + parameterType + " but " + argumentType + " was found",
+                    expression.getMetadata());
+        }
+        // A matching argument is passed unchanged, so it keeps its more precise type.
+        expression.setStaticSequenceType(argumentType.isSubtypeOf(parameterType) ? argumentType : parameterType);
         return argument;
     }
 

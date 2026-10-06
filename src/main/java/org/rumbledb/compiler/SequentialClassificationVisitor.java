@@ -52,6 +52,7 @@ import org.rumbledb.expressions.scripting.loops.WhileStatement;
 import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
 import org.rumbledb.expressions.scripting.mutation.AssignStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.SequenceType;
 
@@ -312,6 +313,14 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
     public DescendentSequentialProperties visitTreatExpression(
             TreatExpression expression, DescendentSequentialProperties argument) {
         DescendentSequentialProperties result = visit(expression.getMainExpression(), argument);
+        expression.setSequential(result.isSequential());
+        return result;
+    }
+
+    @Override
+    public DescendentSequentialProperties visitFunctionArgumentConversion(
+            FunctionArgumentConversionExpression expression, DescendentSequentialProperties argument) {
+        DescendentSequentialProperties result = visit(expression.getArgument(), argument);
         expression.setSequential(result.isSequential());
         return result;
     }
