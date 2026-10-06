@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -993,6 +994,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 // Runtime function conversion checks the type and size of the typed value, just as for casts.
                 return true;
             }
+            if (TypeAtomization.containsNode(itemType)) {
+                // Function conversion atomizes the node, so its known typed value must match.
+                return isFunctionArgumentCompatible(TypeAtomization.inferType(actual), expected);
+            }
             if (itemType.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
                 return actual.getCardinality().isSubtypeOf(expected.getCardinality());
             }
@@ -1150,9 +1155,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private boolean isCastOperandTypeCompatible(ItemType source, ItemType target) {
-        // A node kind is not an atomic cast source; its typed value is checked at runtime.
-        return source.allMemberTypesMatch(
-                member -> TypeAtomization.hasUnknownTypedValue(member) || member.isStaticallyCastableAs(target));
+        // A node is cast through its typed value: an unknown one is checked at runtime, a known one statically.
+        return source.allMemberTypesMatch(member -> TypeAtomization.hasUnknownTypedValue(member)
+                || TypeAtomization.atomizedItemType(member)
+                        .allMemberTypesMatch(atomized -> atomized.isStaticallyCastableAs(target)));
     }
 
     @Override
@@ -3001,10 +3007,35 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         || sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
                 ? sourceItemType
                 : BuiltinTypesCatalogue.nodeItem;
+        if (sourceItemType instanceof ElementNodeItemType element
+                && !(sourceItemType instanceof SchemaElementNodeItemType)) {
+            resultItemType = inferValidatedElementType(expression, element).orElse(resultItemType);
+        }
 
         // Successful validation always returns exactly one copied node.
         expression.setStaticSequenceType(new SequenceType(resultItemType, SequenceType.Arity.One));
         return argument;
+    }
+
+    /** The validated copy of an element is annotated by its global declaration or by the requested type. */
+    private Optional<ItemType> inferValidatedElementType(ValidateExpression expression, ElementNodeItemType source) {
+        XmlSchemaCatalog schemaCatalog =
+                expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
+        if (expression.getValidationMode() == ValidateExpression.ValidationMode.TYPE) {
+            Name typeName = expression.getTypeName();
+            return Optional.of(ItemTypeFactory.elementNodeItemType(
+                    source.getNodeName(),
+                    typeName,
+                    schemaCatalog.getTypeHierarchy(typeName, expression.getMetadata()),
+                    false,
+                    schemaCatalog.getTypedValueType(typeName).orElse(null)));
+        }
+        // Without a declaration, strict validation fails and lax validation leaves the element itself unannotated.
+        Name name = source.getNodeName();
+        if (name == null || !schemaCatalog.hasElementDeclaration(name)) {
+            return Optional.empty();
+        }
+        return Optional.of(schemaCatalog.getSchemaElementTest(name, expression.getMetadata()));
     }
 
     // endregion
