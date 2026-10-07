@@ -3412,6 +3412,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // XPath removes duplicate nodes, so multiple inputs need not yield multiple results.
         SequenceType.Arity resultingArity = leftType.getArity().multiplyWith(rightType.getArity());
         slashExpr.setStaticSequenceType(new SequenceType(rightType.getItemType(), resultingArity));
+
+        // E//S abbreviates E/descendant-or-self::node()/S, so S applies to E and to each of its descendants.
+        if (slashExpr.getLeftExpression() instanceof SlashExpr left
+                && left.getRightExpression() instanceof ForwardStepExpr descendantOrSelf
+                && descendantOrSelf.getForwardAxis().equals(ForwardAxis.DESCENDANT_OR_SELF)
+                && descendantOrSelf.getNodeTest() instanceof AnyKindTest
+                && rightExpression instanceof StepExpr step) {
+            inferSchemaStepType(step, left.getLeftExpression().getStaticSequenceType(), true)
+                    .ifPresent(type -> {
+                        slashExpr.setStaticSequenceType(type);
+                        // As for other steps, it is an error if no descendant can match the step.
+                        basicChecks(type, step.getClass().getSimpleName(), true, true, step.getMetadata());
+                    });
+        }
         return argument;
     }
 
@@ -3434,16 +3448,26 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    /** Child and attribute steps from a schema-typed element or document select the nodes its schema declares. */
     private Optional<SequenceType> inferSchemaStepType(StepExpr stepExpr, SequenceType contextType) {
-        if (contextType == null || !(stepExpr instanceof ForwardStepExpr forwardStep)) {
+        return inferSchemaStepType(stepExpr, contextType, false);
+    }
+
+    /**
+     * Child, attribute, and descendant steps from a schema-typed element or document select the nodes its schema
+     * declares. With fromDescendants, a child or attribute step also applies to each descendant of the context.
+     */
+    private Optional<SequenceType> inferSchemaStepType(
+            StepExpr stepExpr, SequenceType contextType, boolean fromDescendants) {
+        if (contextType == null
+                || !SchemaContentModel.isSchemaTyped(contextType.getItemType())
+                || !(stepExpr instanceof ForwardStepExpr forwardStep)) {
             return Optional.empty();
         }
-        if (!SchemaContentModel.isSchemaTyped(contextType.getItemType())) {
-            return Optional.empty();
-        }
-        boolean attributeAxis = forwardStep.getForwardAxis().equals(ForwardAxis.ATTRIBUTE);
-        if (!attributeAxis && !forwardStep.getForwardAxis().equals(ForwardAxis.CHILD)) {
+        ForwardAxis axis = forwardStep.getForwardAxis();
+        boolean attributeAxis = axis.equals(ForwardAxis.ATTRIBUTE);
+        // descendant::N selects the N children of the context and of each of its descendants.
+        boolean descendants = fromDescendants || axis.equals(ForwardAxis.DESCENDANT);
+        if (!attributeAxis && !axis.equals(ForwardAxis.CHILD) && !axis.equals(ForwardAxis.DESCENDANT)) {
             return Optional.empty();
         }
         NodeTest nodeTest = stepExpr.getNodeTest();
@@ -3465,13 +3489,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         } else {
             return Optional.empty();
         }
-        return stepExpr.getStaticContext()
+        SchemaContentModel contentModel = stepExpr.getStaticContext()
                 .getInScopeSchemaTypes()
                 .getXmlSchemaCatalog()
-                .getContentModel()
-                .getStepType(contextType.getItemType(), attributeAxis, name)
-                .map(type -> new SequenceType(
-                        type.getItemType(), type.getCardinality().repeated(contextType.getCardinality())));
+                .getContentModel();
+        Optional<SequenceType> stepType = descendants
+                ? contentModel.getDescendantStepType(contextType.getItemType(), attributeAxis, name)
+                : contentModel.getStepType(contextType.getItemType(), attributeAxis, name);
+        return stepType.map(type ->
+                new SequenceType(type.getItemType(), type.getCardinality().repeated(contextType.getCardinality())));
     }
 
     private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {
