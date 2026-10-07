@@ -110,6 +110,19 @@ public final class XmlSchemaCatalog {
                 != null;
     }
 
+    /** Returns the name of the only global element declaration that an element can have, if there is one. */
+    public Optional<Name> getOnlyElementDeclarationName() {
+        XSNamedMap elements = this.schemaModel.getComponents(XSConstants.ELEMENT_DECLARATION);
+        List<Name> names = new ArrayList<>();
+        for (int index = 0; index < elements.getLength(); index++) {
+            XSElementDeclaration declaration = (XSElementDeclaration) elements.item(index);
+            if (!declaration.getAbstract()) {
+                names.add(this.typeMapper.declarationName(declaration.getNamespace(), declaration.getName()));
+            }
+        }
+        return names.size() == 1 ? Optional.of(names.get(0)) : Optional.empty();
+    }
+
     /** Resolves a global declaration and the substitutions allowed by its blocking constraints. */
     public SchemaElementNodeItemType getSchemaElementTest(Name name, ExceptionMetadata metadata) {
         XSElementDeclaration declaration = this.schemaModel.getElementDeclaration(
@@ -136,7 +149,7 @@ public final class XmlSchemaCatalog {
 
         XmlSchemaTypeAnnotation annotation = this.typeMapper.mapTypeAnnotation(declaration.getTypeDefinition());
         alternatives.add(new ElementNodeItemType(
-                new Name(declaration.getNamespace(), null, declaration.getName()),
+                this.typeMapper.declarationName(declaration.getNamespace(), declaration.getName()),
                 annotation.name(),
                 annotation.typeHierarchy(),
                 declaration.getNillable(),

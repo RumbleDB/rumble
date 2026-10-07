@@ -179,6 +179,7 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.FunctionSignature;
@@ -3007,31 +3008,46 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         || sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
                 ? sourceItemType
                 : BuiltinTypesCatalogue.nodeItem;
-        if (sourceItemType instanceof ElementNodeItemType element
-                && !(sourceItemType instanceof SchemaElementNodeItemType)) {
-            resultItemType = inferValidatedElementType(expression, element).orElse(resultItemType);
-        }
+        resultItemType = inferValidatedType(expression, sourceItemType).orElse(resultItemType);
 
         // Successful validation always returns exactly one copied node.
         expression.setStaticSequenceType(new SequenceType(resultItemType, SequenceType.Arity.One));
         return argument;
     }
 
+    /** Validating a document validates its single element child. */
+    private Optional<ItemType> inferValidatedType(ValidateExpression expression, ItemType source) {
+        if (source instanceof DocumentNodeItemType document) {
+            ItemType root = document.getElementTestType() == null
+                    ? BuiltinTypesCatalogue.elementNode
+                    : document.getElementTestType();
+            return inferValidatedElementType(expression, root).map(ItemTypeFactory::documentNodeItemType);
+        }
+        return inferValidatedElementType(expression, source);
+    }
+
     /** The validated copy of an element is annotated by its global declaration or by the requested type. */
-    private Optional<ItemType> inferValidatedElementType(ValidateExpression expression, ElementNodeItemType source) {
+    private Optional<ItemType> inferValidatedElementType(ValidateExpression expression, ItemType source) {
+        if (!(source instanceof ElementNodeItemType element) || source instanceof SchemaElementNodeItemType) {
+            return Optional.empty();
+        }
         XmlSchemaCatalog schemaCatalog =
                 expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
         if (expression.getValidationMode() == ValidateExpression.ValidationMode.TYPE) {
             Name typeName = expression.getTypeName();
             return Optional.of(ItemTypeFactory.elementNodeItemType(
-                    source.getNodeName(),
+                    element.getNodeName(),
                     typeName,
                     schemaCatalog.getTypeHierarchy(typeName, expression.getMetadata()),
                     false,
                     schemaCatalog.getTypedValueType(typeName).orElse(null)));
         }
-        // Without a declaration, strict validation fails and lax validation leaves the element itself unannotated.
-        Name name = source.getNodeName();
+        // Strict validation requires a global declaration with the element's name (XQDY0084), so with a single
+        // declaration the name is known. Lax validation leaves an element without a declaration unannotated.
+        Name name = element.getNodeName();
+        if (name == null && expression.getValidationMode() == ValidateExpression.ValidationMode.STRICT) {
+            name = schemaCatalog.getOnlyElementDeclarationName().orElse(null);
+        }
         if (name == null || !schemaCatalog.hasElementDeclaration(name)) {
             return Optional.empty();
         }

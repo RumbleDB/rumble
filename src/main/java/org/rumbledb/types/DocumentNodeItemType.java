@@ -36,6 +36,8 @@ public class DocumentNodeItemType extends AbstractItemType {
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
+    /** The test that the document's single element child matches, or null for document-node(). */
+    @Getter
     private ItemType elementTestType;
 
     public DocumentNodeItemType() {
