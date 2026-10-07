@@ -19,6 +19,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -240,6 +241,52 @@ public final class XmlSchemaCatalog {
             return Optional.empty();
         }
         return select(contextType, attributeAxis, name).map(Selection::sequenceType);
+    }
+
+    /**
+     * Returns the nodes that a child or attribute step selects from a schema-typed element or document and from each of
+     * its descendant elements, as for descendant::N or E//N. It is empty when a descendant may be an element that the
+     * schema does not describe.
+     */
+    public Optional<SequenceType> getDescendantStepType(ItemType contextType, boolean attributeAxis, Name name) {
+        if (!isSchemaTyped(contextType)
+                || (attributeAxis && (name == null || Name.XSI_NS.equals(name.getNamespace())))) {
+            return Optional.empty();
+        }
+        Optional<List<ItemType>> parents = selfAndDescendantElements(contextType);
+        if (parents.isEmpty()) {
+            return Optional.empty();
+        }
+        Set<ItemType> nodeTypes = new LinkedHashSet<>();
+        for (ItemType parent : parents.get()) {
+            Optional<Selection> selection = select(parent, attributeAxis, name);
+            if (selection.isEmpty()) {
+                return Optional.empty();
+            }
+            nodeTypes.addAll(selection.get().nodeTypes());
+        }
+        // Recursive content models can nest matching nodes at any depth.
+        return Optional.of(
+                new Selection(nodeTypes, nodeTypes.isEmpty() ? SequenceCardinality.EMPTY : SequenceCardinality.ANY)
+                        .sequenceType());
+    }
+
+    /** The context followed by the type of every element below it, each listed once since types can be recursive. */
+    private Optional<List<ItemType>> selfAndDescendantElements(ItemType contextType) {
+        List<ItemType> result = new ArrayList<>(List.of(contextType));
+        Set<ItemType> seen = new HashSet<>(result);
+        for (int index = 0; index < result.size(); index++) {
+            Optional<Selection> children = select(result.get(index), false, null);
+            if (children.isEmpty()) {
+                return Optional.empty();
+            }
+            for (ItemType child : children.get().nodeTypes()) {
+                if (seen.add(child)) {
+                    result.add(child);
+                }
+            }
+        }
+        return Optional.of(result);
     }
 
     /** Nodes that a step selects, before their types are combined. */
