@@ -201,7 +201,7 @@ public class AttributeNodeItemType extends AbstractItemType {
         String name = this.nodeName == null ? "*" : this.nodeName.toString();
         return this.schemaTypeName == null
                 ? "attribute(" + name + ")"
-                : "attribute(" + name + ", " + this.schemaTypeName + ")";
+                : "attribute(" + name + ", " + schemaTypeDisplayName(this.schemaTypeName) + ")";
     }
 
     @Override

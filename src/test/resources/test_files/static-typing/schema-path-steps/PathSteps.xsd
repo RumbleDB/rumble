@@ -1,0 +1,53 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:p="urn:path-steps"
+           targetNamespace="urn:path-steps"
+           elementFormDefault="qualified">
+    <xs:complexType name="Item">
+        <xs:sequence>
+            <xs:element name="price" type="xs:decimal"/>
+            <xs:element name="tag" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="id" type="xs:integer" use="required"/>
+        <xs:attribute name="note" type="xs:string"/>
+    </xs:complexType>
+
+    <xs:element name="item" type="p:Item"/>
+    <xs:element name="special" type="p:Item" substitutionGroup="p:item"/>
+
+    <!-- An instance may select Extended with xsi:type, which adds a child. -->
+    <xs:complexType name="Customer">
+        <xs:sequence>
+            <xs:element name="name" type="xs:string"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="Extended">
+        <xs:complexContent>
+            <xs:extension base="p:Customer">
+                <xs:sequence>
+                    <xs:element name="extra" type="xs:integer"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="order">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="p:item" maxOccurs="unbounded"/>
+                <xs:choice>
+                    <xs:element name="paid" type="xs:boolean"/>
+                    <xs:element name="due" type="xs:date"/>
+                </xs:choice>
+                <xs:element name="customer" type="p:Customer"/>
+                <xs:element name="meta">
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:any namespace="##other" processContents="lax" minOccurs="0"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

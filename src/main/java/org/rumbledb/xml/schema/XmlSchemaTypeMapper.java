@@ -40,8 +40,6 @@ import org.rumbledb.types.ItemTypeFactory;
  */
 final class XmlSchemaTypeMapper {
 
-    private static final String ANONYMOUS_TYPE_NAMESPACE = "http://rumbledb.org/anonymous-schema-types";
-
     private final XercesBuiltinAtomicTypeMapper builtinTypeMapper;
     private final Map<XSTypeDefinition, Optional<ItemType>> mappedTypes;
     private final Map<XSTypeDefinition, XmlSchemaTypeAnnotation> mappedAnnotations;
@@ -245,7 +243,8 @@ final class XmlSchemaTypeMapper {
     Name nameOf(XSTypeDefinition schemaType) {
         if (schemaType.getAnonymous() || schemaType.getName() == null) {
             return this.anonymousTypeNames.computeIfAbsent(
-                    schemaType, type -> new Name(ANONYMOUS_TYPE_NAMESPACE, null, "anonymousType-" + UUID.randomUUID()));
+                    schemaType,
+                    type -> new Name(Name.ANONYMOUS_SCHEMA_TYPE_NS, null, "anonymousType-" + UUID.randomUUID()));
         }
         return declarationName(schemaType.getNamespace(), schemaType.getName());
     }
@@ -265,6 +264,14 @@ final class XmlSchemaTypeMapper {
             return null;
         }
         return this.namespacePrefixes.get(namespace);
+    }
+
+    /** Finds the anonymous definition that {@link #nameOf(XSTypeDefinition)} named. */
+    Optional<XSTypeDefinition> anonymousType(Name name) {
+        return this.anonymousTypeNames.entrySet().stream()
+                .filter(entry -> entry.getValue().equals(name))
+                .map(Map.Entry::getKey)
+                .findFirst();
     }
 
     private static void insertBefore(List<Name> names, Name name, Name successor) {

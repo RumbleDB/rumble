@@ -3409,13 +3409,53 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && isStaticallyEmptyStep(stepExpr, contextType.getItemType())) {
             inferredType = SequenceType.createSequenceType("()");
         } else {
-            ItemType inferredItemType = inferStepResultItemType(stepExpr);
-            inferredType = new SequenceType(inferredItemType, inferStepResultArity(stepExpr, contextType));
+            inferredType = inferSchemaStepType(stepExpr, contextType)
+                    .orElseGet(() -> new SequenceType(
+                            inferStepResultItemType(stepExpr), inferStepResultArity(stepExpr, contextType)));
         }
 
         stepExpr.setStaticSequenceType(inferredType);
         basicChecks(inferredType, stepExpr.getClass().getSimpleName(), true, true, stepExpr.getMetadata());
         return argument;
+    }
+
+    /** Child and attribute steps from a schema-typed element or document select the nodes its schema declares. */
+    private Optional<SequenceType> inferSchemaStepType(StepExpr stepExpr, SequenceType contextType) {
+        if (contextType == null || !(stepExpr instanceof ForwardStepExpr forwardStep)) {
+            return Optional.empty();
+        }
+        if (!XmlSchemaCatalog.isSchemaTyped(contextType.getItemType())) {
+            return Optional.empty();
+        }
+        boolean attributeAxis = forwardStep.getForwardAxis().equals(ForwardAxis.ATTRIBUTE);
+        if (!attributeAxis && !forwardStep.getForwardAxis().equals(ForwardAxis.CHILD)) {
+            return Optional.empty();
+        }
+        NodeTest nodeTest = stepExpr.getNodeTest();
+        Name name;
+        if (nodeTest instanceof NameTest nameTest && (nameTest.hasQName() || nameTest.hasWildcardOnly())) {
+            name = nameTest.hasQName() ? nameTest.getExpandedName() : null;
+        } else if (!attributeAxis && nodeTest instanceof ElementTest elementTest) {
+            if (elementTest.isNameWithoutTypeCheck()) {
+                name = elementTest.getElementName();
+            } else if (elementTest.isEmptyCheck() || elementTest.isWildcardOnly()) {
+                name = null;
+            } else {
+                return Optional.empty();
+            }
+        } else if (attributeAxis
+                && nodeTest instanceof AttributeTest attributeTest
+                && attributeTest.isNameWithoutTypeCheck()) {
+            name = attributeTest.getAttributeName();
+        } else {
+            return Optional.empty();
+        }
+        return stepExpr.getStaticContext()
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getStepType(contextType.getItemType(), attributeAxis, name)
+                .map(type -> new SequenceType(
+                        type.getItemType(), type.getCardinality().repeated(contextType.getCardinality())));
     }
 
     private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {
