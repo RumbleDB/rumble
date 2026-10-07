@@ -3482,20 +3482,56 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         } else {
             return Optional.empty();
         }
-        if (axis.equals(ForwardAxis.DESCENDANT)) {
-            // The schema only says which children each type has, so descendant::N is computed as
-            // descendant-or-self::node()/child::N: take every type at or below the context, then their N children.
-            // Every descendant is the child of some node there, and the context is not, so it is never included.
-            return contentModel
-                    .getDescendantOrSelfType(contextType.getItemType())
-                    .flatMap(nodes -> contentModel
-                            .getStepType(nodes.getItemType(), false, name)
-                            .map(type -> type.repeated(nodes.getCardinality())))
-                    .map(type -> type.repeated(contextType.getCardinality()));
+        boolean descendantAxis = axis.equals(ForwardAxis.DESCENDANT);
+        Optional<SequenceType> stepType = descendantAxis
+                // The schema only says which children each type has, so descendant::N is computed as
+                // descendant-or-self::node()/child::N: take every type at or below the context, then their N
+                // children. Every descendant is the child of some node there, and the context is not, so it is
+                // never included.
+                ? contentModel
+                        .getDescendantOrSelfType(contextType.getItemType())
+                        .flatMap(nodes -> contentModel
+                                .getStepType(nodes.getItemType(), false, name)
+                                .map(type -> type.repeated(nodes.getCardinality())))
+                : contentModel.getStepType(contextType.getItemType(), attributeAxis, name);
+        if (stepType.isPresent() && stepType.get().isEmptySequence()) {
+            throwStaticTypeException(
+                    undeclaredStepMessage(contentModel, contextType.getItemType(), attributeAxis, descendantAxis, name),
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    stepExpr.getMetadata());
         }
-        return contentModel
-                .getStepType(contextType.getItemType(), attributeAxis, name)
-                .map(type -> type.repeated(contextType.getCardinality()));
+        return stepType.map(type -> type.repeated(contextType.getCardinality()));
+    }
+
+    /** Explains a step that selects nothing, listing the names that the schema declares instead. */
+    private static String undeclaredStepMessage(
+            SchemaContentModel contentModel,
+            ItemType stepContextType,
+            boolean attributeAxis,
+            boolean descendantAxis,
+            Name name) {
+        // In E//S, S steps from descendant-or-self::node(), whose type lists E's type first and also contains text
+        // nodes, so the message names E instead.
+        boolean descendants =
+                descendantAxis || stepContextType.getMemberTypes().contains(BuiltinTypesCatalogue.textNode);
+        ItemType contextType = descendants && !descendantAxis
+                ? stepContextType.getMemberTypes().get(0)
+                : stepContextType;
+        String kind = attributeAxis ? "attribute" : descendants ? "descendant element" : "child element";
+        String where = descendants ? (attributeAxis ? " on or below " : " below ") : " for ";
+        if (name == null) {
+            return "The schema declares no " + kind + "s" + where + contextType + ".";
+        }
+        List<Name> declared = contentModel
+                .getStepNames(contextType, attributeAxis, descendants)
+                .orElse(List.of());
+        int shown = 10;
+        String alternatives = declared.isEmpty()
+                ? "It declares none."
+                : "It declares "
+                        + declared.stream().limit(shown).map(Name::toString).collect(Collectors.joining(", "))
+                        + (declared.size() > shown ? ", and " + (declared.size() - shown) + " more." : ".");
+        return "The schema declares no " + kind + " " + name + where + contextType + ". " + alternatives;
     }
 
     private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {
