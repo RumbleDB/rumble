@@ -35,6 +35,7 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import org.apache.xerces.xs.XSWildcard;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
@@ -156,6 +157,30 @@ public final class SchemaContentModel {
             }
         }
         return Optional.of(result);
+    }
+
+    /**
+     * Returns the names of the children or attributes that the schema declares for a schema-typed element or document,
+     * for tools that suggest steps. It is empty when a wildcard allows names the schema does not list.
+     */
+    public Optional<List<Name>> getStepNames(ItemType contextType, boolean attributeAxis) {
+        if (!isSchemaTyped(contextType)) {
+            return Optional.empty();
+        }
+        return select(contextType, attributeAxis, null).map(selection -> selection.nodeTypes().stream()
+                .flatMap(nodeType -> nodeNames(nodeType).stream())
+                .distinct()
+                .toList());
+    }
+
+    private static List<Name> nodeNames(ItemType nodeType) {
+        if (nodeType instanceof AttributeNodeItemType attribute) {
+            return List.of(attribute.getNodeName());
+        }
+        return alternatives(nodeType).stream()
+                .map(ElementNodeItemType::getNodeName)
+                .filter(Objects::nonNull)
+                .toList();
     }
 
     /** The node types of the declarations that a step selects from one context node, and how many nodes it selects. */
@@ -371,19 +396,20 @@ public final class SchemaContentModel {
     private Optional<Occurrences> collectAttributes(
             XSComplexTypeDefinition type, Name name, Set<ItemType> attributeTypes) {
         XSWildcard wildcard = type.getAttributeWildcard();
-        if (wildcard != null && allowsNamespace(wildcard, name.getNamespace())) {
+        if (wildcard != null && (name == null || allowsNamespace(wildcard, name.getNamespace()))) {
             return Optional.empty();
         }
         XSObjectList uses = type.getAttributeUses();
+        Occurrences occurrences = Occurrences.NONE;
         for (int index = 0; index < uses.getLength(); index++) {
             XSAttributeUse use = (XSAttributeUse) uses.item(index);
             XSAttributeDeclaration declaration = use.getAttrDeclaration();
-            if (hasName(declaration.getNamespace(), declaration.getName(), name)) {
+            if (name == null || hasName(declaration.getNamespace(), declaration.getName(), name)) {
                 attributeTypes.add(this.catalog.attributeType(declaration));
-                return Optional.of(use.getRequired() ? Occurrences.ONE : Occurrences.OPTIONAL);
+                occurrences = occurrences.plus(use.getRequired() ? Occurrences.ONE : Occurrences.OPTIONAL);
             }
         }
-        return Optional.of(Occurrences.NONE);
+        return Optional.of(occurrences);
     }
 
     /** Xerces uses null for no namespace, and Rumble may use null or the empty string. */
