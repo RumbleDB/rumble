@@ -3464,15 +3464,50 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         } else {
             return Optional.empty();
         }
-        if (axis.equals(ForwardAxis.DESCENDANT)) {
-            // descendant::N selects the N children of the context and of each of its descendants.
-            return catalog.getDescendantOrSelfType(contextType.getItemType())
-                    .flatMap(nodes -> catalog.getStepType(nodes.getItemType(), false, name)
-                            .map(type -> type.repeated(nodes.getCardinality())))
-                    .map(type -> type.repeated(contextType.getCardinality()));
+        boolean descendantAxis = axis.equals(ForwardAxis.DESCENDANT);
+        Optional<SequenceType> stepType = descendantAxis
+                // descendant::N selects the N children of the context and of each of its descendants.
+                ? catalog.getDescendantOrSelfType(contextType.getItemType())
+                        .flatMap(nodes -> catalog.getStepType(nodes.getItemType(), false, name)
+                                .map(type -> type.repeated(nodes.getCardinality())))
+                : catalog.getStepType(contextType.getItemType(), attributeAxis, name);
+        if (stepType.isPresent() && stepType.get().isEmptySequence()) {
+            throwStaticTypeException(
+                    undeclaredStepMessage(catalog, contextType.getItemType(), attributeAxis, descendantAxis, name),
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    stepExpr.getMetadata());
         }
-        return catalog.getStepType(contextType.getItemType(), attributeAxis, name)
-                .map(type -> type.repeated(contextType.getCardinality()));
+        return stepType.map(type -> type.repeated(contextType.getCardinality()));
+    }
+
+    /** Explains a step that selects nothing, listing the names that the schema declares instead. */
+    private static String undeclaredStepMessage(
+            XmlSchemaCatalog catalog,
+            ItemType stepContextType,
+            boolean attributeAxis,
+            boolean descendantAxis,
+            Name name) {
+        // In E//S, S steps from descendant-or-self::node(), whose type lists E's type first and also contains text
+        // nodes, so the message names E instead.
+        boolean descendants =
+                descendantAxis || stepContextType.getMemberTypes().contains(BuiltinTypesCatalogue.textNode);
+        ItemType contextType = descendants && !descendantAxis
+                ? stepContextType.getMemberTypes().get(0)
+                : stepContextType;
+        String kind = attributeAxis ? "attribute" : descendants ? "descendant element" : "child element";
+        String where = descendants ? (attributeAxis ? " on or below " : " below ") : " for ";
+        if (name == null) {
+            return "The schema declares no " + kind + "s" + where + contextType + ".";
+        }
+        List<Name> declared =
+                catalog.getStepNames(contextType, attributeAxis, descendants).orElse(List.of());
+        int shown = 10;
+        String alternatives = declared.isEmpty()
+                ? "It declares none."
+                : "It declares "
+                        + declared.stream().limit(shown).map(Name::toString).collect(Collectors.joining(", "))
+                        + (declared.size() > shown ? ", and " + (declared.size() - shown) + " more." : ".");
+        return "The schema declares no " + kind + " " + name + where + contextType + ". " + alternatives;
     }
 
     private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {
