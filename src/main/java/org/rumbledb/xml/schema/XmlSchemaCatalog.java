@@ -253,7 +253,7 @@ public final class XmlSchemaCatalog {
                 || (attributeAxis && (name == null || Name.XSI_NS.equals(name.getNamespace())))) {
             return Optional.empty();
         }
-        return select(contextType, attributeAxis, name).map(Selection::sequenceType);
+        return select(contextType, attributeAxis, name, false).map(Selection::sequenceType);
     }
 
     /**
@@ -265,7 +265,7 @@ public final class XmlSchemaCatalog {
         if (!isSchemaTyped(contextType)) {
             return Optional.empty();
         }
-        return selfAndDescendantElements(contextType).map(nodes -> {
+        return selfAndDescendantElements(contextType, false).map(nodes -> {
             List<ItemType> nodeTypes = new ArrayList<>(nodes);
             nodeTypes.addAll(List.of(
                     BuiltinTypesCatalogue.textNode,
@@ -277,12 +277,15 @@ public final class XmlSchemaCatalog {
         });
     }
 
-    /** The context followed by the type of every element below it, each listed once since types can be recursive. */
-    private Optional<List<ItemType>> selfAndDescendantElements(ItemType contextType) {
+    /**
+     * The context followed by the type of every element below it, each listed once since types can be recursive. With
+     * declaredOnly, it only follows the elements that the schema declares.
+     */
+    private Optional<List<ItemType>> selfAndDescendantElements(ItemType contextType, boolean declaredOnly) {
         List<ItemType> result = new ArrayList<>(List.of(contextType));
         Set<ItemType> seen = new HashSet<>(result);
         for (int index = 0; index < result.size(); index++) {
-            Optional<Selection> children = select(result.get(index), false, null);
+            Optional<Selection> children = select(result.get(index), false, null, declaredOnly);
             if (children.isEmpty()) {
                 return Optional.empty();
             }
@@ -297,13 +300,18 @@ public final class XmlSchemaCatalog {
 
     /**
      * Returns the names of the children or attributes that the schema declares for a schema-typed element or document,
-     * for tools that suggest steps. It is empty when a wildcard allows names the schema does not list.
+     * or with throughDescendants for it and each of its descendant elements, for tools that suggest steps. Unlike step
+     * types, the names ignore wildcards, so they may not include every node that a step can select.
      */
-    public Optional<List<Name>> getStepNames(ItemType contextType, boolean attributeAxis) {
+    public Optional<List<Name>> getStepNames(ItemType contextType, boolean attributeAxis, boolean throughDescendants) {
         if (!isSchemaTyped(contextType)) {
             return Optional.empty();
         }
-        return select(contextType, attributeAxis, null).map(selection -> selection.nodeTypes().stream()
+        List<ItemType> parents = throughDescendants
+                ? selfAndDescendantElements(contextType, true).orElseThrow()
+                : List.of(contextType);
+        return Optional.of(parents.stream()
+                .flatMap(parent -> select(parent, attributeAxis, null, true).orElseThrow().nodeTypes().stream())
                 .flatMap(nodeType -> nodeNames(nodeType).stream())
                 .distinct()
                 .toList());
@@ -339,13 +347,17 @@ public final class XmlSchemaCatalog {
         }
     }
 
-    private Optional<Selection> select(ItemType contextType, boolean attributeAxis, Name name) {
+    /**
+     * Selects the declared nodes. Unless declaredOnly, it is empty when the schema does not describe every node that
+     * the step can select, which requires a schema-typed context and no matching wildcard.
+     */
+    private Optional<Selection> select(ItemType contextType, boolean attributeAxis, Name name, boolean declaredOnly) {
         Selection result = null;
         for (ItemType member : contextType.getMemberTypes()) {
             List<? extends ItemType> contexts =
                     member instanceof ElementNodeItemType ? alternatives(member) : List.of(member);
             for (ItemType context : contexts) {
-                Optional<Selection> selection = selectFromNode(context, attributeAxis, name);
+                Optional<Selection> selection = selectFromNode(context, attributeAxis, name, declaredOnly);
                 if (selection.isEmpty()) {
                     return Optional.empty();
                 }
@@ -355,7 +367,8 @@ public final class XmlSchemaCatalog {
         return Optional.of(result == null ? Selection.NONE : result);
     }
 
-    private Optional<Selection> selectFromNode(ItemType context, boolean attributeAxis, Name name) {
+    private Optional<Selection> selectFromNode(
+            ItemType context, boolean attributeAxis, Name name, boolean declaredOnly) {
         if (isLeafNode(context)) {
             return Optional.of(Selection.NONE);
         }
@@ -363,15 +376,16 @@ public final class XmlSchemaCatalog {
             return Optional.of(
                     attributeAxis ? Selection.NONE : selectDocumentElement(document.getElementTestType(), name));
         }
-        return selectFromElement((ElementNodeItemType) context, attributeAxis, name);
+        return selectFromElement((ElementNodeItemType) context, attributeAxis, name, declaredOnly);
     }
 
-    private Optional<Selection> selectFromElement(ElementNodeItemType context, boolean attributeAxis, Name name) {
+    private Optional<Selection> selectFromElement(
+            ElementNodeItemType context, boolean attributeAxis, Name name, boolean declaredOnly) {
         Optional<XSTypeDefinition> type = Optional.ofNullable(context.getSchemaTypeName())
                 .flatMap(this::resolveType)
                 .filter(definition -> !isAnyType(definition));
         if (type.isEmpty()) {
-            return Optional.empty();
+            return declaredOnly ? Optional.of(Selection.NONE) : Optional.empty();
         }
         Set<ItemType> nodeTypes = new LinkedHashSet<>();
         SequenceCardinality cardinality = null;
@@ -379,8 +393,8 @@ public final class XmlSchemaCatalog {
         for (XSTypeDefinition derived : typeAndDerivedTypes(type.get())) {
             Optional<Occurrences> occurrences = derived instanceof XSComplexTypeDefinition complexType
                     ? attributeAxis
-                            ? collectAttributes(complexType, name, nodeTypes)
-                            : collectChildElements(complexType.getParticle(), name, nodeTypes)
+                            ? collectAttributes(complexType, name, declaredOnly, nodeTypes)
+                            : collectChildElements(complexType.getParticle(), name, declaredOnly, nodeTypes)
                     : Optional.of(Occurrences.NONE);
             if (occurrences.isEmpty()) {
                 return Optional.empty();
@@ -431,7 +445,8 @@ public final class XmlSchemaCatalog {
     }
 
     /** Collects the declarations that the particle allows with the name, or is empty if a wildcard allows it. */
-    private Optional<Occurrences> collectChildElements(XSParticle particle, Name name, Set<ItemType> elementTypes) {
+    private Optional<Occurrences> collectChildElements(
+            XSParticle particle, Name name, boolean declaredOnly, Set<ItemType> elementTypes) {
         if (particle == null) {
             return Optional.of(Occurrences.NONE);
         }
@@ -449,7 +464,7 @@ public final class XmlSchemaCatalog {
             }
             termOccurrences = !matched ? Occurrences.NONE : unmatched ? Occurrences.OPTIONAL : Occurrences.ONE;
         } else if (particle.getTerm() instanceof XSWildcard wildcard) {
-            if (name == null || allowsNamespace(wildcard, name.getNamespace())) {
+            if (!declaredOnly && (name == null || allowsNamespace(wildcard, name.getNamespace()))) {
                 return Optional.empty();
             }
             termOccurrences = Occurrences.NONE;
@@ -460,7 +475,7 @@ public final class XmlSchemaCatalog {
             XSObjectList particles = group.getParticles();
             for (int index = 0; index < particles.getLength(); index++) {
                 Optional<Occurrences> occurrences =
-                        collectChildElements((XSParticle) particles.item(index), name, elementTypes);
+                        collectChildElements((XSParticle) particles.item(index), name, declaredOnly, elementTypes);
                 if (occurrences.isEmpty()) {
                     return occurrences;
                 }
@@ -492,9 +507,9 @@ public final class XmlSchemaCatalog {
     }
 
     private Optional<Occurrences> collectAttributes(
-            XSComplexTypeDefinition type, Name name, Set<ItemType> attributeTypes) {
+            XSComplexTypeDefinition type, Name name, boolean declaredOnly, Set<ItemType> attributeTypes) {
         XSWildcard wildcard = type.getAttributeWildcard();
-        if (wildcard != null && (name == null || allowsNamespace(wildcard, name.getNamespace()))) {
+        if (!declaredOnly && wildcard != null && (name == null || allowsNamespace(wildcard, name.getNamespace()))) {
             return Optional.empty();
         }
         XSObjectList uses = type.getAttributeUses();

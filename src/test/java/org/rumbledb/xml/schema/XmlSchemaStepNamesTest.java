@@ -39,16 +39,36 @@ public class XmlSchemaStepNamesTest {
     public void listsDeclaredChildrenAndAttributes() {
         Assertions.assertEquals(
                 Optional.of(List.of("p:item", "p:special", "p:paid", "p:due", "p:customer", "p:meta")),
-                stepNames("validate { <p:order/> }", false));
-        Assertions.assertEquals(Optional.of(List.of("id", "note")), stepNames("validate { <p:item/> }", true));
+                stepNames("validate { <p:order/> }", false, false));
+        Assertions.assertEquals(Optional.of(List.of("id", "note")), stepNames("validate { <p:item/> }", true, false));
     }
 
     @Test
-    public void listsNothingWhenAWildcardAllowsOtherNames() {
-        Assertions.assertEquals(Optional.empty(), stepNames("(validate { <p:order/> })/p:meta", false));
+    public void listsDeclaredNamesBelowEveryDescendant() {
+        // p:extra comes from Extended, which instances of p:Customer may select with xsi:type.
+        Assertions.assertEquals(
+                Optional.of(List.of(
+                        "p:item",
+                        "p:special",
+                        "p:paid",
+                        "p:due",
+                        "p:customer",
+                        "p:meta",
+                        "p:price",
+                        "p:tag",
+                        "p:name",
+                        "p:extra")),
+                stepNames("validate { <p:order/> }", false, true));
+        Assertions.assertEquals(Optional.of(List.of("id", "note")), stepNames("validate { <p:order/> }", true, true));
     }
 
-    private static Optional<List<String>> stepNames(String expression, boolean attributeAxis) {
+    @Test
+    public void ignoresWildcardsThatAllowOtherNames() {
+        Assertions.assertEquals(Optional.of(List.of()), stepNames("(validate { <p:order/> })/p:meta", false, false));
+    }
+
+    private static Optional<List<String>> stepNames(
+            String expression, boolean attributeAxis, boolean throughDescendants) {
         String query = "import schema namespace p = \"urn:path-steps\" at \"" + SCHEMA.toUri() + "\"; " + expression;
         MainModule module = CompilationPipeline.compileMainModule(
                 query,
@@ -58,7 +78,8 @@ public class XmlSchemaStepNamesTest {
         return module.getStaticContext()
                 .getInScopeSchemaTypes()
                 .getXmlSchemaCatalog()
-                .getStepNames(module.getExpression().getStaticSequenceType().getItemType(), attributeAxis)
+                .getStepNames(
+                        module.getExpression().getStaticSequenceType().getItemType(), attributeAxis, throughDescendants)
                 .map(names -> names.stream().map(Name::toString).toList());
     }
 }
