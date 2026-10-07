@@ -262,7 +262,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             "Inferred type for "
                                     + nodeName
                                     + " is empty sequence (with active static typing feature, only allowed for CommaExpression)",
-                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                            metadata);
                 }
             }
         }
@@ -294,7 +295,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         "Inferred type for "
                                 + nodeName
                                 + " is empty sequence (with active static typing feature, only allowed for CommaExpression)",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                        metadata);
             }
         }
     }
