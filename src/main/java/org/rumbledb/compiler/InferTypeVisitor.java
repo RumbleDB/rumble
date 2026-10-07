@@ -3529,11 +3529,21 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return BuiltinTypesCatalogue.nodeItem;
     }
 
+    private static boolean hasNoChildren(ItemType nodeType) {
+        return nodeType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.textNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.commentNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+    }
+
     private boolean isStaticallyEmptyStep(StepExpr stepExpr, ItemType contextItemType) {
         if (stepExpr instanceof ForwardStepExpr forwardStep) {
             ForwardAxis axis = forwardStep.getForwardAxis();
             if (axis.equals(ForwardAxis.ATTRIBUTE)) {
-                return !contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode);
+                // Only elements have attributes, but a context such as node() may still be one.
+                return hasNoChildren(contextItemType)
+                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
             }
             if (axis.equals(ForwardAxis.SELF)) {
                 return !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, axis);
@@ -3541,11 +3551,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             if (axis.equals(ForwardAxis.CHILD)
                     || axis.equals(ForwardAxis.DESCENDANT)
                     || axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
-                boolean hasNoDescendants = contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.textNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.commentNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+                boolean hasNoDescendants = hasNoChildren(contextItemType);
                 if (axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
                     return hasNoDescendants
                             && !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, axis);
