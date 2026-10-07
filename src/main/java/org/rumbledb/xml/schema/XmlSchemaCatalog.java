@@ -295,6 +295,30 @@ public final class XmlSchemaCatalog {
         return Optional.of(result);
     }
 
+    /**
+     * Returns the names of the children or attributes that the schema declares for a schema-typed element or document,
+     * for tools that suggest steps. It is empty when a wildcard allows names the schema does not list.
+     */
+    public Optional<List<Name>> getStepNames(ItemType contextType, boolean attributeAxis) {
+        if (!isSchemaTyped(contextType)) {
+            return Optional.empty();
+        }
+        return select(contextType, attributeAxis, null).map(selection -> selection.nodeTypes().stream()
+                .flatMap(nodeType -> nodeNames(nodeType).stream())
+                .distinct()
+                .toList());
+    }
+
+    private static List<Name> nodeNames(ItemType nodeType) {
+        if (nodeType instanceof AttributeNodeItemType attribute) {
+            return List.of(attribute.getNodeName());
+        }
+        return alternatives(nodeType).stream()
+                .map(ElementNodeItemType::getNodeName)
+                .filter(Objects::nonNull)
+                .toList();
+    }
+
     /** Nodes that a step selects, before their types are combined. */
     private record Selection(Set<ItemType> nodeTypes, SequenceCardinality cardinality) {
         private static final Selection NONE = new Selection(Set.of(), SequenceCardinality.EMPTY);
@@ -470,21 +494,22 @@ public final class XmlSchemaCatalog {
     private Optional<Occurrences> collectAttributes(
             XSComplexTypeDefinition type, Name name, Set<ItemType> attributeTypes) {
         XSWildcard wildcard = type.getAttributeWildcard();
-        if (wildcard != null && allowsNamespace(wildcard, name.getNamespace())) {
+        if (wildcard != null && (name == null || allowsNamespace(wildcard, name.getNamespace()))) {
             return Optional.empty();
         }
         XSObjectList uses = type.getAttributeUses();
+        Occurrences occurrences = Occurrences.NONE;
         for (int index = 0; index < uses.getLength(); index++) {
             XSAttributeUse use = (XSAttributeUse) uses.item(index);
             XSAttributeDeclaration declaration = use.getAttrDeclaration();
-            if (hasName(declaration.getNamespace(), declaration.getName(), name)) {
+            if (name == null || hasName(declaration.getNamespace(), declaration.getName(), name)) {
                 attributeTypes.add(attributeType(
                         this.typeMapper.declarationName(declaration.getNamespace(), declaration.getName()),
                         declaration));
-                return Optional.of(use.getRequired() ? Occurrences.ONE : Occurrences.OPTIONAL);
+                occurrences = occurrences.plus(use.getRequired() ? Occurrences.ONE : Occurrences.OPTIONAL);
             }
         }
-        return Optional.of(Occurrences.NONE);
+        return Optional.of(occurrences);
     }
 
     private static boolean hasName(String namespace, String localName, Name name) {
