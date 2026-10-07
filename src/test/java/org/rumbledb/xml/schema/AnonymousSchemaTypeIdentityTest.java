@@ -59,6 +59,8 @@ class AnonymousSchemaTypeIdentityTest {
         assertEquals(annotation.name(), atomic.getName());
         assertEquals(otherAtomic.getName(), mapper.mapTypeAnnotation(second).name());
         assertNotEquals(atomic, otherAtomic);
+        // Internal names stay out of displayed types.
+        assertEquals("<anonymous xs:integer>", atomic.toString());
         // Assigning an internal name must preserve the original inheritance relationship.
         assertTrue(atomic.isSubtypeOf(BuiltinTypesCatalogue.integerItem));
         assertTrue(annotation.isDerivedFrom(BuiltinTypesCatalogue.integerItem.getName()));
