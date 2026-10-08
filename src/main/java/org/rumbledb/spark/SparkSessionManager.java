@@ -150,6 +150,24 @@ public class SparkSessionManager {
 
     private void setDefaultConfiguration() {
         try {
+            if (System.getProperty("hadoop.home.dir") == null) {
+                System.err.println("[WARNING] The hadoop home directory was not set. Setting to \"/\".");
+                System.setProperty("hadoop.home.dir", "/");
+            }
+            String javaVersion = System.getProperty("java.version");
+            if (!javaVersion.startsWith("17.") && !javaVersion.startsWith("21.")) {
+                System.err.println("[Error] RumbleDB requires Java 17 or Java 21.");
+                System.err.println("Your Java version: " + System.getProperty("java.version"));
+            }
+
+            /*
+             * System.err.println(
+             * "[INFO] Total available memory: " + (Runtime.getRuntime().maxMemory() / 1000000000) + " GB"
+             * );
+             * System.err.println(
+             * "[INFO] Total available cores: " + Runtime.getRuntime().availableProcessors()
+             * );
+             */
             this.configuration = new SparkConf();
             if (this.configuration.get("spark.app.name", DEFAULT_APP_NAME).equals(DEFAULT_APP_NAME)) {
                 log.warn("No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
