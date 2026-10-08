@@ -67,6 +67,12 @@ public class SchemaElementNodeItemType extends ElementNodeItemType {
                         && this.alternatives.stream().allMatch(type -> type.isSubtypeOf(superType)));
     }
 
+    /** An instance may match any alternative, so its typed value is any of theirs. */
+    @Override
+    public SequenceType getTypedValueType() {
+        return this.alternatives.isEmpty() ? null : TypeAtomization.inferAlternativesType(this.alternatives);
+    }
+
     @Override
     public String toString() {
         return "schema-element(" + this.declarationName + ")";

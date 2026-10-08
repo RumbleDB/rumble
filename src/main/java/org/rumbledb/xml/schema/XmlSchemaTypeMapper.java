@@ -47,8 +47,10 @@ final class XmlSchemaTypeMapper {
     private final Map<XSTypeDefinition, XmlSchemaTypeAnnotation> mappedAnnotations;
     private final Map<XSTypeDefinition, Name> anonymousTypeNames;
     private final Set<XSTypeDefinition> typesBeingMapped;
+    private final Map<String, String> namespacePrefixes;
 
-    XmlSchemaTypeMapper() {
+    XmlSchemaTypeMapper(Map<String, String> namespacePrefixes) {
+        this.namespacePrefixes = Map.copyOf(namespacePrefixes);
         this.builtinTypeMapper = new XercesBuiltinAtomicTypeMapper();
         this.mappedTypes = new IdentityHashMap<>();
         this.mappedAnnotations = new IdentityHashMap<>();
@@ -240,13 +242,29 @@ final class XmlSchemaTypeMapper {
      * Anonymous definitions keep distinct internal names for the lifetime of this catalog;
      * they are not added to the query's in-scope named schema types.
      */
-    private Name nameOf(XSTypeDefinition schemaType) {
+    Name nameOf(XSTypeDefinition schemaType) {
         if (schemaType.getAnonymous() || schemaType.getName() == null) {
             return this.anonymousTypeNames.computeIfAbsent(
                     schemaType, type -> new Name(ANONYMOUS_TYPE_NAMESPACE, null, "anonymousType-" + UUID.randomUUID()));
         }
-        String namespace = schemaType.getNamespace();
-        return new Name(namespace, Name.XS_NS.equals(namespace) ? "xs" : null, schemaType.getName());
+        return declarationName(schemaType.getNamespace(), schemaType.getName());
+    }
+
+    /** Names a schema component with the query's prefix for its namespace. */
+    Name declarationName(String namespace, String localName) {
+        return new Name(namespace, prefixOf(namespace), localName);
+    }
+
+    /** The prefix the query's schema imports bind to the namespace, or null if there is none. */
+    private String prefixOf(String namespace) {
+        if (Name.XS_NS.equals(namespace)) {
+            return "xs";
+        }
+        if (namespace == null) {
+            // Types in no namespace have no prefix; the immutable map also rejects null lookups.
+            return null;
+        }
+        return this.namespacePrefixes.get(namespace);
     }
 
     private static void insertBefore(List<Name> names, Name name, Name successor) {

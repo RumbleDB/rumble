@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -178,6 +179,7 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.FunctionSignature;
@@ -993,6 +995,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 // Runtime function conversion checks the type and size of the typed value, just as for casts.
                 return true;
             }
+            if (TypeAtomization.containsNode(itemType)) {
+                // Function conversion atomizes the node, so its known typed value must match.
+                return isFunctionArgumentCompatible(TypeAtomization.inferType(actual), expected);
+            }
             if (itemType.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
                 return actual.getCardinality().isSubtypeOf(expected.getCardinality());
             }
@@ -1044,16 +1050,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 return argument;
             }
 
-            // The operand's arity counts source nodes, but casts constrain the atomic values
-            // produced by atomization. One node can yield zero values (a nilled element),
-            // one value, or multiple values (a schema list). The static node type here does
-            // not distinguish these cases, so the runtime checks the atomized cardinality.
-            boolean nodeOperand = TypeAtomization.containsNode(expressionType.getItemType());
-            if (!nodeOperand
-                    && !expressionType.isAritySubtypeOf(
+            SequenceType atomizedOperand = atomizedCastOperand(expressionType);
+            if (atomizedOperand != null
+                    && !atomizedOperand.isAritySubtypeOf(
                             expression.getSequenceType().getArity())) {
                 throwStaticTypeException(
-                        "A cast expression operand must contain at most one item.", expression.getMetadata());
+                        castCardinalityMessage(expressionType, atomizedOperand, expression.getSequenceType()),
+                        expression.getMetadata());
             }
 
             // Check the type of result will casting to this schema type produce
@@ -1062,7 +1065,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
             if (resultType.getArity() == SequenceType.Arity.One
                     && expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero
-                    && (nodeOperand || expressionType.getArity() != SequenceType.Arity.One)) {
+                    && (atomizedOperand == null || atomizedOperand.getArity() != SequenceType.Arity.One)) {
                 // Because getSimpleTypeCastResultType does not take into account the arity of the cast expression,
                 // this if-statement is needed to ensure that the result type is correctly set to OneOrZero when the
                 // cast expression has an optional arity.
@@ -1096,15 +1099,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        boolean nodeOperand = TypeAtomization.containsNode(expressionSequenceType.getItemType());
-        // Cast cardinality applies after atomization. A source node can have zero, one,
-        // or multiple typed values, so its typed-value checks remain at runtime.
-        if (!nodeOperand && !expressionSequenceType.isAritySubtypeOf(castedSequenceType.getArity())) {
+        SequenceType atomizedOperand = atomizedCastOperand(expressionSequenceType);
+        if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(castedSequenceType.getArity())) {
             throwStaticTypeException(
-                    "with static type feature it is not possible to cast a "
-                            + expressionSequenceType
-                            + " as "
-                            + castedSequenceType,
+                    castCardinalityMessage(expressionSequenceType, atomizedOperand, castedSequenceType),
                     expression.getMetadata());
         }
 
@@ -1124,6 +1122,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         expression.setStaticSequenceType(castedSequenceType);
         return argument;
+    }
+
+    /**
+     * Cast cardinality applies after atomization: one node can yield zero values (a nilled element), one value, or
+     * several (a schema list). Returns null when the typed value is only known at runtime.
+     */
+    private static SequenceType atomizedCastOperand(SequenceType operand) {
+        if (!TypeAtomization.containsNode(operand.getItemType())) {
+            return operand;
+        }
+        return TypeAtomization.hasUnknownTypedValue(operand.getItemType()) ? null : TypeAtomization.inferType(operand);
+    }
+
+    private static String castCardinalityMessage(SequenceType operand, SequenceType atomized, SequenceType target) {
+        String found = operand.equals(atomized) ? operand.toString() : operand + " with typed value " + atomized;
+        return "with static type feature it is not possible to cast a " + found + " as " + target;
     }
 
     private boolean isSchemaCastTarget(SequenceType sequenceType, XmlSchemaCatalog schemaCatalog) {
@@ -1150,9 +1164,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private boolean isCastOperandTypeCompatible(ItemType source, ItemType target) {
-        // A node kind is not an atomic cast source; its typed value is checked at runtime.
-        return source.allMemberTypesMatch(
-                member -> TypeAtomization.hasUnknownTypedValue(member) || member.isStaticallyCastableAs(target));
+        // A node is cast through its typed value: an unknown one is checked at runtime, a known one statically.
+        return source.allMemberTypesMatch(member -> TypeAtomization.hasUnknownTypedValue(member)
+                || TypeAtomization.atomizedItemType(member)
+                        .allMemberTypesMatch(atomized -> atomized.isStaticallyCastableAs(target)));
     }
 
     @Override
@@ -3001,10 +3016,42 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         || sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
                 ? sourceItemType
                 : BuiltinTypesCatalogue.nodeItem;
+        resultItemType = inferValidatedType(expression, sourceItemType).orElse(resultItemType);
 
         // Successful validation always returns exactly one copied node.
         expression.setStaticSequenceType(new SequenceType(resultItemType, SequenceType.Arity.One));
         return argument;
+    }
+
+    /** Validating a document validates its single element child. */
+    private Optional<ItemType> inferValidatedType(ValidateExpression expression, ItemType source) {
+        if (source instanceof DocumentNodeItemType document) {
+            ItemType root = document.getElementTestType() == null
+                    ? BuiltinTypesCatalogue.elementNode
+                    : document.getElementTestType();
+            return inferValidatedElementType(expression, root).map(ItemTypeFactory::documentNodeItemType);
+        }
+        return inferValidatedElementType(expression, source);
+    }
+
+    /** The validated copy of an element is annotated by its global declaration or by the requested type. */
+    private Optional<ItemType> inferValidatedElementType(ValidateExpression expression, ItemType source) {
+        if (!(source instanceof ElementNodeItemType element) || source instanceof SchemaElementNodeItemType) {
+            return Optional.empty();
+        }
+        XmlSchemaCatalog schemaCatalog =
+                expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
+        if (expression.getValidationMode() == ValidateExpression.ValidationMode.TYPE) {
+            return Optional.of(schemaCatalog.getElementTest(
+                    element.getNodeName(), expression.getTypeName(), false, expression.getMetadata()));
+        }
+        // Strict validation requires a global declaration with the element's name (XQDY0084), so with a single
+        // declaration the name is known. Lax validation leaves an element without a declaration unannotated.
+        Name name = element.getNodeName();
+        if (name == null && expression.getValidationMode() == ValidateExpression.ValidationMode.STRICT) {
+            name = schemaCatalog.getOnlyElementDeclarationName().orElse(null);
+        }
+        return Optional.ofNullable(name).flatMap(schemaCatalog::findSchemaElementTest);
     }
 
     // endregion

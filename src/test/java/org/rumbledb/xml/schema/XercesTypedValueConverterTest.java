@@ -53,7 +53,8 @@ import org.rumbledb.types.ItemType;
 public class XercesTypedValueConverterTest {
 
     private static final XercesBuiltinAtomicTypeMapper TYPE_MAPPER = new XercesBuiltinAtomicTypeMapper();
-    private static final XercesTypedValueConverter CONVERTER = new XercesTypedValueConverter(new XmlSchemaTypeMapper());
+    private static final XercesTypedValueConverter CONVERTER =
+            new XercesTypedValueConverter(new XmlSchemaTypeMapper(Map.of()));
 
     @Test
     public void mapsBuiltInAtomicTypesByExpandedName() {
