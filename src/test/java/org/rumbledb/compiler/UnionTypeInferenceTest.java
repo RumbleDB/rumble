@@ -33,6 +33,7 @@ import org.rumbledb.api.Rumble;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -49,11 +50,12 @@ class UnionTypeInferenceTest {
 
     @Test
     void mixedAtomicNodeUnionKeepsBothMembers() {
+        ItemType h3 = ItemTypeFactory.elementNodeItemType(Name.createVariableInNoNamespace("h3"));
         ItemType union = infer("for $i in ('3', <h3/>) return $i", URI.create("file:///mixed-union.xq"))
                 .getItemType();
-        assertEquals(List.of(BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.elementNode), union.getTypes());
+        assertEquals(List.of(BuiltinTypesCatalogue.stringItem, h3), union.getTypes());
         // Joins and overlap checks rely on a node type being a subtype of a union that contains it.
-        assertTrue(BuiltinTypesCatalogue.elementNode.isSubtypeOf(union));
+        assertTrue(h3.isSubtypeOf(union));
     }
 
     static Stream<Arguments> unionQueries() {
