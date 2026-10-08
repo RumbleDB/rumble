@@ -175,6 +175,15 @@ public interface ItemType extends Serializable {
         throw new UnsupportedOperationException("getSignature operation is not supported for non-function item types");
     }
 
+    /**
+     * The values that atomizing a node of this type produces, as declared by its schema type.
+     *
+     * @return the typed value type, or null when it is only known to be xs:anyAtomicType*
+     */
+    default SequenceType getTypedValueType() {
+        return null;
+    }
+
     // endregion
 
     // region hierarchy

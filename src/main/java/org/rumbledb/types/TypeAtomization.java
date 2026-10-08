@@ -63,28 +63,17 @@ public final class TypeAtomization {
         if (type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
             return new SequenceType(type);
         }
-        if (type instanceof SchemaElementNodeItemType schemaElement
-                && !schemaElement.getAlternatives().isEmpty()) {
-            return inferAlternativesType(schemaElement.getAlternatives());
-        }
-        if (type instanceof ElementNodeItemType element && element.getTypedValueType() != null) {
-            SequenceType typedValue = element.getTypedValueType();
-            // A nilled element has an empty typed value.
-            return element.isNillable()
-                    ? new SequenceType(
-                            typedValue.getItemType(),
-                            typedValue.getCardinality().union(SequenceCardinality.EMPTY))
-                    : typedValue;
-        }
-        if (type instanceof AttributeNodeItemType attribute && attribute.getTypedValueType() != null) {
-            return attribute.getTypedValueType();
+        SequenceType typedValue = type.getTypedValueType();
+        if (typedValue != null) {
+            return typedValue;
         }
         // Other nodes may produce nothing, one value, a schema list, or an error.
         // Other item kinds also retain this conservative bound on successful atomization.
         return new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceCardinality.ANY);
     }
 
-    private static SequenceType inferAlternativesType(List<? extends ItemType> types) {
+    /** Atomizes a value that may have any of these types. */
+    static SequenceType inferAlternativesType(List<? extends ItemType> types) {
         List<ItemType> alternatives = new ArrayList<>();
         SequenceCardinality cardinality = null;
         for (ItemType member : types) {

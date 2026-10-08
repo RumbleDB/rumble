@@ -53,7 +53,6 @@ public class ElementNodeItemType extends AbstractItemType {
     private final boolean nillable;
 
     /** The typed value of a non-nilled instance, or null when it is only known to be xs:anyAtomicType*. */
-    @Getter
     private SequenceType typedValueType;
 
     public ElementNodeItemType() {
@@ -135,6 +134,17 @@ public class ElementNodeItemType extends AbstractItemType {
     @Override
     public boolean isNodeItemType() {
         return true;
+    }
+
+    @Override
+    public SequenceType getTypedValueType() {
+        if (this.typedValueType == null || !this.nillable) {
+            return this.typedValueType;
+        }
+        // A nilled element has an empty typed value.
+        return new SequenceType(
+                this.typedValueType.getItemType(),
+                this.typedValueType.getCardinality().union(SequenceCardinality.EMPTY));
     }
 
     @Override
