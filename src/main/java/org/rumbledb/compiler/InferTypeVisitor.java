@@ -1050,16 +1050,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 return argument;
             }
 
-            // The operand's arity counts source nodes, but casts constrain the atomic values
-            // produced by atomization. One node can yield zero values (a nilled element),
-            // one value, or multiple values (a schema list). The static node type here does
-            // not distinguish these cases, so the runtime checks the atomized cardinality.
-            boolean nodeOperand = TypeAtomization.containsNode(expressionType.getItemType());
-            if (!nodeOperand
-                    && !expressionType.isAritySubtypeOf(
+            SequenceType atomizedOperand = atomizedCastOperand(expressionType);
+            if (atomizedOperand != null
+                    && !atomizedOperand.isAritySubtypeOf(
                             expression.getSequenceType().getArity())) {
                 throwStaticTypeException(
-                        "A cast expression operand must contain at most one item.", expression.getMetadata());
+                        castCardinalityMessage(expressionType, atomizedOperand, expression.getSequenceType()),
+                        expression.getMetadata());
             }
 
             // Check the type of result will casting to this schema type produce
@@ -1068,7 +1065,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
             if (resultType.getArity() == SequenceType.Arity.One
                     && expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero
-                    && (nodeOperand || expressionType.getArity() != SequenceType.Arity.One)) {
+                    && (atomizedOperand == null || atomizedOperand.getArity() != SequenceType.Arity.One)) {
                 // Because getSimpleTypeCastResultType does not take into account the arity of the cast expression,
                 // this if-statement is needed to ensure that the result type is correctly set to OneOrZero when the
                 // cast expression has an optional arity.
@@ -1102,15 +1099,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        boolean nodeOperand = TypeAtomization.containsNode(expressionSequenceType.getItemType());
-        // Cast cardinality applies after atomization. A source node can have zero, one,
-        // or multiple typed values, so its typed-value checks remain at runtime.
-        if (!nodeOperand && !expressionSequenceType.isAritySubtypeOf(castedSequenceType.getArity())) {
+        SequenceType atomizedOperand = atomizedCastOperand(expressionSequenceType);
+        if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(castedSequenceType.getArity())) {
             throwStaticTypeException(
-                    "with static type feature it is not possible to cast a "
-                            + expressionSequenceType
-                            + " as "
-                            + castedSequenceType,
+                    castCardinalityMessage(expressionSequenceType, atomizedOperand, castedSequenceType),
                     expression.getMetadata());
         }
 
@@ -1130,6 +1122,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         expression.setStaticSequenceType(castedSequenceType);
         return argument;
+    }
+
+    /**
+     * Cast cardinality applies after atomization: one node can yield zero values (a nilled element), one value, or
+     * several (a schema list). Returns null when the typed value is only known at runtime.
+     */
+    private static SequenceType atomizedCastOperand(SequenceType operand) {
+        if (!TypeAtomization.containsNode(operand.getItemType())) {
+            return operand;
+        }
+        return TypeAtomization.hasUnknownTypedValue(operand.getItemType()) ? null : TypeAtomization.inferType(operand);
+    }
+
+    private static String castCardinalityMessage(SequenceType operand, SequenceType atomized, SequenceType target) {
+        String found = operand.equals(atomized) ? operand.toString() : operand + " with typed value " + atomized;
+        return "with static type feature it is not possible to cast a " + found + " as " + target;
     }
 
     private boolean isSchemaCastTarget(SequenceType sequenceType, XmlSchemaCatalog schemaCatalog) {
