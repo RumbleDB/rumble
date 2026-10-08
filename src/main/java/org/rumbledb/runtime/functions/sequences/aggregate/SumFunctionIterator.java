@@ -90,11 +90,9 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         if (nextValue.isUntypedAtomic()) {
             nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
         }
+        // The running sum is always a converted input or an addition result, so it is never untyped.
         if (currentSum == null) {
             return nextValue;
-        }
-        if (currentSum.isUntypedAtomic()) {
-            currentSum = ItemFactory.getInstance().createDoubleItem(currentSum.castToDoubleValue());
         }
         Item result = AdditiveOperationIterator.processItem(currentSum, nextValue, false);
         if (result == null) {
@@ -112,10 +110,11 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
     private static Item computeRDD(
             Item zeroElement, ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
         JavaRDD<Item> rdd = iterator.getRDD(context);
-        if (rdd.count() == 0) {
+        if (rdd.isEmpty()) {
             return zeroElement;
         }
-        return rdd.reduce(new SumClosure(metadata));
+        // Reduction does not call its combiner for a singleton, so convert each input first.
+        return rdd.map(item -> addToSum(null, item, metadata)).reduce((sum, value) -> addToSum(sum, value, metadata));
     }
 
     private static Item computeDataFrame(
