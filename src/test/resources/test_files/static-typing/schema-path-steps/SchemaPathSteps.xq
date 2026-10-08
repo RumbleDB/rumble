@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(1, 2.5, 1, 1, true, 1, 0, 4, 6)" :)
+(:JIQS: ShouldRun; Output="(1, 2.5, 1, 1, true, 1, 0, 4, 1)" :)
 import schema namespace p = "urn:path-steps" at "PathSteps.xsd";
 
 let $order := validate {
@@ -23,5 +23,6 @@ return (
     count($order/p:customer/p:extra is statically element(p:extra, xs:integer)?),
     (: The wildcard may match any element from another namespace, so the step stays untyped. :)
     count($order/p:meta/* is statically element()*) + 4,
-    count($order/* is statically element()+) + 1
+    (: Children with different declarations form a union, and steps from it still use the schema. :)
+    count($order/*/p:name is statically element(p:name, xs:string)*)
 )
