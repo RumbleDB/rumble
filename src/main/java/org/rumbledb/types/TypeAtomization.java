@@ -23,17 +23,25 @@ public final class TypeAtomization {
     private TypeAtomization() {}
 
     public static boolean isAtomicOrNode(ItemType type) {
-        if (type.isUnionType()) {
-            return type.getTypes().stream().allMatch(TypeAtomization::isAtomicOrNode);
-        }
-        return type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem) || type.isSubtypeOf(BuiltinTypesCatalogue.nodeItem);
+        return type.allMemberTypesMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                || member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem));
     }
 
     public static boolean containsNode(ItemType type) {
-        if (type.isUnionType()) {
-            return type.getTypes().stream().anyMatch(TypeAtomization::containsNode);
-        }
-        return type.isSubtypeOf(BuiltinTypesCatalogue.nodeItem);
+        return type.getMemberTypes().stream().anyMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem));
+    }
+
+    /**
+     * Whether atomizing this type yields values whose type is only known at runtime, such as a node's typed value.
+     * Checks on such values are left to runtime.
+     */
+    public static boolean hasUnknownTypedValue(ItemType type) {
+        return containsNode(type) && atomizedItemType(type).equals(BuiltinTypesCatalogue.atomicItem);
+    }
+
+    /** Returns the type of the values that atomizing one item of this type produces. */
+    public static ItemType atomizedItemType(ItemType type) {
+        return inferItemType(type).getItemType();
     }
 
     public static SequenceType inferType(SequenceType source) {
@@ -49,7 +57,7 @@ public final class TypeAtomization {
         if (type.isUnionType()) {
             List<ItemType> alternatives = new ArrayList<>();
             SequenceCardinality cardinality = null;
-            for (ItemType member : type.getTypes()) {
+            for (ItemType member : type.getMemberTypes()) {
                 SequenceType atomized = inferItemType(member);
                 alternatives.add(atomized.getItemType());
                 cardinality =

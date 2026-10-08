@@ -643,19 +643,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private boolean isStrictAggregateOperandType(ItemType type) {
-        if (type.isUnionType()) {
-            return type.getTypes().stream().allMatch(this::isStrictAggregateOperandType);
-        }
-        if (TypeAtomization.containsNode(type)) {
-            type = TypeAtomization.inferType(new SequenceType(type)).getItemType();
-            if (type.equals(BuiltinTypesCatalogue.atomicItem)) {
+        return type.allMemberTypesMatch(member -> {
+            if (TypeAtomization.hasUnknownTypedValue(member)) {
                 return true;
             }
-        }
-        type = normalizeAggregateItemType(type);
-        return type.isNumeric()
-                || type.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
-                || type.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem);
+            ItemType normalized = normalizeAggregateItemType(member);
+            return normalized.isNumeric()
+                    || normalized.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
+                    || normalized.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem);
+        });
     }
 
     // Aggregates can convert untyped values and produce values outside a derived type's restrictions.
@@ -666,7 +662,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     .collect(Collectors.toList()));
         }
         if (TypeAtomization.containsNode(type)) {
-            type = TypeAtomization.inferType(new SequenceType(type)).getItemType();
+            type = TypeAtomization.atomizedItemType(type);
         }
         if (type.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
             return BuiltinTypesCatalogue.doubleItem;
@@ -984,17 +980,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         ItemType itemType = actual.getItemType();
         if (itemType.isUnionType()) {
-            SequenceCardinality cardinality = actual.getCardinality();
-            return itemType.getTypes().stream()
-                    .allMatch(member -> isFunctionArgumentCompatible(new SequenceType(member, cardinality), expected));
+            return itemType.allMemberTypesMatch(member ->
+                    isFunctionArgumentCompatible(new SequenceType(member, actual.getCardinality()), expected));
         }
         if (expected.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            if (TypeAtomization.containsNode(itemType)) {
-                // The typed value of a generic node is unknown. Its type and size
-                // are checked by runtime function conversion, just as for casts.
+            if (TypeAtomization.hasUnknownTypedValue(itemType)) {
+                // Runtime function conversion checks the type and size of the typed value, just as for casts.
                 return true;
             }
-            if (actual.getItemType().isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
+            if (itemType.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
                 return actual.getCardinality().isSubtypeOf(expected.getCardinality());
             }
         }
@@ -1151,11 +1145,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private boolean isCastOperandTypeCompatible(ItemType source, ItemType target) {
-        if (source.isUnionType()) {
-            return source.getTypes().stream().allMatch(member -> isCastOperandTypeCompatible(member, target));
-        }
-        // Do not use node kind as an atomic cast source. The typed value is checked at runtime.
-        return TypeAtomization.containsNode(source) || source.isStaticallyCastableAs(target);
+        // A node kind is not an atomic cast source; its typed value is checked at runtime.
+        return source.allMemberTypesMatch(
+                member -> TypeAtomization.hasUnknownTypedValue(member) || member.isStaticallyCastableAs(target));
     }
 
     @Override
@@ -1418,8 +1410,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (!TypeAtomization.isAtomicOrNode(left) || !TypeAtomization.isAtomicOrNode(right)) {
             return null;
         }
-        if (!TypeAtomization.containsNode(left)
-                && !TypeAtomization.containsNode(right)
+        if (!TypeAtomization.hasUnknownTypedValue(left)
+                && !TypeAtomization.hasUnknownTypedValue(right)
                 && (left.equals(BuiltinTypesCatalogue.atomicItem) || right.equals(BuiltinTypesCatalogue.atomicItem))) {
             return null; // Retain strict checks for declared, unrefined atomic operands.
         }
@@ -1427,7 +1419,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private ItemType normalizeArithmeticItemType(ItemType type) {
-        ItemType atomized = TypeAtomization.inferType(new SequenceType(type)).getItemType();
+        ItemType atomized = TypeAtomization.atomizedItemType(type);
         return atomized.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
                 ? BuiltinTypesCatalogue.doubleItem
                 : atomized;
@@ -1542,9 +1534,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private SequenceType.Arity atomizedSingletonArity(SequenceType source) {
         SequenceType atomized =
                 TypeAtomization.isAtomicOrNode(source.getItemType()) ? TypeAtomization.inferType(source) : source;
-        if (atomized.getCardinality().allowsMany()
-                && !(TypeAtomization.containsNode(source.getItemType())
-                        && atomized.getItemType().equals(BuiltinTypesCatalogue.atomicItem))) {
+        if (atomized.getCardinality().allowsMany() && !TypeAtomization.hasUnknownTypedValue(source.getItemType())) {
             return null;
         }
         return atomized.getCardinality().allowsZero() ? SequenceType.Arity.OneOrZero : SequenceType.Arity.One;
@@ -1670,24 +1660,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private ItemType inferUnaryItemType(ItemType type) {
-        if (type.isUnionType()) {
-            List<ItemType> results = new ArrayList<>();
-            for (ItemType member : type.getTypes()) {
-                ItemType result = inferUnaryItemType(member);
-                if (result == null) {
-                    return null;
-                }
-                results.add(result);
+        List<ItemType> results = new ArrayList<>();
+        for (ItemType member : type.getMemberTypes()) {
+            if (!TypeAtomization.isAtomicOrNode(member)) {
+                return null;
             }
-            return ItemTypeFactory.createInferredUnionType(results);
+            if (TypeAtomization.hasUnknownTypedValue(member)) {
+                results.add(BuiltinTypesCatalogue.numericItem);
+                continue;
+            }
+            ItemType normalized = normalizeArithmeticItemType(member);
+            if (!normalized.isNumeric()) {
+                return null;
+            }
+            results.add(normalized);
         }
-        if (!TypeAtomization.isAtomicOrNode(type)) {
-            return null;
-        }
-        type = normalizeArithmeticItemType(type);
-        return type.isNumeric()
-                ? type
-                : type.equals(BuiltinTypesCatalogue.atomicItem) ? BuiltinTypesCatalogue.numericItem : null;
+        return ItemTypeFactory.createInferredUnionType(results);
     }
 
     // endregion
@@ -1831,13 +1819,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private static boolean areAtomizedComparisonTypesCompatible(
             ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
-        boolean nodeOperand = TypeAtomization.containsNode(left) || TypeAtomization.containsNode(right);
-        left = TypeAtomization.inferType(new SequenceType(left)).getItemType();
-        right = TypeAtomization.inferType(new SequenceType(right)).getItemType();
-        if (nodeOperand
-                && (left.equals(BuiltinTypesCatalogue.atomicItem) || right.equals(BuiltinTypesCatalogue.atomicItem))) {
+        if (TypeAtomization.hasUnknownTypedValue(left) || TypeAtomization.hasUnknownTypedValue(right)) {
             return true; // Unknown typed values require runtime comparison checks.
         }
+        left = TypeAtomization.atomizedItemType(left);
+        right = TypeAtomization.atomizedItemType(right);
         boolean leftUntyped = left.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem);
         boolean rightUntyped = right.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem);
         if (leftUntyped) {
