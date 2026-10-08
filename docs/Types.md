@@ -294,14 +294,15 @@ This asserts exact inference, rather than compatibility with a supertype. For ex
 `xs:anyAtomicType+` in an `instance of` or `treat as` expression, but its inferred item type is the more precise
 anonymous union `xs:string | xs:integer`.
 
-Inference can distinguish multiple-only cardinality (`MANY`) from one-or-more cardinality (`ONE_OR_MANY`). Both
-have the declared occurrence indicator `+`, so `(1, 2) is statically xs:integer+` succeeds. Internal cardinality
-refinements are not compared directly. A successful assertion returns the expression's value unchanged and
-preserves its precise inferred type, including those refinements, for subsequent inference.
+Inference can know more about the number of items than an occurrence indicator shows: for example, that `(1, 2)`
+has at least two items. Such an expression is still written `xs:integer+`, so `(1, 2) is statically xs:integer+`
+succeeds. A successful assertion returns the expression's value unchanged, and inference continues with its
+precise type.
 
 Query type syntax cannot express anonymous unions such as `xs:string | xs:integer`; this notation describes
-the inferred type, not executable type syntax. Tests for their exact members therefore use Java compiler tests.
-The `is statically` comparison does not widen inferred unions to their common supertype.
+the inferred type, not executable type syntax. The `is statically` comparison does not widen inferred unions to
+their common supertype, so an assertion cannot match the type of an expression such as `("s", 12)` or
+`if ($c) then "s" else 12`.
 
 ## What's next?
 

@@ -22,9 +22,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.context.DynamicContext;
@@ -45,23 +45,33 @@ public class SequenceType implements Serializable {
     private SequenceCardinality cardinality;
 
     public SequenceType(ItemType itemType, Arity arity) {
-        this(itemType, SequenceCardinality.fromArity(arity == null ? Arity.ZeroOrMore : arity));
+        this(itemType, cardinalityOf(itemType, arity));
     }
 
     public SequenceType(ItemType itemType, SequenceCardinality cardinality) {
         this.cardinality = cardinality;
         this.itemType = cardinality == SequenceCardinality.EMPTY ? BuiltinTypesCatalogue.item : itemType;
         if (this.itemType == null) {
-            log.warn("Missing item type in incomplete sequence type {}, defaulting to item.", getArity());
+            log.warn("Missing item type in incomplete sequence type "
+                    + getArity()
+                    + ", defaulting to item. Please let us know as we would like to look into this!");
             this.itemType = BuiltinTypesCatalogue.item;
         }
     }
 
-    public SequenceType(ItemType itemType) {
-        this(itemType, SequenceCardinality.ONE);
-        if (itemType == null) {
-            throw new OurBadException("Missing item type in incomplete sequence type " + getArity());
+    public SequenceType(@NonNull ItemType itemType) {
+        this.itemType = itemType;
+        this.cardinality = SequenceCardinality.ONE;
+    }
+
+    private static SequenceCardinality cardinalityOf(ItemType itemType, Arity arity) {
+        if (arity == null) {
+            log.warn("Missing arity in incomplete sequence type "
+                    + itemType
+                    + ", defaulting to *. Please let us know as we would like to look into this!");
+            return SequenceCardinality.ANY;
         }
+        return SequenceCardinality.fromArity(arity);
     }
 
     private SequenceType() {
@@ -166,7 +176,7 @@ public class SequenceType implements Serializable {
     public SequenceType leastCommonSupertypeWith(SequenceType other) {
         ItemType itemSupertype = isEmptySequence()
                 ? other.itemType
-                : other.isEmptySequence() ? this.itemType : this.itemType.findLeastCommonSuperTypeWith(other.itemType);
+                : other.isEmptySequence() ? this.itemType : joinItemTypes(other.itemType);
         return new SequenceType(itemSupertype, this.cardinality.union(other.cardinality));
     }
 
@@ -177,12 +187,21 @@ public class SequenceType implements Serializable {
         if (other.isEmptySequence()) {
             return this;
         }
-        ItemType contentType = concatenateItemTypes(other.itemType);
+        ItemType contentType = joinItemTypes(other.itemType);
         return new SequenceType(contentType, this.cardinality.concatenate(other.cardinality));
     }
 
-    private ItemType concatenateItemTypes(ItemType other) {
+    /**
+     * Joins the item types of two sequences that are concatenated or that are alternatives, e.g. the branches of a
+     * conditional. Atomic types, and types of different kinds such as xs:integer and an object, become an inferred
+     * union that keeps its members in operand order. Two types of the same structured kind keep their existing join,
+     * which navigation and native execution rely on.
+     */
+    private ItemType joinItemTypes(ItemType other) {
         if (this.itemType.equals(other)) {
+            return this.itemType;
+        }
+        if (other.isSubtypeOf(this.itemType)) {
             return this.itemType;
         }
         if (this.itemType.isObjectItemType() && other.isObjectItemType()) {
@@ -191,17 +210,22 @@ public class SequenceType implements Serializable {
                     && this.itemType.getBaseType().equals(BuiltinTypesCatalogue.objectItem)
                     && other.getBaseType().equals(BuiltinTypesCatalogue.objectItem)
                     && haveSameObjectFields(this.itemType, other);
-            // Keep equivalent object schemas usable as DataFrames; merge field presence conservatively.
+            // Keep objects with the same fields usable as DataFrames; a field is required only if both require it.
             return sameShape
                     ? this.itemType.findLeastCommonSuperTypeLax(other)
                     : this.itemType.findLeastCommonSuperTypeWith(other);
         }
-        if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                && other.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            return ItemTypeFactory.createInferredUnionType(List.of(this.itemType, other));
+        if (haveSameStructuredKind(this.itemType, other)) {
+            return this.itemType.findLeastCommonSuperTypeWith(other);
         }
-        // Structured types have existing joins used by navigation and native execution.
-        return this.itemType.findLeastCommonSuperTypeWith(other);
+        return ItemTypeFactory.createInferredUnionType(List.of(this.itemType, other));
+    }
+
+    private static boolean haveSameStructuredKind(ItemType left, ItemType right) {
+        return (left.isArrayItemType() && right.isArrayItemType())
+                || (left.isMapItemType() && right.isMapItemType())
+                || (left.isFunctionItemType() && right.isFunctionItemType())
+                || (left.isNodeItemType() && right.isNodeItemType());
     }
 
     private static boolean haveSameObjectFields(ItemType left, ItemType right) {
@@ -211,11 +235,7 @@ public class SequenceType implements Serializable {
         for (String key : left.getObjectKeysFacet()) {
             FieldDescriptor leftField = left.getObjectContentFacet(key);
             FieldDescriptor rightField = right.getObjectContentFacet(key);
-            if (rightField == null
-                    || !leftField.getType().equals(rightField.getType())
-                    || leftField.isRequired() != rightField.isRequired()
-                    || !Objects.equals(leftField.isUnique(), rightField.isUnique())
-                    || !Objects.equals(leftField.getDefaultValue(), rightField.getDefaultValue())) {
+            if (rightField == null || !leftField.getType().equals(rightField.getType())) {
                 return false;
             }
         }

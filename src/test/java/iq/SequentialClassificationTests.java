@@ -335,6 +335,19 @@ public class SequentialClassificationTests {
 
     @Test
     @Timeout(100)
+    public void testApplyStatementIsSequential() throws Throwable {
+        String filePath = System.getProperty("user.dir")
+                + "/src/test/resources/test_files/sequential/ApplySimpleExpressionSequential.jq";
+        StatementsAndOptionalExpr query = parseAndCompile(filePath).getProgram().getStatementsAndOptionalExpr();
+        Assertions.assertEquals(2, query.getStatements().size());
+        ApplyStatement statement = (ApplyStatement) query.getStatements().get(1);
+        Assertions.assertFalse(statement.getApplyExpression().isSequential());
+        Assertions.assertTrue(statement.isSequential());
+        Assertions.assertTrue(query.isSequential());
+    }
+
+    @Test
+    @Timeout(100)
     public void testNonSequential() throws Throwable {
         File nonsequentialTestsDirectory =
                 new File(System.getProperty("user.dir") + "/src/test/resources/test_files/sequential/non-sequential");
@@ -344,7 +357,13 @@ public class SequentialClassificationTests {
             MainModule mainModule = parseAndCompile(testFile.getAbsolutePath());
             for (Node descendant : mainModule.getDescendants()) {
                 if (descendant instanceof Expression) {
-                    Assertions.assertFalse(((Expression) descendant).isSequential());
+                    Assertions.assertFalse(
+                            ((Expression) descendant).isSequential(),
+                            () -> testFile
+                                    + ": "
+                                    + descendant.getClass().getSimpleName()
+                                    + " at "
+                                    + descendant.getMetadata());
                 } else if (descendant instanceof Statement) {
                     if (descendant instanceof VariableDeclStatement || descendant instanceof ApplyStatement) {
                         Assertions.assertTrue(((Statement) descendant).isSequential());
