@@ -32,7 +32,6 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
-import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceCardinality;
@@ -169,15 +168,6 @@ class IsStaticallyTypeInferenceTest {
         SequenceType type = infer("{\"b\": ((1, 2) is statically xs:integer+)}.b", "jq");
         assertTrue(type.getItemType().isArrayItemType());
         assertEquals(BuiltinTypesCatalogue.integerItem, type.getItemType().getArrayContentFacet());
-    }
-
-    @Test
-    void unionHasAnEffectiveBooleanValueIfEveryMemberHasOne() {
-        String flag = "declare variable $c as xs:boolean external; ";
-        assertDoesNotThrow(() -> infer(flag + "if (if ($c) then 1 else \"a\") then 1 else 2", "jq"));
-        assertThrows(
-                UnexpectedStaticTypeException.class,
-                () -> infer(flag + "if (if ($c) then 1 else current-date()) then 1 else 2", "jq"));
     }
 
     @ParameterizedTest

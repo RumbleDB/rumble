@@ -641,7 +641,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     // Aggregates can convert untyped values and produce values outside a derived type's restrictions.
     private ItemType normalizeAggregateItemType(ItemType type) {
         if (type.isUnionType()) {
-            return ItemTypeFactory.createInferredUnionType(type.getTypes().stream()
+            return ItemTypeFactory.createInferredUnionType(type.getMemberTypes().stream()
                     .map(this::normalizeAggregateItemType)
                     .collect(Collectors.toList()));
         }
@@ -668,14 +668,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (inputType.isEmptySequence()) {
             return zeroType;
         }
-        SequenceType result = new SequenceType(inputType.getItemType());
+        // A non-empty input sums to one item; an empty input returns the zero argument instead.
+        SequenceType sumType = new SequenceType(inputType.getItemType());
         if (!inputType.getCardinality().allowsZero()) {
-            return result;
+            return sumType;
         }
-        ItemType itemType = zeroType.isEmptySequence()
-                ? result.getItemType()
-                : ItemTypeFactory.createInferredUnionType(List.of(result.getItemType(), zeroType.getItemType()));
-        return new SequenceType(itemType, result.getCardinality().union(zeroType.getCardinality()));
+        return sumType.leastCommonSupertypeWith(zeroType);
     }
 
     private SequenceType inferStrictAggregateReturnType(FunctionCallExpression expression, Expression inputExpression) {
@@ -709,8 +707,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (!hasMutuallyComparableItems(inputItemType)) {
             throwStaticTypeException(
                     functionName
-                            + " requires its inferred input item type to be an atomic type other than xs:anyAtomicType,"
-                            + " or a union of numeric types or of xs:string and xs:anyURI, found "
+                            + " requires an atomic input type other than xs:anyAtomicType whose member types can be"
+                            + " compared with each other, found "
                             + inputType,
                     ErrorCode.InvalidArgumentType,
                     expression.getMetadata());
@@ -724,23 +722,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     /**
-     * fn:min and fn:max compare every input item with the others, so the input must not mix types that cannot be
-     * compared, such as (xs:string | xs:integer). Numeric types are compared after promotion, and so are xs:string
-     * and xs:anyURI.
+     * fn:min and fn:max compare every input item with the others, so every pair of member types must support
+     * ordering, e.g. (xs:string | xs:integer) is rejected.
      */
     private static boolean hasMutuallyComparableItems(ItemType itemType) {
         if (!itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
                 || itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             return false;
         }
-        if (!itemType.isUnionType()) {
-            return true;
-        }
-        List<ItemType> members = itemType.getTypes();
-        return members.stream().allMatch(ItemType::isNumeric)
-                || members.stream()
-                        .allMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
-                                || member.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem));
+        return itemType.allMemberTypesMatch(left -> itemType.allMemberTypesMatch(
+                right -> areMemberTypesComparable(left, right, ComparisonExpression.ComparisonOperator.VC_LT)));
     }
 
     private boolean isBuiltinFunctionName(Name functionName, String localName) {
@@ -1338,15 +1329,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     // Evaluate each possible operand pair. A null result means an unsupported pair.
     private ItemType inferBinaryOperationType(
             ItemType left, ItemType right, BiFunction<ItemType, ItemType, ItemType> operation) {
-        if (!left.isUnionType() && !right.isUnionType()) {
-            return operation.apply(left, right);
-        }
         List<ItemType> results = new ArrayList<>();
-        List<ItemType> leftTypes = left.isUnionType() ? left.getTypes() : List.of(left);
-        List<ItemType> rightTypes = right.isUnionType() ? right.getTypes() : List.of(right);
-        for (ItemType leftMember : leftTypes) {
-            for (ItemType rightMember : rightTypes) {
-                ItemType result = inferBinaryOperationType(leftMember, rightMember, operation);
+        for (ItemType leftMember : left.getMemberTypes()) {
+            for (ItemType rightMember : right.getMemberTypes()) {
+                ItemType result = operation.apply(leftMember, rightMember);
                 if (result == null) {
                     return null;
                 }
@@ -1711,19 +1697,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private boolean areComparisonTypesCompatible(
             ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator, boolean sameValue) {
         // Equal union types do not imply equal runtime values. Only references to the same
-        // singleton variable let us check matching alternatives instead of every possible pair.
-        if (left.isUnionType()) {
-            if (sameValue && left.equals(right)) {
-                return left.getTypes().stream()
-                        .allMatch(member -> areComparisonTypesCompatible(member, member, operator, true));
-            }
-            return left.getTypes().stream()
-                    .allMatch(member -> areComparisonTypesCompatible(member, right, operator, false));
+        // singleton variable let us check matching member types instead of every possible pair.
+        if (sameValue && left.isUnionType() && left.equals(right)) {
+            return left.allMemberTypesMatch(member -> areMemberTypesComparable(member, member, operator));
         }
-        if (right.isUnionType()) {
-            return right.getTypes().stream()
-                    .allMatch(member -> areComparisonTypesCompatible(left, member, operator, false));
-        }
+        return left.allMemberTypesMatch(leftMember ->
+                right.allMemberTypesMatch(rightMember -> areMemberTypesComparable(leftMember, rightMember, operator)));
+    }
+
+    private static boolean areMemberTypesComparable(
+            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
         // JSONiq null is comparable with every atomic value, including for ordering.
         if (left.equals(BuiltinTypesCatalogue.nullItem) || right.equals(BuiltinTypesCatalogue.nullItem)) {
             return true;
@@ -2399,7 +2382,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (!checkArguments(formalParameterTypes, actualParameterTypes)) {
             throwStaticTypeException(
-                    "the type of a dynamic function call main expression must be function, instead inferred " + type,
+                    "the arguments of a dynamic function call do not match the signature of " + type,
                     expression.getMetadata());
         }
 

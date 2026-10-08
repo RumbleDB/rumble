@@ -123,8 +123,8 @@ public class SequenceType implements Serializable {
         }
         if (this.itemType.isUnionType()) {
             // A member can fit directly while another needs promotion or function coercion.
-            return this.itemType.getTypes().stream().allMatch(member -> new SequenceType(member, this.cardinality)
-                    .isSubtypeOfOrCanBePromotedTo(superType));
+            return this.itemType.allMemberTypesMatch(
+                    member -> new SequenceType(member, this.cardinality).isSubtypeOfOrCanBePromotedTo(superType));
         }
         return this.cardinality.isSubtypeOf(superType.cardinality)
                 && (this.itemType.isSubtypeOf(superType.itemType)
@@ -139,20 +139,20 @@ public class SequenceType implements Serializable {
     public boolean hasEffectiveBooleanValue() {
         if (isEmptySequence()) {
             return true;
-        } else if (this.itemType.isUnionType()) {
-            // Every possible member must allow EBV at this sequence's cardinality.
-            return this.itemType.getTypes().stream()
-                    .allMatch(member -> new SequenceType(member, this.cardinality).hasEffectiveBooleanValue());
-        } else if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
-            return true;
-        } else {
-            return !this.cardinality.allowsMany()
-                    && (this.itemType.isNumeric()
-                            || this.itemType.equals(BuiltinTypesCatalogue.stringItem)
-                            || this.itemType.equals(BuiltinTypesCatalogue.anyURIItem)
-                            || this.itemType.equals(BuiltinTypesCatalogue.nullItem)
-                            || this.itemType.equals(BuiltinTypesCatalogue.booleanItem));
         }
+        return this.itemType.allMemberTypesMatch(this::memberHasEffectiveBooleanValue);
+    }
+
+    private boolean memberHasEffectiveBooleanValue(ItemType member) {
+        if (member.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
+            return true;
+        }
+        return !this.cardinality.allowsMany()
+                && (member.isNumeric()
+                        || member.equals(BuiltinTypesCatalogue.stringItem)
+                        || member.equals(BuiltinTypesCatalogue.anyURIItem)
+                        || member.equals(BuiltinTypesCatalogue.nullItem)
+                        || member.equals(BuiltinTypesCatalogue.booleanItem));
     }
 
     public boolean hasOverlapWith(SequenceType other) {
