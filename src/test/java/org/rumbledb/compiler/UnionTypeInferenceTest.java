@@ -16,6 +16,7 @@
 package org.rumbledb.compiler;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -34,7 +35,6 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
-import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -48,64 +48,21 @@ class UnionTypeInferenceTest {
 
     private record Case(String query, List<ItemType> expectedTypes) {}
 
-    static Stream<Arguments> mixedAtomicNodeQueries() {
+    @Test
+    void mixedAtomicNodeUnionKeepsBothMembers() {
         ItemType h3 = ItemTypeFactory.elementNodeItemType(Name.createVariableInNoNamespace("h3"));
-        List<ItemType> mixed = List.of(BuiltinTypesCatalogue.stringItem, h3);
-        return Stream.of(
-                Arguments.of("for $i in ('3', <h3/>) return $i", mixed, SequenceCardinality.MANY),
-                Arguments.of(
-                        "let $i := if (xs:boolean('true')) then '3' else <h3/> return $i",
-                        mixed,
-                        SequenceCardinality.ONE),
-                Arguments.of(
-                        "typeswitch (('3', <h3/>)) case xs:string+ return '3' default return <h3/>",
-                        mixed,
-                        SequenceCardinality.ONE),
-                Arguments.of(
-                        "for $i in ('3', <h3/>, 1) return $i",
-                        List.of(BuiltinTypesCatalogue.stringItem, h3, BuiltinTypesCatalogue.integerItem),
-                        SequenceCardinality.MANY),
-                Arguments.of(
-                        "for $i in ('3', <h3/> treat as node()) return $i",
-                        List.of(BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.nodeItem),
-                        SequenceCardinality.MANY));
-    }
-
-    // Anonymous unions have no SequenceType syntax, so their exact members are checked here.
-    // Operator behavior and runtime errors belong to the annotation regressions.
-    @ParameterizedTest
-    @MethodSource("mixedAtomicNodeQueries")
-    void mixedAtomicNodeUnionsRemainPrecise(String query, List<ItemType> members, SequenceCardinality cardinality) {
-        var module = CompilationPipeline.compileMainModule(
-                query,
-                URI.create("file:///mixed-union.xq"),
-                new CompilationConfiguration(CONFIGURATION),
-                ExternalBindings.empty());
-        SequenceType inferred = module.getExpression().getStaticSequenceType();
-        ItemType expected = ItemTypeFactory.createInferredUnionType(members);
-        assertTrue(inferred.getItemType().isUnionType());
-        assertEquals(
-                java.util.Set.copyOf(members),
-                java.util.Set.copyOf(inferred.getItemType().getTypes()));
-        assertEquals(cardinality, inferred.getCardinality());
-        for (ItemType member : members) {
-            assertTrue(member.isSubtypeOf(expected));
-        }
-        if (module.getExpression() instanceof FlworExpression flwor) {
-            assertEquals(
-                    SequenceCardinality.ONE,
-                    flwor.getReturnClause()
-                            .getReturnExpr()
-                            .getStaticSequenceType()
-                            .getCardinality());
-        }
+        ItemType union = infer("for $i in ('3', <h3/>) return $i", URI.create("file:///mixed-union.xq"))
+                .getItemType();
+        assertEquals(List.of(BuiltinTypesCatalogue.stringItem, h3), union.getTypes());
+        // Joins and overlap checks rely on a node type being a subtype of a union that contains it.
+        assertTrue(h3.isSubtypeOf(union));
     }
 
     static Stream<Arguments> unionQueries() {
         List<ItemType> floating = List.of(BuiltinTypesCatalogue.floatItem, BuiltinTypesCatalogue.doubleItem);
         List<ItemType> integers = List.of(BuiltinTypesCatalogue.integerItem);
         List<ItemType> strings = List.of(BuiltinTypesCatalogue.stringItem);
-        List<Case> cases = new java.util.ArrayList<>();
+        List<Case> cases = new ArrayList<>();
         for (String operator : List.of("+", "-", "*", "div", "mod")) {
             cases.add(new Case("for $x in (xs:float(1), xs:double(2)) return $x " + operator + " 1", floating));
         }

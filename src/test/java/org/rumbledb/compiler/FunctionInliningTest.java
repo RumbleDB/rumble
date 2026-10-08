@@ -36,7 +36,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 
 class FunctionInliningTest {
-    private static final URI URI = java.net.URI.create("file:///inlining.xq");
+    private static final URI QUERY_URI = URI.create("file:///inlining.xq");
     private static final String FUNCTION = "declare function local:f($a as xs:integer) { $a }; ";
 
     @Test
@@ -55,7 +55,7 @@ class FunctionInliningTest {
 
     private static Item run(String query) {
         return new Rumble(RumbleConfiguration.defaultConfiguration())
-                .runQuery(query, URI)
+                .runQuery(query, QUERY_URI)
                 .getAsList()
                 .get(0);
     }
@@ -63,7 +63,7 @@ class FunctionInliningTest {
     private static boolean containsCall(String query) {
         Node module = CompilationPipeline.compileMainModule(
                 query,
-                URI,
+                QUERY_URI,
                 new CompilationConfiguration(RumbleConfiguration.defaultConfiguration()),
                 ExternalBindings.empty());
         return new AbstractNodeVisitor<Boolean>() {

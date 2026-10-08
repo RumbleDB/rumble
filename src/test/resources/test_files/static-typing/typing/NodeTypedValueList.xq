@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="(false, true, true)" :)
-import schema namespace t = "urn:arguments" at "../../../xquery-parser/schema-function-conversion/Arguments.xsd";
+import schema namespace t = "urn:arguments" at "../../xquery-parser/schema-function-conversion/Arguments.xsd";
 
 let $list := validate strict { <t:numbers>1 2</t:numbers> }
 return (

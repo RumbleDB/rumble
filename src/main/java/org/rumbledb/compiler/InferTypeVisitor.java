@@ -648,30 +648,26 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private boolean isStrictAggregateOperandType(ItemType type) {
-        if (type.isUnionType()) {
-            return type.getTypes().stream().allMatch(this::isStrictAggregateOperandType);
-        }
-        if (TypeAtomization.containsNode(type)) {
-            type = TypeAtomization.inferType(new SequenceType(type)).getItemType();
-            if (type.equals(BuiltinTypesCatalogue.atomicItem)) {
+        return type.allMemberTypesMatch(member -> {
+            if (TypeAtomization.hasUnknownTypedValue(member)) {
                 return true;
             }
-        }
-        type = normalizeAggregateItemType(type);
-        return type.isNumeric()
-                || type.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
-                || type.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem);
+            ItemType normalized = normalizeAggregateItemType(member);
+            return normalized.isNumeric()
+                    || normalized.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
+                    || normalized.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem);
+        });
     }
 
     // Aggregates can convert untyped values and produce values outside a derived type's restrictions.
     private ItemType normalizeAggregateItemType(ItemType type) {
         if (type.isUnionType()) {
-            return ItemTypeFactory.createInferredUnionType(type.getTypes().stream()
+            return ItemTypeFactory.createInferredUnionType(type.getMemberTypes().stream()
                     .map(this::normalizeAggregateItemType)
                     .collect(Collectors.toList()));
         }
         if (TypeAtomization.containsNode(type)) {
-            type = TypeAtomization.inferType(new SequenceType(type)).getItemType();
+            type = TypeAtomization.atomizedItemType(type);
         }
         if (type.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
             return BuiltinTypesCatalogue.doubleItem;
@@ -704,14 +700,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (inputType.isEmptySequence()) {
             return zeroType;
         }
-        SequenceType result = new SequenceType(inputType.getItemType());
+        // A non-empty input sums to one item; an empty input returns the zero argument instead.
+        SequenceType sumType = new SequenceType(inputType.getItemType());
         if (!inputType.getCardinality().allowsZero()) {
-            return result;
+            return sumType;
         }
-        ItemType itemType = zeroType.isEmptySequence()
-                ? result.getItemType()
-                : ItemTypeFactory.createInferredUnionType(List.of(result.getItemType(), zeroType.getItemType()));
-        return new SequenceType(itemType, result.getCardinality().union(zeroType.getCardinality()));
+        return sumType.leastCommonSupertypeWith(zeroType);
     }
 
     private SequenceType inferStrictAggregateReturnType(FunctionCallExpression expression, Expression inputExpression) {
@@ -740,13 +734,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return SequenceType.createSequenceType("anyAtomicType?");
         }
 
-        ItemType inputItemType = inputType.getItemType();
-        if ((!inputItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                        || inputItemType.equals(BuiltinTypesCatalogue.atomicItem))
-                && !(TypeAtomization.containsNode(inputItemType) && TypeAtomization.isAtomicOrNode(inputItemType))) {
+        // Untyped values are compared as xs:double. A node's typed value is only known at runtime.
+        ItemType inputItemType = normalizeAggregateItemType(inputType.getItemType());
+        boolean nodeInput = TypeAtomization.containsNode(inputType.getItemType())
+                && TypeAtomization.isAtomicOrNode(inputType.getItemType());
+        if (!nodeInput && !hasMutuallyComparableItems(inputItemType)) {
             throwStaticTypeException(
                     functionName
-                            + " requires its inferred input item type to be an atomic type other than xs:anyAtomicType, found "
+                            + " requires an atomic input type other than xs:anyAtomicType whose member types can be"
+                            + " compared with each other, found "
                             + inputType,
                     ErrorCode.InvalidArgumentType,
                     expression.getMetadata());
@@ -757,7 +753,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 (inputType.getArity() == SequenceType.Arity.One || inputType.getArity() == SequenceType.Arity.OneOrMore)
                         ? SequenceType.Arity.One
                         : SequenceType.Arity.OneOrZero;
-        return new SequenceType(normalizeAggregateItemType(inputItemType), returnArity);
+        return new SequenceType(inputItemType, returnArity);
+    }
+
+    /**
+     * fn:min and fn:max compare every input item with the others, so every pair of member types must support
+     * ordering, e.g. (xs:string | xs:integer) is rejected.
+     */
+    private static boolean hasMutuallyComparableItems(ItemType itemType) {
+        if (!itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                || itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
+            return false;
+        }
+        return itemType.allMemberTypesMatch(left -> itemType.allMemberTypesMatch(
+                right -> areMemberTypesComparable(left, right, ComparisonExpression.ComparisonOperator.VC_LT)));
     }
 
     private boolean isBuiltinFunctionName(Name functionName, String localName) {
@@ -976,17 +985,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         ItemType itemType = actual.getItemType();
         if (itemType.isUnionType()) {
-            SequenceCardinality cardinality = actual.getCardinality();
-            return itemType.getTypes().stream()
-                    .allMatch(member -> isFunctionArgumentCompatible(new SequenceType(member, cardinality), expected));
+            return itemType.allMemberTypesMatch(member ->
+                    isFunctionArgumentCompatible(new SequenceType(member, actual.getCardinality()), expected));
         }
         if (expected.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            if (TypeAtomization.containsNode(itemType)) {
-                // The typed value of a generic node is unknown. Its type and size
-                // are checked by runtime function conversion, just as for casts.
+            if (TypeAtomization.hasUnknownTypedValue(itemType)) {
+                // Runtime function conversion checks the type and size of the typed value, just as for casts.
                 return true;
             }
-            if (actual.getItemType().isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
+            if (itemType.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
                 return actual.getCardinality().isSubtypeOf(expected.getCardinality());
             }
         }
@@ -1143,11 +1150,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private boolean isCastOperandTypeCompatible(ItemType source, ItemType target) {
-        if (source.isUnionType()) {
-            return source.getTypes().stream().allMatch(member -> isCastOperandTypeCompatible(member, target));
-        }
-        // Do not use node kind as an atomic cast source. The typed value is checked at runtime.
-        return TypeAtomization.containsNode(source) || source.isStaticallyCastableAs(target);
+        // A node kind is not an atomic cast source; its typed value is checked at runtime.
+        return source.allMemberTypesMatch(
+                member -> TypeAtomization.hasUnknownTypedValue(member) || member.isStaticallyCastableAs(target));
     }
 
     @Override
@@ -1392,24 +1397,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     // Evaluate each possible operand pair. A null result means an unsupported pair.
     private ItemType inferBinaryOperationType(
             ItemType left, ItemType right, BiFunction<ItemType, ItemType, ItemType> operation) {
-        if (!left.isUnionType() && !right.isUnionType()) {
-            if (!TypeAtomization.isAtomicOrNode(left) || !TypeAtomization.isAtomicOrNode(right)) {
-                return null;
-            }
-            if (!TypeAtomization.containsNode(left)
-                    && !TypeAtomization.containsNode(right)
-                    && (left.equals(BuiltinTypesCatalogue.atomicItem)
-                            || right.equals(BuiltinTypesCatalogue.atomicItem))) {
-                return null; // Retain strict checks for declared, unrefined atomic operands.
-            }
-            return operation.apply(normalizeArithmeticItemType(left), normalizeArithmeticItemType(right));
-        }
         List<ItemType> results = new ArrayList<>();
-        List<ItemType> leftTypes = left.isUnionType() ? left.getTypes() : List.of(left);
-        List<ItemType> rightTypes = right.isUnionType() ? right.getTypes() : List.of(right);
-        for (ItemType leftMember : leftTypes) {
-            for (ItemType rightMember : rightTypes) {
-                ItemType result = inferBinaryOperationType(leftMember, rightMember, operation);
+        for (ItemType leftMember : left.getMemberTypes()) {
+            for (ItemType rightMember : right.getMemberTypes()) {
+                ItemType result = inferMemberOperationType(leftMember, rightMember, operation);
                 if (result == null) {
                     return null;
                 }
@@ -1419,8 +1410,21 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return ItemTypeFactory.createInferredUnionType(results);
     }
 
+    private ItemType inferMemberOperationType(
+            ItemType left, ItemType right, BiFunction<ItemType, ItemType, ItemType> operation) {
+        if (!TypeAtomization.isAtomicOrNode(left) || !TypeAtomization.isAtomicOrNode(right)) {
+            return null;
+        }
+        if (!TypeAtomization.hasUnknownTypedValue(left)
+                && !TypeAtomization.hasUnknownTypedValue(right)
+                && (left.equals(BuiltinTypesCatalogue.atomicItem) || right.equals(BuiltinTypesCatalogue.atomicItem))) {
+            return null; // Retain strict checks for declared, unrefined atomic operands.
+        }
+        return operation.apply(normalizeArithmeticItemType(left), normalizeArithmeticItemType(right));
+    }
+
     private ItemType normalizeArithmeticItemType(ItemType type) {
-        ItemType atomized = TypeAtomization.inferType(new SequenceType(type)).getItemType();
+        ItemType atomized = TypeAtomization.atomizedItemType(type);
         return atomized.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
                 ? BuiltinTypesCatalogue.doubleItem
                 : atomized;
@@ -1535,9 +1539,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private SequenceType.Arity atomizedSingletonArity(SequenceType source) {
         SequenceType atomized =
                 TypeAtomization.isAtomicOrNode(source.getItemType()) ? TypeAtomization.inferType(source) : source;
-        if (atomized.getCardinality().allowsMany()
-                && !(TypeAtomization.containsNode(source.getItemType())
-                        && atomized.getItemType().equals(BuiltinTypesCatalogue.atomicItem))) {
+        if (atomized.getCardinality().allowsMany() && !TypeAtomization.hasUnknownTypedValue(source.getItemType())) {
             return null;
         }
         return atomized.getCardinality().allowsZero() ? SequenceType.Arity.OneOrZero : SequenceType.Arity.One;
@@ -1663,24 +1665,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private ItemType inferUnaryItemType(ItemType type) {
-        if (type.isUnionType()) {
-            List<ItemType> results = new ArrayList<>();
-            for (ItemType member : type.getTypes()) {
-                ItemType result = inferUnaryItemType(member);
-                if (result == null) {
-                    return null;
-                }
-                results.add(result);
+        List<ItemType> results = new ArrayList<>();
+        for (ItemType member : type.getMemberTypes()) {
+            if (!TypeAtomization.isAtomicOrNode(member)) {
+                return null;
             }
-            return ItemTypeFactory.createInferredUnionType(results);
+            if (TypeAtomization.hasUnknownTypedValue(member)) {
+                results.add(BuiltinTypesCatalogue.numericItem);
+                continue;
+            }
+            ItemType normalized = normalizeArithmeticItemType(member);
+            if (!normalized.isNumeric()) {
+                return null;
+            }
+            results.add(normalized);
         }
-        if (!TypeAtomization.isAtomicOrNode(type)) {
-            return null;
-        }
-        type = normalizeArithmeticItemType(type);
-        return type.isNumeric()
-                ? type
-                : type.equals(BuiltinTypesCatalogue.atomicItem) ? BuiltinTypesCatalogue.numericItem : null;
+        return ItemTypeFactory.createInferredUnionType(results);
     }
 
     // endregion
@@ -1799,11 +1799,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMetadata());
             }
 
-            boolean sameValue = leftInferredType.getCardinality() == SequenceCardinality.ONE
-                    && childrenExpressions.get(0) instanceof VariableReferenceExpression leftVariable
-                    && childrenExpressions.get(1) instanceof VariableReferenceExpression rightVariable
-                    && leftVariable.getVariableName().equals(rightVariable.getVariableName());
-            if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator, sameValue)) {
+            if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator)) {
                 throwStaticTypeException(
                         "It is not possible to compare these types: "
                                 + leftItemType
@@ -1819,34 +1815,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private boolean areComparisonTypesCompatible(
-            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator, boolean sameValue) {
-        // Equal union types do not imply equal runtime values. Only references to the same
-        // singleton variable let us check matching alternatives instead of every possible pair.
-        if (left.isUnionType()) {
-            if (sameValue && left.equals(right)) {
-                return left.getTypes().stream()
-                        .allMatch(member -> areComparisonTypesCompatible(member, member, operator, true));
-            }
-            return left.getTypes().stream()
-                    .allMatch(member -> areComparisonTypesCompatible(member, right, operator, false));
-        }
-        if (right.isUnionType()) {
-            return right.getTypes().stream()
-                    .allMatch(member -> areComparisonTypesCompatible(left, member, operator, false));
-        }
-        return areAtomizedComparisonTypesCompatible(left, right, operator);
+    // Static typing is pessimistic (XQuery 3.1, 2.2.3.1): every pair of member types must be comparable.
+    private static boolean areComparisonTypesCompatible(
+            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
+        return left.allMemberTypesMatch(leftMember -> right.allMemberTypesMatch(
+                rightMember -> areAtomizedComparisonTypesCompatible(leftMember, rightMember, operator)));
     }
 
-    private boolean areAtomizedComparisonTypesCompatible(
+    private static boolean areAtomizedComparisonTypesCompatible(
             ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
-        boolean nodeOperand = TypeAtomization.containsNode(left) || TypeAtomization.containsNode(right);
-        left = TypeAtomization.inferType(new SequenceType(left)).getItemType();
-        right = TypeAtomization.inferType(new SequenceType(right)).getItemType();
-        if (nodeOperand
-                && (left.equals(BuiltinTypesCatalogue.atomicItem) || right.equals(BuiltinTypesCatalogue.atomicItem))) {
+        if (TypeAtomization.hasUnknownTypedValue(left) || TypeAtomization.hasUnknownTypedValue(right)) {
             return true; // Unknown typed values require runtime comparison checks.
         }
+        left = TypeAtomization.atomizedItemType(left);
+        right = TypeAtomization.atomizedItemType(right);
         boolean leftUntyped = left.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem);
         boolean rightUntyped = right.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem);
         if (leftUntyped) {
@@ -1859,6 +1841,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     ? BuiltinTypesCatalogue.stringItem
                     : left.isNumeric() ? BuiltinTypesCatalogue.doubleItem : left.getCastingPrimitiveType();
         }
+        return areMemberTypesComparable(left, right, operator);
+    }
+
+    private static boolean areMemberTypesComparable(
+            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
         // JSONiq null is comparable with every atomic value, including for ordering.
         if (left.equals(BuiltinTypesCatalogue.nullItem) || right.equals(BuiltinTypesCatalogue.nullItem)) {
             return true;
@@ -2535,7 +2522,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (!checkArguments(formalParameterTypes, actualParameterTypes)) {
             throwStaticTypeException(
-                    "the type of a dynamic function call main expression must be function, instead inferred " + type,
+                    "the arguments of a dynamic function call do not match the signature of " + type,
                     expression.getMetadata());
         }
 
@@ -2570,12 +2557,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region FLOWR
 
-    @Override
-    public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
-        Clause clause = expression.getReturnClause().getFirstClause();
+    /**
+     * Visits the clauses of a FLWOR expression or statement, starting with the given clause,
+     * and returns how many tuples can reach the return clause.
+     */
+    private SequenceCardinality visitFlworClauses(Clause clause) {
         SequenceCardinality forCardinality = SequenceCardinality.ONE;
-        SequenceType forType;
-
         while (clause != null) {
             try {
                 this.visit(clause, clause.getStaticContext());
@@ -2587,13 +2574,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
                 throw e;
             }
-            // if there are for clauses we need to consider their arities for the returning expression
             if (clause.getClauseType() == FLWOR_CLAUSES.FOR) {
-                forType = ((ForClause) clause).getExpression().getStaticSequenceType();
-                // if forType is the empty sequence that means that allowing empty is set otherwise we would have thrown
-                // an error
-                // therefore this for loop will generate one tuple binding the empty sequence, so as for the arities
-                // count as arity.One
+                // Each tuple so far is repeated once per item of the for clause's sequence.
+                SequenceType forType = ((ForClause) clause).getExpression().getStaticSequenceType();
                 if (!forType.isEmptySequence()) {
                     SequenceCardinality sourceCardinality = forType.getCardinality();
                     if (((ForClause) clause).isAllowEmpty()) {
@@ -2602,21 +2585,29 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     }
                     forCardinality = sourceCardinality.repeated(forCardinality);
                 } else if (!((ForClause) clause).isAllowEmpty()) {
+                    // Without allowing empty, an empty source produces no tuples;
+                    // with it, each tuple continues once with an empty binding.
                     forCardinality = SequenceCardinality.EMPTY;
                 }
             } else if (clause.getClauseType() == FLWOR_CLAUSES.GROUP_BY) {
                 // Multiple input tuples can collapse into a single group.
-                forCardinality = SequenceCardinality.fromArity(forCardinality.toArity());
+                forCardinality = forCardinality.grouped();
             } else if (clause.getClauseType() == FLWOR_CLAUSES.WHERE) {
                 // Filtering tuples can leave zero, one, or multiple tuples.
-                forCardinality =
-                        SequenceCardinality.fromArity(forCardinality.toArity()).union(SequenceCardinality.EMPTY);
+                forCardinality = forCardinality.filtered();
             } else if (clause.getClauseType() == FLWOR_CLAUSES.WINDOW) {
                 forCardinality = SequenceCardinality.ANY;
             }
             clause = clause.getNextClause();
         }
 
+        return forCardinality;
+    }
+
+    @Override
+    public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
+        SequenceCardinality forCardinality =
+                visitFlworClauses(expression.getReturnClause().getFirstClause());
         SequenceType returnType = expression.getReturnClause().getReturnExpr().getStaticSequenceType();
         basicChecks(returnType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
         returnType = new SequenceType(
@@ -3100,49 +3091,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
-        Clause clause = statement.getReturnStatementClause().getFirstClause();
-        SequenceCardinality forCardinality = SequenceCardinality.ONE;
-        SequenceType forType;
-
-        while (clause != null) {
-            try {
-                this.visit(clause, clause.getStaticContext());
-            } catch (UnexpectedStaticTypeException e) {
-                if (forCardinality == SequenceCardinality.EMPTY
-                        && clause.getClauseType().equals(FLWOR_CLAUSES.WHERE)) {
-                    clause = clause.getNextClause();
-                    continue;
-                }
-                throw e;
-            }
-            // if there are for clauses we need to consider their arities for the returning expression
-            if (clause.getClauseType() == FLWOR_CLAUSES.FOR) {
-                forType = ((ForClause) clause).getExpression().getStaticSequenceType();
-                // if forType is the empty sequence that means that allowing empty is set otherwise we would have thrown
-                // an error
-                // therefore this for loop will generate one tuple binding the empty sequence, so as for the arities
-                // count as arity.One
-                if (!forType.isEmptySequence()) {
-                    SequenceCardinality sourceCardinality = forType.getCardinality();
-                    if (((ForClause) clause).isAllowEmpty()) {
-                        // An empty source still emits one tuple with an empty binding.
-                        sourceCardinality = sourceCardinality.replaceZeroWithOne();
-                    }
-                    forCardinality = sourceCardinality.repeated(forCardinality);
-                } else if (!((ForClause) clause).isAllowEmpty()) {
-                    forCardinality = SequenceCardinality.EMPTY;
-                }
-            } else if (clause.getClauseType() == FLWOR_CLAUSES.GROUP_BY) {
-                // Multiple input tuples can collapse into a single group.
-                forCardinality = SequenceCardinality.fromArity(forCardinality.toArity());
-            } else if (clause.getClauseType() == FLWOR_CLAUSES.WHERE) {
-                // Filtering tuples can leave zero, one, or multiple tuples.
-                forCardinality =
-                        SequenceCardinality.fromArity(forCardinality.toArity()).union(SequenceCardinality.EMPTY);
-            }
-            clause = clause.getNextClause();
-        }
-
+        visitFlworClauses(statement.getReturnStatementClause().getFirstClause());
         SequenceType returnType =
                 statement.getReturnStatementClause().getReturnStatement().getStaticSequenceType();
         basicChecks(returnType, statement.getClass().getSimpleName(), true, true, statement.getMetadata());

@@ -35,10 +35,6 @@ public abstract class AnnotationsTestsBase {
         return TestConfigurations.defaultConfiguration();
     }
 
-    protected RumbleConfiguration getConfiguration(File testFile) {
-        return getConfiguration();
-    }
-
     public ExternalBindings getExternalBindings() {
         return TestConfigurations.defaultExternalBindings();
     }
@@ -58,6 +54,6 @@ public abstract class AnnotationsTestsBase {
     @MethodSource("testFiles")
     @Timeout(1000)
     final void testAnnotation(File testFile) throws IOException {
-        AnnotationTestExecutor.run(testFile, getConfiguration(testFile), getExternalBindings(), checkOutput());
+        AnnotationTestExecutor.run(testFile, getConfiguration(), getExternalBindings(), checkOutput());
     }
 }
