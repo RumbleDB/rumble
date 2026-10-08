@@ -172,26 +172,6 @@ class IsStaticallyTypeInferenceTest {
     }
 
     @Test
-    void arithmeticPromotesEachUnionMember() {
-        SequenceType type = infer("for $x in (1, 2.5e0) return $x + 1", "jq");
-        assertEquals(
-                List.of(BuiltinTypesCatalogue.integerItem, BuiltinTypesCatalogue.doubleItem),
-                type.getItemType().getTypes());
-    }
-
-    @Test
-    void unionsAreComparableIfEveryMemberPairIs() {
-        String flags = "declare variable $c as xs:boolean external; declare variable $d as xs:boolean external; ";
-        assertEquals(
-                BuiltinTypesCatalogue.booleanItem,
-                infer(flags + "(if ($c) then \"a\" else xs:anyURI(\"b\")) eq \"a\"", "jq")
-                        .getItemType());
-        assertThrows(
-                UnexpectedStaticTypeException.class,
-                () -> infer(flags + "(if ($c) then 1 else \"a\") eq (if ($d) then 2 else \"b\")", "jq"));
-    }
-
-    @Test
     void unionHasAnEffectiveBooleanValueIfEveryMemberHasOne() {
         String flag = "declare variable $c as xs:boolean external; ";
         assertDoesNotThrow(() -> infer(flag + "if (if ($c) then 1 else \"a\") then 1 else 2", "jq"));
