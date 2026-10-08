@@ -213,11 +213,17 @@ public final class XmlSchemaCatalog {
                 getTypedValueType(typeName).orElse(null));
     }
 
-    /** Whether the type is an element or document whose schema type a step can look up. */
+    /**
+     * Whether every member of the type is an element or document whose schema type a step can look up. A step from
+     * a union can only be inferred from the schema if every member describes the nodes it selects.
+     */
     public static boolean isSchemaTyped(ItemType type) {
-        if (type instanceof DocumentNodeItemType document) {
-            return isSchemaTyped(document.getElementTestType());
-        }
+        return type.allMemberTypesMatch(member -> member instanceof DocumentNodeItemType document
+                ? isSchemaTypedElement(document.getElementTestType())
+                : isSchemaTypedElement(member));
+    }
+
+    private static boolean isSchemaTypedElement(ItemType type) {
         return type instanceof SchemaElementNodeItemType
                 || (type instanceof ElementNodeItemType element && element.getSchemaTypeName() != null);
     }
@@ -238,49 +244,73 @@ public final class XmlSchemaCatalog {
 
     /** Nodes that a step selects, before their types are combined. */
     private record Selection(Set<ItemType> nodeTypes, SequenceCardinality cardinality) {
+        private static final Selection NONE = new Selection(Set.of(), SequenceCardinality.EMPTY);
+
+        /** One context node has one of the types, so it selects the nodes of either selection. */
+        private Selection or(Selection other) {
+            Set<ItemType> nodeTypes = new LinkedHashSet<>(this.nodeTypes);
+            nodeTypes.addAll(other.nodeTypes);
+            return new Selection(nodeTypes, this.cardinality.union(other.cardinality));
+        }
+
+        /** Different declarations keep their own types, joined into a union. */
         private SequenceType sequenceType() {
             return this.nodeTypes.isEmpty()
                     ? SequenceType.createSequenceType("()")
-                    : new SequenceType(commonNodeType(this.nodeTypes), this.cardinality);
+                    : new SequenceType(
+                            ItemTypeFactory.createInferredUnionType(new ArrayList<>(this.nodeTypes)), this.cardinality);
         }
     }
 
     private Optional<Selection> select(ItemType contextType, boolean attributeAxis, Name name) {
-        if (contextType instanceof DocumentNodeItemType document) {
-            return Optional.of(
-                    attributeAxis
-                            ? new Selection(Set.of(), SequenceCardinality.EMPTY)
-                            : selectDocumentElement(document.getElementTestType(), name));
+        Selection result = null;
+        for (ItemType member : contextType.getMemberTypes()) {
+            List<? extends ItemType> contexts =
+                    member instanceof DocumentNodeItemType ? List.of(member) : alternatives(member);
+            for (ItemType context : contexts) {
+                Optional<Selection> selection = context instanceof DocumentNodeItemType document
+                        ? Optional.of(
+                                attributeAxis
+                                        ? Selection.NONE
+                                        : selectDocumentElement(document.getElementTestType(), name))
+                        : selectFromElement((ElementNodeItemType) context, attributeAxis, name);
+                if (selection.isEmpty()) {
+                    return Optional.empty();
+                }
+                result = result == null ? selection.get() : result.or(selection.get());
+            }
+        }
+        return Optional.of(result == null ? Selection.NONE : result);
+    }
+
+    private Optional<Selection> selectFromElement(ElementNodeItemType context, boolean attributeAxis, Name name) {
+        Optional<XSTypeDefinition> type = Optional.ofNullable(context.getSchemaTypeName())
+                .flatMap(this::resolveType)
+                .filter(definition -> !isAnyType(definition));
+        if (type.isEmpty()) {
+            return Optional.empty();
         }
         Set<ItemType> nodeTypes = new LinkedHashSet<>();
         SequenceCardinality cardinality = null;
-        for (ElementNodeItemType context : alternatives(contextType)) {
-            Optional<XSTypeDefinition> type = Optional.ofNullable(context.getSchemaTypeName())
-                    .flatMap(this::resolveType)
-                    .filter(definition -> !isAnyType(definition));
-            if (type.isEmpty()) {
+        // An instance may select a derived type with xsi:type.
+        for (XSTypeDefinition derived : typeAndDerivedTypes(type.get())) {
+            Optional<Occurrences> occurrences = derived instanceof XSComplexTypeDefinition complexType
+                    ? attributeAxis
+                            ? collectAttributes(complexType, name, nodeTypes)
+                            : collectChildElements(complexType.getParticle(), name, nodeTypes)
+                    : Optional.of(Occurrences.NONE);
+            if (occurrences.isEmpty()) {
                 return Optional.empty();
             }
-            // An instance may select a derived type with xsi:type.
-            for (XSTypeDefinition derived : typeAndDerivedTypes(type.get())) {
-                Optional<Occurrences> occurrences = derived instanceof XSComplexTypeDefinition complexType
-                        ? attributeAxis
-                                ? collectAttributes(complexType, name, nodeTypes)
-                                : collectChildElements(complexType.getParticle(), name, nodeTypes)
-                        : Optional.of(Occurrences.NONE);
-                if (occurrences.isEmpty()) {
-                    return Optional.empty();
-                }
-                cardinality = cardinality == null
-                        ? occurrences.get().cardinality()
-                        : cardinality.union(occurrences.get().cardinality());
-            }
-            // A nilled element has no children.
-            if (!attributeAxis && context.isNillable()) {
-                cardinality = cardinality.union(SequenceCardinality.EMPTY);
-            }
+            cardinality = cardinality == null
+                    ? occurrences.get().cardinality()
+                    : cardinality.union(occurrences.get().cardinality());
         }
-        return Optional.of(new Selection(nodeTypes, cardinality == null ? SequenceCardinality.EMPTY : cardinality));
+        // A nilled element has no children.
+        if (!attributeAxis && context.isNillable()) {
+            cardinality = cardinality.union(SequenceCardinality.EMPTY);
+        }
+        return Optional.of(new Selection(nodeTypes, cardinality));
     }
 
     /** A document node that matches document-node(E) has exactly one element child, which matches E. */
@@ -410,25 +440,6 @@ public final class XmlSchemaCatalog {
             case XSWildcard.NSCONSTRAINT_NOT -> !listed;
             default -> true;
         };
-    }
-
-    /** Keeps one precise node type, otherwise the closest common name. */
-    private static ItemType commonNodeType(Set<ItemType> nodeTypes) {
-        if (nodeTypes.size() == 1) {
-            return nodeTypes.iterator().next();
-        }
-        ItemType first = nodeTypes.iterator().next();
-        if (first instanceof AttributeNodeItemType attribute) {
-            boolean sameName = nodeTypes.stream()
-                    .allMatch(type -> attribute.getNodeName().equals(((AttributeNodeItemType) type).getNodeName()));
-            return sameName
-                    ? ItemTypeFactory.attributeNodeItemType(attribute.getNodeName())
-                    : BuiltinTypesCatalogue.attributeNode;
-        }
-        Name nodeName = ((ElementNodeItemType) first).getNodeName();
-        boolean sameName =
-                nodeTypes.stream().allMatch(type -> nodeName.equals(((ElementNodeItemType) type).getNodeName()));
-        return sameName ? ItemTypeFactory.elementNodeItemType(nodeName) : BuiltinTypesCatalogue.elementNode;
     }
 
     /** Bounds on how many matching nodes a content model contains. */
