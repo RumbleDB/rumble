@@ -197,39 +197,59 @@ public class ItemTypeFactory {
             return BuiltinTypesCatalogue.nullItem;
         }
         ItemType itemType = valueType.getItemType();
-        if (valueType.getArity() == SequenceType.Arity.One) {
-            return itemType;
-        }
-        if (itemType.isTopmostItemType()) {
-            // item already covers the singleton, null, and wrapped-array possibilities.
-            return itemType;
-        }
-
+        SequenceCardinality cardinality = valueType.getCardinality();
         List<ItemType> alternatives = new ArrayList<>();
-        if (itemType.isUnionType()) {
-            alternatives.addAll(itemType.getTypes());
-        } else {
+        if (cardinality.allowsOne()) {
             alternatives.add(itemType);
         }
-        if (valueType.getArity() == SequenceType.Arity.OneOrMore
-                || valueType.getArity() == SequenceType.Arity.ZeroOrMore) {
-            // Both arities allow a singleton as well as multiple items, so retain both alternatives.
+        if (cardinality.allowsMany()) {
             alternatives.add(createAnonymousArrayType(itemType));
         }
-        if ((valueType.getArity() == SequenceType.Arity.OneOrZero
-                        || valueType.getArity() == SequenceType.Arity.ZeroOrMore)
-                && alternatives.stream().noneMatch(type -> BuiltinTypesCatalogue.nullItem.isSubtypeOf(type))) {
+        if (cardinality.allowsZero()) {
             alternatives.add(BuiltinTypesCatalogue.nullItem);
         }
-        if (alternatives.size() == 1) {
-            return alternatives.get(0);
+        return createInferredUnionType(alternatives);
+    }
+
+    /**
+     * Preserves alternatives inferred from expressions, removing duplicates and subsumed types.
+     * Named schema unions retain their identity; only anonymous inference unions are flattened.
+     */
+    public static ItemType createInferredUnionType(List<ItemType> alternatives) {
+        List<ItemType> flattened = new ArrayList<>();
+        for (ItemType alternative : alternatives) {
+            collectInferredUnionMembers(alternative, flattened);
+        }
+        List<ItemType> members = new ArrayList<>();
+        for (ItemType candidate : flattened) {
+            if (members.stream().anyMatch(candidate::isSubtypeOf)) {
+                continue;
+            }
+            members.removeIf(member -> member.isSubtypeOf(candidate));
+            members.add(candidate);
+        }
+        if (members.isEmpty()) {
+            throw new OurBadException("An inferred union must contain at least one item type.");
+        }
+        if (members.size() == 1) {
+            return members.get(0);
         }
         // isSubtypeOf checks the base type before the members, so the base must cover every member:
         // xs:anyAtomicType only if all members are atomic, otherwise item (e.g. when one is an array).
-        ItemType baseType = alternatives.stream().allMatch(type -> type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))
+        ItemType baseType = members.stream().allMatch(type -> type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))
                 ? BuiltinTypesCatalogue.atomicItem
                 : BuiltinTypesCatalogue.item;
-        return new UnionItemType(null, baseType, alternatives, false);
+        return new UnionItemType(null, baseType, members, false);
+    }
+
+    private static void collectInferredUnionMembers(ItemType type, List<ItemType> members) {
+        if (type.isUnionType() && !type.hasName() && !type.isUserDefined()) {
+            for (ItemType member : type.getTypes()) {
+                collectInferredUnionMembers(member, members);
+            }
+        } else {
+            members.add(type);
+        }
     }
 
     /**
