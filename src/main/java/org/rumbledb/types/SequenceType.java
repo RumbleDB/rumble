@@ -121,6 +121,11 @@ public class SequenceType implements Serializable {
         if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
             return !this.cardinality.allowsZero() || superType.cardinality.allowsZero();
         }
+        if (this.itemType.isUnionType()) {
+            // A member can fit directly while another needs promotion or function coercion.
+            return this.itemType.allMemberTypesMatch(
+                    member -> new SequenceType(member, this.cardinality).isSubtypeOfOrCanBePromotedTo(superType));
+        }
         return this.cardinality.isSubtypeOf(superType.cardinality)
                 && (this.itemType.isSubtypeOf(superType.itemType)
                         || this.itemType.canBePromotedTo(superType.itemType)
