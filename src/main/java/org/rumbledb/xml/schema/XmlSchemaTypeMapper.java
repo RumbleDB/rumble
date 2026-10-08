@@ -17,6 +17,7 @@ package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -44,6 +45,7 @@ final class XmlSchemaTypeMapper {
     private final Map<XSTypeDefinition, Optional<ItemType>> mappedTypes;
     private final Map<XSTypeDefinition, XmlSchemaTypeAnnotation> mappedAnnotations;
     private final Map<XSTypeDefinition, Name> anonymousTypeNames;
+    private final Map<Name, XSTypeDefinition> anonymousTypes;
     private final Set<XSTypeDefinition> typesBeingMapped;
     private final Map<String, String> namespacePrefixes;
 
@@ -53,6 +55,7 @@ final class XmlSchemaTypeMapper {
         this.mappedTypes = new IdentityHashMap<>();
         this.mappedAnnotations = new IdentityHashMap<>();
         this.anonymousTypeNames = new IdentityHashMap<>();
+        this.anonymousTypes = new HashMap<>();
         this.typesBeingMapped = Collections.newSetFromMap(new IdentityHashMap<>());
     }
 
@@ -242,9 +245,11 @@ final class XmlSchemaTypeMapper {
      */
     Name nameOf(XSTypeDefinition schemaType) {
         if (schemaType.getAnonymous() || schemaType.getName() == null) {
-            return this.anonymousTypeNames.computeIfAbsent(
-                    schemaType,
-                    type -> new Name(Name.ANONYMOUS_SCHEMA_TYPE_NS, null, "anonymousType-" + UUID.randomUUID()));
+            return this.anonymousTypeNames.computeIfAbsent(schemaType, type -> {
+                Name name = new Name(Name.ANONYMOUS_SCHEMA_TYPE_NS, null, "anonymousType-" + UUID.randomUUID());
+                this.anonymousTypes.put(name, type);
+                return name;
+            });
         }
         return declarationName(schemaType.getNamespace(), schemaType.getName());
     }
@@ -268,10 +273,7 @@ final class XmlSchemaTypeMapper {
 
     /** Finds the anonymous definition that {@link #nameOf(XSTypeDefinition)} named. */
     Optional<XSTypeDefinition> anonymousType(Name name) {
-        return this.anonymousTypeNames.entrySet().stream()
-                .filter(entry -> entry.getValue().equals(name))
-                .map(Map.Entry::getKey)
-                .findFirst();
+        return Optional.ofNullable(this.anonymousTypes.get(name));
     }
 
     private static void insertBefore(List<Name> names, Name name, Name successor) {
