@@ -1674,11 +1674,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMetadata());
             }
 
-            boolean sameValue = leftInferredType.getCardinality() == SequenceCardinality.ONE
-                    && childrenExpressions.get(0) instanceof VariableReferenceExpression leftVariable
-                    && childrenExpressions.get(1) instanceof VariableReferenceExpression rightVariable
-                    && leftVariable.getVariableName().equals(rightVariable.getVariableName());
-            if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator, sameValue)) {
+            if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator)) {
                 throwStaticTypeException(
                         "It is not possible to compare these types: "
                                 + leftItemType
@@ -1694,13 +1690,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private boolean areComparisonTypesCompatible(
-            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator, boolean sameValue) {
-        // Equal union types do not imply equal runtime values. Only references to the same
-        // singleton variable let us check matching member types instead of every possible pair.
-        if (sameValue && left.isUnionType() && left.equals(right)) {
-            return left.allMemberTypesMatch(member -> areMemberTypesComparable(member, member, operator));
-        }
+    // Static typing is pessimistic (XQuery 3.1, 2.2.3.1): every pair of member types must be comparable.
+    private static boolean areComparisonTypesCompatible(
+            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
         return left.allMemberTypesMatch(leftMember ->
                 right.allMemberTypesMatch(rightMember -> areMemberTypesComparable(leftMember, rightMember, operator)));
     }
