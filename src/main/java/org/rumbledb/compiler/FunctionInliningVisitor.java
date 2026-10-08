@@ -111,10 +111,9 @@ public class FunctionInliningVisitor extends CloneVisitor {
     private void addCastCase(
             List<TypeswitchCase> cases, Expression expression, SequenceType testType, SequenceType targetType) {
         if (testType.equals(targetType)) {
-            cases.add(new TypeswitchCase(null, Collections.singletonList(testType), expression));
+            cases.add(new TypeswitchCase(Collections.singletonList(testType), expression));
         } else if (testType.getArity().isSubtypeOf(Arity.OneOrZero)) {
             cases.add(new TypeswitchCase(
-                    null,
                     Collections.singletonList(testType),
                     new CastExpression(expression, targetType, expression.getMetadata())));
         } else {
@@ -134,9 +133,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
             ReturnClause returnClause = new ReturnClause(castExpression, expression.getMetadata());
             forClause.chainWith(returnClause);
             cases.add(new TypeswitchCase(
-                    null,
-                    Collections.singletonList(testType),
-                    new FlworExpression(returnClause, expression.getMetadata())));
+                    Collections.singletonList(testType), new FlworExpression(returnClause, expression.getMetadata())));
         }
     }
 
@@ -231,13 +228,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     expression,
                     cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata())),
+                    new TypeswitchCase(new TreatExpression(
+                            expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata())),
                     expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
@@ -298,13 +290,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     expression,
                     cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata())),
+                    new TypeswitchCase(new TreatExpression(
+                            expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata())),
                     expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;
@@ -366,13 +353,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     expression,
                     cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata())),
+                    new TypeswitchCase(new TreatExpression(
+                            expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata())),
                     expression.getMetadata());
             typeSwitchExpression.setStaticSequenceType(paramType);
             return typeSwitchExpression;

@@ -66,7 +66,9 @@ public final class QuantifiedTranslation {
                     sequenceType,
                     null,
                     varExpression,
-                    translationContext.metadata(currentVariable.context()));
+                    translationContext.metadata(currentVariable.context()),
+                    translationContext.metadata(currentVariable.varBinding()),
+                    null);
             if (lastClause != null) {
                 lastClause.chainWith(newClause);
             }

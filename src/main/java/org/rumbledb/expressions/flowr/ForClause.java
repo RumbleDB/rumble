@@ -42,6 +42,14 @@ public class ForClause extends Clause {
     @Getter
     private final Name positionalVariableName;
 
+    /** Variable token metadata, or null for compiler-generated clauses, which bind no source variable. */
+    @Getter
+    private final ExceptionMetadata variableMetadata;
+
+    /** Positional variable token metadata, or null when there is no source token. */
+    @Getter
+    private final ExceptionMetadata positionalVariableMetadata;
+
     protected SequenceType sequenceType;
 
     @Getter
@@ -51,6 +59,7 @@ public class ForClause extends Clause {
     @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
+    /** Creates a compiler-generated clause, whose variables have no source tokens. */
     public ForClause(
             Name variableName,
             boolean allowEmpty,
@@ -58,6 +67,18 @@ public class ForClause extends Clause {
             Name positionalVariableName,
             Expression expression,
             ExceptionMetadata metadata) {
+        this(variableName, allowEmpty, sequenceType, positionalVariableName, expression, metadata, null, null);
+    }
+
+    public ForClause(
+            Name variableName,
+            boolean allowEmpty,
+            SequenceType sequenceType,
+            Name positionalVariableName,
+            Expression expression,
+            ExceptionMetadata metadata,
+            ExceptionMetadata variableMetadata,
+            ExceptionMetadata positionalVariableMetadata) {
         super(FLWOR_CLAUSES.FOR, metadata);
         if (variableName == null) {
             throw new SemanticException("For clause must have a variable", metadata);
@@ -65,6 +86,8 @@ public class ForClause extends Clause {
         this.variableName = variableName;
         this.allowingEmpty = allowEmpty;
         this.positionalVariableName = positionalVariableName;
+        this.variableMetadata = variableMetadata;
+        this.positionalVariableMetadata = positionalVariableMetadata;
         this.sequenceType = sequenceType;
         this.expression = expression;
     }

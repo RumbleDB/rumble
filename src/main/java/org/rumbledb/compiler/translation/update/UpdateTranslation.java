@@ -141,7 +141,7 @@ public final class UpdateTranslation {
                 .map(copyDeclCtx -> {
                     Name var = parseVariableBinding.apply(copyDeclCtx.varRef());
                     Expression expr = visitExprSingle.apply(copyDeclCtx.srcExpr());
-                    return new CopyDeclaration(var, expr);
+                    return new CopyDeclaration(var, expr, translationContext.metadata(copyDeclCtx.varRef()));
                 })
                 .collect(Collectors.toList());
         Expression modifyExpression = visitExprSingle.apply(ctx.modExpr());

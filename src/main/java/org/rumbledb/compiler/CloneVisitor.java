@@ -271,13 +271,15 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitForClause(ForClause clause, Node argument) {
-        Clause result = new ForClause(
+        ForClause result = new ForClause(
                 clause.getVariableName(),
                 clause.isAllowEmpty(),
                 clause.getActualSequenceType(),
                 clause.getPositionalVariableName(),
                 (Expression) visit(clause.getExpression(), argument),
-                clause.getMetadata());
+                clause.getMetadata(),
+                clause.getVariableMetadata(),
+                clause.getPositionalVariableMetadata());
         result.setStaticContext(clause.getStaticContext());
         return result;
     }
@@ -291,7 +293,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 (Expression) visit(clause.getExpression(), argument),
                 cloneWindowCondition(clause.getStartCondition(), argument),
                 clause.getEndCondition() == null ? null : cloneWindowCondition(clause.getEndCondition(), argument),
-                clause.getMetadata());
+                clause.getMetadata(),
+                clause.getVariableMetadata());
         result.setStaticContext(clause.getStaticContext());
         return result;
     }
@@ -307,7 +310,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 clause.getVariableName(),
                 clause.getActualSequenceType(),
                 (Expression) visit(clause.getExpression(), argument),
-                clause.getMetadata());
+                clause.getMetadata(),
+                clause.getVariableMetadata());
         result.setStaticType(clause.getStaticType());
         result.setStaticContext(clause.getStaticContext());
         return result;
@@ -317,13 +321,15 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     public Node visitGroupByClause(GroupByClause clause, Node argument) {
         List<GroupByVariableDeclaration> groupByVariableDeclarations = new ArrayList<>();
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
-            groupByVariableDeclarations.add(new GroupByVariableDeclaration(
+            GroupByVariableDeclaration copy = new GroupByVariableDeclaration(
                     variable.getVariableName(),
                     variable.getActualSequenceType(),
                     (variable.getExpression() == null)
                             ? variable.getExpression()
                             : (Expression) visit(variable.getExpression(), argument),
-                    variable.getCollationURI()));
+                    variable.getCollationURI(),
+                    variable.getVariableMetadata());
+            groupByVariableDeclarations.add(copy);
         }
         Clause result = new GroupByClause(groupByVariableDeclarations, clause.getMetadata());
         result.setStaticContext(clause.getStaticContext());
@@ -347,7 +353,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitCountClause(CountClause expression, Node argument) {
-        Clause result = new CountClause(expression.getCountVariableName(), expression.getMetadata());
+        Clause result = new CountClause(
+                expression.getCountVariableName(), expression.getMetadata(), expression.getVariableMetadata());
         result.setStaticContext(expression.getStaticContext());
         return result;
     }
@@ -787,7 +794,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 (StatementsAndOptionalExpr) visit(expression.getBody(), argument),
                 expression.isExternal(),
                 expression.getMetadata(),
-                expression.getNameMetadata());
+                expression.getNameMetadata(),
+                expression.getParameterMetadata());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
         result.setSequential(expression.isSequential());
@@ -1104,25 +1112,31 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         return result;
     }
 
+    private TypeswitchCase cloneTypeswitchCase(TypeswitchCase switchCase, Node argument) {
+        Expression body = (Expression) visit(switchCase.getReturnExpression(), argument);
+        TypeswitchCase copy = switchCase.getUnion() == null
+                ? new TypeswitchCase(switchCase.getVariableName(), body, switchCase.getVariableMetadata())
+                : new TypeswitchCase(
+                        switchCase.getVariableName(), switchCase.getUnion(), body, switchCase.getVariableMetadata());
+        return copy;
+    }
+
+    private TypeSwitchStatementCase cloneTypeswitchCase(TypeSwitchStatementCase switchCase, Node argument) {
+        Statement body = (Statement) visit(switchCase.getReturnStatement(), argument);
+        TypeSwitchStatementCase copy = switchCase.getUnion() == null
+                ? new TypeSwitchStatementCase(switchCase.getVariableName(), body, switchCase.getVariableMetadata())
+                : new TypeSwitchStatementCase(
+                        switchCase.getVariableName(), switchCase.getUnion(), body, switchCase.getVariableMetadata());
+        return copy;
+    }
+
     @Override
     public Node visitTypeSwitchExpression(TypeSwitchExpression expression, Node argument) {
         List<TypeswitchCase> resultCases = new ArrayList<>();
         for (TypeswitchCase switchCase : expression.getCases()) {
-            if (switchCase.getUnion() == null) {
-                resultCases.add(new TypeswitchCase(
-                        switchCase.getVariableName(), (Expression) visit(switchCase.getReturnExpression(), argument)));
-            } else {
-                resultCases.add(new TypeswitchCase(switchCase.getVariableName(), switchCase.getUnion(), (Expression)
-                        visit(switchCase.getReturnExpression(), argument)));
-            }
+            resultCases.add(cloneTypeswitchCase(switchCase, argument));
         }
-        TypeswitchCase defaultCase = (expression.getDefaultCase().getUnion() == null)
-                ? new TypeswitchCase(expression.getDefaultCase().getVariableName(), (Expression)
-                        visit(expression.getDefaultCase().getReturnExpression(), argument))
-                : new TypeswitchCase(
-                        expression.getDefaultCase().getVariableName(),
-                        expression.getDefaultCase().getUnion(),
-                        (Expression) visit(expression.getDefaultCase().getReturnExpression(), argument));
+        TypeswitchCase defaultCase = cloneTypeswitchCase(expression.getDefaultCase(), argument);
 
         TypeSwitchExpression result = new TypeSwitchExpression(
                 (Expression) visit(expression.getTestCondition(), argument),
@@ -1315,22 +1329,10 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
     @Override
     public Node visitTypeSwitchStatement(TypeSwitchStatement statement, Node argument) {
         List<TypeSwitchStatementCase> resultCases = new ArrayList<>();
-        statement.getCases().forEach(twsCase -> {
-            if (twsCase.getUnion() == null) {
-                resultCases.add(new TypeSwitchStatementCase(
-                        twsCase.getVariableName(), (Statement) visit(twsCase.getReturnStatement(), argument)));
-            } else {
-                resultCases.add(new TypeSwitchStatementCase(twsCase.getVariableName(), twsCase.getUnion(), (Statement)
-                        visit(twsCase.getReturnStatement(), argument)));
-            }
-        });
-        TypeSwitchStatementCase defaultCase = (statement.getDefaultCase().getUnion() == null)
-                ? new TypeSwitchStatementCase(statement.getDefaultCase().getVariableName(), (Statement)
-                        visit(statement.getDefaultCase().getReturnStatement(), argument))
-                : new TypeSwitchStatementCase(
-                        statement.getDefaultCase().getVariableName(),
-                        statement.getDefaultCase().getUnion(),
-                        (Statement) visit(statement.getDefaultCase().getReturnStatement(), argument));
+        for (TypeSwitchStatementCase switchCase : statement.getCases()) {
+            resultCases.add(cloneTypeswitchCase(switchCase, argument));
+        }
+        TypeSwitchStatementCase defaultCase = cloneTypeswitchCase(statement.getDefaultCase(), argument);
 
         TypeSwitchStatement result = new TypeSwitchStatement(
                 (Expression) visit(statement.getTestCondition(), argument),
@@ -1369,26 +1371,18 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitVariableDeclStatement(VariableDeclStatement statement, Node argument) {
-        if (statement.getVariableExpression() != null) {
-            VariableDeclStatement result = new VariableDeclStatement(
-                    statement.getAnnotations(),
-                    statement.getVariableName(),
-                    statement.getActualSequenceType(),
-                    (Expression) visit(statement.getVariableExpression(), argument),
-                    statement.getMetadata());
-            result.setStaticContext(statement.getStaticContext());
-            result.setStaticSequenceType(statement.getSequenceType());
-            result.setSequential(statement.isSequential());
-            return result;
-        }
+        Expression initializer = statement.getVariableExpression() == null
+                ? null
+                : (Expression) visit(statement.getVariableExpression(), argument);
         VariableDeclStatement result = new VariableDeclStatement(
                 statement.getAnnotations(),
                 statement.getVariableName(),
                 statement.getActualSequenceType(),
-                null,
-                statement.getMetadata());
+                initializer,
+                statement.getMetadata(),
+                statement.getVariableMetadata());
         result.setStaticContext(statement.getStaticContext());
-        result.setStaticSequenceType(statement.getSequenceType());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
         result.setSequential(statement.isSequential());
         return result;
     }

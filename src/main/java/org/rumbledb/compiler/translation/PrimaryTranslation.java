@@ -19,6 +19,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -221,6 +222,7 @@ public final class PrimaryTranslation {
         List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
         AnnotationValidator.validateInlineFunctionAnnotations(annotations);
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        Map<Name, ExceptionMetadata> parameterMetadata = new LinkedHashMap<>();
         SequenceType fnReturnType = SequenceType.createSequenceType("item*");
         if (ctx.params() != null) {
             for (InlineFunctionExprContext.InlineFunctionParam<VarBindingCtx, SeqTypeCtx> param : ctx.params()) {
@@ -236,6 +238,7 @@ public final class PrimaryTranslation {
                         ? processSequenceType.apply(param.sequenceType())
                         : SequenceType.createSequenceType("item*");
                 fnParams.put(paramName, paramType);
+                parameterMetadata.put(paramName, translationContext.metadata(param.name()));
             }
         }
 
@@ -245,8 +248,17 @@ public final class PrimaryTranslation {
 
         StatementsAndOptionalExpr funcBody = visitStatementsAndOptionalExpr.apply(ctx.fnBody());
 
+        // An anonymous function has no name token.
         return new InlineFunctionExpression(
-                annotations, null, fnParams, fnReturnType, funcBody, translationContext.metadata(ctx.context()));
+                annotations,
+                null,
+                fnParams,
+                fnReturnType,
+                funcBody,
+                false,
+                translationContext.metadata(ctx.context()),
+                null,
+                parameterMetadata);
     }
 
     public static <ExprSingleCtx extends ParserRuleContext> ArrayConstructorExpression squareArrayConstructor(
