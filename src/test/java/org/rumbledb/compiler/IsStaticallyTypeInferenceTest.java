@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -99,6 +100,37 @@ class IsStaticallyTypeInferenceTest {
                 };
         assertEquals(expectedMembers, Set.copyOf(type.getItemType().getTypes()));
         assertEquals(expectedMembers.size(), type.getItemType().getTypes().size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"jq", "xq"})
+    void mixedAtomicCommaKeepsMembersInOperandOrder(String extension) {
+        SequenceType type = infer("(\"s\", 12)", extension);
+        assertEquals(SequenceCardinality.MANY, type.getCardinality());
+        assertEquals(
+                List.of(BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.integerItem),
+                type.getItemType().getTypes());
+    }
+
+    @Test
+    void atomicAndStructuredValuesKeepEveryMemberInOperandOrder() {
+        // Unboxing ignores the members that are not arrays; the array content keeps the comma's union.
+        SequenceType type = infer("[1,2,\"a\",\"b\",{\"a\":12}][]", "jq");
+        assertEquals(SequenceType.Arity.ZeroOrMore, type.getArity());
+        List<ItemType> members = type.getItemType().getTypes();
+        assertEquals(3, members.size());
+        assertEquals(BuiltinTypesCatalogue.integerItem, members.get(0));
+        assertEquals(BuiltinTypesCatalogue.stringItem, members.get(1));
+        assertTrue(members.get(2).isObjectItemType());
+        assertEquals(
+                BuiltinTypesCatalogue.integerItem,
+                members.get(2).getObjectContentFacet("a").getType());
+    }
+
+    @Test
+    void lookupOnMixedSequenceKeepsTheMatchingMember() {
+        SequenceType type = infer("(1, {\"a\": 12}).a", "jq");
+        assertEquals(BuiltinTypesCatalogue.integerItem, type.getItemType());
     }
 
     @Test

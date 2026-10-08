@@ -187,12 +187,12 @@ public class SequenceType implements Serializable {
                     ? this.itemType.findLeastCommonSuperTypeLax(other)
                     : this.itemType.findLeastCommonSuperTypeWith(other);
         }
-        if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                && other.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            return ItemTypeFactory.createInferredUnionType(List.of(this.itemType, other));
+        if (this.itemType.isArrayItemType() && other.isArrayItemType()) {
+            // Arrays have an existing join used by navigation and native execution.
+            return this.itemType.findLeastCommonSuperTypeWith(other);
         }
-        // Structured types have existing joins used by navigation and native execution.
-        return this.itemType.findLeastCommonSuperTypeWith(other);
+        // Atomic values, or values of different kinds such as (1, {"a": 1}), keep their members in operand order.
+        return ItemTypeFactory.createInferredUnionType(List.of(this.itemType, other));
     }
 
     private static boolean haveSameObjectFields(ItemType left, ItemType right) {

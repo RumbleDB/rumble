@@ -19,6 +19,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -279,7 +280,8 @@ public class UnionItemType extends AbstractItemType {
         boolean hasNumeric = false;
         boolean hasNonNumeric = false;
         boolean hasNull = false;
-        Set<ItemType> resultTypes = new HashSet<>(this.types);
+        // Keep operand order so that the same join always displays its members in the same order.
+        Set<ItemType> resultTypes = new LinkedHashSet<>(this.types);
         resultTypes.addAll(otherTypes);
         // The atomic join below widens to an atomic base type, which cannot cover non-atomic members
         // (for example, the array alternative of an inferred object field). Keep every member instead.
