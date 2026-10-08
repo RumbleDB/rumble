@@ -171,6 +171,15 @@ public class SequenceType implements Serializable {
         if (other.isEmptySequence()) {
             return this.getArity() == Arity.OneOrZero || this.getArity() == Arity.ZeroOrMore;
         }
+        // A union overlaps another type when at least one member overlaps it.
+        // Subtyping alone would reject, for example, (object | null) against object.
+        if (this.itemType.isUnionType()) {
+            return this.itemType.getTypes().stream()
+                    .anyMatch(member -> new SequenceType(member, this.arity).hasOverlapWith(other));
+        }
+        if (other.itemType.isUnionType()) {
+            return other.hasOverlapWith(this);
+        }
         // All arities overlap between each other
         return this.getItemType().isSubtypeOf(other.getItemType())
                 || other.getItemType().isSubtypeOf(this.getItemType());

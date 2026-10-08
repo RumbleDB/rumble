@@ -466,6 +466,7 @@ public class ItemParser {
             DataType fieldType = field.dataType();
             String fieldName = field.name();
             ItemType fieldItemType = null;
+            boolean requiredField = false;
 
             if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
                 mutabilityLevel = row.getInt(i);
@@ -494,6 +495,7 @@ public class ItemParser {
                 FieldDescriptor descriptor = itemType.getObjectContentFacet(fieldName);
                 if (descriptor != null) {
                     fieldItemType = descriptor.getType();
+                    requiredField = descriptor.isRequired();
                     if (fieldItemType == null) {
                         throw new OurBadException("Type for field "
                                 + fieldName
@@ -504,10 +506,11 @@ public class ItemParser {
                 }
             }
             Item newItem = convertValueToItem(row, i, null, fieldType, metadata, fieldItemType);
-            // NULL values in DataFrames are mapped to absent in JSONiq.
+            // SQL NULL represents absence for optional fields, but required constructor fields
+            // must retain their key and store JSON null (e.g., an empty value expression).
             if (!newItem.isNull()
                     || (!fieldName.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
-                            && fieldType.equals(DataTypes.NullType))) {
+                            && (requiredField || fieldType.equals(DataTypes.NullType)))) {
                 // don't return array for single sequence item
                 if (fieldName.endsWith(SparkSessionManager.sequenceColumnName)) {
                     if (newItem.getSize() == 0) {

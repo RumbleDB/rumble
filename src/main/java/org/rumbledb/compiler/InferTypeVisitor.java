@@ -467,17 +467,21 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 stringLiteralKeys.add(stringLiteralKey);
             }
         }
-        if (expression.getKeys() != null
-                && stringLiteralKeys.size() == expression.getKeys().size()
-                && expression.getValues().stream()
-                        .map(Expression::getStaticSequenceType)
-                        .allMatch(type -> type.getArity() == SequenceType.Arity.One)) {
+        List<String> literalKeys = stringLiteralKeys.stream()
+                .map(StringLiteralExpression::getValue)
+                .toList();
+        boolean literalKeysOnly = expression.getKeys() != null
+                && literalKeys.size() == expression.getKeys().size();
+        if (literalKeysOnly && new HashSet<>(literalKeys).size() < literalKeys.size()) {
+            // Duplicate keys always make the constructor fail at runtime, so it returns no value, like fn:error().
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.errorItem));
+        } else if (literalKeysOnly) {
+            // Literal keys define the shape even when a value expression can return zero or many items.
+            // Infer each stored item after the constructor's null/array conversion.
             expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createAnonymousObjectType(
-                    stringLiteralKeys.stream()
-                            .map(StringLiteralExpression::getValue)
-                            .collect(Collectors.toList()),
+                    literalKeys,
                     expression.getValues().stream()
-                            .map(value -> value.getStaticSequenceType().getItemType())
+                            .map(value -> ItemTypeFactory.createObjectFieldType(value.getStaticSequenceType()))
                             .collect(Collectors.toList()))));
         } else {
             expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
@@ -1991,8 +1995,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 : SequenceType.Arity.ZeroOrMore;
         ItemType resultItemType = BuiltinTypesCatalogue.item;
         ItemType itemType = mainType.getItemType();
-        if (itemType.isArrayItemType()) {
-            resultItemType = itemType.getArrayContentFacet();
+        ItemType arrayContentType = inferArrayContentType(itemType);
+        if (arrayContentType != null) {
+            resultItemType = arrayContentType;
         }
         expression.setStaticSequenceType(new SequenceType(resultItemType, inferredArity));
         return argument;
@@ -2028,41 +2033,79 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata());
         }
 
-        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
+        String key =
+                expression.getLookupExpression() instanceof StringLiteralExpression literal ? literal.getValue() : null;
+        SequenceType result = inferObjectLookupType(mainType.getItemType(), mainType.getArity(), key);
+        if (result.isEmptySequence()) {
+            throwStaticTypeException(
+                    "Inferred type is empty sequence and this is not a CommaExpression",
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    expression.getMetadata());
+        }
+        expression.setStaticSequenceType(result);
+        return argument;
+    }
+
+    /**
+     * Infers JSONiq dot selection separately for each possible input type.
+     * For example, selecting n from ({n: integer} | null) yields integer?:
+     * the object branch yields an integer, while the null branch yields the empty sequence.
+     * A null key here denotes an expression whose string value is not known statically.
+     */
+    private SequenceType inferObjectLookupType(ItemType itemType, SequenceType.Arity inputArity, String key) {
+        if (itemType.isUnionType()) {
+            SequenceType result = null;
+            for (ItemType member : itemType.getTypes()) {
+                SequenceType memberResult = inferObjectLookupType(member, inputArity, key);
+                // Include empty branches: they make a required field's lookup result optional.
+                result = result == null ? memberResult : result.leastCommonSupertypeWith(memberResult);
+            }
+            return result == null ? SequenceType.createSequenceType("()") : result;
+        }
+        if (itemType.isMapItemType()) {
+            return itemType.getMapValueSequenceType();
+        }
+        SequenceType.Arity outputArity = inputArity.isSubtypeOf(SequenceType.Arity.OneOrZero)
                 ? SequenceType.Arity.OneOrZero
                 : SequenceType.Arity.ZeroOrMore;
-
-        ItemType inferredType = BuiltinTypesCatalogue.item;
-        if (mainType.getItemType().isMapItemType()) {
-            SequenceType mapValueType = mainType.getItemType().getMapValueSequenceType();
-            inferredType = mapValueType.getItemType();
-            inferredArity = mapValueType.getArity();
-        }
-        // if we have a specific object type and a string literal as key try to perform better inference
-        if (mainType.getItemType().isObjectItemType()
-                && (expression.getLookupExpression() instanceof StringLiteralExpression stringLiteralExpr)) {
-            String key = stringLiteralExpr.getValue();
-            boolean isObjectClosed = mainType.getItemType().getClosedFacet();
-            List<String> objectKeys = mainType.getItemType().getObjectKeysFacet();
-            if (objectKeys.contains(key)) {
-                FieldDescriptor field = mainType.getItemType().getObjectContentFacet(key);
-                inferredType = field.getType();
-                if (field.isRequired()) {
-                    // if the field is required then any object will have it, so no need to include '0' arity if not
-                    // present
-                    inferredArity = mainType.getArity();
-                }
-            } else if (isObjectClosed) {
-                // if object is closed and key is not found then for sure we will return the empty sequence
-                throwStaticTypeException(
-                        "Inferred type is empty sequence and this is not a CommaExpression",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        expression.getMetadata());
+        if (itemType.isObjectItemType() && key != null) {
+            FieldDescriptor field = itemType.getObjectContentFacet(key);
+            if (field != null) {
+                return new SequenceType(field.getType(), field.isRequired() ? inputArity : outputArity);
+            }
+            if (itemType.getClosedFacet()) {
+                return SequenceType.createSequenceType("()");
             }
         }
+        SequenceType type = new SequenceType(itemType, inputArity);
+        if (!type.hasOverlapWith(SequenceType.createSequenceType("object*"))
+                && !type.hasOverlapWith(SequenceType.createSequenceType("map*"))) {
+            // JSONiq object selection ignores nonobjects, including null.
+            return SequenceType.createSequenceType("()");
+        }
+        return new SequenceType(BuiltinTypesCatalogue.item, outputArity);
+    }
 
-        expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
-        return argument;
+    /**
+     * Combines content types of possible arrays for JSONiq lookup and unboxing.
+     * Nonarray alternatives contribute no results. Returns Java null when no array is possible;
+     * a broad type that could contain arrays instead contributes item.
+     */
+    private ItemType inferArrayContentType(ItemType itemType) {
+        if (itemType.isUnionType()) {
+            ItemType result = null;
+            for (ItemType member : itemType.getTypes()) {
+                ItemType memberContent = inferArrayContentType(member);
+                if (memberContent != null) {
+                    result = result == null ? memberContent : result.findLeastCommonSuperTypeWith(memberContent);
+                }
+            }
+            return result;
+        }
+        if (itemType.isArrayItemType()) {
+            return itemType.getArrayContentFacet();
+        }
+        return BuiltinTypesCatalogue.arrayItem.isSubtypeOf(itemType) ? BuiltinTypesCatalogue.item : null;
     }
 
     @Override
@@ -2125,9 +2168,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
                     expression.getMetadata());
         }
-        if (mainType.getItemType().isArrayItemType()) {
-            SequenceType sequenceType =
-                    new SequenceType(mainType.getItemType().getArrayContentFacet(), SequenceType.Arity.ZeroOrMore);
+        ItemType contentType = inferArrayContentType(mainType.getItemType());
+        if (contentType != null) {
+            SequenceType sequenceType = new SequenceType(contentType, SequenceType.Arity.ZeroOrMore);
             expression.setStaticSequenceType(sequenceType);
             return argument;
         }

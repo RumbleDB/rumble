@@ -154,7 +154,7 @@ public class ItemTypeFactory {
      * Create an anonymous object type from keys and values.
      *
      * @param keys a list of String representing the keys of the object
-     * @param values a list of ItemType of the values, all with arity == Arity.One
+     * @param values the item types of the stored field values, after sequence-to-value conversion
      * @return an anonymous object type based on the provided keys and values
      */
     public static ItemType createAnonymousObjectType(List<String> keys, List<ItemType> values) {
@@ -180,6 +180,56 @@ public class ItemTypeFactory {
                 content,
                 Collections.emptyList(),
                 Collections.emptyList());
+    }
+
+    /**
+     * Infers the item stored in an object field from its value expression's sequence type.
+     * Object constructors store a singleton as-is, an empty sequence as JSON null,
+     * and a sequence of multiple items as an array. The field remains required in all cases.
+     * This conversion is specific to JSONiq objects; XQuery maps retain the original sequence value.
+     * For example, xs:double? becomes (xs:double | js:null), a single stored item with two possible types.
+     *
+     * @param valueType the sequence type of the value expression
+     * @return an item type covering all possible stored values
+     */
+    public static ItemType createObjectFieldType(SequenceType valueType) {
+        if (valueType.isEmptySequence()) {
+            return BuiltinTypesCatalogue.nullItem;
+        }
+        ItemType itemType = valueType.getItemType();
+        if (valueType.getArity() == SequenceType.Arity.One) {
+            return itemType;
+        }
+        if (itemType.isTopmostItemType()) {
+            // item already covers the singleton, null, and wrapped-array possibilities.
+            return itemType;
+        }
+
+        List<ItemType> alternatives = new ArrayList<>();
+        if (itemType.isUnionType()) {
+            alternatives.addAll(itemType.getTypes());
+        } else {
+            alternatives.add(itemType);
+        }
+        if (valueType.getArity() == SequenceType.Arity.OneOrMore
+                || valueType.getArity() == SequenceType.Arity.ZeroOrMore) {
+            // Both arities allow a singleton as well as multiple items, so retain both alternatives.
+            alternatives.add(createAnonymousArrayType(itemType));
+        }
+        if ((valueType.getArity() == SequenceType.Arity.OneOrZero
+                        || valueType.getArity() == SequenceType.Arity.ZeroOrMore)
+                && alternatives.stream().noneMatch(type -> BuiltinTypesCatalogue.nullItem.isSubtypeOf(type))) {
+            alternatives.add(BuiltinTypesCatalogue.nullItem);
+        }
+        if (alternatives.size() == 1) {
+            return alternatives.get(0);
+        }
+        // isSubtypeOf checks the base type before the members, so the base must cover every member:
+        // xs:anyAtomicType only if all members are atomic, otherwise item (e.g. when one is an array).
+        ItemType baseType = alternatives.stream().allMatch(type -> type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))
+                ? BuiltinTypesCatalogue.atomicItem
+                : BuiltinTypesCatalogue.item;
+        return new UnionItemType(null, baseType, alternatives, false);
     }
 
     /**
