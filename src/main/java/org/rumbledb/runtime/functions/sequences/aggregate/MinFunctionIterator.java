@@ -24,7 +24,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
@@ -41,8 +40,6 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final String CODEPOINT_COLLATION = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
-
     private final ItemRuntimePlan iterator;
 
     public MinFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
@@ -55,7 +52,7 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return ExtremumEvaluation.min(this.iterator, getCollationPlan(), context, getMetadata());
         }
-        validateCollation(context);
+        ExtremumEvaluation.validateCollation(getCollationPlan(), context, getMetadata());
 
         if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, context);
@@ -78,17 +75,6 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     private ItemRuntimePlan getCollationPlan() {
         return this.getChildren().size() > 1 ? this.getChild(1) : null;
-    }
-
-    private void validateCollation(DynamicContext context) {
-        ItemRuntimePlan collationPlan = getCollationPlan();
-        if (collationPlan == null) {
-            return;
-        }
-        Item collation = collationPlan.materializeFirstOrNull(context);
-        if (!CODEPOINT_COLLATION.equals(collation.getStringValue())) {
-            throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
-        }
     }
 
     @Override

@@ -40,6 +40,20 @@ class ItemTypeFactoryTest {
     }
 
     @Test
+    void inferredUnionsFlattenNullableJoins() {
+        ItemType nullableInteger =
+                BuiltinTypesCatalogue.integerItem.findLeastCommonSuperTypeWith(BuiltinTypesCatalogue.nullItem);
+        ItemType union =
+                ItemTypeFactory.createInferredUnionType(List.of(nullableInteger, BuiltinTypesCatalogue.stringItem));
+        assertEquals(
+                List.of(
+                        BuiltinTypesCatalogue.integerItem,
+                        BuiltinTypesCatalogue.nullItem,
+                        BuiltinTypesCatalogue.stringItem),
+                union.getTypes());
+    }
+
+    @Test
     void namedNullableSchemaUnionRetainsItsIdentity() {
         ItemType named = new UnionItemType(
                 Name.createVariableInDefaultTypeNamespace("namedNullable"),

@@ -48,8 +48,7 @@ public final class FunctionCoercion {
 
     public static boolean canItemTypeBeFunctionCoercedTo(ItemType sourceItemType, ItemType targetItemType) {
         if (sourceItemType.isUnionType()) {
-            return sourceItemType.getTypes().stream()
-                    .allMatch(member -> canItemTypeBeFunctionCoercedTo(member, targetItemType));
+            return sourceItemType.allMemberTypesMatch(member -> canItemTypeBeFunctionCoercedTo(member, targetItemType));
         }
         if (!targetItemType.isFunctionItemType() || targetItemType.getSignature() == null) {
             return false;

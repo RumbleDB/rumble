@@ -20,12 +20,19 @@ package org.rumbledb.types;
  * Unlike the declared occurrence indicators, this can express multiple-only and empty-or-multiple.
  */
 public enum SequenceCardinality {
+    /** The empty sequence, (). */
     EMPTY(1),
+    /** Exactly one item. */
     ONE(2),
+    /** Two or more items. */
     MANY(4),
+    /** The empty sequence or one item, ?. */
     ZERO_OR_ONE(3),
+    /** One or more items, +. */
     ONE_OR_MANY(6),
-    ZERO_OR_MANY(5),
+    /** The empty sequence or two or more items, but never exactly one. Displayed as *. */
+    EMPTY_OR_MANY(5),
+    /** Any number of items, *. */
     ANY(7);
 
     private final int mask;
@@ -82,13 +89,27 @@ public enum SequenceCardinality {
         return fromPossibilities(false, allowsZero() || allowsOne(), allowsMany());
     }
 
+    /**
+     * The cardinality after grouping, which can merge any number of items into one but never removes all of them.
+     */
+    public SequenceCardinality grouped() {
+        return fromPossibilities(allowsZero(), allowsOne() || allowsMany(), allowsMany());
+    }
+
+    /**
+     * The cardinality after filtering, which can keep any number of items up to the original size.
+     */
+    public SequenceCardinality filtered() {
+        return fromPossibilities(true, allowsOne() || allowsMany(), allowsMany());
+    }
+
     public SequenceType.Arity toArity() {
         return switch (this) {
             case EMPTY -> SequenceType.Arity.Zero;
             case ONE -> SequenceType.Arity.One;
             case ZERO_OR_ONE -> SequenceType.Arity.OneOrZero;
             case MANY, ONE_OR_MANY -> SequenceType.Arity.OneOrMore;
-            case ZERO_OR_MANY, ANY -> SequenceType.Arity.ZeroOrMore;
+            case EMPTY_OR_MANY, ANY -> SequenceType.Arity.ZeroOrMore;
         };
     }
 

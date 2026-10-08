@@ -16,6 +16,7 @@
 package org.rumbledb.compiler;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -106,7 +107,7 @@ class UnionTypeInferenceTest {
         List<ItemType> floating = List.of(BuiltinTypesCatalogue.floatItem, BuiltinTypesCatalogue.doubleItem);
         List<ItemType> integers = List.of(BuiltinTypesCatalogue.integerItem);
         List<ItemType> strings = List.of(BuiltinTypesCatalogue.stringItem);
-        List<Case> cases = new java.util.ArrayList<>();
+        List<Case> cases = new ArrayList<>();
         for (String operator : List.of("+", "-", "*", "div", "mod")) {
             cases.add(new Case("for $x in (xs:float(1), xs:double(2)) return $x " + operator + " 1", floating));
         }

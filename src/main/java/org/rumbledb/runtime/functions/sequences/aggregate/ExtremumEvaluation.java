@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import java.io.Serializable;
+import java.util.EnumSet;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.storage.StorageLevel;
@@ -148,70 +149,82 @@ final class ExtremumEvaluation {
         return item;
     }
 
+    /**
+     * The primitive types seen in the input, which decide the common type of the result.
+     */
     private static final class Promotion implements Serializable {
         private static final long serialVersionUID = 1L;
-        private static final Promotion EMPTY = new Promotion(false, false, false, false, false, false);
-        private final boolean hasItems;
-        private final boolean sawDouble;
-        private final boolean sawFloat;
-        private final boolean sawDecimal;
-        private final boolean sawString;
-        private final boolean sawAnyURI;
+
+        private enum Seen {
+            ANY_ITEM,
+            DOUBLE,
+            FLOAT,
+            DECIMAL,
+            STRING,
+            ANY_URI
+        }
+
+        private static final Promotion EMPTY = new Promotion(EnumSet.noneOf(Seen.class));
+        private final EnumSet<Seen> seen;
 
         // Spark's Kryo serializer needs an ordinary class rather than a Java record.
         private Promotion() {
-            this(false, false, false, false, false, false);
+            this(EnumSet.noneOf(Seen.class));
         }
 
-        private Promotion(
-                boolean hasItems,
-                boolean sawDouble,
-                boolean sawFloat,
-                boolean sawDecimal,
-                boolean sawString,
-                boolean sawAnyURI) {
-            this.hasItems = hasItems;
-            this.sawDouble = sawDouble;
-            this.sawFloat = sawFloat;
-            this.sawDecimal = sawDecimal;
-            this.sawString = sawString;
-            this.sawAnyURI = sawAnyURI;
-        }
-
-        boolean hasItems() {
-            return this.hasItems;
+        private Promotion(EnumSet<Seen> seen) {
+            this.seen = seen;
         }
 
         static Promotion of(Item item) {
-            return new Promotion(
-                    true, item.isDouble(), item.isFloat(), item.isDecimal(), item.isString(), item.isAnyURI());
+            EnumSet<Seen> seen = EnumSet.of(Seen.ANY_ITEM);
+            if (item.isDouble()) {
+                seen.add(Seen.DOUBLE);
+            }
+            if (item.isFloat()) {
+                seen.add(Seen.FLOAT);
+            }
+            if (item.isDecimal()) {
+                seen.add(Seen.DECIMAL);
+            }
+            if (item.isString()) {
+                seen.add(Seen.STRING);
+            }
+            if (item.isAnyURI()) {
+                seen.add(Seen.ANY_URI);
+            }
+            return new Promotion(seen);
         }
 
         Promotion merge(Promotion other) {
-            return new Promotion(
-                    this.hasItems || other.hasItems,
-                    this.sawDouble || other.sawDouble,
-                    this.sawFloat || other.sawFloat,
-                    this.sawDecimal || other.sawDecimal,
-                    this.sawString || other.sawString,
-                    this.sawAnyURI || other.sawAnyURI);
+            EnumSet<Seen> merged = EnumSet.copyOf(this.seen);
+            merged.addAll(other.seen);
+            return new Promotion(merged);
+        }
+
+        boolean hasItems() {
+            return this.seen.contains(Seen.ANY_ITEM);
         }
 
         Item apply(Item item) {
             // With one primitive type, retain the original item and its derived type.
             // Only mixtures of primitive types require conversion to their common type.
             if (item.isNumeric()) {
-                if (this.sawDouble && (this.sawFloat || this.sawDecimal)) {
+                if (saw(Seen.DOUBLE) && (saw(Seen.FLOAT) || saw(Seen.DECIMAL))) {
                     return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
                 }
-                if (this.sawFloat && this.sawDecimal) {
+                if (saw(Seen.FLOAT) && saw(Seen.DECIMAL)) {
                     return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
                 }
             }
-            if (this.sawString && this.sawAnyURI && (item.isString() || item.isAnyURI())) {
+            if (saw(Seen.STRING) && saw(Seen.ANY_URI) && (item.isString() || item.isAnyURI())) {
                 return ItemFactory.getInstance().createStringItem(item.getStringValue());
             }
             return item;
+        }
+
+        private boolean saw(Seen kind) {
+            return this.seen.contains(kind);
         }
     }
 
@@ -229,8 +242,7 @@ final class ExtremumEvaluation {
         return (item.isFloat() || item.isDouble()) && item.isNaN();
     }
 
-    private static void validateCollation(
-            ItemRuntimePlan collationPlan, DynamicContext context, ExceptionMetadata metadata) {
+    static void validateCollation(ItemRuntimePlan collationPlan, DynamicContext context, ExceptionMetadata metadata) {
         if (collationPlan == null) {
             return;
         }
