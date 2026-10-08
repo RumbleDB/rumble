@@ -20,12 +20,19 @@ package org.rumbledb.types;
  * Unlike the declared occurrence indicators, this can express multiple-only and empty-or-multiple.
  */
 public enum SequenceCardinality {
+    /** The empty sequence, (). */
     EMPTY(1),
+    /** Exactly one item. */
     ONE(2),
+    /** Two or more items. */
     MANY(4),
+    /** The empty sequence or one item, ?. */
     ZERO_OR_ONE(3),
+    /** One or more items, +. */
     ONE_OR_MANY(6),
-    ZERO_OR_MANY(5),
+    /** The empty sequence or two or more items, but never exactly one. Displayed as *. */
+    EMPTY_OR_MANY(5),
+    /** Any number of items, *. */
     ANY(7);
 
     private final int mask;
@@ -88,7 +95,7 @@ public enum SequenceCardinality {
             case ONE -> SequenceType.Arity.One;
             case ZERO_OR_ONE -> SequenceType.Arity.OneOrZero;
             case MANY, ONE_OR_MANY -> SequenceType.Arity.OneOrMore;
-            case ZERO_OR_MANY, ANY -> SequenceType.Arity.ZeroOrMore;
+            case EMPTY_OR_MANY, ANY -> SequenceType.Arity.ZeroOrMore;
         };
     }
 

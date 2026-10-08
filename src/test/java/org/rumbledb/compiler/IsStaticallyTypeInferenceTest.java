@@ -55,7 +55,7 @@ class IsStaticallyTypeInferenceTest {
                 "declare variable $flag as xs:boolean external; "
                         + "(if ($flag) then (1, 2) else ()) is statically xs:integer*",
                 "jq");
-        assertEquals(SequenceCardinality.ZERO_OR_MANY, type.getCardinality());
+        assertEquals(SequenceCardinality.EMPTY_OR_MANY, type.getCardinality());
     }
 
     @ParameterizedTest
@@ -110,6 +110,36 @@ class IsStaticallyTypeInferenceTest {
         assertEquals(
                 List.of(BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.integerItem),
                 type.getItemType().getTypes());
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {"if2", "if5", "if6", "switch2", "switch12", "try1", "try2", "try5", "typeswitch2", "typeswitch6"
+            })
+    void alternativesJoinLikeACommaExpression(String fixture) throws IOException {
+        // Conditional branches, switch cases and catch clauses use the same join as a comma expression.
+        Path path = Path.of("src/test/resources/test_files/static-typing/control", fixture + ".jq");
+        SequenceType type = infer(Files.readString(path), "jq");
+        List<ItemType> expectedMembers =
+                switch (fixture) {
+                    case "if2", "try1", "typeswitch2" -> List.of(
+                            BuiltinTypesCatalogue.integerItem, BuiltinTypesCatalogue.stringItem);
+                    case "if5", "switch2" -> List.of(
+                            BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.integerItem);
+                    case "try2" -> List.of(BuiltinTypesCatalogue.integerItem, BuiltinTypesCatalogue.stringItem);
+                    case "if6" -> List.of(BuiltinTypesCatalogue.arrayItem, BuiltinTypesCatalogue.integerItem);
+                    case "switch12", "try5" -> List.of(
+                            BuiltinTypesCatalogue.decimalItem, BuiltinTypesCatalogue.stringItem);
+                    case "typeswitch6" -> List.of(BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.decimalItem);
+                    default -> throw new IllegalArgumentException(fixture);
+                };
+        assertEquals(expectedMembers, type.getItemType().getTypes());
+        SequenceType.Arity expectedArity =
+                switch (fixture) {
+                    case "if5", "if6", "try2" -> SequenceType.Arity.OneOrMore;
+                    default -> SequenceType.Arity.One;
+                };
+        assertEquals(expectedArity, type.getArity());
     }
 
     @Test

@@ -157,7 +157,7 @@ public class SequenceType implements Serializable {
     public SequenceType leastCommonSupertypeWith(SequenceType other) {
         ItemType itemSupertype = isEmptySequence()
                 ? other.itemType
-                : other.isEmptySequence() ? this.itemType : this.itemType.findLeastCommonSuperTypeWith(other.itemType);
+                : other.isEmptySequence() ? this.itemType : joinItemTypes(other.itemType);
         return new SequenceType(itemSupertype, this.cardinality.union(other.cardinality));
     }
 
@@ -168,11 +168,17 @@ public class SequenceType implements Serializable {
         if (other.isEmptySequence()) {
             return this;
         }
-        ItemType contentType = concatenateItemTypes(other.itemType);
+        ItemType contentType = joinItemTypes(other.itemType);
         return new SequenceType(contentType, this.cardinality.concatenate(other.cardinality));
     }
 
-    private ItemType concatenateItemTypes(ItemType other) {
+    /**
+     * Joins the item types of two sequences that are concatenated or that are alternatives, e.g. the branches of a
+     * conditional. Atomic types, and types of different kinds such as xs:integer and an object, become an inferred
+     * union that keeps its members in operand order. Two types of the same structured kind keep their existing join,
+     * which navigation and native execution rely on.
+     */
+    private ItemType joinItemTypes(ItemType other) {
         if (this.itemType.equals(other)) {
             return this.itemType;
         }
@@ -187,12 +193,17 @@ public class SequenceType implements Serializable {
                     ? this.itemType.findLeastCommonSuperTypeLax(other)
                     : this.itemType.findLeastCommonSuperTypeWith(other);
         }
-        if (this.itemType.isArrayItemType() && other.isArrayItemType()) {
-            // Arrays have an existing join used by navigation and native execution.
+        if (haveSameStructuredKind(this.itemType, other)) {
             return this.itemType.findLeastCommonSuperTypeWith(other);
         }
-        // Atomic values, or values of different kinds such as (1, {"a": 1}), keep their members in operand order.
         return ItemTypeFactory.createInferredUnionType(List.of(this.itemType, other));
+    }
+
+    private static boolean haveSameStructuredKind(ItemType left, ItemType right) {
+        return (left.isArrayItemType() && right.isArrayItemType())
+                || (left.isMapItemType() && right.isMapItemType())
+                || (left.isFunctionItemType() && right.isFunctionItemType())
+                || (left.isNodeItemType() && right.isNodeItemType());
     }
 
     private static boolean haveSameObjectFields(ItemType left, ItemType right) {
