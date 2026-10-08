@@ -1339,8 +1339,51 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    // Types must match exactly or be both numeric or both promotable to string or both durations or one must be null
+    private static boolean areComparable(ItemType left, ItemType right) {
+        return left.equals(right)
+                || (left.isNumeric() && right.isNumeric())
+                || (left.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
+                        && right.isSubtypeOf(BuiltinTypesCatalogue.durationItem))
+                || (left.canBePromotedTo(BuiltinTypesCatalogue.stringItem)
+                        && right.canBePromotedTo(BuiltinTypesCatalogue.stringItem))
+                || left.equals(BuiltinTypesCatalogue.nullItem)
+                || right.equals(BuiltinTypesCatalogue.nullItem);
+    }
+
+    // Inequality is not defined for hexBinary and base64binary or for duration of different types
+    private static boolean isOperatorDefined(
+            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
+        if (operator == ComparisonExpression.ComparisonOperator.VC_EQ
+                || operator == ComparisonExpression.ComparisonOperator.VC_NE
+                || operator == ComparisonExpression.ComparisonOperator.GC_EQ
+                || operator == ComparisonExpression.ComparisonOperator.GC_NE) {
+            return true;
+        }
+        return !(left.equals(BuiltinTypesCatalogue.hexBinaryItem)
+                || left.equals(BuiltinTypesCatalogue.base64BinaryItem)
+                || left.equals(BuiltinTypesCatalogue.durationItem)
+                || right.equals(BuiltinTypesCatalogue.durationItem)
+                || ((left.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
+                                || left.equals(BuiltinTypesCatalogue.yearMonthDurationItem))
+                        && !right.equals(left)));
+    }
+
     // This function assume 2 numeric ItemType
     private ItemType resolveNumericType(ItemType left, ItemType right) {
+        List<ItemType> leftMembers = ItemTypeFactory.getInferredUnionMembers(left);
+        List<ItemType> rightMembers = ItemTypeFactory.getInferredUnionMembers(right);
+        if (leftMembers.size() > 1 || rightMembers.size() > 1) {
+            // Each member pair is promoted separately, e.g. (xs:integer | xs:double) + xs:integer
+            // is (xs:integer | xs:double).
+            List<ItemType> results = new ArrayList<>();
+            for (ItemType leftMember : leftMembers) {
+                for (ItemType rightMember : rightMembers) {
+                    results.add(resolveNumericType(leftMember, rightMember));
+                }
+            }
+            return ItemTypeFactory.createInferredUnionType(results);
+        }
         if (left.equals(BuiltinTypesCatalogue.doubleItem) || right.equals(BuiltinTypesCatalogue.doubleItem)) {
             return BuiltinTypesCatalogue.doubleItem;
         } else if (left.equals(BuiltinTypesCatalogue.floatItem) || right.equals(BuiltinTypesCatalogue.floatItem)) {
@@ -1615,33 +1658,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMetadata());
             }
 
-            // Type must match exactly or be both numeric or both promotable to string or both durations or one must be
-            // null
-            if (!leftItemType.equals(rightItemType)
-                    && !(leftItemType.isNumeric() && rightItemType.isNumeric())
-                    && !(leftItemType.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
-                            && rightItemType.isSubtypeOf(BuiltinTypesCatalogue.durationItem))
-                    && !(leftItemType.canBePromotedTo(BuiltinTypesCatalogue.stringItem)
-                            && rightItemType.canBePromotedTo(BuiltinTypesCatalogue.stringItem))
-                    && !(leftItemType.equals(BuiltinTypesCatalogue.nullItem)
-                            || rightItemType.equals(BuiltinTypesCatalogue.nullItem))) {
+            List<ItemType> leftMembers = ItemTypeFactory.getInferredUnionMembers(leftItemType);
+            List<ItemType> rightMembers = ItemTypeFactory.getInferredUnionMembers(rightItemType);
+            if (leftMembers.size() > 1 || rightMembers.size() > 1) {
+                // Static typing is pessimistic (XQuery 3.1, 2.2.3.1): every pair of members must be comparable.
+                boolean comparable = leftMembers.stream().allMatch(left -> rightMembers.stream()
+                        .allMatch(right -> areComparable(left, right) && isOperatorDefined(left, right, operator)));
+                if (!comparable) {
+                    throwStaticTypeException(
+                            "It is not possible to compare these types: " + leftItemType + " and " + rightItemType,
+                            expression.getMetadata());
+                }
+            } else if (!areComparable(leftItemType, rightItemType)) {
                 throwStaticTypeException(
                         "It is not possible to compare these types: " + leftItemType + " and " + rightItemType,
                         expression.getMetadata());
-            }
-
-            // Inequality is not defined for hexBinary and base64binary or for duration of different types
-            if ((operator != ComparisonExpression.ComparisonOperator.VC_EQ
-                            && operator != ComparisonExpression.ComparisonOperator.VC_NE
-                            && operator != ComparisonExpression.ComparisonOperator.GC_EQ
-                            && operator != ComparisonExpression.ComparisonOperator.GC_NE)
-                    && (leftItemType.equals(BuiltinTypesCatalogue.hexBinaryItem)
-                            || leftItemType.equals(BuiltinTypesCatalogue.base64BinaryItem)
-                            || leftItemType.equals(BuiltinTypesCatalogue.durationItem)
-                            || rightItemType.equals(BuiltinTypesCatalogue.durationItem)
-                            || ((leftItemType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
-                                            || leftItemType.equals(BuiltinTypesCatalogue.yearMonthDurationItem))
-                                    && !rightItemType.equals(leftItemType)))) {
+            } else if (!isOperatorDefined(leftItemType, rightItemType, operator)) {
                 throwStaticTypeException(
                         "It is not possible to compare these types: "
                                 + leftItemType
@@ -2348,11 +2380,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
             } else if (clause.getClauseType() == FLWOR_CLAUSES.GROUP_BY) {
                 // Multiple input tuples can collapse into a single group.
-                forCardinality = SequenceCardinality.fromArity(forCardinality.toArity());
+                forCardinality = forCardinality.grouped();
             } else if (clause.getClauseType() == FLWOR_CLAUSES.WHERE) {
                 // Filtering tuples can leave zero, one, or multiple tuples.
-                forCardinality =
-                        SequenceCardinality.fromArity(forCardinality.toArity()).union(SequenceCardinality.EMPTY);
+                forCardinality = forCardinality.filtered();
             } else if (clause.getClauseType() == FLWOR_CLAUSES.WINDOW) {
                 forCardinality = SequenceCardinality.ANY;
             }

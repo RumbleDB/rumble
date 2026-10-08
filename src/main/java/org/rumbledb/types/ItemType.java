@@ -224,14 +224,17 @@ public interface ItemType extends Serializable {
                 return BuiltinTypesCatalogue.atomicItem;
             }
             return new UnionItemType(
-                    null, BuiltinTypesCatalogue.atomicItem, Arrays.asList(this, BuiltinTypesCatalogue.nullItem));
+                    null, BuiltinTypesCatalogue.atomicItem, Arrays.asList(this, BuiltinTypesCatalogue.nullItem), false);
         }
         if (other.isAtomicItemType() && this.equals(BuiltinTypesCatalogue.nullItem)) {
             if (other.equals(BuiltinTypesCatalogue.atomicItem)) {
                 return BuiltinTypesCatalogue.atomicItem;
             }
             return new UnionItemType(
-                    null, BuiltinTypesCatalogue.atomicItem, Arrays.asList(other, BuiltinTypesCatalogue.nullItem));
+                    null,
+                    BuiltinTypesCatalogue.atomicItem,
+                    Arrays.asList(other, BuiltinTypesCatalogue.nullItem),
+                    false);
         }
         ItemType current = this;
         while (other.getTypeTreeDepth() > current.getTypeTreeDepth()) {

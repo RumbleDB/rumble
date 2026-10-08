@@ -242,6 +242,15 @@ public class ItemTypeFactory {
         return new UnionItemType(null, baseType, members, false);
     }
 
+    /**
+     * Returns the members of an inferred union, or the type itself for any other type, including named unions.
+     */
+    public static List<ItemType> getInferredUnionMembers(ItemType type) {
+        List<ItemType> members = new ArrayList<>();
+        collectInferredUnionMembers(type, members);
+        return members;
+    }
+
     private static void collectInferredUnionMembers(ItemType type, List<ItemType> members) {
         if (type.isUnionType() && !type.hasName() && !type.isUserDefined()) {
             for (ItemType member : type.getTypes()) {

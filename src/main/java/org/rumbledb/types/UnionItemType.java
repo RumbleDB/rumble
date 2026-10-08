@@ -286,7 +286,7 @@ public class UnionItemType extends AbstractItemType {
         // The atomic join below widens to an atomic base type, which cannot cover non-atomic members
         // (for example, the array alternative of an inferred object field). Keep every member instead.
         if (resultTypes.stream().anyMatch(type -> !type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))) {
-            return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes));
+            return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes), false);
         }
         for (ItemType member : resultTypes) {
             if (member.equals(BuiltinTypesCatalogue.nullItem)) {
@@ -311,9 +311,9 @@ public class UnionItemType extends AbstractItemType {
             return BuiltinTypesCatalogue.numericItem;
         }
         if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
-            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes));
+            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes), false);
         }
-        return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes));
+        return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes), false);
     }
 
     @Override

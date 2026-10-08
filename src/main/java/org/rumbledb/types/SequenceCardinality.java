@@ -35,6 +35,14 @@ public enum SequenceCardinality {
     /** Any number of items, *. */
     ANY(7);
 
+    private static final SequenceCardinality[] BY_MASK = new SequenceCardinality[8];
+
+    static {
+        for (SequenceCardinality cardinality : values()) {
+            BY_MASK[cardinality.mask] = cardinality;
+        }
+    }
+
     private final int mask;
 
     SequenceCardinality(int mask) {
@@ -89,6 +97,20 @@ public enum SequenceCardinality {
         return fromPossibilities(false, allowsZero() || allowsOne(), allowsMany());
     }
 
+    /**
+     * The cardinality after grouping, which can merge any number of items into one but never removes all of them.
+     */
+    public SequenceCardinality grouped() {
+        return fromPossibilities(allowsZero(), allowsOne() || allowsMany(), allowsMany());
+    }
+
+    /**
+     * The cardinality after filtering, which can keep any number of items up to the original size.
+     */
+    public SequenceCardinality filtered() {
+        return fromPossibilities(true, allowsOne() || allowsMany(), allowsMany());
+    }
+
     public SequenceType.Arity toArity() {
         return switch (this) {
             case EMPTY -> SequenceType.Arity.Zero;
@@ -114,11 +136,9 @@ public enum SequenceCardinality {
     }
 
     private static SequenceCardinality fromMask(int mask) {
-        for (SequenceCardinality cardinality : values()) {
-            if (cardinality.mask == mask) {
-                return cardinality;
-            }
+        if (BY_MASK[mask] == null) {
+            throw new IllegalArgumentException("A sequence cardinality must allow at least one size.");
         }
-        throw new IllegalArgumentException("A sequence cardinality must allow at least one size.");
+        return BY_MASK[mask];
     }
 }
