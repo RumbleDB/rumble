@@ -77,6 +77,8 @@ jobs:
       matrix:
         test_class: [
           "FrontendTests",
+          "ComposabilityTests",
+          "SequentialClassificationTests",
           "BackwardsCompatibilityTests",
           "RegexPatternUtilsTest",
           "RuntimeTests",
