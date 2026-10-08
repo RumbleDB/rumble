@@ -228,7 +228,7 @@ public class ElementNodeItemType extends AbstractItemType {
         if (this.schemaTypeName == null) {
             return "element(" + name + ")";
         }
-        return "element(" + name + ", " + this.schemaTypeName + (this.nillable ? "?" : "") + ")";
+        return "element(" + name + ", " + schemaTypeDisplayName(this.schemaTypeName) + (this.nillable ? "?" : "") + ")";
     }
 
     @Override
