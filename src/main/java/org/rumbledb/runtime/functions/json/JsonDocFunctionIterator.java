@@ -33,6 +33,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnavailableResourceException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.JSONParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -77,8 +78,14 @@ public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                     false);
         }
 
-        return ItemParser.getItemFromJSONString(
-                jsonText, options, getConfiguration().semantics().xmlVersion(), isJSONiq10, getMetadata());
+        return JSONParser.parseResource(
+                jsonText,
+                options,
+                getConfiguration().semantics().xmlVersion(),
+                isJSONiq10,
+                uri,
+                "JSON document \"" + uri + "\" for fn:json-doc()",
+                getMetadata());
     }
 
     private static URI resolveJsonDocURI(String href, URI staticBaseUri, ExceptionMetadata metadata) {
