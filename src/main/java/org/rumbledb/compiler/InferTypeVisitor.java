@@ -2294,9 +2294,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region FLOWR
 
-    @Override
-    public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
-        Clause clause = expression.getReturnClause().getFirstClause();
+    /**
+     * Visits the clauses of a FLWOR expression or statement, starting with the given clause,
+     * and returns how many tuples can reach the return clause.
+     */
+    private SequenceCardinality visitFlworClauses(Clause clause) {
         SequenceCardinality forCardinality = SequenceCardinality.ONE;
         SequenceType forType;
 
@@ -2341,6 +2343,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             clause = clause.getNextClause();
         }
 
+        return forCardinality;
+    }
+
+    @Override
+    public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
+        SequenceCardinality forCardinality =
+                visitFlworClauses(expression.getReturnClause().getFirstClause());
         SequenceType returnType = expression.getReturnClause().getReturnExpr().getStaticSequenceType();
         basicChecks(returnType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
         returnType = new SequenceType(
@@ -2824,49 +2833,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
-        Clause clause = statement.getReturnStatementClause().getFirstClause();
-        SequenceCardinality forCardinality = SequenceCardinality.ONE;
-        SequenceType forType;
-
-        while (clause != null) {
-            try {
-                this.visit(clause, clause.getStaticContext());
-            } catch (UnexpectedStaticTypeException e) {
-                if (forCardinality == SequenceCardinality.EMPTY
-                        && clause.getClauseType().equals(FLWOR_CLAUSES.WHERE)) {
-                    clause = clause.getNextClause();
-                    continue;
-                }
-                throw e;
-            }
-            // if there are for clauses we need to consider their arities for the returning expression
-            if (clause.getClauseType() == FLWOR_CLAUSES.FOR) {
-                forType = ((ForClause) clause).getExpression().getStaticSequenceType();
-                // if forType is the empty sequence that means that allowing empty is set otherwise we would have thrown
-                // an error
-                // therefore this for loop will generate one tuple binding the empty sequence, so as for the arities
-                // count as arity.One
-                if (!forType.isEmptySequence()) {
-                    SequenceCardinality sourceCardinality = forType.getCardinality();
-                    if (((ForClause) clause).isAllowEmpty()) {
-                        // An empty source still emits one tuple with an empty binding.
-                        sourceCardinality = sourceCardinality.replaceZeroWithOne();
-                    }
-                    forCardinality = sourceCardinality.repeated(forCardinality);
-                } else if (!((ForClause) clause).isAllowEmpty()) {
-                    forCardinality = SequenceCardinality.EMPTY;
-                }
-            } else if (clause.getClauseType() == FLWOR_CLAUSES.GROUP_BY) {
-                // Multiple input tuples can collapse into a single group.
-                forCardinality = SequenceCardinality.fromArity(forCardinality.toArity());
-            } else if (clause.getClauseType() == FLWOR_CLAUSES.WHERE) {
-                // Filtering tuples can leave zero, one, or multiple tuples.
-                forCardinality =
-                        SequenceCardinality.fromArity(forCardinality.toArity()).union(SequenceCardinality.EMPTY);
-            }
-            clause = clause.getNextClause();
-        }
-
+        visitFlworClauses(statement.getReturnStatementClause().getFirstClause());
         SequenceType returnType =
                 statement.getReturnStatementClause().getReturnStatement().getStaticSequenceType();
         basicChecks(returnType, statement.getClass().getSimpleName(), true, true, statement.getMetadata());
