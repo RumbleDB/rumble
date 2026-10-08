@@ -17,7 +17,6 @@ package org.rumbledb.runtime.functions.input;
 
 import java.io.*;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -56,18 +55,16 @@ public class XmlFilesFunctionIterator extends ItemRuntimePlan implements RDDRunt
 
         JavaPairRDD<String, String> strings;
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
-            InputStream is = FileSystemUtil.getDataInputStream(uri, getMetadata());
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            List<String> lines = new ArrayList<>();
-            String line = null;
-            try {
-                while ((line = br.readLine()) != null) {
-                    lines.add(line);
-                }
+            StringWriter content = new StringWriter();
+            try (Reader reader = new InputStreamReader(FileSystemUtil.getDataInputStream(uri, getMetadata()))) {
+                reader.transferTo(content);
             } catch (IOException e) {
-                throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
+                CannotRetrieveResourceException exception =
+                        new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
+                exception.initCause(e);
+                throw exception;
             }
-            String fileContent = String.join("", lines);
+            String fileContent = content.toString();
             strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
                     .parallelizePairs(

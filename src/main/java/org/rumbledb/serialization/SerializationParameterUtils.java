@@ -24,12 +24,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
+import org.xml.sax.InputSource;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -39,10 +36,10 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.InvalidSerializationParameterValueException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.XmlParsingUtils;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -134,31 +131,21 @@ public final class SerializationParameterUtils {
             String location,
             Set<String> explicitParameterNames,
             ExceptionMetadata metadata) {
-        try {
-            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), location, metadata);
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            documentBuilderFactory.setNamespaceAware(true);
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            try (InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, metadata)) {
-                Document xmlDocument = documentBuilder.parse(xmlFileStream);
-                Item item = ItemParser.getItemFromXML(
-                        xmlDocument,
-                        uri.toString(),
-                        staticContext.getRumbleConfiguration().optimization().optimizeParentPointers());
-                applyParameterItem(params, item, explicitParameterNames, metadata);
-            }
-        } catch (ParserConfigurationException e) {
-            throw new OurBadException("Document builder creation failed with: " + e, metadata);
-        } catch (CannotRetrieveResourceException e) {
-            throw e;
+        URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), location, metadata);
+        try (InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, metadata)) {
+            Document xmlDocument = XmlParsingUtils.parseResource(
+                    new InputSource(xmlFileStream),
+                    uri.toString(),
+                    "serialization parameter document \"" + uri + "\"",
+                    metadata);
+            Item item = ItemParser.getItemFromXML(
+                    xmlDocument,
+                    uri.toString(),
+                    staticContext.getRumbleConfiguration().optimization().optimizeParentPointers());
+            applyParameterItem(params, item, explicitParameterNames, metadata);
         } catch (IOException e) {
             CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
                     "Unable to read the serialization parameter document.", metadata);
-            ex.initCause(e);
-            throw ex;
-        } catch (SAXException e) {
-            CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
-                    "Unable to parse the serialization parameter document as well-formed XML.", metadata);
             ex.initCause(e);
             throw ex;
         }
