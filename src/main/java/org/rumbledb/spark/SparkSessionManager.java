@@ -151,14 +151,12 @@ public class SparkSessionManager {
     private void setDefaultConfiguration() {
         try {
             if (System.getProperty("hadoop.home.dir") == null) {
-                System.err.println(
-                    "[WARNING] The hadoop home directory was not set. Setting to \"/\"."
-                );
+                System.err.println("[WARNING] The hadoop home directory was not set. Setting to \"/\".");
                 System.setProperty("hadoop.home.dir", "/");
             }
             String javaVersion = System.getProperty("java.version");
-            if (!javaVersion.startsWith("1.8") && !javaVersion.startsWith("11.")) {
-                System.err.println("[Error] RumbleDB requires Java 8 or Java 11.");
+            if (!javaVersion.startsWith("17.") && !javaVersion.startsWith("21.")) {
+                System.err.println("[Error] RumbleDB requires Java 17 or Java 21.");
                 System.err.println("Your Java version: " + System.getProperty("java.version"));
             }
 

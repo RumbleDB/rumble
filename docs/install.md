@@ -44,9 +44,9 @@ Go to the root of this repository:
 
 You can compile the entire project like so:
 
-    $ mvn clean compile assembly:single
+    $ mvn clean package -DskipTests -Dmaven.javadoc.skip=true
     
-After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `rumbledb-1.24.0-jar-with-dependencies.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `rumbledb-3.0.0-jar-with-dependencies.jar`.
     
 ## Testing the assembled CLI
 
@@ -54,12 +54,12 @@ Run the CLI integration suite with Java 17 or 21:
 
     $ mvn -Pcli-tests test
 
-This profile runs `assembly:single` after compilation and then starts separate Java
-processes against the resulting `target/*-jar-with-dependencies.jar`. Only Maven's
-`provided` dependencies (including Spark) are added to the child classpath; project
-classes and test dependencies are not added. The entry point is read from the
-JAR manifest. This checks the assembly intended for a Spark installation, not a
-standalone `java -jar` distribution.
+This profile builds the shaded distribution after compilation and then starts separate Java
+processes against the resulting `target/*-jar-with-dependencies.jar`. The JAR includes
+runtime dependencies, including Spark, and merges service registrations and Log4j
+plugin caches. Maven's `provided` dependencies are added to the child classpath;
+project classes and test dependencies are not added. The entry point is read from
+the JAR manifest.
 
 The suite checks help, inline and file queries, XQuery, external variables, stdin
 context items, output files and overwrite protection, and error exit codes. Each
