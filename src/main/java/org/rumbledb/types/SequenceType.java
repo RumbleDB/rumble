@@ -200,15 +200,21 @@ public class SequenceType implements Serializable {
             return this.itemType;
         }
         if (this.itemType.isObjectItemType() && other.isObjectItemType()) {
-            boolean sameShape = !this.itemType.hasName()
+            boolean anonymous = !this.itemType.hasName()
                     && !other.hasName()
                     && this.itemType.getBaseType().equals(BuiltinTypesCatalogue.objectItem)
-                    && other.getBaseType().equals(BuiltinTypesCatalogue.objectItem)
-                    && haveSameObjectFields(this.itemType, other);
-            // Keep objects with the same fields usable as DataFrames; a field is required only if both require it.
-            return sameShape
-                    ? this.itemType.findLeastCommonSuperTypeLax(other)
-                    : this.itemType.findLeastCommonSuperTypeWith(other);
+                    && other.getBaseType().equals(BuiltinTypesCatalogue.objectItem);
+            // A sequence of anonymous objects keeps the union of their fields, which are optional unless every
+            // object has them. This is the schema DataFrame conversion infers from the items themselves.
+            if (anonymous) {
+                ItemType laxJoin = this.itemType.findLeastCommonSuperTypeLax(other);
+                // In a DataFrame, SQL NULL in an optional field means the field is absent, so it cannot also stand
+                // for JSON null. Such a join would let DataFrames turn {"a": null} into {}.
+                if (!hasOptionalNullableField(laxJoin)) {
+                    return laxJoin;
+                }
+            }
+            return this.itemType.findLeastCommonSuperTypeWith(other);
         }
         if (haveSameStructuredKind(this.itemType, other)) {
             return this.itemType.findLeastCommonSuperTypeWith(other);
@@ -216,25 +222,29 @@ public class SequenceType implements Serializable {
         return ItemTypeFactory.createInferredUnionType(List.of(this.itemType, other));
     }
 
+    private static boolean hasOptionalNullableField(ItemType type) {
+        if (type instanceof ArrayItemType arrayType) {
+            return hasOptionalNullableField(arrayType.getArrayContentFacet());
+        }
+        if (!(type instanceof ObjectItemType objectType)) {
+            return false;
+        }
+        for (FieldDescriptor field : objectType.getObjectContentFacet()) {
+            if (!field.isRequired() && BuiltinTypesCatalogue.nullItem.isSubtypeOf(field.getType())) {
+                return true;
+            }
+            if (hasOptionalNullableField(field.getType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static boolean haveSameStructuredKind(ItemType left, ItemType right) {
         return (left.isArrayItemType() && right.isArrayItemType())
                 || (left.isMapItemType() && right.isMapItemType())
                 || (left.isFunctionItemType() && right.isFunctionItemType())
                 || (left.isNodeItemType() && right.isNodeItemType());
-    }
-
-    private static boolean haveSameObjectFields(ItemType left, ItemType right) {
-        if (left.getObjectKeysFacet().size() != right.getObjectKeysFacet().size()) {
-            return false;
-        }
-        for (String key : left.getObjectKeysFacet()) {
-            FieldDescriptor leftField = left.getObjectContentFacet(key);
-            FieldDescriptor rightField = right.getObjectContentFacet(key);
-            if (rightField == null || !leftField.getType().equals(rightField.getType())) {
-                return false;
-            }
-        }
-        return true;
     }
 
     // Grouping concatenates one or more sequences for each group.
