@@ -995,7 +995,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 // Runtime function conversion checks the type and size of the typed value, just as for casts.
                 return true;
             }
-            if (TypeAtomization.containsNode(itemType)) {
+            // The error type is both a node and an atomic type, and atomizes to itself.
+            if (TypeAtomization.containsNode(itemType) && !itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
                 // Function conversion atomizes the node, so its known typed value must match.
                 return isFunctionArgumentCompatible(TypeAtomization.inferType(actual), expected);
             }
