@@ -691,11 +691,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 || itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             return false;
         }
-        if (!itemType.isUnionType()) {
-            return true;
-        }
-        List<ItemType> members = itemType.getTypes();
-        return members.stream().allMatch(ItemType::isNumeric)
+        // JSONiq null is comparable with every atomic value.
+        List<ItemType> members = itemType.getMemberTypes().stream()
+                .filter(member -> !member.equals(BuiltinTypesCatalogue.nullItem))
+                .toList();
+        return members.size() <= 1
+                || members.stream().allMatch(ItemType::isNumeric)
                 || members.stream()
                         .allMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
                                 || member.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem));
@@ -1371,8 +1372,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // This function assume 2 numeric ItemType
     private ItemType resolveNumericType(ItemType left, ItemType right) {
-        List<ItemType> leftMembers = ItemTypeFactory.getInferredUnionMembers(left);
-        List<ItemType> rightMembers = ItemTypeFactory.getInferredUnionMembers(right);
+        List<ItemType> leftMembers = left.getMemberTypes();
+        List<ItemType> rightMembers = right.getMemberTypes();
         if (leftMembers.size() > 1 || rightMembers.size() > 1) {
             // Each member pair is promoted separately, e.g. (xs:integer | xs:double) + xs:integer
             // is (xs:integer | xs:double).
@@ -1658,22 +1659,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMetadata());
             }
 
-            List<ItemType> leftMembers = ItemTypeFactory.getInferredUnionMembers(leftItemType);
-            List<ItemType> rightMembers = ItemTypeFactory.getInferredUnionMembers(rightItemType);
-            if (leftMembers.size() > 1 || rightMembers.size() > 1) {
-                // Static typing is pessimistic (XQuery 3.1, 2.2.3.1): every pair of members must be comparable.
-                boolean comparable = leftMembers.stream().allMatch(left -> rightMembers.stream()
-                        .allMatch(right -> areComparable(left, right) && isOperatorDefined(left, right, operator)));
-                if (!comparable) {
-                    throwStaticTypeException(
-                            "It is not possible to compare these types: " + leftItemType + " and " + rightItemType,
-                            expression.getMetadata());
-                }
-            } else if (!areComparable(leftItemType, rightItemType)) {
-                throwStaticTypeException(
-                        "It is not possible to compare these types: " + leftItemType + " and " + rightItemType,
-                        expression.getMetadata());
-            } else if (!isOperatorDefined(leftItemType, rightItemType, operator)) {
+            // Static typing is pessimistic (XQuery 3.1, 2.2.3.1): every pair of member types must be comparable.
+            if (!leftItemType.allMemberTypesMatch(left -> rightItemType.allMemberTypesMatch(
+                    right -> areComparable(left, right) && isOperatorDefined(left, right, operator)))) {
                 throwStaticTypeException(
                         "It is not possible to compare these types: "
                                 + leftItemType

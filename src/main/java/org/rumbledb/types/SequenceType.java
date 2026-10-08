@@ -135,9 +135,7 @@ public class SequenceType implements Serializable {
         if (isEmptySequence()) {
             return true;
         }
-        // An inferred union has an effective boolean value only if every member has one.
-        return ItemTypeFactory.getInferredUnionMembers(this.itemType).stream()
-                .allMatch(this::memberHasEffectiveBooleanValue);
+        return this.itemType.allMemberTypesMatch(this::memberHasEffectiveBooleanValue);
     }
 
     private boolean memberHasEffectiveBooleanValue(ItemType member) {
