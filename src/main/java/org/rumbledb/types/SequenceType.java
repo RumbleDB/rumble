@@ -144,13 +144,14 @@ public class SequenceType implements Serializable {
     }
 
     private boolean memberHasEffectiveBooleanValue(ItemType member) {
-        if (member.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
+        if (member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem) || member.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
             return true;
         }
         return !this.cardinality.allowsMany()
                 && (member.isNumeric()
-                        || member.equals(BuiltinTypesCatalogue.stringItem)
-                        || member.equals(BuiltinTypesCatalogue.anyURIItem)
+                        || member.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+                        || member.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)
+                        || member.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
                         || member.equals(BuiltinTypesCatalogue.nullItem)
                         || member.equals(BuiltinTypesCatalogue.booleanItem));
     }

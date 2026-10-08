@@ -25,9 +25,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-final class XmlSchemaCastSupport {
+final class CastAtomization {
 
-    private XmlSchemaCastSupport() {}
+    private CastAtomization() {}
 
     /**
      * Materializes the atomized value of an operand, but only up to two items. This is used to check if the operand is
@@ -56,7 +56,7 @@ final class XmlSchemaCastSupport {
                         }
                     } catch (CannotAtomizeException exception) {
                         CannotAtomizeException resultException = new CannotAtomizeException(
-                                "Atomization in XML Schema cast failed for \"" + item.serialize() + "\".", metadata);
+                                "Atomization in cast failed for \"" + item.serialize() + "\".", metadata);
                         resultException.initCause(exception);
                         throw resultException;
                     }

@@ -43,6 +43,7 @@ import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeAtomization;
 
 public class ComparisonVisitor extends CloneVisitor {
     /**
@@ -72,6 +73,10 @@ public class ComparisonVisitor extends CloneVisitor {
         // ComparisonIterator can remain simple and only implement the value-comparison
         // “untyped as string” rule.
         if (!expression.getComparisonOperator().isValueComparison()) {
+            // A singleton node can atomize to a sequence. Select the rewrite using
+            // atomic-value cardinality, not the number of source nodes.
+            leftChild = atomizeIfNeeded(leftChild);
+            rightChild = atomizeIfNeeded(rightChild);
             Expression[] normalized = normalizeUntypedForGeneralComparison(
                     leftChild, rightChild, expression.getStaticContext(), expression.getMetadata());
             leftChild = normalized[0];
@@ -204,10 +209,8 @@ public class ComparisonVisitor extends CloneVisitor {
     }
 
     private static Expression atomizeIfNeeded(Expression child) {
-        if (!child.getStaticSequenceType().getItemType().isAtomicItemType()) {
-            SequenceType type = new SequenceType(
-                    BuiltinTypesCatalogue.atomicItem,
-                    child.getStaticSequenceType().getArity());
+        if (!child.getStaticSequenceType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+            SequenceType type = TypeAtomization.inferType(child.getStaticSequenceType());
             ExecutionMode mode = child.getHighestExecutionMode();
             StaticContext staticContext = child.getStaticContext();
             child = new FunctionCallExpression(
@@ -270,7 +273,7 @@ public class ComparisonVisitor extends CloneVisitor {
         SequenceType untypedSeqType = untypedOnLeft ? leftType : rightType;
         ItemType otherItemType = untypedOnLeft ? rightItemType : leftItemType;
 
-        if (!otherItemType.isAtomicItemType()) {
+        if (!otherItemType.isAtomicItemType() || otherItemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             // If the other side is not atomic, do not attempt any rewrite here.
             return new Expression[] {left, right};
         }

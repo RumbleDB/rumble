@@ -47,6 +47,15 @@ class UnionTypeInferenceTest {
 
     private record Case(String query, List<ItemType> expectedTypes) {}
 
+    @Test
+    void mixedAtomicNodeUnionKeepsBothMembers() {
+        ItemType union = infer("for $i in ('3', <h3/>) return $i", URI.create("file:///mixed-union.xq"))
+                .getItemType();
+        assertEquals(List.of(BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.elementNode), union.getTypes());
+        // Joins and overlap checks rely on a node type being a subtype of a union that contains it.
+        assertTrue(BuiltinTypesCatalogue.elementNode.isSubtypeOf(union));
+    }
+
     static Stream<Arguments> unionQueries() {
         List<ItemType> floating = List.of(BuiltinTypesCatalogue.floatItem, BuiltinTypesCatalogue.doubleItem);
         List<ItemType> integers = List.of(BuiltinTypesCatalogue.integerItem);
