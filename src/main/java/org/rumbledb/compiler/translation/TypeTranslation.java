@@ -56,7 +56,6 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 public final class TypeTranslation {
 
@@ -282,13 +281,12 @@ public final class TypeTranslation {
                         : ItemTypeFactory.attributeNodeItemType(attributeName);
             }
             Name typeName = parseEqName.apply(attributeTestContext.typeNameEqName(), NameRole.TYPE);
-            XmlSchemaCatalog catalog =
-                    translationContext.moduleContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
-            return ItemTypeFactory.attributeNodeItemType(
-                    attributeName,
-                    typeName,
-                    catalog.getTypeHierarchy(typeName, translationContext.metadata(attributeTestContext.context())),
-                    catalog.getTypedValueType(typeName).orElse(null));
+            return translationContext
+                    .moduleContext()
+                    .getInScopeSchemaTypes()
+                    .getXmlSchemaCatalog()
+                    .getAttributeTest(
+                            attributeName, typeName, translationContext.metadata(attributeTestContext.context()));
         }
         if (kindTestContext.isCommentTest()) {
             return BuiltinTypesCatalogue.commentNode;
@@ -353,13 +351,14 @@ public final class TypeTranslation {
                     : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
         }
         Name typeName = parseEqName.apply(elementTestContext.typeNameEqName(), NameRole.TYPE);
-        XmlSchemaCatalog catalog =
-                translationContext.moduleContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
-        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(
-                elementName,
-                typeName,
-                catalog.getTypeHierarchy(typeName, translationContext.metadata(elementTestContext.context())),
-                elementTestContext.hasOptional(),
-                catalog.getTypedValueType(typeName).orElse(null));
+        return translationContext
+                .moduleContext()
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getElementTest(
+                        elementName,
+                        typeName,
+                        elementTestContext.hasOptional(),
+                        translationContext.metadata(elementTestContext.context()));
     }
 }

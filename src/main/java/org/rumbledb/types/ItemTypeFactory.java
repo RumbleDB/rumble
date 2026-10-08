@@ -657,15 +657,6 @@ public class ItemTypeFactory {
         return new ElementNodeItemType(nodeName);
     }
 
-    public static ItemType elementNodeItemType(
-            Name nodeName,
-            Name schemaTypeName,
-            List<Name> schemaTypeHierarchy,
-            boolean nillable,
-            SequenceType typedValueType) {
-        return new ElementNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy, nillable, typedValueType);
-    }
-
     /**
      * Wildcard XQuery attribute node type attribute().
      *
@@ -686,11 +677,6 @@ public class ItemTypeFactory {
             throw new OurBadException("Attribute node name cannot be null.");
         }
         return new AttributeNodeItemType(nodeName);
-    }
-
-    public static ItemType attributeNodeItemType(
-            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, SequenceType typedValueType) {
-        return new AttributeNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy, typedValueType);
     }
 
     /**

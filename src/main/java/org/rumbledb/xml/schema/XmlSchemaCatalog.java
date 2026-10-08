@@ -74,6 +74,8 @@ public final class XmlSchemaCatalog {
     private final XercesTypedValueConverter typedValueConverter;
     private final XercesSimpleTypeCaster simpleTypeCaster;
     private final List<XSComplexTypeDefinition> complexTypes;
+    // Typed values depend only on the immutable schema model, but finding derived types scans every complex type.
+    private final Map<XSTypeDefinition, Optional<SequenceType>> typedValueTypes = new IdentityHashMap<>();
 
     XmlSchemaCatalog(
             @NonNull XSModel schemaModel, @NonNull Schema validationSchema, Map<String, String> namespacePrefixes) {
@@ -104,32 +106,36 @@ public final class XmlSchemaCatalog {
         return List.copyOf(names);
     }
 
-    public boolean hasElementDeclaration(Name name) {
-        return this.schemaModel.getElementDeclaration(
-                        name.getLocalName(), XmlNameCodec.emptyToNull(name.getNamespace()))
-                != null;
-    }
-
     /** Returns the name of the only global element declaration that an element can have, if there is one. */
     public Optional<Name> getOnlyElementDeclarationName() {
         XSNamedMap elements = this.schemaModel.getComponents(XSConstants.ELEMENT_DECLARATION);
-        List<Name> names = new ArrayList<>();
+        XSElementDeclaration only = null;
         for (int index = 0; index < elements.getLength(); index++) {
             XSElementDeclaration declaration = (XSElementDeclaration) elements.item(index);
             if (!declaration.getAbstract()) {
-                names.add(this.typeMapper.declarationName(declaration.getNamespace(), declaration.getName()));
+                if (only != null) {
+                    return Optional.empty();
+                }
+                only = declaration;
             }
         }
-        return names.size() == 1 ? Optional.of(names.get(0)) : Optional.empty();
+        return Optional.ofNullable(only)
+                .map(declaration -> this.typeMapper.declarationName(declaration.getNamespace(), declaration.getName()));
     }
 
     /** Resolves a global declaration and the substitutions allowed by its blocking constraints. */
     public SchemaElementNodeItemType getSchemaElementTest(Name name, ExceptionMetadata metadata) {
+        return findSchemaElementTest(name)
+                .orElseThrow(() -> new SemanticException(
+                        "Unknown global schema element: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata));
+    }
+
+    /** Like {@link #getSchemaElementTest}, but empty when there is no global declaration with this name. */
+    public Optional<SchemaElementNodeItemType> findSchemaElementTest(Name name) {
         XSElementDeclaration declaration = this.schemaModel.getElementDeclaration(
                 name.getLocalName(), XmlNameCodec.emptyToNull(name.getNamespace()));
         if (declaration == null) {
-            throw new SemanticException(
-                    "Unknown global schema element: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata);
+            return Optional.empty();
         }
         List<ElementNodeItemType> alternatives = new ArrayList<>();
         addElementAlternative(declaration, alternatives);
@@ -139,7 +145,7 @@ public final class XmlSchemaCatalog {
             addElementAlternative((XSElementDeclaration) substitutions.item(i), alternatives);
         }
 
-        return new SchemaElementNodeItemType(name, alternatives);
+        return Optional.of(new SchemaElementNodeItemType(name, alternatives));
     }
 
     private void addElementAlternative(XSElementDeclaration declaration, List<ElementNodeItemType> alternatives) {
@@ -174,6 +180,26 @@ public final class XmlSchemaCatalog {
                 typedValueType(declaration.getTypeDefinition()).orElse(null));
     }
 
+    /** The test element(nodeName, typeName), or element(*, typeName) when nodeName is null. */
+    public ElementNodeItemType getElementTest(
+            Name nodeName, Name typeName, boolean nillable, ExceptionMetadata metadata) {
+        return new ElementNodeItemType(
+                nodeName,
+                typeName,
+                getTypeHierarchy(typeName, metadata),
+                nillable,
+                getTypedValueType(typeName).orElse(null));
+    }
+
+    /** The test attribute(nodeName, typeName), or attribute(*, typeName) when nodeName is null. */
+    public AttributeNodeItemType getAttributeTest(Name nodeName, Name typeName, ExceptionMetadata metadata) {
+        return new AttributeNodeItemType(
+                nodeName,
+                typeName,
+                getTypeHierarchy(typeName, metadata),
+                getTypedValueType(typeName).orElse(null));
+    }
+
     /** A pure union also accepts annotations derived from any of its atomic member types. */
     private List<Name> matchingTypeNames(XSTypeDefinition definition) {
         List<Name> names = new ArrayList<>();
@@ -192,15 +218,11 @@ public final class XmlSchemaCatalog {
     /** Returns the named schema type followed by its base-type chain. */
     public List<Name> getTypeHierarchy(@NonNull Name name, @NonNull ExceptionMetadata metadata) {
         Optional<XSTypeDefinition> definition = getTypeDefinition(name);
-        // XQuery adds atomic types, such as untypedAtomic and the duration subtypes,
-        // that Xerces's XSD 1.0 catalog does not contain.
-        if (definition.isEmpty() && Name.XS_NS.equals(name.getNamespace()) && BuiltinTypesCatalogue.typeExists(name)) {
-            ItemType itemType = BuiltinTypesCatalogue.getItemTypeByName(name);
-            if (itemType.isAtomicItemType()) {
-                return XmlSchemaTypeAnnotation.forAtomicItemType(itemType).typeHierarchy();
-            }
+        Optional<ItemType> atomicType = definition.isEmpty() ? xqueryAtomicType(name) : Optional.empty();
+        if (atomicType.isPresent()) {
+            return XmlSchemaTypeAnnotation.forAtomicItemType(atomicType.get()).typeHierarchy();
         }
-        if (definition.isEmpty() && Name.XS_NS.equals(name.getNamespace()) && "untyped".equals(name.getLocalName())) {
+        if (definition.isEmpty() && isUntyped(name)) {
             return List.of(name, new Name(Name.XS_NS, "xs", "anyType"));
         }
         if (definition.isEmpty()
@@ -253,17 +275,29 @@ public final class XmlSchemaCatalog {
      * xs:anyAtomicType*. Some XQuery types, such as xs:untyped, have no Xerces definition.
      */
     public Optional<SequenceType> getTypedValueType(Name typeName) {
-        if (Name.XS_NS.equals(typeName.getNamespace())
-                && getTypeDefinition(typeName).isEmpty()) {
-            if ("untyped".equals(typeName.getLocalName())) {
-                return Optional.of(new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem));
-            }
-            if (BuiltinTypesCatalogue.typeExists(typeName)
-                    && BuiltinTypesCatalogue.getItemTypeByName(typeName).isAtomicItemType()) {
-                return Optional.of(new SequenceType(BuiltinTypesCatalogue.getItemTypeByName(typeName)));
-            }
+        Optional<XSTypeDefinition> definition = getTypeDefinition(typeName);
+        if (definition.isPresent()) {
+            return definition.flatMap(this::typedValueType);
         }
-        return getTypeDefinition(typeName).flatMap(this::typedValueType);
+        if (isUntyped(typeName)) {
+            return Optional.of(new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem));
+        }
+        return xqueryAtomicType(typeName).map(SequenceType::new);
+    }
+
+    /**
+     * XQuery adds atomic types, such as untypedAtomic and the duration subtypes, that Xerces's XSD 1.0 catalog does
+     * not contain.
+     */
+    private static Optional<ItemType> xqueryAtomicType(Name name) {
+        if (!Name.XS_NS.equals(name.getNamespace()) || !BuiltinTypesCatalogue.typeExists(name)) {
+            return Optional.empty();
+        }
+        return Optional.of(BuiltinTypesCatalogue.getItemTypeByName(name)).filter(ItemType::isAtomicItemType);
+    }
+
+    private static boolean isUntyped(Name name) {
+        return Name.XS_NS.equals(name.getNamespace()) && "untyped".equals(name.getLocalName());
     }
 
     /**
@@ -272,6 +306,16 @@ public final class XmlSchemaCatalog {
      * complex type can change the content type: for example, an extension of an empty type can add mixed content.
      */
     private Optional<SequenceType> typedValueType(XSTypeDefinition type) {
+        // Not computeIfAbsent: the computation recurses into this cache for simple content.
+        Optional<SequenceType> cached = this.typedValueTypes.get(type);
+        if (cached == null) {
+            cached = computeTypedValueType(type);
+            this.typedValueTypes.put(type, cached);
+        }
+        return cached;
+    }
+
+    private Optional<SequenceType> computeTypedValueType(XSTypeDefinition type) {
         if (type instanceof XSSimpleTypeDefinition simpleType) {
             // Values of xs:anySimpleType may also be lists.
             return simpleType.getVariety() == XSSimpleTypeDefinition.VARIETY_ABSENT
