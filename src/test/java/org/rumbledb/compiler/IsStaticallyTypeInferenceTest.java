@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.Test;
@@ -54,7 +55,7 @@ class IsStaticallyTypeInferenceTest {
                 "declare variable $flag as xs:boolean external; "
                         + "(if ($flag) then (1, 2) else ()) is statically xs:integer*",
                 "jq");
-        assertEquals(SequenceCardinality.ZERO_OR_MANY, type.getCardinality());
+        assertEquals(SequenceCardinality.EMPTY_OR_MANY, type.getCardinality());
     }
 
     @ParameterizedTest
@@ -99,6 +100,67 @@ class IsStaticallyTypeInferenceTest {
                 };
         assertEquals(expectedMembers, Set.copyOf(type.getItemType().getTypes()));
         assertEquals(expectedMembers.size(), type.getItemType().getTypes().size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"jq", "xq"})
+    void mixedAtomicCommaKeepsMembersInOperandOrder(String extension) {
+        SequenceType type = infer("(\"s\", 12)", extension);
+        assertEquals(SequenceCardinality.MANY, type.getCardinality());
+        assertEquals(
+                List.of(BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.integerItem),
+                type.getItemType().getTypes());
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {"if2", "if5", "if6", "switch2", "switch12", "try1", "try2", "try5", "typeswitch2", "typeswitch6"
+            })
+    void alternativesJoinLikeACommaExpression(String fixture) throws IOException {
+        // Conditional branches, switch cases and catch clauses use the same join as a comma expression.
+        Path path = Path.of("src/test/resources/test_files/static-typing/control", fixture + ".jq");
+        SequenceType type = infer(Files.readString(path), "jq");
+        List<ItemType> expectedMembers =
+                switch (fixture) {
+                    case "if2", "try1", "typeswitch2" -> List.of(
+                            BuiltinTypesCatalogue.integerItem, BuiltinTypesCatalogue.stringItem);
+                    case "if5", "switch2" -> List.of(
+                            BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.integerItem);
+                    case "try2" -> List.of(BuiltinTypesCatalogue.integerItem, BuiltinTypesCatalogue.stringItem);
+                    case "if6" -> List.of(BuiltinTypesCatalogue.arrayItem, BuiltinTypesCatalogue.integerItem);
+                    case "switch12", "try5" -> List.of(
+                            BuiltinTypesCatalogue.decimalItem, BuiltinTypesCatalogue.stringItem);
+                    case "typeswitch6" -> List.of(BuiltinTypesCatalogue.stringItem, BuiltinTypesCatalogue.decimalItem);
+                    default -> throw new IllegalArgumentException(fixture);
+                };
+        assertEquals(expectedMembers, type.getItemType().getTypes());
+        SequenceType.Arity expectedArity =
+                switch (fixture) {
+                    case "if5", "if6", "try2" -> SequenceType.Arity.OneOrMore;
+                    default -> SequenceType.Arity.One;
+                };
+        assertEquals(expectedArity, type.getArity());
+    }
+
+    @Test
+    void atomicAndStructuredValuesKeepEveryMemberInOperandOrder() {
+        // Unboxing ignores the members that are not arrays; the array content keeps the comma's union.
+        SequenceType type = infer("[1,2,\"a\",\"b\",{\"a\":12}][]", "jq");
+        assertEquals(SequenceType.Arity.ZeroOrMore, type.getArity());
+        List<ItemType> members = type.getItemType().getTypes();
+        assertEquals(3, members.size());
+        assertEquals(BuiltinTypesCatalogue.integerItem, members.get(0));
+        assertEquals(BuiltinTypesCatalogue.stringItem, members.get(1));
+        assertTrue(members.get(2).isObjectItemType());
+        assertEquals(
+                BuiltinTypesCatalogue.integerItem,
+                members.get(2).getObjectContentFacet("a").getType());
+    }
+
+    @Test
+    void lookupOnMixedSequenceKeepsTheMatchingMember() {
+        SequenceType type = infer("(1, {\"a\": 12}).a", "jq");
+        assertEquals(BuiltinTypesCatalogue.integerItem, type.getItemType());
     }
 
     @Test

@@ -75,7 +75,7 @@ class SequenceCardinalityTest {
         assertFalse(SequenceType.createSequenceType("integer+").isSubtypeOf(multiple));
         assertFalse(multiple.hasOverlapWith(singleton));
         assertEquals(
-                SequenceCardinality.ZERO_OR_MANY,
+                SequenceCardinality.EMPTY_OR_MANY,
                 multiple.leastCommonSupertypeWith(empty).getCardinality());
         assertEquals(SequenceCardinality.MANY, multiple.incrementArity().getCardinality());
         assertEquals(

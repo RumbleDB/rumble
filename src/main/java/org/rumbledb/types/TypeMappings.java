@@ -88,12 +88,14 @@ public class TypeMappings {
         // Leave these unions to the union mapping below.
         if (!itemType.isUnionType() && itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             List<StructField> fields = new ArrayList<>();
-            itemType.getObjectKeysFacet()
-                    .forEach(key -> fields.add(DataTypes.createStructField(
-                            key,
-                            getDataFrameDataTypeFromItemType(
-                                    itemType.getObjectContentFacet(key).getType(), staticContext),
-                            !itemType.getObjectContentFacet(key).isRequired())));
+            itemType.getObjectKeysFacet().forEach(key -> {
+                FieldDescriptor field = itemType.getObjectContentFacet(key);
+                // A required field can still hold null, e.g. an object constructor field of type (xs:double | js:null).
+                fields.add(DataTypes.createStructField(
+                        key,
+                        getDataFrameDataTypeFromItemType(field.getType(), staticContext),
+                        !field.isRequired() || field.getType().canBeNull()));
+            });
             if (fields.size() > 0) {
                 return DataTypes.createStructType(fields);
             }

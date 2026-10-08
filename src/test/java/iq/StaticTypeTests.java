@@ -16,8 +16,11 @@
 package iq;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 import iq.base.SparkAnnotationsTestsBase;
+import iq.base.TestFileDiscovery;
 
 import org.rumbledb.config.RumbleConfiguration;
 
@@ -41,7 +44,7 @@ public class StaticTypeTests extends SparkAnnotationsTestsBase {
     }
 
     @Override
-    protected boolean checkOutput() {
-        return false;
+    protected List<File> testFiles() throws IOException {
+        return TestFileDiscovery.files(testDirectory(), ".jq", ".xq");
     }
 }

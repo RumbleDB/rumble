@@ -19,6 +19,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -105,14 +106,13 @@ public class UnionItemType extends AbstractItemType {
     @Override
     public boolean isStaticallyCastableAs(ItemType other) {
         return other.equals(this)
-                || this.types.stream()
-                        .allMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                                && member.isStaticallyCastableAs(other));
+                || allMemberTypesMatch(member ->
+                        member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem) && member.isStaticallyCastableAs(other));
     }
 
     @Override
     public boolean canBePromotedTo(ItemType other) {
-        return this.types.stream().allMatch(member -> member.isSubtypeOf(other) || member.canBePromotedTo(other));
+        return allMemberTypesMatch(member -> member.isSubtypeOf(other) || member.canBePromotedTo(other));
     }
 
     @Override
@@ -276,12 +276,13 @@ public class UnionItemType extends AbstractItemType {
         boolean hasNumeric = false;
         boolean hasNonNumeric = false;
         boolean hasNull = false;
-        Set<ItemType> resultTypes = new HashSet<>(this.types);
+        // Keep operand order so that the same join always displays its members in the same order.
+        Set<ItemType> resultTypes = new LinkedHashSet<>(this.types);
         resultTypes.addAll(otherTypes);
         // The atomic join below widens to an atomic base type, which cannot cover non-atomic members
-        // (for example, the array alternative of an inferred object field). Fall back to item instead.
+        // (for example, the array alternative of an inferred object field). Keep every member instead.
         if (resultTypes.stream().anyMatch(type -> !type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))) {
-            return BuiltinTypesCatalogue.item;
+            return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes), false);
         }
         for (ItemType member : resultTypes) {
             if (member.equals(BuiltinTypesCatalogue.nullItem)) {
@@ -306,9 +307,9 @@ public class UnionItemType extends AbstractItemType {
             return BuiltinTypesCatalogue.numericItem;
         }
         if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
-            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes));
+            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes), false);
         }
-        return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes));
+        return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes), false);
     }
 
     @Override
