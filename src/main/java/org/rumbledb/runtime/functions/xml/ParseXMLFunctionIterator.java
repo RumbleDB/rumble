@@ -44,10 +44,8 @@ public class ParseXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         if (arg == null) {
             return null;
         }
-        Document xmlDocument = XmlParsingUtils.parseDocument(
-                arg.getStringValue(),
-                "fn:parse-xml: the argument is not a well-formed and namespace-well-formed XML document; XML input",
-                getMetadata());
+        Document xmlDocument =
+                XmlParsingUtils.parseDocument(arg.getStringValue(), "the argument of fn:parse-xml", getMetadata());
         DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                 xmlDocument,
                 XMLDocumentPosition.generateConstructedTreePath(),

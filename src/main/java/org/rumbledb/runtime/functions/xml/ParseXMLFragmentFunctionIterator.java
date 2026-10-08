@@ -49,9 +49,7 @@ public class ParseXMLFragmentFunctionIterator extends AbstractAtMostOneItemRunti
             return null;
         }
         DocumentFragment fragment = XmlParsingUtils.parseFragment(
-                arg.getStringValue(),
-                "fn:parse-xml-fragment: the argument is not a well-formed external general parsed entity; XML input",
-                getMetadata());
+                arg.getStringValue(), "the argument of fn:parse-xml-fragment", getMetadata());
 
         boolean removeParentPointers =
                 context.getRumbleConfiguration().optimization().optimizeParentPointers();

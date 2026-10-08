@@ -43,14 +43,14 @@ public final class XmlParsingUtils {
 
     private XmlParsingUtils() {}
 
-    /** Parses a document string and appends parser diagnostics to the caller's error message. */
-    public static Document parseDocument(String xml, String errorMessage, ExceptionMetadata metadata) {
-        return parseString(xml, false, errorMessage, metadata);
+    /** Parses a document string. The description names the input in error messages. */
+    public static Document parseDocument(String xml, String description, ExceptionMetadata metadata) {
+        return parseString(xml, false, description, metadata);
     }
 
     /** Parses a fragment string without exposing the synthetic wrapper in nodes or diagnostics. */
-    public static DocumentFragment parseFragment(String xml, String errorMessage, ExceptionMetadata metadata) {
-        Document document = parseString(xml, true, errorMessage, metadata);
+    public static DocumentFragment parseFragment(String xml, String description, ExceptionMetadata metadata) {
+        Document document = parseString(xml, true, description, metadata);
         Node wrapper = document.getDocumentElement();
         DocumentFragment fragment = document.createDocumentFragment();
         while (wrapper.hasChildNodes()) {
@@ -91,13 +91,14 @@ public final class XmlParsingUtils {
         }
     }
 
-    private static Document parseString(String xml, boolean fragment, String errorMessage, ExceptionMetadata metadata) {
+    private static Document parseString(String xml, boolean fragment, String description, ExceptionMetadata metadata) {
         String input = fragment ? "<" + FRAGMENT_WRAPPER + ">" + xml + "</" + FRAGMENT_WRAPPER + ">" : xml;
         try {
             return newDocumentBuilder(metadata).parse(new InputSource(new StringReader(input)));
         } catch (SAXException | IOException e) {
             String detail = fragment ? describeFragment(e, xml) : describe(e);
-            InvalidXmlDocumentException exception = new InvalidXmlDocumentException(errorMessage + detail, metadata);
+            InvalidXmlDocumentException exception =
+                    new InvalidXmlDocumentException("Unable to parse " + description + detail, metadata);
             exception.initCause(e);
             throw exception;
         }
@@ -135,37 +136,27 @@ public final class XmlParsingUtils {
         return ": " + exception.getMessage();
     }
 
-    /** Maps wrapper positions back to the fragment, including failures in the synthetic closing tag. */
+    /**
+     * Reports positions relative to the fragment rather than the synthetic wrapper. Errors in the wrapper's closing
+     * tag, such as an unclosed element, are reported at the end of the input.
+     */
     private static String describeFragment(Exception exception, String xml) {
         if (!(exception instanceof SAXParseException parseException)) {
             return describe(exception);
         }
+        String message = parseException.getMessage().replace(FRAGMENT_WRAPPER, "fragment");
         int line = parseException.getLineNumber();
         int column = parseException.getColumnNumber();
         if (line == 1 && column > 0) {
             column = Math.max(1, column - FRAGMENT_WRAPPER.length() - 2);
         }
-
-        // XML normalizes CR and CRLF to LF. Compute the one-based end position using the same rules.
-        int endLine = 1;
-        int endColumn = 1;
-        for (int i = 0; i < xml.length(); i++) {
-            char c = xml.charAt(i);
-            if (c == '\r' || c == '\n') {
-                if (c == '\r' && i + 1 < xml.length() && xml.charAt(i + 1) == '\n') {
-                    i++;
-                }
-                endLine++;
-                endColumn = 1;
-            } else {
-                endColumn++;
-            }
+        // XML treats CR, LF and CRLF as line breaks.
+        String[] lines = xml.split("\r\n|\r|\n", -1);
+        int lastColumn = lines[lines.length - 1].length() + 1;
+        if (line > lines.length || (line == lines.length && column > lastColumn)) {
+            return " at end of input: " + message;
         }
-        if (line > endLine || (line == endLine && column > endColumn)) {
-            line = endLine;
-            column = endColumn;
-        }
-        return formatDiagnostic(parseException.getMessage().replace(FRAGMENT_WRAPPER, "fragment"), line, column);
+        return formatDiagnostic(message, line, column);
     }
 
     private static String formatDiagnostic(String message, int line, int column) {
