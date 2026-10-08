@@ -248,9 +248,19 @@ final class XmlSchemaTypeMapper {
                     schemaType, type -> new Name(ANONYMOUS_TYPE_NAMESPACE, null, "anonymousType-" + UUID.randomUUID()));
         }
         String namespace = schemaType.getNamespace();
-        String prefix =
-                Name.XS_NS.equals(namespace) ? "xs" : namespace == null ? null : this.namespacePrefixes.get(namespace);
-        return new Name(namespace, prefix, schemaType.getName());
+        return new Name(namespace, prefixOf(namespace), schemaType.getName());
+    }
+
+    /** The prefix the query's schema imports bind to the namespace, or null if there is none. */
+    private String prefixOf(String namespace) {
+        if (Name.XS_NS.equals(namespace)) {
+            return "xs";
+        }
+        if (namespace == null) {
+            // Types in no namespace have no prefix; the immutable map also rejects null lookups.
+            return null;
+        }
+        return this.namespacePrefixes.get(namespace);
     }
 
     private static void insertBefore(List<Name> names, Name name, Name successor) {
