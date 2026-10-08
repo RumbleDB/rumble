@@ -22,6 +22,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.spark.internal.Logging;
+import org.slf4j.Logger;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -31,11 +34,8 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.slf4j.Logger;
 import org.rumbledb.serialization.SequenceSerializer;
 import org.rumbledb.serialization.SerializationParameters;
-
-import org.apache.spark.internal.Logging;
 
 public class JsoniqQueryExecutor implements Logging {
     private final RumbleConfiguration configuration;
@@ -43,11 +43,11 @@ public class JsoniqQueryExecutor implements Logging {
 
     public JsoniqQueryExecutor(RumbleConfiguration configuration) {
         this(configuration, ExternalBindings.empty());
-	initializeLogIfNecessary(true, true);
+        initializeLogIfNecessary(true, true);
     }
 
     public JsoniqQueryExecutor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
-	initializeLogIfNecessary(true, true);
+        initializeLogIfNecessary(true, true);
         this.configuration = configuration;
         this.externalBindings = externalBindings.snapshot();
         if (configuration.output().outputPath() == null
@@ -206,5 +206,4 @@ public class JsoniqQueryExecutor implements Logging {
         // TODO Auto-generated method stub
 
     }
-
 }
