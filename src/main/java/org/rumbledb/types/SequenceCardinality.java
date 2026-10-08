@@ -35,14 +35,6 @@ public enum SequenceCardinality {
     /** Any number of items, *. */
     ANY(7);
 
-    private static final SequenceCardinality[] BY_MASK = new SequenceCardinality[8];
-
-    static {
-        for (SequenceCardinality cardinality : values()) {
-            BY_MASK[cardinality.mask] = cardinality;
-        }
-    }
-
     private final int mask;
 
     SequenceCardinality(int mask) {
@@ -136,9 +128,11 @@ public enum SequenceCardinality {
     }
 
     private static SequenceCardinality fromMask(int mask) {
-        if (BY_MASK[mask] == null) {
-            throw new IllegalArgumentException("A sequence cardinality must allow at least one size.");
+        for (SequenceCardinality cardinality : values()) {
+            if (cardinality.mask == mask) {
+                return cardinality;
+            }
         }
-        return BY_MASK[mask];
+        throw new IllegalArgumentException("A sequence cardinality must allow at least one size.");
     }
 }
