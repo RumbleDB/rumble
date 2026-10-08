@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -90,6 +91,18 @@ public final class XmlSchemaCatalogLoader {
             @NonNull List<SchemaImport> schemaImports,
             @NonNull URI staticBaseUri,
             @NonNull CompilationConfiguration compilationConfiguration) {
+        return load(schemaImports, staticBaseUri, compilationConfiguration, uri -> {});
+    }
+
+    /**
+     * Reports each schema URI before reading it, including nested imports and includes.
+     * Failed reads are reported too, so callers can detect when a missing schema becomes available.
+     */
+    public static Optional<XmlSchemaCatalog> load(
+            @NonNull List<SchemaImport> schemaImports,
+            @NonNull URI staticBaseUri,
+            @NonNull CompilationConfiguration compilationConfiguration,
+            @NonNull Consumer<URI> schemaResourceObserver) {
         if (schemaImports.isEmpty()) {
             return Optional.empty();
         }
@@ -101,7 +114,11 @@ public final class XmlSchemaCatalogLoader {
 
         ExceptionMetadata metadata = schemaImports.get(0).getMetadata();
         SchemaResourceResolver resolver = new SchemaResourceResolver(
-                staticBaseUri, resolvedImports.locationsByNamespace(), compilationConfiguration, metadata);
+                staticBaseUri,
+                resolvedImports.locationsByNamespace(),
+                compilationConfiguration,
+                metadata,
+                schemaResourceObserver);
         LoadedSchema loadedSchema = loadSchema(resolvedImports.locations(), resolver, metadata);
         XmlSchemaCatalog catalog = new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema());
         verifyImportedNamespaces(schemaImports, catalog);
@@ -242,17 +259,20 @@ public final class XmlSchemaCatalogLoader {
         private final CompilationConfiguration compilationConfiguration;
         private final ExceptionMetadata metadata;
         private final Map<URI, SchemaSource> sources;
+        private final Consumer<URI> schemaResourceObserver;
 
         private SchemaResourceResolver(
                 URI defaultBaseUri,
                 Map<String, List<URI>> locationsByNamespace,
                 CompilationConfiguration compilationConfiguration,
-                ExceptionMetadata metadata) {
+                ExceptionMetadata metadata,
+                Consumer<URI> schemaResourceObserver) {
             this.defaultBaseUri = defaultBaseUri;
             this.locationsByNamespace = locationsByNamespace;
             this.compilationConfiguration = compilationConfiguration;
             this.metadata = metadata;
             this.sources = new HashMap<>();
+            this.schemaResourceObserver = schemaResourceObserver;
         }
 
         /**
@@ -310,6 +330,7 @@ public final class XmlSchemaCatalogLoader {
          * Reads a schema from the given URI using RumbleDB’s ResourceResolver.
          */
         private SchemaSource read(URI location) {
+            this.schemaResourceObserver.accept(location);
             try (ResolvedResource resource = this.compilationConfiguration
                     .resourceResolver()
                     .resolve(location, this.compilationConfiguration.runtimeConfiguration(), this.metadata)) {
