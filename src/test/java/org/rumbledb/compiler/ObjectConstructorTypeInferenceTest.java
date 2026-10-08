@@ -19,6 +19,7 @@ import java.net.URI;
 import java.util.List;
 
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -171,6 +172,32 @@ class ObjectConstructorTypeInferenceTest {
         ItemType result =
                 ItemTypeFactory.createObjectFieldType(new SequenceType(nullable, SequenceType.Arity.OneOrZero));
         assertEquals(List.of(BuiltinTypesCatalogue.doubleItem, BuiltinTypesCatalogue.nullItem), result.getTypes());
+    }
+
+    @Test
+    void joiningUnionWithNonAtomicMemberKeepsEveryMember() {
+        ItemType sequenceField = ItemTypeFactory.createObjectFieldType(
+                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.ZeroOrMore));
+        ItemType joined = sequenceField.findLeastCommonSuperTypeWith(BuiltinTypesCatalogue.stringItem);
+        assertFalse(joined.isTopmostItemType());
+        assertTrue(joined.isUnionType());
+        assertEquals(4, joined.getTypes().size());
+        assertTrue(BuiltinTypesCatalogue.stringItem.isSubtypeOf(joined));
+        assertTrue(sequenceField.isSubtypeOf(joined));
+    }
+
+    @Test
+    void requiredFieldThatCanBeNullMapsToNullableColumn() {
+        ItemType objectType = infer("declare variable $d as xs:double? := 1e0; {\"value\": $d, \"known\": 1}", "jq")
+                .getItemType();
+        RuntimeStaticContext context = RuntimeStaticContext.builder()
+                .configuration(CONFIGURATION)
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(ExceptionMetadata.EMPTY_METADATA)
+                .build();
+        StructType schema = (StructType) TypeMappings.getDataFrameDataTypeFromItemType(objectType, context);
+        assertTrue(schema.apply("value").nullable());
+        assertFalse(schema.apply("known").nullable());
     }
 
     @Test
