@@ -28,7 +28,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import org.rumbledb.bindings.ExternalBindings;
-import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.compiler.CompilationPipeline;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.InScopeSchemaTypes;
@@ -101,7 +101,7 @@ public class XmlSchemaCatalogLoaderTest {
         RumbleConfiguration configuration = RumbleConfiguration.builder()
                 .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
                 .build();
-        return VisitorHelpers.parseMainModule(
+        return CompilationPipeline.compileMainModule(
                 query, queryUri, new CompilationConfiguration(configuration, resolver), ExternalBindings.empty());
     }
 
