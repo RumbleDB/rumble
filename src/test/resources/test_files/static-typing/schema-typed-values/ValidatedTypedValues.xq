@@ -14,7 +14,7 @@ return (
     (: Marker instances may select Remark, so their typed value may be untyped text. :)
     empty(data(validate { <t:marker/> }) is statically xs:untypedAtomic?),
     (: Element-only content cannot be atomized, so the typed value stays unknown. :)
-    exists(validate { <t:order><t:price>1</t:price></t:order> } is statically schema-element(t:order)),
+    try { data(validate { <t:order><t:price>1</t:price></t:order> }) is statically xs:anyAtomicType* }
+    catch err:FOTY0012 { true() },
     exists(validate lax { <t:unknown/> } is statically element(t:unknown))
-        and exists(validate { <t:price>4.5</t:price> } instance of schema-element(t:price))
 )

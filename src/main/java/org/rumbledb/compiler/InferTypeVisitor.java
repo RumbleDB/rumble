@@ -995,8 +995,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 // Runtime function conversion checks the type and size of the typed value, just as for casts.
                 return true;
             }
-            // The error type is both a node and an atomic type, and atomizes to itself.
-            if (TypeAtomization.containsNode(itemType) && !itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+            if (TypeAtomization.containsNode(itemType)) {
                 // Function conversion atomizes the node, so its known typed value must match.
                 return isFunctionArgumentCompatible(TypeAtomization.inferType(actual), expected);
             }
@@ -3035,13 +3034,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         XmlSchemaCatalog schemaCatalog =
                 expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
         if (expression.getValidationMode() == ValidateExpression.ValidationMode.TYPE) {
-            Name typeName = expression.getTypeName();
-            return Optional.of(ItemTypeFactory.elementNodeItemType(
-                    element.getNodeName(),
-                    typeName,
-                    schemaCatalog.getTypeHierarchy(typeName, expression.getMetadata()),
-                    false,
-                    schemaCatalog.getTypedValueType(typeName).orElse(null)));
+            return Optional.of(schemaCatalog.getElementTest(
+                    element.getNodeName(), expression.getTypeName(), false, expression.getMetadata()));
         }
         // Strict validation requires a global declaration with the element's name (XQDY0084), so with a single
         // declaration the name is known. Lax validation leaves an element without a declaration unannotated.
@@ -3049,10 +3043,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (name == null && expression.getValidationMode() == ValidateExpression.ValidationMode.STRICT) {
             name = schemaCatalog.getOnlyElementDeclarationName().orElse(null);
         }
-        if (name == null || !schemaCatalog.hasElementDeclaration(name)) {
-            return Optional.empty();
-        }
-        return Optional.of(schemaCatalog.getSchemaElementTest(name, expression.getMetadata()));
+        return Optional.ofNullable(name).flatMap(schemaCatalog::findSchemaElementTest);
     }
 
     // endregion

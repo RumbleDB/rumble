@@ -27,8 +27,11 @@ public final class TypeAtomization {
                 || member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem));
     }
 
+    /** Whether atomization changes a member. The error type is both a node and atomic, and atomizes to itself. */
     public static boolean containsNode(ItemType type) {
-        return type.getMemberTypes().stream().anyMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem));
+        return type.getMemberTypes().stream()
+                .anyMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem)
+                        && !member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem));
     }
 
     /**
