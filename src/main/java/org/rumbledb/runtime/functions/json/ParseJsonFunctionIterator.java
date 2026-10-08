@@ -26,6 +26,7 @@ import org.rumbledb.cli.ConsoleOutput;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.JSONParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -60,12 +61,12 @@ public class ParseJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                     getMetadata(),
                     false);
         }
-        return ItemParser.getItemFromJSONString(
+        return JSONParser.parse(
                 stringItem.getStringValue(),
                 options,
                 this.staticContext.getConfiguration().semantics().xmlVersion(),
                 isJSONiq10,
-                "fn:parse-json: JSON input",
+                "the argument of fn:parse-json",
                 getMetadata());
     }
 }

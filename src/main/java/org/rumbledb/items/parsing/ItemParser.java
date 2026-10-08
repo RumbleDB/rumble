@@ -99,17 +99,6 @@ public class ItemParser {
         return JSONParser.parse(string, options, xmlVersion, isJSONiq10, metadata);
     }
 
-    /** Parses JSON with a caller-specific description for parser-generated diagnostics. */
-    public static Item getItemFromJSONString(
-            String string,
-            JSONParsingOptions options,
-            String xmlVersion,
-            boolean isJSONiq10,
-            String inputDescription,
-            ExceptionMetadata metadata) {
-        return JSONParser.parse(string, options, xmlVersion, isJSONiq10, inputDescription, metadata);
-    }
-
     /**
      * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, String, ExceptionMetadata, boolean)}
      *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.

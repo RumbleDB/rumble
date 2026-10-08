@@ -117,7 +117,7 @@ public final class JSONParser {
     }
 
     /**
-     * Parses with the caller's input description, used only for errors created by this parser.
+     * Parses a string. The description names the input in error messages, e.g. "the argument of fn:parse-json".
      * Exceptions raised by the fallback function propagate without relabeling or wrapping.
      */
     public static Item parse(
@@ -130,8 +130,8 @@ public final class JSONParser {
         if (jsonText == null) {
             return null;
         }
-        JSONParser parser = new JSONParser(jsonText, options, xmlVersion, isJSONiq10, inputDescription, null, metadata);
-        return parser.parseDocument();
+        return new JSONParser(jsonText, options, xmlVersion, isJSONiq10, inputDescription, null, metadata)
+                .parseDocument();
     }
 
     /**
@@ -144,9 +144,12 @@ public final class JSONParser {
             String xmlVersion,
             boolean isJSONiq10,
             URI resourceUri,
+            String inputDescription,
             ExceptionMetadata metadata) {
-        return new JSONParser(
-                        jsonText, options, xmlVersion, isJSONiq10, "fn:json-doc: JSON input", resourceUri, metadata)
+        if (jsonText == null) {
+            return null;
+        }
+        return new JSONParser(jsonText, options, xmlVersion, isJSONiq10, inputDescription, resourceUri, metadata)
                 .parseDocument();
     }
 
@@ -261,8 +264,8 @@ public final class JSONParser {
 
                 if (JSONParsingOptions.DUPLICATES_REJECT.equals(policy)) {
                     throw new DuplicateJSONKeyException(
-                            "Duplicate key '" + key.resultValue + "' found in JSON object.",
-                            parsingErrorMetadata(inputPosition(keyStart), keyEnd));
+                            describe("Duplicate key '" + key.resultValue + "' found in JSON object.", keyStart),
+                            errorMetadata(keyStart, keyEnd));
                 }
 
                 if (JSONParsingOptions.DUPLICATES_USE_LAST.equals(policy)) {
@@ -779,34 +782,41 @@ public final class JSONParser {
         }
     }
 
-    /** Uses input coordinates only when the input has a known resource URI. */
     private InvalidJSONException invalidJSON(String message, int offset) {
-        int endOffset = offset;
-        if (offset < this.input.length()) {
-            endOffset += Character.charCount(this.input.codePointAt(offset));
-            if (this.input.charAt(offset) == '\r'
-                    && endOffset < this.input.length()
-                    && this.input.charAt(endOffset) == '\n') {
-                endOffset++;
-            }
-        }
-        SourcePosition start = inputPosition(offset);
-        return new InvalidJSONException(
-                this.inputDescription
-                        + " at line "
-                        + start.line()
-                        + ", column "
-                        + (start.column() + 1)
-                        + ": "
-                        + message,
-                parsingErrorMetadata(start, endOffset));
+        return new InvalidJSONException(describe(message, offset), errorMetadata(offset, characterEnd(offset)));
     }
 
-    private ExceptionMetadata parsingErrorMetadata(SourcePosition start, int endOffset) {
-        return this.resourceUri == null
-                ? this.metadata
-                : new ExceptionMetadata(
-                        this.resourceUri.toString(), new SourceRange(start, inputPosition(endOffset)), "");
+    private String describe(String message, int offset) {
+        SourcePosition position = inputPosition(offset);
+        return "Unable to parse "
+                + this.inputDescription
+                + " at line "
+                + position.line()
+                + ", column "
+                + (position.column() + 1)
+                + ": "
+                + message;
+    }
+
+    /** Points into the resource when it has a URI, and to the caller otherwise. */
+    private ExceptionMetadata errorMetadata(int startOffset, int endOffset) {
+        if (this.resourceUri == null) {
+            return this.metadata;
+        }
+        return new ExceptionMetadata(
+                this.resourceUri.toString(), new SourceRange(inputPosition(startOffset), inputPosition(endOffset)), "");
+    }
+
+    /** The end of the character at the offset, treating a CRLF line break as one character. */
+    private int characterEnd(int offset) {
+        if (offset >= this.input.length()) {
+            return offset;
+        }
+        int end = offset + Character.charCount(this.input.codePointAt(offset));
+        if (this.input.charAt(offset) == '\r' && end < this.input.length() && this.input.charAt(end) == '\n') {
+            end++;
+        }
+        return end;
     }
 
     /** Scans only on failure; successful parsing pays no line/column tracking cost. */

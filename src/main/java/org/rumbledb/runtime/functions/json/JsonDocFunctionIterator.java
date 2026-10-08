@@ -79,7 +79,13 @@ public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
 
         return JSONParser.parseResource(
-                jsonText, options, getConfiguration().semantics().xmlVersion(), isJSONiq10, uri, getMetadata());
+                jsonText,
+                options,
+                getConfiguration().semantics().xmlVersion(),
+                isJSONiq10,
+                uri,
+                "JSON document \"" + uri + "\" for fn:json-doc()",
+                getMetadata());
     }
 
     private static URI resolveJsonDocURI(String href, URI staticBaseUri, ExceptionMetadata metadata) {
