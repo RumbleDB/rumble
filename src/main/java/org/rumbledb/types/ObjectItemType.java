@@ -511,11 +511,6 @@ public class ObjectItemType extends AbstractItemType {
             if (!fieldDescriptor.getType().isCompatibleWithDataFrames(configuration)) {
                 return false;
             }
-            // SQL NULL in an optional field means the field is absent, so it cannot also stand for JSON null.
-            if (!fieldDescriptor.isRequired()
-                    && BuiltinTypesCatalogue.nullItem.isSubtypeOf(fieldDescriptor.getType())) {
-                return false;
-            }
         }
         return true;
     }

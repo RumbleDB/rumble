@@ -206,14 +206,38 @@ public class SequenceType implements Serializable {
                     && other.getBaseType().equals(BuiltinTypesCatalogue.objectItem);
             // A sequence of anonymous objects keeps the union of their fields, which are optional unless every
             // object has them. This is the schema DataFrame conversion infers from the items themselves.
-            return anonymous
-                    ? this.itemType.findLeastCommonSuperTypeLax(other)
-                    : this.itemType.findLeastCommonSuperTypeWith(other);
+            if (anonymous) {
+                ItemType laxJoin = this.itemType.findLeastCommonSuperTypeLax(other);
+                // In a DataFrame, SQL NULL in an optional field means the field is absent, so it cannot also stand
+                // for JSON null. Such a join would let DataFrames turn {"a": null} into {}.
+                if (!hasOptionalNullableField(laxJoin)) {
+                    return laxJoin;
+                }
+            }
+            return this.itemType.findLeastCommonSuperTypeWith(other);
         }
         if (haveSameStructuredKind(this.itemType, other)) {
             return this.itemType.findLeastCommonSuperTypeWith(other);
         }
         return ItemTypeFactory.createInferredUnionType(List.of(this.itemType, other));
+    }
+
+    private static boolean hasOptionalNullableField(ItemType type) {
+        if (type instanceof ArrayItemType arrayType) {
+            return hasOptionalNullableField(arrayType.getArrayContentFacet());
+        }
+        if (!(type instanceof ObjectItemType objectType)) {
+            return false;
+        }
+        for (FieldDescriptor field : objectType.getObjectContentFacet()) {
+            if (!field.isRequired() && BuiltinTypesCatalogue.nullItem.isSubtypeOf(field.getType())) {
+                return true;
+            }
+            if (hasOptionalNullableField(field.getType())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean haveSameStructuredKind(ItemType left, ItemType right) {
