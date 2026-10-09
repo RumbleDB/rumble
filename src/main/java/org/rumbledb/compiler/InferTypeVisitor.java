@@ -3397,20 +3397,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // XPath removes duplicate nodes, so multiple inputs need not yield multiple results.
         SequenceType.Arity resultingArity = leftType.getArity().multiplyWith(rightType.getArity());
         slashExpr.setStaticSequenceType(new SequenceType(rightType.getItemType(), resultingArity));
-
-        // E//S abbreviates E/descendant-or-self::node()/S, so S applies to E and to each of its descendants.
-        if (slashExpr.getLeftExpression() instanceof SlashExpr left
-                && left.getRightExpression() instanceof ForwardStepExpr descendantOrSelf
-                && descendantOrSelf.getForwardAxis().equals(ForwardAxis.DESCENDANT_OR_SELF)
-                && descendantOrSelf.getNodeTest() instanceof AnyKindTest
-                && rightExpression instanceof StepExpr step) {
-            inferSchemaStepType(step, left.getLeftExpression().getStaticSequenceType(), true)
-                    .ifPresent(type -> {
-                        slashExpr.setStaticSequenceType(type);
-                        // As for other steps, it is an error if no descendant can match the step.
-                        basicChecks(type, step.getClass().getSimpleName(), true, true, step.getMetadata());
-                    });
-        }
         return argument;
     }
 
@@ -3433,29 +3419,31 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private Optional<SequenceType> inferSchemaStepType(StepExpr stepExpr, SequenceType contextType) {
-        return inferSchemaStepType(stepExpr, contextType, false);
-    }
-
     /**
      * Child, attribute, and descendant steps from a schema-typed element or document select the nodes its schema
-     * declares. With fromDescendants, a child or attribute step also applies to each descendant of the context.
+     * declares. E//S abbreviates E/descendant-or-self::node()/S, so S steps from the union of the context and its
+     * descendants, and keeps its predicates.
      */
-    private Optional<SequenceType> inferSchemaStepType(
-            StepExpr stepExpr, SequenceType contextType, boolean fromDescendants) {
+    private Optional<SequenceType> inferSchemaStepType(StepExpr stepExpr, SequenceType contextType) {
         if (contextType == null
                 || !XmlSchemaCatalog.isSchemaTyped(contextType.getItemType())
                 || !(stepExpr instanceof ForwardStepExpr forwardStep)) {
             return Optional.empty();
         }
+        XmlSchemaCatalog catalog =
+                stepExpr.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
         ForwardAxis axis = forwardStep.getForwardAxis();
+        NodeTest nodeTest = stepExpr.getNodeTest();
+        if (axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
+            return nodeTest instanceof AnyKindTest
+                    ? catalog.getDescendantOrSelfType(contextType.getItemType())
+                            .map(type -> repeated(type, contextType.getCardinality()))
+                    : Optional.empty();
+        }
         boolean attributeAxis = axis.equals(ForwardAxis.ATTRIBUTE);
-        // descendant::N selects the N children of the context and of each of its descendants.
-        boolean descendants = fromDescendants || axis.equals(ForwardAxis.DESCENDANT);
         if (!attributeAxis && !axis.equals(ForwardAxis.CHILD) && !axis.equals(ForwardAxis.DESCENDANT)) {
             return Optional.empty();
         }
-        NodeTest nodeTest = stepExpr.getNodeTest();
         Name name;
         if (nodeTest instanceof NameTest nameTest && (nameTest.hasQName() || nameTest.hasWildcardOnly())) {
             name = nameTest.hasQName() ? nameTest.getExpandedName() : null;
@@ -3474,13 +3462,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         } else {
             return Optional.empty();
         }
-        XmlSchemaCatalog catalog =
-                stepExpr.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
-        Optional<SequenceType> stepType = descendants
-                ? catalog.getDescendantStepType(contextType.getItemType(), attributeAxis, name)
-                : catalog.getStepType(contextType.getItemType(), attributeAxis, name);
-        return stepType.map(type ->
-                new SequenceType(type.getItemType(), type.getCardinality().repeated(contextType.getCardinality())));
+        if (axis.equals(ForwardAxis.DESCENDANT)) {
+            // descendant::N selects the N children of the context and of each of its descendants.
+            return catalog.getDescendantOrSelfType(contextType.getItemType())
+                    .flatMap(nodes -> catalog.getStepType(nodes.getItemType(), false, name)
+                            .map(type -> repeated(type, nodes.getCardinality())))
+                    .map(type -> repeated(type, contextType.getCardinality()));
+        }
+        return catalog.getStepType(contextType.getItemType(), attributeAxis, name)
+                .map(type -> repeated(type, contextType.getCardinality()));
+    }
+
+    /** The type of applying a step that yields type to each of times context items. */
+    private static SequenceType repeated(SequenceType type, SequenceCardinality times) {
+        return type.isEmptySequence()
+                ? type
+                : new SequenceType(type.getItemType(), type.getCardinality().repeated(times));
     }
 
     private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {

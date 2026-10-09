@@ -215,13 +215,26 @@ public final class XmlSchemaCatalog {
     }
 
     /**
-     * Whether every member of the type is an element or document whose schema type a step can look up. A step from
-     * a union can only be inferred from the schema if every member describes the nodes it selects.
+     * Whether a step from the type can be inferred from the schema: some member is an element or document whose
+     * schema type a step can look up, and every member describes the nodes it selects, as such a node or as a node
+     * without children or attributes.
      */
     public static boolean isSchemaTyped(ItemType type) {
-        return type.allMemberTypesMatch(member -> member instanceof DocumentNodeItemType document
+        return type.getMemberTypes().stream().anyMatch(XmlSchemaCatalog::isSchemaTypedNode)
+                && type.allMemberTypesMatch(member -> isSchemaTypedNode(member) || isLeafNode(member));
+    }
+
+    private static boolean isSchemaTypedNode(ItemType type) {
+        return type instanceof DocumentNodeItemType document
                 ? isSchemaTypedElement(document.getElementTestType())
-                : isSchemaTypedElement(member));
+                : isSchemaTypedElement(type);
+    }
+
+    /** Text, comment, and processing-instruction nodes, which descendant-or-self::node() also selects. */
+    private static boolean isLeafNode(ItemType type) {
+        return type.isSubtypeOf(BuiltinTypesCatalogue.textNode)
+                || type.isSubtypeOf(BuiltinTypesCatalogue.commentNode)
+                || type.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
     }
 
     private static boolean isSchemaTypedElement(ItemType type) {
@@ -244,31 +257,24 @@ public final class XmlSchemaCatalog {
     }
 
     /**
-     * Returns the nodes that a child or attribute step selects from a schema-typed element or document and from each of
-     * its descendant elements, as for descendant::N or E//N. It is empty when a descendant may be an element that the
-     * schema does not describe.
+     * Returns the nodes that descendant-or-self::node() selects from a schema-typed element or document: the context,
+     * every element that the schema allows below it, and text, comment, and processing-instruction nodes. It is empty
+     * when a descendant may be an element that the schema does not describe.
      */
-    public Optional<SequenceType> getDescendantStepType(ItemType contextType, boolean attributeAxis, Name name) {
-        if (!isSchemaTyped(contextType)
-                || (attributeAxis && (name == null || Name.XSI_NS.equals(name.getNamespace())))) {
+    public Optional<SequenceType> getDescendantOrSelfType(ItemType contextType) {
+        if (!isSchemaTyped(contextType)) {
             return Optional.empty();
         }
-        Optional<List<ItemType>> parents = selfAndDescendantElements(contextType);
-        if (parents.isEmpty()) {
-            return Optional.empty();
-        }
-        Set<ItemType> nodeTypes = new LinkedHashSet<>();
-        for (ItemType parent : parents.get()) {
-            Optional<Selection> selection = select(parent, attributeAxis, name);
-            if (selection.isEmpty()) {
-                return Optional.empty();
-            }
-            nodeTypes.addAll(selection.get().nodeTypes());
-        }
-        // Recursive content models can nest matching nodes at any depth.
-        return Optional.of(
-                new Selection(nodeTypes, nodeTypes.isEmpty() ? SequenceCardinality.EMPTY : SequenceCardinality.ANY)
-                        .sequenceType());
+        return selfAndDescendantElements(contextType).map(nodes -> {
+            List<ItemType> nodeTypes = new ArrayList<>(nodes);
+            nodeTypes.addAll(List.of(
+                    BuiltinTypesCatalogue.textNode,
+                    BuiltinTypesCatalogue.commentNode,
+                    BuiltinTypesCatalogue.processingInstructionNode));
+            // The context node itself is always selected.
+            return new SequenceType(
+                    ItemTypeFactory.createInferredUnionType(nodeTypes), SequenceCardinality.ONE_OR_MANY);
+        });
     }
 
     /** The context followed by the type of every element below it, each listed once since types can be recursive. */
@@ -313,14 +319,9 @@ public final class XmlSchemaCatalog {
         Selection result = null;
         for (ItemType member : contextType.getMemberTypes()) {
             List<? extends ItemType> contexts =
-                    member instanceof DocumentNodeItemType ? List.of(member) : alternatives(member);
+                    member instanceof ElementNodeItemType ? alternatives(member) : List.of(member);
             for (ItemType context : contexts) {
-                Optional<Selection> selection = context instanceof DocumentNodeItemType document
-                        ? Optional.of(
-                                attributeAxis
-                                        ? Selection.NONE
-                                        : selectDocumentElement(document.getElementTestType(), name))
-                        : selectFromElement((ElementNodeItemType) context, attributeAxis, name);
+                Optional<Selection> selection = selectFromNode(context, attributeAxis, name);
                 if (selection.isEmpty()) {
                     return Optional.empty();
                 }
@@ -328,6 +329,17 @@ public final class XmlSchemaCatalog {
             }
         }
         return Optional.of(result == null ? Selection.NONE : result);
+    }
+
+    private Optional<Selection> selectFromNode(ItemType context, boolean attributeAxis, Name name) {
+        if (isLeafNode(context)) {
+            return Optional.of(Selection.NONE);
+        }
+        if (context instanceof DocumentNodeItemType document) {
+            return Optional.of(
+                    attributeAxis ? Selection.NONE : selectDocumentElement(document.getElementTestType(), name));
+        }
+        return selectFromElement((ElementNodeItemType) context, attributeAxis, name);
     }
 
     private Optional<Selection> selectFromElement(ElementNodeItemType context, boolean attributeAxis, Name name) {
