@@ -164,8 +164,8 @@ public final class SchemaContentModel {
 
     /**
      * Returns the names of the children or attributes that the schema declares for a schema-typed element or document,
-     * or with throughDescendants for it and each of its descendant elements, for tools that suggest steps. Unlike step
-     * types, the names ignore wildcards, so they may not include every node that a step can select.
+     * or with throughDescendants for it and each of its descendant elements. Unlike step types, the names ignore
+     * wildcards, so they may not include every node that a step can select.
      */
     public Optional<List<Name>> getStepNames(ItemType contextType, boolean attributeAxis, boolean throughDescendants) {
         if (!isSchemaTyped(contextType)) {
