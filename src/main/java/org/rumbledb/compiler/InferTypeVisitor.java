@@ -3455,7 +3455,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return nodeTest instanceof AnyKindTest
                     ? contentModel
                             .getDescendantOrSelfType(contextType.getItemType())
-                            .map(type -> repeated(type, contextType.getCardinality()))
+                            .map(type -> type.repeated(contextType.getCardinality()))
                     : Optional.empty();
         }
         boolean attributeAxis = axis.equals(ForwardAxis.ATTRIBUTE);
@@ -3486,19 +3486,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     .getDescendantOrSelfType(contextType.getItemType())
                     .flatMap(nodes -> contentModel
                             .getStepType(nodes.getItemType(), false, name)
-                            .map(type -> repeated(type, nodes.getCardinality())))
-                    .map(type -> repeated(type, contextType.getCardinality()));
+                            .map(type -> type.repeated(nodes.getCardinality())))
+                    .map(type -> type.repeated(contextType.getCardinality()));
         }
         return contentModel
                 .getStepType(contextType.getItemType(), attributeAxis, name)
-                .map(type -> repeated(type, contextType.getCardinality()));
-    }
-
-    /** The type of applying a step that yields type to each of times context items. */
-    private static SequenceType repeated(SequenceType type, SequenceCardinality times) {
-        return type.isEmptySequence()
-                ? type
-                : new SequenceType(type.getItemType(), type.getCardinality().repeated(times));
+                .map(type -> type.repeated(contextType.getCardinality()));
     }
 
     private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {
