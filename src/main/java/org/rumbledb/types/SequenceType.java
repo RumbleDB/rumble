@@ -243,6 +243,11 @@ public class SequenceType implements Serializable {
         return true;
     }
 
+    /** The type of evaluating an expression of this type once for each of times items. */
+    public SequenceType repeated(SequenceCardinality times) {
+        return isEmptySequence() ? this : new SequenceType(this.itemType, this.cardinality.repeated(times));
+    }
+
     // Grouping concatenates one or more sequences for each group.
     public SequenceType incrementArity() {
         return new SequenceType(this.itemType, this.cardinality.repeated(SequenceCardinality.ONE_OR_MANY));
