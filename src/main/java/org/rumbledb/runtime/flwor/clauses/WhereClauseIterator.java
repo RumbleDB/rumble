@@ -58,7 +58,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemRuntimePlan expression;
+    private final ItemRuntimePlan expression;
 
     public WhereClauseIterator(
             TupleRuntimePlan child, ItemRuntimePlan whereExpression, RuntimeStaticContext staticContext) {

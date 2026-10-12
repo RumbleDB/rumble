@@ -21,7 +21,7 @@ import java.util.Random;
 import org.rumbledb.api.Item;
 
 public abstract class GeneratedRandomsIterator implements Iterator<Item> {
-    protected Random random;
+    protected final Random random;
 
     protected GeneratedRandomsIterator() {
         this.random = new Random();
