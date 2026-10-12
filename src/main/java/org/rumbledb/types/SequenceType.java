@@ -229,13 +229,13 @@ public class SequenceType implements Serializable {
     }
 
     private static boolean hasOptionalNullableField(ItemType type) {
-        if (type instanceof ArrayItemType arrayType) {
-            return hasOptionalNullableField(arrayType.getArrayContentFacet());
+        if (type.isArrayItemType()) {
+            return hasOptionalNullableField(type.getArrayContentFacet());
         }
-        if (!(type instanceof ObjectItemType objectType)) {
+        if (!type.isObjectItemType()) {
             return false;
         }
-        for (FieldDescriptor field : objectType.getObjectContentFacet()) {
+        for (FieldDescriptor field : type.getObjectContentFacet()) {
             if (!field.isRequired() && BuiltinTypesCatalogue.nullItem.isSubtypeOf(field.getType())) {
                 return true;
             }
