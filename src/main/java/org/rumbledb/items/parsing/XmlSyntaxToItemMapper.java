@@ -15,25 +15,19 @@
  */
 package org.rumbledb.items.parsing;
 
-import java.io.IOException;
 import java.io.Serial;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.Iterator;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 import scala.Tuple2;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.xml.DocumentItem;
 
 public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<String, String>>, Item> {
@@ -41,7 +35,6 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<St
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @SuppressWarnings("unused")
     private final ExceptionMetadata metadata;
 
     private final boolean optimizeParentPointers;
@@ -64,28 +57,21 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<St
                 Tuple2<String, String> tuple = stringIterator.next();
                 String path = tuple._1;
                 String content = tuple._2;
+                Document xmlDocument = XmlParsingUtils.parseResource(
+                        new InputSource(new StringReader(content)),
+                        path,
+                        "XML document \"" + path + "\" for jn:xml-files()",
+                        XmlSyntaxToItemMapper.this.metadata);
+                DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
+                        xmlDocument, path, XmlSyntaxToItemMapper.this.optimizeParentPointers);
                 try {
-                    DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-                    documentBuilderFactory.setNamespaceAware(true);
-                    DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-                    Document xmlDocument = documentBuilder.parse(new InputSource(new StringReader(content)));
-                    DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
-                            xmlDocument, path, XmlSyntaxToItemMapper.this.optimizeParentPointers);
-                    try {
-                        URI docUri = URI.create(path);
-                        if (docUri.isAbsolute()) {
-                            documentItem.setConstructionBaseUri(docUri);
-                        }
-                    } catch (IllegalArgumentException ignored) {
+                    URI docUri = URI.create(path);
+                    if (docUri.isAbsolute()) {
+                        documentItem.setConstructionBaseUri(docUri);
                     }
-                    return documentItem;
-                } catch (ParserConfigurationException e) {
-                    throw new OurBadException("Document builder creation failed with: " + e);
-                } catch (IOException e) {
-                    throw new RuntimeException("IOException while reading XML document." + content + e);
-                } catch (SAXException e) {
-                    throw new RuntimeException("SAXException while reading XML document." + content + e);
+                } catch (IllegalArgumentException ignored) {
                 }
+                return documentItem;
             }
 
             @Override
