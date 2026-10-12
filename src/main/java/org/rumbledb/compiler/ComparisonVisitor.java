@@ -274,7 +274,7 @@ public class ComparisonVisitor extends CloneVisitor {
         ItemType otherItemType = untypedOnLeft ? rightItemType : leftItemType;
 
         if (!otherItemType.isAtomicItemType() || otherItemType.equals(BuiltinTypesCatalogue.atomicItem)) {
-            // If the other side is not atomic, do not attempt any rewrite here.
+            // Without a known atomic type on the other side, leave the comparison to runtime.
             return new Expression[] {left, right};
         }
 

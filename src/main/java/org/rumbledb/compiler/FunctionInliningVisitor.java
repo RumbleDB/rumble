@@ -43,7 +43,6 @@ import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromP
 
 public class FunctionInliningVisitor extends CloneVisitor {
 
-    private String queryLanguage;
     private Prolog prolog;
     private boolean constructionPreserve;
 
@@ -99,7 +98,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
     public Node visitMainModule(MainModule mainModule, Node argument) {
         this.prolog = mainModule.getProlog();
         if (mainModule.getStaticContext() != null) {
-            this.queryLanguage = mainModule.getStaticContext().getQueryLanguage();
             this.constructionPreserve = mainModule.getStaticContext().isConstructionPreserve();
         }
         MainModule result = new MainModule(
