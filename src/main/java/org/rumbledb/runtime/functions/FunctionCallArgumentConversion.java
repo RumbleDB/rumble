@@ -60,51 +60,50 @@ public final class FunctionCallArgumentConversion {
         if (functionItem.getSignature().getParameterTypes() == null) {
             return;
         }
+        String exceptionMessage =
+                "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ";
         for (int i = 0; i < functionArguments.size(); i++) {
-            if (functionArguments.get(i) != null
-                    && !functionItem
-                            .getSignature()
-                            .getParameterTypes()
-                            .get(i)
-                            .equals(SequenceType.createSequenceType("item*"))) {
-                SequenceType sequenceType =
-                        functionItem.getSignature().getParameterTypes().get(i);
-                if (functionArguments
-                        .get(i)
-                        .getRuntimeStaticContext()
-                        .getStaticType()
-                        .isSubtypeOf(sequenceType)) {
-                    continue;
-                }
-                ExecutionMode executionMode =
-                        functionArguments.get(i).getRuntimeStaticContext().getExecutionMode();
-                if (isAtMostOne(sequenceType)) {
-                    executionMode = ExecutionMode.LOCAL;
-                }
-                RuntimeStaticContext runtimeStaticContext = callerStaticContext.toBuilder()
-                        .staticType(sequenceType)
-                        .executionMode(executionMode)
-                        .metadata(functionArguments
-                                .get(i)
-                                .getRuntimeStaticContext()
-                                .getMetadata())
-                        .build();
-                String exceptionMessage =
-                        "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ";
-                if (isAtMostOne(sequenceType)) {
-                    functionArguments.set(
-                            i,
-                            wrapAtMostOneForFunctionConversion(
-                                    functionArguments.get(i), sequenceType, exceptionMessage, runtimeStaticContext));
-                } else {
-                    ItemRuntimePlan argumentIterator = wrapForFunctionConversion(
-                            functionArguments.get(i), sequenceType, exceptionMessage, runtimeStaticContext);
-                    ItemRuntimePlan typePromotionIterator = new TypePromotionIterator(
-                            argumentIterator, sequenceType, exceptionMessage, runtimeStaticContext);
-                    functionArguments.set(i, typePromotionIterator);
-                }
+            if (functionArguments.get(i) != null) {
+                functionArguments.set(
+                        i,
+                        wrapArgument(
+                                functionArguments.get(i),
+                                functionItem.getSignature().getParameterTypes().get(i),
+                                exceptionMessage,
+                                callerStaticContext));
             }
         }
+    }
+
+    /**
+     * Applies the function conversion rules for a parameter of the given type: atomization, casting of untyped
+     * values, type promotion, and the final type check. Returns the argument unchanged when it already matches.
+     */
+    public static ItemRuntimePlan wrapArgument(
+            ItemRuntimePlan argument,
+            SequenceType parameterType,
+            String exceptionMessage,
+            RuntimeStaticContext callerStaticContext) {
+        if (parameterType.equals(SequenceType.createSequenceType("item*"))
+                || argument.getRuntimeStaticContext().getStaticType().isSubtypeOf(parameterType)) {
+            return argument;
+        }
+        ExecutionMode executionMode = isAtMostOne(parameterType)
+                ? ExecutionMode.LOCAL
+                : argument.getRuntimeStaticContext().getExecutionMode();
+        RuntimeStaticContext runtimeStaticContext = callerStaticContext.toBuilder()
+                .staticType(parameterType)
+                .executionMode(executionMode)
+                .metadata(argument.getRuntimeStaticContext().getMetadata())
+                .build();
+        if (isAtMostOne(parameterType)) {
+            return wrapAtMostOneForFunctionConversion(argument, parameterType, exceptionMessage, runtimeStaticContext);
+        }
+        return new TypePromotionIterator(
+                wrapForFunctionConversion(argument, parameterType, exceptionMessage, runtimeStaticContext),
+                parameterType,
+                exceptionMessage,
+                runtimeStaticContext);
     }
 
     public static ItemRuntimePlan wrapForFunctionConversion(

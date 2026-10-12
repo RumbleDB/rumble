@@ -27,6 +27,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.api.Rumble;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.CompilationPipeline;
 import org.rumbledb.config.CompilationConfiguration;
@@ -44,6 +46,30 @@ import org.rumbledb.resources.ResourceResolver;
 public class XmlSchemaCatalogLoaderTest {
 
     private static final String NAMESPACE = "urn:test";
+
+    @Test
+    public void typesKeepTheImportPrefix(@TempDir Path directory) throws Exception {
+        Files.writeString(
+                directory.resolve("types.xsd"),
+                schema(NAMESPACE, "<xs:simpleType name=\"Code\"><xs:restriction base=\"xs:string\"/></xs:simpleType>"));
+        URI queryUri = directory.resolve("query.xq").toUri();
+        // Two prefixes for the same schema show that the prefix comes from the import.
+        for (String prefix : List.of("t", "app")) {
+            String query = "import schema namespace " + prefix + " = \"urn:test\" at \"types.xsd\"; ";
+            MainModule module = compile(query + "()", queryUri, new ResourceResolver());
+            Assertions.assertEquals(
+                    prefix + ":Code",
+                    module.getStaticContext()
+                            .getInScopeSchemaTypes()
+                            .getInScopeSchemaType(new Name(NAMESPACE, null, "Code"))
+                            .toString());
+            Item value = new Rumble(RumbleConfiguration.builder().build())
+                    .runQuery(query + prefix + ":Code(\"hello\")", queryUri)
+                    .getAsList()
+                    .get(0);
+            Assertions.assertEquals(prefix, value.getDynamicType().getName().getPrefix());
+        }
+    }
 
     @Test
     public void usesResourceMappingsWhenTheImportHasNoLocationHint(@TempDir Path directory) throws Exception {

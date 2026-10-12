@@ -90,11 +90,15 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         if (nextValue.isUntypedAtomic()) {
             nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
         }
+        if (!nextValue.isNumeric() && !nextValue.isDayTimeDuration() && !nextValue.isYearMonthDuration()) {
+            throw new InvalidArgumentTypeException(
+                    "sum() requires numeric values, xs:dayTimeDuration values or xs:yearMonthDuration values; got "
+                            + nextValue.getDynamicType(),
+                    metadata);
+        }
+        // The running sum is always a converted input or an addition result, so it is never untyped.
         if (currentSum == null) {
             return nextValue;
-        }
-        if (currentSum.isUntypedAtomic()) {
-            currentSum = ItemFactory.getInstance().createDoubleItem(currentSum.castToDoubleValue());
         }
         Item result = AdditiveOperationIterator.processItem(currentSum, nextValue, false);
         if (result == null) {
@@ -111,11 +115,12 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     private static Item computeRDD(
             Item zeroElement, ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
-        JavaRDD<Item> rdd = iterator.getRDD(context);
-        if (rdd.count() == 0) {
+        // Validate and convert each input even when reduce() receives only one item.
+        JavaRDD<Item> rdd = iterator.getRDD(context).map(value -> addToSum(null, value, metadata));
+        if (rdd.isEmpty()) {
             return zeroElement;
         }
-        return rdd.reduce(new SumClosure(metadata));
+        return rdd.reduce((sum, value) -> addToSum(sum, value, metadata));
     }
 
     private static Item computeDataFrame(
@@ -123,6 +128,9 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, context);
         if (df.isEmptySequence()) {
             return zeroElement;
+        }
+        if (!df.getItemType().isNumeric()) {
+            return computeRDD(zeroElement, iterator, context, metadata);
         }
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         HomogeneousItemDataFrame summedDF = df.evaluateSQL(
