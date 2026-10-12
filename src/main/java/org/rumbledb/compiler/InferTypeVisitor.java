@@ -1518,6 +1518,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // Both operands are concrete numeric types.
     private ItemType resolveNumericType(ItemType left, ItemType right) {
+        List<ItemType> leftMembers = left.getMemberTypes();
+        List<ItemType> rightMembers = right.getMemberTypes();
+        if (leftMembers.size() > 1 || rightMembers.size() > 1) {
+            // Each member pair is promoted separately, e.g. (xs:integer | xs:double) + xs:integer
+            // is (xs:integer | xs:double).
+            List<ItemType> results = new ArrayList<>();
+            for (ItemType leftMember : leftMembers) {
+                for (ItemType rightMember : rightMembers) {
+                    results.add(resolveNumericType(leftMember, rightMember));
+                }
+            }
+            return ItemTypeFactory.createInferredUnionType(results);
+        }
         if (left.equals(BuiltinTypesCatalogue.doubleItem) || right.equals(BuiltinTypesCatalogue.doubleItem)) {
             return BuiltinTypesCatalogue.doubleItem;
         } else if (left.equals(BuiltinTypesCatalogue.floatItem) || right.equals(BuiltinTypesCatalogue.floatItem)) {

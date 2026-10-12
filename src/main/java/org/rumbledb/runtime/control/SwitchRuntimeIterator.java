@@ -25,7 +25,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -65,6 +67,15 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new SwitchLocalCursor(this.testField, this.cases, this.defaultReturn, context, getMetadata());
+    }
+
+    private static Item materializeOperand(
+            ItemRuntimePlan plan, DynamicContext context, String role, ExceptionMetadata metadata) {
+        try {
+            return plan.materializeAtMostOne(context);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(role + " must contain at most one item.", metadata);
+        }
     }
 
     private static final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
@@ -113,10 +124,10 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
         }
 
         private ItemRuntimePlan selectApplicablePlan() {
-            Item testValue = this.testPlan.materializeFirstOrNull(this.context);
+            Item testValue = materializeOperand(this.testPlan, this.context, "Switch condition", this.metadata);
             validateAtomic(testValue, "Switch condition");
             for (ItemRuntimePlan caseKey : this.cases.keySet()) {
-                Item caseValue = caseKey.materializeFirstOrNull(this.context);
+                Item caseValue = materializeOperand(caseKey, this.context, "Switch case", this.metadata);
                 validateAtomic(caseValue, "Switch case");
                 if (testValue == null) {
                     if (caseValue == null) {
@@ -145,7 +156,7 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
     }
 
     private ItemRuntimePlan selectApplicableIterator(DynamicContext dynamicContext) {
-        Item testValue = this.testField.materializeFirstOrNull(dynamicContext);
+        Item testValue = materializeOperand(this.testField, dynamicContext, "Switch condition", getMetadata());
 
         if (testValue != null) {
             if (testValue.isArray()) {
@@ -158,7 +169,7 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
         }
 
         for (ItemRuntimePlan caseKey : this.cases.keySet()) {
-            Item caseValue = caseKey.materializeFirstOrNull(dynamicContext);
+            Item caseValue = materializeOperand(caseKey, dynamicContext, "Switch case", getMetadata());
 
             if (caseValue != null) {
                 if (caseValue.isArray()) {
