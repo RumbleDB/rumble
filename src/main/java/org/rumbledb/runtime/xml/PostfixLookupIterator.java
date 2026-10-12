@@ -31,6 +31,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.functions.arrays.ArrayIndexUtils;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -163,7 +164,7 @@ public class PostfixLookupIterator extends ItemRuntimePlan implements LocalRunti
                             "Type error; Lookup with String on Arrays is not possible", staticContext.getMetadata());
                 }
                 if (key.isNumeric()) {
-                    int index = key.castToIntValue() - 1;
+                    int index = ArrayIndexUtils.getZeroBasedPosition(key, item.getSize(), staticContext.getMetadata());
                     if (item.isArrayOfItems()) {
                         results.add(item.getItemAt(index));
                     } else {
