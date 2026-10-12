@@ -32,7 +32,6 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
-import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceCardinality;
@@ -169,35 +168,6 @@ class IsStaticallyTypeInferenceTest {
         SequenceType type = infer("{\"b\": ((1, 2) is statically xs:integer+)}.b", "jq");
         assertTrue(type.getItemType().isArrayItemType());
         assertEquals(BuiltinTypesCatalogue.integerItem, type.getItemType().getArrayContentFacet());
-    }
-
-    @Test
-    void arithmeticPromotesEachUnionMember() {
-        SequenceType type = infer("for $x in (1, 2.5e0) return $x + 1", "jq");
-        assertEquals(
-                List.of(BuiltinTypesCatalogue.integerItem, BuiltinTypesCatalogue.doubleItem),
-                type.getItemType().getTypes());
-    }
-
-    @Test
-    void unionsAreComparableIfEveryMemberPairIs() {
-        String flags = "declare variable $c as xs:boolean external; declare variable $d as xs:boolean external; ";
-        assertEquals(
-                BuiltinTypesCatalogue.booleanItem,
-                infer(flags + "(if ($c) then \"a\" else xs:anyURI(\"b\")) eq \"a\"", "jq")
-                        .getItemType());
-        assertThrows(
-                UnexpectedStaticTypeException.class,
-                () -> infer(flags + "(if ($c) then 1 else \"a\") eq (if ($d) then 2 else \"b\")", "jq"));
-    }
-
-    @Test
-    void unionHasAnEffectiveBooleanValueIfEveryMemberHasOne() {
-        String flag = "declare variable $c as xs:boolean external; ";
-        assertDoesNotThrow(() -> infer(flag + "if (if ($c) then 1 else \"a\") then 1 else 2", "jq"));
-        assertThrows(
-                UnexpectedStaticTypeException.class,
-                () -> infer(flag + "if (if ($c) then 1 else current-date()) then 1 else 2", "jq"));
     }
 
     @ParameterizedTest

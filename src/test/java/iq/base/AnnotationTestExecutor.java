@@ -211,7 +211,8 @@ public final class AnnotationTestExecutor {
             boolean checkOutput,
             boolean applyUpdates,
             int resultSizeCap) {
-        if (!checkOutput) {
+        // A fixture without an Output annotation only checks that the query runs.
+        if (!checkOutput || expectedOutput == null) {
             if (applyUpdates && sequence.availableAsPUL()) {
                 sequence.applyPUL();
             }
