@@ -68,6 +68,7 @@ import org.rumbledb.runtime.flwor.tuple.FlworKey;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.plan.RuntimePlan;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 
 @Log4j2
@@ -235,6 +236,7 @@ public class SparkSessionManager {
                 Name.class,
                 SequenceType.class,
                 SequenceType.Arity.class,
+                SequenceCardinality.class,
                 ItemType.class,
                 DynamicContext.class,
                 FlworTuple.class,
