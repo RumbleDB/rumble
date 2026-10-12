@@ -20,22 +20,16 @@ import java.io.InputStream;
 import java.io.Serial;
 import java.net.URI;
 import java.util.List;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.InputSource;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.XmlParsingUtils;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -61,66 +55,21 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private Item loadDocument(Item path, DynamicContext context) {
         URI uri = FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
-        try {
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            documentBuilderFactory.setNamespaceAware(true);
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            documentBuilder.setErrorHandler(new DefaultHandler() {
-                @Override
-                public void error(SAXParseException exception) throws SAXException {
-                    throw exception;
-                }
-
-                @Override
-                public void fatalError(SAXParseException exception) throws SAXException {
-                    throw exception;
-                }
-            });
-            try (InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getMetadata())) {
-                Document xmlDocument = documentBuilder.parse(xmlFileStream);
-                DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
-                        xmlDocument,
-                        uri.toString(),
-                        context.getRumbleConfiguration().optimization().optimizeParentPointers());
-                documentItem.setConstructionBaseUri(uri);
-                return documentItem;
-            }
-        } catch (ParserConfigurationException e) {
-            throw new OurBadException("Document builder creation failed with: " + e);
-        } catch (CannotRetrieveResourceException e) {
-            throw e;
+        try (InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getMetadata())) {
+            Document xmlDocument = XmlParsingUtils.parseResource(
+                    new InputSource(xmlFileStream),
+                    uri.toString(),
+                    "XML document \"" + uri + "\" for fn:doc()",
+                    getMetadata());
+            DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
+                    xmlDocument,
+                    uri.toString(),
+                    context.getRumbleConfiguration().optimization().optimizeParentPointers());
+            documentItem.setConstructionBaseUri(uri);
+            return documentItem;
         } catch (IOException e) {
             CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
                     "Unable to read the resource supplied to fn:doc().", getMetadata());
-            ex.initCause(e);
-            throw ex;
-        } catch (SAXParseException e) {
-            String position = "";
-            if (e.getLineNumber() > 0) {
-                position = " at line " + e.getLineNumber();
-                if (e.getColumnNumber() > 0) {
-                    position += ", column " + e.getColumnNumber();
-                }
-            }
-
-            String location = e.getSystemId() == null ? uri.toString() : e.getSystemId();
-            ExceptionMetadata metadata =
-                    ExceptionMetadata.fromPoint(location, e.getLineNumber(), e.getColumnNumber() - 1, "");
-
-            CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
-                    "Unable to parse XML document \""
-                            + uri
-                            + "\" supplied to fn:doc()"
-                            + position
-                            + ": "
-                            + e.getMessage(),
-                    metadata);
-            ex.initCause(e);
-            throw ex;
-        } catch (SAXException e) {
-            CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
-                    "Unable to parse XML document \"" + uri + "\" supplied to fn:doc(): " + e.getMessage(),
-                    getMetadata());
             ex.initCause(e);
             throw ex;
         }
