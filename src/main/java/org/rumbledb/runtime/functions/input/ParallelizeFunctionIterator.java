@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -61,9 +60,9 @@ public class ParallelizeFunctionIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        if (this.sequenceIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-            RuntimeDataFrame<Item> dataFrame = this.sequenceIterator.getDataFrame(context);
-            JavaRDD<Item> rdd = dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata());
+        // A distributed sequence is kept distributed rather than collected and distributed again.
+        if (this.sequenceIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            JavaRDD<Item> rdd = this.sequenceIterator.getRDD(context);
             if (this.partitionsIterator == null) {
                 return rdd;
             }
