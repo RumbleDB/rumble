@@ -466,7 +466,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitDirElemConstructor(DirElemConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.elementNode));
+        // Translation has already resolved the element's expanded QName, including local namespaces.
+        expression.setStaticSequenceType(
+                new SequenceType(ItemTypeFactory.elementNodeItemType(expression.getNodeName())));
         return argument;
     }
 
@@ -481,7 +483,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitComputedElementConstructor(
             ComputedElementConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.elementNode));
+        ItemType elementType = expression.hasStaticName()
+                ? ItemTypeFactory.elementNodeItemType(expression.getElementName())
+                : BuiltinTypesCatalogue.elementNode;
+        expression.setStaticSequenceType(new SequenceType(elementType));
         return argument;
     }
 
