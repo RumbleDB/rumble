@@ -32,7 +32,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.items.ItemFactory;
@@ -183,9 +182,7 @@ public class WindowClauseIterator extends TupleRuntimePlan {
         if (inputTuple != null) {
             sourceContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
         }
-        if (this.sourceIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            throw new UnsupportedFeatureException("Window clauses require local execution.", getMetadata());
-        }
+        // A distributed source is collected here, within the materialization cap.
         List<Item> items = this.sourceIterator.materialize(sourceContext);
         List<FlworTuple> results = new ArrayList<>();
         int start = 0;
@@ -233,18 +230,12 @@ public class WindowClauseIterator extends TupleRuntimePlan {
     }
 
     private boolean startMatches(DynamicContext context, FlworTuple inputTuple, List<Item> items, int start) {
-        if (this.startCondition.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            throw new UnsupportedFeatureException("Window clauses require local execution.", getMetadata());
-        }
         DynamicContext conditionContext = createConditionContext(context, inputTuple);
         bindVariables(items, start, this.startVariables, conditionContext.getVariableValues()::addVariableValue);
         return EffectiveBooleanValue.evaluate(this.startCondition, conditionContext);
     }
 
     private boolean endMatches(DynamicContext context, FlworTuple inputTuple, List<Item> items, int start, int end) {
-        if (this.endCondition.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            throw new UnsupportedFeatureException("Window clauses require local execution.", getMetadata());
-        }
         DynamicContext conditionContext = createConditionContext(context, inputTuple);
         bindVariables(items, start, this.startVariables, conditionContext.getVariableValues()::addVariableValue);
         bindVariables(items, end, this.endVariables, conditionContext.getVariableValues()::addVariableValue);
