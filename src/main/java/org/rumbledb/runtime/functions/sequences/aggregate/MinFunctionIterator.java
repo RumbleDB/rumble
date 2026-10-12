@@ -23,17 +23,18 @@ import java.util.TreeMap;
 import org.apache.spark.api.java.JavaRDD;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.CollationCatalogue;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -45,8 +46,6 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final String CODEPOINT_COLLATION = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
-
     private final ItemRuntimePlan iterator;
 
     public MinFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
@@ -56,15 +55,22 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
+        String explicitCollation = this.getChildren().size() > 1
+                ? this.getChild(1).materializeFirstOrNull(context).getStringValue()
+                : null;
+        String collation =
+                CollationSupport.resolveAndCheckCollation(explicitCollation, getRuntimeStaticContext(), getMetadata());
         if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            return ExtremumLocalEvaluation.min(this.iterator, getCollationPlan(), context, getMetadata());
+            return ExtremumLocalEvaluation.min(this.iterator, collation, context, getMetadata());
         }
-        validateCollation(context);
 
         if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, context);
             if (df.isEmptySequence()) {
                 return null;
+            }
+            if (!CollationCatalogue.CODEPOINT_COLLATION.equals(collation)) {
+                return df.toRDD(getMetadata()).min(createComparator(collation));
             }
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             HomogeneousItemDataFrame minDF = df.evaluateSQL(
@@ -81,26 +87,17 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         if (rdd.isEmpty()) {
             return null;
         }
-        return rdd.min(new ItemComparator(
+        return rdd.min(createComparator(collation));
+    }
+
+    private ItemComparator createComparator(String collation) {
+        return new ItemComparator(
                 true,
                 new InvalidArgumentTypeException(
                         "Min expression input error. Input has to be non-null atomics of matching types",
-                        getMetadata())));
-    }
-
-    private ItemRuntimePlan getCollationPlan() {
-        return this.getChildren().size() > 1 ? this.getChild(1) : null;
-    }
-
-    private void validateCollation(DynamicContext context) {
-        ItemRuntimePlan collationPlan = getCollationPlan();
-        if (collationPlan == null) {
-            return;
-        }
-        Item collation = collationPlan.materializeFirstOrNull(context);
-        if (!CODEPOINT_COLLATION.equals(collation.getStringValue())) {
-            throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
-        }
+                        getMetadata()),
+                collation,
+                getMetadata());
     }
 
     @Override

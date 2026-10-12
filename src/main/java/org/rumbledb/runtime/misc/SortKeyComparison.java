@@ -21,7 +21,6 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.CollationCatalogue;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -104,18 +103,14 @@ public final class SortKeyComparison {
         if (isStringCollationType(a) && isStringCollationType(b)) {
             return compareStringCollationTypes(a, b, collationUri, metadata) == 0;
         }
-        DeepEqualFunctionIterator deepEqual = new DeepEqualFunctionIterator(Collections.emptyList(), staticContext);
-        return deepEqual.checkDeepEqual(Collections.singletonList(a), Collections.singletonList(b));
+        return DeepEqualFunctionIterator.checkDeepEqual(
+                Collections.singletonList(a), Collections.singletonList(b), collationUri, metadata);
     }
 
     private static int compareStringCollationTypes(Item a, Item b, String collationUri, ExceptionMetadata metadata) {
-        checkCollationSupported(collationUri, metadata);
         String sa = normalizeUntypedAtomic(a).getStringValue();
         String sb = normalizeUntypedAtomic(b).getStringValue();
-        if (collationUri.equals(Name.DEFAULT_COLLATION_NS)) {
-            return CollationSupport.compareByCodePoint(sa, sb);
-        }
-        return String.CASE_INSENSITIVE_ORDER.compare(sa, sb);
+        return CollationSupport.compareStrings(sa, sb, collationUri, metadata);
     }
 
     private static Item normalizeUntypedAtomic(Item item) {

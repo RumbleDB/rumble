@@ -15,7 +15,6 @@
  */
 package org.rumbledb.context;
 
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -32,15 +31,8 @@ public final class CollationCatalogue {
             "http://www.w3.org/2005/xpath-functions/collation/html-ascii-case-insensitive";
     public static final String UCA_COLLATION_BASE = "http://www.w3.org/2013/collation/UCA";
 
-    private static final Set<String> DEFAULT_STATICALLY_KNOWN_COLLATIONS;
-
-    static {
-        Set<String> collations = new LinkedHashSet<>();
-        collations.add(CODEPOINT_COLLATION);
-        collations.add(FOTS_CASEBLIND_COLLATION);
-        collations.add(HTML_ASCII_CASE_INSENSITIVE_COLLATION);
-        DEFAULT_STATICALLY_KNOWN_COLLATIONS = Collections.unmodifiableSet(collations);
-    }
+    private static final Set<String> DEFAULT_STATICALLY_KNOWN_COLLATIONS =
+            Set.of(CODEPOINT_COLLATION, FOTS_CASEBLIND_COLLATION, HTML_ASCII_CASE_INSENSITIVE_COLLATION);
 
     private CollationCatalogue() {}
 
@@ -69,10 +61,32 @@ public final class CollationCatalogue {
         return HTML_ASCII_CASE_INSENSITIVE_COLLATION.equals(uri);
     }
 
-    public static String normalizeString(String value, String collationUri) {
-        if (value == null || !isCaseInsensitiveCollation(collationUri)) {
-            return value;
+    public static String toHtmlAsciiLowerCase(String value) {
+        if (value == null) {
+            return null;
         }
-        return value.toLowerCase(Locale.ROOT);
+        char[] chars = value.toCharArray();
+        boolean changed = false;
+        for (int i = 0; i < chars.length; i++) {
+            char c = chars[i];
+            if (c >= 'A' && c <= 'Z') {
+                chars[i] = (char) (c + 32);
+                changed = true;
+            }
+        }
+        return changed ? new String(chars) : value;
+    }
+
+    public static String normalizeString(String value, String collationUri) {
+        if (value == null) {
+            return null;
+        }
+        if (isHTMLAsciiCaseInsensitiveCollation(collationUri)) {
+            return toHtmlAsciiLowerCase(value);
+        }
+        if (isCaseInsensitiveCollation(collationUri)) {
+            return value.toLowerCase(Locale.ROOT);
+        }
+        return value;
     }
 }
