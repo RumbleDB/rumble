@@ -129,6 +129,19 @@ public class ObjectItemTypeTest {
      * @param descriptors the field descriptors
      * @return the created object type
      */
+    @Test
+    public void joiningObjectsThatDifferOnlyInFieldPresenceKeepsTheirFields() {
+        ObjectItemType required = createObjectType(true, field("a", BuiltinTypesCatalogue.intItem, true, false, null));
+        ObjectItemType optional = createObjectType(true, field("a", BuiltinTypesCatalogue.intItem, false, false, null));
+
+        ItemType joined = new SequenceType(required)
+                .concatenateWith(new SequenceType(optional))
+                .getItemType();
+        Assertions.assertEquals(
+                BuiltinTypesCatalogue.intItem, joined.getObjectContentFacet("a").getType());
+        Assertions.assertFalse(joined.getObjectContentFacet("a").isRequired());
+    }
+
     private ObjectItemType createObjectType(boolean closed, FieldDescriptor... descriptors) {
         List<String> keys = new ArrayList<>();
         List<FieldDescriptor> content = new ArrayList<>();

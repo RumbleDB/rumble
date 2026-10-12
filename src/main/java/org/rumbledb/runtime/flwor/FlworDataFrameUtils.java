@@ -94,6 +94,7 @@ import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 
 public class FlworDataFrameUtils {
@@ -140,6 +141,7 @@ public class FlworDataFrameUtils {
         kryo.register(Name.class);
         kryo.register(SequenceType.class);
         kryo.register(SequenceType.Arity.class);
+        kryo.register(SequenceCardinality.class);
         kryo.register(ItemType.class);
 
         kryo.register(ArrayList.class);

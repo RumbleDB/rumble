@@ -17,10 +17,12 @@ package org.rumbledb.types;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
@@ -224,14 +226,17 @@ public interface ItemType extends Serializable {
                 return BuiltinTypesCatalogue.atomicItem;
             }
             return new UnionItemType(
-                    null, BuiltinTypesCatalogue.atomicItem, Arrays.asList(this, BuiltinTypesCatalogue.nullItem));
+                    null, BuiltinTypesCatalogue.atomicItem, Arrays.asList(this, BuiltinTypesCatalogue.nullItem), false);
         }
         if (other.isAtomicItemType() && this.equals(BuiltinTypesCatalogue.nullItem)) {
             if (other.equals(BuiltinTypesCatalogue.atomicItem)) {
                 return BuiltinTypesCatalogue.atomicItem;
             }
             return new UnionItemType(
-                    null, BuiltinTypesCatalogue.atomicItem, Arrays.asList(other, BuiltinTypesCatalogue.nullItem));
+                    null,
+                    BuiltinTypesCatalogue.atomicItem,
+                    Arrays.asList(other, BuiltinTypesCatalogue.nullItem),
+                    false);
         }
         ItemType current = this;
         while (other.getTypeTreeDepth() > current.getTypeTreeDepth()) {
@@ -629,6 +634,28 @@ public interface ItemType extends Serializable {
      */
     default List<ItemType> getTypes() {
         throw new UnsupportedOperationException("union content facet is allowed only for union item types");
+    }
+
+    /**
+     * Returns the types a value of this type can have: the members of a union, with nested unions expanded, or this
+     * type itself.
+     */
+    default List<ItemType> getMemberTypes() {
+        if (!isUnionType()) {
+            return List.of(this);
+        }
+        List<ItemType> members = new ArrayList<>();
+        for (ItemType member : getTypes()) {
+            members.addAll(member.getMemberTypes());
+        }
+        return members;
+    }
+
+    /**
+     * Static typing is pessimistic: a check passes for a union only if it passes for every member type.
+     */
+    default boolean allMemberTypesMatch(Predicate<ItemType> check) {
+        return getMemberTypes().stream().allMatch(check);
     }
 
     // endregion
