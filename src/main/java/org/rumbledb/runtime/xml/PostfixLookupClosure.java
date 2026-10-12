@@ -96,6 +96,11 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                                 "Type error; Lookup with String on Arrays is not possible", this.expressionMetadata);
                     }
                     if (key.isNumeric()) {
+                        if (!key.isInteger()) {
+                            throw new UnexpectedTypeException(
+                                    "Array lookup key must be an integer; got " + key.getDynamicType(),
+                                    this.expressionMetadata);
+                        }
                         int idx = key.castToIntValue() - 1;
                         if (arg0.isArrayOfItems()) {
                             results.add(arg0.getItemAt(idx));

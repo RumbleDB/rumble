@@ -163,6 +163,11 @@ public class PostfixLookupIterator extends ItemRuntimePlan implements LocalRunti
                             "Type error; Lookup with String on Arrays is not possible", staticContext.getMetadata());
                 }
                 if (key.isNumeric()) {
+                    if (!key.isInteger()) {
+                        throw new UnexpectedTypeException(
+                                "Array lookup key must be an integer; got " + key.getDynamicType(),
+                                staticContext.getMetadata());
+                    }
                     int index = key.castToIntValue() - 1;
                     if (item.isArrayOfItems()) {
                         results.add(item.getItemAt(index));

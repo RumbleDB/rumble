@@ -121,6 +121,10 @@ public class UnaryLookupIterator extends ItemRuntimePlan implements LocalRuntime
                         "Type error; Lookup with String on Arrays is not possible", getMetadata());
             }
             if (key.isNumeric()) {
+                if (!key.isInteger()) {
+                    throw new UnexpectedTypeException(
+                            "Array lookup key must be an integer; got " + key.getDynamicType(), getMetadata());
+                }
                 int index = key.castToIntValue() - 1;
                 if (array.isArrayOfItems()) {
                     results.add(array.getItemAt(index));
