@@ -109,11 +109,6 @@ public class WindowClauseIterator extends TupleRuntimePlan {
         this.sourceIterator = sourceIterator;
         this.startCondition = startCondition;
         this.endCondition = endCondition;
-        this.sourceIterator.getVariableDependencies();
-        this.startCondition.getVariableDependencies();
-        if (this.endCondition != null) {
-            this.endCondition.getVariableDependencies();
-        }
     }
 
     @Override
