@@ -176,9 +176,11 @@ public class SparkSessionManager {
             }
             this.configuration.set("spark.mongodb.read.connection.uri", "mongodb://127.0.0.1/test.myCollection");
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
-            this.configuration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
-            this.configuration.set(
-                    "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
+            if (isClassAvailable("io.delta.sql.DeltaSparkSessionExtension")) {
+                this.configuration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
+                this.configuration.set(
+                        "spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
+            }
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
@@ -199,14 +201,24 @@ public class SparkSessionManager {
         this.configuration = null;
     }
 
+    private static boolean isClassAvailable(String className) {
+        try {
+            Class.forName(className, false, SparkSessionManager.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
 
-            this.session = SparkSession.builder()
-                    .config(this.configuration)
-                    .enableHiveSupport()
-                    .getOrCreate();
+            SparkSession.Builder builder = SparkSession.builder().config(this.configuration);
+            if (isClassAvailable("org.apache.spark.sql.hive.HiveSessionStateBuilder")) {
+                builder.enableHiveSupport();
+            }
+            this.session = builder.getOrCreate();
             LoggingConfiguration.apply();
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");

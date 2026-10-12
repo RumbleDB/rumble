@@ -15,7 +15,6 @@
  */
 package org.rumbledb.cli;
 
-import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,26 +37,22 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-/** Black-box tests: the child JVM never receives target/classes or the test classpath. */
+/** Black-box tests: the child JVM launches the executable JAR without an extra classpath or module-access flags. */
 public class CLIJarIT {
-    private static String classpath;
-    private static String mainClass;
+    private static Path jar;
 
     @TempDir
     Path directory;
 
     @BeforeAll
     static void locateAssembly() throws Exception {
-        Path jar = Path.of(System.getProperty("cli.jar")).toAbsolutePath();
+        jar = Path.of(System.getProperty("cli.jar")).toAbsolutePath();
         assertTrue(Files.isRegularFile(jar), "Missing assembly JAR: " + jar);
         try (JarFile archive = new JarFile(jar.toFile())) {
-            mainClass = archive.getManifest().getMainAttributes().getValue("Main-Class");
-            assertEquals("org.rumbledb.cli.Main", mainClass);
+            assertEquals(
+                    "org.rumbledb.cli.Main",
+                    archive.getManifest().getMainAttributes().getValue("Main-Class"));
         }
-        classpath = jar
-                + File.pathSeparator
-                + Files.readString(Path.of(System.getProperty("cli.providedClasspath")))
-                        .trim();
     }
 
     // Each group exercises the packaged CLI in a separate JVM, including its exit code.
@@ -255,6 +250,31 @@ public class CLIJarIT {
                             "--output-format-option",
                             "method=json"),
                     "1\n2");
+        }
+
+        @Test
+        void localObjectSequenceCanBeWrittenAsCsv() throws Exception {
+            Path output = directory.resolve("local sequence.csv");
+            assertSuccess(
+                    run(
+                            "",
+                            "run",
+                            "-q",
+                            "for $x in 1 to 10 return { \"foo\" : $x }",
+                            "--output-format",
+                            "csv",
+                            "--output-path",
+                            output.toString()),
+                    "");
+            List<Integer> values = new ArrayList<>();
+            for (Path part : partFiles(output)) {
+                for (String line : Files.readAllLines(part)) {
+                    values.add(Integer.valueOf(line));
+                }
+            }
+            assertEquals(
+                    List.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+                    values.stream().sorted().toList());
         }
 
         @ParameterizedTest(name = "{0}: file format, partitions and all records survive read-back")
@@ -1058,16 +1078,8 @@ public class CLIJarIT {
                 "-Dspark.app.name=RumbleDB-CLI-tests",
                 "-Dspark.master=local[2]",
                 "-Dspark.ui.enabled=false",
-                // Match the Java 17 module access used by the existing Spark test runner.
-                "--add-opens=java.base/java.lang.invoke=ALL-UNNAMED",
-                "--add-opens=java.base/java.net=ALL-UNNAMED",
-                "--add-opens=java.base/java.nio=ALL-UNNAMED",
-                "--add-opens=java.base/java.util=ALL-UNNAMED",
-                "--add-opens=java.base/sun.nio.ch=ALL-UNNAMED",
-                "--add-opens=java.base/sun.util.calendar=ALL-UNNAMED",
-                "-cp",
-                classpath,
-                mainClass));
+                "-jar",
+                jar.toString()));
         command.addAll(List.of(arguments));
         Path stdout = Files.createTempFile(this.directory, "stdout-", ".txt");
         Path stderr = Files.createTempFile(this.directory, "stderr-", ".txt");

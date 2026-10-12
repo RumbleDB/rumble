@@ -48,6 +48,32 @@ You can compile the entire project like so:
     
 After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `rumbledb-3.0.0-jar-with-dependencies.jar`.
     
+## Smaller local-files distribution
+
+To build a standalone JAR for local files and Spark execution across CPU cores:
+
+    $ mvn clean package -Dlocal-files -DskipTests -Dmaven.javadoc.skip=true
+
+The output is `target/rumbledb-3.0.0-local-files.jar`. The `local-files` property
+activates the smaller profile and disables the optional dependencies in the
+`full-distribution` profile. Use `-Dlocal-files` for this build, rather than just
+`-Plocal-files`, so the full dependency profile is disabled too.
+
+This distribution keeps Spark RDDs, DataFrames, MLlib, and local JSON, CSV, Avro,
+Parquet and ORC support. It omits S3/AWS, Iceberg, Hive catalogs and SerDes, Delta,
+MongoDB, PostgreSQL and the Python gateway. Hive and Delta session setup is
+only enabled when their libraries are present. The normal build still includes
+these optional integrations. JMH is available through `-Pbenchmarks` with test
+scope and is excluded from both standalone distributions.
+
+For example:
+
+    $ java -jar target/rumbledb-3.0.0-local-files.jar run -q 'for $x in 1 to 10 return { "foo" : $x }' --output-format csv --output-path /tmp/csv
+
+Validate the smaller distribution with:
+
+    $ mvn -Dlocal-files -Pcli-tests test
+
 ## Testing the assembled CLI
 
 Run the CLI integration suite with Java 17 or 21:
@@ -57,9 +83,9 @@ Run the CLI integration suite with Java 17 or 21:
 This profile builds the shaded distribution after compilation and then starts separate Java
 processes against the resulting `target/*-jar-with-dependencies.jar`. The JAR includes
 runtime dependencies, including Spark, and merges service registrations and Log4j
-plugin caches. Maven's `provided` dependencies are added to the child classpath;
-project classes and test dependencies are not added. The entry point is read from
-the JAR manifest.
+plugin caches. Each child process uses `java -jar` without extra dependencies or
+module-access flags. The JAR bundles ICU4J and declares the Java module access
+required by Spark and Kryo in its manifest.
 
 The suite checks help, inline and file queries, XQuery, external variables, stdin
 context items, output files and overwrite protection, and error exit codes. Each

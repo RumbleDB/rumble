@@ -79,48 +79,55 @@
         <surefire.enableOutErrElements>true</surefire.enableOutErrElements>
         <lombok.version>1.18.46</lombok.version>
         <distribution.phase>package</distribution.phase>
+        <distribution.classifier>jar-with-dependencies</distribution.classifier>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-core</artifactId>
-            <version>1.37</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjdk.jmh</groupId>
-            <artifactId>jmh-generator-annprocess</artifactId>
-            <version>1.37</version>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.13</artifactId>
             <version>4.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.sf.py4j</groupId>
+                    <artifactId>py4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.13</artifactId>
             <version>4.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.sf.py4j</groupId>
+                    <artifactId>py4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-mllib_2.13</artifactId>
             <version>4.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.sf.py4j</groupId>
+                    <artifactId>py4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-hive_2.13</artifactId>
-            <version>4.0.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.hadoop</groupId>
-            <artifactId>hadoop-aws</artifactId>
-            <version>3.3.6</version>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-avro_2.13</artifactId>
             <version>4.0.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>net.sf.py4j</groupId>
+                    <artifactId>py4j</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
@@ -194,44 +201,18 @@
             <artifactId>jackson-dataformat-yaml</artifactId>
             <version>2.18.2</version>
         </dependency>
-        <dependency>
-            <groupId>io.delta</groupId>
-            <artifactId>delta-spark_2.13</artifactId>
-            <version>4.0.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.iceberg</groupId>
-            <artifactId>iceberg-spark-runtime-4.0_2.13</artifactId>
-            <version>1.10.0</version>
-        </dependency>
+
         <dependency>
             <groupId>org.skyscreamer</groupId>
             <artifactId>jsonassert</artifactId>
             <version>1.5.1</version>
             <scope>test</scope>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/net.sf.py4j/py4j -->
-        <dependency>
-            <groupId>net.sf.py4j</groupId>
-            <artifactId>py4j</artifactId>
-            <version>0.10.9.9</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
-        <dependency>
-            <groupId>org.postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>42.7.12</version>
-        </dependency>
-        <dependency>
-            <groupId>org.mongodb.spark</groupId>
-            <artifactId>mongo-spark-connector_2.13</artifactId>
-            <version>10.5.0</version>
-        </dependency>
+
         <dependency>
             <groupId>com.ibm.icu</groupId>
             <artifactId>icu4j</artifactId>
             <version>76.1</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.projectlombok</groupId>
@@ -380,7 +361,7 @@
                 <version>3.6.2</version>
                 <configuration>
                     <shadedArtifactAttached>true</shadedArtifactAttached>
-                    <shadedClassifierName>jar-with-dependencies</shadedClassifierName>
+                    <shadedClassifierName>${distribution.classifier}</shadedClassifierName>
                     <createDependencyReducedPom>false</createDependencyReducedPom>
                     <filters>
                         <filter>
@@ -401,6 +382,7 @@
                             <mainClass>org.rumbledb.cli.Main</mainClass>
                             <manifestEntries>
                                 <Multi-Release>true</Multi-Release>
+                                <Add-Opens>java.base/java.lang.invoke java.base/java.net java.base/java.nio java.base/java.util java.base/sun.nio.ch java.base/sun.util.calendar</Add-Opens>
                             </manifestEntries>
                         </transformer>
                     </transformers>
@@ -640,6 +622,81 @@
     </build>
 
     <profiles>
+        <!-- Property activation keeps the full distribution enabled with other profiles (e.g. cli-tests). -->
+        <profile>
+            <id>full-distribution</id>
+            <activation>
+                <property>
+                    <name>!local-files</name>
+                </property>
+            </activation>
+            <dependencies>
+                <dependency>
+                    <groupId>org.apache.spark</groupId>
+                    <artifactId>spark-hive_2.13</artifactId>
+                    <version>4.0.1</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.hadoop</groupId>
+                    <artifactId>hadoop-aws</artifactId>
+                    <version>3.3.6</version>
+                </dependency>
+                <dependency>
+                    <groupId>io.delta</groupId>
+                    <artifactId>delta-spark_2.13</artifactId>
+                    <version>4.0.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.apache.iceberg</groupId>
+                    <artifactId>iceberg-spark-runtime-4.0_2.13</artifactId>
+                    <version>1.10.0</version>
+                </dependency>
+                <dependency>
+                    <groupId>net.sf.py4j</groupId>
+                    <artifactId>py4j</artifactId>
+                    <version>0.10.9.9</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.postgresql</groupId>
+                    <artifactId>postgresql</artifactId>
+                    <version>42.7.12</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.mongodb.spark</groupId>
+                    <artifactId>mongo-spark-connector_2.13</artifactId>
+                    <version>10.5.0</version>
+                </dependency>
+            </dependencies>
+        </profile>
+        <profile>
+            <id>local-files</id>
+            <activation>
+                <property>
+                    <name>local-files</name>
+                </property>
+            </activation>
+            <properties>
+                <distribution.classifier>local-files</distribution.classifier>
+            </properties>
+        </profile>
+        <profile>
+            <id>benchmarks</id>
+            <dependencies>
+                <dependency>
+                    <groupId>org.openjdk.jmh</groupId>
+                    <artifactId>jmh-core</artifactId>
+                    <version>1.37</version>
+                    <scope>test</scope>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjdk.jmh</groupId>
+                    <artifactId>jmh-generator-annprocess</artifactId>
+                    <version>1.37</version>
+                    <scope>test</scope>
+                </dependency>
+            </dependencies>
+        </profile>
+
         <profile>
             <id>cli-tests</id>
             <properties>
@@ -648,24 +705,6 @@
             </properties>
             <build>
                 <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-dependency-plugin</artifactId>
-                        <version>3.7.0</version>
-                        <executions>
-                            <execution>
-                                <id>cli-provided-dependencies</id>
-                                <goals>
-                                    <goal>build-classpath</goal>
-                                </goals>
-                                <phase>process-test-classes</phase>
-                                <configuration>
-                                    <includeScope>provided</includeScope>
-                                    <outputFile>${project.build.directory}/cli-provided-classpath.txt</outputFile>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
@@ -677,8 +716,7 @@
                                 <include>**/SequenceWriterTest.java</include>
                             </includes>
                             <systemPropertyVariables>
-                                <cli.jar>${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar</cli.jar>
-                                <cli.providedClasspath>${project.build.directory}/cli-provided-classpath.txt</cli.providedClasspath>
+                                <cli.jar>${project.build.directory}/${project.build.finalName}-${distribution.classifier}.jar</cli.jar>
                             </systemPropertyVariables>
                         </configuration>
                     </plugin>
