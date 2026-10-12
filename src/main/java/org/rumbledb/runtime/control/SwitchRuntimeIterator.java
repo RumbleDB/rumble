@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.control;
 
 import java.io.Serial;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
@@ -26,6 +27,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -65,6 +67,17 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new SwitchLocalCursor(this.testField, this.cases, this.defaultReturn, context, getMetadata());
+    }
+
+    private static Item atomizeOperand(Item item, String role, ExceptionMetadata metadata) {
+        if (item == null || !item.isNode()) {
+            return item;
+        }
+        List<Item> typedValue = item.atomizedValue();
+        if (typedValue.size() > 1) {
+            throw new UnexpectedTypeException(role + " must atomize to at most one item.", metadata);
+        }
+        return typedValue.isEmpty() ? null : typedValue.get(0);
     }
 
     private static final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
@@ -115,9 +128,11 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
         private ItemRuntimePlan selectApplicablePlan() {
             Item testValue = this.testPlan.materializeFirstOrNull(this.context);
             validateAtomic(testValue, "Switch condition");
+            testValue = atomizeOperand(testValue, "Switch condition", this.metadata);
             for (ItemRuntimePlan caseKey : this.cases.keySet()) {
                 Item caseValue = caseKey.materializeFirstOrNull(this.context);
                 validateAtomic(caseValue, "Switch case");
+                caseValue = atomizeOperand(caseValue, "Switch case", this.metadata);
                 if (testValue == null) {
                     if (caseValue == null) {
                         return this.cases.get(caseKey);
@@ -157,6 +172,8 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
             }
         }
 
+        testValue = atomizeOperand(testValue, "Switch condition", getMetadata());
+
         for (ItemRuntimePlan caseKey : this.cases.keySet()) {
             Item caseValue = caseKey.materializeFirstOrNull(dynamicContext);
 
@@ -168,6 +185,8 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
                             "Invalid args. Switch case  cannot be an object type", getMetadata());
                 }
             }
+
+            caseValue = atomizeOperand(caseValue, "Switch case", getMetadata());
 
             // both are empty sequences
             if (testValue == null) {
