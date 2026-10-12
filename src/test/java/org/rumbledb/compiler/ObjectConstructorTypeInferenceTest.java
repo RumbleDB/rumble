@@ -39,6 +39,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
@@ -46,6 +47,117 @@ class ObjectConstructorTypeInferenceTest {
     private static final RumbleConfiguration CONFIGURATION = RumbleConfiguration.builder()
             .configureAnalysis(analysis -> analysis.enableStaticTyping(true))
             .build();
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "let $a := {\"b\": (false, 1)} return $a.b",
+                "let $v := (false, 1) return {\"b\": $v}.b",
+                "{\"b\": (false, (1, ()))}.b",
+                "{\"b\": (let $v := (false, 1) return $v)}.b"
+            })
+    void knownMultipleValuesProduceOnlyAnArray(String query) {
+        SequenceType result = infer(query, "jq");
+        assertEquals(SequenceType.Arity.One, result.getArity());
+        assertTrue(result.getItemType().isArrayItemType());
+        Item value = new Rumble(CONFIGURATION).runQuery(query).getAsList().get(0);
+        assertTrue(value.isArray());
+        assertEquals(2, value.getSize());
+        assertFalse(value.getItemAt(0).getBooleanValue());
+        assertEquals(1, value.getItemAt(1).getIntValue());
+    }
+
+    @Test
+    void emptyOrMultipleValuesExcludeSingletonAlternative() {
+        String query =
+                "declare variable $flag as xs:boolean external; " + "{\"b\": if ($flag) then (false, 1) else ()}.b";
+        ItemType type = infer(query, "jq").getItemType();
+        assertTrue(type.isUnionType());
+        assertEquals(2, type.getTypes().size());
+        assertTrue(type.getTypes().stream().anyMatch(ItemType::isArrayItemType));
+        assertTrue(type.getTypes().contains(BuiltinTypesCatalogue.nullItem));
+    }
+
+    @Test
+    void multipleGenericItemsStillProduceAnArray() {
+        ItemType type = infer("declare variable $v as item external; {\"b\": ($v, $v)}.b", "jq")
+                .getItemType();
+        assertTrue(type.isArrayItemType());
+        assertEquals(BuiltinTypesCatalogue.item, type.getArrayContentFacet());
+    }
+
+    @Test
+    void heterogeneousArrayKeepsBooleanAndIntegerMemberTypes() {
+        ItemType type = infer("let $a := {\"b\": (false, 1)} return $a.b", "jq").getItemType();
+        ItemType content = type.getArrayContentFacet();
+        assertTrue(content.isUnionType());
+        assertEquals(List.of(BuiltinTypesCatalogue.booleanItem, BuiltinTypesCatalogue.integerItem), content.getTypes());
+        assertTrue(content.isSubtypeOf(BuiltinTypesCatalogue.atomicItem));
+        assertFalse(content.isSubtypeOf(BuiltinTypesCatalogue.numericItem));
+    }
+
+    @Test
+    void identicalObjectShapesKeepTheirDataFrameCompatibleType() {
+        SequenceType type = infer("({\"id\": 1, \"v\": \"A\"}, {\"id\": 2, \"v\": \"B\"})", "jq");
+        assertEquals(SequenceCardinality.MANY, type.getCardinality());
+        assertTrue(type.getItemType().isObjectItemType());
+        assertTrue(type.getItemType().isCompatibleWithDataFrames(CONFIGURATION));
+        assertEquals(BuiltinTypesCatalogue.integerItem, field(type.getItemType(), "id"));
+    }
+
+    @Test
+    void filteringMultipleItemsCanProduceASingleton() {
+        ItemType type =
+                infer("let $v := (false, 1) return {\"b\": $v[1]}.b", "jq").getItemType();
+        assertTrue(type.isUnionType());
+        assertFalse(type.getTypes().stream().anyMatch(ItemType::isArrayItemType));
+        assertTrue(type.getTypes().contains(BuiltinTypesCatalogue.booleanItem));
+        assertTrue(type.getTypes().contains(BuiltinTypesCatalogue.integerItem));
+        assertTrue(type.getTypes().contains(BuiltinTypesCatalogue.nullItem));
+    }
+
+    @Test
+    void xqueryCommaExpressionRetainsSequenceValues() {
+        String query = "let $v := (false(), 1) return $v";
+        SequenceType type = infer(query, "xq");
+        assertEquals(SequenceCardinality.MANY, type.getCardinality());
+        assertTrue(type.getItemType().isUnionType());
+        List<Item> values = new Rumble(CONFIGURATION)
+                .runQuery(query, URI.create("file:///comma-values.xq"))
+                .getAsList();
+        assertEquals(2, values.size());
+        assertFalse(values.get(0).getBooleanValue());
+        assertEquals(1, values.get(1).getIntValue());
+    }
+
+    @Test
+    void allowingEmptyCanProduceOneTupleForAnEmptyOrMultipleSource() {
+        String query = "declare variable $flag as xs:boolean external; "
+                + "for $v allowing empty in (if ($flag) then (1, 2) else ()) return 1";
+        SequenceType type = infer(query, "jq");
+        assertEquals(SequenceCardinality.ONE_OR_MANY, type.getCardinality());
+    }
+
+    @Test
+    void groupingMultipleTuplesCanProduceOneResult() {
+        String query = "for $v in (1, 2) group by $key := 1 return 1";
+        SequenceType type = infer(query, "jq");
+        assertEquals(SequenceCardinality.ONE_OR_MANY, type.getCardinality());
+        assertEquals(1, new Rumble(CONFIGURATION).runQuery(query).getAsList().size());
+    }
+
+    @Test
+    void xpathDuplicateEliminationCanProduceOneNode() {
+        String query = "let $n := <a/> return ($n, $n)/self::node()";
+        SequenceType type = infer(query, "xq");
+        assertTrue(type.getCardinality().allowsOne());
+        assertEquals(
+                1,
+                new Rumble(CONFIGURATION)
+                        .runQuery(query, URI.create("file:///duplicate-nodes.xq"))
+                        .getAsList()
+                        .size());
+    }
 
     @Test
     void preservesFieldsInOriginalFlworExample() {
@@ -203,7 +315,10 @@ class ObjectConstructorTypeInferenceTest {
     @Test
     void arrayAlternativesUseTheUnionDataFrameMapping() {
         String query = "{\"value\": ([1], [2])}";
-        ItemType arrayAlternatives = field(infer(query, "jq").getItemType(), "value");
+        // An unknown nonempty sequence of arrays can be stored as an array or a wrapped array of arrays.
+        ItemType arrayAlternatives = ItemTypeFactory.createObjectFieldType(new SequenceType(
+                ItemTypeFactory.createAnonymousArrayType(BuiltinTypesCatalogue.integerItem),
+                SequenceType.Arity.OneOrMore));
         assertTrue(arrayAlternatives.isUnionType());
         assertTrue(arrayAlternatives.isSubtypeOf(BuiltinTypesCatalogue.arrayItem));
         assertFalse(arrayAlternatives.isCompatibleWithDataFrames(CONFIGURATION));
