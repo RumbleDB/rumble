@@ -17,14 +17,13 @@ package org.rumbledb.runtime.typing;
 
 import java.io.Serial;
 import java.util.Collections;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CastableException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
@@ -67,45 +66,26 @@ public class CastableIterator extends AbstractAtMostOneItemRuntimePlan {
                             + " is not atomic. Castable can only be used with atomic types.",
                     metadata);
         }
-        Item item;
-        try {
-            item = child.materializeAtMostOne(dynamicContext);
-            if (item != null && !item.getDynamicType().isResolved()) {
-                item.getDynamicType().resolve(dynamicContext, metadata);
-            }
-        } catch (MoreThanOneItemException e) {
+        // Invalid targets and failures evaluating or atomizing the operand are errors,
+        // not a false castability result. Only conversion failures are caught below.
+        if (targetItemType.equals(BuiltinTypesCatalogue.NOTATIONItem)
+                || targetItemType.equals(BuiltinTypesCatalogue.atomicItem)) {
+            throw new CastableException("Invalid target type for castable expression: " + targetItemType, metadata);
+        }
+        List<Item> atomized = CastAtomization.materializeAtomizedAtMostTwo(child, dynamicContext, metadata);
+        if (atomized.size() > 1) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-        if (item == null) {
+        if (atomized.isEmpty()) {
             return ItemFactory.getInstance()
                     .createBooleanItem(sequenceType.getArity().equals(Arity.OneOrZero));
         }
-        checkInvalidCastable(item, metadata, sequenceType.getItemType());
         try {
-            Item res = CastIterator.castItemToType(item, sequenceType.getItemType(), metadata, staticContext);
+            Item res =
+                    CastIterator.castItemToType(atomized.get(0), sequenceType.getItemType(), metadata, staticContext);
             return ItemFactory.getInstance().createBooleanItem(res != null);
         } catch (Exception e) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
-    }
-
-    static void checkInvalidCastable(Item item, ExceptionMetadata metadata, ItemType type) {
-        // the target type cannot be xs:NOTATION, xs:anySimpleType, or xs:anyAtomicType
-        // TODO: add support for xs:anySimpleType
-        if (type.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
-            throw new CastableException("Invalid target type for castable expression: xs:NOTATION", metadata);
-        }
-        if (type.equals(BuiltinTypesCatalogue.atomicItem)) {
-            throw new CastableException("Invalid target type for castable expression: xs:anyAtomicType", metadata);
-        }
-        if (item.isAtomic()) {
-            return;
-        }
-
-        String message = String.format(
-                "Can not atomize an %1$s item: an %1$s has probably been passed where "
-                        + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                item.getDynamicType().toString());
-        throw new NonAtomicKeyException(message, metadata);
     }
 }

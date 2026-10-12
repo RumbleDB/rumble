@@ -76,6 +76,7 @@ import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
@@ -84,6 +85,7 @@ import org.rumbledb.expressions.update.TransformExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -968,6 +970,18 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             return argument;
         }
         expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitFunctionArgumentConversion(
+            FunctionArgumentConversionExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        SequenceType parameterType = expression.getParameterType();
+        expression.setHighestExecutionMode(
+                FunctionCallArgumentConversion.isAtMostOne(parameterType)
+                        ? ExecutionMode.LOCAL
+                        : expression.getArgument().getHighestExecutionMode(this.visitorConfig));
         return argument;
     }
 
