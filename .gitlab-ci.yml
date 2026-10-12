@@ -11,7 +11,7 @@ Build:
     paths:
       - target/
   script:
-    - mvn clean compile assembly:single
+    - mvn clean package -DskipTests -Dmaven.javadoc.skip=true
 
 CLIJarTests:
   stage: tests
