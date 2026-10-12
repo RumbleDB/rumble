@@ -625,11 +625,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         ItemType inputItemType = normalizeAggregateItemType(inputType.getItemType());
-        if (!inputItemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)
-                && !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
-                && !inputItemType.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem)
-                && !(TypeAtomization.containsNode(inputType.getItemType())
-                        && isStrictAggregateOperandType(inputType.getItemType()))) {
+        // A node's typed value is only known at runtime, so node inputs are checked per member type.
+        boolean validInput = TypeAtomization.containsNode(inputType.getItemType())
+                ? inputType
+                        .getItemType()
+                        .allMemberTypesMatch(member -> TypeAtomization.hasUnknownTypedValue(member)
+                                || isStrictAggregateItemType(normalizeAggregateItemType(member)))
+                : isStrictAggregateItemType(inputItemType);
+        if (!validInput) {
             throwStaticTypeException(
                     functionName
                             + " requires its inferred input sequence type to be empty or have an item type that is a subtype of xs:numeric, xs:yearMonthDuration, or xs:dayTimeDuration, found "
@@ -642,16 +645,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 inputItemType, TypeAtomization.inferType(inputType).getCardinality());
     }
 
-    private boolean isStrictAggregateOperandType(ItemType type) {
-        return type.allMemberTypesMatch(member -> {
-            if (TypeAtomization.hasUnknownTypedValue(member)) {
-                return true;
-            }
-            ItemType normalized = normalizeAggregateItemType(member);
-            return normalized.isNumeric()
-                    || normalized.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
-                    || normalized.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem);
-        });
+    private static boolean isStrictAggregateItemType(ItemType type) {
+        return type.isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+                || type.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
+                || type.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem);
     }
 
     // Aggregates can convert untyped values and produce values outside a derived type's restrictions.
