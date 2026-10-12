@@ -17,6 +17,7 @@ package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import javax.xml.validation.Schema;
 
@@ -65,10 +66,11 @@ public final class XmlSchemaCatalog {
     private final XercesTypedValueConverter typedValueConverter;
     private final XercesSimpleTypeCaster simpleTypeCaster;
 
-    XmlSchemaCatalog(@NonNull XSModel schemaModel, @NonNull Schema validationSchema) {
+    XmlSchemaCatalog(
+            @NonNull XSModel schemaModel, @NonNull Schema validationSchema, Map<String, String> namespacePrefixes) {
         this.schemaModel = schemaModel;
         this.validationSchema = validationSchema;
-        this.typeMapper = new XmlSchemaTypeMapper();
+        this.typeMapper = new XmlSchemaTypeMapper(namespacePrefixes);
         this.typedValueConverter = new XercesTypedValueConverter(this.typeMapper);
         this.simpleTypeCaster = new XercesSimpleTypeCaster(this.typeMapper, this.typedValueConverter);
     }
@@ -79,14 +81,15 @@ public final class XmlSchemaCatalog {
 
     /**
      * Returns all global named types in the catalog, including built-in types, lists, unions, and complex types.
-     * The names have no prefix; callers can use {@link #isSchemaCastTarget(Name)} to select constructor candidates.
+     * Names retain schema-import prefixes; callers can use {@link #isSchemaCastTarget(Name)} to select constructor
+     * candidates.
      */
     public List<Name> getNamedTypeNames() {
         XSNamedMap types = this.schemaModel.getComponents(XSConstants.TYPE_DEFINITION);
         List<Name> names = new ArrayList<>();
         for (int index = 0; index < types.getLength(); index++) {
             XSTypeDefinition type = (XSTypeDefinition) types.item(index);
-            names.add(new Name(type.getNamespace(), null, type.getName()));
+            names.add(this.typeMapper.nameOf(type));
         }
         return List.copyOf(names);
     }

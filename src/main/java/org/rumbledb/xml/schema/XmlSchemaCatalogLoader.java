@@ -78,7 +78,7 @@ public final class XmlSchemaCatalogLoader {
             source.setSystemId(EMPTY_SCHEMA_SYSTEM_ID);
 
             LoadedSchema loadedSchema = loadedSchema(schemaFactory.newSchema(source), errorHandler, metadata);
-            return new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema());
+            return new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema(), Map.of());
         } catch (SAXException | RuntimeException exception) {
             throw new SchemaImportException(
                     "Unable to initialize the built-in XML Schema environment: " + exception.getMessage(),
@@ -120,7 +120,14 @@ public final class XmlSchemaCatalogLoader {
                 metadata,
                 schemaResourceObserver);
         LoadedSchema loadedSchema = loadSchema(resolvedImports.locations(), resolver, metadata);
-        XmlSchemaCatalog catalog = new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema());
+        Map<String, String> namespacePrefixes = new LinkedHashMap<>();
+        for (SchemaImport schemaImport : schemaImports) {
+            if (schemaImport.getBindingKind() == SchemaImport.BindingKind.PREFIX) {
+                namespacePrefixes.put(schemaImport.getTargetNamespace(), schemaImport.getPrefix());
+            }
+        }
+        XmlSchemaCatalog catalog =
+                new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema(), namespacePrefixes);
         verifyImportedNamespaces(schemaImports, catalog);
 
         return Optional.of(catalog);
