@@ -25,14 +25,11 @@ public final class ArrayIndexUtils {
     private ArrayIndexUtils() {}
 
     public static int getZeroBasedPosition(Item selector, int arraySize, ExceptionMetadata metadata) {
-        BigInteger position = selector.isInteger()
-                ? selector.castToIntegerValue()
-                : BigInteger.valueOf(selector.castToIntValue());
-        if (position.compareTo(BigInteger.ONE) < 0
-                || position.compareTo(BigInteger.valueOf(arraySize)) > 0) {
+        BigInteger position =
+                selector.isInteger() ? selector.castToIntegerValue() : BigInteger.valueOf(selector.castToIntValue());
+        if (position.compareTo(BigInteger.ONE) < 0 || position.compareTo(BigInteger.valueOf(arraySize)) > 0) {
             throw new ArrayIndexOutOfBoundsException(
-                    "Tried to access array index: " + position + ", of array with length: " + arraySize,
-                    metadata);
+                    "Tried to access array index: " + position + ", of array with length: " + arraySize, metadata);
         }
         return position.intValue() - 1;
     }

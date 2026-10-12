@@ -25,9 +25,9 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.runtime.functions.arrays.ArrayIndexUtils;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.functions.arrays.ArrayIndexUtils;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
