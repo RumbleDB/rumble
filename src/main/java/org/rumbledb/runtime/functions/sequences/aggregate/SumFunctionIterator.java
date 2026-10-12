@@ -90,6 +90,12 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         if (nextValue.isUntypedAtomic()) {
             nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
         }
+        if (!nextValue.isNumeric() && !nextValue.isDayTimeDuration() && !nextValue.isYearMonthDuration()) {
+            throw new InvalidArgumentTypeException(
+                    "sum() requires numeric values, xs:dayTimeDuration values or xs:yearMonthDuration values; got "
+                            + nextValue.getDynamicType(),
+                    metadata);
+        }
         if (currentSum == null) {
             return nextValue;
         }
@@ -111,7 +117,8 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     private static Item computeRDD(
             Item zeroElement, ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
-        JavaRDD<Item> rdd = iterator.getRDD(context);
+        // Validate and convert each input even when reduce() receives only one item.
+        JavaRDD<Item> rdd = iterator.getRDD(context).map(value -> addToSum(null, value, metadata));
         if (rdd.count() == 0) {
             return zeroElement;
         }
@@ -123,6 +130,9 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, context);
         if (df.isEmptySequence()) {
             return zeroElement;
+        }
+        if (!df.getItemType().isNumeric()) {
+            return computeRDD(zeroElement, iterator, context, metadata);
         }
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         HomogeneousItemDataFrame summedDF = df.evaluateSQL(
