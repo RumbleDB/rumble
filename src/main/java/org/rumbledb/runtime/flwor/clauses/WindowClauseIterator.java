@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.function.BiConsumer;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -49,15 +50,25 @@ public class WindowClauseIterator extends TupleRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    /**
-     * The window clause that this iterator is evaluating.
-     */
     private final WindowClause.WindowType windowType;
-
     private final Name windowVariable;
+
+    /**
+     * The declared type of the window variable, or {@code null} if none is declared.
+     */
     private final SequenceType declaredWindowType;
+
     private final WindowClause.WindowVars startVariables;
+
+    /**
+     * The variables bound by the end condition, or {@code null} for a tumbling window without an end condition.
+     */
     private final WindowClause.WindowVars endVariables;
+
+    /**
+     * Whether the end condition is declared with {@code only}, in which case a window whose end condition never holds
+     * is dropped instead of ending with the sequence.
+     */
     private final boolean endConditionOnly;
 
     /**
@@ -86,41 +97,16 @@ public class WindowClauseIterator extends TupleRuntimePlan {
             ItemRuntimePlan startCondition,
             ItemRuntimePlan endCondition,
             RuntimeStaticContext staticContext) {
-        this(
-                child,
-                clause.getWindowType(),
-                clause.getWindowVariable(),
-                clause.getActualSequenceType(),
-                clause.getStartCondition().variables(),
-                clause.getEndCondition() == null
-                        ? null
-                        : clause.getEndCondition().variables(),
-                clause.getEndCondition() != null && clause.getEndCondition().only(),
-                sourceIterator,
-                startCondition,
-                endCondition,
-                staticContext);
-    }
-
-    private WindowClauseIterator(
-            TupleRuntimePlan child,
-            WindowClause.WindowType windowType,
-            Name windowVariable,
-            SequenceType declaredWindowType,
-            WindowClause.WindowVars startVariables,
-            WindowClause.WindowVars endVariables,
-            boolean endConditionOnly,
-            ItemRuntimePlan sourceIterator,
-            ItemRuntimePlan startCondition,
-            ItemRuntimePlan endCondition,
-            RuntimeStaticContext staticContext) {
         super(child, staticContext);
-        this.windowType = windowType;
-        this.windowVariable = windowVariable;
-        this.declaredWindowType = declaredWindowType;
-        this.startVariables = startVariables;
-        this.endVariables = endVariables;
-        this.endConditionOnly = endConditionOnly;
+        this.windowType = clause.getWindowType();
+        this.windowVariable = clause.getWindowVariable();
+        this.declaredWindowType = clause.getActualSequenceType();
+        this.startVariables = clause.getStartCondition().variables();
+        this.endVariables = clause.getEndCondition() == null
+                ? null
+                : clause.getEndCondition().variables();
+        this.endConditionOnly =
+                clause.getEndCondition() != null && clause.getEndCondition().only();
         this.sourceIterator = sourceIterator;
         this.startCondition = startCondition;
         this.endCondition = endCondition;
@@ -133,50 +119,33 @@ public class WindowClauseIterator extends TupleRuntimePlan {
 
     @Override
     public Cursor<FlworTuple> createNativeCursor(DynamicContext context) {
-        return new WindowLocalCursor(
-                new WindowSpec(
-                        this.child,
-                        this.evaluationDepthLimit,
-                        this.windowType,
-                        this.windowVariable,
-                        this.declaredWindowType,
-                        this.startVariables,
-                        this.endVariables,
-                        this.endConditionOnly,
-                        this.sourceIterator,
-                        this.startCondition,
-                        this.endCondition,
-                        getRuntimeStaticContext()),
-                context);
+        return new WindowLocalCursor(context);
     }
 
-    private static final class WindowLocalCursor extends AbstractLocalCursor<FlworTuple> {
+    private final class WindowLocalCursor extends AbstractLocalCursor<FlworTuple> {
 
-        private final WindowSpec spec;
         private final DynamicContext context;
         private final Deque<FlworTuple> pending = new ArrayDeque<>();
         private Cursor<FlworTuple> childCursor;
 
-        private WindowLocalCursor(WindowSpec spec, DynamicContext context) {
-            super(spec.staticContext.getMetadata());
-            this.spec = spec;
+        private WindowLocalCursor(DynamicContext context) {
+            super(WindowClauseIterator.this.getMetadata());
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
-            if (this.spec.hasActiveChild()) {
-                this.childCursor = this.spec.childPlan.createNativeCursor(this.context);
+            if (hasActiveChild()) {
+                this.childCursor = WindowClauseIterator.this.child.createNativeCursor(this.context);
                 fillPending();
             } else {
-                this.pending.addAll(generateWindows(this.spec, this.context, null));
+                this.pending.addAll(generateWindows(this.context, null));
             }
         }
 
         private void fillPending() {
             while (this.pending.isEmpty() && this.childCursor != null && this.childCursor.hasNext()) {
-                FlworTuple inputTuple = this.childCursor.next();
-                this.pending.addAll(generateWindows(this.spec, this.context, inputTuple));
+                this.pending.addAll(generateWindows(this.context, this.childCursor.next()));
             }
         }
 
@@ -204,237 +173,145 @@ public class WindowClauseIterator extends TupleRuntimePlan {
         }
     }
 
-    private static List<FlworTuple> generateWindows(WindowSpec spec, DynamicContext context, FlworTuple inputTuple) {
+    /**
+     * Generates all windows over the source sequence for one input tuple.
+     *
+     * @param inputTuple the tuple from the child clause, or {@code null} if the window clause is the first clause
+     */
+    private List<FlworTuple> generateWindows(DynamicContext context, FlworTuple inputTuple) {
         DynamicContext sourceContext = new DynamicContext(context);
         if (inputTuple != null) {
-            sourceContext.getVariableValues().setBindingsFromTuple(inputTuple, spec.staticContext.getMetadata());
+            sourceContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
         }
-        if (spec.sourcePlan.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            throw new UnsupportedFeatureException(
-                    "Window clauses require local execution.", spec.staticContext.getMetadata());
+        if (this.sourceIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            throw new UnsupportedFeatureException("Window clauses require local execution.", getMetadata());
         }
-        List<Item> items = spec.sourcePlan.materialize(sourceContext);
+        List<Item> items = this.sourceIterator.materialize(sourceContext);
         List<FlworTuple> results = new ArrayList<>();
-        if (spec.windowType == WindowClause.WindowType.TUMBLING) {
-            int start = 0;
-            while (start < items.size()) {
-                while (start < items.size()
-                        && !matches(
-                                spec,
-                                context,
-                                inputTuple,
-                                spec.startCondition,
-                                spec.startVariables,
-                                false,
-                                items,
-                                start,
-                                start)) {
-                    start++;
-                }
-                if (start >= items.size()) {
-                    break;
-                }
-                int end = findEnd(spec, context, inputTuple, items, start);
-                if (end < 0) {
-                    break;
-                }
-                results.add(createTuple(spec, inputTuple, items, start, end));
-                start = end + 1;
+        int start = 0;
+        while (start < items.size()) {
+            if (!startMatches(context, inputTuple, items, start)) {
+                start++;
+                continue;
             }
-        } else {
-            for (int start = 0; start < items.size(); start++) {
-                if (!matches(
-                        spec,
-                        context,
-                        inputTuple,
-                        spec.startCondition,
-                        spec.startVariables,
-                        false,
-                        items,
-                        start,
-                        start)) {
-                    continue;
-                }
-                int end = findEnd(spec, context, inputTuple, items, start);
-                if (end >= 0) {
-                    results.add(createTuple(spec, inputTuple, items, start, end));
-                }
+            int end = findEnd(context, inputTuple, items, start);
+            if (end >= 0) {
+                results.add(createTuple(inputTuple, items, start, end));
+            }
+            if (this.windowType == WindowClause.WindowType.SLIDING) {
+                start++;
+            } else if (end >= 0) {
+                // Tumbling windows do not overlap, so the next window can only start after this one ends.
+                start = end + 1;
+            } else {
+                // A dropped tumbling window would have extended to the end of the sequence.
+                break;
             }
         }
         return results;
     }
 
-    private static int findEnd(
-            WindowSpec spec, DynamicContext context, FlworTuple inputTuple, List<Item> items, int start) {
-        if (spec.endCondition == null) {
+    /**
+     * Returns the position of the last item of the window starting at {@code start}, or -1 if no window is generated.
+     */
+    private int findEnd(DynamicContext context, FlworTuple inputTuple, List<Item> items, int start) {
+        if (this.endCondition == null) {
+            // A tumbling window without an end condition ends before the next item that satisfies the start condition.
             for (int nextStart = start + 1; nextStart < items.size(); nextStart++) {
-                if (matches(
-                        spec,
-                        context,
-                        inputTuple,
-                        spec.startCondition,
-                        spec.startVariables,
-                        false,
-                        items,
-                        nextStart,
-                        nextStart)) {
+                if (startMatches(context, inputTuple, items, nextStart)) {
                     return nextStart - 1;
                 }
             }
             return items.size() - 1;
         }
         for (int end = start; end < items.size(); end++) {
-            if (matches(spec, context, inputTuple, spec.endCondition, spec.endVariables, true, items, end, start)) {
+            if (endMatches(context, inputTuple, items, start, end)) {
                 return end;
             }
         }
-        return spec.endConditionOnly ? -1 : items.size() - 1;
+        return this.endConditionOnly ? -1 : items.size() - 1;
     }
 
-    private static boolean matches(
-            WindowSpec spec,
-            DynamicContext context,
-            FlworTuple inputTuple,
-            ItemRuntimePlan condition,
-            WindowClause.WindowVars variables,
-            boolean isEndCondition,
-            List<Item> items,
-            int position,
-            int startPosition) {
-        if (condition.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            throw new UnsupportedFeatureException(
-                    "Window clauses require local execution.", spec.staticContext.getMetadata());
+    private boolean startMatches(DynamicContext context, FlworTuple inputTuple, List<Item> items, int start) {
+        if (this.startCondition.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            throw new UnsupportedFeatureException("Window clauses require local execution.", getMetadata());
         }
+        DynamicContext conditionContext = createConditionContext(context, inputTuple);
+        bindVariables(items, start, this.startVariables, conditionContext.getVariableValues()::addVariableValue);
+        return EffectiveBooleanValue.evaluate(this.startCondition, conditionContext);
+    }
+
+    private boolean endMatches(DynamicContext context, FlworTuple inputTuple, List<Item> items, int start, int end) {
+        if (this.endCondition.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            throw new UnsupportedFeatureException("Window clauses require local execution.", getMetadata());
+        }
+        DynamicContext conditionContext = createConditionContext(context, inputTuple);
+        bindVariables(items, start, this.startVariables, conditionContext.getVariableValues()::addVariableValue);
+        bindVariables(items, end, this.endVariables, conditionContext.getVariableValues()::addVariableValue);
+        return EffectiveBooleanValue.evaluate(this.endCondition, conditionContext);
+    }
+
+    /**
+     * Creates the context in which a condition is evaluated, so that the bindings of one condition do not leak into
+     * the next one, while outer bindings remain visible.
+     */
+    private DynamicContext createConditionContext(DynamicContext context, FlworTuple inputTuple) {
         DynamicContext conditionContext = new DynamicContext(context);
         conditionContext.getVariableValues().removeAllVariables();
         if (inputTuple != null) {
-            conditionContext.getVariableValues().setBindingsFromTuple(inputTuple, spec.staticContext.getMetadata());
+            conditionContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
         }
-        if (isEndCondition) {
-            bindTupleContext(conditionContext, items, startPosition, spec.startVariables);
-        }
-        bindTupleContext(conditionContext, items, position, variables);
-        return EffectiveBooleanValue.evaluate(condition, conditionContext);
-    }
-
-    private static final class WindowSpec {
-
-        private final TupleRuntimePlan childPlan;
-        private final int evaluationDepthLimit;
-        private final WindowClause.WindowType windowType;
-        private final Name windowVariable;
-        private final SequenceType declaredWindowType;
-        private final WindowClause.WindowVars startVariables;
-        private final WindowClause.WindowVars endVariables;
-        private final boolean endConditionOnly;
-        private final ItemRuntimePlan sourcePlan;
-        private final ItemRuntimePlan startCondition;
-        private final ItemRuntimePlan endCondition;
-        private final RuntimeStaticContext staticContext;
-
-        private WindowSpec(
-                TupleRuntimePlan childPlan,
-                int evaluationDepthLimit,
-                WindowClause.WindowType windowType,
-                Name windowVariable,
-                SequenceType declaredWindowType,
-                WindowClause.WindowVars startVariables,
-                WindowClause.WindowVars endVariables,
-                boolean endConditionOnly,
-                ItemRuntimePlan sourcePlan,
-                ItemRuntimePlan startCondition,
-                ItemRuntimePlan endCondition,
-                RuntimeStaticContext staticContext) {
-            this.childPlan = childPlan;
-            this.evaluationDepthLimit = evaluationDepthLimit;
-            this.windowType = windowType;
-            this.windowVariable = windowVariable;
-            this.declaredWindowType = declaredWindowType;
-            this.startVariables = startVariables;
-            this.endVariables = endVariables;
-            this.endConditionOnly = endConditionOnly;
-            this.sourcePlan = sourcePlan;
-            this.startCondition = startCondition;
-            this.endCondition = endCondition;
-            this.staticContext = staticContext;
-        }
-
-        private boolean hasActiveChild() {
-            return this.childPlan != null && this.evaluationDepthLimit != 0;
-        }
-    }
-
-    private boolean hasActiveChild() {
-        return this.child != null && this.evaluationDepthLimit != 0;
+        return conditionContext;
     }
 
     /**
-     * Bind the window variables to the current dynamic context for the given position in the list of items.
-     *
-     * For each condition, it can have up to 4 variables: current item, previous item, next item, and position.
+     * Binds the variables of a window condition for the item at the given position: the current item, its position,
+     * and the previous and next items, which are empty at the boundaries of the sequence.
      */
-    private static void bindTupleContext(
-            DynamicContext context, List<Item> items, int position, WindowClause.WindowVars variables) {
-        putItem(context, variables.currentItem(), items.get(position));
-        putItem(context, variables.previousItem(), position == 0 ? null : items.get(position - 1));
-        putItem(context, variables.nextItem(), position + 1 >= items.size() ? null : items.get(position + 1));
-        putItem(context, variables.position(), ItemFactory.getInstance().createLongItem(position + 1));
+    private static void bindVariables(
+            List<Item> items, int position, WindowClause.WindowVars variables, BiConsumer<Name, List<Item>> binder) {
+        bindIfDeclared(binder, variables.currentItem(), items.get(position));
+        bindIfDeclared(binder, variables.position(), ItemFactory.getInstance().createLongItem(position + 1));
+        bindIfDeclared(binder, variables.previousItem(), position == 0 ? null : items.get(position - 1));
+        bindIfDeclared(binder, variables.nextItem(), position + 1 >= items.size() ? null : items.get(position + 1));
     }
 
-    private static void putItem(DynamicContext context, Name name, Item item) {
+    private static void bindIfDeclared(BiConsumer<Name, List<Item>> binder, Name name, Item item) {
         if (name != null) {
-            context.getVariableValues().addVariableValue(name, item == null ? Collections.emptyList() : List.of(item));
+            binder.accept(name, item == null ? Collections.emptyList() : List.of(item));
         }
     }
 
     /**
-     * Create a new tuple for the window and add it to the pending results deque.
-     *
-     * @param inputTuple if the window clause is not the first clause of the FLWOR expression, this is the tuple coming
-     *        from the child iterator. Otherwise, it is {@code null}. This is used to create a new tuple that includes
-     *        the window variable and any other variables from the input tuple.
-     * @param items the list of items produced by the source iterator
-     * @param start the start position of the window in the list of items
-     * @param end the end position of the window in the list of items
-     * @return a new tuple that includes the window variable and any other variables from the input tuple
+     * Creates the output tuple for the window from {@code start} to {@code end}, which extends the input tuple with
+     * the window variable and the variables of the start and end conditions.
      */
-    private static FlworTuple createTuple(
-            WindowSpec spec, FlworTuple inputTuple, List<Item> items, int start, int end) {
-        FlworTuple result =
-                inputTuple == null ? new FlworTuple(spec.staticContext.getConfiguration()) : new FlworTuple(inputTuple);
+    private FlworTuple createTuple(FlworTuple inputTuple, List<Item> items, int start, int end) {
+        FlworTuple result = inputTuple == null
+                ? new FlworTuple(getRuntimeStaticContext().getConfiguration())
+                : new FlworTuple(inputTuple);
         List<Item> windowItems = new ArrayList<>(items.subList(start, end + 1));
-        validateWindowType(windowItems, spec.declaredWindowType, spec.staticContext);
-
-        // Window variable will be bound to the list of items in the window
-        result.putValue(spec.windowVariable, windowItems);
-
-        // Bind the variables from the start and end conditions to the tuple
-        addBindings(result, items, start, spec.startVariables);
-        if (spec.endVariables != null) {
-            addBindings(result, items, end, spec.endVariables);
+        validateWindowType(windowItems);
+        result.putValue(this.windowVariable, windowItems);
+        bindVariables(items, start, this.startVariables, result::putValue);
+        if (this.endVariables != null) {
+            bindVariables(items, end, this.endVariables, result::putValue);
         }
-
         return result;
     }
 
     /**
-     * Check that the list of items in the window matches the declared sequence type of the window variable.
+     * Checks that the window matches the declared type of the window variable. This is done at runtime because the
+     * size of a window depends on the data.
      *
-     * This has to be done at runtime because the size of the window can vary depending on the input data and the window
-     * conditions.
-     *
-     * @param windowItems the list of items in the window
-     * @throws UnexpectedTypeException if the list of items does not match the declared sequence type
-     *         of the window variable
+     * @throws UnexpectedTypeException if the window does not match the declared type
      */
-    private static void validateWindowType(
-            List<Item> windowItems, SequenceType declaredType, RuntimeStaticContext staticContext) {
-        if (declaredType == null) {
+    private void validateWindowType(List<Item> windowItems) {
+        if (this.declaredWindowType == null) {
             return;
         }
-
         boolean validCardinality =
-                switch (declaredType.getArity()) {
+                switch (this.declaredWindowType.getArity()) {
                     case Zero -> windowItems.isEmpty();
                     case One -> windowItems.size() == 1;
                     case OneOrZero -> windowItems.size() <= 1;
@@ -446,41 +323,22 @@ public class WindowClauseIterator extends TupleRuntimePlan {
                     "The window sequence has cardinality "
                             + windowItems.size()
                             + ", but the expected type is "
-                            + declaredType,
-                    staticContext.getMetadata());
+                            + this.declaredWindowType,
+                    getMetadata());
         }
         for (Item item : windowItems) {
-            if (!InstanceOfIterator.doesItemTypeMatchItem(declaredType.getItemType(), item)) {
+            if (!InstanceOfIterator.doesItemTypeMatchItem(this.declaredWindowType.getItemType(), item)) {
                 throw new UnexpectedTypeException(
-                        item.getDynamicType() + " is not expected here. The expected type is " + declaredType,
-                        staticContext.getMetadata());
+                        item.getDynamicType()
+                                + " is not expected here. The expected type is "
+                                + this.declaredWindowType,
+                        getMetadata());
             }
         }
     }
 
-    /**
-     * Add the variables from the window condition to the tuple.
-     *
-     * @param tuple the tuple to which the variables will be added
-     * @param items the list of items produced by the source iterator
-     * @param position the position of the item in the list of items
-     * @param variables the window variables to be added to the tuple
-     */
-    private static void addBindings(
-            FlworTuple tuple, List<Item> items, int position, WindowClause.WindowVars variables) {
-        if (variables.currentItem() != null) tuple.putValue(variables.currentItem(), items.get(position));
-        if (variables.position() != null)
-            tuple.putValue(variables.position(), ItemFactory.getInstance().createLongItem(position + 1));
-        if (variables.previousItem() != null) {
-            tuple.putValue(
-                    variables.previousItem(),
-                    position == 0 ? Collections.emptyList() : List.of(items.get(position - 1)));
-        }
-        if (variables.nextItem() != null) {
-            tuple.putValue(
-                    variables.nextItem(),
-                    position + 1 >= items.size() ? Collections.emptyList() : List.of(items.get(position + 1)));
-        }
+    private boolean hasActiveChild() {
+        return this.child != null && this.evaluationDepthLimit != 0;
     }
 
     @Override
