@@ -49,9 +49,9 @@ public class NodeSetOperationIterator extends ItemRuntimePlan implements LocalRu
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemRuntimePlan leftIterator;
-    private ItemRuntimePlan rightIterator;
-    private NodeSetExpression.NodeSetOperator operator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
+    private final NodeSetExpression.NodeSetOperator operator;
 
     public NodeSetOperationIterator(
             ItemRuntimePlan leftIterator,

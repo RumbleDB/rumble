@@ -46,9 +46,9 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private List<? extends ItemRuntimePlan> keys;
-    private List<? extends ItemRuntimePlan> values;
-    private boolean isMergedObject = false;
+    private final List<? extends ItemRuntimePlan> keys;
+    private final List<? extends ItemRuntimePlan> values;
+    private final boolean isMergedObject;
     private final boolean mutable;
 
     public ObjectConstructorRuntimeIterator(
@@ -59,12 +59,16 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
         super(Stream.concat(keys.stream(), values.stream()).toList(), staticContext);
         this.keys = keys;
         this.values = values;
+        this.isMergedObject = false;
         this.mutable = mutable;
     }
 
     public ObjectConstructorRuntimeIterator(
             List<? extends ItemRuntimePlan> childExpressions, RuntimeStaticContext staticContext, boolean mutable) {
         super(childExpressions, staticContext);
+        // A merged object takes its keys and values from the objects that its children return.
+        this.keys = null;
+        this.values = null;
         this.isMergedObject = true;
         this.mutable = mutable;
     }
