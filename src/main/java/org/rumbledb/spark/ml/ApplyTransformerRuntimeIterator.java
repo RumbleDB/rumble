@@ -16,16 +16,17 @@
 package org.rumbledb.spark.ml;
 
 import java.io.Serial;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.linalg.VectorUDT;
+import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -59,9 +60,21 @@ public class ApplyTransformerRuntimeIterator extends ItemRuntimePlan implements 
     @Getter
     private final Transformer transformer;
 
-    private RuntimeDataFrame<Item> inputDataset;
-    private Item paramMapItem;
-    private final List<String> columnNamesOfGeneratedVectors = new ArrayList<>();
+    /**
+     * The inputs of one application of the transformer. They are computed for each evaluation, so that the plan
+     * itself is not modified.
+     */
+    private static final class TransformInput {
+        private RuntimeDataFrame<Item> dataset;
+        private Item paramMapItem;
+        private final List<String> generatedVectorColumns = new ArrayList<>();
+        private final Map<String, String> vectorParamValues = new LinkedHashMap<>();
+
+        private TransformInput(RuntimeDataFrame<Item> dataset, Item paramMapItem) {
+            this.dataset = dataset;
+            this.paramMapItem = paramMapItem;
+        }
+    }
 
     public ApplyTransformerRuntimeIterator(
             String transformerShortName, Transformer transformer, RuntimeStaticContext staticContext) {
@@ -72,17 +85,21 @@ public class ApplyTransformerRuntimeIterator extends ItemRuntimePlan implements 
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        this.inputDataset = getInputDataset(context);
-        this.paramMapItem = getParamMapItem(context);
+        TransformInput input = new TransformInput(getInputDataset(context), getParamMapItem(context));
 
-        processSpecialParamsForVectorization();
+        processSpecialParamsForVectorization(input);
 
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
-                this.transformerShortName, this.transformer, this.paramMapItem, getMetadata());
+                this.transformerShortName, this.transformer, input.paramMapItem, getMetadata());
+        // The vectorized columns are passed in the parameter map, which Spark applies to a copy of the transformer,
+        // instead of being set on the transformer that this plan holds.
+        for (Map.Entry<String, String> entry : input.vectorParamValues.entrySet()) {
+            paramMap.put(getSparkMLTransformerParam(entry.getKey()), entry.getValue());
+        }
 
         try {
-            Dataset<Row> result = this.transformer.transform(this.inputDataset.getDataFrame(), paramMap);
-            for (String name : this.columnNamesOfGeneratedVectors) {
+            Dataset<Row> result = this.transformer.transform(input.dataset.getDataFrame(), paramMap);
+            for (String name : input.generatedVectorColumns) {
                 result = result.drop(name);
             }
             return new HomogeneousItemDataFrame(result, BuiltinTypesCatalogue.objectItem);
@@ -196,7 +213,7 @@ public class ApplyTransformerRuntimeIterator extends ItemRuntimePlan implements 
         return paramMapItemList.get(0);
     }
 
-    private void processSpecialParamsForVectorization() {
+    private void processSpecialParamsForVectorization(TransformInput input) {
         // update input dataset and paramMapItem based on the needs of special params
         for (String specialParamName : RumbleMLCatalog.specialParamsThatMayReferToAColumnOfVectors) {
             boolean transformerExpectsSpecialParam = RumbleMLCatalog.getTransformerParams(
@@ -214,25 +231,24 @@ public class ApplyTransformerRuntimeIterator extends ItemRuntimePlan implements 
                 continue;
             }
 
-            String[] paramValue = calculateParamValue(specialParamName);
-            if (!isVectorizationNeededForParam(specialParamName, paramValue)) {
+            String[] paramValue = calculateParamValue(input, specialParamName);
+            if (!isVectorizationNeededForParam(input, specialParamName, paramValue)) {
                 continue;
             }
 
             String columnNameForVectorizationResult = RumbleMLCatalog.getUUIDOfOfSpecialParam(specialParamName);
-            this.inputDataset = RumbleMLUtils.createDataFrameContainingVectorizedColumn(
-                    this.inputDataset, specialParamName, paramValue, columnNameForVectorizationResult, getMetadata());
-            this.columnNamesOfGeneratedVectors.add(columnNameForVectorizationResult);
-
-            this.setSparkMLTransformerParamToValue(specialParamName, columnNameForVectorizationResult);
+            input.dataset = RumbleMLUtils.createDataFrameContainingVectorizedColumn(
+                    input.dataset, specialParamName, paramValue, columnNameForVectorizationResult, getMetadata());
+            input.generatedVectorColumns.add(columnNameForVectorizationResult);
+            input.vectorParamValues.put(specialParamName, columnNameForVectorizationResult);
         }
     }
 
-    private String[] calculateParamValue(String specialParamName) {
-        Item paramValueItem = this.paramMapItem.getItemByKey(specialParamName);
+    private String[] calculateParamValue(TransformInput input, String specialParamName) {
+        Item paramValueItem = input.paramMapItem.getItemByKey(specialParamName);
         if (paramValueItem != null) {
             // remove this param from the map to prevent processing the param again
-            this.paramMapItem = RumbleMLUtils.removeParameter(this.paramMapItem, specialParamName, getMetadata());
+            input.paramMapItem = RumbleMLUtils.removeParameter(input.paramMapItem, specialParamName, getMetadata());
 
             return (String[]) RumbleMLUtils.convertParamItemToJava(
                     specialParamName, paramValueItem, RumbleMLCatalog.javaTypeNameOfSpecialParams, getMetadata());
@@ -253,8 +269,8 @@ public class ApplyTransformerRuntimeIterator extends ItemRuntimePlan implements 
         return new String[] {defaultSparkMLParamValue};
     }
 
-    private boolean isVectorizationNeededForParam(String specialParamName, String[] paramValue) {
-        StructType schema = this.inputDataset.getDataFrame().schema();
+    private boolean isVectorizationNeededForParam(TransformInput input, String specialParamName, String[] paramValue) {
+        StructType schema = input.dataset.getDataFrame().schema();
         if (paramValue.length == 1) {
             String columnName = paramValue[0];
             DataType columnType;
@@ -276,13 +292,11 @@ public class ApplyTransformerRuntimeIterator extends ItemRuntimePlan implements 
         return true;
     }
 
-    private void setSparkMLTransformerParamToValue(String paramName, String value) {
+    @SuppressWarnings("unchecked")
+    private Param<Object> getSparkMLTransformerParam(String paramName) {
         try {
-            this.transformer
-                    .getClass()
-                    .getMethod("set" + StringUtils.capitalize(paramName), String.class)
-                    .invoke(this.transformer, value);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            return (Param<Object>) this.transformer.getParam(paramName);
+        } catch (NoSuchElementException e) {
             throw new OurBadException("Failed to set " + paramName + " on the transformer");
         }
     }

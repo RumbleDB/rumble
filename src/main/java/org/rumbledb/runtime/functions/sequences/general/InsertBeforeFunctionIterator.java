@@ -45,7 +45,6 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan positionIterator;
     private final ItemRuntimePlan insertIterator;
-    private int insertPosition; // position to start inserting
 
     public InsertBeforeFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
@@ -62,24 +61,24 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        init(context);
+        int insertPosition = evaluatePosition(context);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
 
         if (this.insertIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
             JavaRDD<Item> beforeRDD = zippedRDD
-                    .filter((item) -> item._2() < this.insertPosition - 1)
+                    .filter((item) -> item._2() < insertPosition - 1)
                     .map((item) -> item._1);
             JavaRDD<Item> afterRDD = zippedRDD
-                    .filter((item) -> item._2() >= this.insertPosition - 1)
+                    .filter((item) -> item._2() >= insertPosition - 1)
                     .map((item) -> item._1);
             return beforeRDD.union(insertsRDD).union(afterRDD);
         }
 
         List<Item> inserts = this.insertIterator.materialize(context);
         int numPartitions = zippedRDD.partitions().size();
-        int indexOfInsertion = this.insertPosition;
+        int indexOfInsertion = insertPosition;
 
         return zippedRDD.mapPartitionsWithIndex(
                 (partitionIndex, iterator) -> {
@@ -105,9 +104,9 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
                 false);
     }
 
-    private void init(DynamicContext context) {
+    private int evaluatePosition(DynamicContext context) {
         Item positionItem = this.positionIterator.materializeFirstOrNull(context);
-        this.insertPosition = positionItem.getIntValue();
+        return positionItem.getIntValue();
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {

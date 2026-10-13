@@ -40,7 +40,6 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
 
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan searchIterator;
-    private Item search;
 
     public IndexOfFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
@@ -71,11 +70,11 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
         checkCollation(context);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
-        this.search = this.searchIterator.materializeFirstOrNull(context);
+        Item search = this.searchIterator.materializeFirstOrNull(context);
 
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
         JavaPairRDD<Item, Long> filteredRDD =
-                zippedRDD.filter((item) -> item._1().equals(this.search));
+                zippedRDD.filter((item) -> item._1().equals(search));
         return filteredRDD.map((item) -> ItemFactory.getInstance().createIntItem(item._2.intValue() + 1));
     }
 
