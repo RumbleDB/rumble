@@ -18,6 +18,7 @@ package org.rumbledb.runtime.flwor.clauses;
 import java.io.Serial;
 import java.util.*;
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 
@@ -58,7 +59,36 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemRuntimePlan expression;
+    private final ItemRuntimePlan expression;
+
+    /**
+     * The join that the DataFrame evaluation of this clause performs, prepared together with the tuple projections.
+     * Null if the clause cannot be evaluated as a join.
+     */
+    private transient PreparedJoin preparedJoin;
+
+    /**
+     * The two sides of a join. The left side is a subtree of the clauses below this one. The right side is a copy of
+     * the clauses between this clause and the left side, restricted to them, so that preparing the join does not
+     * change the clauses that this clause evaluates otherwise.
+     */
+    private static final class PreparedJoin {
+        private final TupleRuntimePlan leftTuples;
+        private final TupleRuntimePlan rightTuples;
+        private final List<Name> leftVariables;
+        private final List<Name> rightVariables;
+
+        private PreparedJoin(
+                TupleRuntimePlan leftTuples,
+                TupleRuntimePlan rightTuples,
+                List<Name> leftVariables,
+                List<Name> rightVariables) {
+            this.leftTuples = leftTuples;
+            this.rightTuples = rightTuples;
+            this.leftVariables = leftVariables;
+            this.rightVariables = rightVariables;
+        }
+    }
 
     public WhereClauseIterator(
             TupleRuntimePlan child, ItemRuntimePlan whereExpression, RuntimeStaticContext staticContext) {
@@ -236,10 +266,88 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
     }
 
     private FlworDataFrame getDataFrameIfJoinPossible(DynamicContext context) {
+        PreparedJoin join = this.preparedJoin;
+        if (join == null) {
+            return null;
+        }
+        log.info("Rumble detected a join predicate in the where clause.");
+
+        try {
+            FlworDataFrame leftTuples = (FlworDataFrame) join.leftTuples.getDataFrame(context);
+            FlworDataFrame rightTuples = (FlworDataFrame) join.rightTuples.getDataFrame(context);
+            return JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
+                    context,
+                    leftTuples.getDataFrame(),
+                    rightTuples.getDataFrame(),
+                    this.outputTupleProjection,
+                    join.leftVariables,
+                    join.rightVariables,
+                    this.expression,
+                    false,
+                    null,
+                    getMetadata(),
+                    getStaticContext());
+        } catch (Exception e) {
+            log.warn("Join failed. Falling back to regular execution (nevertheless, please let us know!).");
+            return null;
+        }
+    }
+
+    /**
+     * Sets the tuple projections of this clause and the clauses below it, then prepares the join that the DataFrame
+     * evaluation of this clause performs, if any. The projections are set while the FLWOR expression is built, so the
+     * join is prepared then too, and the evaluation does not change any clause.
+     */
+    @Override
+    public void setInputAndOutputTupleVariableDependencies(Map<Name, VariableDependency> parentProjection) {
+        super.setInputAndOutputTupleVariableDependencies(parentProjection);
+        this.preparedJoin = prepareJoin();
+    }
+
+    private PreparedJoin prepareJoin() {
+        if (this.child == null
+                || !this.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            return null;
+        }
+        // A clause inside the right side of another join is not itself evaluated as a join.
         if (this.evaluationDepthLimit >= 0) {
             return null;
         }
+        try {
+            int limit = findJoinLimit();
+            if (limit == -1) {
+                return null;
+            }
+            TupleRuntimePlan leftTuples = getSubtreeBeyondLimit(limit);
+            Set<Name> leftVariables = leftTuples.getOutputTupleVariableNames();
 
+            // The right side is a copy of the clauses down to the limit, with a projection that leaves out the
+            // variables of the left side.
+            TupleRuntimePlan rightTuples = SerializationUtils.clone(this.child);
+            rightTuples.setEvaluationDepthLimit(limit - 1);
+            Map<Name, VariableDependency> rightProjection = new HashMap<>(this.inputTupleProjection);
+            for (Name variable : leftVariables) {
+                rightProjection.remove(variable);
+            }
+            rightTuples.setInputAndOutputTupleVariableDependencies(rightProjection);
+            Set<Name> rightVariables = rightTuples.getOutputTupleVariableNames();
+
+            return new PreparedJoin(
+                    leftTuples, rightTuples, new ArrayList<>(leftVariables), new ArrayList<>(rightVariables));
+        } catch (Exception e) {
+            log.warn("Could not prepare a join for the where clause; it will be evaluated without a join.");
+            return null;
+        }
+    }
+
+    /**
+     * Finds the deepest clause at which the clauses below this one can be split into the two sides of a join.
+     * The search sets evaluation depth limits temporarily and resets them; it only runs while the FLWOR expression is
+     * built.
+     *
+     * @return the depth of the split, or -1 if there is none
+     */
+    private int findJoinLimit() {
         int height = this.getHeight();
         int limit = -1;
         // System.err.println("[DEBUG] Height of the where clause: " + height);
@@ -293,47 +401,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
             limit = i;
         }
         this.setEvaluationDepthLimit(-1);
-        if (limit == -1) {
-            return null;
-        }
-        log.info("Rumble detected a join predicate in the where clause (limit=" + limit + " of " + height + ").");
-
-        try {
-            FlworDataFrame leftTuples =
-                    (FlworDataFrame) getSubtreeBeyondLimit(limit).getDataFrame(context);
-            Set<Name> leftVariables = getSubtreeBeyondLimit(limit).getOutputTupleVariableNames();
-            this.setEvaluationDepthLimit(limit);
-            Map<Name, VariableDependency> temporaryInputProjection = new HashMap<>(this.inputTupleProjection);
-            for (Name key : leftVariables) {
-                temporaryInputProjection.remove(key);
-            }
-            this.child.setInputAndOutputTupleVariableDependencies(temporaryInputProjection);
-            FlworDataFrame rightTuples = (FlworDataFrame) this.child.getDataFrame(context);
-            this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
-
-            Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
-            this.setEvaluationDepthLimit(-1);
-
-            FlworDataFrame result = JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
-                    context,
-                    leftTuples.getDataFrame(),
-                    rightTuples.getDataFrame(),
-                    this.outputTupleProjection,
-                    new ArrayList<Name>(leftVariables),
-                    new ArrayList<Name>(rightVariables),
-                    this.expression,
-                    false,
-                    null,
-                    getMetadata(),
-                    getStaticContext());
-            return result;
-        } catch (Exception e) {
-            log.warn("Join failed. Falling back to regular execution (nevertheless, please let us know!).");
-
-            this.setEvaluationDepthLimit(-1);
-            this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
-            return null;
-        }
+        return limit;
     }
 
     @Override
