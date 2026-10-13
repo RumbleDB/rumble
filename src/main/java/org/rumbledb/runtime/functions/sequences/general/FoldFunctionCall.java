@@ -55,20 +55,19 @@ final class FoldFunctionCall {
             ExceptionMetadata metadata,
             DynamicContext context) {
         RuntimeStaticContext argumentContext = RuntimeStaticContext.builder()
-            .configuration(configuration)
-            .staticType(SequenceType.createSequenceType("item*"))
-            .executionMode(ExecutionMode.LOCAL)
-            .metadata(metadata)
-            .build();
+                .configuration(configuration)
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(metadata)
+                .build();
         ItemRuntimePlan accumulator = new VariableReferenceIterator(ACCUMULATOR, argumentContext);
         ItemRuntimePlan currentItem = new VariableReferenceIterator(CURRENT_ITEM, argumentContext);
         this.call = NamedFunctions.buildFunctionItemCallIterator(
-            functionItem,
-            callContext,
-            ExecutionMode.LOCAL,
-            accumulatorFirst ? Arrays.asList(accumulator, currentItem) : Arrays.asList(currentItem, accumulator),
-            false
-        );
+                functionItem,
+                callContext,
+                ExecutionMode.LOCAL,
+                accumulatorFirst ? Arrays.asList(accumulator, currentItem) : Arrays.asList(currentItem, accumulator),
+                false);
         this.stepContext = new DynamicContext(context);
     }
 

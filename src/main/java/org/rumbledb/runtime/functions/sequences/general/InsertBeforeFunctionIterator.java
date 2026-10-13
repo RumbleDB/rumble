@@ -67,12 +67,10 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
 
         if (this.insertIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
-            JavaRDD<Item> beforeRDD = zippedRDD
-                    .filter((item) -> item._2() < insertPosition - 1)
-                    .map((item) -> item._1);
-            JavaRDD<Item> afterRDD = zippedRDD
-                    .filter((item) -> item._2() >= insertPosition - 1)
-                    .map((item) -> item._1);
+            JavaRDD<Item> beforeRDD =
+                    zippedRDD.filter((item) -> item._2() < insertPosition - 1).map((item) -> item._1);
+            JavaRDD<Item> afterRDD =
+                    zippedRDD.filter((item) -> item._2() >= insertPosition - 1).map((item) -> item._1);
             return beforeRDD.union(insertsRDD).union(afterRDD);
         }
 

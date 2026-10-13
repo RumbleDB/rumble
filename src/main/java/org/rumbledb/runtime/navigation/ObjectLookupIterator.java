@@ -148,8 +148,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
         }
         if (!lookupKey.isString()) {
-            throw new UnexpectedTypeException(
-                    "Non string object lookup for " + lookupKey.serialize(), getMetadata());
+            throw new UnexpectedTypeException("Non string object lookup for " + lookupKey.serialize(), getMetadata());
         }
         return lookupKey;
     }
