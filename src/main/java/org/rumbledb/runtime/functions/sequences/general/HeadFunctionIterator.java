@@ -35,13 +35,6 @@ public class HeadFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        if (this.getChild(0).getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
-            if (i.isEmpty()) {
-                return null;
-            }
-            return i.get(0);
-        }
         return this.getChild(0).materializeFirstOrNull(dynamicContext);
     }
 }
