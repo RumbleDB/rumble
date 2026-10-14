@@ -428,8 +428,7 @@ public final class RegexPatternUtils {
         return result.toString();
     }
 
-    private static ClassRewriteResult rewriteCharacterClass(
-            String pattern, int startIndex, boolean caseInsensitive) {
+    private static ClassRewriteResult rewriteCharacterClass(String pattern, int startIndex, boolean caseInsensitive) {
         StringBuilder result = new StringBuilder();
         result.append('[');
         int index = startIndex + 1;
@@ -460,9 +459,7 @@ public final class RegexPatternUtils {
             index = token.nextIndex;
             firstToken = false;
 
-            if (index + 1 < pattern.length()
-                    && pattern.charAt(index) == '-'
-                    && pattern.charAt(index + 1) != '[') {
+            if (index + 1 < pattern.length() && pattern.charAt(index) == '-' && pattern.charAt(index + 1) != '[') {
                 ClassToken rightToken = readClassToken(pattern, index + 1, false);
                 if (isRange(token, rightToken, pattern, index + 1)) {
                     if (caseInsensitive) {
