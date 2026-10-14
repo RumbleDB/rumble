@@ -65,11 +65,14 @@ public final class RegexPatternUtils {
         if (quote) {
             pattern = Pattern.quote(pattern);
         }
-        if ((flags & Pattern.CASE_INSENSITIVE) != 0 && !quote) {
-            pattern = normalizeCaseInsensitivePattern(pattern);
-            flags &= ~(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-        }
         if (!quote) {
+            boolean caseInsensitive = (flags & Pattern.CASE_INSENSITIVE) != 0;
+            if (caseInsensitive || pattern.contains("-[")) {
+                pattern = rewritePattern(pattern, caseInsensitive);
+            }
+            if (caseInsensitive) {
+                flags &= ~(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+            }
             pattern = translateUnicodeBlockEscapes(pattern);
         }
         try {
@@ -391,7 +394,7 @@ public final class RegexPatternUtils {
         return result.toString();
     }
 
-    static String normalizeCaseInsensitivePattern(String pattern) {
+    private static String rewritePattern(String pattern, boolean caseInsensitive) {
         StringBuilder result = new StringBuilder(pattern.length());
         for (int i = 0; i < pattern.length(); i++) {
             char current = pattern.charAt(i);
@@ -402,12 +405,13 @@ public final class RegexPatternUtils {
                 continue;
             }
             if (current == '[') {
-                ClassRewriteResult classResult = rewriteCharacterClass(pattern, i);
+                ClassRewriteResult classResult = rewriteCharacterClass(pattern, i, caseInsensitive);
                 result.append(classResult.rewrittenClass);
                 i = classResult.endIndex;
                 continue;
             }
-            if (Character.isHighSurrogate(current)
+            if (caseInsensitive
+                    && Character.isHighSurrogate(current)
                     && i + 1 < pattern.length()
                     && Character.isLowSurrogate(pattern.charAt(i + 1))) {
                 int codePoint = Character.toCodePoint(current, pattern.charAt(i + 1));
@@ -415,7 +419,7 @@ public final class RegexPatternUtils {
                 i++;
                 continue;
             }
-            if (hasCaseVariant(current)) {
+            if (caseInsensitive && hasCaseVariant(current)) {
                 result.append(expandLiteralCodePoint(current));
                 continue;
             }
@@ -424,7 +428,8 @@ public final class RegexPatternUtils {
         return result.toString();
     }
 
-    private static ClassRewriteResult rewriteCharacterClass(String pattern, int startIndex) {
+    private static ClassRewriteResult rewriteCharacterClass(
+            String pattern, int startIndex, boolean caseInsensitive) {
         StringBuilder result = new StringBuilder();
         result.append('[');
         int index = startIndex + 1;
@@ -444,28 +449,33 @@ public final class RegexPatternUtils {
                     && pattern.charAt(index) == '-'
                     && index + 1 < pattern.length()
                     && pattern.charAt(index + 1) == '[') {
-                ClassRewriteResult nestedClass = rewriteCharacterClass(pattern, index + 1);
-                result.append("&&[^");
-                result.append(stripCharacterClassBrackets(nestedClass.rewrittenClass));
-                result.append(']');
-                index = nestedClass.endIndex + 1;
-                continue;
+                ClassRewriteResult nestedClass = rewriteCharacterClass(pattern, index + 1, caseInsensitive);
+                // Keep each operand grouped: A - B becomes A intersect complement(B),
+                // including when A or B is negated or B itself contains subtraction.
+                String subtraction = "[" + result + "]&&[^" + nestedClass.rewrittenClass + "]]";
+                return new ClassRewriteResult(subtraction, nestedClass.endIndex + 1);
             }
 
             ClassToken token = readClassToken(pattern, index, firstToken);
             index = token.nextIndex;
             firstToken = false;
 
-            if (index < pattern.length() && pattern.charAt(index) == '-' && index + 1 < pattern.length()) {
+            if (index + 1 < pattern.length()
+                    && pattern.charAt(index) == '-'
+                    && pattern.charAt(index + 1) != '[') {
                 ClassToken rightToken = readClassToken(pattern, index + 1, false);
                 if (isRange(token, rightToken, pattern, index + 1)) {
-                    result.append(expandRange(token.codePoint, rightToken.codePoint));
+                    if (caseInsensitive) {
+                        result.append(expandRange(token.codePoint, rightToken.codePoint));
+                    } else {
+                        result.append(token.text).append('-').append(rightToken.text);
+                    }
                     index = rightToken.nextIndex;
                     continue;
                 }
             }
 
-            result.append(expandSimpleToken(token));
+            result.append(caseInsensitive ? expandSimpleToken(token) : token.text);
         }
 
         return new ClassRewriteResult(result.toString(), pattern.length() - 1);
@@ -619,15 +629,6 @@ public final class RegexPatternUtils {
 
     private static boolean withinRange(int codePoint, int left, int right) {
         return codePoint >= Math.min(left, right) && codePoint <= Math.max(left, right);
-    }
-
-    private static String stripCharacterClassBrackets(String characterClass) {
-        if (characterClass.length() >= 2
-                && characterClass.charAt(0) == '['
-                && characterClass.charAt(characterClass.length() - 1) == ']') {
-            return characterClass.substring(1, characterClass.length() - 1);
-        }
-        return characterClass;
     }
 
     private static int skipUnicodeEscape(String pattern, int startIndex) {
