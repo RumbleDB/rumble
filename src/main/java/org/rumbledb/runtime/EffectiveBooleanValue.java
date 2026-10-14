@@ -65,8 +65,7 @@ public final class EffectiveBooleanValue {
             result = evaluateNumeric(item, position, staticContext);
         } else if (item.isNull()) {
             result = false;
-        } else if (item.isUntypedAtomic()
-                || item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
+        } else if (item.isUntypedAtomic() || item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
             result = !item.getStringValue().isEmpty();
         } else if (item.isNode()) {
             return true;
