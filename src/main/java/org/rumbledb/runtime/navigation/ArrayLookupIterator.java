@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.navigation;
 
 import java.io.Serial;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -99,6 +100,14 @@ public class ArrayLookupIterator extends ItemRuntimePlan
         if (!lookupExpression.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; Non numeric array lookup for : " + lookupExpression.serialize(), getMetadata());
+        }
+        if (lookupExpression.isInteger()) {
+            BigInteger position = lookupExpression.castToIntegerValue();
+            // A position outside the int range matches no member; 0 never matches.
+            if (position.signum() <= 0 || position.bitLength() >= Integer.SIZE) {
+                return 0;
+            }
+            return position.intValue();
         }
         return lookupExpression.castToIntValue();
     }

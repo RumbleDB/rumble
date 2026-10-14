@@ -96,12 +96,6 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     }
 
     private String resolveLookupKey(DynamicContext context) {
-        if (this.lookupIterator instanceof ContextExpressionIterator) {
-            return context.getVariableValues()
-                    .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                    .get(0)
-                    .getStringValue();
-        }
         return requireLookupKey(this.lookupIterator.materialize(context));
     }
 
