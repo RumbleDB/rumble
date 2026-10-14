@@ -33,6 +33,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.functions.arrays.ArrayIndexUtils;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -168,7 +169,7 @@ public class PostfixLookupIterator extends ItemRuntimePlan implements LocalRunti
                                 "Array lookup key must be an integer; got " + key.getDynamicType(),
                                 staticContext.getMetadata());
                     }
-                    int index = key.castToIntValue() - 1;
+                    int index = ArrayIndexUtils.getZeroBasedPosition(key, item.getSize(), staticContext.getMetadata());
                     if (item.isArrayOfItems()) {
                         results.add(item.getItemAt(index));
                     } else {
