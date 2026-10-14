@@ -685,6 +685,9 @@ public final class RegexPatternUtils {
             } else if (current == '[') {
                 throw new InvalidRegexPatternException("Invalid nested '[' in character class", metadata);
             } else if (current == ']') {
+                if (index == contentStart) {
+                    throw new InvalidRegexPatternException("Empty character class", metadata);
+                }
                 // XSD Appendix F: ']' is not a valid character range on its own (unlike '-', it has no
                 // "literal at the start of the group" exception), so it always closes the class here.
                 return index;
