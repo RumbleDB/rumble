@@ -121,6 +121,10 @@ public class UnaryLookupIterator extends ItemRuntimePlan implements LocalRuntime
                         "Invalid array lookup key type: " + key.getDynamicType(), getMetadata());
             }
             if (key.isNumeric()) {
+                if (!key.isInteger()) {
+                    throw new UnexpectedTypeException(
+                            "Array lookup key must be an integer; got " + key.getDynamicType(), getMetadata());
+                }
                 int index = key.castToIntValue() - 1;
                 if (array.isArrayOfItems()) {
                     results.add(array.getItemAt(index));
