@@ -96,10 +96,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     }
 
     private String resolveLookupKey(DynamicContext context) {
-        return requireLookupKey(this.lookupIterator.materialize(context));
-    }
-
-    private String requireLookupKey(List<Item> values) {
+        List<Item> values = this.lookupIterator.materialize(context);
         if (values.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Object lookup can't be performed with no key.", getMetadata());
@@ -163,7 +160,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             return NativeClauseContext.NoNativeQuery;
         }
         // otherwise, we can directly resolve the key statically.
-        String lookupKey = requireLookupKey(this.lookupIterator.materialize(nativeClauseContext.getContext()));
+        String lookupKey = resolveLookupKey(nativeClauseContext.getContext());
 
         // Next we determine the schema against which the key is resolved
         // If this is a filter, then this is the outer schema. Otherwise

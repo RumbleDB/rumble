@@ -71,7 +71,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        int position = requireLookupPosition(this.lookupIterator.materialize(context));
+        int position = resolveLookupPosition(context);
         return new FlatMappingLocalCursor<>(
                 this.iterator,
                 context,
@@ -87,7 +87,8 @@ public class ArrayLookupIterator extends ItemRuntimePlan
                 getMetadata());
     }
 
-    private int requireLookupPosition(List<Item> values) {
+    private int resolveLookupPosition(DynamicContext context) {
+        List<Item> values = this.lookupIterator.materialize(context);
         if (values.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Array lookup can't be performed with no key.", getMetadata());
@@ -115,7 +116,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
-        int lookup = requireLookupPosition(this.lookupIterator.materialize(dynamicContext));
+        int lookup = resolveLookupPosition(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(lookup);
 
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
@@ -145,7 +146,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
                 }
             }
 
-            int lookup = requireLookupPosition(this.lookupIterator.materialize(newContext.getContext()));
+            int lookup = resolveLookupPosition(newContext.getContext());
 
             ItemType resultType = newContext.getResultingType().getItemType();
             if (!(resultType.isArrayItemType())) {
@@ -186,7 +187,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         HomogeneousItemDataFrame childDataFrame =
                 ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
-        int lookup = requireLookupPosition(this.lookupIterator.materialize(context));
+        int lookup = resolveLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject
