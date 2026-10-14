@@ -92,11 +92,16 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                 }
             } else {
                 for (Item key : this.keys) {
-                    if (key.isString()) {
+                    if (key.isAtomic() && !key.isNumeric()) {
                         throw new UnexpectedTypeException(
-                                "Type error; Lookup with String on Arrays is not possible", this.expressionMetadata);
+                                "Invalid array lookup key type: " + key.getDynamicType(), this.expressionMetadata);
                     }
                     if (key.isNumeric()) {
+                        if (!key.isInteger()) {
+                            throw new UnexpectedTypeException(
+                                    "Array lookup key must be an integer; got " + key.getDynamicType(),
+                                    this.expressionMetadata);
+                        }
                         int idx = ArrayIndexUtils.getZeroBasedPosition(key, arg0.getSize(), this.expressionMetadata);
                         if (arg0.isArrayOfItems()) {
                             results.add(arg0.getItemAt(idx));

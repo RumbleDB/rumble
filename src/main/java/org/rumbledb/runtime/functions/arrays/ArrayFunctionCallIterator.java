@@ -49,9 +49,9 @@ public class ArrayFunctionCallIterator extends ItemRuntimePlan implements LocalR
                     "Invalid array function call; array lookup can't be performed with multiple keys.", getMetadata());
         }
         Item selector = selectors.get(0);
-        if (!selector.isNumeric()) {
+        if (!selector.isInteger()) {
             throw new UnexpectedTypeException(
-                    "Type error; non numeric array lookup for : " + selector.serialize(), getMetadata());
+                    "Array function call key must be an integer; got " + selector.getDynamicType(), getMetadata());
         }
         if (!this.arrayItem.isArray()) {
             throw new UnexpectedTypeException("Array function calls can only be performed on arrays.", getMetadata());
