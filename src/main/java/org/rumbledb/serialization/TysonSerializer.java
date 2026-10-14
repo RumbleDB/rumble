@@ -199,6 +199,7 @@ public class TysonSerializer implements Serializer, Serializable {
             sb.append("\n");
         }
     }
+
     private void serializeElementNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         sb.append(indent);
         sb.append("<");
@@ -221,5 +222,4 @@ public class TysonSerializer implements Serializer, Serializable {
         sb.append(">");
         sb.append("\n");
     }
-
 }

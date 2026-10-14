@@ -55,8 +55,7 @@ final class NamespaceSerializationContext implements Serializable {
         Map<String, String> parent = iterator.hasNext() ? iterator.next() : Map.of();
         List<Item> result = new ArrayList<>();
         for (Map.Entry<String, String> binding : current.entrySet()) {
-            if (!"xml".equals(binding.getKey())
-                    && !Objects.equals(parent.get(binding.getKey()), binding.getValue())) {
+            if (!"xml".equals(binding.getKey()) && !Objects.equals(parent.get(binding.getKey()), binding.getValue())) {
                 result.add(namespaceNode(element, binding.getKey(), binding.getValue()));
             }
         }
