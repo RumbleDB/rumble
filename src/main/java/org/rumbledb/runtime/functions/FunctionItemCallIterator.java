@@ -41,6 +41,7 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.runtime.plan.RuntimePlanBindings;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.types.FunctionSignature;
@@ -281,15 +282,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
             argName = functionItem.getParameterNames().get(i);
             argIterator = functionArguments.get(i);
 
-            if (argIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-                callContext
-                        .getVariableValues()
-                        .addVariableValue(argName, ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(argIterator, context));
-            } else if (argIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-                callContext.getVariableValues().addVariableValue(argName, argIterator.getRDD(context));
-            } else {
-                callContext.getVariableValues().addVariableValue(argName, argIterator.materialize(context));
-            }
+            RuntimePlanBindings.bind(argIterator, callContext, argName, context);
         }
     }
 
