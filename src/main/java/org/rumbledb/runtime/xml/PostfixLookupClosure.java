@@ -25,6 +25,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.functions.arrays.ArrayIndexUtils;
 
 /**
  * Spark closure for postfix lookup with XQuery 3.1 semantics: array index out of bounds
@@ -101,7 +102,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                                     "Array lookup key must be an integer; got " + key.getDynamicType(),
                                     this.expressionMetadata);
                         }
-                        int idx = key.castToIntValue() - 1;
+                        int idx = ArrayIndexUtils.getZeroBasedPosition(key, arg0.getSize(), this.expressionMetadata);
                         if (arg0.isArrayOfItems()) {
                             results.add(arg0.getItemAt(idx));
                         } else {
