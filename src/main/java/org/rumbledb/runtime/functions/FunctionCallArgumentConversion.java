@@ -35,7 +35,7 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
 /**
- * Shared argument arity checks and type-promotion wrapping for dynamic calls on
+ * Shared argument arity checks and function conversion wrapping for arguments and return values of calls on
  * {@link org.rumbledb.items.FunctionItem}s.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -76,8 +76,9 @@ public final class FunctionCallArgumentConversion {
     }
 
     /**
-     * Applies the function conversion rules for a parameter of the given type: atomization, casting of untyped
-     * values, type promotion, and the final type check. Returns the argument unchanged when it already matches.
+     * Applies the function conversion rules for an argument or return value of the given type: atomization,
+     * casting of untyped values, type promotion, and the final type check. Returns the value unchanged when it
+     * already matches.
      */
     public static ItemRuntimePlan wrapArgument(
             ItemRuntimePlan argument,
