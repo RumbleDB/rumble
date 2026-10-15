@@ -1551,7 +1551,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         return FunctionCallArgumentConversion.wrapArgument(
                 this.visit(expression.getArgument(), argument),
                 expression.getParameterType(),
-                "Invalid argument for " + expression.getFunctionName() + " function. ",
+                (expression.isReturnValue() ? "Invalid return type for " : "Invalid argument for ")
+                        + expression.getFunctionName()
+                        + " function. ",
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
