@@ -42,7 +42,21 @@ import org.rumbledb.types.SchemaElementNodeItemType;
 import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 
-/** Reads the content models of a schema to infer which children and attributes a path step selects. */
+/**
+ * Infers which children and attributes a path step selects from a schema-typed node, by reading the content model of
+ * its schema type: the element and attribute declarations that the type allows, and how many times each may occur.
+ * <p>
+ * For example, if the type of p:order is a sequence of one or more p:item elements followed by one p:customer element,
+ * {@code $order/p:customer} selects exactly one {@code element(p:customer, p:Customer)}, and {@code $order/p:missing}
+ * selects nothing, which static typing reports as an error.
+ * <p>
+ * A node may have one of several schema types, and the result covers all of them: each member of a union type, each
+ * declaration of a substitution group, and each type derived from the declared one, which an instance may select with
+ * xsi:type. When the schema does not describe every node a step can select, for example because a wildcard (xs:any)
+ * allows elements it does not declare, the methods return empty and static typing keeps its schema-unaware inference.
+ * <p>
+ * The {@link XmlSchemaCatalog} creates this class and provides the node types of declarations and the derived types.
+ */
 public final class SchemaContentModel {
 
     private final XmlSchemaCatalog catalog;
@@ -67,12 +81,17 @@ public final class SchemaContentModel {
     }
 
     /**
-     * Returns the nodes that a child or attribute step selects from one schema-typed element or document, by name or
-     * with any name when name is null. It is empty when the schema does not describe every node the step can select,
-     * for example through a wildcard.
+     * Returns the nodes that a child or attribute step selects from one schema-typed element or document. It is empty
+     * when the schema does not describe every node the step can select, for example through a wildcard.
+     * <p>
+     * The cardinality is for one context node; the caller repeats it for each node of the context sequence. Different
+     * declarations keep their own types, joined into a union, so that further steps still use each one's content model.
+     *
+     * @param name the name of the selected nodes, or null for any name, as in {@code *} or {@code element()}
      */
     public Optional<SequenceType> getStepType(ItemType contextType, boolean attributeAxis, Name name) {
-        // Instances also carry xsi attributes, such as xsi:type, which the schema does not declare.
+        // Every element may carry xsi:type, xsi:nil, xsi:schemaLocation and xsi:noNamespaceSchemaLocation without a
+        // declaration, so a step that may select them is left to the schema-unaware inference.
         if (!isSchemaTyped(contextType)
                 || (attributeAxis && (name == null || Name.XSI_NS.equals(name.getNamespace())))) {
             return Optional.empty();
@@ -80,11 +99,14 @@ public final class SchemaContentModel {
         return select(contextType, attributeAxis, name).map(Selection::sequenceType);
     }
 
-    /** Nodes that a step selects, before their types are combined. */
+    /** The node types of the declarations that a step selects from one context node, and how many nodes it selects. */
     private record Selection(Set<ItemType> nodeTypes, SequenceCardinality cardinality) {
         private static final Selection NONE = new Selection(Set.of(), SequenceCardinality.EMPTY);
 
-        /** One context node has one of the types, so it selects the nodes of either selection. */
+        /**
+         * Combines the selections of two cases that one context node may be, such as two members of a union: the node
+         * is one or the other, so the step selects the nodes of either selection, as many as either allows.
+         */
         private Selection or(Selection other) {
             Set<ItemType> nodeTypes = new LinkedHashSet<>(this.nodeTypes);
             nodeTypes.addAll(other.nodeTypes);
@@ -100,6 +122,11 @@ public final class SchemaContentModel {
         }
     }
 
+    /**
+     * Selects from each case that a context node of this type may be: each member of a union, and each declaration
+     * that a schema-element test allows through its substitution group. It is empty as soon as one case is unknown,
+     * since the result must cover every node that the step can select.
+     */
     private Optional<Selection> select(ItemType contextType, boolean attributeAxis, Name name) {
         Selection result = null;
         for (ItemType member : contextType.getMemberTypes()) {
@@ -121,6 +148,10 @@ public final class SchemaContentModel {
         return Optional.of(result == null ? Selection.NONE : result);
     }
 
+    /**
+     * Selects through the content model of the element's schema type and of every type derived from it. It is empty
+     * when the schema type cannot be resolved, or is xs:anyType, whose content can be anything.
+     */
     private Optional<Selection> selectFromElement(ElementNodeItemType context, boolean attributeAxis, Name name) {
         Optional<XSTypeDefinition> type = Optional.ofNullable(context.getSchemaTypeName())
                 .flatMap(this.catalog::resolveType)
@@ -151,13 +182,17 @@ public final class SchemaContentModel {
         return Optional.of(new Selection(nodeTypes, cardinality));
     }
 
-    /** A document node that matches document-node(E) has exactly one element child, which matches E. */
+    /**
+     * A document node that matches document-node(E) has exactly one element child, which matches E. With a name, the
+     * child is selected when E's declarations have that name, and only possibly when some have another name or, as in
+     * element(*, T), any name.
+     */
     private static Selection selectDocumentElement(ItemType elementType, Name name) {
         if (name == null) {
             return new Selection(Set.of(elementType), SequenceCardinality.ONE);
         }
         List<ElementNodeItemType> alternatives = alternatives(elementType);
-        // An element(*, T) child may have any name.
+        // The root of element(*, T) has a name that is not known statically, so it may or may not match.
         List<ElementNodeItemType> matching = alternatives.stream()
                 .filter(alternative -> alternative.getNodeName() == null
                         || alternative.getNodeName().equals(name))
@@ -171,13 +206,31 @@ public final class SchemaContentModel {
                         : alwaysMatches ? SequenceCardinality.ONE : SequenceCardinality.ZERO_OR_ONE);
     }
 
+    /** The declarations that an element test matches: the alternatives of schema-element(E), or the test itself. */
     private static List<ElementNodeItemType> alternatives(ItemType elementType) {
         return elementType instanceof SchemaElementNodeItemType schemaElement
                 ? schemaElement.getAlternatives()
                 : List.of((ElementNodeItemType) elementType);
     }
 
-    /** Collects the declarations that the particle allows with the name, or is empty if a wildcard allows it. */
+    /**
+     * Walks one particle of a content model, collects the element declarations with the name, and returns how many
+     * matching children the particle allows. It is empty when a wildcard may allow a matching element that the schema
+     * does not declare.
+     * <p>
+     * A particle is an entry of the content model with its minOccurs and maxOccurs, which repeat what its term allows:
+     * <ul>
+     * <li>an element declaration matches once, or only possibly when just some of its substitution group has the
+     * name;</li>
+     * <li>a wildcard (xs:any) matches nothing when its namespaces exclude the name;</li>
+     * <li>a sequence or all group contains all of its particles, so their counts add up, and a choice contains one of
+     * them.</li>
+     * </ul>
+     * For example, a sequence of p:item (maxOccurs="unbounded") and p:customer allows one or more p:item children and
+     * exactly one p:customer child.
+     *
+     * @param particle the content model of a complex type, or null when it has empty or simple content
+     */
     private Optional<Occurrences> collectChildElements(XSParticle particle, Name name, Set<ItemType> elementTypes) {
         if (particle == null) {
             return Optional.of(Occurrences.NONE);
@@ -224,7 +277,10 @@ public final class SchemaContentModel {
                 particle.getMaxOccursUnbounded() ? Occurrences.UNBOUNDED : particle.getMaxOccurs()));
     }
 
-    /** A global declaration's position also accepts the members of its substitution group. */
+    /**
+     * A reference to a global declaration also accepts the members of its substitution group. Abstract declarations
+     * are dropped, since no element can be validated against them.
+     */
     private List<XSElementDeclaration> substitutableDeclarations(XSElementDeclaration declaration) {
         List<XSElementDeclaration> result = new ArrayList<>();
         result.add(declaration);
@@ -238,6 +294,11 @@ public final class SchemaContentModel {
         return result;
     }
 
+    /**
+     * Collects the attribute declaration with the name, and returns whether the attribute is required, optional or
+     * absent. It is empty when an attribute wildcard (xs:anyAttribute) may allow the name. The attribute uses of a type
+     * include those inherited from its base types.
+     */
     private Optional<Occurrences> collectAttributes(
             XSComplexTypeDefinition type, Name name, Set<ItemType> attributeTypes) {
         XSWildcard wildcard = type.getAttributeWildcard();
@@ -256,11 +317,13 @@ public final class SchemaContentModel {
         return Optional.of(Occurrences.NONE);
     }
 
+    /** Xerces uses null for no namespace, and Rumble may use null or the empty string. */
     private static boolean hasName(String namespace, String localName, Name name) {
         return Objects.equals(XmlNameCodec.emptyToNull(namespace), XmlNameCodec.emptyToNull(name.getNamespace()))
                 && localName.equals(name.getLocalName());
     }
 
+    /** Whether a wildcard allows names in the namespace: ##any, a list of namespaces, or ##other (none of a list). */
     private static boolean allowsNamespace(XSWildcard wildcard, String namespace) {
         boolean listed = wildcard.getNsConstraintList().contains(XmlNameCodec.emptyToNull(namespace));
         return switch (wildcard.getConstraintType()) {
@@ -270,23 +333,26 @@ public final class SchemaContentModel {
         };
     }
 
-    /** Bounds on how many matching nodes a content model contains. */
+    /** Bounds on how many matching nodes a part of a content model contains, like minOccurs and maxOccurs. */
     private record Occurrences(long min, long max) {
         private static final long UNBOUNDED = Long.MAX_VALUE;
         private static final Occurrences NONE = new Occurrences(0, 0);
         private static final Occurrences OPTIONAL = new Occurrences(0, 1);
         private static final Occurrences ONE = new Occurrences(1, 1);
 
+        /** Both parts occur, as in a sequence, so their counts add up. */
         private Occurrences plus(Occurrences other) {
             return new Occurrences(
                     this.min + other.min,
                     this.max == UNBOUNDED || other.max == UNBOUNDED ? UNBOUNDED : this.max + other.max);
         }
 
+        /** One of the parts occurs, as in a choice. */
         private Occurrences or(Occurrences other) {
             return new Occurrences(Math.min(this.min, other.min), Math.max(this.max, other.max));
         }
 
+        /** The part repeats between minOccurs and maxOccurs times. */
         private Occurrences times(long minOccurs, long maxOccurs) {
             long max = this.max == 0 || maxOccurs == 0
                     ? 0
@@ -294,6 +360,7 @@ public final class SchemaContentModel {
             return new Occurrences(this.min * minOccurs, max);
         }
 
+        /** The cardinality that allows every count between min and max. */
         private SequenceCardinality cardinality() {
             return SequenceCardinality.fromPossibilities(this.min == 0, this.min <= 1 && this.max >= 1, this.max >= 2);
         }
