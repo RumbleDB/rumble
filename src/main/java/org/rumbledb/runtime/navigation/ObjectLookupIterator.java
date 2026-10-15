@@ -37,6 +37,8 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.InvalidSelectorException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
@@ -96,16 +98,16 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     }
 
     private String resolveLookupKey(DynamicContext context) {
-        List<Item> values = this.lookupIterator.materialize(context);
-        if (values.isEmpty()) {
+        Item key;
+        try {
+            key = this.lookupIterator.materializeExactlyOne(context);
+        } catch (NoItemException e) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Object lookup can't be performed with no key.", getMetadata());
-        }
-        if (values.size() > 1) {
+        } catch (MoreThanOneItemException e) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Object lookup can't be performed with multiple keys.", getMetadata());
         }
-        Item key = values.get(0);
         if (key.isNull() || key.isObject() || key.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; Object selector can't be converted to a string: " + key.serialize(), getMetadata());

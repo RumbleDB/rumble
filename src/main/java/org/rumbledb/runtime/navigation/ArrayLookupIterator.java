@@ -88,16 +88,16 @@ public class ArrayLookupIterator extends ItemRuntimePlan
     }
 
     private int resolveLookupPosition(DynamicContext context) {
-        List<Item> values = this.lookupIterator.materialize(context);
-        if (values.isEmpty()) {
+        Item lookupExpression;
+        try {
+            lookupExpression = this.lookupIterator.materializeExactlyOne(context);
+        } catch (NoItemException e) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Array lookup can't be performed with no key.", getMetadata());
-        }
-        if (values.size() > 1) {
+        } catch (MoreThanOneItemException e) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Array lookup can't be performed with multiple keys.", getMetadata());
         }
-        Item lookupExpression = values.get(0);
         if (!lookupExpression.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; Non numeric array lookup for : " + lookupExpression.serialize(), getMetadata());
