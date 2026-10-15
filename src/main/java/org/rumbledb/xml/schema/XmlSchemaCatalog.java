@@ -75,7 +75,7 @@ public final class XmlSchemaCatalog {
     private final XercesSimpleTypeCaster simpleTypeCaster;
     /**
      * Every complex type an element may be annotated with, named or anonymous, collected once by
-     * {@link #collectComplexTypes}. {@link #derivedComplexTypes} scans it to find the types derived from a given type.
+     * {@link #collectComplexTypes}. {@link #typeAndDerivedTypes} scans it to find the types derived from a given type.
      */
     private final List<XSComplexTypeDefinition> complexTypes;
     /**
@@ -85,6 +85,9 @@ public final class XmlSchemaCatalog {
      */
     private final Map<XSTypeDefinition, Optional<SequenceType>> typedValueTypes = new IdentityHashMap<>();
 
+    @Getter
+    private final SchemaContentModel contentModel;
+
     XmlSchemaCatalog(
             @NonNull XSModel schemaModel, @NonNull Schema validationSchema, Map<String, String> namespacePrefixes) {
         this.schemaModel = schemaModel;
@@ -93,6 +96,7 @@ public final class XmlSchemaCatalog {
         this.typedValueConverter = new XercesTypedValueConverter(this.typeMapper);
         this.simpleTypeCaster = new XercesSimpleTypeCaster(this.typeMapper, this.typedValueConverter);
         this.complexTypes = collectComplexTypes(schemaModel);
+        this.contentModel = new SchemaContentModel(this);
     }
 
     public Optional<XSTypeDefinition> getTypeDefinition(@NonNull Name name) {
@@ -169,18 +173,20 @@ public final class XmlSchemaCatalog {
     }
 
     private void addElementAlternative(XSElementDeclaration declaration, List<ElementNodeItemType> alternatives) {
-        if (declaration.getAbstract()) {
-            return;
+        if (!declaration.getAbstract()) {
+            alternatives.add(elementType(declaration));
         }
+    }
 
+    ElementNodeItemType elementType(XSElementDeclaration declaration) {
         XmlSchemaTypeAnnotation annotation = this.typeMapper.mapTypeAnnotation(declaration.getTypeDefinition());
-        alternatives.add(new ElementNodeItemType(
+        return new ElementNodeItemType(
                 this.typeMapper.declarationName(declaration.getNamespace(), declaration.getName()),
                 annotation.name(),
                 annotation.typeHierarchy(),
                 declaration.getNillable(),
                 matchingTypeNames(declaration.getTypeDefinition()),
-                typedValueType(declaration.getTypeDefinition()).orElse(null)));
+                typedValueType(declaration.getTypeDefinition()).orElse(null));
     }
 
     /** Attribute declaration tests have the same matching rules as a named, typed attribute test. */
@@ -191,6 +197,15 @@ public final class XmlSchemaCatalog {
             throw new SemanticException(
                     "Unknown global schema attribute: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata);
         }
+        return attributeType(name, declaration);
+    }
+
+    AttributeNodeItemType attributeType(XSAttributeDeclaration declaration) {
+        return attributeType(
+                this.typeMapper.declarationName(declaration.getNamespace(), declaration.getName()), declaration);
+    }
+
+    private AttributeNodeItemType attributeType(Name name, XSAttributeDeclaration declaration) {
         XmlSchemaTypeAnnotation annotation = this.typeMapper.mapTypeAnnotation(declaration.getTypeDefinition());
         return new AttributeNodeItemType(
                 name,
@@ -373,11 +388,12 @@ public final class XmlSchemaCatalog {
                     : Optional.of(simpleTypedValueType(simpleType));
         }
         // Simple types are also derived from xs:anyType.
-        if (Name.XS_NS.equals(type.getNamespace()) && "anyType".equals(type.getName())) {
+        if (isAnyType(type)) {
             return Optional.empty();
         }
         SequenceType result = null;
-        for (XSComplexTypeDefinition derived : derivedComplexTypes((XSComplexTypeDefinition) type)) {
+        for (XSTypeDefinition derivedType : typeAndDerivedTypes(type)) {
+            XSComplexTypeDefinition derived = (XSComplexTypeDefinition) derivedType;
             SequenceType typedValue;
             switch (derived.getContentType()) {
                 case XSComplexTypeDefinition.CONTENTTYPE_EMPTY:
@@ -403,12 +419,18 @@ public final class XmlSchemaCatalog {
         return Optional.ofNullable(result).filter(typedValue -> !typedValue.isEmptySequence());
     }
 
-    /**
-     * Returns the type itself followed by every collected complex type derived from it, by extension or restriction
-     * and through any number of steps. These are the types that a node matching the type may actually have.
-     */
-    private List<XSComplexTypeDefinition> derivedComplexTypes(XSComplexTypeDefinition type) {
-        List<XSComplexTypeDefinition> result = new ArrayList<>();
+    /** Resolves a named type, or an anonymous type through the internal name it was given. */
+    Optional<XSTypeDefinition> resolveType(Name name) {
+        return getTypeDefinition(name).or(() -> this.typeMapper.anonymousType(name));
+    }
+
+    static boolean isAnyType(XSTypeDefinition type) {
+        return Name.XS_NS.equals(type.getNamespace()) && "anyType".equals(type.getName());
+    }
+
+    /** A type and the complex types derived from it, since simple types derived from a simple type stay simple. */
+    List<XSTypeDefinition> typeAndDerivedTypes(XSTypeDefinition type) {
+        List<XSTypeDefinition> result = new ArrayList<>();
         result.add(type);
         for (XSComplexTypeDefinition candidate : this.complexTypes) {
             if (candidate != type && candidate.derivedFromType(type, XSConstants.DERIVATION_NONE)) {
@@ -422,7 +444,7 @@ public final class XmlSchemaCatalog {
      * Named complex types, and the anonymous complex types of global and local element declarations.
      * <p>
      * Xerces only lists named (global) types, but an element declared with an anonymous type that extends or
-     * restricts T also matches element(*, T), so {@link #derivedComplexTypes} needs those types too. This walks from
+     * restricts T also matches element(*, T), so {@link #typeAndDerivedTypes} needs those types too. This walks from
      * the named types and global element declarations into the content models of the complex types it finds, which
      * reach the local element declarations and their anonymous types. Simple types are not kept: deriving from a
      * simple type never widens its typed value.
