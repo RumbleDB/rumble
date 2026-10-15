@@ -75,6 +75,9 @@ public final class RegexPatternUtils {
             pattern = Pattern.quote(pattern);
         }
         if (!quote) {
+            if ((flags & Pattern.MULTILINE) == 0) {
+                pattern = translateEndAnchors(pattern);
+            }
             boolean caseInsensitive = (flags & Pattern.CASE_INSENSITIVE) != 0;
             if (caseInsensitive || pattern.contains("-[")) {
                 pattern = rewritePattern(pattern, caseInsensitive);
@@ -90,6 +93,30 @@ public final class RegexPatternUtils {
         } catch (PatternSyntaxException e) {
             throw new InvalidRegexPatternException(e.getDescription(), metadata);
         }
+    }
+
+    /** XPath's non-multiline '$' matches only the end, whereas Java also accepts a final line terminator. */
+    private static String translateEndAnchors(String pattern) {
+        StringBuilder result = new StringBuilder(pattern.length());
+        int classDepth = 0;
+        for (int i = 0; i < pattern.length(); i++) {
+            char current = pattern.charAt(i);
+            if (current == '\\' && i + 1 < pattern.length()) {
+                result.append(current).append(pattern.charAt(++i));
+                continue;
+            }
+            if (current == '[') {
+                classDepth++;
+            } else if (current == ']') {
+                classDepth--;
+            }
+            if (current == '$' && classDepth == 0) {
+                result.append("\\z");
+            } else {
+                result.append(current);
+            }
+        }
+        return result.toString();
     }
 
     private static void validateXQueryRegex(String pattern, boolean quote, ExceptionMetadata metadata) {
