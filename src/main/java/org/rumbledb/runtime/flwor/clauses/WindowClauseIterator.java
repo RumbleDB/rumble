@@ -72,7 +72,7 @@ public class WindowClauseIterator extends TupleRuntimePlan {
 
     /**
      * The iterator that produces the items to be windowed.
-     * For example, {@code for sliding window in (1, 2, 3)}
+     * For example, {@code for sliding window $w in (1, 2, 3)}
      */
     private final ItemRuntimePlan sourceIterator;
 
@@ -173,20 +173,21 @@ public class WindowClauseIterator extends TupleRuntimePlan {
      * @param inputTuple the tuple from the child clause, or {@code null} if the window clause is the first clause
      */
     private List<FlworTuple> generateWindows(DynamicContext context, FlworTuple inputTuple) {
-        DynamicContext sourceContext = new DynamicContext(context);
+        DynamicContext tupleContext = new DynamicContext(context);
         if (inputTuple != null) {
-            sourceContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
+            tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
         }
         // A distributed source is collected here, within the materialization cap.
-        List<Item> items = this.sourceIterator.materialize(sourceContext);
+        List<Item> items = this.sourceIterator.materialize(tupleContext);
         List<FlworTuple> results = new ArrayList<>();
         int start = 0;
+        boolean startKnownToMatch = false;
         while (start < items.size()) {
-            if (!startMatches(context, inputTuple, items, start)) {
+            if (!startKnownToMatch && !startMatches(tupleContext, items, start)) {
                 start++;
                 continue;
             }
-            int end = findEnd(context, inputTuple, items, start);
+            int end = findEnd(tupleContext, items, start);
             if (end >= 0) {
                 results.add(createTuple(inputTuple, items, start, end));
             }
@@ -195,6 +196,8 @@ public class WindowClauseIterator extends TupleRuntimePlan {
             } else if (end >= 0) {
                 // Tumbling windows do not overlap, so the next window can only start after this one ends.
                 start = end + 1;
+                // Without an end condition, findEnd already found that the start condition holds for the next item.
+                startKnownToMatch = this.endCondition == null;
             } else {
                 // A dropped tumbling window would have extended to the end of the sequence.
                 break;
@@ -206,47 +209,39 @@ public class WindowClauseIterator extends TupleRuntimePlan {
     /**
      * Returns the position of the last item of the window starting at {@code start}, or -1 if no window is generated.
      */
-    private int findEnd(DynamicContext context, FlworTuple inputTuple, List<Item> items, int start) {
+    private int findEnd(DynamicContext tupleContext, List<Item> items, int start) {
         if (this.endCondition == null) {
             // A tumbling window without an end condition ends before the next item that satisfies the start condition.
             for (int nextStart = start + 1; nextStart < items.size(); nextStart++) {
-                if (startMatches(context, inputTuple, items, nextStart)) {
+                if (startMatches(tupleContext, items, nextStart)) {
                     return nextStart - 1;
                 }
             }
             return items.size() - 1;
         }
         for (int end = start; end < items.size(); end++) {
-            if (endMatches(context, inputTuple, items, start, end)) {
+            if (endMatches(tupleContext, items, start, end)) {
                 return end;
             }
         }
         return this.endConditionOnly ? -1 : items.size() - 1;
     }
 
-    private boolean startMatches(DynamicContext context, FlworTuple inputTuple, List<Item> items, int start) {
-        DynamicContext conditionContext = createConditionContext(context, inputTuple);
+    /**
+     * Evaluates the start condition in a fresh child of the tuple context, so that the condition variables of one
+     * evaluation do not leak into the next one, while the outer bindings remain visible.
+     */
+    private boolean startMatches(DynamicContext tupleContext, List<Item> items, int start) {
+        DynamicContext conditionContext = new DynamicContext(tupleContext);
         bindVariables(items, start, this.startVariables, conditionContext.getVariableValues()::addVariableValue);
         return EffectiveBooleanValue.evaluate(this.startCondition, conditionContext);
     }
 
-    private boolean endMatches(DynamicContext context, FlworTuple inputTuple, List<Item> items, int start, int end) {
-        DynamicContext conditionContext = createConditionContext(context, inputTuple);
+    private boolean endMatches(DynamicContext tupleContext, List<Item> items, int start, int end) {
+        DynamicContext conditionContext = new DynamicContext(tupleContext);
         bindVariables(items, start, this.startVariables, conditionContext.getVariableValues()::addVariableValue);
         bindVariables(items, end, this.endVariables, conditionContext.getVariableValues()::addVariableValue);
         return EffectiveBooleanValue.evaluate(this.endCondition, conditionContext);
-    }
-
-    /**
-     * Creates the context in which a condition is evaluated, so that the bindings of one condition do not leak into
-     * the next one, while outer bindings remain visible.
-     */
-    private DynamicContext createConditionContext(DynamicContext context, FlworTuple inputTuple) {
-        DynamicContext conditionContext = new DynamicContext(context);
-        if (inputTuple != null) {
-            conditionContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
-        }
-        return conditionContext;
     }
 
     /**
