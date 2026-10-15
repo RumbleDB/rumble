@@ -126,7 +126,7 @@ public class ObjectRemoveKeysFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemRuntimePlan iterator;
+    private final ItemRuntimePlan iterator;
 
     public ObjectRemoveKeysFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);

@@ -74,14 +74,14 @@ public class ObjectLookupIterator extends ItemRuntimePlan
 
     private final ItemRuntimePlan iterator;
     private final ItemRuntimePlan lookupIterator;
-    private Item lookupKey;
-    private boolean contextLookup;
+    private final boolean contextLookup;
 
     public ObjectLookupIterator(
             ItemRuntimePlan object, ItemRuntimePlan lookupIterator, RuntimeStaticContext staticContext) {
         super(Arrays.asList(object, lookupIterator), staticContext);
         this.iterator = object;
         this.lookupIterator = lookupIterator;
+        this.contextLookup = lookupIterator instanceof ContextExpressionIterator;
     }
 
     @Override
@@ -110,51 +110,47 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 getMetadata());
     }
 
-    private void initLookupKey(DynamicContext context) {
-        this.contextLookup = this.lookupIterator instanceof ContextExpressionIterator;
-
-        if (!this.contextLookup) {
-
-            try {
-                this.lookupKey = this.lookupIterator.materializeExactlyOne(context);
-            } catch (NoItemException e) {
-                throw new InvalidSelectorException(
-                        "Invalid Lookup Key; Object lookup can't be performed with no key.", getMetadata());
-            } catch (MoreThanOneItemException e) {
-                throw new InvalidSelectorException(
-                        "Invalid Lookup Key; Object lookup can't be performed with multiple keys.", getMetadata());
-            }
-
-            if (this.lookupKey.isNull() || this.lookupKey.isObject() || this.lookupKey.isArray()) {
-                throw new UnexpectedTypeException(
-                        "Type error; Object selector can't be converted to a string: " + this.lookupKey.serialize(),
-                        getMetadata());
-            } else {
-                // convert to string
-                if (this.lookupKey.isBoolean()) {
-                    Boolean value = this.lookupKey.getBooleanValue();
-                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (this.lookupKey.isDecimal()) {
-                    BigDecimal value = this.lookupKey.getDecimalValue();
-                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (this.lookupKey.isDouble()) {
-                    Double value = this.lookupKey.getDoubleValue();
-                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (this.lookupKey.isInt()) {
-                    Integer value = this.lookupKey.getIntValue();
-                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (this.lookupKey.isInteger()) {
-                    BigInteger value = this.lookupKey.getIntegerValue();
-                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (this.lookupKey.isString()) {
-                    // do nothing
-                }
-            }
-            if (!this.lookupKey.isString()) {
-                throw new UnexpectedTypeException(
-                        "Non string object lookup for " + this.lookupKey.serialize(), getMetadata());
-            }
+    private Item evaluateLookupKey(DynamicContext context) {
+        if (this.contextLookup) {
+            return null;
         }
+        Item lookupKey;
+        try {
+            lookupKey = this.lookupIterator.materializeExactlyOne(context);
+        } catch (NoItemException e) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Object lookup can't be performed with no key.", getMetadata());
+        } catch (MoreThanOneItemException e) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Object lookup can't be performed with multiple keys.", getMetadata());
+        }
+
+        if (lookupKey.isNull() || lookupKey.isObject() || lookupKey.isArray()) {
+            throw new UnexpectedTypeException(
+                    "Type error; Object selector can't be converted to a string: " + lookupKey.serialize(),
+                    getMetadata());
+        }
+        // convert to string
+        if (lookupKey.isBoolean()) {
+            Boolean value = lookupKey.getBooleanValue();
+            lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
+        } else if (lookupKey.isDecimal()) {
+            BigDecimal value = lookupKey.getDecimalValue();
+            lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
+        } else if (lookupKey.isDouble()) {
+            Double value = lookupKey.getDoubleValue();
+            lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
+        } else if (lookupKey.isInt()) {
+            Integer value = lookupKey.getIntValue();
+            lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
+        } else if (lookupKey.isInteger()) {
+            BigInteger value = lookupKey.getIntegerValue();
+            lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
+        }
+        if (!lookupKey.isString()) {
+            throw new UnexpectedTypeException("Non string object lookup for " + lookupKey.serialize(), getMetadata());
+        }
+        return lookupKey;
     }
 
     private String requireLookupKey(List<Item> values) {
@@ -195,7 +191,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
-        initLookupKey(dynamicContext);
+        Item lookupKey = evaluateLookupKey(dynamicContext);
         String key;
         if (this.contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
@@ -205,7 +201,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                     .get(0)
                     .getStringValue();
         } else {
-            key = this.lookupKey.getStringValue();
+            key = lookupKey.getStringValue();
         }
         FlatMapFunction<Item, Item> transformation = new ObjectLookupClosure(key);
 
@@ -228,7 +224,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             }
         }
         // otherwise, we can directly resolve the key statically.
-        initLookupKey(nativeClauseContext.getContext());
+        Item lookupKey = evaluateLookupKey(nativeClauseContext.getContext());
 
         // Next we determine the schema against which the key is resolved
         // If this is a filter, then this is the outer schema. Otherwise
@@ -264,7 +260,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         }
 
         // get key (escape backtick)
-        String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
+        String key = lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
         if (!(leftSchema instanceof StructType structSchema)) {
             if (this.lookupIterator instanceof StringRuntimeIterator) {
@@ -349,7 +345,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         HomogeneousItemDataFrame childDataFrame =
                 ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
-        initLookupKey(context);
+        Item lookupKey = evaluateLookupKey(context);
         String key;
         if (this.contextLookup) {
             key = context.getVariableValues()
@@ -357,7 +353,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                     .get(0)
                     .getStringValue();
         } else {
-            key = this.lookupKey.getStringValue();
+            key = lookupKey.getStringValue();
         }
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (childDataFrame.hasKey(key)) {
