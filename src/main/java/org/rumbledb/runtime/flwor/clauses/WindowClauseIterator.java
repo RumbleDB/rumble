@@ -243,7 +243,6 @@ public class WindowClauseIterator extends TupleRuntimePlan {
      */
     private DynamicContext createConditionContext(DynamicContext context, FlworTuple inputTuple) {
         DynamicContext conditionContext = new DynamicContext(context);
-        conditionContext.getVariableValues().removeAllVariables();
         if (inputTuple != null) {
             conditionContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata());
         }
