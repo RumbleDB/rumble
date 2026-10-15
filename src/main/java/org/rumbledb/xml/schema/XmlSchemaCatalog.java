@@ -73,8 +73,16 @@ public final class XmlSchemaCatalog {
     private final XmlSchemaTypeMapper typeMapper;
     private final XercesTypedValueConverter typedValueConverter;
     private final XercesSimpleTypeCaster simpleTypeCaster;
+    /**
+     * Every complex type an element may be annotated with, named or anonymous, collected once by
+     * {@link #collectComplexTypes}. {@link #derivedComplexTypes} scans it to find the types derived from a given type.
+     */
     private final List<XSComplexTypeDefinition> complexTypes;
-    // Typed values depend only on the immutable schema model, but finding derived types scans every complex type.
+    /**
+     * Typed values computed by {@link #typedValueType}, keyed by Xerces type object. An empty Optional means the
+     * typed value is unknown (no narrower than xs:anyAtomicType*); a missing key means it was not computed yet.
+     * Typed values depend only on the immutable schema model, but finding derived types scans every complex type.
+     */
     private final Map<XSTypeDefinition, Optional<SequenceType>> typedValueTypes = new IdentityHashMap<>();
 
     XmlSchemaCatalog(
@@ -106,7 +114,14 @@ public final class XmlSchemaCatalog {
         return List.copyOf(names);
     }
 
-    /** Returns the name of the only global element declaration that an element can have, if there is one. */
+    /**
+     * Returns the name of the only global element declaration that an element can have, if there is one.
+     * <p>
+     * Used by static typing of {@code validate strict { $e }} when the name of {@code $e} is not known statically:
+     * strict validation fails (XQDY0084) unless a global declaration has the element's name, so if only one
+     * declaration can match, a successful validation must have used it. Abstract declarations are skipped because an
+     * element can never be validated against them directly.
+     */
     public Optional<Name> getOnlyElementDeclarationName() {
         XSNamedMap elements = this.schemaModel.getComponents(XSConstants.ELEMENT_DECLARATION);
         XSElementDeclaration only = null;
@@ -130,7 +145,12 @@ public final class XmlSchemaCatalog {
                         "Unknown global schema element: " + name, ErrorCode.UndeclaredVariableErrorCode, metadata));
     }
 
-    /** Like {@link #getSchemaElementTest}, but empty when there is no global declaration with this name. */
+    /**
+     * Like {@link #getSchemaElementTest}, but empty when there is no global declaration with this name.
+     * <p>
+     * Used to infer the type of a validated element: lax validation leaves an element without a declaration
+     * unannotated, which is not an error.
+     */
     public Optional<SchemaElementNodeItemType> findSchemaElementTest(Name name) {
         XSElementDeclaration declaration = this.schemaModel.getElementDeclaration(
                 name.getLocalName(), XmlNameCodec.emptyToNull(name.getNamespace()));
@@ -180,7 +200,14 @@ public final class XmlSchemaCatalog {
                 typedValueType(declaration.getTypeDefinition()).orElse(null));
     }
 
-    /** The test element(nodeName, typeName), or element(*, typeName) when nodeName is null. */
+    /**
+     * The test element(nodeName, typeName), or element(*, typeName) when nodeName is null.
+     * <p>
+     * Used to translate sequence types and path node tests, and to type {@code validate type T { ... }}. The test
+     * carries the typed value of typeName, so atomizing a matching node has a known static type.
+     *
+     * @param nillable whether the test also matches nilled elements, as in element(N, T?)
+     */
     public ElementNodeItemType getElementTest(
             Name nodeName, Name typeName, boolean nillable, ExceptionMetadata metadata) {
         return new ElementNodeItemType(
@@ -191,7 +218,12 @@ public final class XmlSchemaCatalog {
                 getTypedValueType(typeName).orElse(null));
     }
 
-    /** The test attribute(nodeName, typeName), or attribute(*, typeName) when nodeName is null. */
+    /**
+     * The test attribute(nodeName, typeName), or attribute(*, typeName) when nodeName is null.
+     * <p>
+     * Used to translate sequence types and path node tests. Like {@link #getElementTest}, the test carries the typed
+     * value of typeName.
+     */
     public AttributeNodeItemType getAttributeTest(Name nodeName, Name typeName, ExceptionMetadata metadata) {
         return new AttributeNodeItemType(
                 nodeName,
@@ -272,7 +304,11 @@ public final class XmlSchemaCatalog {
 
     /**
      * Returns the typed value of a node annotated with the named type, or empty when it is no narrower than
-     * xs:anyAtomicType*. Some XQuery types, such as xs:untyped, have no Xerces definition.
+     * xs:anyAtomicType*. The typed value is what fn:data (atomization) returns for the node: for example, an element
+     * of a list type atomizes to one value per list item.
+     * <p>
+     * This is the entry point for typed tests such as element(*, T). Some XQuery types, such as xs:untyped, have no
+     * Xerces definition and are handled here directly.
      */
     public Optional<SequenceType> getTypedValueType(Name typeName) {
         Optional<XSTypeDefinition> definition = getTypeDefinition(typeName);
@@ -304,6 +340,9 @@ public final class XmlSchemaCatalog {
      * Returns the typed value of a node annotated with this type or with a type derived from it, since an instance
      * may select one with xsi:type. Derivation keeps simple content within its base simple type, but a derived
      * complex type can change the content type: for example, an extension of an empty type can add mixed content.
+     * <p>
+     * Caching wrapper around {@link #computeTypedValueType}. Used for declarations (schema-element, schema-attribute)
+     * and, through {@link #getTypedValueType}, for named types.
      */
     private Optional<SequenceType> typedValueType(XSTypeDefinition type) {
         // Not computeIfAbsent: the computation recurses into this cache for simple content.
@@ -315,6 +354,17 @@ public final class XmlSchemaCatalog {
         return cached;
     }
 
+    /**
+     * Computes the typed value without the cache. A simple type gives its values directly. A complex type is joined
+     * over itself and every complex type derived from it, according to each one's content type (what the element may
+     * contain between its tags):
+     * <ul>
+     * <li>empty: no content, so the typed value is ();</li>
+     * <li>mixed: text interleaved with child elements, atomized as one xs:untypedAtomic;</li>
+     * <li>simple: text only, of a simple type that gives the typed value;</li>
+     * <li>element-only: child elements only, which atomization rejects with FOTY0012, so it adds no values.</li>
+     * </ul>
+     */
     private Optional<SequenceType> computeTypedValueType(XSTypeDefinition type) {
         if (type instanceof XSSimpleTypeDefinition simpleType) {
             // Values of xs:anySimpleType may also be lists.
@@ -353,6 +403,10 @@ public final class XmlSchemaCatalog {
         return Optional.ofNullable(result).filter(typedValue -> !typedValue.isEmptySequence());
     }
 
+    /**
+     * Returns the type itself followed by every collected complex type derived from it, by extension or restriction
+     * and through any number of steps. These are the types that a node matching the type may actually have.
+     */
     private List<XSComplexTypeDefinition> derivedComplexTypes(XSComplexTypeDefinition type) {
         List<XSComplexTypeDefinition> result = new ArrayList<>();
         result.add(type);
@@ -364,8 +418,17 @@ public final class XmlSchemaCatalog {
         return result;
     }
 
-    /** Named complex types, and the anonymous complex types of global and local element declarations. */
+    /**
+     * Named complex types, and the anonymous complex types of global and local element declarations.
+     * <p>
+     * Xerces only lists named (global) types, but an element declared with an anonymous type that extends or
+     * restricts T also matches element(*, T), so {@link #derivedComplexTypes} needs those types too. This walks from
+     * the named types and global element declarations into the content models of the complex types it finds, which
+     * reach the local element declarations and their anonymous types. Simple types are not kept: deriving from a
+     * simple type never widens its typed value.
+     */
     private static List<XSComplexTypeDefinition> collectComplexTypes(XSModel schemaModel) {
+        // Compared by identity: Xerces creates one object per type definition, and anonymous types have no name.
         Set<XSComplexTypeDefinition> complexTypes = Collections.newSetFromMap(new IdentityHashMap<>());
         Deque<XSTypeDefinition> pending = new ArrayDeque<>();
         XSNamedMap types = schemaModel.getComponents(XSConstants.TYPE_DEFINITION);
@@ -377,6 +440,7 @@ public final class XmlSchemaCatalog {
             pending.add(((XSElementDeclaration) elements.item(index)).getTypeDefinition());
         }
         while (!pending.isEmpty()) {
+            // A type seen before is skipped, so recursive content models (a Tree type containing Tree elements) end.
             if (pending.pop() instanceof XSComplexTypeDefinition complexType && complexTypes.add(complexType)) {
                 addLocalElementTypes(complexType.getParticle(), pending);
             }
@@ -384,6 +448,17 @@ public final class XmlSchemaCatalog {
         return List.copyOf(complexTypes);
     }
 
+    /**
+     * Queues the types of the element declarations in a content model.
+     * <p>
+     * In the Xerces schema model, a complex type's content model is a tree of particles. A particle is one entry of
+     * the content model with its occurrence bounds (minOccurs, maxOccurs), and its term is what may occur: an element
+     * declaration (local, or a reference to a global one), a model group (xs:sequence, xs:choice or xs:all, which
+     * holds further particles), or a wildcard (xs:any, which declares no types). For a type derived by extension, the
+     * particle already includes the content inherited from the base type.
+     *
+     * @param particle the content model of a complex type, or null when it has empty or simple content
+     */
     private static void addLocalElementTypes(XSParticle particle, Deque<XSTypeDefinition> pending) {
         if (particle == null) {
             return;
@@ -398,6 +473,11 @@ public final class XmlSchemaCatalog {
         }
     }
 
+    /**
+     * The values of a simple type, shared by casts to the type and by the typed value of nodes annotated with it.
+     * A list (or a union with a list member) gives its item type with *, since the text is split on whitespace into
+     * any number of values. Any other simple type gives exactly one value.
+     */
     private SequenceType simpleTypedValueType(XSSimpleTypeDefinition schemaType) {
         if (mayProduceMultipleValues(schemaType)) {
             ItemType itemType = this.typeMapper.getListItemType(schemaType).orElse(BuiltinTypesCatalogue.atomicItem);
