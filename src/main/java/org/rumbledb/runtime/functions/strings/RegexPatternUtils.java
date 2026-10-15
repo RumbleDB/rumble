@@ -33,6 +33,15 @@ public final class RegexPatternUtils {
 
     private static final Pattern XML_WHITESPACE_PATTERN = Pattern.compile("[\\t\\n\\r ]+");
 
+    // XML 1.0 (Fifth Edition), productions [4] NameStartChar and [4a] NameChar.
+    private static final String XML_NAME_START_CHARACTERS = ":A-Z_a-z"
+            + "\\x{C0}-\\x{D6}\\x{D8}-\\x{F6}\\x{F8}-\\x{2FF}"
+            + "\\x{370}-\\x{37D}\\x{37F}-\\x{1FFF}\\x{200C}-\\x{200D}"
+            + "\\x{2070}-\\x{218F}\\x{2C00}-\\x{2FEF}\\x{3001}-\\x{D7FF}"
+            + "\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFFD}\\x{10000}-\\x{EFFFF}";
+    private static final String XML_NAME_CHARACTERS =
+            XML_NAME_START_CHARACTERS + "\\-.0-9\\x{B7}\\x{300}-\\x{36F}\\x{203F}-\\x{2040}";
+
     private RegexPatternUtils() {}
 
     public static CompiledRegex compileRegex(String pattern, String flagsString, ExceptionMetadata metadata) {
@@ -74,6 +83,7 @@ public final class RegexPatternUtils {
                 flags &= ~(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
             }
             pattern = translateUnicodeBlockEscapes(pattern);
+            pattern = translateXmlNameEscapes(pattern);
         }
         try {
             return new CompiledRegex(Pattern.compile(pattern, flags), quote, pattern);
@@ -390,6 +400,37 @@ public final class RegexPatternUtils {
             }
             result.append(current);
             i++;
+        }
+        return result.toString();
+    }
+
+    /**
+     * Expands XSD name escapes to Java character classes, including when used inside another class.
+     * Run after validation and class/case rewriting so generated ranges retain their XML meaning.
+     */
+    private static String translateXmlNameEscapes(String pattern) {
+        StringBuilder result = new StringBuilder(pattern.length());
+        for (int i = 0; i < pattern.length(); i++) {
+            char current = pattern.charAt(i);
+            if (current != '\\' || i + 1 >= pattern.length()) {
+                result.append(current);
+                continue;
+            }
+            char next = pattern.charAt(++i);
+            switch (next) {
+                case 'i':
+                case 'I':
+                case 'c':
+                case 'C':
+                    result.append(next == 'I' || next == 'C' ? "[^" : "[");
+                    result.append(next == 'i' || next == 'I' ? XML_NAME_START_CHARACTERS : XML_NAME_CHARACTERS);
+                    result.append(']');
+                    break;
+                default:
+                    // Consume the whole escape, especially literal backslashes in \\i and \\c.
+                    result.append(current).append(next);
+                    break;
+            }
         }
         return result.toString();
     }
