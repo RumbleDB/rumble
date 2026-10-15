@@ -131,32 +131,15 @@ public class NamedFunctions implements Serializable {
         if (isTailOptimization) {
             return functionCallIterator;
         }
-        if (sequenceType.equals(SequenceType.createSequenceType("item*"))) {
-            return functionCallIterator;
-        }
-        if (sequenceType.isEmptySequence()
-                || sequenceType.getArity().equals(Arity.One)
-                || sequenceType.getArity().equals(Arity.OneOrZero)) {
-            return new AtMostOneItemTypePromotionIterator(
-                    functionCallIterator,
-                    sequenceType,
-                    "Invalid return type for "
-                            + ((functionItem.getIdentifier().getName() == null)
-                                    ? ""
-                                    : (functionItem.getIdentifier().getName()) + " ")
-                            + "function. ",
-                    outerStaticContext);
-        } else {
-            return new TypePromotionIterator(
-                    functionCallIterator,
-                    sequenceType,
-                    "Invalid return type for "
-                            + ((functionItem.getIdentifier().getName() == null)
-                                    ? ""
-                                    : (functionItem.getIdentifier().getName()) + " ")
-                            + "function. ",
-                    outerStaticContext);
-        }
+        return FunctionCallArgumentConversion.wrapArgument(
+                functionCallIterator,
+                sequenceType,
+                "Invalid return type for "
+                        + ((functionItem.getIdentifier().getName() == null)
+                                ? ""
+                                : (functionItem.getIdentifier().getName()) + " ")
+                        + "function. ",
+                outerStaticContext);
     }
 
     public void addUserDefinedFunction(Item function, ExceptionMetadata meta) {

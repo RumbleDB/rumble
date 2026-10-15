@@ -23,7 +23,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -50,23 +49,18 @@ public class ArrayFunctionCallIterator extends ItemRuntimePlan implements LocalR
                     "Invalid array function call; array lookup can't be performed with multiple keys.", getMetadata());
         }
         Item selector = selectors.get(0);
-        if (!selector.isNumeric()) {
+        if (!selector.isInteger()) {
             throw new UnexpectedTypeException(
-                    "Type error; non numeric array lookup for : " + selector.serialize(), getMetadata());
+                    "Array function call key must be an integer; got " + selector.getDynamicType(), getMetadata());
         }
         if (!this.arrayItem.isArray()) {
             throw new UnexpectedTypeException("Array function calls can only be performed on arrays.", getMetadata());
         }
-        int position = selector.castToIntValue();
-        if (position <= 0) {
-            throw new ArrayIndexOutOfBoundsException(
-                    "Tried to access array index: " + position + ", of array with length: " + this.arrayItem.getSize(),
-                    getMetadata());
-        }
+        int position = ArrayIndexUtils.getZeroBasedPosition(selector, this.arrayItem.getSize(), getMetadata());
         if (this.arrayItem.isArrayOfItems()) {
-            return List.of(this.arrayItem.getItemAt(position - 1));
+            return List.of(this.arrayItem.getItemAt(position));
         }
-        return this.arrayItem.getSequenceAt(position - 1);
+        return this.arrayItem.getSequenceAt(position);
     }
 
     @Serial
