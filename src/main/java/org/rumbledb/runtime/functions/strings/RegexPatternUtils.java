@@ -96,30 +96,6 @@ public final class RegexPatternUtils {
         }
     }
 
-    // XPath's x flag preserves whitespace in character classes and gives '#' no special meaning.
-    private static String removePatternWhitespace(String pattern) {
-        StringBuilder result = new StringBuilder(pattern.length());
-        int classDepth = 0;
-        boolean escaped = false;
-        for (int i = 0; i < pattern.length(); i++) {
-            char current = pattern.charAt(i);
-            if (classDepth == 0 && (current == ' ' || current == '\t' || current == '\n' || current == '\r')) {
-                continue;
-            }
-            result.append(current);
-            if (escaped) {
-                escaped = false;
-            } else if (current == '\\') {
-                escaped = true;
-            } else if (current == '[') {
-                classDepth++;
-            } else if (current == ']') {
-                classDepth--;
-            }
-        }
-        return result.toString();
-    }
-
     private static void validateXQueryRegex(String pattern, boolean quote, ExceptionMetadata metadata) {
         if (quote) {
             return;
@@ -366,6 +342,30 @@ public final class RegexPatternUtils {
         } catch (PatternSyntaxException e) {
             return false;
         }
+    }
+
+    // XPath's x flag preserves whitespace in character classes and gives '#' no special meaning.
+    private static String removePatternWhitespace(String pattern) {
+        StringBuilder result = new StringBuilder(pattern.length());
+        int classDepth = 0;
+        boolean escaped = false;
+        for (int i = 0; i < pattern.length(); i++) {
+            char current = pattern.charAt(i);
+            if (classDepth == 0 && (current == ' ' || current == '\t' || current == '\n' || current == '\r')) {
+                continue;
+            }
+            result.append(current);
+            if (escaped) {
+                escaped = false;
+            } else if (current == '\\') {
+                escaped = true;
+            } else if (current == '[') {
+                classDepth++;
+            } else if (current == ']') {
+                classDepth--;
+            }
+        }
+        return result.toString();
     }
 
     public static String[] tokenizeOnXmlWhitespace(String input) {
