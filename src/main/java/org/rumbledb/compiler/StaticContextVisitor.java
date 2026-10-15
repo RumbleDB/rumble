@@ -205,9 +205,17 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
+        if (expression.getActualReturnType() != null) {
+            expression.getActualReturnType().resolve(argument, expression.getMetadata());
+        }
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
         for (Entry<Name, SequenceType> entry : expression.getParams().entrySet()) {
+            entry.getValue()
+                    .resolve(
+                            argument,
+                            Objects.requireNonNullElse(
+                                    expression.getParameterMetadata().get(entry.getKey()), expression.getMetadata()));
             functionDeclarationContext.addVariable(
                     entry.getKey(),
                     entry.getValue(),
