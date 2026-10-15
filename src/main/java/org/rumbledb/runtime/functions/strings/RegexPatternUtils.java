@@ -46,6 +46,7 @@ public final class RegexPatternUtils {
 
     public static CompiledRegex compileRegex(String pattern, String flagsString, ExceptionMetadata metadata) {
         boolean quote = false;
+        boolean ignoreWhitespace = false;
         int flags = 0;
         if (flagsString != null) {
             for (char flag : flagsString.toCharArray()) {
@@ -60,7 +61,7 @@ public final class RegexPatternUtils {
                         flags |= Pattern.DOTALL;
                         break;
                     case 'x':
-                        flags |= Pattern.COMMENTS;
+                        ignoreWhitespace = true;
                         break;
                     case 'q':
                         quote = true;
@@ -69,6 +70,9 @@ public final class RegexPatternUtils {
                         throw new InvalidRegexFlagException("Invalid regular expression flag: " + flag, metadata);
                 }
             }
+        }
+        if (ignoreWhitespace && !quote) {
+            pattern = removePatternWhitespace(pattern);
         }
         validateXQueryRegex(pattern, quote, metadata);
         if (quote) {
@@ -90,6 +94,30 @@ public final class RegexPatternUtils {
         } catch (PatternSyntaxException e) {
             throw new InvalidRegexPatternException(e.getDescription(), metadata);
         }
+    }
+
+    // XPath's x flag preserves whitespace in character classes and gives '#' no special meaning.
+    private static String removePatternWhitespace(String pattern) {
+        StringBuilder result = new StringBuilder(pattern.length());
+        int classDepth = 0;
+        boolean escaped = false;
+        for (int i = 0; i < pattern.length(); i++) {
+            char current = pattern.charAt(i);
+            if (classDepth == 0 && (current == ' ' || current == '\t' || current == '\n' || current == '\r')) {
+                continue;
+            }
+            result.append(current);
+            if (escaped) {
+                escaped = false;
+            } else if (current == '\\') {
+                escaped = true;
+            } else if (current == '[') {
+                classDepth++;
+            } else if (current == ']') {
+                classDepth--;
+            }
+        }
+        return result.toString();
     }
 
     private static void validateXQueryRegex(String pattern, boolean quote, ExceptionMetadata metadata) {
