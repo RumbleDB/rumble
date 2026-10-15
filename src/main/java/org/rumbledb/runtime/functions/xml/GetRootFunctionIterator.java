@@ -45,9 +45,6 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
         if (node == null) {
             return null;
         }
-        if (!node.isNode()) {
-            throw new UnexpectedTypeException("The context item must be a node", getMetadata());
-        }
         Item current = node;
         while (current.parent() != null) {
             current = current.parent();
