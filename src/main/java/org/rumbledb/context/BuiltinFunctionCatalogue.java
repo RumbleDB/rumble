@@ -523,15 +523,15 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction root_with_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "root"),
-            List.of("item"),
-            "item",
+            List.of("node()?"),
+            "node()?",
             GetRootFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction root_without_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "root"),
             List.of(),
-            "item",
+            "node()",
             GetRootFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
