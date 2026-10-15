@@ -166,11 +166,15 @@ public final class SchemaContentModel {
      * Returns the names of the children or attributes that the schema declares for a schema-typed element or document,
      * or with throughDescendants for it and each of its descendant elements. Unlike step types, the names ignore
      * wildcards, so they may not include every node that a step can select.
+     * <p>
+     * For example, from schema-element(p:order) the child names are p:item, p:special, p:paid, p:due, p:customer and
+     * p:meta. The LSP suggests them for completion, and static typing lists them when a step selects nothing.
      */
     public Optional<List<Name>> getStepNames(ItemType contextType, boolean attributeAxis, boolean throughDescendants) {
         if (!isSchemaTyped(contextType)) {
             return Optional.empty();
         }
+        // With declaredOnly, selecting never gives up, so it is never empty.
         List<ItemType> parents = throughDescendants
                 ? selfAndDescendantElements(contextType, true).orElseThrow()
                 : List.of(contextType);
@@ -181,6 +185,7 @@ public final class SchemaContentModel {
                 .toList());
     }
 
+    /** The names of a selected attribute or element declaration; element(*, T) has none to list. */
     private static List<Name> nodeNames(ItemType nodeType) {
         if (nodeType instanceof AttributeNodeItemType attribute) {
             return List.of(attribute.getNodeName());
@@ -406,8 +411,9 @@ public final class SchemaContentModel {
     }
 
     /**
-     * Collects the attribute declaration with the name, and returns whether the attribute is required, optional or
-     * absent. It is empty when an attribute wildcard (xs:anyAttribute) may allow the name. The attribute uses of a type
+     * Collects the attribute declarations with the name, or every one when name is null, and returns how many of them
+     * an element has: each required attribute counts once and each optional one possibly once. It is empty when an
+     * attribute wildcard (xs:anyAttribute) may allow the name, unless declaredOnly. The attribute uses of a type
      * include those inherited from its base types.
      */
     private Optional<Occurrences> collectAttributes(
