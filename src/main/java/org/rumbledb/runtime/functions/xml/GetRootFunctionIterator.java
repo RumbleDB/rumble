@@ -21,12 +21,6 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.items.xml.AttributeItem;
-import org.rumbledb.items.xml.CommentItem;
-import org.rumbledb.items.xml.DocumentItem;
-import org.rumbledb.items.xml.ElementItem;
-import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -47,18 +41,13 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
     }
 
     private Item evaluate(Item node) {
-        if (node instanceof DocumentItem
-                || node instanceof ElementItem
-                || node instanceof AttributeItem
-                || node instanceof TextItem
-                || node instanceof CommentItem) {
-            Item current = node;
-            while (current.parent() != null) {
-                current = current.parent();
-            }
-            return current;
+        if (node == null) {
+            return null;
         }
-        throw new UnsupportedFeatureException(
-                "The argument must be a reference to a supported XML node type", getMetadata());
+        Item current = node;
+        while (current.parent() != null) {
+            current = current.parent();
+        }
+        return current;
     }
 }
