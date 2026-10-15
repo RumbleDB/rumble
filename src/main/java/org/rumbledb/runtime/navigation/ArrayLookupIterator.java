@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.navigation;
 
 import java.io.Serial;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,6 @@ public class ArrayLookupIterator extends ItemRuntimePlan
 
     private final ItemRuntimePlan iterator;
     private final ItemRuntimePlan lookupIterator;
-    private int lookup;
 
     public ArrayLookupIterator(
             ItemRuntimePlan array, ItemRuntimePlan lookupIterator, RuntimeStaticContext staticContext) {
@@ -71,7 +71,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        int position = requireLookupPosition(this.lookupIterator.materialize(context));
+        int position = resolveLookupPosition(context);
         return new FlatMappingLocalCursor<>(
                 this.iterator,
                 context,
@@ -87,14 +87,10 @@ public class ArrayLookupIterator extends ItemRuntimePlan
                 getMetadata());
     }
 
-    private void initLookupPosition(DynamicContext context) {
+    private int resolveLookupPosition(DynamicContext context) {
+        Item lookupExpression;
         try {
-            Item lookupExpression = this.lookupIterator.materializeExactlyOne(context);
-            if (!lookupExpression.isNumeric()) {
-                throw new UnexpectedTypeException(
-                        "Type error; Non numeric array lookup for : " + lookupExpression.serialize(), getMetadata());
-            }
-            this.lookup = lookupExpression.castToIntValue();
+            lookupExpression = this.lookupIterator.materializeExactlyOne(context);
         } catch (NoItemException e) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Array lookup can't be performed with no key.", getMetadata());
@@ -102,21 +98,17 @@ public class ArrayLookupIterator extends ItemRuntimePlan
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Array lookup can't be performed with multiple keys.", getMetadata());
         }
-    }
-
-    private int requireLookupPosition(List<Item> values) {
-        if (values.isEmpty()) {
-            throw new InvalidSelectorException(
-                    "Invalid Lookup Key; Array lookup can't be performed with no key.", getMetadata());
-        }
-        if (values.size() > 1) {
-            throw new InvalidSelectorException(
-                    "Invalid Lookup Key; Array lookup can't be performed with multiple keys.", getMetadata());
-        }
-        Item lookupExpression = values.get(0);
         if (!lookupExpression.isNumeric()) {
             throw new UnexpectedTypeException(
                     "Type error; Non numeric array lookup for : " + lookupExpression.serialize(), getMetadata());
+        }
+        if (lookupExpression.isInteger()) {
+            BigInteger position = lookupExpression.castToIntegerValue();
+            // A position outside the int range matches no member; 0 never matches.
+            if (position.signum() <= 0 || position.bitLength() >= Integer.SIZE) {
+                return 0;
+            }
+            return position.intValue();
         }
         return lookupExpression.castToIntValue();
     }
@@ -124,8 +116,8 @@ public class ArrayLookupIterator extends ItemRuntimePlan
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
-        initLookupPosition(dynamicContext);
-        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this.lookup);
+        int lookup = resolveLookupPosition(dynamicContext);
+        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(lookup);
 
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
@@ -154,7 +146,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
                 }
             }
 
-            initLookupPosition(newContext.getContext());
+            int lookup = resolveLookupPosition(newContext.getContext());
 
             ItemType resultType = newContext.getResultingType().getItemType();
             if (!(resultType.isArrayItemType())) {
@@ -186,7 +178,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
             newContext.setResultingType(
                     new SequenceType(resultType.getArrayContentFacet(), SequenceType.Arity.OneOrZero));
             newContext.setSchema(arraySchema.elementType());
-            newContext.setResultingQuery("get(" + newContext.getResultingQuery() + " ," + (this.lookup - 1) + ")");
+            newContext.setResultingQuery("get(" + newContext.getResultingQuery() + " ," + (lookup - 1) + ")");
         }
         return newContext;
     }
@@ -195,7 +187,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         HomogeneousItemDataFrame childDataFrame =
                 ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
-        initLookupPosition(context);
+        int lookup = resolveLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
         boolean hasNonObjectJSONiqItem = isObject
@@ -224,11 +216,11 @@ public class ArrayLookupIterator extends ItemRuntimePlan
                                     SparkSessionManager.rowIdColumnName,
                                     SparkSessionManager.mutabilityLevelColumnName,
                                     SparkSessionManager.pathInColumnName,
-                                    Integer.toString(this.lookup - 1),
+                                    Integer.toString(lookup - 1),
                                     SparkSessionManager.pathInColumnName,
                                     SparkSessionManager.tableLocationColumnName,
                                     SparkSessionManager.nonObjectJSONiqItemColumnName,
-                                    Integer.toString(this.lookup - 1),
+                                    Integer.toString(lookup - 1),
                                     SparkSessionManager.nonObjectJSONiqItemColumnName,
                                     SparkSessionManager.rowIdColumnName,
                                     SparkSessionManager.mutabilityLevelColumnName,
@@ -236,7 +228,7 @@ public class ArrayLookupIterator extends ItemRuntimePlan
                                     SparkSessionManager.tableLocationColumnName,
                                     array,
                                     SparkSessionManager.nonObjectJSONiqItemColumnName,
-                                    Integer.toString(this.lookup)),
+                                    Integer.toString(lookup)),
                             elementType);
                 }
                 // Otherwise just return the object
@@ -245,22 +237,22 @@ public class ArrayLookupIterator extends ItemRuntimePlan
                                 "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s)",
                                 SparkSessionManager.nonObjectJSONiqItemColumnName,
                                 SparkSessionManager.nonObjectJSONiqItemColumnName,
-                                Integer.toString(this.lookup - 1),
+                                Integer.toString(lookup - 1),
                                 SparkSessionManager.nonObjectJSONiqItemColumnName,
                                 array,
                                 SparkSessionManager.nonObjectJSONiqItemColumnName,
-                                Integer.toString(this.lookup)),
+                                Integer.toString(lookup)),
                         elementType);
             }
             return childDataFrame.evaluateSQL(
                     String.format(
                             "SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s",
                             SparkSessionManager.nonObjectJSONiqItemColumnName,
-                            Integer.toString(this.lookup - 1),
+                            Integer.toString(lookup - 1),
                             SparkSessionManager.nonObjectJSONiqItemColumnName,
                             array,
                             SparkSessionManager.nonObjectJSONiqItemColumnName,
-                            Integer.toString(this.lookup)),
+                            Integer.toString(lookup)),
                     elementType);
         } else if (hasNonObjectJSONiqItem
                 && childDataFrame
@@ -288,33 +280,33 @@ public class ArrayLookupIterator extends ItemRuntimePlan
                         SparkSessionManager.pathInColumnName,
                         SparkSessionManager.tableLocationColumnName,
                         SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        Integer.toString(this.lookup - 1),
+                        Integer.toString(lookup - 1),
                         SparkSessionManager.nonObjectJSONiqItemColumnName,
                         SparkSessionManager.rowIdColumnName,
                         SparkSessionManager.mutabilityLevelColumnName,
                         SparkSessionManager.pathInColumnName,
-                        Integer.toString(this.lookup - 1),
+                        Integer.toString(lookup - 1),
                         SparkSessionManager.pathInColumnName,
                         SparkSessionManager.tableLocationColumnName,
                         array,
                         SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        Integer.toString(this.lookup));
+                        Integer.toString(lookup));
                 res = childDataFrame.evaluateSQL(sql, elementType);
             } else {
                 sql = String.format(
                         "SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s",
                         SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        this.lookup - 1,
+                        lookup - 1,
                         SparkSessionManager.nonObjectJSONiqItemColumnName,
                         SparkSessionManager.rowIdColumnName,
                         SparkSessionManager.mutabilityLevelColumnName,
                         SparkSessionManager.pathInColumnName,
-                        this.lookup - 1,
+                        lookup - 1,
                         SparkSessionManager.pathInColumnName,
                         SparkSessionManager.tableLocationColumnName,
                         array,
                         SparkSessionManager.nonObjectJSONiqItemColumnName,
-                        this.lookup);
+                        lookup);
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
                 res = new HomogeneousItemDataFrame(df, elementType);
             }

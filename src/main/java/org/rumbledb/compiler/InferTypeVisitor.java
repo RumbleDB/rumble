@@ -1222,7 +1222,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType parameterType = expression.getParameterType();
         if (!isFunctionArgumentCompatible(argumentType, parameterType)) {
             throwStaticTypeException(
-                    "Argument requires " + parameterType + " but " + argumentType + " was found",
+                    (expression.isReturnValue() ? "Return value requires " : "Argument requires ")
+                            + parameterType
+                            + " but "
+                            + argumentType
+                            + " was found",
                     expression.getMetadata());
         }
         // A matching argument is passed unchanged, so it keeps its more precise type.
