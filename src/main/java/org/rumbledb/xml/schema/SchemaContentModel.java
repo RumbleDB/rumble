@@ -45,12 +45,17 @@ import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 
 /**
- * Infers which children and attributes a path step selects from a schema-typed node, by reading the content model of
- * its schema type: the element and attribute declarations that the type allows, and how many times each may occur.
+ * Infers which children, attributes and descendants a path step selects from a schema-typed node, by reading the
+ * content model of its schema type: the element and attribute declarations that the type allows, and how many times
+ * each may occur.
  * <p>
  * For example, if the type of p:order is a sequence of one or more p:item elements followed by one p:customer element,
  * {@code $order/p:customer} selects exactly one {@code element(p:customer, p:Customer)}, and {@code $order/p:missing}
  * selects nothing, which static typing reports as an error.
+ * <p>
+ * Descendant steps go through {@link #getDescendantOrSelfType}: E//S abbreviates E/descendant-or-self::node()/S, whose
+ * type is a union of E's type, every element type that the schema allows below it, and text, comment and
+ * processing-instruction nodes. S is then an ordinary child or attribute step from that union.
  * <p>
  * A node may have one of several schema types, and the result covers all of them: each member of a union type, each
  * declaration of a substitution group, and each type derived from the declared one, which an instance may select with
@@ -197,6 +202,10 @@ public final class SchemaContentModel {
         return Optional.of(result == null ? Selection.NONE : result);
     }
 
+    /**
+     * Selects from one case: a text, comment or processing-instruction node has no children or attributes, a document
+     * has only its root element, and an element selects through its schema type.
+     */
     private Optional<Selection> selectFromNode(ItemType context, boolean attributeAxis, Name name) {
         if (isLeafNode(context)) {
             return Optional.of(Selection.NONE);
