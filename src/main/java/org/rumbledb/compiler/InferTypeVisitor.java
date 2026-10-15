@@ -189,6 +189,7 @@ import org.rumbledb.types.SchemaElementNodeItemType;
 import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeAtomization;
+import org.rumbledb.xml.schema.SchemaContentModel;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 /**
@@ -3438,7 +3439,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (contextType == null || !(stepExpr instanceof ForwardStepExpr forwardStep)) {
             return Optional.empty();
         }
-        if (!XmlSchemaCatalog.isSchemaTyped(contextType.getItemType())) {
+        if (!SchemaContentModel.isSchemaTyped(contextType.getItemType())) {
             return Optional.empty();
         }
         boolean attributeAxis = forwardStep.getForwardAxis().equals(ForwardAxis.ATTRIBUTE);
@@ -3467,6 +3468,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return stepExpr.getStaticContext()
                 .getInScopeSchemaTypes()
                 .getXmlSchemaCatalog()
+                .getContentModel()
                 .getStepType(contextType.getItemType(), attributeAxis, name)
                 .map(type -> new SequenceType(
                         type.getItemType(), type.getCardinality().repeated(contextType.getCardinality())));
