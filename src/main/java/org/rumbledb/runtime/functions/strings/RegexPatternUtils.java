@@ -33,6 +33,15 @@ public final class RegexPatternUtils {
 
     private static final Pattern XML_WHITESPACE_PATTERN = Pattern.compile("[\\t\\n\\r ]+");
 
+    // XML 1.0 (Fifth Edition), productions [4] NameStartChar and [4a] NameChar.
+    private static final String XML_NAME_START_CHARACTERS = ":A-Z_a-z"
+            + "\\x{C0}-\\x{D6}\\x{D8}-\\x{F6}\\x{F8}-\\x{2FF}"
+            + "\\x{370}-\\x{37D}\\x{37F}-\\x{1FFF}\\x{200C}-\\x{200D}"
+            + "\\x{2070}-\\x{218F}\\x{2C00}-\\x{2FEF}\\x{3001}-\\x{D7FF}"
+            + "\\x{F900}-\\x{FDCF}\\x{FDF0}-\\x{FFFD}\\x{10000}-\\x{EFFFF}";
+    private static final String XML_NAME_CHARACTERS =
+            XML_NAME_START_CHARACTERS + "\\-.0-9\\x{B7}\\x{300}-\\x{36F}\\x{203F}-\\x{2040}";
+
     private RegexPatternUtils() {}
 
     public static CompiledRegex compileRegex(String pattern, String flagsString, ExceptionMetadata metadata) {
@@ -65,12 +74,16 @@ public final class RegexPatternUtils {
         if (quote) {
             pattern = Pattern.quote(pattern);
         }
-        if ((flags & Pattern.CASE_INSENSITIVE) != 0 && !quote) {
-            pattern = normalizeCaseInsensitivePattern(pattern);
-            flags &= ~(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
-        }
         if (!quote) {
+            boolean caseInsensitive = (flags & Pattern.CASE_INSENSITIVE) != 0;
+            if (caseInsensitive || pattern.contains("-[")) {
+                pattern = rewritePattern(pattern, caseInsensitive);
+            }
+            if (caseInsensitive) {
+                flags &= ~(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
+            }
             pattern = translateUnicodeBlockEscapes(pattern);
+            pattern = translateXmlNameEscapes(pattern);
         }
         try {
             return new CompiledRegex(Pattern.compile(pattern, flags), quote, pattern);
@@ -391,7 +404,38 @@ public final class RegexPatternUtils {
         return result.toString();
     }
 
-    static String normalizeCaseInsensitivePattern(String pattern) {
+    /**
+     * Expands XSD name escapes to Java character classes, including when used inside another class.
+     * Run after validation and class/case rewriting so generated ranges retain their XML meaning.
+     */
+    private static String translateXmlNameEscapes(String pattern) {
+        StringBuilder result = new StringBuilder(pattern.length());
+        for (int i = 0; i < pattern.length(); i++) {
+            char current = pattern.charAt(i);
+            if (current != '\\' || i + 1 >= pattern.length()) {
+                result.append(current);
+                continue;
+            }
+            char next = pattern.charAt(++i);
+            switch (next) {
+                case 'i':
+                case 'I':
+                case 'c':
+                case 'C':
+                    result.append(next == 'I' || next == 'C' ? "[^" : "[");
+                    result.append(next == 'i' || next == 'I' ? XML_NAME_START_CHARACTERS : XML_NAME_CHARACTERS);
+                    result.append(']');
+                    break;
+                default:
+                    // Consume the whole escape, especially literal backslashes in \\i and \\c.
+                    result.append(current).append(next);
+                    break;
+            }
+        }
+        return result.toString();
+    }
+
+    private static String rewritePattern(String pattern, boolean caseInsensitive) {
         StringBuilder result = new StringBuilder(pattern.length());
         for (int i = 0; i < pattern.length(); i++) {
             char current = pattern.charAt(i);
@@ -402,12 +446,13 @@ public final class RegexPatternUtils {
                 continue;
             }
             if (current == '[') {
-                ClassRewriteResult classResult = rewriteCharacterClass(pattern, i);
+                ClassRewriteResult classResult = rewriteCharacterClass(pattern, i, caseInsensitive);
                 result.append(classResult.rewrittenClass);
                 i = classResult.endIndex;
                 continue;
             }
-            if (Character.isHighSurrogate(current)
+            if (caseInsensitive
+                    && Character.isHighSurrogate(current)
                     && i + 1 < pattern.length()
                     && Character.isLowSurrogate(pattern.charAt(i + 1))) {
                 int codePoint = Character.toCodePoint(current, pattern.charAt(i + 1));
@@ -415,7 +460,7 @@ public final class RegexPatternUtils {
                 i++;
                 continue;
             }
-            if (hasCaseVariant(current)) {
+            if (caseInsensitive && hasCaseVariant(current)) {
                 result.append(expandLiteralCodePoint(current));
                 continue;
             }
@@ -424,7 +469,7 @@ public final class RegexPatternUtils {
         return result.toString();
     }
 
-    private static ClassRewriteResult rewriteCharacterClass(String pattern, int startIndex) {
+    private static ClassRewriteResult rewriteCharacterClass(String pattern, int startIndex, boolean caseInsensitive) {
         StringBuilder result = new StringBuilder();
         result.append('[');
         int index = startIndex + 1;
@@ -444,28 +489,31 @@ public final class RegexPatternUtils {
                     && pattern.charAt(index) == '-'
                     && index + 1 < pattern.length()
                     && pattern.charAt(index + 1) == '[') {
-                ClassRewriteResult nestedClass = rewriteCharacterClass(pattern, index + 1);
-                result.append("&&[^");
-                result.append(stripCharacterClassBrackets(nestedClass.rewrittenClass));
-                result.append(']');
-                index = nestedClass.endIndex + 1;
-                continue;
+                ClassRewriteResult nestedClass = rewriteCharacterClass(pattern, index + 1, caseInsensitive);
+                // Keep each operand grouped: A - B becomes A intersect complement(B),
+                // including when A or B is negated or B itself contains subtraction.
+                String subtraction = "[" + result + "]&&[^" + nestedClass.rewrittenClass + "]]";
+                return new ClassRewriteResult(subtraction, nestedClass.endIndex + 1);
             }
 
             ClassToken token = readClassToken(pattern, index, firstToken);
             index = token.nextIndex;
             firstToken = false;
 
-            if (index < pattern.length() && pattern.charAt(index) == '-' && index + 1 < pattern.length()) {
+            if (index + 1 < pattern.length() && pattern.charAt(index) == '-' && pattern.charAt(index + 1) != '[') {
                 ClassToken rightToken = readClassToken(pattern, index + 1, false);
                 if (isRange(token, rightToken, pattern, index + 1)) {
-                    result.append(expandRange(token.codePoint, rightToken.codePoint));
+                    if (caseInsensitive) {
+                        result.append(expandRange(token.codePoint, rightToken.codePoint));
+                    } else {
+                        result.append(token.text).append('-').append(rightToken.text);
+                    }
                     index = rightToken.nextIndex;
                     continue;
                 }
             }
 
-            result.append(expandSimpleToken(token));
+            result.append(caseInsensitive ? expandSimpleToken(token) : token.text);
         }
 
         return new ClassRewriteResult(result.toString(), pattern.length() - 1);
@@ -621,15 +669,6 @@ public final class RegexPatternUtils {
         return codePoint >= Math.min(left, right) && codePoint <= Math.max(left, right);
     }
 
-    private static String stripCharacterClassBrackets(String characterClass) {
-        if (characterClass.length() >= 2
-                && characterClass.charAt(0) == '['
-                && characterClass.charAt(characterClass.length() - 1) == ']') {
-            return characterClass.substring(1, characterClass.length() - 1);
-        }
-        return characterClass;
-    }
-
     private static int skipUnicodeEscape(String pattern, int startIndex) {
         int index = startIndex + 3;
         while (index < pattern.length() && pattern.charAt(index) != '}') {
@@ -687,6 +726,9 @@ public final class RegexPatternUtils {
             } else if (current == '[') {
                 throw new InvalidRegexPatternException("Invalid nested '[' in character class", metadata);
             } else if (current == ']') {
+                if (index == contentStart) {
+                    throw new InvalidRegexPatternException("Empty character class", metadata);
+                }
                 // XSD Appendix F: ']' is not a valid character range on its own (unlike '-', it has no
                 // "literal at the start of the group" exception), so it always closes the class here.
                 return index;

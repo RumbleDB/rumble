@@ -51,51 +51,14 @@ import static org.apache.spark.sql.functions.udf;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import com.esotericsoftware.kryo.serializers.JavaSerializer;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SourcePosition;
-import org.rumbledb.exceptions.SourceRange;
-import org.rumbledb.items.AnnotatedItem;
-import org.rumbledb.items.AnyURIItem;
-import org.rumbledb.items.ArrayItem;
-import org.rumbledb.items.Base64BinaryItem;
-import org.rumbledb.items.BooleanItem;
-import org.rumbledb.items.DateItem;
-import org.rumbledb.items.DateTimeItem;
-import org.rumbledb.items.DateTimeStampItem;
-import org.rumbledb.items.DayTimeDurationItem;
-import org.rumbledb.items.DecimalItem;
-import org.rumbledb.items.DoubleItem;
-import org.rumbledb.items.DurationItem;
-import org.rumbledb.items.FloatItem;
-import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.HexBinaryItem;
-import org.rumbledb.items.IntItem;
-import org.rumbledb.items.IntegerItem;
-import org.rumbledb.items.NullItem;
-import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.QNameItem;
-import org.rumbledb.items.StringItem;
-import org.rumbledb.items.TimeItem;
-import org.rumbledb.items.YearMonthDurationItem;
-import org.rumbledb.items.xml.AttributeItem;
-import org.rumbledb.items.xml.CommentItem;
-import org.rumbledb.items.xml.DocumentItem;
-import org.rumbledb.items.xml.ElementItem;
-import org.rumbledb.items.xml.NodeTypedValue;
-import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.spark.SparkSessionManager;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceCardinality;
-import org.rumbledb.types.SequenceType;
 
 public class FlworDataFrameUtils {
 
@@ -105,57 +68,6 @@ public class FlworDataFrameUtils {
     private static final ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
 
     private static final ThreadLocal<List<Item>> lastObjectItemCache = ThreadLocal.withInitial(() -> null);
-
-    public static void registerKryoClassesKryo(Kryo kryo) {
-        // Kryo 4's FieldSerializer cannot construct Java records on recent JDKs.
-        kryo.register(SourcePosition.class, new JavaSerializer());
-        kryo.register(SourceRange.class, new JavaSerializer());
-        kryo.register(Item.class);
-        kryo.register(AnnotatedItem.class);
-
-        kryo.register(ArrayItem.class);
-        kryo.register(ObjectItem.class);
-
-        kryo.register(AnyURIItem.class);
-        kryo.register(Base64BinaryItem.class);
-        kryo.register(BooleanItem.class);
-        kryo.register(DateItem.class);
-        kryo.register(DateTimeItem.class);
-        kryo.register(DateTimeStampItem.class);
-        kryo.register(DayTimeDurationItem.class);
-        kryo.register(DecimalItem.class);
-        kryo.register(DoubleItem.class);
-        kryo.register(DurationItem.class);
-        kryo.register(FloatItem.class);
-        kryo.register(HexBinaryItem.class);
-        kryo.register(IntegerItem.class);
-        kryo.register(IntItem.class);
-        kryo.register(NullItem.class);
-        kryo.register(QNameItem.class);
-        kryo.register(StringItem.class);
-        kryo.register(TimeItem.class);
-        kryo.register(YearMonthDurationItem.class);
-
-        kryo.register(FunctionItem.class);
-        kryo.register(FunctionIdentifier.class);
-        kryo.register(Name.class);
-        kryo.register(SequenceType.class);
-        kryo.register(SequenceType.Arity.class);
-        kryo.register(SequenceCardinality.class);
-        kryo.register(ItemType.class);
-
-        kryo.register(ArrayList.class);
-
-        kryo.register(RumbleConfiguration.class);
-
-        kryo.register(DocumentItem.class);
-        kryo.register(ElementItem.class);
-        kryo.register(AttributeItem.class);
-        kryo.register(NodeTypedValue.class);
-        kryo.register(NodeTypedValue.State.class);
-        kryo.register(CommentItem.class);
-        kryo.register(TextItem.class);
-    }
 
     public static byte[] serializeItem(Item toSerialize, Kryo kryo, Output output) {
         output.clear();
