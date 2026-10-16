@@ -139,7 +139,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
                 String collapsed = NamespaceBindingUtils.collapseQNameLexical(atomizedNameItem.getStringValue());
                 try {
                     elementName = ItemFactory.getInstance()
-                            .createQNameItem(NamespaceBindingUtils.parseLexicalQName(
+                            .createQNameItem(NamespaceBindingUtils.parseLexicalQNameForComputedElement(
                                     collapsed,
                                     NamespaceBindingUtils.namespaceResolver(this.staticContext),
                                     getMetadata()));
