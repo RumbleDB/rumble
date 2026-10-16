@@ -49,7 +49,7 @@ public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan
         StringBuilder stringBuilder = new StringBuilder();
         boolean first = true;
         for (Item item : strings) {
-            if (!(item.isString())) {
+            if (!item.isString() && !("xquery31".equals(this.staticContext.getQueryLanguage()) && item.isAtomic())) {
                 throw new UnexpectedTypeException(
                         "String item expected",
                         this.getChild(0).getRuntimeStaticContext().getMetadata());
