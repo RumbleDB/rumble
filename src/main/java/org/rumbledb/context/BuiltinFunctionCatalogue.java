@@ -260,6 +260,7 @@ import org.rumbledb.spark.ml.AnnotateFunctionIterator;
 import org.rumbledb.spark.ml.BinaryClassificationMetricsFunctionIterator;
 import org.rumbledb.spark.ml.GetEstimatorFunctionIterator;
 import org.rumbledb.spark.ml.GetTransformerFunctionIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -678,9 +679,9 @@ public class BuiltinFunctionCatalogue {
      * fn:in-scope-prefixes($element as element()) as xs:string*
      * Returns the prefixes of the in-scope namespaces for $element.
      */
-    static final BuiltinFunction in_scope_prefixes = createBuiltinFunction(
+    static final BuiltinFunction in_scope_prefixes = createBuiltinFunctionWithSequenceTypes(
             new Name(Name.FN_NS, "fn", "in-scope-prefixes"),
-            List.of("item"),
+            List.of(new SequenceType(BuiltinTypesCatalogue.elementNode)),
             "string*",
             InScopePrefixesFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
