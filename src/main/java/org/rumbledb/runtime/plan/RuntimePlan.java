@@ -145,10 +145,7 @@ public abstract class RuntimePlan<T> implements Serializable {
      */
     public final JavaRDD<T> getRDD(@NonNull DynamicContext context) {
         return this.executeSelectedRepresentation(
-                context,
-                cursor -> RuntimePlanConversions.cursorToRDD(cursor, this.materializationCap, this.metadata),
-                rdd -> rdd,
-                dataFrame -> dataFrame.toRDD(this.metadata));
+                context, RuntimePlanConversions::cursorToRDD, rdd -> rdd, dataFrame -> dataFrame.toRDD(this.metadata));
     }
 
     /**
