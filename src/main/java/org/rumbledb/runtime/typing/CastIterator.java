@@ -570,7 +570,8 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                 convertedValue = ItemFactory.getInstance()
                         .createDayTimeDurationItem(item.getStringValue().trim());
             } else if (item.isDuration() || item.isYearMonthDuration()) {
-                convertedValue = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
+                convertedValue =
+                        ItemFactory.getInstance().createDayTimeDurationItem(item.getDayTimeDurationComponent());
             }
             return finalizeAtomicBranchValue(convertedValue, targetType, BuiltinTypesCatalogue.dayTimeDurationItem);
         }
