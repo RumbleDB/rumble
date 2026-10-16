@@ -3481,7 +3481,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return Optional.empty();
         }
         if (axis.equals(ForwardAxis.DESCENDANT)) {
-            // descendant::N selects the N children of the context and of each of its descendants.
+            // The schema only says which children each type has, so descendant::N is computed as
+            // descendant-or-self::node()/child::N: take every type at or below the context, then their N children.
+            // Every descendant is the child of some node there, and the context is not, so it is never included.
             return contentModel
                     .getDescendantOrSelfType(contextType.getItemType())
                     .flatMap(nodes -> contentModel
