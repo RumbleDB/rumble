@@ -58,8 +58,8 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
     private final List<ItemRuntimePlan> functionArguments;
 
     // calculated fields
-    private boolean isPartialApplication;
-    private boolean isTailOptimization;
+    private final boolean isPartialApplication;
+    private final boolean isTailOptimization;
 
     public FunctionItemCallIterator(
             Item functionItem,
@@ -75,11 +75,10 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
                                 .getRuntimeStaticContext()
                                 .isSequential())
                         .build());
-        this.isPartialApplication = functionArguments.stream().anyMatch(arg -> arg == null);
-        if (isTailOptimization) {
-            this.isPartialApplication = true;
-            this.isTailOptimization = true;
-        }
+        // A tail call is evaluated as a partial application that returns a thunk.
+        this.isPartialApplication =
+                isTailOptimization || functionArguments.stream().anyMatch(arg -> arg == null);
+        this.isTailOptimization = isTailOptimization;
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
         this.validateNumberOfArguments();
