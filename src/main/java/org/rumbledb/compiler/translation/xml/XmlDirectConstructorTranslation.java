@@ -29,6 +29,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import org.rumbledb.compiler.context.EnclosedExprContext;
 import org.rumbledb.compiler.context.xml.CommonContentContext;
 import org.rumbledb.compiler.context.xml.DirAttributeContentContext;
 import org.rumbledb.compiler.context.xml.DirAttributeListContext;
@@ -36,6 +37,7 @@ import org.rumbledb.compiler.context.xml.DirAttributeValueContext;
 import org.rumbledb.compiler.context.xml.DirElemContentContext;
 import org.rumbledb.compiler.context.xml.DirElemOpenCloseContext;
 import org.rumbledb.compiler.context.xml.DirectConstructorContext;
+import org.rumbledb.compiler.translation.SequenceTranslation;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.utils.TokenStreamUtils;
@@ -368,8 +370,9 @@ public final class XmlDirectConstructorTranslation {
             CommonContentContext<ExprCtx> ctx,
             TranslationContext translationContext,
             Function<ExprCtx, Expression> visitExpr) {
-        if (ctx.expr() != null) {
-            return visitExpr.apply(ctx.expr());
+        if (ctx.isEnclosed()) {
+            return SequenceTranslation.enclosedExpr(
+                    new EnclosedExprContext<>(ctx.expr(), ctx.context()), translationContext, visitExpr);
         }
         String xmlVersion = translationContext.configuration().semantics().xmlVersion();
         String processedContent =
@@ -551,7 +554,8 @@ public final class XmlDirectConstructorTranslation {
                         "Namespace declaration attributes cannot contain enclosed expressions.",
                         translationContext.metadata(ctx.context()));
             }
-            return List.of(visitExpr.apply(ctx.expr()));
+            return List.of(SequenceTranslation.enclosedExpr(
+                    new EnclosedExprContext<>(ctx.expr(), ctx.context()), translationContext, visitExpr));
         }
 
         String childText = tokenStream.getText(ctx.context().getSourceInterval());
