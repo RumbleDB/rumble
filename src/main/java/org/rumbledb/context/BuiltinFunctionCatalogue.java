@@ -304,7 +304,7 @@ public class BuiltinFunctionCatalogue {
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, String queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
-            return builtinFunctions.get(identifier);
+            return forQueryLanguage(builtinFunctions.get(identifier), queryLanguage);
         }
         BuiltinFunction constructorFunction = resolveConstructorFunction(identifier, queryLanguage);
         if (constructorFunction != null) {
@@ -323,9 +323,23 @@ public class BuiltinFunctionCatalogue {
                         ConcatFunctionIterator.class,
                         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
             }
-            return builtinFunctions.get(resolved);
+            return forQueryLanguage(builtinFunctions.get(resolved), queryLanguage);
         }
         return null;
+    }
+
+    private static BuiltinFunction forQueryLanguage(BuiltinFunction function, String queryLanguage) {
+        if ("xquery31".equals(queryLanguage) && (function == string_join1 || function == string_join2)) {
+            return createBuiltinFunction(
+                    function.getIdentifier().getName(),
+                    function.getIdentifier().getArity() == 1
+                            ? List.of("anyAtomicType*")
+                            : List.of("anyAtomicType*", "string"),
+                    "string",
+                    StringJoinFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+        }
+        return function;
     }
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, StaticContext staticContext) {
