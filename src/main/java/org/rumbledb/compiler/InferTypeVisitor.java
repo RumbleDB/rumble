@@ -19,7 +19,9 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -199,6 +201,12 @@ import org.rumbledb.xml.schema.XmlSchemaCatalog;
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private final RumbleConfiguration rumbleRuntimeConfiguration;
+
+    /**
+     * The context type E of each type that descendant-or-self::node() inferred from a schema, so that an error in the
+     * step S of E//S can name E. Compared by identity: S steps from that same type object.
+     */
+    private final Map<ItemType, ItemType> descendantOrSelfContexts = new IdentityHashMap<>();
 
     /**
      * Builds a new visitor.
@@ -3454,11 +3462,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ForwardAxis axis = forwardStep.getForwardAxis();
         NodeTest nodeTest = stepExpr.getNodeTest();
         if (axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
-            return nodeTest instanceof AnyKindTest
-                    ? contentModel
-                            .getDescendantOrSelfType(contextType.getItemType())
-                            .map(type -> type.repeated(contextType.getCardinality()))
-                    : Optional.empty();
+            if (!(nodeTest instanceof AnyKindTest)) {
+                return Optional.empty();
+            }
+            Optional<SequenceType> descendantsOrSelf = contentModel.getDescendantOrSelfType(contextType.getItemType());
+            descendantsOrSelf.ifPresent(
+                    type -> this.descendantOrSelfContexts.put(type.getItemType(), contextType.getItemType()));
+            return descendantsOrSelf.map(type -> type.repeated(contextType.getCardinality()));
         }
         boolean attributeAxis = axis.equals(ForwardAxis.ATTRIBUTE);
         if (!attributeAxis && !axis.equals(ForwardAxis.CHILD) && !axis.equals(ForwardAxis.DESCENDANT)) {
@@ -3504,19 +3514,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     /** Explains a step that selects nothing, listing the names that the schema declares instead. */
-    private static String undeclaredStepMessage(
+    private String undeclaredStepMessage(
             SchemaContentModel contentModel,
             ItemType stepContextType,
             boolean attributeAxis,
             boolean descendantAxis,
             Name name) {
-        // In E//S, S steps from descendant-or-self::node(), whose type lists E's type first and also contains text
-        // nodes, so the message names E instead.
-        boolean descendants =
-                descendantAxis || stepContextType.getMemberTypes().contains(BuiltinTypesCatalogue.textNode);
-        ItemType contextType = descendants && !descendantAxis
-                ? stepContextType.getMemberTypes().get(0)
-                : stepContextType;
+        // In E//S, S steps from the type of descendant-or-self::node(), so the message names E instead.
+        ItemType descendantOrSelfContext = this.descendantOrSelfContexts.get(stepContextType);
+        boolean descendants = descendantAxis || descendantOrSelfContext != null;
+        ItemType contextType = descendantOrSelfContext != null ? descendantOrSelfContext : stepContextType;
         String kind = attributeAxis ? "attribute" : descendants ? "descendant element" : "child element";
         String where = descendants ? (attributeAxis ? " on or below " : " below ") : " for ";
         if (name == null) {

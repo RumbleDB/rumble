@@ -30,6 +30,8 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 class SchemaStepErrorMessageTest {
     private static final Path SCHEMA =
             Path.of("src/test/resources/test_files/static-typing/schema-path-steps/PathSteps.xsd");
+    private static final Path SECTIONS =
+            Path.of("src/test/resources/test_files/static-typing/schema-path-steps/Sections.xsd");
 
     @Test
     void listsTheDeclaredChildren() {
@@ -61,12 +63,27 @@ class SchemaStepErrorMessageTest {
                 "The schema declares no child elements for element(p:paid, xs:boolean).", message("$order/p:paid/*"));
     }
 
+    @Test
+    void namesTheContextOfADescendantStep() {
+        // A nested d:section has a base type of d:Chapter, so the type of E//node() does not keep E's type first.
+        assertEquals(
+                "The schema declares no descendant element d:missing below element(d:section, d:Chapter). "
+                        + "It declares d:title, d:section.",
+                message(
+                        "import schema namespace d = \"urn:sections\" at \"" + SECTIONS.toUri() + "\"; ",
+                        "$order as element(d:section, d:Chapter)",
+                        "$order//d:missing"));
+    }
+
     private static String message(String path) {
-        String query = "import schema namespace p = \"urn:path-steps\" at \""
-                + SCHEMA.toUri()
-                + "\"; declare function local:f($order as schema-element(p:order)) { "
-                + path
-                + " }; 1";
+        return message(
+                "import schema namespace p = \"urn:path-steps\" at \"" + SCHEMA.toUri() + "\"; ",
+                "$order as schema-element(p:order)",
+                path);
+    }
+
+    private static String message(String schemaImport, String parameter, String path) {
+        String query = schemaImport + "declare function local:f(" + parameter + ") { " + path + " }; 1";
         UnexpectedStaticTypeException exception = assertThrows(
                 UnexpectedStaticTypeException.class,
                 () -> CompilationPipeline.compileMainModule(
