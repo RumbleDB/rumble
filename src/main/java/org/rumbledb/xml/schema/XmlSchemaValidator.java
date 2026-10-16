@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ValidateException;
+import org.rumbledb.runtime.xml.XmlBaseUtils;
 
 /** Validates local Rumble XML nodes against an imported Xerces schema catalog. */
 public final class XmlSchemaValidator {
@@ -104,7 +105,9 @@ public final class XmlSchemaValidator {
         handler.setContentHandler(builder);
         try {
             new XmlItemSaxEmitter(handler, builder::comment).emit(input);
-            return builder.getResult();
+            Item result = builder.getResult();
+            XmlBaseUtils.preserveBaseUri(input, result);
+            return result;
         } catch (SAXException exception) {
             throw invalidInstance(exception, metadata);
         }
