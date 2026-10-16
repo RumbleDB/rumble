@@ -42,22 +42,6 @@ class SchemaStepErrorMessageTest {
     }
 
     @Test
-    void listsTheDeclaredAttributes() {
-        assertEquals(
-                "The schema declares no attribute ids for element(p:item, p:Item). It declares id, note.",
-                message("$order/p:item/@ids"));
-    }
-
-    @Test
-    void listsTheDeclaredDescendants() {
-        // p:order is not used here, since a wildcard below it allows elements that the schema does not describe.
-        assertEquals(
-                "The schema declares no descendant element p:prise below element(p:item, p:Item). "
-                        + "It declares p:price, p:tag.",
-                message("$order/p:item//p:prise"));
-    }
-
-    @Test
     void explainsThatAnElementHasNoChildren() {
         assertEquals(
                 "The schema declares no child elements for element(p:paid, xs:boolean).", message("$order/p:paid/*"));

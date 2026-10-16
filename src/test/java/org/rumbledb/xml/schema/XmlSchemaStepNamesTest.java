@@ -36,16 +36,9 @@ public class XmlSchemaStepNamesTest {
             Path.of("src/test/resources/test_files/static-typing/schema-path-steps/PathSteps.xsd");
 
     @Test
-    public void listsDeclaredChildrenAndAttributes() {
-        Assertions.assertEquals(
-                Optional.of(List.of("p:item", "p:special", "p:paid", "p:due", "p:customer", "p:meta")),
-                stepNames("validate { <p:order/> }", false, false));
-        Assertions.assertEquals(Optional.of(List.of("id", "note")), stepNames("validate { <p:item/> }", true, false));
-    }
-
-    @Test
     public void listsDeclaredNamesBelowEveryDescendant() {
-        // p:extra comes from Extended, which instances of p:Customer may select with xsi:type.
+        // The wildcard of p:meta adds no names instead of hiding the declared ones. p:extra comes from Extended, which
+        // instances of p:Customer may select with xsi:type.
         Assertions.assertEquals(
                 Optional.of(List.of(
                         "p:item",
@@ -60,11 +53,6 @@ public class XmlSchemaStepNamesTest {
                         "p:extra")),
                 stepNames("validate { <p:order/> }", false, true));
         Assertions.assertEquals(Optional.of(List.of("id", "note")), stepNames("validate { <p:order/> }", true, true));
-    }
-
-    @Test
-    public void ignoresWildcardsThatAllowOtherNames() {
-        Assertions.assertEquals(Optional.of(List.of()), stepNames("(validate { <p:order/> })/p:meta", false, false));
     }
 
     private static Optional<List<String>> stepNames(

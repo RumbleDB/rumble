@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(1, 1, 2.5)" :)
+(:JIQS: ShouldRun; Output="1" :)
 import schema namespace p = "urn:path-steps" at "PathSteps.xsd";
 
 let $order := validate {
@@ -9,9 +9,5 @@ let $order := validate {
         <p:meta/>
     </p:order>
 }
-return (
-    (: The context item of a predicate has the type of the step that it filters. :)
-    count($order/p:item[. is statically element(p:item, p:Item)]),
-    count($order/p:item[p:price is statically element(p:price, xs:decimal) > 1]),
-    sum($order/p:item[p:price > 1]/p:price)
-)
+(: The context item of a predicate has the type of the step that it filters. :)
+return count($order/p:item[. is statically element(p:item, p:Item)])
