@@ -28,6 +28,7 @@ import java.util.zip.GZIPInputStream;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -110,6 +111,7 @@ public class CLIJarIT {
     }
 
     @Nested
+    @Tag("cli-output-formats")
     class OutputFormatsAndRoundTrips {
         @ParameterizedTest(name = "{0} requires an output path in run and repl")
         @ValueSource(strings = {"json", "csv", "parquet", "avro"})

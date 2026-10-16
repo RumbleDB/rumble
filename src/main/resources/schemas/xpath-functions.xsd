@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+Bundled by RumbleDB on 2026-10-16; schema declarations are unchanged.
+
+W3C SOFTWARE NOTICE AND LICENSE
+
+Copyright (c) 1994-2002 World Wide Web Consortium,
+(Massachusetts Institute of Technology, Institut National de Recherche en
+Informatique et en Automatique, Keio University). All Rights Reserved.
+http://www.w3.org/Consortium/Legal/
+
+This W3C work (including software, documents, or other related items) is being
+provided by the copyright holders under the following license. By obtaining,
+using and/or copying this work, you (the licensee) agree that you have read,
+understood, and will comply with the following terms and conditions:
+
+Permission to use, copy, modify, and distribute this software and its
+documentation, with or without modification, for any purpose and without fee
+or royalty is hereby granted, provided that you include the following on ALL
+copies of the software and documentation or portions thereof, including
+modifications, that you make:
+
+1. The full text of this NOTICE in a location viewable to users of the
+   redistributed or derivative work.
+2. Any pre-existing intellectual property disclaimers, notices, or terms and
+   conditions. If none exist, a short notice of the following form (hypertext
+   is preferred, text is permitted) should be used within the body of any
+   redistributed or derivative code: "Copyright (c) [$date-of-software] World
+   Wide Web Consortium, (Massachusetts Institute of Technology, Institut
+   National de Recherche en Informatique et en Automatique, Keio University).
+   All Rights Reserved. http://www.w3.org/Consortium/Legal/"
+3. Notice of any changes or modifications to the W3C files, including the date
+   changes were made. (We recommend you provide URIs to the location from which
+   the code is derived.)
+
+THIS SOFTWARE AND DOCUMENTATION IS PROVIDED "AS IS," AND COPYRIGHT HOLDERS
+MAKE NO REPRESENTATIONS OR WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT
+LIMITED TO, WARRANTIES OF MERCHANTABILITY OR FITNESS FOR ANY PARTICULAR
+PURPOSE OR THAT THE USE OF THE SOFTWARE OR DOCUMENTATION WILL NOT INFRINGE ANY
+THIRD PARTY PATENTS, COPYRIGHTS, TRADEMARKS OR OTHER RIGHTS.
+
+COPYRIGHT HOLDERS WILL NOT BE LIABLE FOR ANY DIRECT, INDIRECT, SPECIAL OR
+CONSEQUENTIAL DAMAGES ARISING OUT OF ANY USE OF THE SOFTWARE OR DOCUMENTATION.
+
+The name and trademarks of copyright holders may NOT be used in advertising or
+publicity pertaining to the software without specific, written prior
+permission. Title to copyright in this software and any associated
+documentation will at all times remain with copyright holders.
+
+Source: https://www.w3.org/Consortium/Legal/copyright-software-19980720
+-->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    elementFormDefault="qualified"
+    targetNamespace="http://www.w3.org/2005/xpath-functions"
+    xmlns:j="http://www.w3.org/2005/xpath-functions">
+    
+    <!-- 
+     * This is a schema for the XML representation of JSON used as the target for the
+     * function fn:json-to-xml()
+     *
+     * The schema is made available under the terms of the W3C software notice and license
+     * at http://www.w3.org/Consortium/Legal/copyright-software-19980720
+     *
+    -->
+    
+    <xs:element name="map" type="j:mapType">
+        <xs:unique name="unique-key">
+            <xs:selector xpath="*"/>
+            <xs:field xpath="@key"/>
+        </xs:unique>
+    </xs:element>
+    
+    <xs:element name="array" type="j:arrayType"/>
+    
+    <xs:element name="string" type="j:stringType"/>
+    
+    <xs:element name="number" type="j:numberType"/>
+    
+    <xs:element name="boolean" type="j:booleanType"/>
+    
+    <xs:element name="null" type="j:nullType"/>
+    
+    <xs:complexType name="nullType">
+        <xs:sequence/>
+        <xs:anyAttribute processContents="skip" namespace="##other"/>
+    </xs:complexType>
+    
+    <xs:complexType name="booleanType">
+        <xs:simpleContent>
+            <xs:extension base="xs:boolean">
+                <xs:anyAttribute processContents="skip" namespace="##other"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+    <xs:complexType name="stringType">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="escaped" type="xs:boolean" use="optional" default="false"/>
+                <xs:anyAttribute processContents="skip" namespace="##other"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+    <xs:simpleType name="finiteNumberType">
+        <xs:restriction base="xs:double">
+            <!-- exclude positive and negative infinity, and NaN -->
+            <xs:minExclusive value="-INF"/>
+            <xs:maxExclusive value="INF"/>
+        </xs:restriction>
+    </xs:simpleType>
+    
+    <xs:complexType name="numberType">
+        <xs:simpleContent>
+            <xs:extension base="j:finiteNumberType">
+                <xs:anyAttribute processContents="skip" namespace="##other"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+    <xs:complexType name="arrayType">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element ref="j:map"/>
+            <xs:element ref="j:array"/>
+            <xs:element ref="j:string"/>
+            <xs:element ref="j:number"/>
+            <xs:element ref="j:boolean"/>
+            <xs:element ref="j:null"/>
+        </xs:choice>
+        <xs:anyAttribute processContents="skip" namespace="##other"/>
+    </xs:complexType>
+    
+    <xs:complexType name="mapWithinMapType">
+        <xs:complexContent>
+            <xs:extension base="j:mapType">
+                <xs:attributeGroup ref="j:key-group"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    
+    <xs:complexType name="arrayWithinMapType">
+        <xs:complexContent>
+            <xs:extension base="j:arrayType">
+                <xs:attributeGroup ref="j:key-group"/>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+    
+    <xs:complexType name="stringWithinMapType">
+        <xs:simpleContent>
+            <xs:extension base="j:stringType">
+                <xs:attributeGroup ref="j:key-group"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+    <xs:complexType name="numberWithinMapType">
+        <xs:simpleContent>
+            <xs:extension base="j:numberType">
+                <xs:attributeGroup ref="j:key-group"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+    <xs:complexType name="booleanWithinMapType">
+        <xs:simpleContent>
+            <xs:extension base="j:booleanType">
+                <xs:attributeGroup ref="j:key-group"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+    
+    <xs:complexType name="nullWithinMapType">
+        <xs:attributeGroup ref="j:key-group"/>
+    </xs:complexType>
+    
+    <xs:complexType name="mapType">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element name="map" type="j:mapWithinMapType">
+                <xs:unique name="unique-key-2">
+                    <xs:selector xpath="*"/>
+                    <xs:field xpath="@key"/>
+                </xs:unique>
+            </xs:element>
+            <xs:element name="array" type="j:arrayWithinMapType"/>            
+            <xs:element name="string" type="j:stringWithinMapType"/>   
+            <xs:element name="number" type="j:numberWithinMapType"/>
+            <xs:element name="boolean" type="j:booleanWithinMapType"/>
+            <xs:element name="null" type="j:nullWithinMapType"/>
+        </xs:choice>
+        <xs:anyAttribute processContents="skip" namespace="##other"/>
+    </xs:complexType>
+    
+    <xs:attributeGroup name="key-group">
+        <xs:attribute name="key" type="xs:string"/>
+        <xs:attribute name="escaped-key" type="xs:boolean" use="optional" default="false"/>
+    </xs:attributeGroup>
+    
+</xs:schema>

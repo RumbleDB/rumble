@@ -58,8 +58,8 @@ public class ParseXMLFragmentFunctionIterator extends AbstractAtMostOneItemRunti
         NodeList nodeList = fragment.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); ++i) {
             Node child = nodeList.item(i);
-            if (isSignificantChild(child)) {
-                children.add(ItemParser.getItemFromXML(child, path, removeParentPointers));
+            if (isFragmentChild(child)) {
+                children.add(ItemParser.getItemFromXML(child, path, removeParentPointers, true));
             }
         }
 
@@ -72,7 +72,7 @@ public class ParseXMLFragmentFunctionIterator extends AbstractAtMostOneItemRunti
         return documentItem;
     }
 
-    private static boolean isSignificantChild(Node node) {
+    private static boolean isFragmentChild(Node node) {
         switch (node.getNodeType()) {
             case Node.ELEMENT_NODE:
             case Node.COMMENT_NODE:
@@ -80,7 +80,7 @@ public class ParseXMLFragmentFunctionIterator extends AbstractAtMostOneItemRunti
                 return true;
             case Node.TEXT_NODE:
             case Node.CDATA_SECTION_NODE:
-                return !node.getTextContent().trim().isEmpty();
+                return true;
             default:
                 return false;
         }
