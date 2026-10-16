@@ -35,6 +35,10 @@ public final class ResourceResolver {
         this.mappings = Map.copyOf(mappings);
     }
 
+    public boolean hasMapping(URI requestedURI) {
+        return this.mappings.containsKey(requestedURI);
+    }
+
     public ResolvedResource resolve(URI requestedURI, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         URI physicalURI = this.mappings.getOrDefault(requestedURI, requestedURI);
         return new ResolvedResource(physicalURI, FileSystemUtil.getDataInputStream(physicalURI, metadata));
