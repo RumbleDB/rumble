@@ -344,6 +344,16 @@ public final class NamespaceBindingUtils {
         return resolvePrefixedLexicalToName(split.prefix, split.local, namespaceResolver, metadata);
     }
 
+    /** Parses computed element names, including URI-qualified names with an explicit namespace. */
+    public static Name parseLexicalQNameForComputedElement(
+            String lexical, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
+        if (lexical.startsWith("Q{")) {
+            // URI-qualified names have the same meaning for elements and attributes, including Q{}.
+            return parseLexicalQNameForComputedAttribute(lexical, namespaceResolver, metadata);
+        }
+        return parseLexicalQName(lexical, namespaceResolver, metadata);
+    }
+
     /**
      * fn:resolve-QName (Functions and Operators 3.1 10.1.1): like {@link #parseLexicalQName}, but raises
      * err:FONS0004 ({@link NoNamespaceFoundForPrefixException}) rather than err:FOCA0002 when the prefix is
