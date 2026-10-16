@@ -88,6 +88,35 @@ public final class XmlSchemaCatalogLoader {
         }
     }
 
+    /** Supplies the standard JSON XML schema without importing its types into the query's static context. */
+    public static XmlSchemaCatalog loadXPathFunctionsCatalog() {
+        LoadedSchema schema = XPathFunctionsSchemaHolder.SCHEMA;
+        // Type mappers contain mutable caches, so each validation gets its own catalog.
+        return new XmlSchemaCatalog(schema.schemaModel(), schema.validationSchema(), Map.of(Name.FN_NS, "fn"));
+    }
+
+    private static final class XPathFunctionsSchemaHolder {
+        private static final LoadedSchema SCHEMA = loadXPathFunctionsSchema();
+    }
+
+    private static LoadedSchema loadXPathFunctionsSchema() {
+        ExceptionMetadata metadata = ExceptionMetadata.EMPTY_METADATA;
+        try (InputStream input = XmlSchemaCatalogLoader.class.getResourceAsStream("/schemas/xpath-functions.xsd")) {
+            if (input == null) {
+                throw new SchemaImportException("The bundled XPath functions schema is unavailable.", metadata);
+            }
+            SchemaErrorHandler errorHandler = new SchemaErrorHandler();
+            XMLSchemaFactory factory = new XMLSchemaFactory();
+            factory.setErrorHandler(errorHandler);
+            StreamSource source = new StreamSource(input);
+            source.setSystemId(Name.FN_NS);
+            return loadedSchema(factory.newSchema(source), errorHandler, metadata);
+        } catch (SAXException | IOException exception) {
+            throw new SchemaImportException(
+                    "Unable to initialize the XPath functions schema: " + exception.getMessage(), metadata, exception);
+        }
+    }
+
     public static Optional<XmlSchemaCatalog> load(
             @NonNull List<SchemaImport> schemaImports,
             @NonNull URI staticBaseUri,
