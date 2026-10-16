@@ -58,6 +58,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanBindings;
@@ -74,11 +75,18 @@ import org.rumbledb.types.SequenceType.Arity;
 public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     private final RumbleConfiguration configuration;
+    private final ResourceResolver resourceResolver;
     private ExternalBindings externalBindings;
     private Map<String, DynamicContext> importedModuleContexts;
 
     public DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
+        this(configuration, externalBindings, new ResourceResolver());
+    }
+
+    public DynamicContextVisitor(
+            RumbleConfiguration configuration, ExternalBindings externalBindings, ResourceResolver resourceResolver) {
         this.configuration = configuration;
+        this.resourceResolver = resourceResolver;
         this.externalBindings = externalBindings;
         this.importedModuleContexts = new HashMap<>();
     }
@@ -92,7 +100,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visit(Node node, DynamicContext argument) {
         if (argument == null) {
-            argument = new DynamicContext(this.configuration, this.externalBindings);
+            argument = new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
         }
         return node.accept(this, argument);
     }
@@ -298,7 +306,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
         if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
-            DynamicContext newContext = new DynamicContext(this.configuration, this.externalBindings);
+            DynamicContext newContext =
+                    new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
             newContext.setNamedFunctions(argument.getNamedFunctions());
             DynamicContext importedContext = visitDescendants(module, newContext);
             this.importedModuleContexts.put(module.getNamespace(), importedContext);

@@ -50,6 +50,7 @@ public class UnparsedTextAvailableFunctionIterator extends AbstractAtMostOneItem
                     hrefItem.getStringValue(),
                     encoding,
                     getConfiguration().semantics().xmlVersion(),
+                    context.getResourceResolver(),
                     getMetadata());
             return ItemFactory.getInstance().createBooleanItem(true);
         } catch (Exception e) {
