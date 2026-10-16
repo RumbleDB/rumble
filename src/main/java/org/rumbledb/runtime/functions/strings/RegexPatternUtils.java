@@ -46,6 +46,7 @@ public final class RegexPatternUtils {
 
     public static CompiledRegex compileRegex(String pattern, String flagsString, ExceptionMetadata metadata) {
         boolean quote = false;
+        boolean ignoreWhitespace = false;
         int flags = 0;
         if (flagsString != null) {
             for (char flag : flagsString.toCharArray()) {
@@ -60,7 +61,7 @@ public final class RegexPatternUtils {
                         flags |= Pattern.DOTALL;
                         break;
                     case 'x':
-                        flags |= Pattern.COMMENTS;
+                        ignoreWhitespace = true;
                         break;
                     case 'q':
                         quote = true;
@@ -69,6 +70,9 @@ public final class RegexPatternUtils {
                         throw new InvalidRegexFlagException("Invalid regular expression flag: " + flag, metadata);
                 }
             }
+        }
+        if (ignoreWhitespace && !quote) {
+            pattern = removePatternWhitespace(pattern);
         }
         validateXQueryRegex(pattern, quote, metadata);
         if (quote) {
@@ -86,7 +90,7 @@ public final class RegexPatternUtils {
                 flags &= ~(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
             }
             pattern = translateUnicodeBlockEscapes(pattern);
-            pattern = translateXmlNameEscapes(pattern);
+            pattern = translateCharacterClassEscapes(pattern);
         }
         try {
             return new CompiledRegex(Pattern.compile(pattern, flags), quote, pattern);
@@ -367,6 +371,30 @@ public final class RegexPatternUtils {
         }
     }
 
+    // XPath's x flag preserves whitespace in character classes and gives '#' no special meaning.
+    private static String removePatternWhitespace(String pattern) {
+        StringBuilder result = new StringBuilder(pattern.length());
+        int classDepth = 0;
+        boolean escaped = false;
+        for (int i = 0; i < pattern.length(); i++) {
+            char current = pattern.charAt(i);
+            if (classDepth == 0 && (current == ' ' || current == '\t' || current == '\n' || current == '\r')) {
+                continue;
+            }
+            result.append(current);
+            if (escaped) {
+                escaped = false;
+            } else if (current == '\\') {
+                escaped = true;
+            } else if (current == '[') {
+                classDepth++;
+            } else if (current == ']') {
+                classDepth--;
+            }
+        }
+        return result.toString();
+    }
+
     public static String[] tokenizeOnXmlWhitespace(String input) {
         String[] result = XML_WHITESPACE_PATTERN.split(input, 0);
         if (result.length != 0 && result[0].isEmpty()) {
@@ -432,10 +460,10 @@ public final class RegexPatternUtils {
     }
 
     /**
-     * Expands XSD name escapes to Java character classes, including when used inside another class.
+     * Expands XSD name, digit, and word escapes to Java character classes, including inside another class.
      * Run after validation and class/case rewriting so generated ranges retain their XML meaning.
      */
-    private static String translateXmlNameEscapes(String pattern) {
+    private static String translateCharacterClassEscapes(String pattern) {
         StringBuilder result = new StringBuilder(pattern.length());
         for (int i = 0; i < pattern.length(); i++) {
             char current = pattern.charAt(i);
@@ -445,6 +473,19 @@ public final class RegexPatternUtils {
             }
             char next = pattern.charAt(++i);
             switch (next) {
+                case 'd':
+                    result.append("\\p{Nd}");
+                    break;
+                case 'D':
+                    result.append("\\P{Nd}");
+                    break;
+                case 'w':
+                    // XSD's word characters exclude punctuation, separators, and other characters.
+                    result.append("[^\\p{P}\\p{Z}\\p{C}]");
+                    break;
+                case 'W':
+                    result.append("[\\p{P}\\p{Z}\\p{C}]");
+                    break;
                 case 'i':
                 case 'I':
                 case 'c':
@@ -464,9 +505,25 @@ public final class RegexPatternUtils {
 
     private static String rewritePattern(String pattern, boolean caseInsensitive) {
         StringBuilder result = new StringBuilder(pattern.length());
+        int nextCaptureGroupNumber = 1;
         for (int i = 0; i < pattern.length(); i++) {
             char current = pattern.charAt(i);
             if (current == '\\' && i + 1 < pattern.length()) {
+                if (caseInsensitive && Character.isDigit(pattern.charAt(i + 1))) {
+                    int end = i + 1;
+                    while (end < pattern.length() && Character.isDigit(pattern.charAt(end))) {
+                        end++;
+                    }
+                    int prefixLength = findLongestExistingBackReferencePrefixLength(
+                            pattern.substring(i + 1, end), nextCaptureGroupNumber);
+                    // Scope case folding to the reference so Unicode categories keep their meaning.
+                    // Any remaining digits stay outside the group to preserve quantifier binding.
+                    result.append("(?iu:")
+                            .append(pattern, i, i + 1 + prefixLength)
+                            .append(')');
+                    i += prefixLength;
+                    continue;
+                }
                 EscapedToken escapedToken = readEscapedToken(pattern, i);
                 result.append(escapedToken.text);
                 i = escapedToken.endIndex;
@@ -490,6 +547,9 @@ public final class RegexPatternUtils {
             if (caseInsensitive && hasCaseVariant(current)) {
                 result.append(expandLiteralCodePoint(current));
                 continue;
+            }
+            if (current == '(' && (i + 1 >= pattern.length() || pattern.charAt(i + 1) != '?')) {
+                nextCaptureGroupNumber++;
             }
             result.append(current);
         }
@@ -716,6 +776,7 @@ public final class RegexPatternUtils {
             index++;
         }
         int contentStart = index;
+        boolean previousWasSingleChar = false;
         while (index < pattern.length()) {
             char current = pattern.charAt(index);
             if (current == '\\') {
@@ -734,10 +795,12 @@ public final class RegexPatternUtils {
                                 "Unterminated Unicode category or block escape in character class", metadata);
                     }
                     index = end;
+                    previousWasSingleChar = false;
                 } else if (!isLegalRegexEscape(next)) {
                     throw new InvalidRegexPatternException(
                             "Invalid regular expression escape \\" + next + " in character class", metadata);
                 } else {
+                    previousWasSingleChar = "sSiIcCdDwW".indexOf(next) < 0;
                     index++;
                 }
             } else if (current == '-' && index + 1 < pattern.length() && pattern.charAt(index + 1) == '[') {
@@ -759,6 +822,16 @@ public final class RegexPatternUtils {
                 // XSD Appendix F: ']' is not a valid character range on its own (unlike '-', it has no
                 // "literal at the start of the group" exception), so it always closes the class here.
                 return index;
+            } else {
+                if (current == '-'
+                        && previousWasSingleChar
+                        && index + 2 < pattern.length()
+                        && pattern.charAt(index + 1) == '\\'
+                        && "sSiIcCdDwWpP".indexOf(pattern.charAt(index + 2)) >= 0) {
+                    throw new InvalidRegexPatternException(
+                            "A character range cannot end with a character class escape", metadata);
+                }
+                previousWasSingleChar = current != '-';
             }
             index++;
         }

@@ -191,7 +191,7 @@ public class PostfixLookupIterator extends ItemRuntimePlan implements LocalRunti
 
     private final ItemRuntimePlan iterator;
     private final ItemRuntimePlan lookupIterator;
-    private boolean wildcard;
+    private final boolean wildcard;
 
     public PostfixLookupIterator(
             ItemRuntimePlan object, ItemRuntimePlan lookupIterator, RuntimeStaticContext staticContext) {
