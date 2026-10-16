@@ -26,6 +26,7 @@ import java.util.Map;
 
 import org.w3c.dom.Node;
 
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 
@@ -55,6 +56,7 @@ public class ElementItem extends AbstractNodeItem {
     private boolean id;
     private boolean idRefs;
 
+    @Getter
     @Setter
     private URI constructionBaseUri;
 
