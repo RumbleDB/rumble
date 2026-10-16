@@ -16,7 +16,6 @@
 package org.rumbledb.runtime.functions.io;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serial;
 import java.net.URI;
 import java.util.List;
@@ -31,6 +30,7 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.XmlParsingUtils;
 import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.resources.ResolvedResource;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -55,12 +55,12 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private Item loadDocument(Item path, DynamicContext context) {
         URI uri = FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
-        try (InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getMetadata())) {
+        try (ResolvedResource resource =
+                context.getResourceResolver().resolve(uri, getConfiguration(), getMetadata())) {
+            InputSource source = new InputSource(resource.getInputStream());
+            source.setSystemId(resource.getSystemId().toString());
             Document xmlDocument = XmlParsingUtils.parseResource(
-                    new InputSource(xmlFileStream),
-                    uri.toString(),
-                    "XML document \"" + uri + "\" for fn:doc()",
-                    getMetadata());
+                    source, uri.toString(), "XML document \"" + uri + "\" for fn:doc()", getMetadata());
             DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                     xmlDocument,
                     uri.toString(),
