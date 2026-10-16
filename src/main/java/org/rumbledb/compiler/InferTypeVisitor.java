@@ -3434,19 +3434,34 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    /** Child and attribute steps from a schema-typed element or document select the nodes its schema declares. */
+    /**
+     * Child, attribute, and descendant steps from a schema-typed element or document select the nodes its schema
+     * declares. E//S abbreviates E/descendant-or-self::node()/S, so S steps from the union of the context and its
+     * descendants, and keeps its predicates.
+     */
     private Optional<SequenceType> inferSchemaStepType(StepExpr stepExpr, SequenceType contextType) {
-        if (contextType == null || !(stepExpr instanceof ForwardStepExpr forwardStep)) {
+        if (contextType == null
+                || !SchemaContentModel.isSchemaTyped(contextType.getItemType())
+                || !(stepExpr instanceof ForwardStepExpr forwardStep)) {
             return Optional.empty();
         }
-        if (!SchemaContentModel.isSchemaTyped(contextType.getItemType())) {
-            return Optional.empty();
-        }
-        boolean attributeAxis = forwardStep.getForwardAxis().equals(ForwardAxis.ATTRIBUTE);
-        if (!attributeAxis && !forwardStep.getForwardAxis().equals(ForwardAxis.CHILD)) {
-            return Optional.empty();
-        }
+        SchemaContentModel contentModel = stepExpr.getStaticContext()
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getContentModel();
+        ForwardAxis axis = forwardStep.getForwardAxis();
         NodeTest nodeTest = stepExpr.getNodeTest();
+        if (axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
+            return nodeTest instanceof AnyKindTest
+                    ? contentModel
+                            .getDescendantOrSelfType(contextType.getItemType())
+                            .map(type -> type.repeated(contextType.getCardinality()))
+                    : Optional.empty();
+        }
+        boolean attributeAxis = axis.equals(ForwardAxis.ATTRIBUTE);
+        if (!attributeAxis && !axis.equals(ForwardAxis.CHILD) && !axis.equals(ForwardAxis.DESCENDANT)) {
+            return Optional.empty();
+        }
         Name name;
         if (nodeTest instanceof NameTest nameTest && (nameTest.hasQName() || nameTest.hasWildcardOnly())) {
             name = nameTest.hasQName() ? nameTest.getExpandedName() : null;
@@ -3465,13 +3480,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         } else {
             return Optional.empty();
         }
-        return stepExpr.getStaticContext()
-                .getInScopeSchemaTypes()
-                .getXmlSchemaCatalog()
-                .getContentModel()
+        if (axis.equals(ForwardAxis.DESCENDANT)) {
+            // The schema only says which children each type has, so descendant::N is computed as
+            // descendant-or-self::node()/child::N: take every type at or below the context, then their N children.
+            // Every descendant is the child of some node there, and the context is not, so it is never included.
+            return contentModel
+                    .getDescendantOrSelfType(contextType.getItemType())
+                    .flatMap(nodes -> contentModel
+                            .getStepType(nodes.getItemType(), false, name)
+                            .map(type -> type.repeated(nodes.getCardinality())))
+                    .map(type -> type.repeated(contextType.getCardinality()));
+        }
+        return contentModel
                 .getStepType(contextType.getItemType(), attributeAxis, name)
-                .map(type -> new SequenceType(
-                        type.getItemType(), type.getCardinality().repeated(contextType.getCardinality())));
+                .map(type -> type.repeated(contextType.getCardinality()));
     }
 
     private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {
@@ -3545,11 +3567,21 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return BuiltinTypesCatalogue.nodeItem;
     }
 
+    private static boolean hasNoChildren(ItemType nodeType) {
+        return nodeType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.textNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.commentNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+    }
+
     private boolean isStaticallyEmptyStep(StepExpr stepExpr, ItemType contextItemType) {
         if (stepExpr instanceof ForwardStepExpr forwardStep) {
             ForwardAxis axis = forwardStep.getForwardAxis();
             if (axis.equals(ForwardAxis.ATTRIBUTE)) {
-                return !contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode);
+                // Only elements have attributes, but a context such as node() may still be one.
+                return hasNoChildren(contextItemType)
+                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
             }
             if (axis.equals(ForwardAxis.SELF)) {
                 return !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, axis);
@@ -3557,11 +3589,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             if (axis.equals(ForwardAxis.CHILD)
                     || axis.equals(ForwardAxis.DESCENDANT)
                     || axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
-                boolean hasNoDescendants = contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.textNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.commentNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+                boolean hasNoDescendants = hasNoChildren(contextItemType);
                 if (axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
                     return hasNoDescendants
                             && !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, axis);
