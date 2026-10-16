@@ -17,6 +17,7 @@ package org.rumbledb.items.parsing;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.net.URI;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -45,12 +46,17 @@ public final class XmlParsingUtils {
 
     /** Parses a document string. The description names the input in error messages. */
     public static Document parseDocument(String xml, String description, ExceptionMetadata metadata) {
-        return parseString(xml, false, description, metadata);
+        return parseDocument(xml, null, description, metadata);
+    }
+
+    /** Supplies the static base URI for relative external DTD and entity references. */
+    public static Document parseDocument(String xml, URI baseUri, String description, ExceptionMetadata metadata) {
+        return parseString(xml, false, baseUri, description, metadata);
     }
 
     /** Parses a fragment string without exposing the synthetic wrapper in nodes or diagnostics. */
     public static DocumentFragment parseFragment(String xml, String description, ExceptionMetadata metadata) {
-        Document document = parseString(xml, true, description, metadata);
+        Document document = parseString(xml, true, null, description, metadata);
         Node wrapper = document.getDocumentElement();
         DocumentFragment fragment = document.createDocumentFragment();
         while (wrapper.hasChildNodes()) {
@@ -91,10 +97,15 @@ public final class XmlParsingUtils {
         }
     }
 
-    private static Document parseString(String xml, boolean fragment, String description, ExceptionMetadata metadata) {
+    private static Document parseString(
+            String xml, boolean fragment, URI baseUri, String description, ExceptionMetadata metadata) {
         String input = fragment ? "<" + FRAGMENT_WRAPPER + ">" + xml + "</" + FRAGMENT_WRAPPER + ">" : xml;
+        InputSource source = new InputSource(new StringReader(input));
+        if (baseUri != null) {
+            source.setSystemId(baseUri.toString());
+        }
         try {
-            return newDocumentBuilder(metadata).parse(new InputSource(new StringReader(input)));
+            return newDocumentBuilder(metadata).parse(source);
         } catch (SAXException | IOException e) {
             String detail = fragment ? describeFragment(e, xml) : describe(e);
             InvalidXmlDocumentException exception =
