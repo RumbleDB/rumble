@@ -17,6 +17,7 @@ package org.rumbledb.xml.schema;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.HashMap;
@@ -338,15 +339,26 @@ public final class XmlSchemaCatalogLoader {
          */
         private SchemaSource read(URI location) {
             this.schemaResourceObserver.accept(location);
-            try (ResolvedResource resource = this.compilationConfiguration
-                    .resourceResolver()
-                    .resolve(location, this.compilationConfiguration.runtimeConfiguration(), this.metadata)) {
+            try (ResolvedResource resource = resolveResource(location)) {
                 return new SchemaSource(
                         resource.getSystemId(), resource.getInputStream().readAllBytes());
             } catch (IOException | RumbleException exception) {
                 throw new SchemaImportException(
                         "Unable to read imported XML Schema " + location + ".", this.metadata, exception);
             }
+        }
+
+        private ResolvedResource resolveResource(URI location) {
+            var resolver = this.compilationConfiguration.resourceResolver();
+            if (Name.FN_NS.equals(location.toString()) && !resolver.hasMapping(location)) {
+                InputStream schema = XmlSchemaCatalogLoader.class.getResourceAsStream("/schemas/xpath-functions.xsd");
+                if (schema == null) {
+                    throw new SchemaImportException(
+                            "The bundled XPath functions schema is unavailable.", this.metadata);
+                }
+                return new ResolvedResource(location, schema);
+            }
+            return resolver.resolve(location, this.compilationConfiguration.runtimeConfiguration(), this.metadata);
         }
 
         /**
