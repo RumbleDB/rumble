@@ -68,6 +68,7 @@ import org.rumbledb.items.xml.NodeTypedValue;
 import org.rumbledb.items.xml.ProcessingInstructionItem;
 import org.rumbledb.items.xml.TextItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.flwor.tuple.FlworKey;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
@@ -151,6 +152,8 @@ public class RumbleKryoRegistrator implements KryoRegistrator {
         kryo.register(DoubleType.class);
         kryo.register(FloatType.class);
         kryo.register(IntType.class);
+        // URI and immutable map internals need their Java serialization contracts.
+        kryo.register(ResourceResolver.class, new JavaSerializer());
     }
 
     /**

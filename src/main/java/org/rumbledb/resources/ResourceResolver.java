@@ -15,6 +15,8 @@
  */
 package org.rumbledb.resources;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.net.URI;
 import java.util.Map;
 
@@ -22,8 +24,11 @@ import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-/** Resolves logical resource URIs to source content used during query compilation. */
-public final class ResourceResolver {
+/** Resolves logical resource URIs to source content during compilation and execution. */
+public final class ResourceResolver implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     private final Map<URI, URI> mappings;
 
@@ -40,7 +45,11 @@ public final class ResourceResolver {
     }
 
     public ResolvedResource resolve(URI requestedURI, RumbleConfiguration configuration, ExceptionMetadata metadata) {
-        URI physicalURI = this.mappings.getOrDefault(requestedURI, requestedURI);
+        URI physicalURI = resolveURI(requestedURI);
         return new ResolvedResource(physicalURI, FileSystemUtil.getDataInputStream(physicalURI, metadata));
+    }
+
+    public URI resolveURI(URI requestedURI) {
+        return this.mappings.getOrDefault(requestedURI, requestedURI);
     }
 }

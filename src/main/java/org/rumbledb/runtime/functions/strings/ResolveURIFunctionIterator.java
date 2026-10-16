@@ -59,6 +59,10 @@ public class ResolveURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan
         }
 
         URI uri = parseURI(base.getStringValue());
+        if (!uri.isAbsolute() || uri.isOpaque() || uri.getFragment() != null) {
+            throw new InvalidArgumentValueException(
+                    "The base URI must be absolute, hierarchical, and have no fragment identifier.", getMetadata());
+        }
         String stringURI = uri.resolve(relativeURI).toString();
 
         return ItemFactory.getInstance().createAnyURIItem(stringURI);

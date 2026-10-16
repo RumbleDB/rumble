@@ -54,6 +54,12 @@ Run the CLI integration suite with Java 17 or 21:
 
     $ mvn -Pcli-tests test
 
+CI runs this suite in two parallel groups: output formats (including serializer
+and writer tests), and the remaining CLI tests. To run either group locally:
+
+    $ mvn -Pcli-tests -Dgroups=cli-output-formats test
+    $ mvn -Pcli-tests -DexcludedGroups=cli-output-formats test
+
 This profile runs `assembly:single` after compilation and then starts separate Java
 processes against the resulting `target/*-jar-with-dependencies.jar`. Only Maven's
 `provided` dependencies (including Spark) are added to the child classpath; project
