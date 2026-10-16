@@ -40,6 +40,10 @@ public final class ResourceResolver implements Serializable {
         this.mappings = Map.copyOf(mappings);
     }
 
+    public boolean hasMapping(URI requestedURI) {
+        return this.mappings.containsKey(requestedURI);
+    }
+
     public ResolvedResource resolve(URI requestedURI, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         URI physicalURI = resolveURI(requestedURI);
         return new ResolvedResource(physicalURI, FileSystemUtil.getDataInputStream(physicalURI, metadata));
