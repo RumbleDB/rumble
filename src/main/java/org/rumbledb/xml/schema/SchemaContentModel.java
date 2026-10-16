@@ -225,8 +225,7 @@ public final class SchemaContentModel {
      * since the result must cover every node that the step can select.
      * <p>
      * With declaredOnly, it selects only the nodes that the schema declares: an unknown case or a matching wildcard
-     * adds
-     * nothing instead of making the result empty. Tools use it to list the names that the schema declares.
+     * adds nothing instead of making the result empty. Tools use it to list the names that the schema declares.
      */
     private Optional<Selection> select(ItemType contextType, boolean attributeAxis, Name name, boolean declaredOnly) {
         Selection result = null;
