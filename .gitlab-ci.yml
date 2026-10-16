@@ -15,14 +15,20 @@ Build:
 
 CLIJarTests:
   stage: tests
+  parallel:
+    matrix:
+      - CLI_TEST_SET: output-formats
+        CLI_TEST_FILTER: -Dgroups=cli-output-formats
+      - CLI_TEST_SET: commands-and-runtime
+        CLI_TEST_FILTER: -DexcludedGroups=cli-output-formats
   script:
-    - mvn --batch-mode -Pcli-tests test
+    - mvn --batch-mode -Pcli-tests "$CLI_TEST_FILTER" test
   artifacts:
     when: always
     paths:
       - target/surefire-reports/
     reports:
-      junit: target/surefire-reports/TEST-org.rumbledb.cli.CLIJarIT.xml
+      junit: target/surefire-reports/TEST-*.xml
 
 SparkRuntimeTest:
   stage: tests
