@@ -64,7 +64,7 @@ public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
         URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticContext.getStaticURI(), getMetadata());
 
-        String jsonText = readJsonResource(uri, getMetadata());
+        String jsonText = readJsonResource(context.getResourceResolver().resolveURI(uri), getMetadata());
 
         if (options.isLegacy()) {
             ConsoleOutput.warn("Warning: fn:json-doc option 'legacy' skips spec-conformant JSON parsing in favor of "
