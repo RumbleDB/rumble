@@ -247,8 +247,12 @@ final class XmlSchemaTypeMapper {
             return this.anonymousTypeNames.computeIfAbsent(
                     schemaType, type -> new Name(ANONYMOUS_TYPE_NAMESPACE, null, "anonymousType-" + UUID.randomUUID()));
         }
-        String namespace = schemaType.getNamespace();
-        return new Name(namespace, prefixOf(namespace), schemaType.getName());
+        return declarationName(schemaType.getNamespace(), schemaType.getName());
+    }
+
+    /** Names a schema component with the query's prefix for its namespace. */
+    Name declarationName(String namespace, String localName) {
+        return new Name(namespace, prefixOf(namespace), localName);
     }
 
     /** The prefix the query's schema imports bind to the namespace, or null if there is none. */

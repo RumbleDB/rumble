@@ -49,6 +49,10 @@ public class AttributeNodeItemType extends AbstractItemType {
     @Getter
     private List<Name> schemaTypeAlternatives = List.of();
 
+    /** The typed value, or null when it is only known to be xs:anyAtomicType*. */
+    @Getter
+    private SequenceType typedValueType;
+
     public AttributeNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("attribute");
         this.nodeName = null;
@@ -66,7 +70,8 @@ public class AttributeNodeItemType extends AbstractItemType {
         this.schemaTypeHierarchy = List.of();
     }
 
-    public AttributeNodeItemType(Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy) {
+    public AttributeNodeItemType(
+            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, SequenceType typedValueType) {
         if (schemaTypeName == null || schemaTypeHierarchy == null || schemaTypeHierarchy.isEmpty()) {
             throw new IllegalArgumentException("A typed attribute test requires a schema type hierarchy.");
         }
@@ -75,11 +80,16 @@ public class AttributeNodeItemType extends AbstractItemType {
         this.schemaTypeName = schemaTypeName;
         this.schemaTypeHierarchy = List.copyOf(schemaTypeHierarchy);
         this.schemaTypeAlternatives = List.of(schemaTypeName);
+        this.typedValueType = typedValueType;
     }
 
     public AttributeNodeItemType(
-            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, List<Name> schemaTypeAlternatives) {
-        this(nodeName, schemaTypeName, schemaTypeHierarchy);
+            Name nodeName,
+            Name schemaTypeName,
+            List<Name> schemaTypeHierarchy,
+            List<Name> schemaTypeAlternatives,
+            SequenceType typedValueType) {
+        this(nodeName, schemaTypeName, schemaTypeHierarchy, typedValueType);
         this.schemaTypeAlternatives = List.copyOf(schemaTypeAlternatives);
     }
 
