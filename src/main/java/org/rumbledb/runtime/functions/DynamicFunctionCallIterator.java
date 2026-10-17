@@ -262,7 +262,12 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                     this.callerExecutionMode,
                     this.staticContext,
                     this.context);
-            this.delegate = this.call.iterator.getCursor(this.context);
+            // A call may evaluate its arguments when its cursor is created.
+            try {
+                this.delegate = this.call.iterator.getCursor(this.context);
+            } catch (InvalidRumbleMLParamException e) {
+                throw new InvalidRumbleMLParamException(e.getMLMessage(), this.staticContext.getMetadata());
+            }
         }
 
         @Override
