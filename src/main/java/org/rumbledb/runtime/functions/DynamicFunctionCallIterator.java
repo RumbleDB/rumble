@@ -22,11 +22,7 @@ import java.util.stream.Stream;
 import org.apache.spark.api.java.JavaRDD;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.BuiltinFunction;
-import org.rumbledb.context.BuiltinFunctionCatalogue;
-import org.rumbledb.context.BuiltinFunctionExecutionModes;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -34,9 +30,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
@@ -77,13 +71,12 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new DynamicCallLocalCursor(
-                this.functionItemIterator,
-                this.functionArguments,
-                this.isPartialApplication,
-                this.staticContext.getExecutionMode(),
-                this.staticContext,
-                context);
+        // ML functions raise invalid parameters when they build their result, that is, when the cursor is created.
+        try {
+            return resolveFunctionCall(context).getCursor();
+        } catch (InvalidRumbleMLParamException e) {
+            throw new InvalidRumbleMLParamException(e.getMLMessage(), getMetadata());
+        }
     }
 
     private FunctionCall resolveFunctionCall(DynamicContext context) {
@@ -133,7 +126,8 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                     .executionMode(ExecutionMode.LOCAL)
                     .metadata(staticContext.getMetadata())
                     .build();
-            return new FunctionCall(new ArrayFunctionCallIterator(functionItem, keyIterator, callStaticContext));
+            return new FunctionCall(
+                    new ArrayFunctionCallIterator(functionItem, keyIterator, callStaticContext), context);
         }
         if (functionItem.isMap()) {
             if (partialApplication) {
@@ -152,149 +146,36 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                     .executionMode(ExecutionMode.LOCAL)
                     .metadata(staticContext.getMetadata())
                     .build();
-            return new FunctionCall(new MapFunctionCallIterator(functionItem, keyIterator, callStaticContext));
+            return new FunctionCall(new MapFunctionCallIterator(functionItem, keyIterator, callStaticContext), context);
         }
         if (!functionItem.isFunction()) {
             throw new UnexpectedTypeException(
                     "Dynamic function calls can only be performed on functions, arrays, or maps.",
                     staticContext.getMetadata());
         }
-        ExecutionMode calleeExecutionMode = getCalleeExecutionModeForFunctionItemCall(
-                functionItem, functionArguments, partialApplication, staticContext);
+        ExecutionMode calleeExecutionMode =
+                FunctionCall.calleeExecutionMode(functionItem, functionArguments, partialApplication, staticContext);
         if (calleeExecutionMode.equals(ExecutionMode.LOCAL) && callerExecutionMode.equals(ExecutionMode.DATAFRAME)) {
             throw new OurBadException(
                     "Execution mode mismatch in dynamic function call. At this point, Rumble only supports higher-order functions "
                             + "that are either machine learning models or estimators (which process validated and structured sequences of objects at any scale), or that take and return just one item at a time.",
                     staticContext.getMetadata());
         }
-        return new FunctionCall(NamedFunctions.buildFunctionItemCallIterator(
-                functionItem,
-                staticContext,
-                partialApplication ? ExecutionMode.LOCAL : calleeExecutionMode,
-                functionArguments,
-                false));
-    }
-
-    private static ExecutionMode getCalleeExecutionModeForFunctionItemCall(
-            Item functionItem,
-            List<? extends ItemRuntimePlan> functionArguments,
-            boolean partialApplication,
-            RuntimeStaticContext staticContext) {
-        if (partialApplication) {
-            return ExecutionMode.LOCAL;
-        }
-        if (functionItem.isBuiltinFunction()) {
-            BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
-                    functionItem.getIdentifier(), staticContext.getQueryLanguage());
-            // assume that the passed builtin function is valid
-            ExecutionMode firstArgumentMode = ExecutionMode.LOCAL;
-            for (ItemRuntimePlan arg : functionArguments) {
-                if (arg != null) {
-                    firstArgumentMode = arg.getRuntimeStaticContext().getExecutionMode();
-                    break;
-                }
-            }
-            return BuiltinFunctionExecutionModes.resolve(builtin, firstArgumentMode, staticContext.getConfiguration());
-        }
-        if (functionItem.getBodyIterator() instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
-            return coercionRuntimeIterator.getWrappedCallableExecutionMode();
-        }
-        return functionItem.getBodyIterator().getRuntimeStaticContext().getExecutionMode();
+        return FunctionCall.of(functionItem, functionArguments, staticContext, context);
     }
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        return resolveFunctionCall(dynamicContext).iterator.getRDD(dynamicContext);
+        return resolveFunctionCall(dynamicContext).getRDD();
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         try {
-            return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-                    resolveFunctionCall(dynamicContext).iterator, dynamicContext);
+            return resolveFunctionCall(dynamicContext).getDataFrame();
         } catch (InvalidRumbleMLParamException e) {
             String m = e.getMLMessage();
             throw new InvalidRumbleMLParamException(m, getMetadata());
-        }
-    }
-
-    private static final class FunctionCall {
-        private final ItemRuntimePlan iterator;
-
-        private FunctionCall(ItemRuntimePlan iterator) {
-            this.iterator = iterator;
-        }
-    }
-
-    private static final class DynamicCallLocalCursor extends AbstractLocalCursor<Item> {
-
-        private final ItemRuntimePlan functionItemPlan;
-        private final List<? extends ItemRuntimePlan> functionArguments;
-        private final boolean partialApplication;
-        private final ExecutionMode callerExecutionMode;
-        private final RuntimeStaticContext staticContext;
-        private final DynamicContext context;
-        private FunctionCall call;
-        private Cursor<Item> delegate;
-
-        private DynamicCallLocalCursor(
-                ItemRuntimePlan functionItemPlan,
-                List<? extends ItemRuntimePlan> functionArguments,
-                boolean partialApplication,
-                ExecutionMode callerExecutionMode,
-                RuntimeStaticContext staticContext,
-                DynamicContext context) {
-            super(staticContext.getMetadata());
-            this.functionItemPlan = functionItemPlan;
-            this.functionArguments = functionArguments;
-            this.partialApplication = partialApplication;
-            this.callerExecutionMode = callerExecutionMode;
-            this.staticContext = staticContext;
-            this.context = context;
-        }
-
-        @Override
-        protected void openLocal() {
-            this.call = resolveFunctionCall(
-                    this.functionItemPlan,
-                    this.functionArguments,
-                    this.partialApplication,
-                    this.callerExecutionMode,
-                    this.staticContext,
-                    this.context);
-            // A call may evaluate its arguments when its cursor is created.
-            try {
-                this.delegate = this.call.iterator.getCursor(this.context);
-            } catch (InvalidRumbleMLParamException e) {
-                throw new InvalidRumbleMLParamException(e.getMLMessage(), this.staticContext.getMetadata());
-            }
-        }
-
-        @Override
-        protected boolean hasNextLocal() {
-            try {
-                return this.delegate.hasNext();
-            } catch (InvalidRumbleMLParamException e) {
-                throw new InvalidRumbleMLParamException(e.getMLMessage(), this.staticContext.getMetadata());
-            }
-        }
-
-        @Override
-        protected Item nextLocal() {
-            try {
-                return this.delegate.next();
-            } catch (InvalidRumbleMLParamException e) {
-                throw new InvalidRumbleMLParamException(e.getMLMessage(), this.staticContext.getMetadata());
-            }
-        }
-
-        @Override
-        protected void closeLocal() {
-            if (this.delegate != null) {
-                this.delegate.close();
-            }
-            this.delegate = null;
-            this.call = null;
         }
     }
 }

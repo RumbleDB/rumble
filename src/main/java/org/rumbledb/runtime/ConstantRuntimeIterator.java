@@ -27,7 +27,7 @@ public class ConstantRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Item item;
+    private final Item item;
 
     public ConstantRuntimeIterator(Item item, RuntimeStaticContext staticContext) {
         super(List.of(), staticContext);
@@ -35,9 +35,6 @@ public class ConstantRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     // Only for reuse as a cached argument iterator; call only while closed.
-    public void setItemForReuse(Item item) {
-        this.item = item;
-    }
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
