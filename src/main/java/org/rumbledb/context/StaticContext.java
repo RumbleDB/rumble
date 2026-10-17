@@ -22,6 +22,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -302,6 +303,21 @@ public class StaticContext {
 
     public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
         this.staticallyKnownFunctionSignatures.put(identifier, signature);
+    }
+
+    /**
+     * Returns the arities of the user-defined functions with this name that are visible from this context.
+     */
+    public Set<Integer> getUserDefinedFunctionArities(Name functionName) {
+        Set<Integer> arities = new TreeSet<>();
+        for (StaticContext context = this; context != null; context = context.parent) {
+            for (FunctionIdentifier identifier : context.staticallyKnownFunctionSignatures.keySet()) {
+                if (identifier.getName().equals(functionName)) {
+                    arities.add(identifier.getArity());
+                }
+            }
+        }
+        return arities;
     }
 
     @Override
