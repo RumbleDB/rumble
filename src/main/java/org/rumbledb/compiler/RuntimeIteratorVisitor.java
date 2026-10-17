@@ -280,6 +280,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
 
     private final VisitorConfig visitorConfig;
     private final RumbleConfiguration config;
+    // Whether the body of the function being visited contains a tail call.
+    private boolean hasTailCalls;
 
     public RuntimeIteratorVisitor(RumbleConfiguration config) {
         this.visitorConfig = VisitorConfig.RUNTIME_PLAN_GENERATION;
@@ -1189,8 +1191,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         SequenceType returnType = expression.getReturnType();
-        ItemRuntimePlan bodyIterator =
-                new FunctionBodyIterator(this.visit(expression.getBody(), argument), expression.hasExitStatement());
+        boolean enclosingFunctionHasTailCalls = this.hasTailCalls;
+        this.hasTailCalls = false;
+        ItemRuntimePlan body = this.visit(expression.getBody(), argument);
+        ItemRuntimePlan bodyIterator = new FunctionBodyIterator(body, expression.hasExitStatement(), this.hasTailCalls);
+        this.hasTailCalls = enclosingFunctionHasTailCalls;
         ItemRuntimePlan runtimeIterator = new FunctionRuntimeIterator(
                 expression.getName(),
                 paramNameToSequenceTypes,
@@ -1226,6 +1231,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     false);
         } else {
+            this.hasTailCalls |= expression.isTailCallOptimization();
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(
                     identifier,
                     arguments,
