@@ -30,12 +30,10 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -87,83 +85,21 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new FunctionCallLocalCursor(
-                this.functionItem,
-                this.functionArguments,
-                this.isPartialApplication,
-                this.isTailOptimization,
-                this.staticContext,
-                context);
-    }
-
-    private static final class FunctionCallLocalCursor extends AbstractLocalCursor<Item> {
-        private final Item functionItem;
-        private final List<ItemRuntimePlan> functionArguments;
-        private final boolean partialApplication;
-        private final boolean tailOptimization;
-        private final RuntimeStaticContext staticContext;
-        private final DynamicContext context;
-        private Cursor<Item> body;
-
-        private FunctionCallLocalCursor(
-                Item functionItem,
-                List<ItemRuntimePlan> functionArguments,
-                boolean partialApplication,
-                boolean tailOptimization,
-                RuntimeStaticContext staticContext,
-                DynamicContext context) {
-            super(staticContext.getMetadata());
-            this.functionItem = functionItem;
-            this.functionArguments = functionArguments;
-            this.partialApplication = partialApplication;
-            this.tailOptimization = tailOptimization;
-            this.staticContext = staticContext;
-            this.context = context;
+        if (this.isPartialApplication) {
+            return new IteratorLocalCursor<>(
+                    () -> List.<Item>of(createPartiallyAppliedFunction(
+                                    this.functionItem, this.functionArguments, this.isTailOptimization, context))
+                            .iterator(),
+                    getMetadata());
         }
-
-        @Override
-        protected void openLocal() {
-            ItemRuntimePlan bodyPlan;
-            DynamicContext bodyContext;
-            if (this.partialApplication) {
-                bodyPlan = generatePartiallyAppliedFunction(
-                        this.functionItem,
-                        this.functionArguments,
-                        this.tailOptimization,
-                        this.staticContext,
-                        this.context);
-                bodyContext = this.context;
-            } else {
-                bodyPlan = this.functionItem.getBodyIterator();
-                bodyContext = createCallContext(this.functionItem, this.functionArguments, this.context);
-            }
-            this.body = bodyPlan.getCursor(bodyContext);
-        }
-
-        @Override
-        protected boolean hasNextLocal() {
-            return this.body.hasNext();
-        }
-
-        @Override
-        protected Item nextLocal() {
-            return this.body.next();
-        }
-
-        @Override
-        protected void closeLocal() {
-            if (this.body != null) {
-                this.body.close();
-                this.body = null;
-            }
-        }
+        return this.functionItem.getBodyIterator().getCursor(createCallContext(context));
     }
 
     private DynamicContext createCallContext(DynamicContext context) {
         return createCallContext(this.functionItem, this.functionArguments, context);
     }
 
-    private static DynamicContext createCallContext(
+    static DynamicContext createCallContext(
             Item functionItem, List<ItemRuntimePlan> functionArguments, DynamicContext context) {
         // A call context belongs to one invocation. Reusing it would retain parameters and function-local variables.
         Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(functionItem.getLocalVariablesInClosure());
@@ -192,7 +128,10 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
     private void wrapArgumentIteratorsWithTypeCheckingIterators() {
         FunctionCallArgumentConversion.wrapAccordingToSignature(
-                this.functionItem, this.functionArguments, getRuntimeStaticContext());
+                this.functionItem.getIdentifier().getName(),
+                this.functionItem.getSignature(),
+                this.functionArguments,
+                getRuntimeStaticContext());
     }
 
     /**
@@ -203,13 +142,15 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
      * <li>Argument placeholders form the parameters</li>
      * </ul>
      *
-     * @return a one-item iterator containing the partially applied function item
+     * For a tail call, all arguments are supplied, and the outermost call that is not a tail call then calls the
+     * returned function item.
+     *
+     * @return the partially applied function item
      */
-    private static ItemRuntimePlan generatePartiallyAppliedFunction(
+    static FunctionItem createPartiallyAppliedFunction(
             Item functionItem,
             List<ItemRuntimePlan> functionArguments,
             boolean tailOptimization,
-            RuntimeStaticContext staticContext,
             DynamicContext context) {
         Name argName;
         ItemRuntimePlan argIterator;
@@ -260,13 +201,10 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
                 localArgumentValues,
                 RDDArgumentValues,
                 DFArgumentValues);
-        return new ConstantRuntimeIterator(
-                partiallyAppliedFunction,
-                staticContext.toBuilder()
-                        .staticType(SequenceType.createSequenceType("function(*)"))
-                        .executionMode(ExecutionMode.LOCAL)
-                        .metadata(staticContext.getMetadata())
-                        .build());
+        if (functionItem instanceof FunctionItem function) {
+            partiallyAppliedFunction.shareCalleePlan(function);
+        }
+        return partiallyAppliedFunction;
     }
 
     private static void populateDynamicContextWithArguments(

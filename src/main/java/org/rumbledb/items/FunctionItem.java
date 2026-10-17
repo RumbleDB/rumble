@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.Estimator;
@@ -34,6 +35,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.ml.ApplyEstimatorRuntimeIterator;
@@ -57,6 +59,12 @@ public class FunctionItem implements Item {
     private FunctionSignature signature;
 
     private ItemRuntimePlan bodyIterator;
+
+    /**
+     * The body plan with the conversion of its result to the declared return type, built on the first call and shared
+     * by all calls of this function. It is derived from the signature and the body plan, so it is not serialized.
+     */
+    private transient ItemRuntimePlan calleePlan;
 
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
@@ -83,6 +91,7 @@ public class FunctionItem implements Item {
         this.parameterNames = source.parameterNames;
         this.signature = source.signature;
         this.bodyIterator = source.bodyIterator;
+        this.calleePlan = source.calleePlan;
         this.dynamicModuleContext = source.dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>(source.localVariablesInClosure);
         this.RDDVariablesInClosure = new HashMap<>(source.RDDVariablesInClosure);
@@ -223,6 +232,37 @@ public class FunctionItem implements Item {
     @Override
     public ItemRuntimePlan getBodyIterator() {
         return this.bodyIterator;
+    }
+
+    /**
+     * Returns the plan that a call of this function evaluates in its call context: the body, with the function
+     * conversion rules applied to its result according to the declared return type.
+     */
+    public ItemRuntimePlan getCalleePlan() {
+        if (this.calleePlan == null) {
+            SequenceType returnType = this.signature.getReturnType();
+            Name name = this.identifier.getName();
+            this.calleePlan = returnType == null
+                    ? this.bodyIterator
+                    : FunctionCallArgumentConversion.wrapArgument(
+                            this.bodyIterator,
+                            returnType,
+                            "Invalid return type for " + (name == null ? "" : name + " ") + "function. ",
+                            this.bodyIterator.getRuntimeStaticContext());
+        }
+        return this.calleePlan;
+    }
+
+    /**
+     * Uses the callee plan of {@code function}, which this function item partially applies: both have the same body
+     * and return type, so that each partial application, such as a tail call, does not build its own.
+     */
+    public void shareCalleePlan(FunctionItem function) {
+        if (function.bodyIterator != this.bodyIterator
+                || !Objects.equals(function.signature.getReturnType(), this.signature.getReturnType())) {
+            throw new OurBadException("Only a partial application of a function can share its callee plan.");
+        }
+        this.calleePlan = function.getCalleePlan();
     }
 
     /**
