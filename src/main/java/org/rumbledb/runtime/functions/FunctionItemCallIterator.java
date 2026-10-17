@@ -163,7 +163,7 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
         return createCallContext(this.functionItem, this.functionArguments, context);
     }
 
-    private static DynamicContext createCallContext(
+    static DynamicContext createCallContext(
             Item functionItem, List<ItemRuntimePlan> functionArguments, DynamicContext context) {
         // A call context belongs to one invocation. Reusing it would retain parameters and function-local variables.
         Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(functionItem.getLocalVariablesInClosure());
