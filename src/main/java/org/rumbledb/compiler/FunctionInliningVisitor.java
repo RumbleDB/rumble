@@ -113,10 +113,15 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 argument, parameterType, call.getFunctionIdentifier().getName(), argument.getMetadata());
     }
 
+    // Return value errors are reported at the function body, as when the function is called without inlining.
     private static FunctionArgumentConversionExpression convertReturnValue(
-            Expression value, SequenceType returnType, FunctionCallExpression call) {
+            Expression value, SequenceType returnType, FunctionCallExpression call, InlineFunctionExpression function) {
         return new FunctionArgumentConversionExpression(
-                value, returnType, call.getFunctionIdentifier().getName(), true, call.getMetadata());
+                value,
+                returnType,
+                call.getFunctionIdentifier().getName(),
+                true,
+                function.getBody().getMetadata());
     }
 
     // Inlining is disabled for functions that:
@@ -148,14 +153,19 @@ public class FunctionInliningVisitor extends CloneVisitor {
         if (expression.getArguments().isEmpty() || allArgumentsMatch(expression, paramNames)) {
             if (inlineFunction.getReturnType() != null) {
                 FunctionArgumentConversionExpression result =
-                        convertReturnValue(body, inlineFunction.getReturnType(), expression);
+                        convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
             return body;
         }
         body.setStaticSequenceType(inlineFunction.getReturnType());
-        ReturnClause returnClause = new ReturnClause(body, expression.getMetadata());
+        // The return value is converted inside the FLWOR expression, which binds the arguments and is evaluated once,
+        // so that conversion errors are reported at the body, not at the call.
+        Expression returnValue = inlineFunction.getReturnType() == null
+                ? body
+                : convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
+        ReturnClause returnClause = new ReturnClause(returnValue, expression.getMetadata());
         Clause expressionClauses = null;
         Clause assignmentClauses = null;
         for (int i = 0; i < expression.getArguments().size(); i++) {
@@ -199,7 +209,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
         if (expressionClauses == null) {
             if (inlineFunction.getReturnType() != null) {
                 FunctionArgumentConversionExpression result =
-                        convertReturnValue(body, inlineFunction.getReturnType(), expression);
+                        convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
@@ -211,10 +221,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
         } else {
             expressionClauses.getLastClause().chainWith(returnClause);
         }
-        FlworExpression result = new FlworExpression(returnClause, expression.getMetadata());
-        if (inlineFunction.getReturnType() != null) {
-            return convertReturnValue(result, inlineFunction.getReturnType(), expression);
-        }
-        return result;
+        return new FlworExpression(returnClause, expression.getMetadata());
     }
 }
