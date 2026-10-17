@@ -29,7 +29,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
@@ -108,23 +107,15 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        try {
-            FunctionItem function = getFunction(dynamicContext);
-            return function.getCalleePlan().getRDD(createCallContext(function, dynamicContext));
-        } catch (ExitStatementException exitStatementException) {
-            return exitStatementException.getRddResult();
-        }
+        FunctionItem function = getFunction(dynamicContext);
+        return function.getCalleePlan().getRDD(createCallContext(function, dynamicContext));
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        try {
-            FunctionItem function = getFunction(dynamicContext);
-            return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
-                    function.getCalleePlan(), createCallContext(function, dynamicContext));
-        } catch (ExitStatementException exitStatementException) {
-            return exitStatementException.getDataFrameResult();
-        }
+        FunctionItem function = getFunction(dynamicContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                function.getCalleePlan(), createCallContext(function, dynamicContext));
     }
 
     @Override
@@ -195,12 +186,6 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
                     this.nextResult = null;
                     closeDelegate();
                 }
-            } catch (ExitStatementException e) {
-                // An exit statement ends the call: its results replace the rest of the body's results.
-                closeDelegate();
-                List<Item> exitResults = e.getLocalResult();
-                this.delegate = new IteratorLocalCursor<>(exitResults::iterator, this.callSite.getMetadata());
-                advance();
             } catch (RuntimeException e) {
                 closeDelegate();
                 throw e;

@@ -28,7 +28,6 @@ import org.rumbledb.context.BuiltinFunctionExecutionModes;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExitStatementException;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
@@ -205,11 +204,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        try {
-            return resolveFunctionCall(dynamicContext).iterator.getRDD(dynamicContext);
-        } catch (ExitStatementException exitStatementException) {
-            return exitStatementException.getRddResult();
-        }
+        return resolveFunctionCall(dynamicContext).iterator.getRDD(dynamicContext);
     }
 
     @Override
@@ -220,8 +215,6 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
         } catch (InvalidRumbleMLParamException e) {
             String m = e.getMLMessage();
             throw new InvalidRumbleMLParamException(m, getMetadata());
-        } catch (ExitStatementException exitStatementException) {
-            return exitStatementException.getDataFrameResult();
         }
     }
 
@@ -243,8 +236,6 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
         private final DynamicContext context;
         private FunctionCall call;
         private Cursor<Item> delegate;
-        private List<Item> exitResults;
-        private int exitIndex;
 
         private DynamicCallLocalCursor(
                 ItemRuntimePlan functionItemPlan,
@@ -276,41 +267,24 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                 this.delegate = this.call.iterator.getCursor(this.context);
             } catch (InvalidRumbleMLParamException e) {
                 throw new InvalidRumbleMLParamException(e.getMLMessage(), this.staticContext.getMetadata());
-            } catch (ExitStatementException e) {
-                this.exitResults = e.getLocalResult();
             }
         }
 
         @Override
         protected boolean hasNextLocal() {
-            if (this.exitResults != null) {
-                return this.exitIndex < this.exitResults.size();
-            }
             try {
                 return this.delegate.hasNext();
             } catch (InvalidRumbleMLParamException e) {
                 throw new InvalidRumbleMLParamException(e.getMLMessage(), this.staticContext.getMetadata());
-            } catch (ExitStatementException e) {
-                this.exitResults = e.getLocalResult();
-                return this.exitIndex < this.exitResults.size();
             }
         }
 
         @Override
         protected Item nextLocal() {
-            if (this.exitResults != null) {
-                if (this.exitIndex >= this.exitResults.size()) {
-                    throw invalidState("No more dynamic function results are available.");
-                }
-                return this.exitResults.get(this.exitIndex++);
-            }
             try {
                 return this.delegate.next();
             } catch (InvalidRumbleMLParamException e) {
                 throw new InvalidRumbleMLParamException(e.getMLMessage(), this.staticContext.getMetadata());
-            } catch (ExitStatementException e) {
-                this.exitResults = e.getLocalResult();
-                return nextLocal();
             }
         }
 
@@ -321,8 +295,6 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
             }
             this.delegate = null;
             this.call = null;
-            this.exitResults = null;
-            this.exitIndex = 0;
         }
     }
 }
