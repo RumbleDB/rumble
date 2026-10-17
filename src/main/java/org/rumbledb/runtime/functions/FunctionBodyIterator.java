@@ -137,7 +137,7 @@ public class FunctionBodyIterator extends ItemRuntimePlan
                 // A tail call only calls the function itself (see TailCallOptimizationVisitor), so the return type
                 // conversion around this body also applies to its result.
                 this.body = ((FunctionBodyIterator) tailCall.getBodyIterator()).body;
-                this.context = FunctionItemCallIterator.createCallContext(tailCall, List.of(), this.context);
+                this.context = FunctionCall.createCallContext(tailCall, List.of(), this.context);
                 evaluateBody();
             }
         }
