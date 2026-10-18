@@ -1036,6 +1036,9 @@ public class SequenceType implements Serializable {
             case "node()+":
                 st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.OneOrMore);
                 break;
+            case "document-node()?":
+                st = new SequenceType(BuiltinTypesCatalogue.documentNode, SequenceType.Arity.OneOrZero);
+                break;
             default:
                 throw new OurBadException("Unrecognized type: " + userFriendlyName);
         }
