@@ -21,6 +21,7 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -43,6 +44,9 @@ public class GetRootFunctionIterator extends LocalFunctionCallIterator {
     private Item evaluate(Item node) {
         if (node == null) {
             return null;
+        }
+        if (!node.isNode()) {
+            throw new UnexpectedTypeException("The argument to fn:root must be a node.", getMetadata());
         }
         Item current = node;
         while (current.parent() != null) {

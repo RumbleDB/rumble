@@ -42,6 +42,8 @@ import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
+import org.rumbledb.xml.schema.XmlSchemaValidator;
 
 public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
@@ -72,6 +74,7 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
         boolean liberal = false;
         boolean escape = false;
+        boolean validate = false;
         String duplicates = DUPLICATES_RETAIN;
         if (this.getChildren().size() > 1) {
             Item optionsItem = this.getChild(1).materializeFirstOrNull(context);
@@ -81,9 +84,13 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             }
             liberal = readBooleanOption(optionsItem, "liberal", false);
             escape = readBooleanOption(optionsItem, "escape", false);
-            duplicates = readDuplicatesOption(optionsItem);
-            checkValidateOption(optionsItem);
+            validate = readBooleanOption(optionsItem, "validate", false);
+            duplicates = readDuplicatesOption(optionsItem, validate);
             checkFallbackOption(optionsItem, escape);
+        }
+        if (validate && DUPLICATES_RETAIN.equals(duplicates)) {
+            throw new InvalidOptionException(
+                    "fn:json-to-xml: duplicates='retain' is incompatible with validate=true().", getMetadata());
         }
         if (escape) {
             throw new UnsupportedFeatureException(
@@ -118,6 +125,10 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             documentItem.addParentToDescendants();
         }
         documentItem.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
+        if (validate) {
+            return new XmlSchemaValidator(XmlSchemaCatalogLoader.loadXPathFunctionsCatalog())
+                    .validateStrict(documentItem, getMetadata());
+        }
         return documentItem;
     }
 
@@ -199,10 +210,10 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return sequence.get(0).getBooleanValue();
     }
 
-    private String readDuplicatesOption(Item optionsItem) {
+    private String readDuplicatesOption(Item optionsItem, boolean validate) {
         List<Item> sequence = optionsItem.getSequenceByKey("duplicates");
         if (sequence == null) {
-            return DUPLICATES_RETAIN;
+            return validate ? DUPLICATES_REJECT : DUPLICATES_RETAIN;
         }
         if (sequence.size() != 1 || !sequence.get(0).isString()) {
             throw new UnexpectedTypeException(
@@ -217,22 +228,6 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                     "fn:json-to-xml: invalid value for option 'duplicates': '" + value + "'", getMetadata());
         }
         return value;
-    }
-
-    private void checkValidateOption(Item optionsItem) {
-        List<Item> sequence = optionsItem.getSequenceByKey("validate");
-        if (sequence == null) {
-            return;
-        }
-        if (sequence.size() != 1 || !sequence.get(0).isBoolean()) {
-            throw new UnexpectedTypeException(
-                    "The 'validate' option of fn:json-to-xml must be a single xs:boolean [err:XPTY0004].",
-                    getMetadata());
-        }
-        if (sequence.get(0).getBooleanValue()) {
-            throw new UnsupportedFeatureException(
-                    "fn:json-to-xml: option 'validate' is not supported yet.", getMetadata());
-        }
     }
 
     private void checkFallbackOption(Item optionsItem, boolean escape) {

@@ -18,10 +18,11 @@ package org.rumbledb.expressions.xml.node_test;
 import java.io.Serial;
 import java.util.Objects;
 
-import org.apache.commons.lang3.StringUtils;
-
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 /**
  * XQuery 3.1 Section 2.5.5 - SequenceType Matching
@@ -47,7 +48,8 @@ public class PITest implements NodeTest {
      * @param targetName the target name to match against (from NCName or StringLiteral)
      */
     public PITest(String targetName) {
-        this.targetName = StringUtils.normalizeSpace(Objects.requireNonNull(targetName));
+        this.targetName = NamespaceBindingUtils.normalizePITestTarget(
+                Objects.requireNonNull(targetName), ExceptionMetadata.EMPTY_METADATA);
     }
 
     public boolean hasTargetName() {

@@ -15,7 +15,6 @@
  */
 package org.rumbledb.runtime.functions.io;
 
-import java.io.InputStream;
 import java.io.Serial;
 import java.net.URI;
 import java.util.List;
@@ -27,6 +26,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.XmlParsingUtils;
+import org.rumbledb.resources.ResolvedResource;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -48,9 +48,11 @@ public class DocAvailableFunctionIterator extends AbstractAtMostOneItemRuntimePl
         try {
             URI uri = FileSystemUtil.resolveURI(
                     this.staticContext.getStaticURI(), uriItem.getStringValue(), getMetadata());
-            try (InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getMetadata())) {
-                return ItemFactory.getInstance()
-                        .createBooleanItem(XmlParsingUtils.isWellFormed(new InputSource(xmlFileStream), getMetadata()));
+            try (ResolvedResource resource =
+                    context.getResourceResolver().resolve(uri, getConfiguration(), getMetadata())) {
+                InputSource source = new InputSource(resource.getInputStream());
+                source.setSystemId(resource.getSystemId().toString());
+                return ItemFactory.getInstance().createBooleanItem(XmlParsingUtils.isWellFormed(source, getMetadata()));
             }
         } catch (Exception e) {
             return ItemFactory.getInstance().createBooleanItem(false);
