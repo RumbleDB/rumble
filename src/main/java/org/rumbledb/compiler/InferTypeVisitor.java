@@ -19,7 +19,9 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -198,7 +200,16 @@ import org.rumbledb.xml.schema.XmlSchemaCatalog;
 @Log4j2
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
+    /** How many declared names an error for an undeclared schema step lists before summarizing the rest. */
+    private static final int MAX_LISTED_STEP_NAMES = 10;
+
     private final RumbleConfiguration rumbleRuntimeConfiguration;
+
+    /**
+     * The context type E of each type that descendant-or-self::node() inferred from a schema, so that an error in the
+     * step S of E//S can name E. Compared by identity: S steps from that same type object.
+     */
+    private final Map<ItemType, ItemType> descendantOrSelfContexts = new IdentityHashMap<>();
 
     /**
      * Builds a new visitor.
@@ -207,12 +218,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      */
     InferTypeVisitor(RumbleConfiguration rumbleRuntimeConfiguration) {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
-    }
-
-    private void throwStaticTypeException(String message, ErrorCode code) {
-        if (this.rumbleRuntimeConfiguration.analysis().enableStaticTyping()) {
-            throw new UnexpectedStaticTypeException(message, code);
-        }
     }
 
     private void throwStaticTypeException(String message, ExceptionMetadata metadata) {
@@ -263,7 +268,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             "Inferred type for "
                                     + nodeName
                                     + " is empty sequence (with active static typing feature, only allowed for CommaExpression)",
-                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                            metadata);
                 }
             }
         }
@@ -295,7 +301,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         "Inferred type for "
                                 + nodeName
                                 + " is empty sequence (with active static typing feature, only allowed for CommaExpression)",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                        metadata);
             }
         }
     }
@@ -3434,19 +3441,36 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    /** Child and attribute steps from a schema-typed element or document select the nodes its schema declares. */
+    /**
+     * Child, attribute, and descendant steps from a schema-typed element or document select the nodes its schema
+     * declares. E//S abbreviates E/descendant-or-self::node()/S, so S steps from the union of the context and its
+     * descendants, and keeps its predicates.
+     */
     private Optional<SequenceType> inferSchemaStepType(StepExpr stepExpr, SequenceType contextType) {
-        if (contextType == null || !(stepExpr instanceof ForwardStepExpr forwardStep)) {
+        if (contextType == null
+                || !SchemaContentModel.isSchemaTyped(contextType.getItemType())
+                || !(stepExpr instanceof ForwardStepExpr forwardStep)) {
             return Optional.empty();
         }
-        if (!SchemaContentModel.isSchemaTyped(contextType.getItemType())) {
-            return Optional.empty();
-        }
-        boolean attributeAxis = forwardStep.getForwardAxis().equals(ForwardAxis.ATTRIBUTE);
-        if (!attributeAxis && !forwardStep.getForwardAxis().equals(ForwardAxis.CHILD)) {
-            return Optional.empty();
-        }
+        SchemaContentModel contentModel = stepExpr.getStaticContext()
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getContentModel();
+        ForwardAxis axis = forwardStep.getForwardAxis();
         NodeTest nodeTest = stepExpr.getNodeTest();
+        if (axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
+            if (!(nodeTest instanceof AnyKindTest)) {
+                return Optional.empty();
+            }
+            Optional<SequenceType> descendantsOrSelf = contentModel.getDescendantOrSelfType(contextType.getItemType());
+            descendantsOrSelf.ifPresent(
+                    type -> this.descendantOrSelfContexts.put(type.getItemType(), contextType.getItemType()));
+            return descendantsOrSelf.map(type -> type.repeated(contextType.getCardinality()));
+        }
+        boolean attributeAxis = axis.equals(ForwardAxis.ATTRIBUTE);
+        if (!attributeAxis && !axis.equals(ForwardAxis.CHILD) && !axis.equals(ForwardAxis.DESCENDANT)) {
+            return Optional.empty();
+        }
         Name name;
         if (nodeTest instanceof NameTest nameTest && (nameTest.hasQName() || nameTest.hasWildcardOnly())) {
             name = nameTest.hasQName() ? nameTest.getExpandedName() : null;
@@ -3465,13 +3489,56 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         } else {
             return Optional.empty();
         }
-        return stepExpr.getStaticContext()
-                .getInScopeSchemaTypes()
-                .getXmlSchemaCatalog()
-                .getContentModel()
-                .getStepType(contextType.getItemType(), attributeAxis, name)
-                .map(type -> new SequenceType(
-                        type.getItemType(), type.getCardinality().repeated(contextType.getCardinality())));
+        boolean descendantAxis = axis.equals(ForwardAxis.DESCENDANT);
+        // The schema only says which children each type has, so descendant::N is computed as
+        // descendant-or-self::node()/child::N: take every type at or below the context, then their N children.
+        // Every descendant is the child of some node there, and the context is not, so it is never included.
+        Optional<SequenceType> stepType = descendantAxis
+                ? contentModel
+                        .getDescendantOrSelfType(contextType.getItemType())
+                        .flatMap(nodes -> contentModel
+                                .getStepType(nodes.getItemType(), false, name)
+                                .map(type -> type.repeated(nodes.getCardinality())))
+                : contentModel.getStepType(contextType.getItemType(), attributeAxis, name);
+        if (stepType.isPresent() && stepType.get().isEmptySequence()) {
+            throwStaticTypeException(
+                    undeclaredStepMessage(contentModel, contextType.getItemType(), attributeAxis, descendantAxis, name),
+                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                    stepExpr.getMetadata());
+        }
+        return stepType.map(type -> type.repeated(contextType.getCardinality()));
+    }
+
+    /** Explains a step that selects nothing, listing the names that the schema declares instead. */
+    private String undeclaredStepMessage(
+            SchemaContentModel contentModel,
+            ItemType stepContextType,
+            boolean attributeAxis,
+            boolean descendantAxis,
+            Name name) {
+        // In E//S, S steps from the type of descendant-or-self::node(), so the message names E instead.
+        ItemType descendantOrSelfContext = this.descendantOrSelfContexts.get(stepContextType);
+        boolean descendants = descendantAxis || descendantOrSelfContext != null;
+        ItemType contextType = descendantOrSelfContext != null ? descendantOrSelfContext : stepContextType;
+        String kind = attributeAxis ? "attribute" : descendants ? "descendant element" : "child element";
+        String where = descendants ? (attributeAxis ? " on or below " : " below ") : " for ";
+        if (name == null) {
+            return "The schema declares no " + kind + "s" + where + contextType + ".";
+        }
+        List<Name> declared = contentModel
+                .getStepNames(contextType, attributeAxis, descendants)
+                .orElse(List.of());
+        String alternatives = declared.isEmpty()
+                ? "It declares none."
+                : "It declares "
+                        + declared.stream()
+                                .limit(MAX_LISTED_STEP_NAMES)
+                                .map(Name::toString)
+                                .collect(Collectors.joining(", "))
+                        + (declared.size() > MAX_LISTED_STEP_NAMES
+                                ? ", and " + (declared.size() - MAX_LISTED_STEP_NAMES) + " more."
+                                : ".");
+        return "The schema declares no " + kind + " " + name + where + contextType + ". " + alternatives;
     }
 
     private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {
@@ -3545,11 +3612,21 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return BuiltinTypesCatalogue.nodeItem;
     }
 
+    private static boolean hasNoChildren(ItemType nodeType) {
+        return nodeType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.textNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.commentNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode)
+                || nodeType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+    }
+
     private boolean isStaticallyEmptyStep(StepExpr stepExpr, ItemType contextItemType) {
         if (stepExpr instanceof ForwardStepExpr forwardStep) {
             ForwardAxis axis = forwardStep.getForwardAxis();
             if (axis.equals(ForwardAxis.ATTRIBUTE)) {
-                return !contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode);
+                // Only elements have attributes, but a context such as node() may still be one.
+                return hasNoChildren(contextItemType)
+                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
             }
             if (axis.equals(ForwardAxis.SELF)) {
                 return !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, axis);
@@ -3557,11 +3634,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             if (axis.equals(ForwardAxis.CHILD)
                     || axis.equals(ForwardAxis.DESCENDANT)
                     || axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
-                boolean hasNoDescendants = contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.textNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.commentNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode)
-                        || contextItemType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+                boolean hasNoDescendants = hasNoChildren(contextItemType);
                 if (axis.equals(ForwardAxis.DESCENDANT_OR_SELF)) {
                     return hasNoDescendants
                             && !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, axis);

@@ -514,7 +514,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction doc = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "doc"),
             List.of("string?"),
-            "item*",
+            "document-node()?",
             DocFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
     /**

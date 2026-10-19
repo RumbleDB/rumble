@@ -207,6 +207,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DirectElementConstructorTagMismatchErrorCode = registerBuiltIn("XQST0118");
     public static final ErrorCode DecimalFormatPropertyInvalidValueErrorCode = registerBuiltIn("XQST0097");
     public static final ErrorCode DecimalFormatPropertyConflictErrorCode = registerBuiltIn("XQST0098");
+    public static final ErrorCode DuplicateDefaultNamespaceDeclarationErrorCode = registerBuiltIn("XQST0066");
     public static final ErrorCode DuplicateDecimalFormatDeclarationErrorCode = registerBuiltIn("XQST0111");
     public static final ErrorCode DuplicateDecimalFormatPropertyErrorCode = registerBuiltIn("XQST0114");
     public static final ErrorCode ValidateTypeNotFoundErrorCode = registerBuiltIn("XQST0104");
@@ -264,6 +265,9 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidVariableDeclaration = registerBuiltIn("SCIN0001");
 
     public static final ErrorCode UnsupportedNormalizationFormSerialization = registerBuiltIn("SESU0011");
+    public static final ErrorCode LibraryModuleOutputDeclarationErrorCode = registerBuiltIn("XQST0108");
+    public static final ErrorCode InvalidOutputDeclarationErrorCode = registerBuiltIn("XQST0109");
+    public static final ErrorCode DuplicateOutputDeclarationErrorCode = registerBuiltIn("XQST0110");
     public static final ErrorCode InvalidSerializationParameterValue = registerBuiltIn("SEPM0016");
     public static final ErrorCode InvalidSerializationParameterDocument = registerBuiltIn("SEPM0017");
     public static final ErrorCode DuplicateCharacterMap = registerBuiltIn("SEPM0018");
