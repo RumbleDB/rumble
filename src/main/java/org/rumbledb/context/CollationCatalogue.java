@@ -15,7 +15,6 @@
  */
 package org.rumbledb.context;
 
-import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -45,47 +44,11 @@ public final class CollationCatalogue {
                 || uri.startsWith(UCA_COLLATION_BASE + "?");
     }
 
-    public static boolean isCaseInsensitiveCollation(String uri) {
-        return FOTS_CASEBLIND_COLLATION.equals(uri)
-                || HTML_ASCII_CASE_INSENSITIVE_COLLATION.equals(uri)
-                || UCA_COLLATION_BASE.equals(uri)
-                || uri.startsWith(UCA_COLLATION_BASE + "?");
-    }
-
     public static boolean isUCACollation(String uri) {
         return UCA_COLLATION_BASE.equals(uri) || uri.startsWith(UCA_COLLATION_BASE + "?");
     }
 
     public static boolean isHTMLAsciiCaseInsensitiveCollation(String uri) {
         return HTML_ASCII_CASE_INSENSITIVE_COLLATION.equals(uri);
-    }
-
-    public static String toHtmlAsciiLowerCase(String value) {
-        if (value == null) {
-            return null;
-        }
-        char[] chars = value.toCharArray();
-        boolean changed = false;
-        for (int i = 0; i < chars.length; i++) {
-            char c = chars[i];
-            if (c >= 'A' && c <= 'Z') {
-                chars[i] = (char) (c - 'A' + 'a');
-                changed = true;
-            }
-        }
-        return changed ? new String(chars) : value;
-    }
-
-    public static String normalizeString(String value, String collationUri) {
-        if (value == null) {
-            return null;
-        }
-        if (isHTMLAsciiCaseInsensitiveCollation(collationUri)) {
-            return toHtmlAsciiLowerCase(value);
-        }
-        if (isCaseInsensitiveCollation(collationUri)) {
-            return value.toLowerCase(Locale.ROOT);
-        }
-        return value;
     }
 }

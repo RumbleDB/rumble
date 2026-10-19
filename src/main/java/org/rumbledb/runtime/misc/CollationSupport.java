@@ -156,8 +156,7 @@ public final class CollationSupport {
                     .toByteArray();
             return ItemFactory.getInstance().createHexBinaryItem(HexFormat.of().formatHex(sortKeyBytes));
         }
-        return ItemFactory.getInstance()
-                .createStringItem(CollationCatalogue.normalizeString(item.getStringValue(), collationUri));
+        return ItemFactory.getInstance().createStringItem(foldCase(item.getStringValue(), collationUri));
     }
 
     /**
@@ -177,8 +176,7 @@ public final class CollationSupport {
         if (CollationCatalogue.isUCACollation(collationUri)) {
             return getUcaCollator(collationUri, metadata).compare(left, right);
         }
-        return CollationCatalogue.normalizeString(left, collationUri)
-                .compareTo(CollationCatalogue.normalizeString(right, collationUri));
+        return foldCase(left, collationUri).compareTo(foldCase(right, collationUri));
     }
 
     /**
@@ -242,8 +240,7 @@ public final class CollationSupport {
         }
         if (CollationCatalogue.isHTMLAsciiCaseInsensitiveCollation(collationUri)) {
             // ASCII lowercasing preserves length, so indices in the normalized string match the original.
-            int idx = CollationCatalogue.toHtmlAsciiLowerCase(source)
-                    .indexOf(CollationCatalogue.toHtmlAsciiLowerCase(target));
+            int idx = toHtmlAsciiLowerCase(source).indexOf(toHtmlAsciiLowerCase(target));
             return idx == -1 ? null : new int[] {idx, target.length()};
         }
         // Full Unicode lowercasing may change the string length, so match on the original string instead.
@@ -253,6 +250,30 @@ public final class CollationSupport {
             }
         }
         return null;
+    }
+
+    /**
+     * Folds the case of a string under a case-insensitive collation. Callers handle the codepoint and UCA
+     * collations first, so only the HTML ASCII and the QT3 case-blind collations reach this method.
+     */
+    private static String foldCase(String value, String collationUri) {
+        if (CollationCatalogue.isHTMLAsciiCaseInsensitiveCollation(collationUri)) {
+            return toHtmlAsciiLowerCase(value);
+        }
+        return value.toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Lowercases only the ASCII letters A-Z, as the HTML ASCII case-insensitive collation requires.
+     */
+    private static String toHtmlAsciiLowerCase(String value) {
+        char[] chars = value.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            if (chars[i] >= 'A' && chars[i] <= 'Z') {
+                chars[i] = (char) (chars[i] - 'A' + 'a');
+            }
+        }
+        return new String(chars);
     }
 
     private static boolean isIgnorable(String value, RuleBasedCollator collator) {
@@ -346,8 +367,7 @@ public final class CollationSupport {
             // Leading ignorable characters have no collation units, so the match may start after them.
             return firstIndex != StringSearch.DONE && isIgnorable(value.substring(0, firstIndex), collator);
         }
-        return CollationCatalogue.normalizeString(value, collationUri)
-                .startsWith(CollationCatalogue.normalizeString(prefix, collationUri));
+        return foldCase(value, collationUri).startsWith(foldCase(prefix, collationUri));
     }
 
     /**
@@ -382,8 +402,7 @@ public final class CollationSupport {
             return lastIndex != StringSearch.DONE
                     && isIgnorable(value.substring(lastIndex + stringSearch.getMatchLength()), collator);
         }
-        return CollationCatalogue.normalizeString(value, collationUri)
-                .endsWith(CollationCatalogue.normalizeString(suffix, collationUri));
+        return foldCase(value, collationUri).endsWith(foldCase(suffix, collationUri));
     }
 
     private static RuleBasedCollator getUcaCollator(String collationUri, ExceptionMetadata metadata) {
