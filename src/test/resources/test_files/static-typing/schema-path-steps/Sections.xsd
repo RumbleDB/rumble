@@ -1,0 +1,29 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:d="urn:sections"
+           targetNamespace="urn:sections"
+           elementFormDefault="qualified">
+    <!-- Sections nest recursively. -->
+    <xs:complexType name="Section">
+        <xs:sequence>
+            <xs:element name="title" type="xs:string"/>
+            <xs:element name="section" type="d:Section" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="level" type="xs:integer"/>
+    </xs:complexType>
+
+    <xs:element name="doc">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element name="section" type="d:Section" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+
+    <xs:element name="open">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:any processContents="lax" minOccurs="0" maxOccurs="unbounded"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

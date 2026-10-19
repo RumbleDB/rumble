@@ -66,6 +66,11 @@ public abstract class AbstractItemType implements ItemType {
         return new NamedTypeKey(Objects.requireNonNull(name));
     }
 
+    /** Anonymous schema types have internal names that no sequence type can refer to. */
+    protected static String schemaTypeDisplayName(Name typeName) {
+        return Name.ANONYMOUS_SCHEMA_TYPE_NS.equals(typeName.getNamespace()) ? "<anonymous>" : typeName.toString();
+    }
+
     protected static Object structuralTypeKey(Class<? extends ItemType> typeClass, Object... components) {
         return new StructuralTypeKey(typeClass, Arrays.asList(components));
     }

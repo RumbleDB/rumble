@@ -336,14 +336,11 @@ public final class TypeTranslation {
                     : ItemTypeFactory.attributeNodeItemType(attributeName);
         }
         Name typeName = parseEqName.apply(attributeTestContext.typeNameEqName(), NameRole.TYPE);
-        return ItemTypeFactory.attributeNodeItemType(
-                attributeName,
-                typeName,
-                translationContext
-                        .moduleContext()
-                        .getInScopeSchemaTypes()
-                        .getXmlSchemaCatalog()
-                        .getTypeHierarchy(typeName, translationContext.metadata(attributeTestContext.context())));
+        return translationContext
+                .moduleContext()
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getAttributeTest(attributeName, typeName, translationContext.metadata(attributeTestContext.context()));
     }
 
     public static <EqNameCtx extends ParserRuleContext> ElementNodeItemType elementTestAsItemType(
@@ -359,14 +356,14 @@ public final class TypeTranslation {
                     : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
         }
         Name typeName = parseEqName.apply(elementTestContext.typeNameEqName(), NameRole.TYPE);
-        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(
-                elementName,
-                typeName,
-                translationContext
-                        .moduleContext()
-                        .getInScopeSchemaTypes()
-                        .getXmlSchemaCatalog()
-                        .getTypeHierarchy(typeName, translationContext.metadata(elementTestContext.context())),
-                elementTestContext.hasOptional());
+        return translationContext
+                .moduleContext()
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getElementTest(
+                        elementName,
+                        typeName,
+                        elementTestContext.hasOptional(),
+                        translationContext.metadata(elementTestContext.context()));
     }
 }
