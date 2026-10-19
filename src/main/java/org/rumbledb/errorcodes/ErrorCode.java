@@ -74,6 +74,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode CodepointNotValidErrorCode = registerBuiltIn("FOCH0001");
     public static final ErrorCode UnsupportedCollationExceptionCode = registerBuiltIn("FOCH0002");
     public static final ErrorCode InvalidNormalizationForm = registerBuiltIn("FOCH0003");
+    public static final ErrorCode CollationDoesNotSupportCollationUnitsCode = registerBuiltIn("FOCH0004");
     public static final ErrorCode NodeNotInDocumentErrorCode = registerBuiltIn("FODC0001");
     public static final ErrorCode CannotRetrieveResourceErrorCode = registerBuiltIn("FODC0002");
     public static final ErrorCode InvalidXmlDocumentErrorCode = registerBuiltIn("FODC0006");
