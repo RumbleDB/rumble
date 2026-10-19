@@ -20,6 +20,9 @@ import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.runtime.functions.strings.IriUtils;
 
 /**
@@ -31,6 +34,24 @@ public final class XmlBaseUtils {
     private static final Pattern ABSOLUTE_URI_SCHEME = Pattern.compile("^[A-Za-z][A-Za-z0-9+.-]*:");
 
     private XmlBaseUtils() {}
+
+    /** Preserves the inherited base when validation builds a new, parentless root. */
+    public static void preserveBaseUri(Item source, Item result) {
+        if (result instanceof DocumentItem document) {
+            var base = source.baseUri();
+            document.setConstructionBaseUri(
+                    base.isEmpty() ? null : safeParse(base.get(0).getStringValue()));
+        } else if (source instanceof ElementItem element && result instanceof ElementItem validated) {
+            if (source.parent() == null) {
+                validated.setConstructionBaseUri(element.getConstructionBaseUri());
+            } else {
+                var base = source.parent().baseUri();
+                // The result retains xml:base, so copy its inherited base rather than resolving it twice.
+                validated.setConstructionBaseUri(
+                        base.isEmpty() ? null : safeParse(base.get(0).getStringValue()));
+            }
+        }
+    }
 
     /**
      * Resolves an {@code xml:base} attribute value against an inherited base URI.

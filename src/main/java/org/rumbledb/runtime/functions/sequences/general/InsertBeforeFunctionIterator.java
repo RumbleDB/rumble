@@ -45,7 +45,6 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan positionIterator;
     private final ItemRuntimePlan insertIterator;
-    private int insertPosition; // position to start inserting
 
     public InsertBeforeFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
@@ -62,52 +61,45 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        init(context);
+        int insertPosition =
+                this.positionIterator.materializeFirstOrNull(context).getIntValue();
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
 
         if (this.insertIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
-            JavaRDD<Item> beforeRDD = zippedRDD
-                    .filter((item) -> item._2() < this.insertPosition - 1)
-                    .map((item) -> item._1);
-            JavaRDD<Item> afterRDD = zippedRDD
-                    .filter((item) -> item._2() >= this.insertPosition - 1)
-                    .map((item) -> item._1);
+            JavaRDD<Item> beforeRDD =
+                    zippedRDD.filter((item) -> item._2() < insertPosition - 1).map((item) -> item._1);
+            JavaRDD<Item> afterRDD =
+                    zippedRDD.filter((item) -> item._2() >= insertPosition - 1).map((item) -> item._1);
             return beforeRDD.union(insertsRDD).union(afterRDD);
         }
 
         List<Item> inserts = this.insertIterator.materialize(context);
         int numPartitions = zippedRDD.partitions().size();
-        int indexOfInsertion = this.insertPosition;
 
         return zippedRDD.mapPartitionsWithIndex(
                 (partitionIndex, iterator) -> {
                     List<Item> list = new ArrayList<>();
                     int lastIndex = -1;
-                    if (partitionIndex == 0 && indexOfInsertion - 1 < 0) {
+                    if (partitionIndex == 0 && insertPosition - 1 < 0) {
                         list.addAll(inserts);
                     }
                     Tuple2<Item, Long> element;
                     while (iterator.hasNext()) {
                         element = iterator.next();
-                        if (element._2() == indexOfInsertion - 1) {
+                        if (element._2() == insertPosition - 1) {
                             list.addAll(inserts);
                         }
                         list.add(element._1());
                         lastIndex = element._2().intValue();
                     }
-                    if (partitionIndex == numPartitions - 1 && indexOfInsertion - 1 > lastIndex) {
+                    if (partitionIndex == numPartitions - 1 && insertPosition - 1 > lastIndex) {
                         list.addAll(inserts);
                     }
                     return list.iterator();
                 },
                 false);
-    }
-
-    private void init(DynamicContext context) {
-        Item positionItem = this.positionIterator.materializeFirstOrNull(context);
-        this.insertPosition = positionItem.getIntValue();
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
