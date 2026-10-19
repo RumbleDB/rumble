@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.misc;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.text.StringCharacterIterator;
 import java.util.HexFormat;
 import java.util.Locale;
@@ -132,12 +133,32 @@ public final class CollationSupport {
             return item;
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
-            byte[] sortKeyBytes = UcaCollators.get(collationUri, metadata)
-                    .getCollationKey(item.getStringValue())
-                    .toByteArray();
-            return ItemFactory.getInstance().createHexBinaryItem(HexFormat.of().formatHex(sortKeyBytes));
+            byte[] sortKey = collationKey(item.getStringValue(), collationUri, metadata);
+            return ItemFactory.getInstance().createHexBinaryItem(HexFormat.of().formatHex(sortKey));
         }
         return ItemFactory.getInstance().createStringItem(foldCase(item.getStringValue(), collationUri));
+    }
+
+    /**
+     * Computes the {@code fn:collation-key} of a string: two strings have equal keys if and only if they are
+     * equal under the collation.
+     *
+     * @param value the string to compute the key of
+     * @param collationUri the collation URI to use
+     * @param metadata source location metadata for error reporting
+     * @return the collation key bytes
+     */
+    public static byte[] collationKey(String value, String collationUri, ExceptionMetadata metadata) {
+        checkCollationSupported(collationUri, metadata);
+        if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
+            return value.getBytes(StandardCharsets.UTF_8);
+        }
+        if (CollationCatalogue.isUCACollation(collationUri)) {
+            return UcaCollators.get(collationUri, metadata)
+                    .getCollationKey(value)
+                    .toByteArray();
+        }
+        return foldCase(value, collationUri).getBytes(StandardCharsets.UTF_8);
     }
 
     /**
