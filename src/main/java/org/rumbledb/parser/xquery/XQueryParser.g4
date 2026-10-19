@@ -51,6 +51,15 @@ annotatedDecl
    | optionDecl
    ;
 
+// Enforce the leading-lone-slash constraint: if the next token can start a
+// relative path, a slash cannot be parsed as a complete expression.
+pathExpr
+   : SLASH singleslash = relativePathExpr
+   | SLASH {!getATN().nextTokens(getATN().ruleToStartState[RULE_relativePathExpr]).contains(_input.LA(1))}?
+   | DSLASH doubleslash = relativePathExpr
+   | relative = relativePathExpr
+   ;
+
 andExpr
    : main_expr = comparisonExpr (KW_AND rhs += comparisonExpr)*
    ;
