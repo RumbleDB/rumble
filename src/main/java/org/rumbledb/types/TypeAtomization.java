@@ -27,8 +27,11 @@ public final class TypeAtomization {
                 || member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem));
     }
 
+    /** Whether atomization changes a member. The error type is both a node and atomic, and atomizes to itself. */
     public static boolean containsNode(ItemType type) {
-        return type.getMemberTypes().stream().anyMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem));
+        return type.getMemberTypes().stream()
+                .anyMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem)
+                        && !member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem));
     }
 
     /**
@@ -55,22 +58,30 @@ public final class TypeAtomization {
 
     private static SequenceType inferItemType(ItemType type) {
         if (type.isUnionType()) {
-            List<ItemType> alternatives = new ArrayList<>();
-            SequenceCardinality cardinality = null;
-            for (ItemType member : type.getMemberTypes()) {
-                SequenceType atomized = inferItemType(member);
-                alternatives.add(atomized.getItemType());
-                cardinality =
-                        cardinality == null ? atomized.getCardinality() : cardinality.union(atomized.getCardinality());
-            }
-            return new SequenceType(ItemTypeFactory.createInferredUnionType(alternatives), cardinality);
+            return inferAlternativesType(type.getMemberTypes());
         }
         if (type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
             return new SequenceType(type);
         }
-        // Node types do not currently carry inferred typed-value information.
-        // Atomization may produce nothing, one value, a schema list, or an error.
+        SequenceType typedValue = type.getTypedValueType();
+        if (typedValue != null) {
+            return typedValue;
+        }
+        // Other nodes may produce nothing, one value, a schema list, or an error.
         // Other item kinds also retain this conservative bound on successful atomization.
         return new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceCardinality.ANY);
+    }
+
+    /** Atomizes a value that may have any of these types. */
+    static SequenceType inferAlternativesType(List<? extends ItemType> types) {
+        List<ItemType> alternatives = new ArrayList<>();
+        SequenceCardinality cardinality = null;
+        for (ItemType member : types) {
+            SequenceType atomized = inferItemType(member);
+            alternatives.add(atomized.getItemType());
+            cardinality =
+                    cardinality == null ? atomized.getCardinality() : cardinality.union(atomized.getCardinality());
+        }
+        return new SequenceType(ItemTypeFactory.createInferredUnionType(alternatives), cardinality);
     }
 }
