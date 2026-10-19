@@ -285,6 +285,7 @@ public final class XmlDirectConstructorTranslation {
                     BiFunction<QnameCtx, NameRole, Name> parseName,
                     Function<DirElemContentCtx, Expression> visitDirElemContent,
                     Function<ExprCtx, Expression> visitExpr) {
+        validateTagSyntax(ctx, tokenStream, translationContext);
         DirElemOpenCloseContext<QnameCtx, DirElemContentCtx> openClose = ctx.openClose();
         if (openClose != null
                 && openClose.closeTagName() != null
@@ -320,6 +321,61 @@ public final class XmlDirectConstructorTranslation {
                     translationContext.metadata(ctx.context()));
         } finally {
             translationContext.popConstructorNamespaceFrame();
+        }
+    }
+
+    private static void validateTagGap(
+            Token left,
+            Token right,
+            boolean whitespaceRequired,
+            boolean adjacent,
+            TranslationContext translationContext) {
+        String gap = left.getInputStream()
+                .getText(org.antlr.v4.runtime.misc.Interval.of(left.getStopIndex() + 1, right.getStartIndex() - 1));
+        if ((whitespaceRequired && gap.isEmpty())
+                || (adjacent && !gap.isEmpty())
+                || !gap.chars().allMatch(c -> isXmlWhitespace((char) c))) {
+            throw new ParsingException(
+                    "Invalid whitespace or comment in an XML tag.", translationContext.metadata(left, right));
+        }
+    }
+
+    private static List<Token> tagTokens(CommonTokenStream tokens, int start, int stop) {
+        return tokens.getTokens(start, stop).stream()
+                .filter(token -> token.getChannel() == Token.DEFAULT_CHANNEL)
+                .toList();
+    }
+
+    private static <Q extends ParserRuleContext, E extends ParserRuleContext, D extends ParserRuleContext>
+            void validateTagSyntax(
+                    DirectConstructorContext<Q, E, D> ctx,
+                    CommonTokenStream tokens,
+                    TranslationContext translationContext) {
+        validateTagGap(ctx.context().getStart(), ctx.openTagName().getStart(), false, true, translationContext);
+        Token previous = ctx.openTagName().getStop();
+        for (var attribute : ctx.attributes().attributes()) {
+            validateTagGap(previous, attribute.name().getStart(), true, false, translationContext);
+            Token equals = tagTokens(
+                            tokens,
+                            attribute.name().getStop().getTokenIndex() + 1,
+                            attribute.value().context().getStart().getTokenIndex() - 1)
+                    .get(0);
+            validateTagGap(attribute.name().getStop(), equals, false, false, translationContext);
+            validateTagGap(equals, attribute.value().context().getStart(), false, false, translationContext);
+            previous = attribute.value().context().getStop();
+        }
+        Token openEnd = ctx.openClose() == null
+                ? ctx.context().getStop()
+                : ctx.openClose().endOpen();
+        List<Token> endTokens = tagTokens(tokens, previous.getTokenIndex(), openEnd.getTokenIndex());
+        for (int i = 1; i < endTokens.size(); i++) {
+            validateTagGap(endTokens.get(i - 1), endTokens.get(i), false, i > 1, translationContext);
+        }
+        if (ctx.openClose() != null) {
+            Q closeName = ctx.openClose().closeTagName();
+            validateTagGap(ctx.openClose().startClose(), ctx.openClose().slashClose(), false, true, translationContext);
+            validateTagGap(ctx.openClose().slashClose(), closeName.getStart(), false, true, translationContext);
+            validateTagGap(closeName.getStop(), ctx.context().getStop(), false, false, translationContext);
         }
     }
 
