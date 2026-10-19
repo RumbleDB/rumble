@@ -158,10 +158,7 @@ stringLiteralQuot
 stringLiteralApos
    : Apos (escapedJsoniqStringCharacter | ~ (Apos | BACKSLASH))* Apos
    ;
-   // JSONiq lexes "." outside names (for object lookups), so a dotted constructor name spans several tokens.
-   
-   // The predicate keeps the name to adjacent tokens; the translator rejects malformed names.
-   
+
 directConstructor
    : LANGLE open_tag_name = directConstructorQName attributes = dirAttributeList (open_close = dirElemConstructorOpenClose | single_tag = dirElemConstructorSingleTag)
    | COMMENT
@@ -175,7 +172,13 @@ dirElemConstructorOpenClose
 dirAttributeList
    : (attribute_qname += directConstructorQName EQUAL attribute_value += dirAttributeValue)*
    ;
-
+/*
+ * JSONiq lexes "." outside names (for object lookups), so a dotted name spans several tokens.
+ * The predicate stops the name at whitespace or a comment, which the parser cannot otherwise see;
+ * TranslationVisitor rejects assembled names that are not QNames.
+ */
+   
+   
 directConstructorQName
    : (FullQName | ncName) (
    {_input.LT(-1).getStopIndex() + 1 == _input.LT(1).getStartIndex()}? (DOT | DDOT | DecimalLiteral | DoubleLiteral | IntegerLiteral | FullQName | ncName | COLON | MINUS))*
