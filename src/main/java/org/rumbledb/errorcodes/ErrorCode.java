@@ -153,6 +153,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode UnexpectedTypeErrorCode = registerBuiltIn("XPTY0004");
     public static final ErrorCode NodeAndNonNode = registerBuiltIn("XPTY0018");
     public static final ErrorCode UnexpectedNode = registerBuiltIn("XPTY0019");
+    public static final ErrorCode AxisStepContextItemTypeErrorCode = registerBuiltIn("XPTY0020");
     public static final ErrorCode ValidateOperandTypeErrorCode = registerBuiltIn("XQTY0030");
 
     public static final ErrorCode InvalidInstance = registerBuiltIn("XQDY0027");
