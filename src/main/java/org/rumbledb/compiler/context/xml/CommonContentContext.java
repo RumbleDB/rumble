@@ -22,6 +22,11 @@ import org.rumbledb.parser.xquery.XQueryParser;
 
 public record CommonContentContext<ExprCtx extends ParserRuleContext>(ExprCtx expr, ParserRuleContext context) {
 
+    public boolean isEnclosed() {
+        return "{".equals(this.context.getStart().getText())
+                && "}".equals(this.context.getStop().getText());
+    }
+
     public static CommonContentContext<JsoniqParser.ExprContext> from(JsoniqParser.CommonContentContext c) {
         return new CommonContentContext<>(c.expr(), c);
     }
