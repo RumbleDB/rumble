@@ -230,7 +230,7 @@ public final class CollationSupport {
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
             RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
-            if (collator.compare(target, "") == 0) {
+            if (isIgnorable(target, collator)) {
                 return new int[] {0, 0};
             }
             if (source.isEmpty()) {
@@ -253,6 +253,10 @@ public final class CollationSupport {
             }
         }
         return null;
+    }
+
+    private static boolean isIgnorable(String value, RuleBasedCollator collator) {
+        return collator.compare(value, "") == 0;
     }
 
     private static StringSearch newStringSearch(
@@ -322,11 +326,28 @@ public final class CollationSupport {
      * @return true if the string starts with the prefix under the collation
      */
     public static boolean startsWith(String value, String prefix, String collationUri, ExceptionMetadata metadata) {
+        checkCollationSupported(collationUri, metadata);
+        if (prefix.isEmpty()) {
+            return true;
+        }
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
             return value.startsWith(prefix);
         }
-        int[] match = indexOf(value, prefix, collationUri, metadata);
-        return match != null && match[0] == 0;
+        if (CollationCatalogue.isUCACollation(collationUri)) {
+            RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
+            if (isIgnorable(prefix, collator)) {
+                return true;
+            }
+            if (value.isEmpty()) {
+                return false;
+            }
+            StringSearch stringSearch = newStringSearch(prefix, value, collator, metadata);
+            int firstIndex = stringSearch.first();
+            // Leading ignorable characters have no collation units, so the match may start after them.
+            return firstIndex != StringSearch.DONE && isIgnorable(value.substring(0, firstIndex), collator);
+        }
+        return CollationCatalogue.normalizeString(value, collationUri)
+                .startsWith(CollationCatalogue.normalizeString(prefix, collationUri));
     }
 
     /**
@@ -349,7 +370,7 @@ public final class CollationSupport {
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
             RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
-            if (collator.compare(suffix, "") == 0) {
+            if (isIgnorable(suffix, collator)) {
                 return true;
             }
             if (value.isEmpty()) {
@@ -357,7 +378,9 @@ public final class CollationSupport {
             }
             StringSearch stringSearch = newStringSearch(suffix, value, collator, metadata);
             int lastIndex = stringSearch.last();
-            return lastIndex != StringSearch.DONE && lastIndex + stringSearch.getMatchLength() == value.length();
+            // Trailing ignorable characters have no collation units, so the match may end before them.
+            return lastIndex != StringSearch.DONE
+                    && isIgnorable(value.substring(lastIndex + stringSearch.getMatchLength()), collator);
         }
         return CollationCatalogue.normalizeString(value, collationUri)
                 .endsWith(CollationCatalogue.normalizeString(suffix, collationUri));
@@ -384,15 +407,30 @@ public final class CollationSupport {
             throw new UnsupportedCollationException("Wrong collation parameter", metadata);
         }
 
-        ruleBasedCollator.setStrength(parameters.strength);
+        int strength = parameters.strength != null ? parameters.strength : Collator.TERTIARY;
+        if (parameters.alternate == Alternate.BLANKED && strength == Collator.QUATERNARY) {
+            // ICU has no "blanked" mode. Shifted only differs from blanked by distinguishing variable characters
+            // at the quaternary level, so blanked is shifted without that level.
+            strength = Collator.TERTIARY;
+        }
+        ruleBasedCollator.setStrength(strength);
         ruleBasedCollator.setDecomposition(
-                parameters.normalization ? Collator.CANONICAL_DECOMPOSITION : Collator.NO_DECOMPOSITION);
-        ruleBasedCollator.setCaseLevel(parameters.caseLevel);
+                Boolean.TRUE.equals(parameters.normalization)
+                        ? Collator.CANONICAL_DECOMPOSITION
+                        : Collator.NO_DECOMPOSITION);
+        ruleBasedCollator.setCaseLevel(Boolean.TRUE.equals(parameters.caseLevel));
         if (parameters.backwards != null) {
             ruleBasedCollator.setFrenchCollation(parameters.backwards);
         }
-        if (parameters.alternateShifted != null) {
-            ruleBasedCollator.setAlternateHandlingShifted(parameters.alternateShifted);
+        if (parameters.alternate != null) {
+            ruleBasedCollator.setAlternateHandlingShifted(parameters.alternate != Alternate.NON_IGNORABLE);
+        }
+        if (parameters.upperCaseFirst != null) {
+            if (parameters.upperCaseFirst) {
+                ruleBasedCollator.setUpperCaseFirst(true);
+            } else {
+                ruleBasedCollator.setLowerCaseFirst(true);
+            }
         }
         if (parameters.numeric != null) {
             ruleBasedCollator.setNumericCollation(parameters.numeric);
@@ -422,93 +460,109 @@ public final class CollationSupport {
             }
         }
 
+        // With fallback=yes (the default), unsupported keywords and invalid values are ignored.
+        boolean fallback = !Boolean.FALSE.equals(parseYesNo(queryParameters.get("fallback")));
         for (Map.Entry<String, String> parameter : queryParameters.entrySet()) {
-            String key = parameter.getKey();
             String value = parameter.getValue();
-            switch (key) {
-                case "lang":
-                    parameters.languageTag = value;
-                    break;
-                case "strength":
-                    parameters.strength = parseStrength(value, metadata);
-                    break;
-                case "normalization":
-                    parameters.normalization = parseYesNo(value, key, metadata);
-                    break;
-                case "backwards":
-                    parameters.backwards = parseYesNo(value, key, metadata);
-                    break;
-                case "caseLevel":
-                    parameters.caseLevel = parseYesNo(value, key, metadata);
-                    break;
-                case "alternate":
-                    parameters.alternateShifted = parseAlternate(value, metadata);
-                    break;
-                case "numeric":
-                    parameters.numeric = parseYesNo(value, key, metadata);
-                    break;
-                case "fallback":
-                case "version":
-                    if ("version".equals(key) && "no".equals(queryParameters.get("fallback"))) {
-                        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-                    }
-                    break;
-                default:
-                    if ("no".equals(queryParameters.get("fallback"))) {
-                        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-                    }
-                    break;
+            switch (parameter.getKey()) {
+                case "lang" -> parameters.languageTag = value;
+                case "strength" -> parameters.strength = validOrFallback(parseStrength(value), fallback, metadata);
+                case "alternate" -> parameters.alternate = validOrFallback(parseAlternate(value), fallback, metadata);
+                case "backwards" -> parameters.backwards = validOrFallback(parseYesNo(value), fallback, metadata);
+                case "normalization" -> parameters.normalization =
+                        validOrFallback(parseYesNo(value), fallback, metadata);
+                case "caseLevel" -> parameters.caseLevel = validOrFallback(parseYesNo(value), fallback, metadata);
+                case "caseFirst" -> parameters.upperCaseFirst =
+                        validOrFallback(parseCaseFirst(value), fallback, metadata);
+                case "numeric" -> parameters.numeric = validOrFallback(parseYesNo(value), fallback, metadata);
+                case "fallback" -> {
+                    // Already read before the loop.
+                }
+                default -> {
+                    // Unsupported keyword. This includes version, as no specific UCA version is guaranteed.
+                    rejectUnlessFallback(fallback, metadata);
+                }
             }
         }
         return parameters;
+    }
+
+    /**
+     * Returns a parsed UCA parameter value, where null means the value is invalid or unsupported.
+     * An invalid value is ignored with fallback=yes and raises err:FOCH0002 with fallback=no.
+     */
+    private static <T> T validOrFallback(T parsedValue, boolean fallback, ExceptionMetadata metadata) {
+        if (parsedValue == null) {
+            rejectUnlessFallback(fallback, metadata);
+        }
+        return parsedValue;
+    }
+
+    private static void rejectUnlessFallback(boolean fallback, ExceptionMetadata metadata) {
+        if (!fallback) {
+            throw new UnsupportedCollationException("Wrong collation parameter", metadata);
+        }
     }
 
     private static String decodeQueryComponent(String value) {
         return URLDecoder.decode(value, StandardCharsets.UTF_8);
     }
 
-    private static boolean parseYesNo(String value, String key, ExceptionMetadata metadata) {
+    private static Boolean parseYesNo(String value) {
         if ("yes".equalsIgnoreCase(value)) {
             return true;
         }
         if ("no".equalsIgnoreCase(value)) {
             return false;
         }
-        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
+        return null;
     }
 
-    private static Boolean parseAlternate(String value, ExceptionMetadata metadata) {
-        String normalized = value.toLowerCase(Locale.ROOT);
-        // ICU has no "blanked" mode; shifted is the closest approximation (variable characters ignored up to
-        // the tertiary level instead of at all levels).
-        if ("shifted".equals(normalized) || "blanked".equals(normalized)) {
-            return true;
-        }
-        if ("non-ignorable".equals(normalized)) {
-            return false;
-        }
-        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
+    private static Boolean parseCaseFirst(String value) {
+        return switch (value.toLowerCase(Locale.ROOT)) {
+            case "upper" -> true;
+            case "lower" -> false;
+            default -> null;
+        };
     }
 
-    private static int parseStrength(String value, ExceptionMetadata metadata) {
-        String normalized = value.toLowerCase(Locale.ROOT);
-        return switch (normalized) {
+    private static Alternate parseAlternate(String value) {
+        return switch (value.toLowerCase(Locale.ROOT)) {
+            case "non-ignorable" -> Alternate.NON_IGNORABLE;
+            case "shifted" -> Alternate.SHIFTED;
+            case "blanked" -> Alternate.BLANKED;
+            default -> null;
+        };
+    }
+
+    private static Integer parseStrength(String value) {
+        return switch (value.toLowerCase(Locale.ROOT)) {
             case "1", "primary" -> Collator.PRIMARY;
             case "2", "secondary" -> Collator.SECONDARY;
             case "3", "tertiary" -> Collator.TERTIARY;
             case "4", "quaternary" -> Collator.QUATERNARY;
             case "5", "identical" -> Collator.IDENTICAL;
-            default -> throw new UnsupportedCollationException("Wrong collation parameter", metadata);
+            default -> null;
         };
     }
 
+    private enum Alternate {
+        NON_IGNORABLE,
+        SHIFTED,
+        BLANKED
+    }
+
+    /**
+     * Parameters given in a UCA collation URI. A null field means the parameter was absent or ignored.
+     */
     private static final class UcaParameters {
         private String languageTag;
-        private int strength = Collator.TERTIARY;
-        private boolean normalization;
+        private Integer strength;
+        private Alternate alternate;
         private Boolean backwards;
-        private boolean caseLevel;
-        private Boolean alternateShifted;
+        private Boolean normalization;
+        private Boolean caseLevel;
+        private Boolean upperCaseFirst;
         private Boolean numeric;
     }
 }
