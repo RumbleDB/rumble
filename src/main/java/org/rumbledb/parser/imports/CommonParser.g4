@@ -866,8 +866,7 @@ eqName
 
 qname
    : FullQName
-   | (ns = ncName COLON)? local_name = ncName
-   {$start.getStartIndex() + $ctx.getText().codePointCount(0, $ctx.getText().length()) == _input.LT(-1).getStopIndex() + 1}?
+   | ncName
    ;
 
 ncName
