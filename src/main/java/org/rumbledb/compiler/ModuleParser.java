@@ -149,6 +149,7 @@ final class ModuleParser {
             if (isMainModule && moduleParseTree == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
+            GrammarValidation.validate(moduleParseTree, parser, tokens, uri, query);
             return (Module) visitor.visit(moduleParseTree);
         } catch (ParseCancellationException ex) {
             ParsingException exception = new ParsingException(
