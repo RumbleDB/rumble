@@ -31,6 +31,27 @@ import CommonParser;
 // Java header
 package org.rumbledb.parser.jsoniq;
 }
+@ members
+{
+    // Match CommonLexer name ranges with dots enabled, without changing JSONiq selector tokens.
+    // Numeric suffixes can span decimal/exponent tokens; validate the assembled QName as well.
+    private static final String DIRECT_NAME_START = "[_a-zA-Z\u00C0-\u00D6\u00D8-\u00F6\u00F8-\u02FF\u0370-\u037D"
+            + "\u037F-\u1FFF\u200C-\u200D\u2070-\u218F\u2C00-\u2FEF\u3001-\uD7FF\uF900-\uFDCF\uFDF0-\uFFFD]";
+    private static final String DIRECT_NAME_CHAR = "(?:" + DIRECT_NAME_START + "|[-.0-9\u00A1-\u00BF\u0300-\u036F\u203F-\u2040])";
+    private static final String DIRECT_NAME_NCNAME = DIRECT_NAME_START + DIRECT_NAME_CHAR + "*";
+    private static final java.util.regex.Pattern DIRECT_NAME_QNAME = java.util.regex.Pattern.compile(DIRECT_NAME_NCNAME + "(?::" + DIRECT_NAME_NCNAME + ")?");
+    private static final java.util.regex.Pattern DIRECT_NAME_CONTINUATION = java.util.regex.Pattern.compile("(?:" + DIRECT_NAME_CHAR + "|:)+");
+
+    private static boolean isDirectConstructorNameContinuation(Token previous, Token next) {
+        return next.getType() != Token.EOF
+                && previous.getStopIndex() + 1 == next.getStartIndex()
+                && DIRECT_NAME_CONTINUATION.matcher(next.getText()).matches();
+    }
+
+    private static boolean isDirectConstructorQName(String name) {
+        return DIRECT_NAME_QNAME.matcher(name).matches();
+    }
+}
 
 options { tokenVocab = JsoniqLexer; }
 module
@@ -162,5 +183,25 @@ stringLiteralQuot
 
 stringLiteralApos
    : Apos (escapedJsoniqStringCharacter | ~ (Apos | BACKSLASH))* Apos
+   ;
+
+directConstructor
+   : LANGLE open_tag_name = directConstructorQName attributes = dirAttributeList (open_close = dirElemConstructorOpenClose | single_tag = dirElemConstructorSingleTag)
+   | COMMENT
+   | PI
+   ;
+
+dirElemConstructorOpenClose
+   : endOpen = RANGLE dirElemContent* startClose = LANGLE slashClose = SLASH close_tag_name = directConstructorQName RANGLE
+   ;
+
+dirAttributeList
+   : (attribute_qname += directConstructorQName EQUAL attribute_value += dirAttributeValue)*
+   ;
+
+directConstructorQName
+   : (FullQName | ncName) (
+   {isDirectConstructorNameContinuation(_input.LT(-1), _input.LT(1))}? (DOT | DDOT | DecimalLiteral | DoubleLiteral | IntegerLiteral | FullQName | ncName | COLON | MINUS))*
+   {isDirectConstructorQName($ctx.getText())}?
    ;
 

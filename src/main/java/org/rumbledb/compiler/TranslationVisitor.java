@@ -555,6 +555,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                         createMetadataFromContext(ctx));
     }
 
+    /** Resolves a QName assembled only within a JSONiq direct constructor. */
+    private Name parseName(JsoniqParser.DirectConstructorQNameContext ctx, NameRole role) {
+        return this.translationContext.names().resolveEQName(ctx.getText(), role, createMetadataFromContext(ctx));
+    }
+
     private TypeDeclaration processTypeDecl(JsoniqParser.TypeDeclContext ctx) {
         String definitionString = ctx.type_definition.getText();
         Item definitionItem = null;
