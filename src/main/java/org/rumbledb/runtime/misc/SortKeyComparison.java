@@ -20,11 +20,9 @@ import java.util.Collections;
 import java.util.List;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.CollationCatalogue;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
@@ -36,13 +34,6 @@ import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 public final class SortKeyComparison {
 
     private SortKeyComparison() {}
-
-    public static void checkCollationSupported(String collationUri, ExceptionMetadata metadata) {
-        if (CollationCatalogue.isDefaultStaticallyKnownCollation(collationUri)) {
-            return;
-        }
-        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-    }
 
     public static boolean sortKeysDeepEqual(
             List<Item> a, List<Item> b, String collationUri, RuntimeStaticContext staticContext) {

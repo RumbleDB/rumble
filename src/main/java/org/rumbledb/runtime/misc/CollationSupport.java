@@ -68,7 +68,8 @@ public final class CollationSupport {
     /**
      * Evaluates an optional collation argument of a built-in function, then resolves and validates it.
      *
-     * @param collationPlan the plan of the collation argument, or null if the argument is absent
+     * @param collationPlan the plan of the collation argument, or null if the argument is absent. An empty
+     *        sequence also selects the default collation.
      * @param context the dynamic context to evaluate the argument in
      * @param staticContext the runtime static context providing the base URI and default collation
      * @param metadata source location metadata for error reporting
@@ -80,9 +81,8 @@ public final class CollationSupport {
             DynamicContext context,
             RuntimeStaticContext staticContext,
             ExceptionMetadata metadata) {
-        String explicitCollationUri = collationPlan == null
-                ? null
-                : collationPlan.materializeFirstOrNull(context).getStringValue();
+        Item collationItem = collationPlan == null ? null : collationPlan.materializeFirstOrNull(context);
+        String explicitCollationUri = collationItem == null ? null : collationItem.getStringValue();
         String collation = resolveCollation(explicitCollationUri, staticContext);
         checkCollationSupported(collation, metadata);
         return collation;
