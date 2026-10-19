@@ -16,19 +16,12 @@
 package org.rumbledb.runtime.misc;
 
 import java.net.URI;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.text.StringCharacterIterator;
-import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import com.ibm.icu.text.Collator;
 import com.ibm.icu.text.RuleBasedCollator;
 import com.ibm.icu.text.StringSearch;
-import com.ibm.icu.util.ULocale;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.CollationCatalogue;
@@ -41,9 +34,11 @@ import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
+/**
+ * Resolves collation URIs, and compares and searches strings under the codepoint, case-insensitive and UCA
+ * collations.
+ */
 public final class CollationSupport {
-
-    private static final ConcurrentHashMap<String, RuleBasedCollator> UCA_COLLATOR_CACHE = new ConcurrentHashMap<>();
 
     private CollationSupport() {}
 
@@ -71,22 +66,6 @@ public final class CollationSupport {
     }
 
     /**
-     * Resolves an optional collation URI and validates that it is supported by the engine.
-     *
-     * @param explicitCollationUri the collation URI supplied by the query, or null
-     * @param staticContext the runtime static context providing the base URI and default collation
-     * @param metadata source location metadata for error reporting
-     * @return the resolved, validated collation URI string
-     * @throws UnsupportedCollationException if the collation is not supported (err:FOCH0002)
-     */
-    public static String resolveAndCheckCollation(
-            String explicitCollationUri, RuntimeStaticContext staticContext, ExceptionMetadata metadata) {
-        String collation = resolveCollation(explicitCollationUri, staticContext);
-        checkCollationSupported(collation, metadata);
-        return collation;
-    }
-
-    /**
      * Evaluates an optional collation argument of a built-in function, then resolves and validates it.
      *
      * @param collationPlan the plan of the collation argument, or null if the argument is absent
@@ -104,7 +83,9 @@ public final class CollationSupport {
         String explicitCollationUri = collationPlan == null
                 ? null
                 : collationPlan.materializeFirstOrNull(context).getStringValue();
-        return resolveAndCheckCollation(explicitCollationUri, staticContext, metadata);
+        String collation = resolveCollation(explicitCollationUri, staticContext);
+        checkCollationSupported(collation, metadata);
+        return collation;
     }
 
     /**
@@ -151,7 +132,7 @@ public final class CollationSupport {
             return item;
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
-            byte[] sortKeyBytes = getUcaCollator(collationUri, metadata)
+            byte[] sortKeyBytes = UcaCollators.get(collationUri, metadata)
                     .getCollationKey(item.getStringValue())
                     .toByteArray();
             return ItemFactory.getInstance().createHexBinaryItem(HexFormat.of().formatHex(sortKeyBytes));
@@ -174,7 +155,7 @@ public final class CollationSupport {
             return compareByCodePoint(left, right);
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
-            return getUcaCollator(collationUri, metadata).compare(left, right);
+            return UcaCollators.get(collationUri, metadata).compare(left, right);
         }
         return foldCase(left, collationUri).compareTo(foldCase(right, collationUri));
     }
@@ -200,53 +181,165 @@ public final class CollationSupport {
     }
 
     /**
-     * Locates the first occurrence of {@code target} in {@code source} under the specified collation.
-     *
-     * <p>
-     * Handles codepoint matching via {@link String#indexOf}, UCA collation matching via ICU4J
-     * {@link com.ibm.icu.text.StringSearch} (including ignorable/blanked collation units),
-     * and case-insensitive collations via case-folded matching on the original string.
-     * </p>
+     * Evaluates {@code fn:contains} semantics: returns true if {@code source} contains {@code target}
+     * under the specified collation. An empty target always matches.
      *
      * @param source the string to search within
      * @param target the substring to search for
-     * @param collationUri the collation URI defining the matching rules
+     * @param collationUri the collation URI defining matching rules
      * @param metadata source location metadata for error reporting
-     * @return an {@code int[]} with two elements: {@code [startIndex, matchLength]}, or {@code null} if no match is
-     *         found
+     * @return true if the target is contained in the source under the collation
+     */
+    public static boolean contains(String source, String target, String collationUri, ExceptionMetadata metadata) {
+        return indexOf(source, target, collationUri, metadata) != null;
+    }
+
+    /**
+     * Evaluates {@code fn:substring-before} semantics: returns the substring of {@code source} preceding
+     * the first occurrence of {@code target} under the specified collation.
+     *
+     * @param source the string to extract from
+     * @param target the delimiter substring
+     * @param collationUri the collation URI defining matching rules
+     * @param metadata source location metadata for error reporting
+     * @return the substring before the target match, or empty string if no match or empty inputs
+     */
+    public static String substringBefore(
+            String source, String target, String collationUri, ExceptionMetadata metadata) {
+        Match match = indexOf(source, target, collationUri, metadata);
+        return match == null ? "" : source.substring(0, match.start());
+    }
+
+    /**
+     * Evaluates {@code fn:substring-after} semantics: returns the substring of {@code source} following
+     * the first occurrence of {@code target} under the specified collation.
+     *
+     * @param source the string to extract from
+     * @param target the delimiter substring
+     * @param collationUri the collation URI defining matching rules
+     * @param metadata source location metadata for error reporting
+     * @return the substring after the target match, or empty string if not found / empty source
+     */
+    public static String substringAfter(String source, String target, String collationUri, ExceptionMetadata metadata) {
+        Match match = indexOf(source, target, collationUri, metadata);
+        return match == null ? "" : source.substring(match.end());
+    }
+
+    /**
+     * Evaluates {@code fn:starts-with} semantics: returns true if {@code value} starts with {@code prefix}
+     * under the specified collation. An empty prefix always matches.
+     *
+     * @param value the string to check
+     * @param prefix the prefix to look for
+     * @param collationUri the collation URI defining matching rules
+     * @param metadata source location metadata for error reporting
+     * @return true if the string starts with the prefix under the collation
+     */
+    public static boolean startsWith(String value, String prefix, String collationUri, ExceptionMetadata metadata) {
+        checkCollationSupported(collationUri, metadata);
+        if (prefix.isEmpty()) {
+            return true;
+        }
+        if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
+            return value.startsWith(prefix);
+        }
+        if (CollationCatalogue.isUCACollation(collationUri)) {
+            RuleBasedCollator collator = UcaCollators.get(collationUri, metadata);
+            if (isIgnorable(prefix, collator)) {
+                return true;
+            }
+            if (value.isEmpty()) {
+                return false;
+            }
+            StringSearch stringSearch = newStringSearch(prefix, value, collator, metadata);
+            int firstIndex = stringSearch.first();
+            // Leading ignorable characters have no collation units, so the match may start after them.
+            return firstIndex != StringSearch.DONE && isIgnorable(value.substring(0, firstIndex), collator);
+        }
+        return foldCase(value, collationUri).startsWith(foldCase(prefix, collationUri));
+    }
+
+    /**
+     * Evaluates {@code fn:ends-with} semantics: returns true if {@code value} ends with {@code suffix}
+     * under the specified collation. An empty suffix always matches.
+     *
+     * @param value the string to check
+     * @param suffix the suffix to look for
+     * @param collationUri the collation URI defining matching rules
+     * @param metadata source location metadata for error reporting
+     * @return true if the string ends with the suffix under the collation
+     */
+    public static boolean endsWith(String value, String suffix, String collationUri, ExceptionMetadata metadata) {
+        checkCollationSupported(collationUri, metadata);
+        if (suffix.isEmpty()) {
+            return true;
+        }
+        if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
+            return value.endsWith(suffix);
+        }
+        if (CollationCatalogue.isUCACollation(collationUri)) {
+            RuleBasedCollator collator = UcaCollators.get(collationUri, metadata);
+            if (isIgnorable(suffix, collator)) {
+                return true;
+            }
+            if (value.isEmpty()) {
+                return false;
+            }
+            StringSearch stringSearch = newStringSearch(suffix, value, collator, metadata);
+            int lastIndex = stringSearch.last();
+            // Trailing ignorable characters have no collation units, so the match may end before them.
+            return lastIndex != StringSearch.DONE
+                    && isIgnorable(value.substring(lastIndex + stringSearch.getMatchLength()), collator);
+        }
+        return foldCase(value, collationUri).endsWith(foldCase(suffix, collationUri));
+    }
+
+    /**
+     * A match of a search string, as the start index and length of the matched region in the searched string.
+     */
+    private record Match(int start, int length) {
+        int end() {
+            return this.start + this.length;
+        }
+    }
+
+    /**
+     * Locates the first occurrence of {@code target} in {@code source} under the specified collation.
+     *
+     * @return the first match, or null if there is none
      * @throws CollationDoesNotSupportCollationUnitsException if the collation does not support collation units
      *         (err:FOCH0004)
      */
-    public static int[] indexOf(String source, String target, String collationUri, ExceptionMetadata metadata) {
+    private static Match indexOf(String source, String target, String collationUri, ExceptionMetadata metadata) {
         checkCollationSupported(collationUri, metadata);
         if (target.isEmpty()) {
-            return new int[] {0, 0};
+            return new Match(0, 0);
         }
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
             int idx = source.indexOf(target);
-            return idx == -1 ? null : new int[] {idx, target.length()};
+            return idx == -1 ? null : new Match(idx, target.length());
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
-            RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
+            RuleBasedCollator collator = UcaCollators.get(collationUri, metadata);
             if (isIgnorable(target, collator)) {
-                return new int[] {0, 0};
+                return new Match(0, 0);
             }
             if (source.isEmpty()) {
                 return null;
             }
             StringSearch stringSearch = newStringSearch(target, source, collator, metadata);
             int idx = stringSearch.first();
-            return idx == StringSearch.DONE ? null : new int[] {idx, stringSearch.getMatchLength()};
+            return idx == StringSearch.DONE ? null : new Match(idx, stringSearch.getMatchLength());
         }
         if (CollationCatalogue.isHTMLAsciiCaseInsensitiveCollation(collationUri)) {
-            // ASCII lowercasing preserves length, so indices in the normalized string match the original.
+            // ASCII lowercasing preserves length, so indices in the lowercased string match the original.
             int idx = toHtmlAsciiLowerCase(source).indexOf(toHtmlAsciiLowerCase(target));
-            return idx == -1 ? null : new int[] {idx, target.length()};
+            return idx == -1 ? null : new Match(idx, target.length());
         }
         // Full Unicode lowercasing may change the string length, so match on the original string instead.
         for (int idx = 0; idx + target.length() <= source.length(); idx++) {
             if (source.regionMatches(true, idx, target, 0, target.length())) {
-                return new int[] {idx, target.length()};
+                return new Match(idx, target.length());
             }
         }
         return null;
@@ -289,299 +382,5 @@ public final class CollationSupport {
             throw new CollationDoesNotSupportCollationUnitsException(
                     "Collation does not support collation units: " + e.getMessage(), metadata);
         }
-    }
-
-    /**
-     * Evaluates {@code fn:contains} semantics: returns true if {@code source} contains {@code target}
-     * under the specified collation. An empty target always matches.
-     *
-     * @param source the string to search within
-     * @param target the substring to search for
-     * @param collationUri the collation URI defining matching rules
-     * @param metadata source location metadata for error reporting
-     * @return true if the target is contained in the source under the collation
-     */
-    public static boolean contains(String source, String target, String collationUri, ExceptionMetadata metadata) {
-        return indexOf(source, target, collationUri, metadata) != null;
-    }
-
-    /**
-     * Evaluates {@code fn:substring-before} semantics: returns the substring of {@code source} preceding
-     * the first occurrence of {@code target} under the specified collation.
-     *
-     * @param source the string to extract from
-     * @param target the delimiter substring
-     * @param collationUri the collation URI defining matching rules
-     * @param metadata source location metadata for error reporting
-     * @return the substring before the target match, or empty string if no match or empty inputs
-     */
-    public static String substringBefore(
-            String source, String target, String collationUri, ExceptionMetadata metadata) {
-        int[] match = indexOf(source, target, collationUri, metadata);
-        return match == null ? "" : source.substring(0, match[0]);
-    }
-
-    /**
-     * Evaluates {@code fn:substring-after} semantics: returns the substring of {@code source} following
-     * the first occurrence of {@code target} under the specified collation.
-     *
-     * @param source the string to extract from
-     * @param target the delimiter substring
-     * @param collationUri the collation URI defining matching rules
-     * @param metadata source location metadata for error reporting
-     * @return the substring after the target match, or empty string if not found / empty source
-     */
-    public static String substringAfter(String source, String target, String collationUri, ExceptionMetadata metadata) {
-        int[] match = indexOf(source, target, collationUri, metadata);
-        return match == null ? "" : source.substring(match[0] + match[1]);
-    }
-
-    /**
-     * Evaluates {@code fn:starts-with} semantics: returns true if {@code value} starts with {@code prefix}
-     * under the specified collation. An empty prefix always matches.
-     *
-     * @param value the string to check
-     * @param prefix the prefix to look for
-     * @param collationUri the collation URI defining matching rules
-     * @param metadata source location metadata for error reporting
-     * @return true if the string starts with the prefix under the collation
-     */
-    public static boolean startsWith(String value, String prefix, String collationUri, ExceptionMetadata metadata) {
-        checkCollationSupported(collationUri, metadata);
-        if (prefix.isEmpty()) {
-            return true;
-        }
-        if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
-            return value.startsWith(prefix);
-        }
-        if (CollationCatalogue.isUCACollation(collationUri)) {
-            RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
-            if (isIgnorable(prefix, collator)) {
-                return true;
-            }
-            if (value.isEmpty()) {
-                return false;
-            }
-            StringSearch stringSearch = newStringSearch(prefix, value, collator, metadata);
-            int firstIndex = stringSearch.first();
-            // Leading ignorable characters have no collation units, so the match may start after them.
-            return firstIndex != StringSearch.DONE && isIgnorable(value.substring(0, firstIndex), collator);
-        }
-        return foldCase(value, collationUri).startsWith(foldCase(prefix, collationUri));
-    }
-
-    /**
-     * Evaluates {@code fn:ends-with} semantics: returns true if {@code value} ends with {@code suffix}
-     * under the specified collation. An empty suffix always matches.
-     *
-     * @param value the string to check
-     * @param suffix the suffix to look for
-     * @param collationUri the collation URI defining matching rules
-     * @param metadata source location metadata for error reporting
-     * @return true if the string ends with the suffix under the collation
-     */
-    public static boolean endsWith(String value, String suffix, String collationUri, ExceptionMetadata metadata) {
-        checkCollationSupported(collationUri, metadata);
-        if (suffix.isEmpty()) {
-            return true;
-        }
-        if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
-            return value.endsWith(suffix);
-        }
-        if (CollationCatalogue.isUCACollation(collationUri)) {
-            RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
-            if (isIgnorable(suffix, collator)) {
-                return true;
-            }
-            if (value.isEmpty()) {
-                return false;
-            }
-            StringSearch stringSearch = newStringSearch(suffix, value, collator, metadata);
-            int lastIndex = stringSearch.last();
-            // Trailing ignorable characters have no collation units, so the match may end before them.
-            return lastIndex != StringSearch.DONE
-                    && isIgnorable(value.substring(lastIndex + stringSearch.getMatchLength()), collator);
-        }
-        return foldCase(value, collationUri).endsWith(foldCase(suffix, collationUri));
-    }
-
-    private static RuleBasedCollator getUcaCollator(String collationUri, ExceptionMetadata metadata) {
-        try {
-            RuleBasedCollator prototype =
-                    UCA_COLLATOR_CACHE.computeIfAbsent(collationUri, uri -> buildUcaCollator(uri, metadata));
-            return prototype.cloneAsThawed();
-        } catch (RuntimeException e) {
-            if (e instanceof UnsupportedCollationException) {
-                throw e;
-            }
-            throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-        }
-    }
-
-    private static RuleBasedCollator buildUcaCollator(String collationUri, ExceptionMetadata metadata) {
-        UcaParameters parameters = parseUcaParameters(collationUri, metadata);
-        ULocale locale = parameters.languageTag == null ? ULocale.ROOT : ULocale.forLanguageTag(parameters.languageTag);
-        Collator collator = Collator.getInstance(locale);
-        if (!(collator instanceof RuleBasedCollator ruleBasedCollator)) {
-            throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-        }
-
-        int strength = parameters.strength != null ? parameters.strength : Collator.TERTIARY;
-        if (parameters.alternate == Alternate.BLANKED && strength == Collator.QUATERNARY) {
-            // ICU has no "blanked" mode. Shifted only differs from blanked by distinguishing variable characters
-            // at the quaternary level, so blanked is shifted without that level.
-            strength = Collator.TERTIARY;
-        }
-        ruleBasedCollator.setStrength(strength);
-        ruleBasedCollator.setDecomposition(
-                Boolean.TRUE.equals(parameters.normalization)
-                        ? Collator.CANONICAL_DECOMPOSITION
-                        : Collator.NO_DECOMPOSITION);
-        ruleBasedCollator.setCaseLevel(Boolean.TRUE.equals(parameters.caseLevel));
-        if (parameters.backwards != null) {
-            ruleBasedCollator.setFrenchCollation(parameters.backwards);
-        }
-        if (parameters.alternate != null) {
-            ruleBasedCollator.setAlternateHandlingShifted(parameters.alternate != Alternate.NON_IGNORABLE);
-        }
-        if (parameters.upperCaseFirst != null) {
-            if (parameters.upperCaseFirst) {
-                ruleBasedCollator.setUpperCaseFirst(true);
-            } else {
-                ruleBasedCollator.setLowerCaseFirst(true);
-            }
-        }
-        if (parameters.numeric != null) {
-            ruleBasedCollator.setNumericCollation(parameters.numeric);
-        }
-        return ruleBasedCollator;
-    }
-
-    private static UcaParameters parseUcaParameters(String collationUri, ExceptionMetadata metadata) {
-        UcaParameters parameters = new UcaParameters();
-        int queryIndex = collationUri.indexOf('?');
-        if (queryIndex < 0 || queryIndex == collationUri.length() - 1) {
-            return parameters;
-        }
-        String query = collationUri.substring(queryIndex + 1);
-        Map<String, String> queryParameters = new HashMap<>();
-        for (String part : query.split(";")) {
-            if (part.isEmpty()) {
-                continue;
-            }
-            int separator = part.indexOf('=');
-            if (separator < 0) {
-                queryParameters.put(decodeQueryComponent(part), "");
-            } else {
-                queryParameters.put(
-                        decodeQueryComponent(part.substring(0, separator)),
-                        decodeQueryComponent(part.substring(separator + 1)));
-            }
-        }
-
-        // With fallback=yes (the default), unsupported keywords and invalid values are ignored.
-        boolean fallback = !Boolean.FALSE.equals(parseYesNo(queryParameters.get("fallback")));
-        for (Map.Entry<String, String> parameter : queryParameters.entrySet()) {
-            String value = parameter.getValue();
-            switch (parameter.getKey()) {
-                case "lang" -> parameters.languageTag = value;
-                case "strength" -> parameters.strength = validOrFallback(parseStrength(value), fallback, metadata);
-                case "alternate" -> parameters.alternate = validOrFallback(parseAlternate(value), fallback, metadata);
-                case "backwards" -> parameters.backwards = validOrFallback(parseYesNo(value), fallback, metadata);
-                case "normalization" -> parameters.normalization =
-                        validOrFallback(parseYesNo(value), fallback, metadata);
-                case "caseLevel" -> parameters.caseLevel = validOrFallback(parseYesNo(value), fallback, metadata);
-                case "caseFirst" -> parameters.upperCaseFirst =
-                        validOrFallback(parseCaseFirst(value), fallback, metadata);
-                case "numeric" -> parameters.numeric = validOrFallback(parseYesNo(value), fallback, metadata);
-                case "fallback" -> {
-                    // Already read before the loop.
-                }
-                default -> {
-                    // Unsupported keyword. This includes version, as no specific UCA version is guaranteed.
-                    rejectUnlessFallback(fallback, metadata);
-                }
-            }
-        }
-        return parameters;
-    }
-
-    /**
-     * Returns a parsed UCA parameter value, where null means the value is invalid or unsupported.
-     * An invalid value is ignored with fallback=yes and raises err:FOCH0002 with fallback=no.
-     */
-    private static <T> T validOrFallback(T parsedValue, boolean fallback, ExceptionMetadata metadata) {
-        if (parsedValue == null) {
-            rejectUnlessFallback(fallback, metadata);
-        }
-        return parsedValue;
-    }
-
-    private static void rejectUnlessFallback(boolean fallback, ExceptionMetadata metadata) {
-        if (!fallback) {
-            throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-        }
-    }
-
-    private static String decodeQueryComponent(String value) {
-        return URLDecoder.decode(value, StandardCharsets.UTF_8);
-    }
-
-    private static Boolean parseYesNo(String value) {
-        if ("yes".equalsIgnoreCase(value)) {
-            return true;
-        }
-        if ("no".equalsIgnoreCase(value)) {
-            return false;
-        }
-        return null;
-    }
-
-    private static Boolean parseCaseFirst(String value) {
-        return switch (value.toLowerCase(Locale.ROOT)) {
-            case "upper" -> true;
-            case "lower" -> false;
-            default -> null;
-        };
-    }
-
-    private static Alternate parseAlternate(String value) {
-        return switch (value.toLowerCase(Locale.ROOT)) {
-            case "non-ignorable" -> Alternate.NON_IGNORABLE;
-            case "shifted" -> Alternate.SHIFTED;
-            case "blanked" -> Alternate.BLANKED;
-            default -> null;
-        };
-    }
-
-    private static Integer parseStrength(String value) {
-        return switch (value.toLowerCase(Locale.ROOT)) {
-            case "1", "primary" -> Collator.PRIMARY;
-            case "2", "secondary" -> Collator.SECONDARY;
-            case "3", "tertiary" -> Collator.TERTIARY;
-            case "4", "quaternary" -> Collator.QUATERNARY;
-            case "5", "identical" -> Collator.IDENTICAL;
-            default -> null;
-        };
-    }
-
-    private enum Alternate {
-        NON_IGNORABLE,
-        SHIFTED,
-        BLANKED
-    }
-
-    /**
-     * Parameters given in a UCA collation URI. A null field means the parameter was absent or ignored.
-     */
-    private static final class UcaParameters {
-        private String languageTag;
-        private Integer strength;
-        private Alternate alternate;
-        private Boolean backwards;
-        private Boolean normalization;
-        private Boolean caseLevel;
-        private Boolean upperCaseFirst;
-        private Boolean numeric;
     }
 }
