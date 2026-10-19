@@ -505,6 +505,11 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public Duration getDayTimeDurationComponent() {
+        return this.itemToAnnotate.getDayTimeDurationComponent();
+    }
+
+    @Override
     public long getEpochMillis() {
         return this.itemToAnnotate.getEpochMillis();
     }

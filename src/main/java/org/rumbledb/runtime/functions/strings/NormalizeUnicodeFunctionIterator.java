@@ -20,6 +20,7 @@ import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -137,7 +138,11 @@ public class NormalizeUnicodeFunctionIterator extends AbstractAtMostOneItemRunti
         if (this.getChildren().size() > 1) {
             Item normalizationFormItem = this.getChild(1).materializeFirstOrNull(context);
 
-            String normalizationFormRaw = normalizationFormItem.getStringValue();
+            String normalizationFormRaw = normalizationFormItem
+                    .getStringValue()
+                    .replaceAll("[\\t\\n\\r ]+", " ")
+                    .replaceAll("^ | $", "")
+                    .toUpperCase(Locale.ROOT);
             if (normalizationFormRaw.length() == 0) {
                 return inputItem;
             }
@@ -146,7 +151,7 @@ public class NormalizeUnicodeFunctionIterator extends AbstractAtMostOneItemRunti
                     || normalizationFormRaw.equals("NFD")
                     || normalizationFormRaw.equals("NFKC")
                     || normalizationFormRaw.equals("NFKD")) {
-                normalizationForm = Normalizer.Form.valueOf(normalizationFormItem.getStringValue());
+                normalizationForm = Normalizer.Form.valueOf(normalizationFormRaw);
             } else if (normalizationFormRaw.equals("FULLY-NORMALIZED")) {
                 fullyNormalized = true;
                 normalizationForm = Normalizer.Form.NFC;
@@ -157,7 +162,7 @@ public class NormalizeUnicodeFunctionIterator extends AbstractAtMostOneItemRunti
         }
 
         String input = inputItem.getStringValue();
-        if (fullyNormalized && exclusionCharacters.contains(input.codePointAt(0))) {
+        if (fullyNormalized && !input.isEmpty() && exclusionCharacters.contains(input.codePointAt(0))) {
             input = " " + input;
         }
         String normalizedString = Normalizer.normalize(input, normalizationForm);

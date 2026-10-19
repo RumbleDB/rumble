@@ -139,7 +139,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
                 String collapsed = NamespaceBindingUtils.collapseQNameLexical(atomizedNameItem.getStringValue());
                 try {
                     elementName = ItemFactory.getInstance()
-                            .createQNameItem(NamespaceBindingUtils.parseLexicalQName(
+                            .createQNameItem(NamespaceBindingUtils.parseLexicalQNameForComputedElement(
                                     collapsed,
                                     NamespaceBindingUtils.namespaceResolver(this.staticContext),
                                     getMetadata()));
@@ -193,7 +193,8 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
     private ProcessedContent processContentExpression(List<Item> rawContentSequence) {
         // 1. If the content sequence contains a document node, the document node is replaced in the content
         // sequence by its children.
-        List<Item> expandedContentSequence = expandDocumentNodes(rawContentSequence);
+        List<Item> expandedContentSequence =
+                expandDocumentNodes(XmlConstructorContentUtils.normalizeContent(rawContentSequence));
 
         // 3. If the content sequence contains an attribute node or a namespace node following a node that is not an
         // attribute node or a namespace node, a type error is raised [err:XQTY0024].
