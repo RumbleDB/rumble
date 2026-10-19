@@ -21,7 +21,6 @@ import java.util.Map;
 import java.util.TreeMap;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.CollationCatalogue;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -53,11 +52,11 @@ public class MaxFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        String explicitCollation = this.getChildren().size() > 1
-                ? this.getChild(1).materializeFirstOrNull(context).getStringValue()
-                : null;
-        String collation =
-                CollationSupport.resolveAndCheckCollation(explicitCollation, getRuntimeStaticContext(), getMetadata());
+        String collation = CollationSupport.resolveCollationArgument(
+                this.getChildren().size() > 1 ? this.getChild(1) : null,
+                context,
+                getRuntimeStaticContext(),
+                getMetadata());
         if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
             return ExtremumEvaluation.max(this.iterator, collation, context, getMetadata());
         }
@@ -67,9 +66,6 @@ public class MaxFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
             if (df.isEmptySequence()) {
                 return null;
             }
-            if (!CollationCatalogue.CODEPOINT_COLLATION.equals(collation)) {
-                return ExtremumEvaluation.maxRDD(df.toRDD(getMetadata()), collation, getMetadata());
-            }
             ItemType maxType;
             if (df.getItemType().isObjectItemType()
                     && df.getItemType().getObjectKeysFacet().contains(SparkSessionManager.tableLocationColumnName)) {
@@ -78,6 +74,9 @@ public class MaxFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
                         .getType();
             } else {
                 maxType = df.getItemType();
+            }
+            if (ExtremumEvaluation.needsCollationComparison(maxType, collation)) {
+                return ExtremumEvaluation.maxRDD(df.toRDD(getMetadata()), collation, getMetadata());
             }
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             HomogeneousItemDataFrame maxDF = df.evaluateSQL(

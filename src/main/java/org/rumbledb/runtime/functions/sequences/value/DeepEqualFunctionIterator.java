@@ -60,11 +60,11 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     public Item evaluateAtMostOne(DynamicContext context) {
         ItemRuntimePlan sequenceIterator1 = this.getChild(0);
         ItemRuntimePlan sequenceIterator2 = this.getChild(1);
-        String explicitCollation = this.getChildren().size() == 3
-                ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
-                : null;
-        String collation =
-                CollationSupport.resolveAndCheckCollation(explicitCollation, getRuntimeStaticContext(), getMetadata());
+        String collation = CollationSupport.resolveCollationArgument(
+                this.getChildren().size() > 2 ? this.getChild(2) : null,
+                context,
+                getRuntimeStaticContext(),
+                getMetadata());
 
         if (sequenceIterator1.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()
                 && sequenceIterator2
@@ -75,7 +75,7 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             JavaRDD<Item> rdd2 = sequenceIterator2.getRDD(context);
             if (rdd1.partitions().size() == rdd2.partitions().size()) {
                 FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> filter =
-                        new SameElementsAndLengthClosure(collation);
+                        new SameElementsAndLengthClosure(collation, getMetadata());
                 JavaRDD<Boolean> differences = rdd1.zipPartitions(rdd2, filter);
                 return booleanItem(differences.isEmpty());
             } else {
@@ -83,14 +83,14 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 JavaPairRDD<Long, Item> rdd2Zipped = rdd2.zipWithIndex().mapToPair(Tuple2::swap);
                 JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddJoined =
                         rdd1Zipped.fullOuterJoin(rdd2Zipped);
-                final String finalCollation = collation;
+                ExceptionMetadata metadata = getMetadata();
                 JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddFiltered = rddJoined.filter(tuple -> {
                     Optional<Item> o1 = tuple._2()._1();
                     Optional<Item> o2 = tuple._2()._2();
                     if (!o1.isPresent() || !o2.isPresent()) {
                         return true;
                     }
-                    return !checkItemsDeepEqual(o1.get(), o2.get(), finalCollation, ExceptionMetadata.EMPTY_METADATA);
+                    return !checkItemsDeepEqual(o1.get(), o2.get(), collation, metadata);
                 });
                 return booleanItem(rddFiltered.isEmpty());
             }
@@ -103,17 +103,6 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     private static Item booleanItem(boolean value) {
         return ItemFactory.getInstance().createBooleanItem(value);
-    }
-
-    /**
-     * Checks if two lists of items are deep-equal according to specification using default collation.
-     *
-     * @param items1 The first list of items
-     * @param items2 The second list of items
-     * @return true if the lists are deep-equal, false otherwise
-     */
-    public boolean checkDeepEqual(List<Item> items1, List<Item> items2) {
-        return checkDeepEqual(items1, items2, Name.DEFAULT_COLLATION_NS, getMetadata());
     }
 
     /**
@@ -370,9 +359,8 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
         // 4b: The typed value of $i1 is deep-equal to the typed value of $i2.
         // Note: we do not support type annotations on attribute nodes yet.
-        // For now, the typed value of the attribute node is the same as its string value
-        return CollationSupport.compareStrings(attr1.getStringValue(), attr2.getStringValue(), collation, metadata)
-                == 0;
+        // For now, the typed value of the attribute node is untyped atomic.
+        return checkDeepEqual(attr1.atomizedValue(), attr2.atomizedValue(), collation, metadata);
     }
 
     /**

@@ -60,11 +60,11 @@ public class StringConcatIterator extends AbstractAtMostOneItemRuntimePlan {
                             "Cannot atomize a function item in string concatenation expression.", getMetadata());
                 }
                 if (item.isAtomic()) {
-                    singleAtomic = recordAtomic(singleAtomic, item, side);
+                    singleAtomic = requireSingleAtomic(singleAtomic, item, side);
                 } else {
                     try {
                         for (Item atomicItem : item.atomizedValue()) {
-                            singleAtomic = recordAtomic(singleAtomic, atomicItem, side);
+                            singleAtomic = requireSingleAtomic(singleAtomic, atomicItem, side);
                         }
                     } catch (CannotAtomizeException e) {
                         throw new CannotAtomizeException(e.getMessage(), getMetadata());
@@ -75,7 +75,7 @@ public class StringConcatIterator extends AbstractAtMostOneItemRuntimePlan {
         return singleAtomic == null ? "" : singleAtomic.getStringValue();
     }
 
-    private Item recordAtomic(Item current, Item next, String side) {
+    private Item requireSingleAtomic(Item current, Item next, String side) {
         if (current != null) {
             throw new UnexpectedTypeException(
                     "String concatenation expression requires at most one item in its " + side + " input sequence.",

@@ -19,6 +19,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.Comparator;
 
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
@@ -40,7 +42,7 @@ public class ItemComparator implements Comparator<Item>, Serializable {
     private final boolean compareMin;
 
     public ItemComparator(
-            boolean compareMin, RumbleException exception, String collationUri, ExceptionMetadata metadata) {
+            boolean compareMin, RumbleException exception, @NonNull String collationUri, ExceptionMetadata metadata) {
         this.compareMin = compareMin;
         this.exception = exception;
         this.collationUri = collationUri;
@@ -68,9 +70,7 @@ public class ItemComparator implements Comparator<Item>, Serializable {
                 return 1;
             }
         }
-        if (this.collationUri != null
-                && CollationSupport.isStringCollationType(v1)
-                && CollationSupport.isStringCollationType(v2)) {
+        if (CollationSupport.isStringCollationType(v1) && CollationSupport.isStringCollationType(v2)) {
             return CollationSupport.compareStrings(
                     v1.getStringValue(), v2.getStringValue(), this.collationUri, this.metadata);
         }

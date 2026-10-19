@@ -54,10 +54,11 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
     }
 
     private String resolveCollation(DynamicContext context) {
-        String explicitCollation = this.getChildren().size() == 3
-                ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
-                : null;
-        return CollationSupport.resolveAndCheckCollation(explicitCollation, getRuntimeStaticContext(), getMetadata());
+        return CollationSupport.resolveCollationArgument(
+                this.getChildren().size() > 2 ? this.getChild(2) : null,
+                context,
+                getRuntimeStaticContext(),
+                getMetadata());
     }
 
     @Override
@@ -79,7 +80,7 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
             throw new NonAtomicKeyException(
                     "Invalid args. index-of can't be performed with a non-atomic in the input sequence", metadata);
         }
-        if (search == null || searchIsNaN || isItemNaN(item)) {
+        if (search == null || searchIsNaN) {
             return false;
         }
         if (CollationSupport.isStringCollationType(item) && CollationSupport.isStringCollationType(search)) {
@@ -152,6 +153,7 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
                 this.sequenceCursor = null;
             }
             this.search = null;
+            this.searchIsNaN = false;
             this.nextResult = null;
             this.collation = null;
             this.index = 0;

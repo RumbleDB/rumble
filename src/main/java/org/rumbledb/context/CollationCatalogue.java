@@ -15,7 +15,6 @@
  */
 package org.rumbledb.context;
 
-import java.util.LinkedHashSet;
 import java.util.Locale;
 import java.util.Set;
 
@@ -37,7 +36,7 @@ public final class CollationCatalogue {
     private CollationCatalogue() {}
 
     public static Set<String> defaultStaticallyKnownCollations() {
-        return new LinkedHashSet<>(DEFAULT_STATICALLY_KNOWN_COLLATIONS);
+        return DEFAULT_STATICALLY_KNOWN_COLLATIONS;
     }
 
     public static boolean isDefaultStaticallyKnownCollation(String uri) {
@@ -70,7 +69,7 @@ public final class CollationCatalogue {
         for (int i = 0; i < chars.length; i++) {
             char c = chars[i];
             if (c >= 'A' && c <= 'Z') {
-                chars[i] = (char) (c + 32);
+                chars[i] = (char) (c - 'A' + 'a');
                 changed = true;
             }
         }

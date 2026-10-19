@@ -51,7 +51,7 @@ public final class SortKeyComparison {
         }
         ExceptionMetadata metadata = staticContext.getMetadata();
         for (int i = 0; i < a.size(); i++) {
-            if (!sortKeyItemDeepEqual(a.get(i), b.get(i), collationUri, staticContext, metadata)) {
+            if (!sortKeyItemDeepEqual(a.get(i), b.get(i), collationUri, metadata)) {
                 return false;
             }
         }
@@ -69,7 +69,7 @@ public final class SortKeyComparison {
         }
         Item headA = a.get(0);
         Item headB = b.get(0);
-        if (sortKeyItemDeepEqual(headA, headB, collationUri, staticContext, metadata)) {
+        if (sortKeyItemDeepEqual(headA, headB, collationUri, metadata)) {
             return sortKeysDeepLessThan(tail(a), tail(b), collationUri, staticContext);
         }
         if (isNumericNaN(headA)) {
@@ -95,8 +95,7 @@ public final class SortKeyComparison {
         return new ArrayList<>(seq.subList(1, seq.size()));
     }
 
-    private static boolean sortKeyItemDeepEqual(
-            Item a, Item b, String collationUri, RuntimeStaticContext staticContext, ExceptionMetadata metadata) {
+    private static boolean sortKeyItemDeepEqual(Item a, Item b, String collationUri, ExceptionMetadata metadata) {
         if (isNumericNaN(a) && isNumericNaN(b)) {
             return true;
         }

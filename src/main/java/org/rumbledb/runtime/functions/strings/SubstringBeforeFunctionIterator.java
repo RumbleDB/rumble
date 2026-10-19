@@ -37,11 +37,11 @@ public class SubstringBeforeFunctionIterator extends AbstractAtMostOneItemRuntim
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        String explicitCollation = this.getChildren().size() == 3
-                ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
-                : null;
-        String collation =
-                CollationSupport.resolveAndCheckCollation(explicitCollation, getRuntimeStaticContext(), getMetadata());
+        String collation = CollationSupport.resolveCollationArgument(
+                this.getChildren().size() > 2 ? this.getChild(2) : null,
+                context,
+                getRuntimeStaticContext(),
+                getMetadata());
         Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         Item substringItem = this.getChild(1).materializeFirstOrNull(context);
         String source = stringItem == null ? "" : stringItem.getStringValue();

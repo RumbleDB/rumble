@@ -24,6 +24,7 @@ import org.apache.spark.storage.StorageLevel;
 import lombok.NonNull;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.CollationCatalogue;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
@@ -54,7 +55,8 @@ final class ExtremumEvaluation {
         return evaluateRDD(input, collation, metadata, Kind.MAX);
     }
 
-    private static Item evaluateRDD(JavaRDD<Item> input, String collation, ExceptionMetadata metadata, Kind kind) {
+    private static Item evaluateRDD(
+            JavaRDD<Item> input, @NonNull String collation, ExceptionMetadata metadata, Kind kind) {
         // Both passes must see the same converted input, including for non-deterministic source plans.
         JavaRDD<Item> converted =
                 input.map(item -> normalizeCandidate(item, kind, metadata)).persist(StorageLevel.MEMORY_AND_DISK());
@@ -231,6 +233,13 @@ final class ExtremumEvaluation {
 
     private static boolean isNaN(Item item) {
         return (item.isFloat() || item.isDouble()) && item.isNaN();
+    }
+
+    /**
+     * Whether a DataFrame column of the given type must be compared with the collation rather than natively in SQL.
+     */
+    static boolean needsCollationComparison(ItemType type, String collation) {
+        return !CollationCatalogue.CODEPOINT_COLLATION.equals(collation) && !type.isNumeric();
     }
 
     private static void ensureSupported(Item item, Kind kind, ExceptionMetadata metadata) {

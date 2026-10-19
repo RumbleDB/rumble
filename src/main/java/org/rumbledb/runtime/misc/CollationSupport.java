@@ -32,12 +32,14 @@ import com.ibm.icu.util.ULocale;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.CollationCatalogue;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CollationDoesNotSupportCollationUnitsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public final class CollationSupport {
 
@@ -82,6 +84,27 @@ public final class CollationSupport {
         String collation = resolveCollation(explicitCollationUri, staticContext);
         checkCollationSupported(collation, metadata);
         return collation;
+    }
+
+    /**
+     * Evaluates an optional collation argument of a built-in function, then resolves and validates it.
+     *
+     * @param collationPlan the plan of the collation argument, or null if the argument is absent
+     * @param context the dynamic context to evaluate the argument in
+     * @param staticContext the runtime static context providing the base URI and default collation
+     * @param metadata source location metadata for error reporting
+     * @return the resolved, validated collation URI string
+     * @throws UnsupportedCollationException if the collation is not supported (err:FOCH0002)
+     */
+    public static String resolveCollationArgument(
+            ItemRuntimePlan collationPlan,
+            DynamicContext context,
+            RuntimeStaticContext staticContext,
+            ExceptionMetadata metadata) {
+        String explicitCollationUri = collationPlan == null
+                ? null
+                : collationPlan.materializeFirstOrNull(context).getStringValue();
+        return resolveAndCheckCollation(explicitCollationUri, staticContext, metadata);
     }
 
     /**
@@ -184,7 +207,7 @@ public final class CollationSupport {
      * <p>
      * Handles codepoint matching via {@link String#indexOf}, UCA collation matching via ICU4J
      * {@link com.ibm.icu.text.StringSearch} (including ignorable/blanked collation units),
-     * and case-insensitive collations via normalized string matching.
+     * and case-insensitive collations via case-folded matching on the original string.
      * </p>
      *
      * @param source the string to search within
@@ -202,9 +225,6 @@ public final class CollationSupport {
             return new int[] {0, 0};
         }
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
-            if (source.isEmpty()) {
-                return null;
-            }
             int idx = source.indexOf(target);
             return idx == -1 ? null : new int[] {idx, target.length()};
         }
@@ -216,25 +236,34 @@ public final class CollationSupport {
             if (source.isEmpty()) {
                 return null;
             }
-            try {
-                StringSearch stringSearch = new StringSearch(target, new StringCharacterIterator(source), collator);
-                int idx = stringSearch.first();
-                if (idx == StringSearch.DONE) {
-                    return null;
-                }
-                return new int[] {idx, stringSearch.getMatchLength()};
-            } catch (UnsupportedOperationException e) {
-                throw new CollationDoesNotSupportCollationUnitsException(
-                        "Collation does not support collation units: " + e.getMessage(), metadata);
+            StringSearch stringSearch = newStringSearch(target, source, collator, metadata);
+            int idx = stringSearch.first();
+            return idx == StringSearch.DONE ? null : new int[] {idx, stringSearch.getMatchLength()};
+        }
+        if (CollationCatalogue.isHTMLAsciiCaseInsensitiveCollation(collationUri)) {
+            // ASCII lowercasing preserves length, so indices in the normalized string match the original.
+            int idx = CollationCatalogue.toHtmlAsciiLowerCase(source)
+                    .indexOf(CollationCatalogue.toHtmlAsciiLowerCase(target));
+            return idx == -1 ? null : new int[] {idx, target.length()};
+        }
+        // Full Unicode lowercasing may change the string length, so match on the original string instead.
+        for (int idx = 0; idx + target.length() <= source.length(); idx++) {
+            if (source.regionMatches(true, idx, target, 0, target.length())) {
+                return new int[] {idx, target.length()};
             }
         }
-        if (source.isEmpty()) {
-            return null;
+        return null;
+    }
+
+    private static StringSearch newStringSearch(
+            String pattern, String text, RuleBasedCollator collator, ExceptionMetadata metadata) {
+        try {
+            return new StringSearch(pattern, new StringCharacterIterator(text), collator);
+        } catch (UnsupportedOperationException e) {
+            // ICU rejects collations without collation units, e.g. numeric collation.
+            throw new CollationDoesNotSupportCollationUnitsException(
+                    "Collation does not support collation units: " + e.getMessage(), metadata);
         }
-        String normSource = CollationCatalogue.normalizeString(source, collationUri);
-        String normTarget = CollationCatalogue.normalizeString(target, collationUri);
-        int idx = normSource.indexOf(normTarget);
-        return idx == -1 ? null : new int[] {idx, target.length()};
     }
 
     /**
@@ -248,7 +277,6 @@ public final class CollationSupport {
      * @return true if the target is contained in the source under the collation
      */
     public static boolean contains(String source, String target, String collationUri, ExceptionMetadata metadata) {
-        checkCollationSupported(collationUri, metadata);
         return indexOf(source, target, collationUri, metadata) != null;
     }
 
@@ -264,15 +292,8 @@ public final class CollationSupport {
      */
     public static String substringBefore(
             String source, String target, String collationUri, ExceptionMetadata metadata) {
-        checkCollationSupported(collationUri, metadata);
-        if (source.isEmpty() || target.isEmpty()) {
-            return "";
-        }
         int[] match = indexOf(source, target, collationUri, metadata);
-        if (match == null || match[1] == 0) {
-            return "";
-        }
-        return source.substring(0, match[0]);
+        return match == null ? "" : source.substring(0, match[0]);
     }
 
     /**
@@ -286,21 +307,8 @@ public final class CollationSupport {
      * @return the substring after the target match, or empty string if not found / empty source
      */
     public static String substringAfter(String source, String target, String collationUri, ExceptionMetadata metadata) {
-        checkCollationSupported(collationUri, metadata);
-        if (source.isEmpty()) {
-            return "";
-        }
-        if (target.isEmpty()) {
-            return source;
-        }
         int[] match = indexOf(source, target, collationUri, metadata);
-        if (match == null) {
-            return "";
-        }
-        if (match[1] == 0) {
-            return source;
-        }
-        return source.substring(match[0] + match[1]);
+        return match == null ? "" : source.substring(match[0] + match[1]);
     }
 
     /**
@@ -314,10 +322,6 @@ public final class CollationSupport {
      * @return true if the string starts with the prefix under the collation
      */
     public static boolean startsWith(String value, String prefix, String collationUri, ExceptionMetadata metadata) {
-        checkCollationSupported(collationUri, metadata);
-        if (prefix.isEmpty()) {
-            return true;
-        }
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
             return value.startsWith(prefix);
         }
@@ -351,17 +355,9 @@ public final class CollationSupport {
             if (value.isEmpty()) {
                 return false;
             }
-            try {
-                StringSearch stringSearch = new StringSearch(suffix, new StringCharacterIterator(value), collator);
-                int lastIndex = stringSearch.last();
-                return lastIndex != StringSearch.DONE && lastIndex + stringSearch.getMatchLength() == value.length();
-            } catch (UnsupportedOperationException e) {
-                throw new CollationDoesNotSupportCollationUnitsException(
-                        "Collation does not support collation units: " + e.getMessage(), metadata);
-            }
-        }
-        if (value.isEmpty()) {
-            return false;
+            StringSearch stringSearch = newStringSearch(suffix, value, collator, metadata);
+            int lastIndex = stringSearch.last();
+            return lastIndex != StringSearch.DONE && lastIndex + stringSearch.getMatchLength() == value.length();
         }
         return CollationCatalogue.normalizeString(value, collationUri)
                 .endsWith(CollationCatalogue.normalizeString(suffix, collationUri));
@@ -483,6 +479,8 @@ public final class CollationSupport {
 
     private static Boolean parseAlternate(String value, ExceptionMetadata metadata) {
         String normalized = value.toLowerCase(Locale.ROOT);
+        // ICU has no "blanked" mode; shifted is the closest approximation (variable characters ignored up to
+        // the tertiary level instead of at all levels).
         if ("shifted".equals(normalized) || "blanked".equals(normalized)) {
             return true;
         }

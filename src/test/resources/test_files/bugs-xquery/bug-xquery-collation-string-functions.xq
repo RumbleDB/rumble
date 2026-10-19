@@ -10,4 +10,3 @@ and starts-with("", "-", "http://www.w3.org/2013/collation/UCA?alternate=blanked
 and ends-with("", "-", "http://www.w3.org/2013/collation/UCA?alternate=blanked")
 and substring-before("database", "-", "http://www.w3.org/2013/collation/UCA?alternate=blanked") eq ""
 and substring-after("database", "-", "http://www.w3.org/2013/collation/UCA?alternate=blanked") eq "database"
-

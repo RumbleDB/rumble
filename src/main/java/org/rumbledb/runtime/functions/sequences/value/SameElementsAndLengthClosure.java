@@ -31,9 +31,11 @@ public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<I
     private static final long serialVersionUID = 1L;
 
     private final String collation;
+    private final ExceptionMetadata metadata;
 
-    public SameElementsAndLengthClosure(String collation) {
+    public SameElementsAndLengthClosure(String collation, ExceptionMetadata metadata) {
         this.collation = collation;
+        this.metadata = metadata;
     }
 
     @Override
@@ -41,7 +43,7 @@ public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<I
         List<Boolean> list = new ArrayList<>();
         while (iterator1.hasNext() && iterator2.hasNext()) {
             if (!DeepEqualFunctionIterator.checkItemsDeepEqual(
-                    iterator1.next(), iterator2.next(), this.collation, ExceptionMetadata.EMPTY_METADATA)) {
+                    iterator1.next(), iterator2.next(), this.collation, this.metadata)) {
                 list.add(true);
                 return list.iterator();
             }
