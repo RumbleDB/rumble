@@ -27,12 +27,28 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DirectElementConstructorTagMismatchException;
+import org.rumbledb.exceptions.DuplicateDirectAttributeException;
 import org.rumbledb.exceptions.ParsingException;
 
 class JsoniqDirectConstructorNamesTest {
     @ParameterizedTest
-    @ValueSource(strings = {"a.b", "a..b", "a.", "a.123", "a.1e2", "a.1e-2", "a.123b", "a.1.2", "a.-b", "element.name"})
+    @ValueSource(
+            strings = {
+                "a.b",
+                "a..b",
+                "a.",
+                "a.123",
+                "a.1e2",
+                "a.1e-2",
+                "a.123b",
+                "a.1.2",
+                "a.-b",
+                "element.name",
+                "a.é",
+                "é.名"
+            })
     void acceptsDottedElementAndAttributeNames(String name) {
         for (String suffix : new String[] {"/>", "></" + name + ">"}) {
             Item element = run("<" + name + " " + name + "=\"value\"" + suffix);
@@ -42,13 +58,55 @@ class JsoniqDirectConstructorNamesTest {
         }
     }
 
-    @Test
-    void acceptsDottedPrefixesAndResolvesNamespaces() {
-        Item element = run("<p.q:a.b xmlns:p.q=\"urn:test\" p.q:c.d=\"value\"></p.q:a.b>");
+    @ParameterizedTest
+    @ValueSource(strings = {"p.q", "p.1", "p."})
+    void acceptsDottedPrefixesAndResolvesNamespaces(String prefix) {
+        Item element = run("<"
+                + prefix
+                + ":a.b xmlns:"
+                + prefix
+                + "=\"urn:test\" "
+                + prefix
+                + ":c.d=\"value\"></"
+                + prefix
+                + ":a.b>");
         assertEquals("urn:test", element.nodeName().getNamespace());
         assertEquals("a.b", element.nodeName().getLocalName());
         assertEquals("urn:test", element.attributes().get(0).nodeName().getNamespace());
         assertEquals("c.d", element.attributes().get(0).nodeName().getLocalName());
+    }
+
+    @Test
+    void defaultNamespaceAppliesToDottedElementsButNotUnprefixedAttributes() {
+        Item element = run("<a.b xmlns=\"urn:default\" attr.name=\"value\"/>");
+        assertEquals("urn:default", element.nodeName().getNamespace());
+        assertEquals("a.b", element.nodeName().getLocalName());
+        assertEquals(
+                Name.createVariableInNoNamespace("attr.name"),
+                element.attributes().get(0).nodeName());
+    }
+
+    @Test
+    void nestedDottedConstructorsRestoreNamespaceBindingsForSiblings() {
+        Item element = run("<p.q:outer.name xmlns:p.q=\"urn:outer\">"
+                + "<p.q:inner.name xmlns:p.q=\"urn:inner\"/>"
+                + "<p.q:sibling.name/></p.q:outer.name>");
+        assertEquals("urn:outer", element.nodeName().getNamespace());
+        assertEquals(2, element.children().size());
+        assertEquals("inner.name", element.children().get(0).nodeName().getLocalName());
+        assertEquals("urn:inner", element.children().get(0).nodeName().getNamespace());
+        assertEquals("sibling.name", element.children().get(1).nodeName().getLocalName());
+        assertEquals("urn:outer", element.children().get(1).nodeName().getNamespace());
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "<a.b attr.name=\"1\" attr.name=\"2\"/>",
+                "<a.b xmlns:p.q=\"urn:test\" xmlns:r.s=\"urn:test\" p.q:attr.name=\"1\" r.s:attr.name=\"2\"/>"
+            })
+    void rejectsDuplicateDottedAttributesByExpandedName(String query) {
+        assertThrows(DuplicateDirectAttributeException.class, () -> run(query));
     }
 
     @Test
@@ -79,6 +137,9 @@ class JsoniqDirectConstructorNamesTest {
             strings = {
                 "<a . b/>",
                 "<a(:comment:).b/>",
+                "<a.(:comment:)b/>",
+                "<a. 123/>",
+                "<a .123/>",
                 "<a.b c . d=\"v\"/>",
                 "<a.b></a . b>",
                 "<.a/>",
