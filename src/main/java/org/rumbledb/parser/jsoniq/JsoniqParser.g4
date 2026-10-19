@@ -26,11 +26,6 @@
 parser grammar JsoniqParser;
 
 import CommonParser;
-@ header
-{
-// Java header
-package org.rumbledb.parser.jsoniq;
-}
 
 options { tokenVocab = JsoniqLexer; }
 module
