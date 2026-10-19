@@ -34,6 +34,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.OptionDeclaration;
@@ -106,6 +107,15 @@ public final class DeclarationTranslation {
         SequenceType seq = null;
         if (ctx.sequenceType() != null) {
             seq = processSequenceType.apply(ctx.sequenceType());
+        }
+        if ("xquery31".equals(translationContext.moduleContext().getQueryLanguage())) {
+            if (seq == null) {
+                seq = SequenceType.createSequenceType("item");
+            } else if (seq.isEmptySequence() || seq.getArity() != SequenceType.Arity.One) {
+                throw new ParsingException(
+                        "An XQuery context item declaration requires an item type without an occurrence indicator.",
+                        translationContext.metadata(ctx.sequenceType()));
+            }
         }
         boolean external = ctx.isExternal();
         Expression expr = null;
