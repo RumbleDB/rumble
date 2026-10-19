@@ -110,11 +110,10 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
     private List<Item> processContentExpression(List<Item> contentItems) {
         List<Item> contentSequence = new ArrayList<>();
         StringBuilder textAccumulator = null;
-        boolean previousItemWasAtomic = false;
 
         // Collect all content items
         if (this.contentIterator != null) {
-            for (Item contentItem : contentItems) {
+            for (Item contentItem : XmlConstructorContentUtils.normalizeContent(contentItems)) {
                 List<Item> expandedItems = new ArrayList<>();
                 XmlConstructorContentUtils.appendExpandedItem(contentItem, expandedItems);
                 for (Item item : expandedItems) {
@@ -124,7 +123,6 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
                             textAccumulator = null;
                         }
                         contentSequence.add(item);
-                        previousItemWasAtomic = false;
                         continue;
                     }
 
@@ -133,15 +131,10 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
                         if (textAccumulator == null) {
                             textAccumulator = new StringBuilder();
                         }
-                        if (item.isAtomic() && previousItemWasAtomic) {
-                            textAccumulator.append(' ');
-                        }
                         if (textContent.isEmpty()) {
-                            previousItemWasAtomic = item.isAtomic();
                             continue;
                         }
                         textAccumulator.append(textContent);
-                        previousItemWasAtomic = item.isAtomic();
                         continue;
                     }
 
@@ -151,7 +144,6 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
                     }
                     contentSequence.add(
                             item.isNode() ? NodeConstructionUtils.copyNode(item, this.staticContext) : item);
-                    previousItemWasAtomic = false;
                 }
             }
         }
