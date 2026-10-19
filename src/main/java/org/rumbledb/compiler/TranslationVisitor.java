@@ -545,14 +545,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     /** Adapts the JSONiq QName grammar to the shared role-aware resolver. */
     public Name parseName(JsoniqParser.QnameContext ctx, NameRole role) {
-        return this.translationContext
-                .names()
-                .resolveQName(
-                        ctx.FullQName() == null ? null : ctx.FullQName().getText(),
-                        ctx.ns == null ? null : ctx.ns.getText(),
-                        ctx.local_name == null ? null : ctx.local_name.getText(),
-                        role,
-                        createMetadataFromContext(ctx));
+        return this.translationContext.names().resolveEQName(ctx.getText(), role, createMetadataFromContext(ctx));
     }
 
     private TypeDeclaration processTypeDecl(JsoniqParser.TypeDeclContext ctx) {
