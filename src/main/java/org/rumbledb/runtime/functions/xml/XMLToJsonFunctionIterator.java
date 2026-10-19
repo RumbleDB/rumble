@@ -46,7 +46,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private static final Pattern JSON_NUMBER_PATTERN =
             Pattern.compile("-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
     private static final Pattern PERMISSIVE_NUMBER_PATTERN =
-            Pattern.compile("[+-]?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
+            Pattern.compile("[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?");
 
     public XMLToJsonFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
@@ -124,7 +124,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private Item extractDocumentElement(Item document) {
         Item root = null;
         for (Item child : document.children()) {
-            if (child.isCommentNode()) {
+            if (child.isCommentNode() || child.isProcessingInstructionNode()) {
                 continue;
             }
             if (child.isTextNode()) {
@@ -212,7 +212,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
         for (Item child : element.children()) {
-            if (child.isCommentNode()) {
+            if (child.isCommentNode() || child.isProcessingInstructionNode()) {
                 continue;
             }
             if (child.isTextNode()) {
@@ -238,7 +238,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private Item parseArray(Item element) {
         List<Item> members = new ArrayList<>();
         for (Item child : element.children()) {
-            if (child.isCommentNode()) {
+            if (child.isCommentNode() || child.isProcessingInstructionNode()) {
                 continue;
             }
             if (child.isTextNode()) {
@@ -304,10 +304,10 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     private boolean parseBooleanValue(Item element) {
         String stringValue = collectScalarTextContent(element).trim();
-        if (stringValue.equals("true")) {
+        if (stringValue.equals("true") || stringValue.equals("1")) {
             return true;
         }
-        if (stringValue.equals("false")) {
+        if (stringValue.equals("false") || stringValue.equals("0")) {
             return false;
         }
         throw invalidRepresentation("Invalid lexical representation for a JSON boolean.");
@@ -315,7 +315,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     private void ensureOnlyScalarChildren(Item element) {
         for (Item child : element.children()) {
-            if (child.isCommentNode()) {
+            if (child.isCommentNode() || child.isProcessingInstructionNode()) {
                 continue;
             }
             if (child.isTextNode()) {
@@ -331,7 +331,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private String collectScalarTextContent(Item element) {
         StringBuilder result = new StringBuilder();
         for (Item child : element.children()) {
-            if (child.isCommentNode()) {
+            if (child.isCommentNode() || child.isProcessingInstructionNode()) {
                 continue;
             }
             if (child.isTextNode()) {
