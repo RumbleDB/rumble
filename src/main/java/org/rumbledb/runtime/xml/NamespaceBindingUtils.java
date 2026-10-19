@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.InvalidNodeNameException;
 import org.rumbledb.exceptions.NoNamespaceFoundForPrefixException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 
 public final class NamespaceBindingUtils {
 
@@ -53,6 +54,16 @@ public final class NamespaceBindingUtils {
     public static final String XMLNS_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
 
     private NamespaceBindingUtils() {}
+
+    /** Normalizes and validates the target of a processing-instruction name test. */
+    public static String normalizePITestTarget(String target, ExceptionMetadata metadata) {
+        String normalized = target.replaceAll("[ \t\r\n]+", " ").replaceAll("^ | $", "");
+        if (!isValidNcName(normalized)) {
+            throw new UnexpectedTypeException(
+                    "A processing-instruction name test requires a valid NCName target.", metadata);
+        }
+        return normalized;
+    }
 
     /**
      * XML 1.0 / Namespaces in XML — NCName character checks (no colon).
@@ -129,7 +140,7 @@ public final class NamespaceBindingUtils {
                 || (c >= 0xD8 && c <= 0xF6)
                 || (c >= 0xF8 && c <= 0x2FF)
                 || (c >= 0x370 && c <= 0x37D)
-                || (c == 0x37F)
+                || (c >= 0x37F && c <= 0x1FFF)
                 || (c >= 0x200C && c <= 0x200D)
                 || (c >= 0x2070 && c <= 0x218F)
                 || (c >= 0x2C00 && c <= 0x2FEF)
