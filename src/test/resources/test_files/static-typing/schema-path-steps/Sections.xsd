@@ -11,6 +11,15 @@
         <xs:attribute name="level" type="xs:integer"/>
     </xs:complexType>
 
+    <!-- A top-level section is a chapter, whose nested sections have the base type. -->
+    <xs:complexType name="Chapter">
+        <xs:complexContent>
+            <xs:extension base="d:Section"/>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="section" type="d:Chapter"/>
+
     <xs:element name="doc">
         <xs:complexType>
             <xs:sequence>

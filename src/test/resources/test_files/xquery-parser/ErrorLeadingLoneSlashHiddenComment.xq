@@ -1,2 +1,2 @@
 (:JIQS: ShouldNotParse; ErrorCode="XPST0003" :)
-/ (:hidden:) * 5
+/ (:hidden:) div 2
