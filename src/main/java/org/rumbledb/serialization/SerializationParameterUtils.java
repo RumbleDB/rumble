@@ -72,6 +72,11 @@ public final class SerializationParameterUtils {
 
     private SerializationParameterUtils() {}
 
+    public static boolean isOutputDeclarationParameter(String name) {
+        return "parameter-document".equals(name)
+                || (STANDARD_PARAMETERS.contains(name) && !"use-character-maps".equals(name));
+    }
+
     // -------------------------------------------------------------------------
     // Public API — fn:serialize / element-document paths
     // -------------------------------------------------------------------------
