@@ -238,7 +238,9 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
     @Override
     public DescendentSequentialProperties visitInlineFunctionExpr(
             InlineFunctionExpression expression, DescendentSequentialProperties argument) {
-        return visitDescendantsWithScope(expression, argument);
+        DescendentSequentialProperties result = visitDescendantsWithScope(expression, argument);
+        expression.setHasExitStatement(result.hasExitStatement());
+        return result;
     }
 
     @Override
