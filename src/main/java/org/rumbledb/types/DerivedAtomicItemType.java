@@ -406,8 +406,8 @@ public class DerivedAtomicItemType extends AbstractItemType {
 
     @Override
     public String toString() {
-        // Anonymous schema types have internal names that no sequence type can refer to.
-        if (this.hasName() && Name.ANONYMOUS_SCHEMA_TYPE_NS.equals(this.name.getNamespace())) {
+        // Unlike a node's type annotation, which is only a name, an anonymous atomic type can show its base type.
+        if (this.hasName() && isAnonymousSchemaTypeName(this.name)) {
             return "<anonymous " + this.baseType + ">";
         }
         return getIdentifierString();

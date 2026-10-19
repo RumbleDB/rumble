@@ -18,45 +18,44 @@ package org.rumbledb.compiler;
 import java.net.URI;
 import java.nio.file.Path;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 
-class SchemaStepErrorMessageTest {
+public class SchemaStepErrorMessageTest {
     private static final Path SCHEMA =
             Path.of("src/test/resources/test_files/static-typing/schema-path-steps/PathSteps.xsd");
     private static final Path SECTIONS =
             Path.of("src/test/resources/test_files/static-typing/schema-path-steps/Sections.xsd");
 
     @Test
-    void listsTheDeclaredChildren() {
-        assertEquals(
+    public void listsTheDeclaredChildren() {
+        Assertions.assertEquals(
                 "The schema declares no child element p:prices for schema-element(p:order). "
                         + "It declares p:item, p:special, p:paid, p:due, p:customer, p:meta.",
                 message("$order/p:prices"));
     }
 
     @Test
-    void explainsThatAnElementHasNoChildren() {
-        assertEquals(
+    public void explainsThatAnElementHasNoChildren() {
+        Assertions.assertEquals(
                 "The schema declares no child elements for element(p:paid, xs:boolean).", message("$order/p:paid/*"));
     }
 
     @Test
-    void namesTheContextOfADescendantStep() {
+    public void namesTheContextOfADescendantStep() {
         // A nested d:section has a base type of d:Chapter, so the type of E//node() does not keep E's type first.
-        assertEquals(
+        Assertions.assertEquals(
                 "The schema declares no descendant element d:missing below element(d:section, d:Chapter). "
                         + "It declares d:title, d:section.",
                 message(
                         "import schema namespace d = \"urn:sections\" at \"" + SECTIONS.toUri() + "\"; ",
-                        "$order as element(d:section, d:Chapter)",
-                        "$order//d:missing"));
+                        "$section as element(d:section, d:Chapter)",
+                        "$section//d:missing"));
     }
 
     private static String message(String path) {
@@ -68,7 +67,7 @@ class SchemaStepErrorMessageTest {
 
     private static String message(String schemaImport, String parameter, String path) {
         String query = schemaImport + "declare function local:f(" + parameter + ") { " + path + " }; 1";
-        UnexpectedStaticTypeException exception = assertThrows(
+        UnexpectedStaticTypeException exception = Assertions.assertThrows(
                 UnexpectedStaticTypeException.class,
                 () -> CompilationPipeline.compileMainModule(
                         query,

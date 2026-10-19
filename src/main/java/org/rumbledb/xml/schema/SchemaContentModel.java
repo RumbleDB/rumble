@@ -35,6 +35,7 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import org.apache.xerces.xs.XSWildcard;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.DocumentNodeItemType;
@@ -117,7 +118,8 @@ public final class SchemaContentModel {
                 || (attributeAxis && (name == null || Name.XSI_NS.equals(name.getNamespace())))) {
             return Optional.empty();
         }
-        return select(contextType, attributeAxis, name, false).map(Selection::sequenceType);
+        return select(contextType, attributeAxis, name, SelectionMode.EVERY_NODE)
+                .map(Selection::sequenceType);
     }
 
     /**
@@ -129,7 +131,7 @@ public final class SchemaContentModel {
         if (!isSchemaTyped(contextType)) {
             return Optional.empty();
         }
-        return selfAndDescendantElements(contextType, false).map(nodes -> {
+        return selfAndDescendantElements(contextType, SelectionMode.EVERY_NODE).map(nodes -> {
             List<ItemType> nodeTypes = new ArrayList<>(nodes);
             nodeTypes.addAll(List.of(
                     BuiltinTypesCatalogue.textNode,
@@ -143,13 +145,13 @@ public final class SchemaContentModel {
 
     /**
      * The context followed by the type of every element below it, each listed once since types can be recursive. With
-     * declaredOnly, it only follows the elements that the schema declares.
+     * {@link SelectionMode#DECLARED_ONLY}, it only follows the elements that the schema declares.
      */
-    private Optional<List<ItemType>> selfAndDescendantElements(ItemType contextType, boolean declaredOnly) {
+    private Optional<List<ItemType>> selfAndDescendantElements(ItemType contextType, SelectionMode mode) {
         List<ItemType> result = new ArrayList<>(List.of(contextType));
         Set<ItemType> seen = new HashSet<>(result);
         for (int index = 0; index < result.size(); index++) {
-            Optional<Selection> children = select(result.get(index), false, null, declaredOnly);
+            Optional<Selection> children = select(result.get(index), false, null, mode);
             if (children.isEmpty()) {
                 return Optional.empty();
             }
@@ -174,15 +176,23 @@ public final class SchemaContentModel {
         if (!isSchemaTyped(contextType)) {
             return Optional.empty();
         }
-        // With declaredOnly, selecting never gives up, so it is never empty.
         List<ItemType> parents = throughDescendants
-                ? selfAndDescendantElements(contextType, true).orElseThrow()
+                ? declared(selfAndDescendantElements(contextType, SelectionMode.DECLARED_ONLY))
                 : List.of(contextType);
         return Optional.of(parents.stream()
-                .flatMap(parent -> select(parent, attributeAxis, null, true).orElseThrow().nodeTypes().stream())
+                .flatMap(parent ->
+                        declared(select(parent, attributeAxis, null, SelectionMode.DECLARED_ONLY)).nodeTypes().stream())
                 .flatMap(nodeType -> nodeNames(nodeType).stream())
                 .distinct()
                 .toList());
+    }
+
+    /**
+     * Unwraps a result computed with {@link SelectionMode#DECLARED_ONLY}, which is never empty: unknown cases and
+     * wildcards add nothing instead of making the selection give up.
+     */
+    private static <T> T declared(Optional<T> result) {
+        return result.orElseThrow(() -> new OurBadException("Selecting only declared nodes must not give up."));
     }
 
     /** The names of a selected attribute or element declaration; element(*, T) has none to list. */
@@ -194,6 +204,19 @@ public final class SchemaContentModel {
                 .map(ElementNodeItemType::getNodeName)
                 .filter(Objects::nonNull)
                 .toList();
+    }
+
+    /** Which nodes a selection must describe. */
+    private enum SelectionMode {
+        /**
+         * Every node that the step can select, as type inference needs: the selection gives up (is empty) when an
+         * unknown type or a wildcard may allow nodes that the schema does not declare.
+         */
+        EVERY_NODE,
+        /**
+         * Only the nodes that the schema declares, as tools listing names need: unknown types and wildcards add none.
+         */
+        DECLARED_ONLY
     }
 
     /** The node types of the declarations that a step selects from one context node, and how many nodes it selects. */
@@ -224,16 +247,16 @@ public final class SchemaContentModel {
      * that a schema-element test allows through its substitution group. It is empty as soon as one case is unknown,
      * since the result must cover every node that the step can select.
      * <p>
-     * With declaredOnly, it selects only the nodes that the schema declares: an unknown case or a matching wildcard
-     * adds nothing instead of making the result empty. Tools use it to list the names that the schema declares.
+     * With {@link SelectionMode#DECLARED_ONLY}, it selects only the nodes that the schema declares: an unknown case or
+     * a matching wildcard adds nothing instead of making the result empty.
      */
-    private Optional<Selection> select(ItemType contextType, boolean attributeAxis, Name name, boolean declaredOnly) {
+    private Optional<Selection> select(ItemType contextType, boolean attributeAxis, Name name, SelectionMode mode) {
         Selection result = null;
         for (ItemType member : contextType.getMemberTypes()) {
             List<? extends ItemType> contexts =
                     member instanceof ElementNodeItemType ? alternatives(member) : List.of(member);
             for (ItemType context : contexts) {
-                Optional<Selection> selection = selectFromNode(context, attributeAxis, name, declaredOnly);
+                Optional<Selection> selection = selectFromNode(context, attributeAxis, name, mode);
                 if (selection.isEmpty()) {
                     return Optional.empty();
                 }
@@ -247,8 +270,7 @@ public final class SchemaContentModel {
      * Selects from one case: a text, comment or processing-instruction node has no children or attributes, a document
      * has only its root element, and an element selects through its schema type.
      */
-    private Optional<Selection> selectFromNode(
-            ItemType context, boolean attributeAxis, Name name, boolean declaredOnly) {
+    private Optional<Selection> selectFromNode(ItemType context, boolean attributeAxis, Name name, SelectionMode mode) {
         if (isLeafNode(context)) {
             return Optional.of(Selection.NONE);
         }
@@ -256,21 +278,21 @@ public final class SchemaContentModel {
             return Optional.of(
                     attributeAxis ? Selection.NONE : selectDocumentElement(document.getElementTestType(), name));
         }
-        return selectFromElement((ElementNodeItemType) context, attributeAxis, name, declaredOnly);
+        return selectFromElement((ElementNodeItemType) context, attributeAxis, name, mode);
     }
 
     /**
      * Selects through the content model of the element's schema type and of every type derived from it. It is empty
-     * when the schema type cannot be resolved, or is xs:anyType, whose content can be anything; with declaredOnly, such
-     * an element selects nothing instead.
+     * when the schema type cannot be resolved, or is xs:anyType, whose content can be anything; with
+     * {@link SelectionMode#DECLARED_ONLY}, such an element selects nothing instead.
      */
     private Optional<Selection> selectFromElement(
-            ElementNodeItemType context, boolean attributeAxis, Name name, boolean declaredOnly) {
+            ElementNodeItemType context, boolean attributeAxis, Name name, SelectionMode mode) {
         Optional<XSTypeDefinition> type = Optional.ofNullable(context.getSchemaTypeName())
                 .flatMap(this.catalog::resolveType)
                 .filter(definition -> !XmlSchemaCatalog.isAnyType(definition));
         if (type.isEmpty()) {
-            return declaredOnly ? Optional.of(Selection.NONE) : Optional.empty();
+            return mode == SelectionMode.DECLARED_ONLY ? Optional.of(Selection.NONE) : Optional.empty();
         }
         Set<ItemType> nodeTypes = new LinkedHashSet<>();
         SequenceCardinality cardinality = null;
@@ -278,8 +300,8 @@ public final class SchemaContentModel {
         for (XSTypeDefinition derived : this.catalog.typeAndDerivedTypes(type.get())) {
             Optional<Occurrences> occurrences = derived instanceof XSComplexTypeDefinition complexType
                     ? attributeAxis
-                            ? collectAttributes(complexType, name, declaredOnly, nodeTypes)
-                            : collectChildElements(complexType.getParticle(), name, declaredOnly, nodeTypes)
+                            ? collectAttributes(complexType, name, mode, nodeTypes)
+                            : collectChildElements(complexType.getParticle(), name, mode, nodeTypes)
                     : Optional.of(Occurrences.NONE);
             if (occurrences.isEmpty()) {
                 return Optional.empty();
@@ -343,10 +365,10 @@ public final class SchemaContentModel {
      * exactly one p:customer child.
      *
      * @param particle the content model of a complex type, or null when it has empty or simple content
-     * @param declaredOnly whether wildcards match nothing, to collect only the declared elements
+     * @param mode with {@link SelectionMode#DECLARED_ONLY}, wildcards match nothing, to collect only declared elements
      */
     private Optional<Occurrences> collectChildElements(
-            XSParticle particle, Name name, boolean declaredOnly, Set<ItemType> elementTypes) {
+            XSParticle particle, Name name, SelectionMode mode, Set<ItemType> elementTypes) {
         if (particle == null) {
             return Optional.of(Occurrences.NONE);
         }
@@ -364,7 +386,7 @@ public final class SchemaContentModel {
             }
             termOccurrences = !matched ? Occurrences.NONE : unmatched ? Occurrences.OPTIONAL : Occurrences.ONE;
         } else if (particle.getTerm() instanceof XSWildcard wildcard) {
-            if (!declaredOnly && (name == null || allowsNamespace(wildcard, name.getNamespace()))) {
+            if (mode == SelectionMode.EVERY_NODE && (name == null || allowsNamespace(wildcard, name.getNamespace()))) {
                 return Optional.empty();
             }
             termOccurrences = Occurrences.NONE;
@@ -375,7 +397,7 @@ public final class SchemaContentModel {
             XSObjectList particles = group.getParticles();
             for (int index = 0; index < particles.getLength(); index++) {
                 Optional<Occurrences> occurrences =
-                        collectChildElements((XSParticle) particles.item(index), name, declaredOnly, elementTypes);
+                        collectChildElements((XSParticle) particles.item(index), name, mode, elementTypes);
                 if (occurrences.isEmpty()) {
                     return occurrences;
                 }
@@ -412,13 +434,15 @@ public final class SchemaContentModel {
     /**
      * Collects the attribute declarations with the name, or every one when name is null, and returns how many of them
      * an element has: each required attribute counts once and each optional one possibly once. It is empty when an
-     * attribute wildcard (xs:anyAttribute) may allow the name, unless declaredOnly. The attribute uses of a type
-     * include those inherited from its base types.
+     * attribute wildcard (xs:anyAttribute) may allow the name, unless {@link SelectionMode#DECLARED_ONLY}. The
+     * attribute uses of a type include those inherited from its base types.
      */
     private Optional<Occurrences> collectAttributes(
-            XSComplexTypeDefinition type, Name name, boolean declaredOnly, Set<ItemType> attributeTypes) {
+            XSComplexTypeDefinition type, Name name, SelectionMode mode, Set<ItemType> attributeTypes) {
         XSWildcard wildcard = type.getAttributeWildcard();
-        if (!declaredOnly && wildcard != null && (name == null || allowsNamespace(wildcard, name.getNamespace()))) {
+        if (mode == SelectionMode.EVERY_NODE
+                && wildcard != null
+                && (name == null || allowsNamespace(wildcard, name.getNamespace()))) {
             return Optional.empty();
         }
         XSObjectList uses = type.getAttributeUses();

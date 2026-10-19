@@ -200,6 +200,9 @@ import org.rumbledb.xml.schema.XmlSchemaCatalog;
 @Log4j2
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
+    /** How many declared names an error for an undeclared schema step lists before summarizing the rest. */
+    private static final int MAX_LISTED_STEP_NAMES = 10;
+
     private final RumbleConfiguration rumbleRuntimeConfiguration;
 
     /**
@@ -3493,11 +3496,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return Optional.empty();
         }
         boolean descendantAxis = axis.equals(ForwardAxis.DESCENDANT);
+        // The schema only says which children each type has, so descendant::N is computed as
+        // descendant-or-self::node()/child::N: take every type at or below the context, then their N children.
+        // Every descendant is the child of some node there, and the context is not, so it is never included.
         Optional<SequenceType> stepType = descendantAxis
-                // The schema only says which children each type has, so descendant::N is computed as
-                // descendant-or-self::node()/child::N: take every type at or below the context, then their N
-                // children. Every descendant is the child of some node there, and the context is not, so it is
-                // never included.
                 ? contentModel
                         .getDescendantOrSelfType(contextType.getItemType())
                         .flatMap(nodes -> contentModel
@@ -3532,12 +3534,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<Name> declared = contentModel
                 .getStepNames(contextType, attributeAxis, descendants)
                 .orElse(List.of());
-        int shown = 10;
         String alternatives = declared.isEmpty()
                 ? "It declares none."
                 : "It declares "
-                        + declared.stream().limit(shown).map(Name::toString).collect(Collectors.joining(", "))
-                        + (declared.size() > shown ? ", and " + (declared.size() - shown) + " more." : ".");
+                        + declared.stream()
+                                .limit(MAX_LISTED_STEP_NAMES)
+                                .map(Name::toString)
+                                .collect(Collectors.joining(", "))
+                        + (declared.size() > MAX_LISTED_STEP_NAMES
+                                ? ", and " + (declared.size() - MAX_LISTED_STEP_NAMES) + " more."
+                                : ".");
         return "The schema declares no " + kind + " " + name + where + contextType + ". " + alternatives;
     }
 
