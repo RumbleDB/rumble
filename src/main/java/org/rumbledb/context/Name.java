@@ -59,6 +59,8 @@ public class Name implements Comparable<Name>, Serializable {
     public static final String ARRAY_NS = "http://www.w3.org/2005/xpath-functions/array";
     public static final String XS_NS = "http://www.w3.org/2001/XMLSchema";
     public static final String XSI_NS = "http://www.w3.org/2001/XMLSchema-instance";
+    // Internal names of anonymous XML Schema types, which XQuery cannot refer to.
+    public static final String ANONYMOUS_SCHEMA_TYPE_NS = "http://rumbledb.org/anonymous-schema-types";
     public static final String XML_NS = "http://www.w3.org/XML/1998/namespace";
     public static final String JS_NS = "http://jsoniq.org/types";
     public static final String JSONIQ_ANNOTATIONS_NS = "http://jsoniq.org/annotations";
