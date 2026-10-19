@@ -207,6 +207,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DirectElementConstructorTagMismatchErrorCode = registerBuiltIn("XQST0118");
     public static final ErrorCode DecimalFormatPropertyInvalidValueErrorCode = registerBuiltIn("XQST0097");
     public static final ErrorCode DecimalFormatPropertyConflictErrorCode = registerBuiltIn("XQST0098");
+    public static final ErrorCode DuplicateDecimalFormatDeclarationErrorCode = registerBuiltIn("XQST0111");
     public static final ErrorCode DuplicateDecimalFormatPropertyErrorCode = registerBuiltIn("XQST0114");
     public static final ErrorCode ValidateTypeNotFoundErrorCode = registerBuiltIn("XQST0104");
 
