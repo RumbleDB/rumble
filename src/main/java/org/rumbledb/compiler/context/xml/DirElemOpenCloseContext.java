@@ -31,8 +31,9 @@ public record DirElemOpenCloseContext<QnameCtx extends ParserRuleContext, DirEle
         List<DirElemContentCtx> dirElemContent,
         ParserRuleContext context) {
 
-    public static DirElemOpenCloseContext<JsoniqParser.QnameContext, JsoniqParser.DirElemContentContext> from(
-            JsoniqParser.DirElemConstructorOpenCloseContext c) {
+    public static DirElemOpenCloseContext<
+                    JsoniqParser.DirectConstructorQNameContext, JsoniqParser.DirElemContentContext>
+            from(JsoniqParser.DirElemConstructorOpenCloseContext c) {
         return new DirElemOpenCloseContext<>(
                 c.close_tag_name, c.endOpen, c.startClose, c.slashClose, c.dirElemContent(), c);
     }
