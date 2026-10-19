@@ -118,7 +118,11 @@ public final class ControlStatementTranslation {
                 }
             }
             Statement returnStatement = visitStatement.apply(stmt.ret());
-            cases.add(new TypeSwitchStatementCase(variableName, union, returnStatement));
+            cases.add(new TypeSwitchStatementCase(
+                    variableName,
+                    union,
+                    returnStatement,
+                    stmt.varRef() == null ? null : translationContext.metadata(stmt.varRef())));
         }
         Name defaultVariableName = null;
         if (ctx.defaultVar() != null) {
@@ -128,7 +132,10 @@ public final class ControlStatementTranslation {
         return new TypeSwitchStatement(
                 condition,
                 cases,
-                new TypeSwitchStatementCase(defaultVariableName, defaultStatement),
+                new TypeSwitchStatementCase(
+                        defaultVariableName,
+                        defaultStatement,
+                        ctx.defaultVar() == null ? null : translationContext.metadata(ctx.defaultVar())),
                 translationContext.metadata(ctx.context()));
     }
 

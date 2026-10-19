@@ -16,19 +16,14 @@
 package org.rumbledb.compiler;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
 import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.control.TypeSwitchExpression;
-import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
@@ -39,17 +34,13 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
-import org.rumbledb.expressions.typing.CastExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
 
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
 
 public class FunctionInliningVisitor extends CloneVisitor {
 
-    private String queryLanguage;
     private Prolog prolog;
     private boolean constructionPreserve;
 
@@ -63,13 +54,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
             }
         }
         return false;
-    }
-
-    private boolean requiresSchemaParameterConversion(InlineFunctionExpression function) {
-        // Inlining runs before schema type references are resolved. Its promotion expressions do not
-        // implement union atomization and untyped conversion, so retain the normal call in these cases.
-        return function.getParams().values().stream()
-                .anyMatch(type -> !type.isResolved() || type.getItemType().isUnionType());
     }
 
     private boolean isVariableReferenced(Node expression, Name name) {
@@ -108,304 +92,10 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return allArgumentsMatch;
     }
 
-    private void addCastCase(
-            List<TypeswitchCase> cases, Expression expression, SequenceType testType, SequenceType targetType) {
-        if (testType.equals(targetType)) {
-            cases.add(new TypeswitchCase(null, Collections.singletonList(testType), expression));
-        } else if (testType.getArity().isSubtypeOf(Arity.OneOrZero)) {
-            cases.add(new TypeswitchCase(
-                    null,
-                    Collections.singletonList(testType),
-                    new CastExpression(expression, targetType, expression.getMetadata())));
-        } else {
-            Name variableName = Name.createVariableInNoNamespace(
-                    String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
-            Clause forClause = new ForClause(
-                    variableName,
-                    false,
-                    new SequenceType(testType.getItemType(), Arity.One),
-                    null,
-                    expression,
-                    expression.getMetadata());
-            Expression castExpression = new CastExpression(
-                    new VariableReferenceExpression(variableName, expression.getMetadata()),
-                    new SequenceType(targetType.getItemType(), Arity.One),
-                    expression.getMetadata());
-            ReturnClause returnClause = new ReturnClause(castExpression, expression.getMetadata());
-            forClause.chainWith(returnClause);
-            cases.add(new TypeswitchCase(
-                    null,
-                    Collections.singletonList(testType),
-                    new FlworExpression(returnClause, expression.getMetadata())));
-        }
-    }
-
-    private Expression createTypePromotion(Expression expression, SequenceType paramType) {
-        if (isNamespaceSensitiveFunctionParameter(paramType)
-                && usesQNameCoercionErrorSemantics(expression)
-                && expression.getStaticSequenceType() != null
-                && expression.getStaticSequenceType().getItemType() != null
-                && expression
-                        .getStaticSequenceType()
-                        .getItemType()
-                        .isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
-            TreatExpression result = new TreatExpression(
-                    expression, paramType, ErrorCode.CannotConvertToQNameErrorCode, expression.getMetadata());
-            result.setStaticSequenceType(paramType);
-            return result;
-        }
-        // integer > decimal > double
-        if (paramType.getItemType() == BuiltinTypesCatalogue.doubleItem) {
-            List<TypeswitchCase> cases = new ArrayList<>();
-            switch (paramType.getArity()) {
-                case One:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("integer"),
-                            SequenceType.createSequenceType("double"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("decimal"),
-                            SequenceType.createSequenceType("double"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("double"),
-                            SequenceType.createSequenceType("double"));
-                    break;
-                case OneOrZero:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("integer?"),
-                            SequenceType.createSequenceType("double?"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("decimal?"),
-                            SequenceType.createSequenceType("double?"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("double?"),
-                            SequenceType.createSequenceType("double?"));
-                    break;
-                case OneOrMore:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("integer+"),
-                            SequenceType.createSequenceType("double+"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("decimal+"),
-                            SequenceType.createSequenceType("double+"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("double+"),
-                            SequenceType.createSequenceType("double+"));
-                    break;
-                case ZeroOrMore:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("integer*"),
-                            SequenceType.createSequenceType("double*"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("decimal*"),
-                            SequenceType.createSequenceType("double*"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("double*"),
-                            SequenceType.createSequenceType("double*"));
-                    break;
-                case Zero:
-            }
-            TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
-                    expression,
-                    cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata())),
-                    expression.getMetadata());
-            typeSwitchExpression.setStaticSequenceType(paramType);
-            return typeSwitchExpression;
-        }
-        if (paramType.getItemType() == BuiltinTypesCatalogue.decimalItem) {
-            List<TypeswitchCase> cases = new ArrayList<>();
-            switch (paramType.getArity()) {
-                case One:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("integer"),
-                            SequenceType.createSequenceType("decimal"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("decimal"),
-                            SequenceType.createSequenceType("decimal"));
-                    break;
-                case OneOrZero:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("integer?"),
-                            SequenceType.createSequenceType("decimal?"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("decimal?"),
-                            SequenceType.createSequenceType("decimal?"));
-                    break;
-                case OneOrMore:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("integer+"),
-                            SequenceType.createSequenceType("decimal+"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("decimal+"),
-                            SequenceType.createSequenceType("decimal+"));
-                    break;
-                case ZeroOrMore:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("integer*"),
-                            SequenceType.createSequenceType("decimal*"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("decimal*"),
-                            SequenceType.createSequenceType("decimal*"));
-                    break;
-                case Zero:
-            }
-            TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
-                    expression,
-                    cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata())),
-                    expression.getMetadata());
-            typeSwitchExpression.setStaticSequenceType(paramType);
-            return typeSwitchExpression;
-        }
-        // anyURI > string
-        if (paramType.getItemType() == BuiltinTypesCatalogue.stringItem) {
-            List<TypeswitchCase> cases = new ArrayList<>();
-            switch (paramType.getArity()) {
-                case One:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("anyURI"),
-                            SequenceType.createSequenceType("string"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("string"),
-                            SequenceType.createSequenceType("string"));
-                    break;
-                case OneOrZero:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("anyURI?"),
-                            SequenceType.createSequenceType("string?"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("string?"),
-                            SequenceType.createSequenceType("string?"));
-                    break;
-                case OneOrMore:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("anyURI+"),
-                            SequenceType.createSequenceType("string+"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("string+"),
-                            SequenceType.createSequenceType("string+"));
-                    break;
-                case ZeroOrMore:
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("anyURI*"),
-                            SequenceType.createSequenceType("string*"));
-                    addCastCase(
-                            cases,
-                            expression,
-                            SequenceType.createSequenceType("string*"),
-                            SequenceType.createSequenceType("string*"));
-                    break;
-                case Zero:
-            }
-            TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
-                    expression,
-                    cases,
-                    new TypeswitchCase(
-                            null,
-                            new TreatExpression(
-                                    expression,
-                                    paramType,
-                                    ErrorCode.UnexpectedTypeErrorCode,
-                                    expression.getMetadata())),
-                    expression.getMetadata());
-            typeSwitchExpression.setStaticSequenceType(paramType);
-            return typeSwitchExpression;
-        }
-        if (paramType.getItemType().equals(BuiltinTypesCatalogue.errorItem)) {
-            TreatExpression result = new TreatExpression(
-                    expression, paramType, ErrorCode.UnexpectedTypeErrorCode, expression.getMetadata());
-            result.setStaticSequenceType(paramType);
-            return result;
-        }
-        return expression;
-    }
-
-    private boolean isNamespaceSensitiveFunctionParameter(SequenceType paramType) {
-        return paramType.getItemType().equals(BuiltinTypesCatalogue.QNameItem)
-                || paramType.getItemType().equals(BuiltinTypesCatalogue.NOTATIONItem);
-    }
-
-    private boolean usesQNameCoercionErrorSemantics(Expression expression) {
-        String currentQueryLanguage = this.queryLanguage;
-        if (currentQueryLanguage == null && expression.getStaticContext() != null) {
-            currentQueryLanguage = expression.getStaticContext().getQueryLanguage();
-        }
-        return currentQueryLanguage != null
-                && !currentQueryLanguage.equals("xquery10")
-                && !currentQueryLanguage.equals("jsoniq10");
-    }
-
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
         this.prolog = mainModule.getProlog();
         if (mainModule.getStaticContext() != null) {
-            this.queryLanguage = mainModule.getStaticContext().getQueryLanguage();
             this.constructionPreserve = mainModule.getStaticContext().isConstructionPreserve();
         }
         MainModule result = new MainModule(
@@ -414,6 +104,19 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 mainModule.getMetadata());
         result.setStaticContext(mainModule.getStaticContext());
         return result;
+    }
+
+    // An inlined call converts its arguments exactly like the function call it replaces.
+    private static Expression convertArgument(
+            Expression argument, SequenceType parameterType, FunctionCallExpression call) {
+        return new FunctionArgumentConversionExpression(
+                argument, parameterType, call.getFunctionIdentifier().getName(), argument.getMetadata());
+    }
+
+    private static FunctionArgumentConversionExpression convertReturnValue(
+            Expression value, SequenceType returnType, FunctionCallExpression call) {
+        return new FunctionArgumentConversionExpression(
+                value, returnType, call.getFunctionIdentifier().getName(), true, call.getMetadata());
     }
 
     // Inlining is disabled for functions that:
@@ -427,7 +130,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 || targetFunction == null
                 // Rebuilding an inlined body in the caller's context would change its constructor semantics.
                 || hasDifferentConstructionMode(this.prolog, targetFunction)
-                || requiresSchemaParameterConversion((InlineFunctionExpression) targetFunction.getExpression())
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
                 || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {
@@ -445,11 +147,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
         if (expression.getArguments().isEmpty() || allArgumentsMatch(expression, paramNames)) {
             if (inlineFunction.getReturnType() != null) {
-                TreatExpression result = new TreatExpression(
-                        body,
-                        inlineFunction.getReturnType(),
-                        ErrorCode.UnexpectedTypeErrorCode,
-                        expression.getMetadata());
+                FunctionArgumentConversionExpression result =
+                        convertReturnValue(body, inlineFunction.getReturnType(), expression);
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
@@ -475,8 +174,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 Name columnName = Name.createVariableInNoNamespace(
                         String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
                 Clause expressionClause = new LetClause(columnName, null, argumentExpression, expression.getMetadata());
-                Expression assignmentExpression = createTypePromotion(
-                        new VariableReferenceExpression(columnName, expression.getMetadata()), paramType);
+                Expression assignmentExpression = convertArgument(
+                        new VariableReferenceExpression(columnName, expression.getMetadata()), paramType, expression);
                 Clause assignmentClause =
                         new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
                 if (assignmentClauses != null) {
@@ -488,7 +187,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 }
                 expressionClauses = expressionClause;
             } else {
-                Expression assignmentExpression = createTypePromotion(argumentExpression, paramType);
+                Expression assignmentExpression = convertArgument(argumentExpression, paramType, expression);
                 Clause expressionClause =
                         new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
                 if (expressionClauses != null) {
@@ -499,11 +198,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
         }
         if (expressionClauses == null) {
             if (inlineFunction.getReturnType() != null) {
-                TreatExpression result = new TreatExpression(
-                        body,
-                        inlineFunction.getReturnType(),
-                        ErrorCode.UnexpectedTypeErrorCode,
-                        expression.getMetadata());
+                FunctionArgumentConversionExpression result =
+                        convertReturnValue(body, inlineFunction.getReturnType(), expression);
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
@@ -517,11 +213,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
         }
         FlworExpression result = new FlworExpression(returnClause, expression.getMetadata());
         if (inlineFunction.getReturnType() != null) {
-            return new TreatExpression(
-                    result,
-                    inlineFunction.getReturnType(),
-                    ErrorCode.UnexpectedTypeErrorCode,
-                    expression.getMetadata());
+            return convertReturnValue(result, inlineFunction.getReturnType(), expression);
         }
         return result;
     }

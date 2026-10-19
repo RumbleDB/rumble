@@ -17,6 +17,7 @@ package org.rumbledb.xml.schema;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.HashMap;
@@ -24,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
@@ -77,7 +79,7 @@ public final class XmlSchemaCatalogLoader {
             source.setSystemId(EMPTY_SCHEMA_SYSTEM_ID);
 
             LoadedSchema loadedSchema = loadedSchema(schemaFactory.newSchema(source), errorHandler, metadata);
-            return new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema());
+            return new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema(), Map.of());
         } catch (SAXException | RuntimeException exception) {
             throw new SchemaImportException(
                     "Unable to initialize the built-in XML Schema environment: " + exception.getMessage(),
@@ -86,10 +88,51 @@ public final class XmlSchemaCatalogLoader {
         }
     }
 
+    /** Supplies the standard JSON XML schema without importing its types into the query's static context. */
+    public static XmlSchemaCatalog loadXPathFunctionsCatalog() {
+        LoadedSchema schema = XPathFunctionsSchemaHolder.SCHEMA;
+        // Type mappers contain mutable caches, so each validation gets its own catalog.
+        return new XmlSchemaCatalog(schema.schemaModel(), schema.validationSchema(), Map.of(Name.FN_NS, "fn"));
+    }
+
+    private static final class XPathFunctionsSchemaHolder {
+        private static final LoadedSchema SCHEMA = loadXPathFunctionsSchema();
+    }
+
+    private static LoadedSchema loadXPathFunctionsSchema() {
+        ExceptionMetadata metadata = ExceptionMetadata.EMPTY_METADATA;
+        try (InputStream input = XmlSchemaCatalogLoader.class.getResourceAsStream("/schemas/xpath-functions.xsd")) {
+            if (input == null) {
+                throw new SchemaImportException("The bundled XPath functions schema is unavailable.", metadata);
+            }
+            SchemaErrorHandler errorHandler = new SchemaErrorHandler();
+            XMLSchemaFactory factory = new XMLSchemaFactory();
+            factory.setErrorHandler(errorHandler);
+            StreamSource source = new StreamSource(input);
+            source.setSystemId(Name.FN_NS);
+            return loadedSchema(factory.newSchema(source), errorHandler, metadata);
+        } catch (SAXException | IOException exception) {
+            throw new SchemaImportException(
+                    "Unable to initialize the XPath functions schema: " + exception.getMessage(), metadata, exception);
+        }
+    }
+
     public static Optional<XmlSchemaCatalog> load(
             @NonNull List<SchemaImport> schemaImports,
             @NonNull URI staticBaseUri,
             @NonNull CompilationConfiguration compilationConfiguration) {
+        return load(schemaImports, staticBaseUri, compilationConfiguration, uri -> {});
+    }
+
+    /**
+     * Reports each schema URI before reading it, including nested imports and includes.
+     * Failed reads are reported too, so callers can detect when a missing schema becomes available.
+     */
+    public static Optional<XmlSchemaCatalog> load(
+            @NonNull List<SchemaImport> schemaImports,
+            @NonNull URI staticBaseUri,
+            @NonNull CompilationConfiguration compilationConfiguration,
+            @NonNull Consumer<URI> schemaResourceObserver) {
         if (schemaImports.isEmpty()) {
             return Optional.empty();
         }
@@ -101,9 +144,20 @@ public final class XmlSchemaCatalogLoader {
 
         ExceptionMetadata metadata = schemaImports.get(0).getMetadata();
         SchemaResourceResolver resolver = new SchemaResourceResolver(
-                staticBaseUri, resolvedImports.locationsByNamespace(), compilationConfiguration, metadata);
+                staticBaseUri,
+                resolvedImports.locationsByNamespace(),
+                compilationConfiguration,
+                metadata,
+                schemaResourceObserver);
         LoadedSchema loadedSchema = loadSchema(resolvedImports.locations(), resolver, metadata);
-        XmlSchemaCatalog catalog = new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema());
+        Map<String, String> namespacePrefixes = new LinkedHashMap<>();
+        for (SchemaImport schemaImport : schemaImports) {
+            if (schemaImport.getBindingKind() == SchemaImport.BindingKind.PREFIX) {
+                namespacePrefixes.put(schemaImport.getTargetNamespace(), schemaImport.getPrefix());
+            }
+        }
+        XmlSchemaCatalog catalog =
+                new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema(), namespacePrefixes);
         verifyImportedNamespaces(schemaImports, catalog);
 
         return Optional.of(catalog);
@@ -242,17 +296,20 @@ public final class XmlSchemaCatalogLoader {
         private final CompilationConfiguration compilationConfiguration;
         private final ExceptionMetadata metadata;
         private final Map<URI, SchemaSource> sources;
+        private final Consumer<URI> schemaResourceObserver;
 
         private SchemaResourceResolver(
                 URI defaultBaseUri,
                 Map<String, List<URI>> locationsByNamespace,
                 CompilationConfiguration compilationConfiguration,
-                ExceptionMetadata metadata) {
+                ExceptionMetadata metadata,
+                Consumer<URI> schemaResourceObserver) {
             this.defaultBaseUri = defaultBaseUri;
             this.locationsByNamespace = locationsByNamespace;
             this.compilationConfiguration = compilationConfiguration;
             this.metadata = metadata;
             this.sources = new HashMap<>();
+            this.schemaResourceObserver = schemaResourceObserver;
         }
 
         /**
@@ -310,15 +367,27 @@ public final class XmlSchemaCatalogLoader {
          * Reads a schema from the given URI using RumbleDB’s ResourceResolver.
          */
         private SchemaSource read(URI location) {
-            try (ResolvedResource resource = this.compilationConfiguration
-                    .resourceResolver()
-                    .resolve(location, this.compilationConfiguration.runtimeConfiguration(), this.metadata)) {
+            this.schemaResourceObserver.accept(location);
+            try (ResolvedResource resource = resolveResource(location)) {
                 return new SchemaSource(
                         resource.getSystemId(), resource.getInputStream().readAllBytes());
             } catch (IOException | RumbleException exception) {
                 throw new SchemaImportException(
                         "Unable to read imported XML Schema " + location + ".", this.metadata, exception);
             }
+        }
+
+        private ResolvedResource resolveResource(URI location) {
+            var resolver = this.compilationConfiguration.resourceResolver();
+            if (Name.FN_NS.equals(location.toString()) && !resolver.hasMapping(location)) {
+                InputStream schema = XmlSchemaCatalogLoader.class.getResourceAsStream("/schemas/xpath-functions.xsd");
+                if (schema == null) {
+                    throw new SchemaImportException(
+                            "The bundled XPath functions schema is unavailable.", this.metadata);
+                }
+                return new ResolvedResource(location, schema);
+            }
+            return resolver.resolve(location, this.compilationConfiguration.runtimeConfiguration(), this.metadata);
         }
 
         /**

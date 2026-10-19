@@ -22,6 +22,7 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.logging.log4j.spi.StandardLevel;
 
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.model.DebugConfig;
 import org.rumbledb.exceptions.CliException;
 
@@ -37,11 +38,13 @@ public final class LoggingConfiguration {
                     .toList());
 
     private static DebugConfig currentDebugConfig = null;
+    private static boolean printInferredTypes;
 
     private LoggingConfiguration() {}
 
-    static void configure(DebugConfig debugConfig) {
-        currentDebugConfig = debugConfig;
+    static void configure(RumbleConfiguration configuration) {
+        currentDebugConfig = configuration.debug();
+        printInferredTypes = configuration.analysis().printInferredTypes();
         apply();
     }
 
@@ -60,7 +63,9 @@ public final class LoggingConfiguration {
 
     private static Level resolveApplicationLevel(DebugConfig debugConfig) {
         if (isBlank(debugConfig.logLevel())) {
-            return DEFAULT_APPLICATION_LEVEL;
+            return debugConfig.logging() || debugConfig.printIteratorTree() || printInferredTypes
+                    ? Level.DEBUG
+                    : DEFAULT_APPLICATION_LEVEL;
         }
         return parseLevel(debugConfig.logLevel(), "--log-level");
     }

@@ -21,6 +21,7 @@ import java.util.List;
 import lombok.Getter;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
 
@@ -33,17 +34,35 @@ import org.rumbledb.types.SequenceType;
 public class TypeswitchCase {
 
     private final Name variableName;
+    private final ExceptionMetadata variableMetadata;
+
     private final List<SequenceType> union;
     private final Expression returnExpression;
 
-    public TypeswitchCase(Name variableName, List<SequenceType> union, Expression returnExpression) {
+    /** Creates a compiler-generated case that binds no variable. */
+    public TypeswitchCase(List<SequenceType> union, Expression returnExpression) {
+        this(null, union, returnExpression, null);
+    }
+
+    /** Creates a compiler-generated default case that binds no variable. */
+    public TypeswitchCase(Expression returnExpression) {
+        this(null, returnExpression, null);
+    }
+
+    public TypeswitchCase(
+            Name variableName,
+            List<SequenceType> union,
+            Expression returnExpression,
+            ExceptionMetadata variableMetadata) {
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
         this.union = new ArrayList<>(union);
         this.returnExpression = returnExpression;
     }
 
-    public TypeswitchCase(Name variableName, Expression returnExpression) {
+    public TypeswitchCase(Name variableName, Expression returnExpression, ExceptionMetadata variableMetadata) {
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
         this.union = null;
         this.returnExpression = returnExpression;
     }

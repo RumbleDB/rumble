@@ -36,7 +36,7 @@ public final class Run extends BaseCommand {
     public CLIInvocation call() {
         return this.invocation(this.baseConfiguration(RumbleMode.RUN)
                 .input(this.input.toConfig())
-                .output(this.output.toConfig())
+                .output(this.output.toConfig(this.semantics.toConfig().queryLanguage()))
                 .build());
     }
 }

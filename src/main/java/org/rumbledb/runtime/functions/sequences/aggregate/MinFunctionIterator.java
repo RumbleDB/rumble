@@ -20,15 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.spark.api.java.JavaRDD;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.CollationCatalogue;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
@@ -61,7 +57,7 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         String collation =
                 CollationSupport.resolveAndCheckCollation(explicitCollation, getRuntimeStaticContext(), getMetadata());
         if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            return ExtremumLocalEvaluation.min(this.iterator, collation, context, getMetadata());
+            return ExtremumEvaluation.min(this.iterator, collation, context, getMetadata());
         }
 
         if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
@@ -70,7 +66,7 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
                 return null;
             }
             if (!CollationCatalogue.CODEPOINT_COLLATION.equals(collation)) {
-                return df.toRDD(getMetadata()).min(createComparator(collation));
+                return ExtremumEvaluation.minRDD(df.toRDD(getMetadata()), collation, getMetadata());
             }
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             HomogeneousItemDataFrame minDF = df.evaluateSQL(
@@ -83,21 +79,7 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
             return minDF.getExactlyOneItem();
         }
 
-        JavaRDD<Item> rdd = this.iterator.getRDD(context);
-        if (rdd.isEmpty()) {
-            return null;
-        }
-        return rdd.min(createComparator(collation));
-    }
-
-    private ItemComparator createComparator(String collation) {
-        return new ItemComparator(
-                true,
-                new InvalidArgumentTypeException(
-                        "Min expression input error. Input has to be non-null atomics of matching types",
-                        getMetadata()),
-                collation,
-                getMetadata());
+        return ExtremumEvaluation.minRDD(this.iterator.getRDD(context), collation, getMetadata());
     }
 
     @Override

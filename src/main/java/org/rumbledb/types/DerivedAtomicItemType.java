@@ -406,6 +406,10 @@ public class DerivedAtomicItemType extends AbstractItemType {
 
     @Override
     public String toString() {
+        // Unlike a node's type annotation, which is only a name, an anonymous atomic type can show its base type.
+        if (this.hasName() && isAnonymousSchemaTypeName(this.name)) {
+            return "<anonymous " + this.baseType + ">";
+        }
         return getIdentifierString();
     }
 

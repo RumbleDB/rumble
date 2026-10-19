@@ -52,8 +52,17 @@ jobs:
           path: target/*.jar
 
   cli-tests:
+    name: CLI tests (${{ matrix.suite }})
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: output-formats
+            test_filter: -Dgroups=cli-output-formats
+          - suite: commands-and-runtime
+            test_filter: -DexcludedGroups=cli-output-formats
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -62,11 +71,11 @@ jobs:
           distribution: temurin
           cache: maven
       - name: Test assembled CLI
-        run: mvn --batch-mode -Pcli-tests test
+        run: mvn --batch-mode -Pcli-tests '${{ matrix.test_filter }}' test
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: CLI-test-reports
+          name: CLI-test-reports-${{ matrix.suite }}
           path: target/surefire-reports/
 
   tests:
@@ -77,6 +86,8 @@ jobs:
       matrix:
         test_class: [
           "FrontendTests",
+          "ComposabilityTests",
+          "SequentialClassificationTests",
           "BackwardsCompatibilityTests",
           "RegexPatternUtilsTest",
           "RuntimeTests",

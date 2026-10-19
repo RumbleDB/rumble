@@ -466,6 +466,7 @@ public class ItemParser {
             DataType fieldType = field.dataType();
             String fieldName = field.name();
             ItemType fieldItemType = null;
+            boolean requiredField = false;
 
             if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
                 mutabilityLevel = row.getInt(i);
@@ -494,6 +495,7 @@ public class ItemParser {
                 FieldDescriptor descriptor = itemType.getObjectContentFacet(fieldName);
                 if (descriptor != null) {
                     fieldItemType = descriptor.getType();
+                    requiredField = descriptor.isRequired();
                     if (fieldItemType == null) {
                         throw new OurBadException("Type for field "
                                 + fieldName
@@ -504,10 +506,11 @@ public class ItemParser {
                 }
             }
             Item newItem = convertValueToItem(row, i, null, fieldType, metadata, fieldItemType);
-            // NULL values in DataFrames are mapped to absent in JSONiq.
+            // SQL NULL represents absence for optional fields, but required constructor fields
+            // must retain their key and store JSON null (e.g., an empty value expression).
             if (!newItem.isNull()
                     || (!fieldName.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
-                            && fieldType.equals(DataTypes.NullType))) {
+                            && (requiredField || fieldType.equals(DataTypes.NullType)))) {
                 // don't return array for single sequence item
                 if (fieldName.endsWith(SparkSessionManager.sequenceColumnName)) {
                     if (newItem.getSize() == 0) {
@@ -819,28 +822,40 @@ public class ItemParser {
      * @return the parsed item
      */
     public static Item getItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
-        if (currentNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(currentNode)) {
+        return getItemFromXML(currentNode, path, removeParentPointers, false);
+    }
+
+    /** Converts parsed XML, optionally retaining all whitespace text nodes. */
+    public static Item getItemFromXML(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
+        if (currentNode.getNodeType() == Node.TEXT_NODE || currentNode.getNodeType() == Node.CDATA_SECTION_NODE) {
             return getTextNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.COMMENT_NODE) {
             return getCommentNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
             return getProcessingInstructionNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
-            return getDocumentItemFromXML(currentNode, path, removeParentPointers);
+            return getDocumentItemFromXML(currentNode, path, removeParentPointers, preserveWhitespace);
         }
-        return getElementNodeItem(currentNode, path, removeParentPointers);
+        return getElementNodeItem(currentNode, path, removeParentPointers, preserveWhitespace);
     }
 
     public static DocumentItem getDocumentItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
-        List<Item> children = getChildren(currentNode, path, removeParentPointers);
+        return getDocumentItemFromXML(currentNode, path, removeParentPointers, false);
+    }
+
+    private static DocumentItem getDocumentItemFromXML(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
+        List<Item> children = getChildren(currentNode, path, removeParentPointers, preserveWhitespace);
         DocumentItem documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
         if (!removeParentPointers) addParentToChildrenAndAttributes(documentItem);
         documentItem.setXmlDocumentPosition(path, 0);
         return documentItem;
     }
 
-    private static Item getElementNodeItem(Node currentNode, String path, boolean removeParentPointers) {
-        List<Item> children = getChildren(currentNode, path, removeParentPointers);
+    private static Item getElementNodeItem(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
+        List<Item> children = getChildren(currentNode, path, removeParentPointers, preserveWhitespace);
         ParsedDomAttributes parsedAttributes = getAttributesAndNamespaces(currentNode);
         Item elementItem = ItemFactory.getInstance()
                 .createXmlElementNode(currentNode, children, parsedAttributes.attributes, parsedAttributes.namespaces);
@@ -855,19 +870,20 @@ public class ItemParser {
         return content.trim().isEmpty();
     }
 
-    private static List<Item> getChildren(Node currentNode, String path, boolean removeParentPointers) {
+    private static List<Item> getChildren(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
         List<Item> children = new ArrayList<>();
         NodeList nodeList = currentNode.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); ++i) {
             Node childNode = nodeList.item(i);
             if (childNode.getNodeType() == Node.ELEMENT_NODE) {
-                children.add(getItemFromXML(childNode, path, removeParentPointers));
+                children.add(getItemFromXML(childNode, path, removeParentPointers, preserveWhitespace));
             } else if (childNode.getNodeType() == Node.COMMENT_NODE) {
                 children.add(ItemFactory.getInstance().createXmlCommentNode(childNode));
             } else if (childNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
                 children.add(ItemFactory.getInstance().createXmlProcessingInstructionNode(childNode));
             } else if ((childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
-                    && !hasWhitespaceText(childNode)) {
+                    && (preserveWhitespace || !hasWhitespaceText(childNode))) {
                 children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
             }
         }

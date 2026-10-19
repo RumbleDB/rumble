@@ -20,15 +20,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.spark.api.java.JavaRDD;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.CollationCatalogue;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
@@ -63,7 +59,7 @@ public class MaxFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         String collation =
                 CollationSupport.resolveAndCheckCollation(explicitCollation, getRuntimeStaticContext(), getMetadata());
         if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            return ExtremumLocalEvaluation.max(this.iterator, collation, context, getMetadata());
+            return ExtremumEvaluation.max(this.iterator, collation, context, getMetadata());
         }
 
         if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
@@ -72,7 +68,7 @@ public class MaxFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
                 return null;
             }
             if (!CollationCatalogue.CODEPOINT_COLLATION.equals(collation)) {
-                return itemTypePromotion(df.toRDD(getMetadata()).max(createComparator(collation)));
+                return ExtremumEvaluation.maxRDD(df.toRDD(getMetadata()), collation, getMetadata());
             }
             ItemType maxType;
             if (df.getItemType().isObjectItemType()
@@ -94,21 +90,7 @@ public class MaxFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
             return itemTypePromotion(maxDF.getExactlyOneItem());
         }
 
-        JavaRDD<Item> rdd = this.iterator.getRDD(context);
-        if (rdd.isEmpty()) {
-            return null;
-        }
-        return rdd.max(createComparator(collation));
-    }
-
-    private ItemComparator createComparator(String collation) {
-        return new ItemComparator(
-                false,
-                new InvalidArgumentTypeException(
-                        "Max expression input error. Input has to be non-null atomics of matching types",
-                        getMetadata()),
-                collation,
-                getMetadata());
+        return ExtremumEvaluation.maxRDD(this.iterator.getRDD(context), collation, getMetadata());
     }
 
     @Override

@@ -60,7 +60,7 @@ public class XmlSchemaTypeAnnotation implements Serializable {
                 }
             }
         }
-        this.typeHierarchy = List.copyOf(hierarchy);
+        this.typeHierarchy = hierarchy;
         if (this.typeHierarchy.isEmpty() || !this.name.equals(this.typeHierarchy.get(0))) {
             throw new IllegalArgumentException("A schema type hierarchy must start with the annotated type.");
         }

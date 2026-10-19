@@ -63,6 +63,10 @@ abstract class DateFormattingFunctionIterator extends AbstractAtMostOneItemRunti
             calendar = getConfiguration().formatting().defaultFormattingCalendar();
         }
 
+        if (place == null) {
+            place = getConfiguration().formatting().defaultFormattingPlace();
+        }
+
         FormattingContext formattingContext = FormattingContext.fromArguments(
                 language, calendar, place, getRuntimeStaticContext().getStaticallyKnownNamespaces(), getMetadata());
 

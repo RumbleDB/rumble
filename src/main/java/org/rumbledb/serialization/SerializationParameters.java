@@ -60,6 +60,22 @@ public class SerializationParameters implements Serializable {
      */
     private String method = "xml";
 
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private boolean useLanguageDefaultMethod;
+
+    public void setMethod(String method) {
+        this.method = method;
+        this.useLanguageDefaultMethod = false;
+    }
+
+    /** Reapplies language defaults when parsing detects a different language; explicit options are preserved. */
+    public void applyLanguageDefaults(String queryLanguage) {
+        if (this.useLanguageDefaultMethod) {
+            this.method = defaultMethod(queryLanguage);
+        }
+    }
+
     /**
      * Character encoding.
      * "encoding" — XSLT and XQuery Serialization 3.1 — Serialization Parameters (link:
@@ -245,7 +261,8 @@ public class SerializationParameters implements Serializable {
     }
 
     /**
-     * Application output defaults, including the JSONiq hybrid method and newline-separated results.
+     * Application output defaults. JSONiq uses the hybrid method and XQuery uses XML.
+     * Both leave item-separator absent so sequence normalization supplies atomic-value spaces.
      * fn:serialize uses the standard field defaults through the no-argument constructor instead.
      */
     public static SerializationParameters defaults(String queryLanguage) {
@@ -254,7 +271,7 @@ public class SerializationParameters implements Serializable {
         p.version = null;
         p.omitXmlDeclaration = false;
         p.htmlVersion = null;
-        p.itemSeparator = "\n";
+        p.useLanguageDefaultMethod = true;
         p.jsonNodeOutputMethod = JsonNodeOutputMethod.UNSPECIFIED;
         return p;
     }
@@ -364,6 +381,7 @@ public class SerializationParameters implements Serializable {
     public static SerializationParameters copy(SerializationParameters parameters) {
         SerializationParameters copy = new SerializationParameters();
         copy.method = parameters.method;
+        copy.useLanguageDefaultMethod = parameters.useLanguageDefaultMethod;
         copy.encoding = parameters.encoding;
         copy.version = parameters.version;
         copy.omitXmlDeclaration = parameters.omitXmlDeclaration;

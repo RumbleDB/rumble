@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
@@ -113,6 +115,7 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateExpression;
@@ -176,6 +179,8 @@ import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpressio
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.functions.FunctionBodyIterator;
+import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
@@ -267,8 +272,10 @@ import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeAtomization;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
+@Log4j2
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan> {
 
     private final VisitorConfig visitorConfig;
@@ -277,6 +284,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     public RuntimeIteratorVisitor(RumbleConfiguration config) {
         this.visitorConfig = VisitorConfig.RUNTIME_PLAN_GENERATION;
         this.config = config;
+    }
+
+    /** Generates a runtime plan and renders it when debug output is enabled. */
+    public ItemRuntimePlan generateRuntimePlan(Node node) {
+        ItemRuntimePlan result = visit(node, null);
+        if (this.config.debug().printIteratorTree() || this.config.debug().logging()) {
+            StringBuilder sb = new StringBuilder();
+            result.print(sb, 0);
+            log.debug(sb);
+        }
+        return result;
     }
 
     @Override
@@ -1171,7 +1189,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         SequenceType returnType = expression.getReturnType();
-        ItemRuntimePlan bodyIterator = this.visit(expression.getBody(), argument);
+        ItemRuntimePlan bodyIterator =
+                new FunctionBodyIterator(this.visit(expression.getBody(), argument), expression.hasExitStatement());
         ItemRuntimePlan runtimeIterator = new FunctionRuntimeIterator(
                 expression.getName(),
                 paramNameToSequenceTypes,
@@ -1284,16 +1303,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         Expression rightExpression = (Expression) expression.getChildren().get(1);
         ItemRuntimePlan left = this.visit(leftExpression, argument);
         ItemRuntimePlan right = this.visit(rightExpression, argument);
-        if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
-            left = new DataFunctionIterator(
-                    Collections.singletonList(left),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
-        }
-        if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
-            right = new DataFunctionIterator(
-                    Collections.singletonList(right),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
-        }
+        left = atomizeIfNeeded(leftExpression, left, expression);
+        right = atomizeIfNeeded(rightExpression, right, expression);
 
         ItemRuntimePlan runtimeIterator = new AdditiveOperationIterator(
                 left,
@@ -1310,16 +1321,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         Expression rightExpression = (Expression) expression.getChildren().get(1);
         ItemRuntimePlan left = this.visit(leftExpression, argument);
         ItemRuntimePlan right = this.visit(rightExpression, argument);
-        if (!leftExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
-            left = new DataFunctionIterator(
-                    Collections.singletonList(left),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
-        }
-        if (!rightExpression.getStaticSequenceType().getItemType().isAtomicItemType()) {
-            right = new DataFunctionIterator(
-                    Collections.singletonList(right),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
-        }
+        left = atomizeIfNeeded(leftExpression, left, expression);
+        right = atomizeIfNeeded(rightExpression, right, expression);
 
         ItemRuntimePlan runtimeIterator = new MultiplicativeOperationIterator(
                 left,
@@ -1382,7 +1385,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     public ItemRuntimePlan visitUnaryExpr(UnaryExpression expression, ItemRuntimePlan argument) {
         // compute +- final result
         ItemRuntimePlan runtimeIterator = new UnaryOperationIterator(
-                this.visit(expression.getMainExpression(), argument),
+                atomizeIfNeeded(
+                        expression.getMainExpression(),
+                        this.visit(expression.getMainExpression(), argument),
+                        expression),
                 expression.isNegated(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
@@ -1439,18 +1445,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             }
             throw new OurBadException("Expected a range plan for an integer-range comparison.");
         }
-        if (!(leftExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
-            // Atomic comparison operators require atomized operands. If the operands are not atomic, we need to wrap
-            // them in a DataFunctionIterator to atomize them.
-            left = new DataFunctionIterator(
-                    Collections.singletonList(left),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
-        }
-        if (!(rightExpression.getStaticSequenceType().getItemType().isAtomicItemType())) {
-            right = new DataFunctionIterator(
-                    Collections.singletonList(right),
-                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
-        }
+        left = atomizeIfNeeded(leftExpression, left, expression);
+        right = atomizeIfNeeded(rightExpression, right, expression);
         ItemRuntimePlan runtimeIterator = new ComparisonIterator(
                 left,
                 right,
@@ -1475,12 +1471,25 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
 
     @Override
     public ItemRuntimePlan visitStringConcatExpr(StringConcatExpression expression, ItemRuntimePlan argument) {
-        ItemRuntimePlan left = this.visit(expression.getChildren().get(0), argument);
-        ItemRuntimePlan right = this.visit(expression.getChildren().get(1), argument);
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+        ItemRuntimePlan left = atomizeIfNeeded(leftExpression, this.visit(leftExpression, argument), expression);
+        ItemRuntimePlan right = atomizeIfNeeded(rightExpression, this.visit(rightExpression, argument), expression);
         ItemRuntimePlan runtimeIterator = new StringConcatIterator(
                 left, right, expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
+    }
+
+    private ItemRuntimePlan atomizeIfNeeded(Expression operand, ItemRuntimePlan plan, Expression parent) {
+        if (operand.getStaticSequenceType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+            return plan;
+        }
+        return new DataFunctionIterator(
+                Collections.singletonList(plan),
+                parent.getStaticContextForRuntime(this.config, this.visitorConfig).toBuilder()
+                        .staticType(TypeAtomization.inferType(operand.getStaticSequenceType()))
+                        .build());
     }
 
     @Override
@@ -1536,6 +1545,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
+    }
+
+    @Override
+    public ItemRuntimePlan visitFunctionArgumentConversion(
+            FunctionArgumentConversionExpression expression, ItemRuntimePlan argument) {
+        return FunctionCallArgumentConversion.wrapArgument(
+                this.visit(expression.getArgument(), argument),
+                expression.getParameterType(),
+                (expression.isReturnValue() ? "Invalid return type for " : "Invalid argument for ")
+                        + expression.getFunctionName()
+                        + " function. ",
+                expression.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
     @Override

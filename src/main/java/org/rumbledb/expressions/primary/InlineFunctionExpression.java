@@ -53,6 +53,10 @@ public class InlineFunctionExpression extends Expression {
     @Getter
     private final Map<Name, SequenceType> params;
 
+    /** Synthetic parameters have no source token and are absent from this map. */
+    @Getter
+    private final Map<Name, ExceptionMetadata> parameterMetadata;
+
     private final SequenceType returnType;
 
     @Getter
@@ -75,7 +79,7 @@ public class InlineFunctionExpression extends Expression {
             StatementsAndOptionalExpr body,
             boolean isExternal,
             ExceptionMetadata metadata) {
-        this(annotations, name, params, returnType, body, isExternal, metadata, metadata);
+        this(annotations, name, params, returnType, body, isExternal, metadata, metadata, Map.of());
     }
 
     public InlineFunctionExpression(
@@ -86,11 +90,13 @@ public class InlineFunctionExpression extends Expression {
             StatementsAndOptionalExpr body,
             boolean isExternal,
             ExceptionMetadata metadata,
-            ExceptionMetadata nameMetadata) {
+            ExceptionMetadata nameMetadata,
+            Map<Name, ExceptionMetadata> parameterMetadata) {
         super(metadata);
         this.name = name;
         this.nameMetadata = nameMetadata;
         this.params = params;
+        this.parameterMetadata = Map.copyOf(parameterMetadata);
         this.returnType = returnType;
         this.body = body;
         this.annotations = annotations;

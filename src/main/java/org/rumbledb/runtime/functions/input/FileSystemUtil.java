@@ -86,6 +86,15 @@ public class FileSystemUtil {
     }
 
     private static URI parseFileSystemURI(String value) throws URISyntaxException {
+        // An explicit URI is already percent-encoded. Hadoop Path(String) would encode it again.
+        try {
+            URI uri = parseURI(value);
+            if (uri.isAbsolute() && !uri.isOpaque()) {
+                return uri;
+            }
+        } catch (URISyntaxException e) {
+            // Raw filesystem paths may contain characters that are not valid in a URI.
+        }
         try {
             return new Path(value).toUri();
         } catch (HadoopIllegalArgumentException e) {
@@ -113,8 +122,7 @@ public class FileSystemUtil {
             if (url == null || url.isEmpty()) {
                 url = ".";
             }
-            Path relativePath = new Path(url);
-            URI relativeURI = relativePath.toUri();
+            URI relativeURI = parseFileSystemURI(url);
             return virtualURI.resolve(relativeURI);
         } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException("The default file system is not supported!", metadata);
@@ -214,6 +222,21 @@ public class FileSystemUtil {
         }
     }
 
+    /** Writes exactly the supplied bytes, without adding separators or a trailing newline. */
+    public static void writeBytes(URI locator, byte[] content, ExceptionMetadata metadata) {
+        checkForAbsoluteAndNoWildcards(locator, metadata);
+        try {
+            FileContext fileContext = FileContext.getFileContext();
+            Path path = new Path(locator);
+            try (FSDataOutputStream output =
+                    fileContext.create(path, EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE))) {
+                output.write(content);
+            }
+        } catch (Exception e) {
+            handleException(e, locator, metadata);
+        }
+    }
+
     public static void write(URI locator, List<String> content, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
         try {
@@ -222,7 +245,7 @@ public class FileSystemUtil {
             FSDataOutputStream outputStream =
                     fileContext.create(path, EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE));
             for (String s : content) {
-                outputStream.writeBytes(s);
+                outputStream.write(s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 outputStream.writeBytes("\n");
             }
             outputStream.close();
@@ -240,7 +263,7 @@ public class FileSystemUtil {
             FSDataOutputStream outputStream =
                     fileContext.create(path, EnumSet.of(CreateFlag.CREATE, CreateFlag.APPEND));
             for (String s : content) {
-                outputStream.writeBytes(s);
+                outputStream.write(s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 outputStream.writeBytes("\n");
             }
             outputStream.close();

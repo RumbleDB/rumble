@@ -260,6 +260,7 @@ import org.rumbledb.spark.ml.AnnotateFunctionIterator;
 import org.rumbledb.spark.ml.BinaryClassificationMetricsFunctionIterator;
 import org.rumbledb.spark.ml.GetEstimatorFunctionIterator;
 import org.rumbledb.spark.ml.GetTransformerFunctionIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -304,7 +305,7 @@ public class BuiltinFunctionCatalogue {
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, String queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
-            return builtinFunctions.get(identifier);
+            return forQueryLanguage(builtinFunctions.get(identifier), queryLanguage);
         }
         BuiltinFunction constructorFunction = resolveConstructorFunction(identifier, queryLanguage);
         if (constructorFunction != null) {
@@ -323,9 +324,23 @@ public class BuiltinFunctionCatalogue {
                         ConcatFunctionIterator.class,
                         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
             }
-            return builtinFunctions.get(resolved);
+            return forQueryLanguage(builtinFunctions.get(resolved), queryLanguage);
         }
         return null;
+    }
+
+    private static BuiltinFunction forQueryLanguage(BuiltinFunction function, String queryLanguage) {
+        if ("xquery31".equals(queryLanguage) && (function == string_join1 || function == string_join2)) {
+            return createBuiltinFunction(
+                    function.getIdentifier().getName(),
+                    function.getIdentifier().getArity() == 1
+                            ? List.of("anyAtomicType*")
+                            : List.of("anyAtomicType*", "string"),
+                    "string",
+                    StringJoinFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+        }
+        return function;
     }
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, StaticContext staticContext) {
@@ -499,7 +514,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction doc = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "doc"),
             List.of("string?"),
-            "item*",
+            "document-node()?",
             DocFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
     /**
@@ -523,15 +538,15 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction root_with_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "root"),
-            List.of("item"),
-            "item",
+            List.of("node()?"),
+            "node()?",
             GetRootFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction root_without_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "root"),
             List.of(),
-            "item",
+            "node()",
             GetRootFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
@@ -678,9 +693,9 @@ public class BuiltinFunctionCatalogue {
      * fn:in-scope-prefixes($element as element()) as xs:string*
      * Returns the prefixes of the in-scope namespaces for $element.
      */
-    static final BuiltinFunction in_scope_prefixes = createBuiltinFunction(
+    static final BuiltinFunction in_scope_prefixes = createBuiltinFunctionWithSequenceTypes(
             new Name(Name.FN_NS, "fn", "in-scope-prefixes"),
-            List.of("item"),
+            List.of(new SequenceType(BuiltinTypesCatalogue.elementNode)),
             "string*",
             InScopePrefixesFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);

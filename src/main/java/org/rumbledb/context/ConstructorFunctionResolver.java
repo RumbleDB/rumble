@@ -101,7 +101,8 @@ public final class ConstructorFunctionResolver {
         return builtIn != null ? builtIn : resolveImported(identifier, staticContext.getXmlSchemaCatalog());
     }
 
-    private static ResolvedConstructor resolveImported(FunctionIdentifier identifier, XmlSchemaCatalog schemaCatalog) {
+    /** Resolves a named simple-type constructor directly from an imported schema catalog. */
+    public static ResolvedConstructor resolveImported(FunctionIdentifier identifier, XmlSchemaCatalog schemaCatalog) {
         if (identifier.getArity() != 1 || schemaCatalog == null) {
             return null;
         }

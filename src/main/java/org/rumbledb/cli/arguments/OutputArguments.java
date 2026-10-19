@@ -36,8 +36,12 @@ public final class OutputArguments {
             names = {"-f", "--output-format"},
             paramLabel = "format",
             description = {
-                "An output format to use for the output.",
-                "Formats other than json can only be output if the query outputs a highly structured sequence of objects."
+                "Output file format (json, csv, parquet, avro, or another Spark format).",
+                "Spark file formats, including json, require --output-path.",
+                "Use serialize to write the whole sequence as one string using the serialization method.",
+                "Use serialize-each-item to serialize items independently, separated by newlines.",
+                "Default: serialize-each-item for JSONiq; serialize for XQuery.",
+                "Other formats except json require a DataFrame-compatible sequence."
             })
     private String outputFormat;
 
@@ -70,7 +74,7 @@ public final class OutputArguments {
                     "Options to further specify the output format, for example a separator character for CSV or a compression format.")
     private Map<String, String> outputFormatOptions;
 
-    public OutputConfig toConfig() {
+    public OutputConfig toConfig(String queryLanguage) {
         OutputConfig.OutputConfigBuilder builder = OutputConfig.builder();
 
         OptionConversion.applyBooleanIfPresent(this.overwrite, builder::allowOverwrite);
@@ -81,7 +85,8 @@ public final class OutputArguments {
         OptionConversion.applyIfPresent(this.shellFilter, builder::shellFilter);
         OptionConversion.applyIfPresent(
                 this.outputFormatOptions,
-                options -> builder.serializationParameters(SerializationParameterUtils.buildFromConfig(options)));
+                options -> builder.serializationParameters(
+                        SerializationParameterUtils.buildFromConfig(options, queryLanguage)));
 
         return builder.build();
     }

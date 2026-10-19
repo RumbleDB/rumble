@@ -58,6 +58,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanBindings;
@@ -74,11 +75,18 @@ import org.rumbledb.types.SequenceType.Arity;
 public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     private final RumbleConfiguration configuration;
+    private final ResourceResolver resourceResolver;
     private ExternalBindings externalBindings;
     private Map<String, DynamicContext> importedModuleContexts;
 
-    DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
+    public DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
+        this(configuration, externalBindings, new ResourceResolver());
+    }
+
+    public DynamicContextVisitor(
+            RumbleConfiguration configuration, ExternalBindings externalBindings, ResourceResolver resourceResolver) {
         this.configuration = configuration;
+        this.resourceResolver = resourceResolver;
         this.externalBindings = externalBindings;
         this.importedModuleContexts = new HashMap<>();
     }
@@ -92,7 +100,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visit(Node node, DynamicContext argument) {
         if (argument == null) {
-            argument = new DynamicContext(this.configuration, this.externalBindings);
+            argument = new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
         }
         return node.accept(this, argument);
     }
@@ -108,7 +116,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (!expression.getReturnType().isResolved()) {
             expression.getReturnType().resolve(argument, expression.getMetadata());
         }
-        ItemRuntimePlan bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+        ItemRuntimePlan bodyIterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
         List<Item> functionInList = bodyIterator.materialize(argument);
         if (functionInList.size() != 1) {
             throw new OurBadException("A function declaration should produce exactly one function");
@@ -123,23 +131,6 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         return defaultAction(expression, argument);
     }
 
-    // @Override
-    // public DynamicContext visitTransformExpression(TransformExpression expression, DynamicContext argument) {
-    //
-    // for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
-    // Expression child = copyDecl.getSourceExpression();
-    // this.visit(child, argument);
-    // ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
-    // iterator.bindToVariableInDynamicContext(argument, copyDecl.getVariableName(), argument);
-    // }
-    //
-    // this.visit(expression.getModifyExpression(), argument);
-    //
-    // this.visit(expression.getReturnExpression(), argument);
-    //
-    // return argument;
-    // }
-
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
         Name name = variableDeclaration.getVariableName();
@@ -147,7 +138,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Variable is not external: we use the expression.
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
-            ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+            ItemRuntimePlan iterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
             RuntimePlanBindings.bind(iterator, argument, name, argument);
             return argument;
         }
@@ -210,7 +201,12 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                         FileSystemUtil.resolveURIAgainstWorkingDirectory(value, ExceptionMetadata.EMPTY_METADATA);
                 item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());
             } else {
-                item = ItemFactory.getInstance().createStringItem(value);
+                boolean jsonFile =
+                        this.externalBindings.get(name, FileBinding.class).isPresent()
+                                && this.getInputFormat(name).equals("json");
+                item = jsonFile
+                        ? parseJSONItem(value, variableDeclaration.getMetadata())
+                        : ItemFactory.getInstance().createStringItem(value);
                 ItemType itemType = variableDeclaration.getSequenceType().getItemType();
                 if (!InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                     Item castItem = CastIterator.castItemToType(item, itemType, variableDeclaration.getMetadata());
@@ -291,7 +287,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Variable is external and we do not have any supplied value: we fall back to expression, if any.
         Expression expression = variableDeclaration.getExpression();
         if (expression != null) {
-            ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+            ItemRuntimePlan iterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
             RuntimePlanBindings.bind(iterator, argument, name, argument);
             return argument;
         }
@@ -310,7 +306,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
         if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
-            DynamicContext newContext = new DynamicContext(this.configuration, this.externalBindings);
+            DynamicContext newContext =
+                    new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
             newContext.setNamedFunctions(argument.getNamedFunctions());
             DynamicContext importedContext = visitDescendants(module, newContext);
             this.importedModuleContexts.put(module.getNamespace(), importedContext);
