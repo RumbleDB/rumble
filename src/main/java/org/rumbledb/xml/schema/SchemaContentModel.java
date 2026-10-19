@@ -16,6 +16,7 @@
 package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -34,6 +35,7 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import org.apache.xerces.xs.XSWildcard;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.ItemType;
@@ -43,12 +45,17 @@ import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 
 /**
- * Infers which children and attributes a path step selects from a schema-typed node, by reading the content model of
- * its schema type: the element and attribute declarations that the type allows, and how many times each may occur.
+ * Infers which children, attributes and descendants a path step selects from a schema-typed node, by reading the
+ * content model of its schema type: the element and attribute declarations that the type allows, and how many times
+ * each may occur.
  * <p>
  * For example, if the type of p:order is a sequence of one or more p:item elements followed by one p:customer element,
  * {@code $order/p:customer} selects exactly one {@code element(p:customer, p:Customer)}, and {@code $order/p:missing}
  * selects nothing, which static typing reports as an error.
+ * <p>
+ * Descendant steps go through {@link #getDescendantOrSelfType}: E//S abbreviates E/descendant-or-self::node()/S, whose
+ * type is a union of E's type, every element type that the schema allows below it, and text, comment and
+ * processing-instruction nodes. S is then an ordinary child or attribute step from that union.
  * <p>
  * A node may have one of several schema types, and the result covers all of them: each member of a union type, each
  * declaration of a substitution group, and each type derived from the declared one, which an instance may select with
@@ -66,13 +73,26 @@ public final class SchemaContentModel {
     }
 
     /**
-     * Whether every member of the type is an element or document whose schema type a step can look up. A step from
-     * a union can only be inferred from the schema if every member describes the nodes it selects.
+     * Whether a step from the type can be inferred from the schema: some member is an element or document whose
+     * schema type a step can look up, and every member describes the nodes it selects, as such a node or as a node
+     * without children or attributes.
      */
     public static boolean isSchemaTyped(ItemType type) {
-        return type.allMemberTypesMatch(member -> member instanceof DocumentNodeItemType document
+        return type.getMemberTypes().stream().anyMatch(SchemaContentModel::isSchemaTypedNode)
+                && type.allMemberTypesMatch(member -> isSchemaTypedNode(member) || isLeafNode(member));
+    }
+
+    private static boolean isSchemaTypedNode(ItemType type) {
+        return type instanceof DocumentNodeItemType document
                 ? isSchemaTypedElement(document.getElementTestType())
-                : isSchemaTypedElement(member));
+                : isSchemaTypedElement(type);
+    }
+
+    /** Text, comment, and processing-instruction nodes, which descendant-or-self::node() also selects. */
+    private static boolean isLeafNode(ItemType type) {
+        return type.isSubtypeOf(BuiltinTypesCatalogue.textNode)
+                || type.isSubtypeOf(BuiltinTypesCatalogue.commentNode)
+                || type.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
     }
 
     private static boolean isSchemaTypedElement(ItemType type) {
@@ -97,6 +117,45 @@ public final class SchemaContentModel {
             return Optional.empty();
         }
         return select(contextType, attributeAxis, name).map(Selection::sequenceType);
+    }
+
+    /**
+     * Returns the nodes that descendant-or-self::node() selects from a schema-typed element or document: the context,
+     * every element that the schema allows below it, and text, comment, and processing-instruction nodes. It is empty
+     * when a descendant may be an element that the schema does not describe.
+     */
+    public Optional<SequenceType> getDescendantOrSelfType(ItemType contextType) {
+        if (!isSchemaTyped(contextType)) {
+            return Optional.empty();
+        }
+        return selfAndDescendantElements(contextType).map(nodes -> {
+            List<ItemType> nodeTypes = new ArrayList<>(nodes);
+            nodeTypes.addAll(List.of(
+                    BuiltinTypesCatalogue.textNode,
+                    BuiltinTypesCatalogue.commentNode,
+                    BuiltinTypesCatalogue.processingInstructionNode));
+            // The context node itself is always selected.
+            return new SequenceType(
+                    ItemTypeFactory.createInferredUnionType(nodeTypes), SequenceCardinality.ONE_OR_MANY);
+        });
+    }
+
+    /** The context followed by the type of every element below it, each listed once since types can be recursive. */
+    private Optional<List<ItemType>> selfAndDescendantElements(ItemType contextType) {
+        List<ItemType> result = new ArrayList<>(List.of(contextType));
+        Set<ItemType> seen = new HashSet<>(result);
+        for (int index = 0; index < result.size(); index++) {
+            Optional<Selection> children = select(result.get(index), false, null);
+            if (children.isEmpty()) {
+                return Optional.empty();
+            }
+            for (ItemType child : children.get().nodeTypes()) {
+                if (seen.add(child)) {
+                    result.add(child);
+                }
+            }
+        }
+        return Optional.of(result);
     }
 
     /** The node types of the declarations that a step selects from one context node, and how many nodes it selects. */
@@ -131,14 +190,9 @@ public final class SchemaContentModel {
         Selection result = null;
         for (ItemType member : contextType.getMemberTypes()) {
             List<? extends ItemType> contexts =
-                    member instanceof DocumentNodeItemType ? List.of(member) : alternatives(member);
+                    member instanceof ElementNodeItemType ? alternatives(member) : List.of(member);
             for (ItemType context : contexts) {
-                Optional<Selection> selection = context instanceof DocumentNodeItemType document
-                        ? Optional.of(
-                                attributeAxis
-                                        ? Selection.NONE
-                                        : selectDocumentElement(document.getElementTestType(), name))
-                        : selectFromElement((ElementNodeItemType) context, attributeAxis, name);
+                Optional<Selection> selection = selectFromNode(context, attributeAxis, name);
                 if (selection.isEmpty()) {
                     return Optional.empty();
                 }
@@ -146,6 +200,21 @@ public final class SchemaContentModel {
             }
         }
         return Optional.of(result == null ? Selection.NONE : result);
+    }
+
+    /**
+     * Selects from one case: a text, comment or processing-instruction node has no children or attributes, a document
+     * has only its root element, and an element selects through its schema type.
+     */
+    private Optional<Selection> selectFromNode(ItemType context, boolean attributeAxis, Name name) {
+        if (isLeafNode(context)) {
+            return Optional.of(Selection.NONE);
+        }
+        if (context instanceof DocumentNodeItemType document) {
+            return Optional.of(
+                    attributeAxis ? Selection.NONE : selectDocumentElement(document.getElementTestType(), name));
+        }
+        return selectFromElement((ElementNodeItemType) context, attributeAxis, name);
     }
 
     /**
