@@ -59,6 +59,7 @@ public final class PrologBuilder {
     private boolean baseUriSet;
     private boolean defaultCollationSet;
     private boolean defaultFunctionNamespaceSet;
+    private boolean defaultElementNamespaceSet;
     private final Set<String> moduleNamespaces = new HashSet<>();
     private final Set<String> schemaNamespaces = new HashSet<>();
     private final List<LibraryModule> modules = new ArrayList<>();
@@ -83,12 +84,22 @@ public final class PrologBuilder {
         NamespaceBindingUtils.validateDefaultNamespaceDeclaration(uri, metadata);
         if (function) {
             if (this.defaultFunctionNamespaceSet) {
-                throw new SemanticException("The default function namespace has already been declared.", metadata);
+                throw new SemanticException(
+                        "The default function namespace has already been declared.",
+                        ErrorCode.DuplicateDefaultNamespaceDeclarationErrorCode,
+                        metadata);
             }
             this.translationContext.moduleContext().setDefaultFunctionNamespaceUri(uri);
             this.defaultFunctionNamespaceSet = true;
         } else {
+            if (this.defaultElementNamespaceSet) {
+                throw new SemanticException(
+                        "The default element namespace has already been declared.",
+                        ErrorCode.DuplicateDefaultNamespaceDeclarationErrorCode,
+                        metadata);
+            }
             this.translationContext.bindNamespace("", uri, metadata);
+            this.defaultElementNamespaceSet = true;
         }
     }
 
