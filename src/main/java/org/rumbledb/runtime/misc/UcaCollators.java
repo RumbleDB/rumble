@@ -39,15 +39,14 @@ final class UcaCollators {
     private UcaCollators() {}
 
     /**
-     * Returns a collator for the given UCA collation URI. Each call returns a fresh copy, as ICU collators are not
-     * thread-safe.
+     * Returns the collator for the given UCA collation URI. It is frozen, so it can be shared between threads
+     * but not modified.
      *
      * @throws UnsupportedCollationException if the URI cannot be supported (err:FOCH0002)
      */
     static RuleBasedCollator get(String collationUri, ExceptionMetadata metadata) {
         try {
-            return CACHE.computeIfAbsent(collationUri, uri -> build(uri, metadata))
-                    .cloneAsThawed();
+            return CACHE.computeIfAbsent(collationUri, uri -> build(uri, metadata));
         } catch (RuntimeException e) {
             if (e instanceof UnsupportedCollationException) {
                 throw e;
@@ -92,6 +91,7 @@ final class UcaCollators {
         if (parameters.numeric != null) {
             ruleBasedCollator.setNumericCollation(parameters.numeric);
         }
+        ruleBasedCollator.freeze();
         return ruleBasedCollator;
     }
 
