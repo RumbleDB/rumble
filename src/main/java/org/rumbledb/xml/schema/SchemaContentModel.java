@@ -295,7 +295,8 @@ public final class SchemaContentModel {
             return mode == SelectionMode.DECLARED_ONLY ? Optional.of(Selection.NONE) : Optional.empty();
         }
         Set<ItemType> nodeTypes = new LinkedHashSet<>();
-        SequenceCardinality cardinality = null;
+        // A nilled element has no children.
+        SequenceCardinality cardinality = !attributeAxis && context.isNillable() ? SequenceCardinality.EMPTY : null;
         // An instance may select a derived type with xsi:type.
         for (XSTypeDefinition derived : this.catalog.typeAndDerivedTypes(type.get())) {
             Optional<Occurrences> occurrences = derived instanceof XSComplexTypeDefinition complexType
@@ -309,10 +310,6 @@ public final class SchemaContentModel {
             cardinality = cardinality == null
                     ? occurrences.get().cardinality()
                     : cardinality.union(occurrences.get().cardinality());
-        }
-        // A nilled element has no children.
-        if (!attributeAxis && context.isNillable()) {
-            cardinality = cardinality.union(SequenceCardinality.EMPTY);
         }
         return Optional.of(new Selection(nodeTypes, cardinality));
     }
