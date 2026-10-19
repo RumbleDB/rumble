@@ -301,6 +301,11 @@ public final class NamespaceBindingUtils {
     }
 
     private static LexicalQNameSplit splitAndValidateLexicalQName(String lexical, ExceptionMetadata metadata) {
+        return splitAndValidateLexicalQName(lexical, metadata, false);
+    }
+
+    private static LexicalQNameSplit splitAndValidateLexicalQName(
+            String lexical, ExceptionMetadata metadata, boolean allowXmlnsPrefix) {
         if (lexical.isEmpty()) {
             throw new InvalidLexicalValueException("Invalid xs:QName: empty lexical value.", metadata);
         }
@@ -318,7 +323,7 @@ public final class NamespaceBindingUtils {
             prefix = lexical.substring(0, colon);
             local = lexical.substring(colon + 1);
         }
-        if ("xmlns".equals(prefix)) {
+        if (!allowXmlnsPrefix && "xmlns".equals(prefix)) {
             throw new InvalidLexicalValueException("Invalid xs:QName: prefix xmlns is not allowed.", metadata);
         }
         if (!isValidNcName(local) || (prefix != null && !isValidNcName(prefix))) {
@@ -452,7 +457,9 @@ public final class NamespaceBindingUtils {
             throw new InvalidLexicalValueException(
                     "fn:QName: prefixed lexical QName requires a non-empty namespace URI.", metadata);
         }
-        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        // fn:QName constructs an atomic value, so reserved node-name prefixes are permitted here.
+        // Computed node constructors validate those names with their own required error codes.
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata, true);
         String namespace = noNamespace ? null : uri;
         return new Name(namespace, split.prefix, split.local);
     }
