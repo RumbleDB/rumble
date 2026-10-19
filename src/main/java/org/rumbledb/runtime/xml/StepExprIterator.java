@@ -19,8 +19,6 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -260,7 +258,7 @@ public class StepExprIterator extends ItemRuntimePlan implements LocalRuntimePla
             return node;
         }
         // processing-instruction(target) matches PI nodes whose target name equals the given name
-        if (StringUtils.normalizeSpace(nodeNameLexical(node)).equals(piTest.getTargetName())) {
+        if (nodeNameLexical(node).equals(piTest.getTargetName())) {
             return node;
         }
         return null;
