@@ -659,6 +659,10 @@ public class BuiltinTypesCatalogue {
             IDREFItem,
             ENTITYItem);
 
+    public static List<ItemType> getBuiltinItemTypes() {
+        return Collections.unmodifiableList(builtInItemTypes);
+    }
+
     public static ItemType getItemTypeByName(Name name) {
         for (ItemType builtInItemType : builtInItemTypes) {
             if (name.getNamespace() != null && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
