@@ -16,8 +16,6 @@
 package org.rumbledb.runtime.navigation;
 
 import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.*;
 
 import org.apache.spark.api.java.JavaPairRDD;
@@ -36,10 +34,10 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
@@ -159,51 +157,15 @@ public class PredicateIterator extends ItemRuntimePlan
                 if (!this.booleanOnlyFilter) {
                     this.filterContext.getVariableValues().setPosition(this.position);
                 }
-                Item filterResult;
-                try {
-                    filterResult = this.filterPlan.materializeAtMostOne(this.filterContext);
-                } catch (MoreThanOneItemException e) {
-                    throw new InvalidArgumentTypeException(
-                            "Effective boolean value not defined for sequences of more than one atomic item. Sequence must be singleton.",
-                            this.filterPlan.getRuntimeStaticContext().getMetadata());
-                }
-                if (matches(filterResult)) {
+                if (EffectiveBooleanValue.evaluateOrCheckPosition(
+                        this.filterPlan,
+                        this.filterContext,
+                        ItemFactory.getInstance().createLongItem(this.position))) {
                     this.nextResult = item;
                     break;
                 }
             }
             this.filterContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
-        }
-
-        private boolean matches(Item filterResult) {
-            if (filterResult == null) {
-                return false;
-            }
-            if (!filterResult.isNumeric()) {
-                return filterResult.getEffectiveBooleanValue();
-            }
-            BigDecimal numericValue;
-            if (filterResult.isInt() || filterResult.isInteger()) {
-                numericValue = new BigDecimal(filterResult.getIntegerValue());
-            } else if (filterResult.isDecimal()) {
-                numericValue = filterResult.getDecimalValue();
-            } else if (filterResult.isDouble()) {
-                double value = filterResult.getDoubleValue();
-                if (Double.isNaN(value) || Double.isInfinite(value)) {
-                    return false;
-                }
-                numericValue = BigDecimal.valueOf(value);
-            } else if (filterResult.isFloat()) {
-                float value = filterResult.getFloatValue();
-                if (Float.isNaN(value) || Float.isInfinite(value)) {
-                    return false;
-                }
-                numericValue = new BigDecimal(Float.toString(value));
-            } else {
-                return false;
-            }
-            return numericValue.stripTrailingZeros().scale() <= 0
-                    && numericValue.toBigIntegerExact().equals(BigInteger.valueOf(this.position));
         }
 
         @Override

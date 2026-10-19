@@ -24,15 +24,22 @@ import org.rumbledb.parser.jsoniq.JsoniqParser;
 import org.rumbledb.parser.xquery.XQueryParser;
 
 public record DirElemOpenCloseContext<QnameCtx extends ParserRuleContext, DirElemContentCtx extends ParserRuleContext>(
-        QnameCtx closeTagName, Token endOpen, List<DirElemContentCtx> dirElemContent, ParserRuleContext context) {
+        QnameCtx closeTagName,
+        Token endOpen,
+        Token startClose,
+        Token slashClose,
+        List<DirElemContentCtx> dirElemContent,
+        ParserRuleContext context) {
 
     public static DirElemOpenCloseContext<JsoniqParser.QnameContext, JsoniqParser.DirElemContentContext> from(
             JsoniqParser.DirElemConstructorOpenCloseContext c) {
-        return new DirElemOpenCloseContext<>(c.close_tag_name, c.endOpen, c.dirElemContent(), c);
+        return new DirElemOpenCloseContext<>(
+                c.close_tag_name, c.endOpen, c.startClose, c.slashClose, c.dirElemContent(), c);
     }
 
     public static DirElemOpenCloseContext<XQueryParser.QnameContext, XQueryParser.DirElemContentContext> from(
             XQueryParser.DirElemConstructorOpenCloseContext c) {
-        return new DirElemOpenCloseContext<>(c.close_tag_name, c.endOpen, c.dirElemContent(), c);
+        return new DirElemOpenCloseContext<>(
+                c.close_tag_name, c.endOpen, c.startClose, c.slashClose, c.dirElemContent(), c);
     }
 }

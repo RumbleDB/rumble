@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.InvalidNodeNameException;
 import org.rumbledb.exceptions.NoNamespaceFoundForPrefixException;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 
 public final class NamespaceBindingUtils {
 
@@ -53,6 +54,16 @@ public final class NamespaceBindingUtils {
     public static final String XMLNS_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
 
     private NamespaceBindingUtils() {}
+
+    /** Normalizes and validates the target of a processing-instruction name test. */
+    public static String normalizePITestTarget(String target, ExceptionMetadata metadata) {
+        String normalized = target.replaceAll("[ \t\r\n]+", " ").replaceAll("^ | $", "");
+        if (!isValidNcName(normalized)) {
+            throw new UnexpectedTypeException(
+                    "A processing-instruction name test requires a valid NCName target.", metadata);
+        }
+        return normalized;
+    }
 
     /**
      * XML 1.0 / Namespaces in XML — NCName character checks (no colon).
@@ -129,7 +140,7 @@ public final class NamespaceBindingUtils {
                 || (c >= 0xD8 && c <= 0xF6)
                 || (c >= 0xF8 && c <= 0x2FF)
                 || (c >= 0x370 && c <= 0x37D)
-                || (c == 0x37F)
+                || (c >= 0x37F && c <= 0x1FFF)
                 || (c >= 0x200C && c <= 0x200D)
                 || (c >= 0x2070 && c <= 0x218F)
                 || (c >= 0x2C00 && c <= 0x2FEF)
@@ -290,6 +301,11 @@ public final class NamespaceBindingUtils {
     }
 
     private static LexicalQNameSplit splitAndValidateLexicalQName(String lexical, ExceptionMetadata metadata) {
+        return splitAndValidateLexicalQName(lexical, metadata, false);
+    }
+
+    private static LexicalQNameSplit splitAndValidateLexicalQName(
+            String lexical, ExceptionMetadata metadata, boolean allowXmlnsPrefix) {
         if (lexical.isEmpty()) {
             throw new InvalidLexicalValueException("Invalid xs:QName: empty lexical value.", metadata);
         }
@@ -307,7 +323,7 @@ public final class NamespaceBindingUtils {
             prefix = lexical.substring(0, colon);
             local = lexical.substring(colon + 1);
         }
-        if ("xmlns".equals(prefix)) {
+        if (!allowXmlnsPrefix && "xmlns".equals(prefix)) {
             throw new InvalidLexicalValueException("Invalid xs:QName: prefix xmlns is not allowed.", metadata);
         }
         if (!isValidNcName(local) || (prefix != null && !isValidNcName(prefix))) {
@@ -342,6 +358,16 @@ public final class NamespaceBindingUtils {
             return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
         }
         return resolvePrefixedLexicalToName(split.prefix, split.local, namespaceResolver, metadata);
+    }
+
+    /** Parses computed element names, including URI-qualified names with an explicit namespace. */
+    public static Name parseLexicalQNameForComputedElement(
+            String lexical, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
+        if (lexical.startsWith("Q{")) {
+            // URI-qualified names have the same meaning for elements and attributes, including Q{}.
+            return parseLexicalQNameForComputedAttribute(lexical, namespaceResolver, metadata);
+        }
+        return parseLexicalQName(lexical, namespaceResolver, metadata);
     }
 
     /**
@@ -431,7 +457,9 @@ public final class NamespaceBindingUtils {
             throw new InvalidLexicalValueException(
                     "fn:QName: prefixed lexical QName requires a non-empty namespace URI.", metadata);
         }
-        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        // fn:QName constructs an atomic value, so reserved node-name prefixes are permitted here.
+        // Computed node constructors validate those names with their own required error codes.
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata, true);
         String namespace = noNamespace ? null : uri;
         return new Name(namespace, split.prefix, split.local);
     }

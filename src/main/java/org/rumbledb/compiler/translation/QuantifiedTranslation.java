@@ -22,6 +22,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.Clause;
@@ -32,6 +33,7 @@ import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.SequenceType;
 
 public final class QuantifiedTranslation {
@@ -60,6 +62,14 @@ public final class QuantifiedTranslation {
             }
 
             varExpression = visitExprSingle.apply(currentVariable.exprSingle());
+            if (sequenceType != null) {
+                // Each binding is a singleton; the source itself may contain any number of items.
+                SequenceType sourceType = sequenceType.isEmptySequence()
+                        ? sequenceType
+                        : new SequenceType(sequenceType.getItemType(), SequenceType.Arity.ZeroOrMore);
+                varExpression = new TreatExpression(
+                        varExpression, sourceType, ErrorCode.UnexpectedTypeErrorCode, varExpression.getMetadata());
+            }
             Clause newClause = new ForClause(
                     variableName,
                     false,

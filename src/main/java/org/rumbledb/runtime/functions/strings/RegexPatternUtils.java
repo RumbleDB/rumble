@@ -505,9 +505,25 @@ public final class RegexPatternUtils {
 
     private static String rewritePattern(String pattern, boolean caseInsensitive) {
         StringBuilder result = new StringBuilder(pattern.length());
+        int nextCaptureGroupNumber = 1;
         for (int i = 0; i < pattern.length(); i++) {
             char current = pattern.charAt(i);
             if (current == '\\' && i + 1 < pattern.length()) {
+                if (caseInsensitive && Character.isDigit(pattern.charAt(i + 1))) {
+                    int end = i + 1;
+                    while (end < pattern.length() && Character.isDigit(pattern.charAt(end))) {
+                        end++;
+                    }
+                    int prefixLength = findLongestExistingBackReferencePrefixLength(
+                            pattern.substring(i + 1, end), nextCaptureGroupNumber);
+                    // Scope case folding to the reference so Unicode categories keep their meaning.
+                    // Any remaining digits stay outside the group to preserve quantifier binding.
+                    result.append("(?iu:")
+                            .append(pattern, i, i + 1 + prefixLength)
+                            .append(')');
+                    i += prefixLength;
+                    continue;
+                }
                 EscapedToken escapedToken = readEscapedToken(pattern, i);
                 result.append(escapedToken.text);
                 i = escapedToken.endIndex;
@@ -531,6 +547,9 @@ public final class RegexPatternUtils {
             if (caseInsensitive && hasCaseVariant(current)) {
                 result.append(expandLiteralCodePoint(current));
                 continue;
+            }
+            if (current == '(' && (i + 1 >= pattern.length() || pattern.charAt(i + 1) != '?')) {
+                nextCaptureGroupNumber++;
             }
             result.append(current);
         }
