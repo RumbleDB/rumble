@@ -81,15 +81,9 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                     "Map key must atomize to a single atomic value [err:XPTY0004].", getMetadata());
         }
         Item key = atomized.get(0);
-        Item result = ItemFactory.getInstance().createMapItemAddingKey(mapItem, key, valueSequence);
-        // Retain the mutable-result contract for side-effecting queries. Object-shaped puts
-        // have always returned an immutable object, including when the input was mutable.
-        if (mapItem.getMutabilityLevel() != -1
-                && this.getRuntimeStaticContext().isQuerySideEffecting()
-                && !(mapItem.isObject() && key.isString() && valueSequence.size() == 1)) {
-            return ItemFactory.getInstance()
-                    .createMapItem(result.getItemKeys(), result.getSequenceValues(), getMetadata(), true);
-        }
-        return result;
+        // Updating a mutable map in a side-effecting query gives a mutable map.
+        boolean mutable = mapItem.getMutabilityLevel() != -1
+                && this.getRuntimeStaticContext().isQuerySideEffecting();
+        return ItemFactory.getInstance().createMapItemAddingKey(mapItem, key, valueSequence, mutable);
     }
 }

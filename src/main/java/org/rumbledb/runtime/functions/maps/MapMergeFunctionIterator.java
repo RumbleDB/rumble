@@ -17,9 +17,7 @@ package org.rumbledb.runtime.functions.maps;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -59,23 +57,12 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
  * </pre>
  *
  * <p>
- * This implementation stays local-only and accumulates entries using atomic same-key equality.
- * Immutable results use the persistent map representation so subsequent puts and removes can share structure.
+ * This implementation stays local-only and folds the maps into a persistent map using atomic same-key equality.
  */
 public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    private static class AccumulatedEntry {
-        private Item key;
-        private List<Item> values;
-
-        private AccumulatedEntry(Item key, List<Item> values) {
-            this.key = key;
-            this.values = values;
-        }
-    }
 
     private final ItemRuntimePlan mapsIterator;
     private final ItemRuntimePlan optionsIterator; // may be null for
@@ -150,11 +137,10 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             }
         }
 
-        // 3. Implement fold-left over maps with a hashed same-key accumulator.
+        // 3. Fold the maps into a persistent map, which later puts and removes can share.
         // Streaming consumption avoids materializing huge sequences of maps.
-        Map<Item, AccumulatedEntry> accumulator = new HashMap<>();
-        boolean allKeysString = true;
-        boolean allValuesSingletons = true;
+        ItemFactory factory = ItemFactory.getInstance();
+        Item result = factory.createMapItem(List.of(), List.of(), metadata, false);
         try (Cursor<Item> maps = this.mapsIterator.getCursor(context)) {
             while (maps.hasNext()) {
                 Item mapItem = maps.next();
@@ -162,75 +148,37 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                     throw new UnexpectedTypeException(
                             "map:merge expects a sequence of map(*) items as first argument [err:XPTY0004].", metadata);
                 }
-                List<Item> bKeys = mapItem.getItemKeys();
-                for (Item bKey : bKeys) {
-                    List<Item> bSeq = mapItem.getSequenceByKey(bKey);
-                    if (bSeq == null) {
-                        bSeq = new ArrayList<>();
-                    }
-
-                    AccumulatedEntry existing = accumulator.get(bKey);
-                    if (existing == null) {
-                        accumulator.put(bKey, new AccumulatedEntry(bKey, new ArrayList<>(bSeq)));
-                        if (allKeysString && !bKey.isString()) {
-                            allKeysString = false;
+                for (Item key : mapItem.getItemKeys()) {
+                    List<Item> value = mapItem.getSequenceByKey(key);
+                    List<Item> existing = result.getSequenceByKey(key);
+                    if (existing != null) {
+                        switch (policy) {
+                            case USE_FIRST:
+                            case USE_ANY:
+                                continue;
+                            case USE_LAST:
+                                break;
+                            case COMBINE:
+                                List<Item> combined = new ArrayList<>(existing.size() + value.size());
+                                combined.addAll(existing);
+                                combined.addAll(value);
+                                value = combined;
+                                break;
+                            case REJECT:
+                                throw new DuplicateJSONKeyException(
+                                        "map:merge encountered duplicate map keys with duplicates=\"reject\" [err:FOJS0003].",
+                                        metadata);
+                            default:
+                                throw new OurBadException("Unexpected duplicates policy in map:merge.");
                         }
-                        if (allValuesSingletons && bSeq.size() != 1) {
-                            allValuesSingletons = false;
-                        }
-                        continue;
                     }
-
-                    switch (policy) {
-                        case USE_FIRST:
-                            break;
-                        case USE_LAST:
-                            existing.key = bKey;
-                            existing.values = new ArrayList<>(bSeq);
-                            if (allKeysString && !bKey.isString()) {
-                                allKeysString = false;
-                            }
-                            if (allValuesSingletons && bSeq.size() != 1) {
-                                allValuesSingletons = false;
-                            }
-                            break;
-                        case USE_ANY:
-                            break;
-                        case COMBINE:
-                            List<Item> combined = new ArrayList<>(existing.values.size() + bSeq.size());
-                            combined.addAll(existing.values);
-                            combined.addAll(bSeq);
-                            existing.key = bKey;
-                            existing.values = combined;
-                            if (allKeysString && !bKey.isString()) {
-                                allKeysString = false;
-                            }
-                            if (allValuesSingletons && combined.size() != 1) {
-                                allValuesSingletons = false;
-                            }
-                            break;
-                        case REJECT:
-                            throw new DuplicateJSONKeyException(
-                                    "map:merge encountered duplicate map keys with duplicates=\"reject\" [err:FOJS0003].",
-                                    metadata);
-                        default:
-                            throw new OurBadException("Unexpected duplicates policy in map:merge.");
-                    }
+                    result = factory.createMapItemAddingKey(result, key, value, false);
                 }
             }
         }
-
-        // Object-shaped maps must also use the persistent representation. Returning ObjectItem
-        // here would make every independent put/remove convert the entire merged map again.
-        Map<Item, List<Item>> finalKeyValuePairs = new HashMap<>();
-        for (AccumulatedEntry entry : accumulator.values()) {
-            finalKeyValuePairs.put(entry.key, entry.values);
+        if (this.getRuntimeStaticContext().isQuerySideEffecting()) {
+            result.setMutabilityLevel(0);
         }
-        return ItemFactory.getInstance()
-                .createMapItem(
-                        finalKeyValuePairs,
-                        metadata,
-                        !(allKeysString && allValuesSingletons)
-                                && this.getRuntimeStaticContext().isQuerySideEffecting());
+        return result;
     }
 }

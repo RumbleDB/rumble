@@ -74,16 +74,10 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         if (keysToRemove.isEmpty()) {
             return mapItem;
         }
-        Item result = ItemFactory.getInstance().createMapItemRemovingKeys(mapItem, keysToRemove);
-        if (mapItem.getMutabilityLevel() != -1 && this.getRuntimeStaticContext().isQuerySideEffecting()) {
-            if (result.isObject()) {
-                return ItemFactory.getInstance()
-                        .createObjectItem(result.getStringKeys(), result.getItemValues(), getMetadata(), true);
-            }
-            return ItemFactory.getInstance()
-                    .createMapItem(result.getItemKeys(), result.getSequenceValues(), getMetadata(), true);
-        }
-        return result;
+        // Updating a mutable map in a side-effecting query gives a mutable map.
+        boolean mutable = mapItem.getMutabilityLevel() != -1
+                && this.getRuntimeStaticContext().isQuerySideEffecting();
+        return ItemFactory.getInstance().createMapItemRemovingKeys(mapItem, keysToRemove, mutable);
     }
 
     @Serial

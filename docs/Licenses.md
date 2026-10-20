@@ -7,7 +7,6 @@ RumbleDB uses the following software:
 - Apache Commons Lang - Apache License
 - Apache Commons IO - Apache License
 - Apache HTTP client - Apache License
-- Capsule Hash Trie Collections Library - BSD-2-Clause License
 - gson - Apache License
 - JLine terminal framework - BSD License
 - Kryo serialization framework - BSD License

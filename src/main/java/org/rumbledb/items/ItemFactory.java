@@ -351,49 +351,27 @@ public class ItemFactory {
     }
 
     public Item createMapItem(Item onlyKey, List<Item> onlyValue, boolean mutable) {
-        if (!mutable) {
-            return new PersistentMapItem(onlyKey, onlyValue);
-        }
-        return createMapItem(List.of(onlyKey), List.of(onlyValue), ExceptionMetadata.EMPTY_METADATA, true);
+        return createMapItem(List.of(onlyKey), List.of(onlyValue), ExceptionMetadata.EMPTY_METADATA, mutable);
     }
 
-    public Item createMapItemRemovingKeys(Item original, List<Item> keysToRemove) {
-        if (keysToRemove.isEmpty()) {
-            return original;
-        }
-        return PersistentMapItem.from(original).withoutKeys(keysToRemove);
+    public Item createMapItemRemovingKeys(Item original, List<Item> keysToRemove, boolean mutable) {
+        return withMutability(MapItem.from(original).without(keysToRemove), mutable);
     }
 
-    public Item createMapItemAddingKey(Item original, Item keyToAdd, List<Item> valueToAdd) {
-        return PersistentMapItem.from(original).withEntry(keyToAdd, valueToAdd);
+    public Item createMapItemAddingKey(Item original, Item keyToAdd, List<Item> valueToAdd, boolean mutable) {
+        return withMutability(MapItem.from(original).with(keyToAdd, valueToAdd), mutable);
     }
 
     public Item createMapItem(
             List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
-        if (!mutable && keys.size() == 1) {
-            Item key = keys.get(0);
-            return new PersistentMapItem(key, values.get(0));
-        }
-        if (!mutable) {
-            return new PersistentMapItem(keys, values, itemMetadata);
-        }
-        Item result = new MutableMapItem(keys, values, itemMetadata);
-        result.setMutabilityLevel(0);
-        return result;
+        return withMutability(new MapItem(keys, values, itemMetadata), mutable);
     }
 
-    public Item createMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
-        if (!mutable && keyValuePairs.size() == 1) {
-            Item key = keyValuePairs.keySet().iterator().next();
-            List<Item> values = keyValuePairs.get(key);
-            return new PersistentMapItem(key, values);
+    private static Item withMutability(Item map, boolean mutable) {
+        if (mutable) {
+            map.setMutabilityLevel(0);
         }
-        if (!mutable) {
-            return new PersistentMapItem(keyValuePairs, itemMetadata);
-        }
-        Item result = new MutableMapItem(keyValuePairs, itemMetadata);
-        result.setMutabilityLevel(0);
-        return result;
+        return map;
     }
 
     public Item createXmlTextNode(Node currentNode) {
