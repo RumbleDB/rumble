@@ -59,8 +59,8 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
  * </pre>
  *
  * <p>
- * This implementation stays local-only and mirrors that behaviour using the existing MapItem
- * representation and {@code MapAtomicSameKey} key equality via {@code MapItem.getSequenceByKey()}.
+ * This implementation stays local-only and accumulates entries using atomic same-key equality.
+ * Immutable results use the persistent map representation so subsequent puts and removes can share structure.
  */
 public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -153,7 +153,6 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         // 3. Implement fold-left over maps with a hashed same-key accumulator.
         // Streaming consumption avoids materializing huge sequences of maps.
         Map<Item, AccumulatedEntry> accumulator = new HashMap<>();
-        boolean sawAnyMap = false;
         boolean allKeysString = true;
         boolean allValuesSingletons = true;
         try (Cursor<Item> maps = this.mapsIterator.getCursor(context)) {
@@ -163,7 +162,6 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                     throw new UnexpectedTypeException(
                             "map:merge expects a sequence of map(*) items as first argument [err:XPTY0004].", metadata);
                 }
-                sawAnyMap = true;
                 List<Item> bKeys = mapItem.getItemKeys();
                 for (Item bKey : bKeys) {
                     List<Item> bSeq = mapItem.getSequenceByKey(bKey);
@@ -222,32 +220,17 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             }
         }
 
-        // Empty input -> empty map.
-        if (!sawAnyMap) {
-            return ItemFactory.getInstance().createObjectItemOptimized(new HashMap<>(), false);
+        // Object-shaped maps must also use the persistent representation. Returning ObjectItem
+        // here would make every independent put/remove convert the entire merged map again.
+        Map<Item, List<Item>> finalKeyValuePairs = new HashMap<>();
+        for (AccumulatedEntry entry : accumulator.values()) {
+            finalKeyValuePairs.put(entry.key, entry.values);
         }
-
-        if (allKeysString && allValuesSingletons) {
-            // fast path: construct an object item
-            HashMap<String, Item> newKeyValuePairs = new HashMap<>();
-            for (AccumulatedEntry entry : accumulator.values()) {
-                Item key = entry.key;
-                List<Item> values = entry.values;
-                newKeyValuePairs.put(key.getStringValue(), values.get(0));
-            }
-            return ItemFactory.getInstance().createObjectItemOptimized(newKeyValuePairs, false);
-        } else {
-            // construct a map item
-            // 4. Build final MapItem from accumulator via map overload to avoid duplicate-key verification.
-            Map<Item, List<Item>> finalKeyValuePairs = new HashMap<>();
-            for (AccumulatedEntry entry : accumulator.values()) {
-                finalKeyValuePairs.put(entry.key, entry.values);
-            }
-            return ItemFactory.getInstance()
-                    .createMapItem(
-                            finalKeyValuePairs,
-                            metadata,
-                            this.getRuntimeStaticContext().isQuerySideEffecting());
-        }
+        return ItemFactory.getInstance()
+                .createMapItem(
+                        finalKeyValuePairs,
+                        metadata,
+                        !(allKeysString && allValuesSingletons)
+                                && this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 }

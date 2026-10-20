@@ -334,6 +334,37 @@ class PersistentMapItemTest {
     }
 
     @Test
+    void mergedStringMapsRemainPersistentForIndependentUpdates() {
+        Rumble rumble = new Rumble(RumbleConfiguration.builder()
+                .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
+                .build());
+        for (String query : List.of("map:merge(())", "map:merge((map:entry('a', 1), map:entry('b', 2)))")) {
+            Item merged = rumble.runQuery(query).getAsList().get(0);
+            Assertions.assertInstanceOf(PersistentMapItem.class, merged);
+            Assertions.assertTrue(merged.isObject());
+        }
+        // Reduced QT3 op/same-key.xml:same-key-023. Each update starts from the same map,
+        // so a non-persistent merge result would be converted in full for every key.
+        Item result = rumble.runQuery(
+                        """
+                    let $keys :=
+                      let $range := 48 to 63
+                      for $c1 in $range, $c2 in $range, $c3 in $range
+                      return codepoints-to-string(($c1, $c2, $c3))
+                    let $map := map:merge(($keys, $keys) ! map:entry(., .))
+                    return map:size($map) eq count($keys) and (
+                      every $key in $keys satisfies
+                        $map($key) eq $key and
+                        not(map:contains(map:remove($map, $key), $key)) and
+                        map:get(map:put($map, $key, 'x'), $key) eq 'x'
+                    )
+                    """)
+                .getAsList()
+                .get(0);
+        Assertions.assertTrue(result.getBooleanValue());
+    }
+
+    @Test
     void queryPutAndRemoveUsePersistentMaps() {
         Rumble rumble = new Rumble(RumbleConfiguration.builder()
                 .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
