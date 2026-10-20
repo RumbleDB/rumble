@@ -16,6 +16,9 @@
 package org.rumbledb.items;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.Arrays;
 
 import org.rumbledb.api.Item;
 
@@ -57,28 +60,44 @@ public final class AtomicItemEquivalence {
         if (item.isNumeric()) {
             return numericHash(item);
         }
+        // The Gregorian and duration hashes use the values that ComparisonIterator compares.
+        if (item.isTime()) {
+            return item.getTimeValue()
+                    .atDate(LocalDate.of(1970, 1, 1))
+                    .toInstant()
+                    .hashCode();
+        }
         if (item.isDate()
-                || item.isTime()
                 || item.isDateTime()
                 || item.isGYear()
                 || item.isGYearMonth()
                 || item.isGMonth()
                 || item.isGMonthDay()
                 || item.isGDay()) {
-            // A deliberately coarse hash keeps all values accepted by the Gregorian same-key
-            // rules compatible, independently of timezone representation.
-            return 0x47;
+            return item.getDateTimeValue().toInstant().hashCode();
         }
-        if (item.isBoolean()
-                || item.isHexBinary()
-                || item.isBase64Binary()
-                || item.isDuration()
-                || item.isYearMonthDuration()
-                || item.isDayTimeDuration()) {
-            // These types use deep-equal. A coarse hash is safe and avoids duplicating that logic.
-            return 0x4D;
+        if (item.isDuration()) {
+            // Durations of different subtypes are the same key when their months and their
+            // day-time components are equal, e.g. xs:yearMonthDuration('P1Y') and xs:duration('P12M').
+            Period period = item.getPeriodValue();
+            long months = period == null ? 0 : period.toTotalMonths();
+            return 31 * Long.hashCode(months)
+                    + item.getDayTimeDurationComponent().hashCode();
         }
-        // QName, NOTATION, and future atomic types remain correct with a conservative hash.
+        if (item.isHexBinary() || item.isBase64Binary()) {
+            return Arrays.hashCode(item.getBinaryValue());
+        }
+        if (item.isBoolean()) {
+            return Boolean.hashCode(item.getBooleanValue());
+        }
+        if (item.isQName()) {
+            // Name compares the namespace and the local name, but not the prefix.
+            return item.getQNameValue().hashCode();
+        }
+        if (item.isNotation()) {
+            return item.getNotationValue().hashCode();
+        }
+        // Future atomic types remain correct with a conservative hash.
         return 0x4F;
     }
 
