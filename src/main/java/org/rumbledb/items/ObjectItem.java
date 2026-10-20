@@ -278,7 +278,7 @@ public class ObjectItem extends AbstractMapItem {
             return;
         }
         throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
+                "ObjectItem only supports singleton values; use a general map for non-singleton sequences.");
     }
 
     @Override
@@ -293,7 +293,7 @@ public class ObjectItem extends AbstractMapItem {
         }
         // throw an error
         throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
+                "ObjectItem only supports singleton values; use a general map for non-singleton sequences.");
     }
 
     @Override

@@ -198,7 +198,7 @@ public class LazyObjectItem extends AbstractMapItem {
         }
         if (valueSequence.size() != 1) {
             throw new OurBadException(
-                    "LazyObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
+                    "LazyObjectItem only supports singleton values; use a general map for non-singleton sequences.");
         }
         putItemByKey(key, valueSequence.get(0));
     }
@@ -213,7 +213,7 @@ public class LazyObjectItem extends AbstractMapItem {
             return;
         }
         throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
+                "ObjectItem only supports singleton values; use a general map for non-singleton sequences.");
     }
 
     @Override

@@ -205,7 +205,7 @@ class PersistentMapItemTest {
         List<Item> keys = map.getItemKeys();
         List<List<Item>> values = map.getSequenceValues();
         for (int i = 0; i < keys.size(); i++) Assertions.assertSame(pairs.get(keys.get(i)), values.get(i));
-        Item materialized = new MapItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+        Item materialized = new MutableMapItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
         Assertions.assertEquals(materialized, map);
         Assertions.assertEquals(map, materialized);
         Assertions.assertEquals(materialized.hashCode(), map.hashCode());

@@ -377,7 +377,7 @@ public class ItemFactory {
         if (!mutable) {
             return new PersistentMapItem(keys, values, itemMetadata);
         }
-        Item result = new MapItem(keys, values, itemMetadata);
+        Item result = new MutableMapItem(keys, values, itemMetadata);
         result.setMutabilityLevel(0);
         return result;
     }
@@ -391,7 +391,7 @@ public class ItemFactory {
         if (!mutable) {
             return new PersistentMapItem(keyValuePairs, itemMetadata);
         }
-        Item result = new MapItem(keyValuePairs, itemMetadata);
+        Item result = new MutableMapItem(keyValuePairs, itemMetadata);
         result.setMutabilityLevel(0);
         return result;
     }

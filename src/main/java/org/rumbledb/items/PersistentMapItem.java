@@ -22,6 +22,7 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 import io.usethesource.capsule.Map;
 
@@ -92,8 +93,15 @@ public final class PersistentMapItem extends AbstractMapItem implements KryoSeri
         if (original instanceof PersistentMapItem persistent) {
             return persistent;
         }
+        if (original instanceof MutableMapItem mutable) {
+            return mutable.getPersistentMap();
+        }
         return new PersistentMapItem(
                 original.getItemKeys(), original.getSequenceValues(), ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    void forEachEntry(BiConsumer<Item, List<Item>> action) {
+        this.entries.valueIterator().forEachRemaining(entry -> action.accept(entry.key, entry.value));
     }
 
     PersistentMapItem withEntry(Item key, List<Item> value) {

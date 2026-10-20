@@ -67,7 +67,7 @@ public class MapKeysFunctionIterator extends ItemRuntimePlan implements LocalRun
             throw new UnexpectedTypeException("Type error; argument to map:keys must be a map.", getMetadata());
         }
 
-        // MapItem already enforces distinct atomic keys (via op:same-key) during construction/merge.
+        // Map construction/merge already enforces distinct atomic keys (via op:same-key).
         return mapItem.getItemKeys();
     }
 }
