@@ -100,14 +100,16 @@ public class MapItem extends AbstractMapItem {
             result.setMutabilityLevel(0);
             return result;
         }
-        return new MapItem(
-                this.keys.stream().map(item -> item.copy(mutable)).toList(),
-                this.values.stream()
-                        .map(item -> item.stream()
-                                .map(subitem -> subitem.copy(mutable))
-                                .toList())
-                        .toList(),
-                ExceptionMetadata.EMPTY_METADATA);
+        return ItemFactory.getInstance()
+                .createMapItem(
+                        this.keys.stream().map(item -> item.copy(mutable)).toList(),
+                        this.values.stream()
+                                .map(item -> item.stream()
+                                        .map(subitem -> subitem.copy(mutable))
+                                        .toList())
+                                .toList(),
+                        ExceptionMetadata.EMPTY_METADATA,
+                        false);
     }
 
     private void rebuildKeyStringIndex() {

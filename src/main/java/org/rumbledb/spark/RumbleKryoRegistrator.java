@@ -55,6 +55,7 @@ import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
+import org.rumbledb.items.PersistentMapItem;
 import org.rumbledb.items.QNameItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
@@ -154,6 +155,7 @@ public class RumbleKryoRegistrator implements KryoRegistrator {
         kryo.register(IntType.class);
         // URI and immutable map internals need their Java serialization contracts.
         kryo.register(ResourceResolver.class, new JavaSerializer());
+        kryo.register(PersistentMapItem.class);
     }
 
     /**

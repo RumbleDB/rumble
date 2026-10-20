@@ -17,7 +17,6 @@ package org.rumbledb.runtime.functions.maps;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -26,7 +25,6 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
@@ -83,43 +81,15 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                     "Map key must atomize to a single atomic value [err:XPTY0004].", getMetadata());
         }
         Item key = atomized.get(0);
-        // 3) Materialize $value as item()*
-        if (mapItem.getMutabilityLevel() == -1) {
-            return ItemFactory.getInstance().createMapItemAddingKey(mapItem, key, valueSequence);
-        }
-        // 4) Build a new map: keep entries whose key is not op:same-key to $key. Walk keys and value
-        // sequences by index (one pass); reuse value lists for unchanged entries like map:remove.
-        if (mapItem.isObject() && key.isString() && valueSequence.size() == 1) {
-            // fast path:construct an object item
-            HashMap<String, Item> newKeyValuePairs = new HashMap<>();
-            // optimization: short circuit the op:same-key check if the key is already found
-            boolean keyFound = false;
-            for (Item existingKey : mapItem.getItemKeys()) {
-                if (!keyFound && MapAtomicSameKey.sameKey(existingKey, key)) {
-                    keyFound = true;
-                    continue;
-                }
-                newKeyValuePairs.put(existingKey.getStringValue(), mapItem.getItemByKey(existingKey));
-            }
-            newKeyValuePairs.put(key.getStringValue(), valueSequence.get(0));
-            return ItemFactory.getInstance().createObjectItemOptimized(newKeyValuePairs, false);
-        } else {
-            HashMap<Item, List<Item>> newKeyValuePairs = new HashMap<>();
-            // optimization: short circuit the op:same-key check if the key is already found
-            boolean keyFound = false;
-            for (Item existingKey : mapItem.getItemKeys()) {
-                if (!keyFound && MapAtomicSameKey.sameKey(existingKey, key)) {
-                    keyFound = true;
-                    continue;
-                }
-                newKeyValuePairs.put(existingKey, mapItem.getSequenceByKey(existingKey));
-            }
-            newKeyValuePairs.put(key, valueSequence);
+        Item result = ItemFactory.getInstance().createMapItemAddingKey(mapItem, key, valueSequence);
+        // Retain the mutable-result contract for side-effecting queries. Object-shaped puts
+        // have always returned an immutable object, including when the input was mutable.
+        if (mapItem.getMutabilityLevel() != -1
+                && this.getRuntimeStaticContext().isQuerySideEffecting()
+                && !(mapItem.isObject() && key.isString() && valueSequence.size() == 1)) {
             return ItemFactory.getInstance()
-                    .createMapItem(
-                            newKeyValuePairs,
-                            getMetadata(),
-                            this.getRuntimeStaticContext().isQuerySideEffecting());
+                    .createMapItem(result.getItemKeys(), result.getSequenceValues(), getMetadata(), true);
         }
+        return result;
     }
 }

@@ -352,53 +352,33 @@ public class ItemFactory {
 
     public Item createMapItem(Item onlyKey, List<Item> onlyValue, boolean mutable) {
         if (!mutable) {
-            return new MapEntryItem(onlyKey, onlyValue);
+            return new PersistentMapItem(onlyKey, onlyValue);
         }
-        List<Item> keys = List.of(onlyKey);
-        List<List<Item>> values = List.of(onlyValue);
-        return new MapItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+        return createMapItem(List.of(onlyKey), List.of(onlyValue), ExceptionMetadata.EMPTY_METADATA, true);
     }
 
     public Item createMapItemRemovingKeys(Item original, List<Item> keysToRemove) {
-        original = rebaseDeepMapOverlay(original);
-        return new MapWithRemovedEntryItem(original, keysToRemove);
+        if (keysToRemove.isEmpty()) {
+            return original;
+        }
+        return PersistentMapItem.from(original).withoutKeys(keysToRemove);
     }
 
     public Item createMapItemAddingKey(Item original, Item keyToAdd, List<Item> valueToAdd) {
-        original = rebaseDeepMapOverlay(original);
-        return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
-    }
-
-    static int getMapOverlayChainLength(Item item) {
-        if (item instanceof MapWithAdditionalEntryItem additionalEntry) {
-            return additionalEntry.getOverlayChainLength();
-        }
-        if (item instanceof MapWithRemovedEntryItem removedEntry) {
-            return removedEntry.getOverlayChainLength();
-        }
-        return 0;
-    }
-
-    private Item rebaseDeepMapOverlay(Item original) {
-        if (getMapOverlayChainLength(original) < MapWithAdditionalEntryItem.MAX_OVERLAY_CHAIN_LENGTH) {
-            return original;
-        }
-        return createMapItem(
-                original.getItemKeys(), original.getSequenceValues(), ExceptionMetadata.EMPTY_METADATA, false);
+        return PersistentMapItem.from(original).withEntry(keyToAdd, valueToAdd);
     }
 
     public Item createMapItem(
             List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
         if (!mutable && keys.size() == 1) {
             Item key = keys.get(0);
-            return new MapEntryItem(key, values.get(0));
+            return new PersistentMapItem(key, values.get(0));
+        }
+        if (!mutable) {
+            return new PersistentMapItem(keys, values, itemMetadata);
         }
         Item result = new MapItem(keys, values, itemMetadata);
-        if (mutable) {
-            result.setMutabilityLevel(0);
-        } else {
-            result.setMutabilityLevel(-1);
-        }
+        result.setMutabilityLevel(0);
         return result;
     }
 
@@ -406,14 +386,13 @@ public class ItemFactory {
         if (!mutable && keyValuePairs.size() == 1) {
             Item key = keyValuePairs.keySet().iterator().next();
             List<Item> values = keyValuePairs.get(key);
-            return new MapEntryItem(key, values);
+            return new PersistentMapItem(key, values);
+        }
+        if (!mutable) {
+            return new PersistentMapItem(keyValuePairs, itemMetadata);
         }
         Item result = new MapItem(keyValuePairs, itemMetadata);
-        if (mutable) {
-            result.setMutabilityLevel(0);
-        } else {
-            result.setMutabilityLevel(-1);
-        }
+        result.setMutabilityLevel(0);
         return result;
     }
 

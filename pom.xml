@@ -82,6 +82,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.usethesource</groupId>
+            <artifactId>capsule</artifactId>
+            <version>0.7.1</version>
+        </dependency>
+        <dependency>
             <groupId>org.openjdk.jmh</groupId>
             <artifactId>jmh-core</artifactId>
             <version>1.37</version>
@@ -250,6 +255,13 @@
             <version>4.7.7</version>
         </dependency>
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>usethesource</id>
+            <url>https://releases.usethesource.io/maven/</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
