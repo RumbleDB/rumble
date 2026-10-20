@@ -111,6 +111,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode InvalidXMLRepresentationOfJSON = registerBuiltIn("FOJS0006");
     public static final ErrorCode InvalidEscapeSequenceJSON = registerBuiltIn("FOJS0007");
     public static final ErrorCode UnavailableResourceErrorCode = registerBuiltIn("FOUT1170");
+    public static final ErrorCode InvalidEncodingNameErrorCode = registerBuiltIn("XQST0087");
     public static final ErrorCode InvalidEncodingErrorCode = registerBuiltIn("FOUT1190");
     public static final ErrorCode CannotInferEncodingErrorCode = registerBuiltIn("FOUT1200");
 
@@ -208,6 +209,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DirectElementConstructorTagMismatchErrorCode = registerBuiltIn("XQST0118");
     public static final ErrorCode DecimalFormatPropertyInvalidValueErrorCode = registerBuiltIn("XQST0097");
     public static final ErrorCode DecimalFormatPropertyConflictErrorCode = registerBuiltIn("XQST0098");
+    public static final ErrorCode EmptyFunctionNamespaceErrorCode = registerBuiltIn("XQST0060");
     public static final ErrorCode DuplicateDefaultNamespaceDeclarationErrorCode = registerBuiltIn("XQST0066");
     public static final ErrorCode DuplicateDecimalFormatDeclarationErrorCode = registerBuiltIn("XQST0111");
     public static final ErrorCode DuplicateDecimalFormatPropertyErrorCode = registerBuiltIn("XQST0114");
