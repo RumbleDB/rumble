@@ -16,13 +16,41 @@
 package org.rumbledb.runtime.functions.arrays;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
+import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 public final class ArrayIndexUtils {
     private ArrayIndexUtils() {}
+
+    /** Applies fn:data and array function conversion to lookup keys. */
+    public static List<Item> atomizeLookupKeys(List<Item> keys, ExceptionMetadata metadata) {
+        List<Item> result = new ArrayList<>();
+        for (Item rawKey : keys) {
+            for (Item atomized : rawKey.atomizedValue()) {
+                Item key = atomized;
+                if (key.isUntypedAtomic()) {
+                    key = CastIterator.castItemToType(key, BuiltinTypesCatalogue.integerItem, metadata);
+                    if (key == null) {
+                        throw new CastException("Array lookup key cannot be cast to xs:integer.", metadata);
+                    }
+                }
+                if (!key.isInteger()) {
+                    throw new UnexpectedTypeException(
+                            "Array lookup key must be an integer; got " + key.getDynamicType(), metadata);
+                }
+                result.add(key);
+            }
+        }
+        return result;
+    }
 
     public static int getZeroBasedPosition(Item selector, int arraySize, ExceptionMetadata metadata) {
         BigInteger position =
