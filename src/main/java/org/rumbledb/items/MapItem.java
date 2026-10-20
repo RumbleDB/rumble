@@ -22,8 +22,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import scala.Tuple2;
 import scala.collection.immutable.HashMap;
 import scala.collection.immutable.HashMap$;
+import scala.collection.mutable.ReusableBuilder;
 import scala.jdk.javaapi.CollectionConverters;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -82,11 +84,25 @@ public class MapItem extends AbstractMapItem implements KryoSerializable {
         this.topLevelOrder = 0.0;
     }
 
+    /**
+     * Builds the trie with Scala's builder, which updates its nodes in place until result(), instead of
+     * copying a path of the trie for every entry.
+     */
     public MapItem(List<Item> keys, List<List<Item>> valueSequences, ExceptionMetadata metadata) {
         this();
+        ReusableBuilder<Tuple2<Item, Entry>, HashMap<Item, Entry>> builder = HashMap$.MODULE$.newBuilder();
         for (int i = 0; i < keys.size(); i++) {
-            putNewEntry(keys.get(i), valueSequences.get(i), metadata);
+            Item key = keys.get(i);
+            checkKey(key, metadata);
+            Entry entry = new Entry(key, valueSequences.get(i));
+            builder.addOne(new Tuple2<>(key, entry));
+            // The builder has no lookup, but a key that is already there does not grow it.
+            if (builder.knownSize() == i) {
+                throw new DuplicateObjectKeyException(key.serialize(), metadata);
+            }
+            this.nonObjectEntries += nonObjectCount(entry);
         }
+        this.entries = builder.result();
     }
 
     /**
@@ -131,10 +147,14 @@ public class MapItem extends AbstractMapItem implements KryoSerializable {
         return this.entries.getOrElse(key, () -> null);
     }
 
-    private void putNewEntry(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
+    private static void checkKey(Item key, ExceptionMetadata metadata) {
         if (key == null || !key.isAtomic()) {
             throw new OurBadException("Map keys must be atomic items.", metadata);
         }
+    }
+
+    private void putNewEntry(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
+        checkKey(key, metadata);
         if (this.entries.contains(key)) {
             throw new DuplicateObjectKeyException(key.serialize(), metadata);
         }
