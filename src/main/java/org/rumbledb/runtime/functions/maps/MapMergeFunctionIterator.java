@@ -17,7 +17,9 @@ package org.rumbledb.runtime.functions.maps;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -57,7 +59,8 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
  * </pre>
  *
  * <p>
- * This implementation stays local-only and folds the maps into a persistent map using atomic same-key equality.
+ * This implementation stays local-only, collects the entries using atomic same-key equality, and builds the map
+ * once.
  */
 public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -137,10 +140,11 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             }
         }
 
-        // 3. Fold the maps into a persistent map, which later puts and removes can share.
-        // Streaming consumption avoids materializing huge sequences of maps.
-        ItemFactory factory = ItemFactory.getInstance();
-        Item result = factory.createMapItem(List.of(), List.of(), metadata, false);
+        // 3. Collect the entries, with the key of the latest map that set each one, as a fold of map:put
+        // would, then build the map in one go. Streaming consumption avoids materializing huge sequences of maps.
+        Map<Item, Integer> positions = new HashMap<>();
+        List<Item> keys = new ArrayList<>();
+        List<List<Item>> values = new ArrayList<>();
         try (Cursor<Item> maps = this.mapsIterator.getCursor(context)) {
             while (maps.hasNext()) {
                 Item mapItem = maps.next();
@@ -150,35 +154,39 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 }
                 for (Item key : mapItem.getItemKeys()) {
                     List<Item> value = mapItem.getSequenceByKey(key);
-                    List<Item> existing = result.getSequenceByKey(key);
-                    if (existing != null) {
-                        switch (policy) {
-                            case USE_FIRST:
-                            case USE_ANY:
-                                continue;
-                            case USE_LAST:
-                                break;
-                            case COMBINE:
-                                List<Item> combined = new ArrayList<>(existing.size() + value.size());
-                                combined.addAll(existing);
-                                combined.addAll(value);
-                                value = combined;
-                                break;
-                            case REJECT:
-                                throw new DuplicateJSONKeyException(
-                                        "map:merge encountered duplicate map keys with duplicates=\"reject\" [err:FOJS0003].",
-                                        metadata);
-                            default:
-                                throw new OurBadException("Unexpected duplicates policy in map:merge.");
-                        }
+                    Integer position = positions.putIfAbsent(key, keys.size());
+                    if (position == null) {
+                        keys.add(key);
+                        values.add(value);
+                        continue;
                     }
-                    result = factory.createMapItemAddingKey(result, key, value, false);
+                    switch (policy) {
+                        case USE_FIRST:
+                        case USE_ANY:
+                            continue;
+                        case USE_LAST:
+                            break;
+                        case COMBINE:
+                            List<Item> existing = values.get(position);
+                            List<Item> combined = new ArrayList<>(existing.size() + value.size());
+                            combined.addAll(existing);
+                            combined.addAll(value);
+                            value = combined;
+                            break;
+                        case REJECT:
+                            throw new DuplicateJSONKeyException(
+                                    "map:merge encountered duplicate map keys with duplicates=\"reject\" [err:FOJS0003].",
+                                    metadata);
+                        default:
+                            throw new OurBadException("Unexpected duplicates policy in map:merge.");
+                    }
+                    keys.set(position, key);
+                    values.set(position, value);
                 }
             }
         }
-        if (this.getRuntimeStaticContext().isQuerySideEffecting()) {
-            result.setMutabilityLevel(0);
-        }
-        return result;
+        return ItemFactory.getInstance()
+                .createMapItem(
+                        keys, values, metadata, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 }
