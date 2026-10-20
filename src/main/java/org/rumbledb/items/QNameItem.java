@@ -44,7 +44,8 @@ public class QNameItem extends AbstractAtomicItem {
 
     @Override
     public String getStringValue() {
-        return this.name.toString();
+        String prefix = this.name.getPrefix();
+        return prefix == null || prefix.isEmpty() ? this.name.getLocalName() : prefix + ":" + this.name.getLocalName();
     }
 
     @Override
