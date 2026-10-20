@@ -114,6 +114,14 @@ final class ModuleParser {
             Language language,
             StaticContext moduleContext,
             boolean isMainModule) {
+        if (language == Language.XQUERY) {
+            // XQuery source line endings are normalized before tokenization, including inside literals.
+            query = query.replace("\r\n", "\n");
+            if ("1.1".equals(configuration.runtimeConfiguration().semantics().xmlVersion())) {
+                query = query.replace("\r\u0085", "\n").replace('\u0085', '\n').replace('\u2028', '\n');
+            }
+            query = query.replace('\r', '\n');
+        }
         // File extensions and version declarations can select a language different from the configured default.
         if (language == Language.XQUERY && !moduleContext.getQueryLanguage().startsWith("xquery")) {
             moduleContext.setQueryLanguage("xquery31");
