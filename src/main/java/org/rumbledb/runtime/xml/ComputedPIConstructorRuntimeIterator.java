@@ -116,10 +116,9 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
         String content = String.join(" ", stringValues);
         content = removeLeadingWhitespace(content);
         Item processingInstructionItem = ItemFactory.getInstance().createXmlProcessingInstructionNode(target, content);
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            processingInstructionItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        processingInstructionItem.setXmlDocumentPosition(documentPath, 0);
         return processingInstructionItem;
     }
 
