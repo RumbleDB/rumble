@@ -44,8 +44,8 @@ public class ParseXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         if (arg == null) {
             return null;
         }
-        Document xmlDocument =
-                XmlParsingUtils.parseDocument(arg.getStringValue(), "the argument of fn:parse-xml", getMetadata());
+        Document xmlDocument = XmlParsingUtils.parseDocument(
+                arg.getStringValue(), this.staticContext.getStaticURI(), "the argument of fn:parse-xml", getMetadata());
         DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                 xmlDocument,
                 XMLDocumentPosition.generateConstructedTreePath(),

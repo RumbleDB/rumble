@@ -1,10 +1,6 @@
 lexer grammar JsoniqLexer;
 
 import CommonLexer;
-@ header
-{
-package org.rumbledb.parser.jsoniq;
-}
 DOUBLE_DOLLAR
    : '$$'
    ;

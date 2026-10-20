@@ -30,13 +30,13 @@ public record DirAttributeListContext<QnameCtx extends ParserRuleContext, ExprCt
     public record DirAttributeContext<QnameCtx extends ParserRuleContext, ExprCtx extends ParserRuleContext>(
             QnameCtx name, DirAttributeValueContext<ExprCtx> value) {}
 
-    public static DirAttributeListContext<JsoniqParser.QnameContext, JsoniqParser.ExprContext> from(
+    public static DirAttributeListContext<JsoniqParser.DirectConstructorQNameContext, JsoniqParser.ExprContext> from(
             JsoniqParser.DirAttributeListContext c) {
         if (c.attribute_qname == null || c.attribute_value == null) {
             return new DirAttributeListContext<>(Collections.emptyList(), c);
         }
         int count = Math.min(c.attribute_qname.size(), c.attribute_value.size());
-        List<DirAttributeContext<JsoniqParser.QnameContext, JsoniqParser.ExprContext>> attributes =
+        List<DirAttributeContext<JsoniqParser.DirectConstructorQNameContext, JsoniqParser.ExprContext>> attributes =
                 new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             attributes.add(new DirAttributeContext<>(

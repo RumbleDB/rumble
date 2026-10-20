@@ -16,8 +16,6 @@
 package org.rumbledb.runtime.navigation;
 
 import java.io.Serial;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +42,6 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
@@ -74,8 +71,6 @@ public class ObjectLookupIterator extends ItemRuntimePlan
 
     private final ItemRuntimePlan iterator;
     private final ItemRuntimePlan lookupIterator;
-    private Item lookupKey;
-    private boolean contextLookup;
 
     public ObjectLookupIterator(
             ItemRuntimePlan object, ItemRuntimePlan lookupIterator, RuntimeStaticContext staticContext) {
@@ -86,15 +81,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        String key;
-        if (this.lookupIterator instanceof ContextExpressionIterator) {
-            key = context.getVariableValues()
-                    .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                    .get(0)
-                    .getStringValue();
-        } else {
-            key = requireLookupKey(this.lookupIterator.materialize(context));
-        }
+        String key = resolveLookupKey(context);
         return new FlatMappingLocalCursor<>(
                 this.iterator,
                 context,
@@ -110,63 +97,17 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 getMetadata());
     }
 
-    private void initLookupKey(DynamicContext context) {
-        this.contextLookup = this.lookupIterator instanceof ContextExpressionIterator;
-
-        if (!this.contextLookup) {
-
-            try {
-                this.lookupKey = this.lookupIterator.materializeExactlyOne(context);
-            } catch (NoItemException e) {
-                throw new InvalidSelectorException(
-                        "Invalid Lookup Key; Object lookup can't be performed with no key.", getMetadata());
-            } catch (MoreThanOneItemException e) {
-                throw new InvalidSelectorException(
-                        "Invalid Lookup Key; Object lookup can't be performed with multiple keys.", getMetadata());
-            }
-
-            if (this.lookupKey.isNull() || this.lookupKey.isObject() || this.lookupKey.isArray()) {
-                throw new UnexpectedTypeException(
-                        "Type error; Object selector can't be converted to a string: " + this.lookupKey.serialize(),
-                        getMetadata());
-            } else {
-                // convert to string
-                if (this.lookupKey.isBoolean()) {
-                    Boolean value = this.lookupKey.getBooleanValue();
-                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (this.lookupKey.isDecimal()) {
-                    BigDecimal value = this.lookupKey.getDecimalValue();
-                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (this.lookupKey.isDouble()) {
-                    Double value = this.lookupKey.getDoubleValue();
-                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (this.lookupKey.isInt()) {
-                    Integer value = this.lookupKey.getIntValue();
-                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (this.lookupKey.isInteger()) {
-                    BigInteger value = this.lookupKey.getIntegerValue();
-                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
-                } else if (this.lookupKey.isString()) {
-                    // do nothing
-                }
-            }
-            if (!this.lookupKey.isString()) {
-                throw new UnexpectedTypeException(
-                        "Non string object lookup for " + this.lookupKey.serialize(), getMetadata());
-            }
-        }
-    }
-
-    private String requireLookupKey(List<Item> values) {
-        if (values.isEmpty()) {
+    private String resolveLookupKey(DynamicContext context) {
+        Item key;
+        try {
+            key = this.lookupIterator.materializeExactlyOne(context);
+        } catch (NoItemException e) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Object lookup can't be performed with no key.", getMetadata());
-        }
-        if (values.size() > 1) {
+        } catch (MoreThanOneItemException e) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Object lookup can't be performed with multiple keys.", getMetadata());
         }
-        Item key = values.get(0);
         if (key.isNull() || key.isObject() || key.isArray()) {
             throw new UnexpectedTypeException(
                     "Type error; Object selector can't be converted to a string: " + key.serialize(), getMetadata());
@@ -195,18 +136,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
-        initLookupKey(dynamicContext);
-        String key;
-        if (this.contextLookup) {
-            // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            key = dynamicContext
-                    .getVariableValues()
-                    .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                    .get(0)
-                    .getStringValue();
-        } else {
-            key = this.lookupKey.getStringValue();
-        }
+        String key = resolveLookupKey(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ObjectLookupClosure(key);
 
         return childRDD.flatMap(transformation);
@@ -227,8 +157,12 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 }
             }
         }
+        // A context item key is only known per item, so it cannot be resolved here.
+        if (this.lookupIterator instanceof ContextExpressionIterator) {
+            return NativeClauseContext.NoNativeQuery;
+        }
         // otherwise, we can directly resolve the key statically.
-        initLookupKey(nativeClauseContext.getContext());
+        String lookupKey = resolveLookupKey(nativeClauseContext.getContext());
 
         // Next we determine the schema against which the key is resolved
         // If this is a filter, then this is the outer schema. Otherwise
@@ -264,7 +198,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
         }
 
         // get key (escape backtick)
-        String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
+        String key = lookupKey.replace("`", FlworDataFrameUtils.backtickEscape);
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
         if (!(leftSchema instanceof StructType structSchema)) {
             if (this.lookupIterator instanceof StringRuntimeIterator) {
@@ -349,16 +283,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         HomogeneousItemDataFrame childDataFrame =
                 ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
-        initLookupKey(context);
-        String key;
-        if (this.contextLookup) {
-            key = context.getVariableValues()
-                    .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
-                    .get(0)
-                    .getStringValue();
-        } else {
-            key = this.lookupKey.getStringValue();
-        }
+        String key = resolveLookupKey(context);
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (childDataFrame.hasKey(key)) {
             FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet(key);

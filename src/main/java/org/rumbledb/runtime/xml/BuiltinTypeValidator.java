@@ -70,6 +70,7 @@ public final class BuiltinTypeValidator {
                     "Atomic XML validation is only supported for document and element nodes.", metadata);
         }
         copiedRoot.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
+        XmlBaseUtils.preserveBaseUri(item, copiedRoot);
 
         Item typedValue;
         try {

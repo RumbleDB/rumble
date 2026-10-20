@@ -28,6 +28,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.DuplicateDecimalFormatDeclarationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
@@ -86,6 +87,7 @@ public class StaticContext {
     private static final Map<String, String> defaultBindings;
 
     private DecimalFormatDefinition defaultDecimalFormat;
+    private boolean defaultDecimalFormatDeclared;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
 
     @Setter
@@ -710,10 +712,18 @@ public class StaticContext {
     }
 
     public void setDefaultDecimalFormat(DecimalFormatDefinition decimalFormat) {
+        setDefaultDecimalFormat(decimalFormat, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    public void setDefaultDecimalFormat(DecimalFormatDefinition decimalFormat, ExceptionMetadata metadata) {
         if (this.parent != null) {
-            this.parent.setDefaultDecimalFormat(decimalFormat);
+            this.parent.setDefaultDecimalFormat(decimalFormat, metadata);
             return;
         }
+        if (this.defaultDecimalFormatDeclared) {
+            throw new DuplicateDecimalFormatDeclarationException("Default decimal format already declared.", metadata);
+        }
+        this.defaultDecimalFormatDeclared = true;
         this.defaultDecimalFormat = decimalFormat;
     }
 
@@ -723,7 +733,7 @@ public class StaticContext {
             return;
         }
         if (this.decimalFormats.containsKey(name)) {
-            throw new SemanticException("Decimal format already declared: " + name, metadata);
+            throw new DuplicateDecimalFormatDeclarationException("Decimal format already declared: " + name, metadata);
         }
         this.decimalFormats.put(name, decimalFormat);
     }

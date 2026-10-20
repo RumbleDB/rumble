@@ -35,8 +35,30 @@ public final class AtomicDeepEqual {
      * (NaN float/double pairs compare equal, as required by FO 3.1).
      */
     public static boolean deepEqual(Item item1, Item item2) {
+        return deepEqual(item1, item2, null, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    /**
+     * Deep equality for individual items with collation support for string-participating types.
+     *
+     * @param item1 the first item
+     * @param item2 the second item
+     * @param collation the collation URI, or null for default comparison
+     * @param metadata exception metadata for error reporting
+     * @return true if items are deep-equal, false otherwise
+     */
+    public static boolean deepEqual(Item item1, Item item2, String collation, ExceptionMetadata metadata) {
+        if (!item1.isAtomic() || !item2.isAtomic()) {
+            return false;
+        }
         if (bothFloatOrDoubleNaN(item1, item2)) {
             return true;
+        }
+        if (collation != null
+                && CollationSupport.isStringCollationType(item1)
+                && CollationSupport.isStringCollationType(item2)) {
+            return CollationSupport.compareStrings(item1.getStringValue(), item2.getStringValue(), collation, metadata)
+                    == 0;
         }
         if (item1.isUntypedAtomic()) {
             item1 = ItemFactory.getInstance().createStringItem(item1.getStringValue());

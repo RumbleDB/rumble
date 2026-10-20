@@ -80,7 +80,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
     private static final long serialVersionUID = 1L;
 
     private final List<GroupByClauseSparkIteratorExpression> groupingExpressions;
-    private Map<Name, DynamicContext.VariableDependency> dependencies;
+    private final Map<Name, DynamicContext.VariableDependency> dependencies;
 
     public GroupByClauseIterator(
             TupleRuntimePlan child,

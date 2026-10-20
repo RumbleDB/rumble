@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.Clause;
@@ -36,7 +35,6 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.SequenceType;
 
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
@@ -115,6 +113,12 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 argument, parameterType, call.getFunctionIdentifier().getName(), argument.getMetadata());
     }
 
+    private static FunctionArgumentConversionExpression convertReturnValue(
+            Expression value, SequenceType returnType, FunctionCallExpression call) {
+        return new FunctionArgumentConversionExpression(
+                value, returnType, call.getFunctionIdentifier().getName(), true, call.getMetadata());
+    }
+
     // Inlining is disabled for functions that:
     // 1. Are sequential.
     // 2. Contain an exit statement.
@@ -143,11 +147,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
         if (expression.getArguments().isEmpty() || allArgumentsMatch(expression, paramNames)) {
             if (inlineFunction.getReturnType() != null) {
-                TreatExpression result = new TreatExpression(
-                        body,
-                        inlineFunction.getReturnType(),
-                        ErrorCode.UnexpectedTypeErrorCode,
-                        expression.getMetadata());
+                FunctionArgumentConversionExpression result =
+                        convertReturnValue(body, inlineFunction.getReturnType(), expression);
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
@@ -197,11 +198,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
         }
         if (expressionClauses == null) {
             if (inlineFunction.getReturnType() != null) {
-                TreatExpression result = new TreatExpression(
-                        body,
-                        inlineFunction.getReturnType(),
-                        ErrorCode.UnexpectedTypeErrorCode,
-                        expression.getMetadata());
+                FunctionArgumentConversionExpression result =
+                        convertReturnValue(body, inlineFunction.getReturnType(), expression);
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
@@ -215,11 +213,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
         }
         FlworExpression result = new FlworExpression(returnClause, expression.getMetadata());
         if (inlineFunction.getReturnType() != null) {
-            return new TreatExpression(
-                    result,
-                    inlineFunction.getReturnType(),
-                    ErrorCode.UnexpectedTypeErrorCode,
-                    expression.getMetadata());
+            return convertReturnValue(result, inlineFunction.getReturnType(), expression);
         }
         return result;
     }

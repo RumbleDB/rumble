@@ -48,8 +48,8 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
 
     private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR =
             Comparator.comparing(Item::getXmlDocumentPosition, Comparator.nullsLast(Comparator.naturalOrder()));
-    private ItemRuntimePlan leftIterator;
-    private ItemRuntimePlan rightIterator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
 
     public SlashExprIterator(
             ItemRuntimePlan sequence, ItemRuntimePlan stepIterator, RuntimeStaticContext staticContext) {

@@ -15,41 +15,87 @@
  */
 package org.rumbledb.runtime.misc;
 
-import java.net.URLDecoder;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.text.StringCharacterIterator;
-import java.util.HashMap;
 import java.util.HexFormat;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import com.ibm.icu.text.Collator;
 import com.ibm.icu.text.RuleBasedCollator;
 import com.ibm.icu.text.StringSearch;
-import com.ibm.icu.util.ULocale;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.CollationCatalogue;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CollationDoesNotSupportCollationUnitsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
+/**
+ * Resolves collation URIs, and compares and searches strings under the codepoint, case-insensitive and UCA
+ * collations.
+ */
 public final class CollationSupport {
-
-    private static final ConcurrentHashMap<String, RuleBasedCollator> UCA_COLLATOR_CACHE = new ConcurrentHashMap<>();
 
     private CollationSupport() {}
 
+    /**
+     * Resolves an optional collation URI against the static base URI if relative.
+     * If null, falls back to the default collation of the static context (or Unicode codepoint collation).
+     *
+     * @param explicitCollationUri the collation URI supplied by the query, or null
+     * @param staticContext the runtime static context providing the base URI and default collation
+     * @return the resolved collation URI string
+     */
     public static String resolveCollation(String explicitCollationUri, RuntimeStaticContext staticContext) {
-        if (explicitCollationUri != null) {
-            return explicitCollationUri;
+        if (explicitCollationUri == null) {
+            return staticContext != null ? staticContext.getDefaultCollation() : CollationCatalogue.CODEPOINT_COLLATION;
         }
-        return staticContext.getDefaultCollation();
+        try {
+            URI uri = URI.create(explicitCollationUri);
+            if (!uri.isAbsolute() && staticContext != null && staticContext.getStaticURI() != null) {
+                return staticContext.getStaticURI().resolve(uri).toString();
+            }
+        } catch (IllegalArgumentException ignored) {
+            // let checkCollationSupported reject invalid URI
+        }
+        return explicitCollationUri;
     }
 
+    /**
+     * Evaluates an optional collation argument of a built-in function, then resolves and validates it.
+     *
+     * @param collationPlan the plan of the collation argument, or null if the argument is absent. An empty
+     *        sequence also selects the default collation.
+     * @param context the dynamic context to evaluate the argument in
+     * @param staticContext the runtime static context providing the base URI and default collation
+     * @param metadata source location metadata for error reporting
+     * @return the resolved, validated collation URI string
+     * @throws UnsupportedCollationException if the collation is not supported (err:FOCH0002)
+     */
+    public static String resolveCollationArgument(
+            ItemRuntimePlan collationPlan,
+            DynamicContext context,
+            RuntimeStaticContext staticContext,
+            ExceptionMetadata metadata) {
+        Item collationItem = collationPlan == null ? null : collationPlan.materializeFirstOrNull(context);
+        String explicitCollationUri = collationItem == null ? null : collationItem.getStringValue();
+        String collation = resolveCollation(explicitCollationUri, staticContext);
+        checkCollationSupported(collation, metadata);
+        return collation;
+    }
+
+    /**
+     * Verifies that the specified collation URI is recognized and supported.
+     *
+     * @param collationUri the collation URI to validate
+     * @param metadata source location metadata for error reporting
+     * @throws UnsupportedCollationException if the collation is not supported (err:FOCH0002)
+     */
     public static void checkCollationSupported(String collationUri, ExceptionMetadata metadata) {
         if (CollationCatalogue.isDefaultStaticallyKnownCollation(collationUri)) {
             return;
@@ -57,10 +103,27 @@ public final class CollationSupport {
         throw new UnsupportedCollationException("Wrong collation parameter", metadata);
     }
 
+    /**
+     * Checks if the item has a type that participates in string collation comparisons
+     * (xs:string, xs:anyURI, or xs:untypedAtomic).
+     *
+     * @param item the item to test
+     * @return true if the item is string-like for collation purposes
+     */
     public static boolean isStringCollationType(Item item) {
         return item != null && (item.isString() || item.isAnyURI() || item.isUntypedAtomic());
     }
 
+    /**
+     * Normalizes an item into a form suitable for collation-based equality or sorting.
+     * For UCA collations, returns a sort key as a hexBinary item; for case-insensitive collations,
+     * returns a normalized lowercase string item.
+     *
+     * @param item the item to normalize
+     * @param collationUri the collation URI to use
+     * @param metadata source location metadata for error reporting
+     * @return the normalized item, or the original item if not subject to collation normalization
+     */
     public static Item normalizeItemForCollation(Item item, String collationUri, ExceptionMetadata metadata) {
         if (item == null) {
             return null;
@@ -70,25 +133,52 @@ public final class CollationSupport {
             return item;
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
-            byte[] sortKeyBytes = getUcaCollator(collationUri, metadata)
-                    .getCollationKey(item.getStringValue())
-                    .toByteArray();
-            return ItemFactory.getInstance().createHexBinaryItem(HexFormat.of().formatHex(sortKeyBytes));
+            byte[] sortKey = collationKey(item.getStringValue(), collationUri, metadata);
+            return ItemFactory.getInstance().createHexBinaryItem(HexFormat.of().formatHex(sortKey));
         }
-        return ItemFactory.getInstance()
-                .createStringItem(CollationCatalogue.normalizeString(item.getStringValue(), collationUri));
+        return ItemFactory.getInstance().createStringItem(foldCase(item.getStringValue(), collationUri));
     }
 
+    /**
+     * Computes the {@code fn:collation-key} of a string: two strings have equal keys if and only if they are
+     * equal under the collation.
+     *
+     * @param value the string to compute the key of
+     * @param collationUri the collation URI to use
+     * @param metadata source location metadata for error reporting
+     * @return the collation key bytes
+     */
+    public static byte[] collationKey(String value, String collationUri, ExceptionMetadata metadata) {
+        checkCollationSupported(collationUri, metadata);
+        if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
+            return value.getBytes(StandardCharsets.UTF_8);
+        }
+        if (CollationCatalogue.isUCACollation(collationUri)) {
+            return UcaCollators.get(collationUri, metadata)
+                    .getCollationKey(value)
+                    .toByteArray();
+        }
+        return foldCase(value, collationUri).getBytes(StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Compares two strings according to the rules of the given collation.
+     *
+     * @param left the left string operand
+     * @param right the right string operand
+     * @param collationUri the collation URI defining the comparison rules
+     * @param metadata source location metadata for error reporting
+     * @return negative if left &lt; right, zero if left == right, positive if left &gt; right
+     */
     public static int compareStrings(String left, String right, String collationUri, ExceptionMetadata metadata) {
         checkCollationSupported(collationUri, metadata);
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
             return compareByCodePoint(left, right);
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
-            return getUcaCollator(collationUri, metadata).compare(left, right);
+            return UcaCollators.get(collationUri, metadata).compare(left, right);
         }
-        return CollationCatalogue.normalizeString(left, collationUri)
-                .compareTo(CollationCatalogue.normalizeString(right, collationUri));
+        return foldCase(left, collationUri).compareTo(foldCase(right, collationUri));
     }
 
     /**
@@ -111,160 +201,207 @@ public final class CollationSupport {
         return (leftLength - i) - (rightLength - j);
     }
 
+    /**
+     * Evaluates {@code fn:contains} semantics: returns true if {@code source} contains {@code target}
+     * under the specified collation. An empty target always matches.
+     *
+     * @param source the string to search within
+     * @param target the substring to search for
+     * @param collationUri the collation URI defining matching rules
+     * @param metadata source location metadata for error reporting
+     * @return true if the target is contained in the source under the collation
+     */
+    public static boolean contains(String source, String target, String collationUri, ExceptionMetadata metadata) {
+        return indexOf(source, target, collationUri, metadata) != null;
+    }
+
+    /**
+     * Evaluates {@code fn:substring-before} semantics: returns the substring of {@code source} preceding
+     * the first occurrence of {@code target} under the specified collation.
+     *
+     * @param source the string to extract from
+     * @param target the delimiter substring
+     * @param collationUri the collation URI defining matching rules
+     * @param metadata source location metadata for error reporting
+     * @return the substring before the target match, or empty string if no match or empty inputs
+     */
+    public static String substringBefore(
+            String source, String target, String collationUri, ExceptionMetadata metadata) {
+        Match match = indexOf(source, target, collationUri, metadata);
+        return match == null ? "" : source.substring(0, match.start());
+    }
+
+    /**
+     * Evaluates {@code fn:substring-after} semantics: returns the substring of {@code source} following
+     * the first occurrence of {@code target} under the specified collation.
+     *
+     * @param source the string to extract from
+     * @param target the delimiter substring
+     * @param collationUri the collation URI defining matching rules
+     * @param metadata source location metadata for error reporting
+     * @return the substring after the target match, or empty string if not found / empty source
+     */
+    public static String substringAfter(String source, String target, String collationUri, ExceptionMetadata metadata) {
+        Match match = indexOf(source, target, collationUri, metadata);
+        return match == null ? "" : source.substring(match.end());
+    }
+
+    /**
+     * Evaluates {@code fn:starts-with} semantics: returns true if {@code value} starts with {@code prefix}
+     * under the specified collation. An empty prefix always matches.
+     *
+     * @param value the string to check
+     * @param prefix the prefix to look for
+     * @param collationUri the collation URI defining matching rules
+     * @param metadata source location metadata for error reporting
+     * @return true if the string starts with the prefix under the collation
+     */
     public static boolean startsWith(String value, String prefix, String collationUri, ExceptionMetadata metadata) {
         checkCollationSupported(collationUri, metadata);
+        if (prefix.isEmpty()) {
+            return true;
+        }
         if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
             return value.startsWith(prefix);
         }
         if (CollationCatalogue.isUCACollation(collationUri)) {
-            RuleBasedCollator collator = getUcaCollator(collationUri, metadata);
-            StringSearch stringSearch = new StringSearch(prefix, new StringCharacterIterator(value), collator);
-            return stringSearch.first() == 0;
+            RuleBasedCollator collator = UcaCollators.get(collationUri, metadata);
+            if (isIgnorable(prefix, collator)) {
+                return true;
+            }
+            if (value.isEmpty()) {
+                return false;
+            }
+            StringSearch stringSearch = newStringSearch(prefix, value, collator, metadata);
+            int firstIndex = stringSearch.first();
+            // Leading ignorable characters have no collation units, so the match may start after them.
+            return firstIndex != StringSearch.DONE && isIgnorable(value.substring(0, firstIndex), collator);
         }
-        return CollationCatalogue.normalizeString(value, collationUri)
-                .startsWith(CollationCatalogue.normalizeString(prefix, collationUri));
+        return foldCase(value, collationUri).startsWith(foldCase(prefix, collationUri));
     }
 
-    private static RuleBasedCollator getUcaCollator(String collationUri, ExceptionMetadata metadata) {
+    /**
+     * Evaluates {@code fn:ends-with} semantics: returns true if {@code value} ends with {@code suffix}
+     * under the specified collation. An empty suffix always matches.
+     *
+     * @param value the string to check
+     * @param suffix the suffix to look for
+     * @param collationUri the collation URI defining matching rules
+     * @param metadata source location metadata for error reporting
+     * @return true if the string ends with the suffix under the collation
+     */
+    public static boolean endsWith(String value, String suffix, String collationUri, ExceptionMetadata metadata) {
+        checkCollationSupported(collationUri, metadata);
+        if (suffix.isEmpty()) {
+            return true;
+        }
+        if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
+            return value.endsWith(suffix);
+        }
+        if (CollationCatalogue.isUCACollation(collationUri)) {
+            RuleBasedCollator collator = UcaCollators.get(collationUri, metadata);
+            if (isIgnorable(suffix, collator)) {
+                return true;
+            }
+            if (value.isEmpty()) {
+                return false;
+            }
+            StringSearch stringSearch = newStringSearch(suffix, value, collator, metadata);
+            int lastIndex = stringSearch.last();
+            // Trailing ignorable characters have no collation units, so the match may end before them.
+            return lastIndex != StringSearch.DONE
+                    && isIgnorable(value.substring(lastIndex + stringSearch.getMatchLength()), collator);
+        }
+        return foldCase(value, collationUri).endsWith(foldCase(suffix, collationUri));
+    }
+
+    /**
+     * A match of a search string, as the start index and length of the matched region in the searched string.
+     */
+    private record Match(int start, int length) {
+        int end() {
+            return this.start + this.length;
+        }
+    }
+
+    /**
+     * Locates the first occurrence of {@code target} in {@code source} under the specified collation.
+     *
+     * @return the first match, or null if there is none
+     * @throws CollationDoesNotSupportCollationUnitsException if the collation does not support collation units
+     *         (err:FOCH0004)
+     */
+    private static Match indexOf(String source, String target, String collationUri, ExceptionMetadata metadata) {
+        checkCollationSupported(collationUri, metadata);
+        if (target.isEmpty()) {
+            return new Match(0, 0);
+        }
+        if (Name.DEFAULT_COLLATION_NS.equals(collationUri)) {
+            int idx = source.indexOf(target);
+            return idx == -1 ? null : new Match(idx, target.length());
+        }
+        if (CollationCatalogue.isUCACollation(collationUri)) {
+            RuleBasedCollator collator = UcaCollators.get(collationUri, metadata);
+            if (isIgnorable(target, collator)) {
+                return new Match(0, 0);
+            }
+            if (source.isEmpty()) {
+                return null;
+            }
+            StringSearch stringSearch = newStringSearch(target, source, collator, metadata);
+            int idx = stringSearch.first();
+            return idx == StringSearch.DONE ? null : new Match(idx, stringSearch.getMatchLength());
+        }
+        if (CollationCatalogue.isHTMLAsciiCaseInsensitiveCollation(collationUri)) {
+            // ASCII lowercasing preserves length, so indices in the lowercased string match the original.
+            int idx = toHtmlAsciiLowerCase(source).indexOf(toHtmlAsciiLowerCase(target));
+            return idx == -1 ? null : new Match(idx, target.length());
+        }
+        // Full Unicode lowercasing may change the string length, so match on the original string instead.
+        for (int idx = 0; idx + target.length() <= source.length(); idx++) {
+            if (source.regionMatches(true, idx, target, 0, target.length())) {
+                return new Match(idx, target.length());
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Folds the case of a string under a case-insensitive collation. Callers handle the codepoint and UCA
+     * collations first, so only the HTML ASCII and the QT3 case-blind collations reach this method.
+     */
+    private static String foldCase(String value, String collationUri) {
+        if (CollationCatalogue.isHTMLAsciiCaseInsensitiveCollation(collationUri)) {
+            return toHtmlAsciiLowerCase(value);
+        }
+        return value.toLowerCase(Locale.ROOT);
+    }
+
+    /**
+     * Lowercases only the ASCII letters A-Z, as the HTML ASCII case-insensitive collation requires.
+     */
+    private static String toHtmlAsciiLowerCase(String value) {
+        char[] chars = value.toCharArray();
+        for (int i = 0; i < chars.length; i++) {
+            if (chars[i] >= 'A' && chars[i] <= 'Z') {
+                chars[i] = (char) (chars[i] - 'A' + 'a');
+            }
+        }
+        return new String(chars);
+    }
+
+    private static boolean isIgnorable(String value, RuleBasedCollator collator) {
+        return collator.compare(value, "") == 0;
+    }
+
+    private static StringSearch newStringSearch(
+            String pattern, String text, RuleBasedCollator collator, ExceptionMetadata metadata) {
         try {
-            RuleBasedCollator prototype =
-                    UCA_COLLATOR_CACHE.computeIfAbsent(collationUri, uri -> buildUcaCollator(uri, metadata));
-            return prototype.cloneAsThawed();
-        } catch (RuntimeException e) {
-            if (e instanceof UnsupportedCollationException) {
-                throw e;
-            }
-            throw new UnsupportedCollationException("Wrong collation parameter", metadata);
+            return new StringSearch(pattern, new StringCharacterIterator(text), collator);
+        } catch (UnsupportedOperationException e) {
+            // ICU rejects collations without collation units, e.g. numeric collation.
+            throw new CollationDoesNotSupportCollationUnitsException(
+                    "Collation does not support collation units: " + e.getMessage(), metadata);
         }
-    }
-
-    private static RuleBasedCollator buildUcaCollator(String collationUri, ExceptionMetadata metadata) {
-        UcaParameters parameters = parseUcaParameters(collationUri, metadata);
-        ULocale locale = parameters.languageTag == null ? ULocale.ROOT : ULocale.forLanguageTag(parameters.languageTag);
-        Collator collator = Collator.getInstance(locale);
-        if (!(collator instanceof RuleBasedCollator ruleBasedCollator)) {
-            throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-        }
-
-        ruleBasedCollator.setStrength(parameters.strength);
-        ruleBasedCollator.setDecomposition(
-                parameters.normalization ? Collator.CANONICAL_DECOMPOSITION : Collator.NO_DECOMPOSITION);
-        ruleBasedCollator.setCaseLevel(parameters.caseLevel);
-        if (parameters.backwards != null) {
-            ruleBasedCollator.setFrenchCollation(parameters.backwards);
-        }
-        if (parameters.alternateShifted != null) {
-            ruleBasedCollator.setAlternateHandlingShifted(parameters.alternateShifted);
-        }
-        return ruleBasedCollator;
-    }
-
-    private static UcaParameters parseUcaParameters(String collationUri, ExceptionMetadata metadata) {
-        UcaParameters parameters = new UcaParameters();
-        int queryIndex = collationUri.indexOf('?');
-        if (queryIndex < 0 || queryIndex == collationUri.length() - 1) {
-            return parameters;
-        }
-        String query = collationUri.substring(queryIndex + 1);
-        Map<String, String> queryParameters = new HashMap<>();
-        for (String part : query.split(";")) {
-            if (part.isEmpty()) {
-                continue;
-            }
-            int separator = part.indexOf('=');
-            if (separator < 0) {
-                queryParameters.put(decodeQueryComponent(part), "");
-            } else {
-                queryParameters.put(
-                        decodeQueryComponent(part.substring(0, separator)),
-                        decodeQueryComponent(part.substring(separator + 1)));
-            }
-        }
-
-        for (Map.Entry<String, String> parameter : queryParameters.entrySet()) {
-            String key = parameter.getKey();
-            String value = parameter.getValue();
-            switch (key) {
-                case "lang":
-                    parameters.languageTag = value;
-                    break;
-                case "strength":
-                    parameters.strength = parseStrength(value, metadata);
-                    break;
-                case "normalization":
-                    parameters.normalization = parseYesNo(value, key, metadata);
-                    break;
-                case "backwards":
-                    parameters.backwards = parseYesNo(value, key, metadata);
-                    break;
-                case "caseLevel":
-                    parameters.caseLevel = parseYesNo(value, key, metadata);
-                    break;
-                case "alternate":
-                    parameters.alternateShifted = parseAlternate(value, metadata);
-                    break;
-                case "fallback":
-                case "version":
-                    if ("version".equals(key) && "no".equals(queryParameters.get("fallback"))) {
-                        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-                    }
-                    break;
-                default:
-                    if ("no".equals(queryParameters.get("fallback"))) {
-                        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-                    }
-                    break;
-            }
-        }
-        return parameters;
-    }
-
-    private static String decodeQueryComponent(String value) {
-        return URLDecoder.decode(value, StandardCharsets.UTF_8);
-    }
-
-    private static boolean parseYesNo(String value, String key, ExceptionMetadata metadata) {
-        if ("yes".equalsIgnoreCase(value)) {
-            return true;
-        }
-        if ("no".equalsIgnoreCase(value)) {
-            return false;
-        }
-        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-    }
-
-    private static Boolean parseAlternate(String value, ExceptionMetadata metadata) {
-        String normalized = value.toLowerCase(Locale.ROOT);
-        if ("shifted".equals(normalized)) {
-            return true;
-        }
-        if ("non-ignorable".equals(normalized)) {
-            return false;
-        }
-        if ("blanked".equals(normalized)) {
-            return true;
-        }
-        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-    }
-
-    private static int parseStrength(String value, ExceptionMetadata metadata) {
-        String normalized = value.toLowerCase(Locale.ROOT);
-        return switch (normalized) {
-            case "1", "primary" -> Collator.PRIMARY;
-            case "2", "secondary" -> Collator.SECONDARY;
-            case "3", "tertiary" -> Collator.TERTIARY;
-            case "4", "quaternary" -> Collator.QUATERNARY;
-            case "5", "identical" -> Collator.IDENTICAL;
-            default -> throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-        };
-    }
-
-    private static final class UcaParameters {
-        private String languageTag;
-        private int strength = Collator.TERTIARY;
-        private boolean normalization;
-        private Boolean backwards;
-        private boolean caseLevel;
-        private Boolean alternateShifted;
     }
 }

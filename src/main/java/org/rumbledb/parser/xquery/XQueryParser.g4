@@ -26,11 +26,6 @@
 parser grammar XQueryParser;
 
 import CommonParser;
-@ header
-{
-// Java header
-package org.rumbledb.parser.xquery;
-}
 
 options { tokenVocab = XQueryLexer; }
 module

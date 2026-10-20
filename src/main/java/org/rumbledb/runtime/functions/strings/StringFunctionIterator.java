@@ -53,6 +53,6 @@ public class StringFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
 
         Item item = this.getChild(0).materializeFirstOrNull(context);
-        return item == null ? null : stringResultFromItem(item);
+        return item == null ? ItemFactory.getInstance().createStringItem("") : stringResultFromItem(item);
     }
 }

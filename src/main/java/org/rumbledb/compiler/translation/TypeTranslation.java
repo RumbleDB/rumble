@@ -271,24 +271,7 @@ public final class TypeTranslation {
             return elementTestAsItemType(kindTestContext.elementTest(), translationContext, parseEqName);
         }
         if (kindTestContext.attributeTest() != null) {
-            AttributeTestContext<EqNameCtx> attributeTestContext = kindTestContext.attributeTest();
-            Name attributeName = attributeTestContext.hasAttributeNameOrWildcard() && !attributeTestContext.isWildcard()
-                    ? parseEqName.apply(attributeTestContext.attributeNameEqName(), NameRole.NO_DEFAULT_NAMESPACE)
-                    : null;
-            if (attributeTestContext.typeNameEqName() == null) {
-                return attributeName == null
-                        ? BuiltinTypesCatalogue.attributeNode
-                        : ItemTypeFactory.attributeNodeItemType(attributeName);
-            }
-            Name typeName = parseEqName.apply(attributeTestContext.typeNameEqName(), NameRole.TYPE);
-            return ItemTypeFactory.attributeNodeItemType(
-                    attributeName,
-                    typeName,
-                    translationContext
-                            .moduleContext()
-                            .getInScopeSchemaTypes()
-                            .getXmlSchemaCatalog()
-                            .getTypeHierarchy(typeName, translationContext.metadata(attributeTestContext.context())));
+            return attributeTestAsItemType(kindTestContext.attributeTest(), translationContext, parseEqName);
         }
         if (kindTestContext.isCommentTest()) {
             return BuiltinTypesCatalogue.commentNode;
@@ -340,7 +323,27 @@ public final class TypeTranslation {
                 .getSchemaAttributeTest(name, translationContext.metadata(ctx.context()));
     }
 
-    private static <EqNameCtx extends ParserRuleContext> ElementNodeItemType elementTestAsItemType(
+    public static <EqNameCtx extends ParserRuleContext> ItemType attributeTestAsItemType(
+            AttributeTestContext<EqNameCtx> attributeTestContext,
+            TranslationContext translationContext,
+            BiFunction<EqNameCtx, NameRole, Name> parseEqName) {
+        Name attributeName = attributeTestContext.hasAttributeNameOrWildcard() && !attributeTestContext.isWildcard()
+                ? parseEqName.apply(attributeTestContext.attributeNameEqName(), NameRole.NO_DEFAULT_NAMESPACE)
+                : null;
+        if (attributeTestContext.typeNameEqName() == null) {
+            return attributeName == null
+                    ? BuiltinTypesCatalogue.attributeNode
+                    : ItemTypeFactory.attributeNodeItemType(attributeName);
+        }
+        Name typeName = parseEqName.apply(attributeTestContext.typeNameEqName(), NameRole.TYPE);
+        return translationContext
+                .moduleContext()
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getAttributeTest(attributeName, typeName, translationContext.metadata(attributeTestContext.context()));
+    }
+
+    public static <EqNameCtx extends ParserRuleContext> ElementNodeItemType elementTestAsItemType(
             ElementTestContext<EqNameCtx> elementTestContext,
             TranslationContext translationContext,
             BiFunction<EqNameCtx, NameRole, Name> parseEqName) {
@@ -353,14 +356,14 @@ public final class TypeTranslation {
                     : (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(elementName);
         }
         Name typeName = parseEqName.apply(elementTestContext.typeNameEqName(), NameRole.TYPE);
-        return (ElementNodeItemType) ItemTypeFactory.elementNodeItemType(
-                elementName,
-                typeName,
-                translationContext
-                        .moduleContext()
-                        .getInScopeSchemaTypes()
-                        .getXmlSchemaCatalog()
-                        .getTypeHierarchy(typeName, translationContext.metadata(elementTestContext.context())),
-                elementTestContext.hasOptional());
+        return translationContext
+                .moduleContext()
+                .getInScopeSchemaTypes()
+                .getXmlSchemaCatalog()
+                .getElementTest(
+                        elementName,
+                        typeName,
+                        elementTestContext.hasOptional(),
+                        translationContext.metadata(elementTestContext.context()));
     }
 }
