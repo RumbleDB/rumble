@@ -179,10 +179,7 @@ public class ComparisonVisitor extends CloneVisitor {
         }
         // otherwise, use ([left op right, false][[1]])
         ComparisonExpression comparisonExpression = new ComparisonExpression(
-                leftChild,
-                rightChild,
-                expression.getComparisonOperator(),
-                expression.getMetadata());
+                leftChild, rightChild, expression.getComparisonOperator(), expression.getMetadata());
         comparisonExpression.setStaticSequenceType(expression.getStaticSequenceType());
         comparisonExpression.setStaticContext(expression.getStaticContext());
         BooleanLiteralExpression booleanExpression = new BooleanLiteralExpression(false, expression.getMetadata());
@@ -245,7 +242,8 @@ public class ComparisonVisitor extends CloneVisitor {
         SequenceType rightType = right.getStaticSequenceType();
         // Casts operate on at most one value. Keep sequence cardinalities intact so the
         // general-comparison rewrite can compare individual pairs, casting at runtime.
-        if (leftType == null || rightType == null
+        if (leftType == null
+                || rightType == null
                 || !leftType.getArity().isSubtypeOf(SequenceType.Arity.OneOrZero)
                 || !rightType.getArity().isSubtypeOf(SequenceType.Arity.OneOrZero)) {
             return new Expression[] {left, right};
