@@ -19,8 +19,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.IdentityHashMap;
-import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -29,6 +29,7 @@ import java.util.stream.Collectors;
 import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
@@ -37,18 +38,23 @@ import org.rumbledb.expressions.module.Prolog;
 final class ModuleImportGraph {
     private ModuleImportGraph() {}
 
-    static LibraryModule normalize(LibraryModule root, ModuleImportLoader.ImportSession session,
-            RumbleConfiguration configuration) {
+    static LibraryModule normalize(
+            LibraryModule root, ModuleImportLoader.ImportSession session, RumbleConfiguration configuration) {
         var graph = new DefaultDirectedGraph<LibraryModule, DefaultEdge>(DefaultEdge.class);
         List<LibraryModule> modules = new ArrayList<>(new LinkedHashSet<>(session.modules.values()));
         modules.forEach(graph::addVertex);
         Map<LibraryModule, LibraryModule> canonical = new IdentityHashMap<>();
+        Map<LibraryModule, URI> sourceLocations = new IdentityHashMap<>();
+        session.modules.forEach((location, module) -> sourceLocations.put(module, location));
         for (LibraryModule module : modules) {
             canonical.put(module, module);
             for (LibraryModule imported : module.getProlog().getImportedModules()) {
-                LibraryModule target = session.modules.get(URI.create(imported.getMetadata().getLocation()).normalize());
-                if (target == null) {
-                    throw new IllegalStateException("Imported module has no completed translation: " + imported.getNamespace());
+                // Diagnostic locations may be overridden by a shared static base URI.
+                // Back edges must resolve through the loader's module identities instead.
+                LibraryModule target = session.completedModules.getOrDefault(imported, imported);
+                if (!graph.containsVertex(target)) {
+                    throw new IllegalStateException(
+                            "Imported module has no completed translation: " + imported.getNamespace());
                 }
                 canonical.put(imported, target);
                 graph.addEdge(module, target);
@@ -67,13 +73,14 @@ final class ModuleImportGraph {
         Set<LibraryModule> representatives = new LinkedHashSet<>();
         for (Set<LibraryModule> component : new KosarajuStrongConnectivityInspector<>(graph).stronglyConnectedSets()) {
             List<LibraryModule> members = component.stream()
-                    .sorted(Comparator.comparing(module -> module.getMetadata().getLocation())).toList();
+                    .sorted(Comparator.comparing(
+                            module -> sourceLocations.get(module).toString()))
+                    .toList();
             LibraryModule first = members.get(0);
             LibraryModule representative = first;
             if (members.size() > 1 || graph.containsEdge(first, first)) {
-                Prolog prolog = new Prolog(List.of(), List.of(), List.of(), first.getProlog().getMetadata());
-                prolog.setModuleGroupKey(members.stream().map(module -> module.getMetadata().getLocation())
-                        .collect(Collectors.joining("|")));
+                Prolog prolog = new Prolog(
+                        List.of(), List.of(), List.of(), first.getProlog().getMetadata());
                 for (LibraryModule member : members) {
                     prolog.getDeclarations().addAll(member.getProlog().getDeclarations());
                     prolog.getSchemaImports().addAll(member.getProlog().getSchemaImports());
@@ -82,6 +89,12 @@ final class ModuleImportGraph {
                 representative = new LibraryModule(prolog, first.getNamespace(), first.getMetadata());
                 representative.setStaticContext(first.getStaticContext());
             }
+            // Pruning must distinguish modules even when their configured base URI is identical.
+            representative
+                    .getProlog()
+                    .setModuleGroupKey(members.stream()
+                            .map(module -> sourceLocations.get(module).toString())
+                            .collect(Collectors.joining("|")));
             representatives.add(representative);
             for (LibraryModule member : members) {
                 groups.put(member, representative);

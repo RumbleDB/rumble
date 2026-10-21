@@ -87,8 +87,12 @@ public final class ImportTranslation {
                 metadata);
         if (ctx.prefix() != null) {
             boolean sameModuleBinding = libraryModule.getNamespace().equals(translationContext.libraryModuleNamespace())
-                    && libraryModule.getNamespace().equals(translationContext.moduleContext()
-                            .getInScopeNamespaceBindings().get(ctx.prefix()));
+                    && libraryModule
+                            .getNamespace()
+                            .equals(translationContext
+                                    .moduleContext()
+                                    .getInScopeNamespaceBindings()
+                                    .get(ctx.prefix()));
             if (!sameModuleBinding) {
                 translationContext.bindNamespace(ctx.prefix(), libraryModule.getNamespace(), metadata);
             }

@@ -16,6 +16,7 @@
 package org.rumbledb.compiler;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.rumbledb.config.RumbleConfiguration;
@@ -24,7 +25,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 
 /**
- * Removes duplicate import edges while retaining the declarations of shared modules.
+ * Removes duplicate declarations while retaining import visibility for shared modules.
  *
  */
 public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
@@ -50,7 +51,7 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
         for (var schema : prolog.getSchemaImports()) {
             visit(schema, argument);
         }
-        var imports = prolog.getImportedModules().iterator();
+        var imports = prolog.getImportedModules().listIterator();
         while (imports.hasNext()) {
             LibraryModule module = imports.next();
             String key = module.getProlog().getModuleGroupKey();
@@ -58,7 +59,14 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
                 key = module.getMetadata().getLocation();
             }
             if (!this.visitedModules.add(key)) {
-                imports.remove();
+                // Keep the import visible to this module without revisiting shared declarations.
+                Prolog referenceProlog = new Prolog(
+                        List.of(), List.of(), List.of(), module.getProlog().getMetadata());
+                referenceProlog.setModuleGroupKey(key);
+                LibraryModule reference =
+                        new LibraryModule(referenceProlog, module.getNamespace(), module.getMetadata());
+                reference.setStaticContext(module.getStaticContext());
+                imports.set(reference);
             } else {
                 visit(module, argument);
             }

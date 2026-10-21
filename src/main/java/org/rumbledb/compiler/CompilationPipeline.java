@@ -95,7 +95,10 @@ public final class CompilationPipeline {
         return run(
                 module,
                 new CompilationContext(configuration, ExternalBindings.empty()),
-                List.of(CompilationPasses.resolveDependencies(), CompilationPasses.populateStaticContext(), CompilationPasses.inferTypes()));
+                List.of(
+                        CompilationPasses.resolveDependencies(),
+                        CompilationPasses.populateStaticContext(),
+                        CompilationPasses.inferTypes()));
     }
 
     /**
