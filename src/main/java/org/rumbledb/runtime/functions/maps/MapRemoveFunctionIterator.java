@@ -17,7 +17,6 @@ package org.rumbledb.runtime.functions.maps;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -27,7 +26,6 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.MapAtomicSameKey;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
@@ -76,50 +74,10 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         if (keysToRemove.isEmpty()) {
             return mapItem;
         }
-        if (mapItem.getMutabilityLevel() == -1) {
-            return ItemFactory.getInstance().createMapItemRemovingKeys(mapItem, keysToRemove);
-        }
-        List<Item> mapKeys = mapItem.getItemKeys();
-        List<List<Item>> mapValueSequences = mapItem.getSequenceValues();
-        boolean allKeysString = true;
-        boolean allValuesSingletons = true;
-        HashMap<Item, List<Item>> newKeyValuePairs = new HashMap<>();
-        HashMap<String, Item> newStringKeyValuePairs = new HashMap<>();
-        for (int i = 0; i < mapKeys.size(); i++) {
-            Item mapKey = mapKeys.get(i);
-            if (shouldRemoveKey(mapKey, keysToRemove)) {
-                continue;
-            }
-            List<Item> seq = mapValueSequences.get(i);
-            if (allKeysString && !mapKey.isString()) {
-                allKeysString = false;
-                // optimization: free up memory by removing pointer to the string hash map
-                newStringKeyValuePairs = null;
-            }
-            if (allValuesSingletons && seq.size() != 1) {
-                allValuesSingletons = false;
-                // optimization: free up memory by removing pointer to the string hash map
-                newStringKeyValuePairs = null;
-            }
-            if (allKeysString && allValuesSingletons) {
-                if (newStringKeyValuePairs == null) {
-                    newStringKeyValuePairs = new HashMap<>();
-                }
-                newStringKeyValuePairs.put(mapKey.getStringValue(), seq.get(0));
-            }
-            newKeyValuePairs.put(mapKey, seq);
-        }
-        if (allKeysString && allValuesSingletons) {
-            return ItemFactory.getInstance()
-                    .createObjectItemOptimized(
-                            newStringKeyValuePairs,
-                            this.getRuntimeStaticContext().isQuerySideEffecting());
-        }
-        return ItemFactory.getInstance()
-                .createMapItem(
-                        newKeyValuePairs,
-                        getMetadata(),
-                        this.getRuntimeStaticContext().isQuerySideEffecting());
+        // Updating a mutable map in a side-effecting query gives a mutable map.
+        boolean mutable = mapItem.getMutabilityLevel() != -1
+                && this.getRuntimeStaticContext().isQuerySideEffecting();
+        return ItemFactory.getInstance().createMapItemRemovingKeys(mapItem, keysToRemove, mutable);
     }
 
     @Serial
@@ -135,14 +93,5 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         }
         this.mapIterator = arguments.get(0);
         this.keysIterator = arguments.get(1);
-    }
-
-    private static boolean shouldRemoveKey(Item mapKey, List<Item> keysToRemove) {
-        for (Item keyToRemove : keysToRemove) {
-            if (MapAtomicSameKey.sameKey(mapKey, keyToRemove)) {
-                return true;
-            }
-        }
-        return false;
     }
 }

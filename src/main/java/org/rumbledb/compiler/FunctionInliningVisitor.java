@@ -17,6 +17,7 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.rumbledb.context.Name;
@@ -43,13 +44,15 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
     private Prolog prolog;
     private boolean constructionPreserve;
+    private java.net.URI staticBaseUri;
 
-    private boolean hasDifferentConstructionMode(Prolog prolog, FunctionDeclaration target) {
+    private boolean hasDifferentModuleContext(Prolog prolog, FunctionDeclaration target) {
         for (var module : prolog.getImportedModules()) {
             if (module.getProlog().getFunctionDeclarations().contains(target)) {
-                return module.getStaticContext().isConstructionPreserve() != this.constructionPreserve;
+                return module.getStaticContext().isConstructionPreserve() != this.constructionPreserve
+                        || !Objects.equals(module.getStaticContext().getStaticBaseURI(), this.staticBaseUri);
             }
-            if (hasDifferentConstructionMode(module.getProlog(), target)) {
+            if (hasDifferentModuleContext(module.getProlog(), target)) {
                 return true;
             }
         }
@@ -97,6 +100,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
         this.prolog = mainModule.getProlog();
         if (mainModule.getStaticContext() != null) {
             this.constructionPreserve = mainModule.getStaticContext().isConstructionPreserve();
+            this.staticBaseUri = mainModule.getStaticContext().getStaticBaseURI();
         }
         MainModule result = new MainModule(
                 mainModule.getProlog(),
@@ -113,10 +117,15 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 argument, parameterType, call.getFunctionIdentifier().getName(), argument.getMetadata());
     }
 
+    // Return value errors are reported at the function body, as when the function is called without inlining.
     private static FunctionArgumentConversionExpression convertReturnValue(
-            Expression value, SequenceType returnType, FunctionCallExpression call) {
+            Expression value, SequenceType returnType, FunctionCallExpression call, InlineFunctionExpression function) {
         return new FunctionArgumentConversionExpression(
-                value, returnType, call.getFunctionIdentifier().getName(), true, call.getMetadata());
+                value,
+                returnType,
+                call.getFunctionIdentifier().getName(),
+                true,
+                function.getBody().getMetadata());
     }
 
     // Inlining is disabled for functions that:
@@ -128,8 +137,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 getFunctionDeclarationFromProlog(this.prolog, expression.getFunctionIdentifier());
         if (expression.isPartialApplication()
                 || targetFunction == null
-                // Rebuilding an inlined body in the caller's context would change its constructor semantics.
-                || hasDifferentConstructionMode(this.prolog, targetFunction)
+                // Rebuilding an imported body in the caller's context can change its constructors and static base URI.
+                || hasDifferentModuleContext(this.prolog, targetFunction)
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
                 || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {
@@ -148,14 +157,19 @@ public class FunctionInliningVisitor extends CloneVisitor {
         if (expression.getArguments().isEmpty() || allArgumentsMatch(expression, paramNames)) {
             if (inlineFunction.getReturnType() != null) {
                 FunctionArgumentConversionExpression result =
-                        convertReturnValue(body, inlineFunction.getReturnType(), expression);
+                        convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
             return body;
         }
         body.setStaticSequenceType(inlineFunction.getReturnType());
-        ReturnClause returnClause = new ReturnClause(body, expression.getMetadata());
+        // The return value is converted inside the FLWOR expression, which binds the arguments and is evaluated once,
+        // so that conversion errors are reported at the body, not at the call.
+        Expression returnValue = inlineFunction.getReturnType() == null
+                ? body
+                : convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
+        ReturnClause returnClause = new ReturnClause(returnValue, expression.getMetadata());
         Clause expressionClauses = null;
         Clause assignmentClauses = null;
         for (int i = 0; i < expression.getArguments().size(); i++) {
@@ -199,7 +213,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
         if (expressionClauses == null) {
             if (inlineFunction.getReturnType() != null) {
                 FunctionArgumentConversionExpression result =
-                        convertReturnValue(body, inlineFunction.getReturnType(), expression);
+                        convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
@@ -211,10 +225,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
         } else {
             expressionClauses.getLastClause().chainWith(returnClause);
         }
-        FlworExpression result = new FlworExpression(returnClause, expression.getMetadata());
-        if (inlineFunction.getReturnType() != null) {
-            return convertReturnValue(result, inlineFunction.getReturnType(), expression);
-        }
-        return result;
+        return new FlworExpression(returnClause, expression.getMetadata());
     }
 }

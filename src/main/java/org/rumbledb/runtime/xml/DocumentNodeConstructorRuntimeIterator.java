@@ -86,12 +86,9 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
         documentItem.setConstructionBaseUri(this.staticContext.getStaticURI());
         // Set the parent of the child nodes to the document node
         documentItem.addParentToDescendants();
-        // Set XML document position if this is the top-level runtime iterator
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            // This is the top-level runtime iterator - set XML document positions recursively
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            documentItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        documentItem.setXmlDocumentPosition(documentPath, 0);
         return documentItem;
     }
 

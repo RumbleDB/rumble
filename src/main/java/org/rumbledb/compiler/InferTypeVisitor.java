@@ -923,6 +923,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMetadata());
             }
         }
+        // The zero-argument form has an implicit node argument. Check the focus type
+        // just as the one-argument form checks its explicit argument under static typing.
+        Name functionName = expression.getFunctionIdentifier().getName();
+        if ((Name.FN_NS.equals(functionName.getNamespace())
+                        || Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(functionName.getNamespace()))
+                && functionName.getLocalName().equals("has-children")
+                && expression.getArguments().isEmpty()) {
+            SequenceType contextType = expression.getStaticContext().getContextItemStaticType();
+            if (contextType != null && !contextType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.nodeItem)) {
+                throwStaticTypeException(
+                        "fn:has-children() requires a node context item, but " + contextType + " was inferred.",
+                        expression.getMetadata());
+            }
+        }
         FunctionSignature signature = null;
         try {
             signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
@@ -2539,6 +2553,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         FunctionSignature signature = type.getSignature();
         List<SequenceType> actualParameterTypes = new ArrayList<>();
         List<SequenceType> formalParameterTypes = signature.getParameterTypes();
+        if (formalParameterTypes.size() != expression.getArguments().size()) {
+            throwStaticTypeException(
+                    "The arguments of a dynamic function call have the wrong arity.", expression.getMetadata());
+            // With optional static typing disabled, an unreachable branch may still have
+            // a mismatched signature. Leave enforcement to the runtime call if it is evaluated.
+            return SequenceType.createSequenceType("item*");
+        }
         List<SequenceType> partialFormalParameterTypes = new ArrayList<>();
         boolean isPartialApplication = false;
         int i = 0;

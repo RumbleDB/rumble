@@ -90,10 +90,9 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         String uri = resolveUri(materialize);
         validateNamespaceBinding(prefix, uri);
         Item namespaceItem = ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri);
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            namespaceItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        namespaceItem.setXmlDocumentPosition(documentPath, 0);
         return namespaceItem;
     }
 

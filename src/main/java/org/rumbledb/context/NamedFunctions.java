@@ -28,20 +28,15 @@ import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
-import org.rumbledb.runtime.functions.FunctionItemCallIterator;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -57,89 +52,6 @@ public class NamedFunctions implements Serializable {
 
     public NamedFunctions() {
         this.userDefinedFunctions = new HashMap<>();
-    }
-
-    /**
-     * Callee execution mode is taken from {@code callerRuntimeContext.getExecutionMode()}.
-     */
-    public ItemRuntimePlan getUserDefinedFunctionCallIterator(
-            FunctionIdentifier identifier,
-            RuntimeStaticContext callerRuntimeContext,
-            List<? extends ItemRuntimePlan> arguments,
-            boolean isTailOptimization) {
-        if (checkUserDefinedFunctionExists(identifier)) {
-            return buildFunctionItemCallIterator(
-                    this.userDefinedFunctions.get(identifier),
-                    callerRuntimeContext,
-                    callerRuntimeContext.getExecutionMode(),
-                    arguments,
-                    isTailOptimization);
-        }
-        throw new UnknownFunctionCallException(
-                identifier.getName(), identifier.getArity(), callerRuntimeContext.getMetadata());
-    }
-
-    /**
-     * Builds a dynamic function-item call using configuration and metadata from {@code callerRuntimeContext} and the
-     * callee's {@code executionModeForFunctionCall}
-     */
-    public static ItemRuntimePlan buildFunctionItemCallIterator(
-            Item functionItem,
-            RuntimeStaticContext callerRuntimeContext,
-            ExecutionMode executionModeForFunctionCall,
-            List<? extends ItemRuntimePlan> inputArguments,
-            boolean isTailOptimization) {
-        List<ItemRuntimePlan> arguments = new ArrayList<>(inputArguments);
-        ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
-        boolean isPartialApplication = arguments.stream().anyMatch(a -> a == null);
-        SequenceType sequenceType = functionItem.getSignature().getReturnType();
-        if (isPartialApplication) {
-            List<SequenceType> partialParamTypes = new ArrayList<>();
-            List<SequenceType> paramTypes = functionItem.getSignature().getParameterTypes();
-            for (int i = 0; i < arguments.size(); i++) {
-                if (arguments.get(i) == null) {
-                    partialParamTypes.add(paramTypes.get(i));
-                }
-            }
-            FunctionSignature partialSignature = new FunctionSignature(
-                    partialParamTypes,
-                    functionItem.getSignature().getReturnType(),
-                    functionItem.getSignature().isUpdating());
-            sequenceType = new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
-        }
-        SequenceType innerSequenceType =
-                functionItem.getBodyIterator().getRuntimeStaticContext().getStaticType();
-        RuntimeStaticContext outerStaticContext = callerRuntimeContext.toBuilder()
-                .staticType(sequenceType)
-                .executionMode(executionModeForFunctionCall)
-                .build();
-        RuntimeStaticContext innerStaticContext = callerRuntimeContext.toBuilder()
-                .staticType(innerSequenceType)
-                .executionMode(executionModeForFunctionCall)
-                .build();
-        ItemRuntimePlan functionCallIterator;
-        if (functionItem.isBuiltinFunction()) {
-            if (arguments.stream().anyMatch(a -> a == null)) {
-                throw new UnsupportedFeatureException(
-                        "Partial application of builtin named function references is not supported yet.", metadata);
-            }
-            functionCallIterator = new BuiltinFunctionItemCallIterator(functionItem, arguments, innerStaticContext);
-        } else {
-            functionCallIterator =
-                    new FunctionItemCallIterator(functionItem, arguments, innerStaticContext, isTailOptimization);
-        }
-        if (isTailOptimization) {
-            return functionCallIterator;
-        }
-        return FunctionCallArgumentConversion.wrapArgument(
-                functionCallIterator,
-                sequenceType,
-                "Invalid return type for "
-                        + ((functionItem.getIdentifier().getName() == null)
-                                ? ""
-                                : (functionItem.getIdentifier().getName()) + " ")
-                        + "function. ",
-                outerStaticContext);
     }
 
     public void addUserDefinedFunction(Item function, ExceptionMetadata meta) {
@@ -160,6 +72,19 @@ public class NamedFunctions implements Serializable {
 
     public boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
         return this.userDefinedFunctions.containsKey(identifier);
+    }
+
+    /**
+     * Returns the registered function item itself, shared by all calls, which must not change it. Unlike
+     * {@link #getUserDefinedFunction}, which copies it for function references, it is used for calls, which only read
+     * the function item.
+     */
+    public FunctionItem getSharedUserDefinedFunction(FunctionIdentifier identifier, ExceptionMetadata metadata) {
+        FunctionItem functionItem = this.userDefinedFunctions.get(identifier);
+        if (functionItem == null) {
+            throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
+        }
+        return functionItem;
     }
 
     public FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
@@ -232,8 +157,10 @@ public class NamedFunctions implements Serializable {
                 .executionMode(callerStaticContext.getExecutionMode())
                 .build();
 
-        if (!"format-number".equals(identifier.getName().getLocalName())) {
-            // Remove decimal formats definition from the context
+        if (!"format-number".equals(identifier.getName().getLocalName())
+                && !"function-lookup".equals(identifier.getName().getLocalName())) {
+            // function-lookup must retain decimal formats for references to format-number.
+            // Other builtins do not need these definitions.
             delegateContext = delegateContext.toBuilder()
                     .decimalFormats(null)
                     .defaultDecimalFormat(null)
