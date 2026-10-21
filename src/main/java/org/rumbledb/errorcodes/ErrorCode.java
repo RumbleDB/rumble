@@ -102,6 +102,7 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode FunctionAtomizationErrorCode = registerBuiltIn("FOTY0013");
     public static final ErrorCode FunctionItemStringValueErrorCode = registerBuiltIn("FOTY0014");
+    public static final ErrorCode FunctionItemInConstructorContentErrorCode = registerBuiltIn("XQTY0105");
 
     public static final ErrorCode DuplicatePairNameErrorCode = registerBuiltIn("XQDY0137");
 

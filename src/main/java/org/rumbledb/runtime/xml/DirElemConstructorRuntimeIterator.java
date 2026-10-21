@@ -90,8 +90,8 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             StringBuilder textAccumulator = null;
             boolean hasSeenNonAttributeNode = false;
             for (ItemRuntimePlan iterator : this.content) {
-                for (Item childItem :
-                        XmlConstructorContentUtils.normalizeContent(materialize.apply(iterator, contextToUse))) {
+                for (Item childItem : XmlConstructorContentUtils.normalizeContent(
+                        materialize.apply(iterator, contextToUse), getMetadata())) {
                     List<Item> expandedItems = new ArrayList<>();
                     XmlConstructorContentUtils.appendExpandedItem(childItem, expandedItems);
                     for (Item item : expandedItems) {
