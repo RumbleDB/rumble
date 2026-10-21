@@ -86,7 +86,10 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
                 throw new UnexpectedStaticTypeException(
                         "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic");
             }
-            String nameString = atomizedNameItem.getStringValue();
+            String nameString = atomizedNameItem
+                    .getStringValue()
+                    .replaceAll("[ \t\r\n]+", " ")
+                    .replaceAll("^ | $", "");
             if (!isValidNCName(nameString)) {
                 throw new InvalidProcessingInstructionTargetCastException(
                         "Processing instruction target cannot be cast to xs:NCName.", getMetadata());
