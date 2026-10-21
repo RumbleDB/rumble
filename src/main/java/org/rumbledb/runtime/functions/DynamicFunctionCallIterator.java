@@ -183,7 +183,7 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
         if (partialApplication) {
             return ExecutionMode.LOCAL;
         }
-        if (functionItem.isBuiltinFunction()) {
+        if (functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator) {
             BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
                     functionItem.getIdentifier(), staticContext.getQueryLanguage());
             // assume that the passed builtin function is valid

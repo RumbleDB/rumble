@@ -94,6 +94,6 @@ public final class FunctionItemFactory {
         }
         ItemRuntimePlan body = org.rumbledb.context.NamedFunctions.getBuiltInFunctionIterator(
                 identifier, parameters, bodyContext, true);
-        return new FunctionItem(identifier, paramNames, builtinFunction.getSignature(), moduleContext, body);
+        return new FunctionItem(identifier, paramNames, builtinFunction.getSignature(), moduleContext, body, true);
     }
 }

@@ -313,7 +313,7 @@ public class AdaptiveSerializer implements Serializer, Serializable {
 
     private void appendFunctionItem(Item item, StringBuilder sb) {
         FunctionIdentifier identifier = item.getIdentifier();
-        if (item.isBuiltinFunction()) {
+        if (item.isBuiltinFunction() && identifier.getName() != null) {
             Name functionName = identifier.getName();
             if (functionName.getPrefix() != null && !functionName.getPrefix().isEmpty()) {
                 sb.append(functionName.getPrefix()).append(":").append(functionName.getLocalName());

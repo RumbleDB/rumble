@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.functions.BuiltinFunctionItemCallIterator;
+import org.rumbledb.runtime.functions.BuiltinNamedFunctionReferenceMarkerIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
@@ -119,7 +120,7 @@ public class NamedFunctions implements Serializable {
                 .executionMode(executionModeForFunctionCall)
                 .build();
         ItemRuntimePlan functionCallIterator;
-        if (functionItem.isBuiltinFunction()) {
+        if (functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator) {
             if (arguments.stream().anyMatch(a -> a == null)) {
                 throw new UnsupportedFeatureException(
                         "Partial application of builtin named function references is not supported yet.", metadata);
@@ -233,8 +234,10 @@ public class NamedFunctions implements Serializable {
                 .executionMode(callerStaticContext.getExecutionMode())
                 .build();
 
-        if (!"format-number".equals(identifier.getName().getLocalName())) {
-            // Remove decimal formats definition from the context
+        if (!"format-number".equals(identifier.getName().getLocalName())
+                && !"function-lookup".equals(identifier.getName().getLocalName())) {
+            // function-lookup must retain decimal formats for references to format-number.
+            // Other builtins do not need these definitions.
             delegateContext = delegateContext.toBuilder()
                     .decimalFormats(null)
                     .defaultDecimalFormat(null)

@@ -173,6 +173,16 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
 
         DynamicContext callContext = new DynamicContext(
                 functionItem.getModuleDynamicContext(), localArgumentValues, RDDArgumentValues, DFArgumentValues);
+        if (functionItem.isBuiltinFunction()) {
+            // The global context item must not replace the focus captured at the reference site.
+            // DynamicContext removes global bindings from closure copies, so restore the captured focus.
+            for (Name name : List.of(Name.CONTEXT_ITEM, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT)) {
+                List<Item> value = functionItem.getLocalVariablesInClosure().get(name);
+                if (value != null) {
+                    callContext.getVariableValues().addVariableValue(name, value);
+                }
+            }
+        }
         populateDynamicContextWithArguments(functionItem, functionArguments, context, callContext);
         return callContext;
     }
@@ -247,6 +257,9 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
         Name functionItemName = functionItem.getIdentifier().getName();
         if (tailOptimization) {
             functionItemName = Name.TAIL_CALL_OPTIMIZATION;
+        } else if (functionItem.isBuiltinFunction()) {
+            // Partial applications are anonymous, while retaining their builtin body and captured focus.
+            functionItemName = null;
         }
         FunctionItem partiallyAppliedFunction = new FunctionItem(
                 new FunctionIdentifier(functionItemName, partialApplicationParamNames.size()),
@@ -259,7 +272,8 @@ public class FunctionItemCallIterator extends ItemRuntimePlan
                 functionItem.getBodyIterator(),
                 localArgumentValues,
                 RDDArgumentValues,
-                DFArgumentValues);
+                DFArgumentValues,
+                functionItem.isBuiltinFunction());
         return new ConstantRuntimeIterator(
                 partiallyAppliedFunction,
                 staticContext.toBuilder()

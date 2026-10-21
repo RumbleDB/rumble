@@ -64,7 +64,7 @@ public class FunctionItem implements Item {
     private Map<Name, HomogeneousItemDataFrame> dataFrameVariablesInClosure;
 
     /**
-     * When true, this item was created for a builtin named function reference ({@code name#arity}).
+     * When true, this item has a builtin function body, including partial applications of builtin references.
      */
     private boolean isBuiltin;
 
