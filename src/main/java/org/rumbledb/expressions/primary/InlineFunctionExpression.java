@@ -22,7 +22,6 @@ import javax.annotation.Nullable;
 
 import lombok.Getter;
 import lombok.Setter;
-import lombok.experimental.Accessors;
 
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
@@ -70,9 +69,7 @@ public class InlineFunctionExpression extends Expression {
     private boolean hasExitStatement;
 
     // Whether the body contains a call marked by TailCallOptimizationVisitor.
-    @Getter
     @Setter
-    @Accessors(fluent = true)
     private boolean hasTailCalls;
 
     @Getter
@@ -266,5 +263,9 @@ public class InlineFunctionExpression extends Expression {
 
     public boolean hasExitStatement() {
         return this.hasExitStatement;
+    }
+
+    public boolean hasTailCalls() {
+        return this.hasTailCalls;
     }
 }
