@@ -22,7 +22,6 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.OurBadException;
@@ -32,6 +31,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.functions.FunctionCall;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
 import org.rumbledb.runtime.misc.CollationSupport;
@@ -161,9 +161,8 @@ public class SortFunctionIterator extends ItemRuntimePlan implements LocalRuntim
     private List<Item> invokeKeyFunction(FunctionItem functionItem, Item item, DynamicContext context) {
         List<ItemRuntimePlan> arguments = new ArrayList<>(1);
         arguments.add(new ConstantRuntimeIterator(item, localStaticContext()));
-        ItemRuntimePlan call = NamedFunctions.buildFunctionItemCallIterator(
-                functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
-        return materializeKeyIterator(call, context);
+        FunctionCall call = FunctionCall.of(functionItem, arguments, this.staticContext, context);
+        return materializeKeyIterator(call.plan(), call.context());
     }
 
     private List<Item> keyFromArrayLookup(Item keyArray, Item item, DynamicContext context) {

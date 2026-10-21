@@ -155,7 +155,18 @@ public final class DeclarationTranslation {
         List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
         AnnotationValidator.validateFunctionAnnotations(annotations);
         Name name = parseFunctionName.apply(ctx.functionName());
-        FunctionDeclarationValidator.validateFunctionName(name, translationContext.metadata(ctx.functionName()));
+        boolean xquery = "xquery31".equals(translationContext.moduleContext().getQueryLanguage());
+        String lexicalName = ctx.functionName().getText();
+        if (xquery
+                && translationContext.moduleContext().getDefaultFunctionNamespaceUri() == null
+                && lexicalName.indexOf(':') < 0
+                && !lexicalName.startsWith("Q{")) {
+            // XQuery's implicit default is fn, even though calls use Rumble's shared
+            // JSONiq convenience namespace for built-in function resolution.
+            name = new Name(Name.FN_NS, "", name.getLocalName());
+        }
+        FunctionDeclarationValidator.validateFunctionName(
+                name, xquery, translationContext.metadata(ctx.functionName()));
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         Map<Name, ExceptionMetadata> parameterMetadata = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
