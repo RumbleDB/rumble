@@ -79,7 +79,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
             // The result is a function item with the supplied arguments bound. For a tail call, the body of the
             // function evaluates it (see FunctionBodyIterator).
             return new IteratorLocalCursor<>(
-                    () -> List.<Item>of(FunctionItemCallIterator.createPartiallyAppliedFunction(
+                    () -> List.<Item>of(FunctionCall.partiallyApply(
                                     getFunction(context),
                                     this.convertedArguments,
                                     this.tailCallOptimizationCandidate,
@@ -100,7 +100,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
             throw new OurBadException(
                     "Unexpected program state reached. Partially applied function calls must be evaluated locally.");
         }
-        return FunctionItemCallIterator.createCallContext(function, this.convertedArguments, context);
+        return FunctionCall.createCallContext(function, this.convertedArguments, context);
     }
 
     @Override
@@ -133,7 +133,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
         if (!this.staticContext.isUpdating()) {
             return new PendingUpdateList();
         }
-        // As in FunctionItemCallIterator, updates come from the body: the return type conversion does not apply.
+        // Updates come from the body: the return type conversion does not apply.
         FunctionItem function = getFunction(context);
         DynamicContext contextForUpdates = new DynamicContext(createCallContext(function, context));
         contextForUpdates.setCurrentMutabilityLevel(context.getCurrentMutabilityLevel());
