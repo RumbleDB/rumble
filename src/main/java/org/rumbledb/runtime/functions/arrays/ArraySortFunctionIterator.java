@@ -23,7 +23,6 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -35,6 +34,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionCall;
 import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.misc.SortKeyComparison;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -195,9 +195,8 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         ItemRuntimePlan memberIterator = createSequenceIterator(memberSequence);
         List<ItemRuntimePlan> arguments = new ArrayList<>(1);
         arguments.add(memberIterator);
-        ItemRuntimePlan call = NamedFunctions.buildFunctionItemCallIterator(
-                functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
-        return materializeKeyIterator(call, context);
+        FunctionCall call = FunctionCall.of(functionItem, arguments, this.staticContext, context);
+        return materializeKeyIterator(call.plan(), call.context());
     }
 
     private List<Item> keyFromArrayLookup(Item keyArray, List<Item> memberSequence, DynamicContext context) {

@@ -354,24 +354,32 @@ public class ItemFactory {
         return createMapItem(List.of(onlyKey), List.of(onlyValue), ExceptionMetadata.EMPTY_METADATA, mutable);
     }
 
+    // These two do not set -1 on the values of an immutable map: that would visit every entry on each put or remove.
     public Item createMapItemRemovingKeys(Item original, List<Item> keysToRemove, boolean mutable) {
-        return withMutability(MapItem.from(original).without(keysToRemove), mutable);
+        Item result = MapItem.from(original).without(keysToRemove);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        }
+        return result;
     }
 
     public Item createMapItemAddingKey(Item original, Item keyToAdd, List<Item> valueToAdd, boolean mutable) {
-        return withMutability(MapItem.from(original).with(keyToAdd, valueToAdd), mutable);
+        Item result = MapItem.from(original).with(keyToAdd, valueToAdd);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        }
+        return result;
     }
 
     public Item createMapItem(
             List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
-        return withMutability(new MapItem(keys, values, itemMetadata), mutable);
-    }
-
-    private static Item withMutability(Item map, boolean mutable) {
+        Item result = new MapItem(keys, values, itemMetadata);
         if (mutable) {
-            map.setMutabilityLevel(0);
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
         }
-        return map;
+        return result;
     }
 
     public Item createXmlTextNode(Node currentNode) {

@@ -174,12 +174,9 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
         // Set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
         NamespaceFixupUtils.applyNamespaceFixup(elementItem);
-        // Set XML document position if this is the top-level runtime iterator
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            // This is the top-level runtime iterator - set XML document positions recursively
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            elementItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        elementItem.setXmlDocumentPosition(documentPath, 0);
         NodeConstructionUtils.initializeElement(elementItem, this.staticContext);
         return elementItem;
     }
