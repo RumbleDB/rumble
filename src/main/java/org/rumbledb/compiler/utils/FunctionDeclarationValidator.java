@@ -18,8 +18,10 @@ package org.rumbledb.compiler.utils;
 import java.util.Set;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidFunctionNamespaceException;
+import org.rumbledb.exceptions.SemanticException;
 
 /** Static validation shared by the JSONiq and XQuery function declaration translators. */
 public final class FunctionDeclarationValidator {
@@ -41,7 +43,17 @@ public final class FunctionDeclarationValidator {
      * See https://www.w3.org/TR/xquery-31/#FunctionDeclns for more information.
      */
     public static void validateFunctionName(Name name, ExceptionMetadata metadata) {
+        validateFunctionName(name, false, metadata);
+    }
+
+    public static void validateFunctionName(Name name, boolean xquery, ExceptionMetadata metadata) {
         String namespace = name.getNamespace();
+        if (xquery && (namespace == null || namespace.isEmpty())) {
+            throw new SemanticException(
+                    "An XQuery function declaration must have a non-empty namespace.",
+                    ErrorCode.EmptyFunctionNamespaceErrorCode,
+                    metadata);
+        }
         if (RESERVED_NAMESPACES.contains(namespace)) {
             throw new InvalidFunctionNamespaceException(
                     "Functions cannot be declared in the reserved namespace " + namespace + ".", metadata);

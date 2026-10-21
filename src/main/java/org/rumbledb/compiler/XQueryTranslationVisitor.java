@@ -148,6 +148,7 @@ import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -251,6 +252,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region module
     @Override
     public Module visitModule(XQueryParser.ModuleContext ctx) {
+        if (ctx.encoding != null) {
+            String encoding = processStringLiteral(ctx.encoding);
+            if (!encoding.matches("[A-Za-z][A-Za-z0-9._-]*")) {
+                throw new SemanticException(
+                        "Invalid encoding name: " + encoding,
+                        ErrorCode.InvalidEncodingNameErrorCode,
+                        createMetadataFromContext(ctx.encoding));
+            }
+        }
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             String version = processStringLiteral(ctx.vers).trim();
             if (version.equals("1.0")) {

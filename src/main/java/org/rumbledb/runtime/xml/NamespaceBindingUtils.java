@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidAttributeNameException;
 import org.rumbledb.exceptions.InvalidLexicalValueException;
@@ -349,7 +350,7 @@ public final class NamespaceBindingUtils {
     }
 
     /**
-     * Whitespace-collapsed lexical QName to expanded name (xs:QName cast / constructor).
+     * Whitespace-collapsed lexical QName to expanded node name.
      */
     public static Name parseLexicalQName(
             String lexical, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
@@ -358,6 +359,26 @@ public final class NamespaceBindingUtils {
             return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
         }
         return resolvePrefixedLexicalToName(split.prefix, split.local, namespaceResolver, metadata);
+    }
+
+    /** Parses xs:QName casts with their distinct lexical and namespace error codes. */
+    public static Name parseLexicalQNameForCast(
+            String lexical, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
+        LexicalQNameSplit split;
+        try {
+            split = splitAndValidateLexicalQName(lexical, metadata, true);
+        } catch (InvalidLexicalValueException e) {
+            throw new CastException(e.getJSONiqErrorMessage(), metadata);
+        }
+        if (split.prefix == null) {
+            return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
+        }
+        String uri = namespaceResolver.resolvePrefix(split.prefix);
+        if (uri == null) {
+            throw new NoNamespaceFoundForPrefixException(
+                    "No namespace binding for prefix \"" + split.prefix + "\".", metadata);
+        }
+        return new Name(uri, split.prefix, split.local);
     }
 
     /** Parses computed element names, including URI-qualified names with an explicit namespace. */
