@@ -63,6 +63,7 @@ public class FunctionItem implements Item {
     /**
      * The body plan with the conversion of its result to the declared return type, built on the first call and shared
      * by all calls of this function. It is derived from the signature and the body plan, so it is not serialized.
+     * Concurrent first calls may each build it; the plans are immutable and equivalent, so either can be kept.
      */
     private transient ItemRuntimePlan calleePlan;
 

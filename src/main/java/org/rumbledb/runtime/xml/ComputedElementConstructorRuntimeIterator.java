@@ -174,12 +174,9 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
         // Set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
         NamespaceFixupUtils.applyNamespaceFixup(elementItem);
-        // Set XML document position if this is the top-level runtime iterator
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            // This is the top-level runtime iterator - set XML document positions recursively
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            elementItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        elementItem.setXmlDocumentPosition(documentPath, 0);
         NodeConstructionUtils.initializeElement(elementItem, this.staticContext);
         return elementItem;
     }
@@ -193,7 +190,8 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
     private ProcessedContent processContentExpression(List<Item> rawContentSequence) {
         // 1. If the content sequence contains a document node, the document node is replaced in the content
         // sequence by its children.
-        List<Item> expandedContentSequence = expandDocumentNodes(rawContentSequence);
+        List<Item> expandedContentSequence =
+                expandDocumentNodes(XmlConstructorContentUtils.normalizeContent(rawContentSequence));
 
         // 3. If the content sequence contains an attribute node or a namespace node following a node that is not an
         // attribute node or a namespace node, a type error is raised [err:XQTY0024].

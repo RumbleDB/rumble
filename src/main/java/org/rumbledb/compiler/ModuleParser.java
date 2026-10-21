@@ -86,7 +86,7 @@ final class ModuleParser {
     }
 
     private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
-        if (query.contains("xquery version")) {
+        if (query.contains("xquery version") || query.contains("xquery encoding")) {
             return true;
         }
         if (query.contains("jsoniq version")) {

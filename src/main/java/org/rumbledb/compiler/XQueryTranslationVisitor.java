@@ -23,6 +23,7 @@ import java.util.List;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import lombok.extern.log4j.Log4j2;
@@ -147,6 +148,7 @@ import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -223,6 +225,13 @@ import org.rumbledb.types.SequenceType;
 @Log4j2
 public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
+    /**
+     * Token types that can begin a relativePathExpr (e.g. "*", "<", any name or keyword), read from the generated
+     * parser's ATN so the set follows the grammar. Used by {@link #checkLeadingLoneSlash}.
+     */
+    private static final IntervalSet RELATIVE_PATH_START_TOKENS =
+            XQueryParser._ATN.nextTokens(XQueryParser._ATN.ruleToStartState[XQueryParser.RULE_relativePathExpr]);
+
     private final CommonTokenStream xQueryTokenStream;
     private final TranslationContext translationContext;
 
@@ -243,6 +252,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region module
     @Override
     public Module visitModule(XQueryParser.ModuleContext ctx) {
+        if (ctx.encoding != null) {
+            String encoding = processStringLiteral(ctx.encoding);
+            if (!encoding.matches("[A-Za-z][A-Za-z0-9._-]*")) {
+                throw new SemanticException(
+                        "Invalid encoding name: " + encoding,
+                        ErrorCode.InvalidEncodingNameErrorCode,
+                        createMetadataFromContext(ctx.encoding));
+            }
+        }
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             String version = processStringLiteral(ctx.vers).trim();
             if (version.equals("1.0")) {
@@ -490,14 +508,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     /** Adapts the XQuery QName grammar to the shared role-aware resolver. */
     public Name parseName(XQueryParser.QnameContext ctx, NameRole role) {
-        return this.translationContext
-                .names()
-                .resolveQName(
-                        ctx.FullQName() == null ? null : ctx.FullQName().getText(),
-                        ctx.ns == null ? null : ctx.ns.getText(),
-                        ctx.local_name == null ? null : ctx.local_name.getText(),
-                        role,
-                        createMetadataFromContext(ctx));
+        return this.translationContext.names().resolveEQName(ctx.getText(), role, createMetadataFromContext(ctx));
     }
 
     // endregion
@@ -1331,7 +1342,27 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Expression visitPathExpr(XQueryParser.PathExprContext ctx) {
+        if (ctx.SLASH() != null && ctx.singleslash == null) {
+            checkLeadingLoneSlash(ctx);
+        }
         return XmlPathTranslation.pathExpr(PathExprContext.from(ctx), this.translationContext, this::visitStepExpr);
+    }
+
+    /**
+     * Enforces xgc: leading-lone-slash, which the grammar cannot express: ANTLR would otherwise read
+     * {@code / * 5} as {@code (/) * 5} instead of rejecting it.
+     */
+    private void checkLeadingLoneSlash(XQueryParser.PathExprContext ctx) {
+        int index = ctx.getStop().getTokenIndex() + 1;
+        Token next = this.xQueryTokenStream.get(index);
+        while (next.getChannel() != Token.DEFAULT_CHANNEL) {
+            next = this.xQueryTokenStream.get(++index);
+        }
+        if (RELATIVE_PATH_START_TOKENS.contains(next.getType())) {
+            throw new ParsingException(
+                    "A leading lone slash cannot be followed by a token that starts a relative path.",
+                    createMetadataFromContext(ctx));
+        }
     }
 
     @Override

@@ -866,7 +866,7 @@ eqName
 
 qname
    : FullQName
-   | (ns = ncName COLON)? local_name = ncName
+   | ncName
    ;
 
 ncName

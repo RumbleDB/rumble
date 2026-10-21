@@ -545,14 +545,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     /** Adapts the JSONiq QName grammar to the shared role-aware resolver. */
     public Name parseName(JsoniqParser.QnameContext ctx, NameRole role) {
-        return this.translationContext
-                .names()
-                .resolveQName(
-                        ctx.FullQName() == null ? null : ctx.FullQName().getText(),
-                        ctx.ns == null ? null : ctx.ns.getText(),
-                        ctx.local_name == null ? null : ctx.local_name.getText(),
-                        role,
-                        createMetadataFromContext(ctx));
+        return this.translationContext.names().resolveEQName(ctx.getText(), role, createMetadataFromContext(ctx));
+    }
+
+    /** Resolves a direct-constructor name, validated by {@link #validateDirectConstructorName}. */
+    private Name parseName(JsoniqParser.DirectConstructorQNameContext ctx, NameRole role) {
+        return this.translationContext.names().resolveEQName(ctx.getText(), role, createMetadataFromContext(ctx));
     }
 
     private TypeDeclaration processTypeDecl(JsoniqParser.TypeDeclContext ctx) {
@@ -1205,6 +1203,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Expression visitDirectConstructor(JsoniqParser.DirectConstructorContext ctx) {
+        if (ctx.open_tag_name != null) {
+            validateDirectConstructorName(ctx.open_tag_name);
+            ctx.attributes.attribute_qname.forEach(this::validateDirectConstructorName);
+            if (ctx.open_close != null) {
+                validateDirectConstructorName(ctx.open_close.close_tag_name);
+            }
+        }
         return XmlDirectConstructorTranslation.directConstructor(
                 DirectConstructorContext.from(ctx),
                 this.jsoniqTokenStream,
@@ -1212,6 +1217,21 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 this::parseName,
                 this::visitDirElemContent,
                 this::visitExpr);
+    }
+
+    /**
+     * A direct-constructor name is assembled from adjacent tokens, which contribute name characters, dots, colons,
+     * "-" and "+" (from an exponent). Check that the result is a QName.
+     */
+    private void validateDirectConstructorName(JsoniqParser.DirectConstructorQNameContext ctx) {
+        String name = ctx.getText();
+        String localName = name.substring(name.indexOf(':') + 1);
+        if (name.indexOf('+') >= 0
+                || localName.indexOf(':') >= 0
+                || localName.isEmpty()
+                || ".-0123456789".indexOf(localName.charAt(0)) >= 0) {
+            throw new ParsingException("Invalid name in a direct constructor: " + name, createMetadataFromContext(ctx));
+        }
     }
 
     @Override

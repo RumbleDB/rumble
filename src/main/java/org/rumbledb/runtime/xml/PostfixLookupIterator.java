@@ -158,23 +158,12 @@ public class PostfixLookupIterator extends ItemRuntimePlan implements LocalRunti
                 }
                 return results;
             }
-            for (Item key : keys) {
-                if (key.isAtomic() && !key.isNumeric()) {
-                    throw new UnexpectedTypeException(
-                            "Invalid array lookup key type: " + key.getDynamicType(), staticContext.getMetadata());
-                }
-                if (key.isNumeric()) {
-                    if (!key.isInteger()) {
-                        throw new UnexpectedTypeException(
-                                "Array lookup key must be an integer; got " + key.getDynamicType(),
-                                staticContext.getMetadata());
-                    }
-                    int index = ArrayIndexUtils.getZeroBasedPosition(key, item.getSize(), staticContext.getMetadata());
-                    if (item.isArrayOfItems()) {
-                        results.add(item.getItemAt(index));
-                    } else {
-                        results.addAll(item.getSequenceAt(index));
-                    }
+            for (Item key : ArrayIndexUtils.atomizeLookupKeys(keys, staticContext.getMetadata())) {
+                int index = ArrayIndexUtils.getZeroBasedPosition(key, item.getSize(), staticContext.getMetadata());
+                if (item.isArrayOfItems()) {
+                    results.add(item.getItemAt(index));
+                } else {
+                    results.addAll(item.getSequenceAt(index));
                 }
             }
             return results;
