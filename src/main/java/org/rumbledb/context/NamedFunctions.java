@@ -60,26 +60,6 @@ public class NamedFunctions implements Serializable {
     }
 
     /**
-     * Callee execution mode is taken from {@code callerRuntimeContext.getExecutionMode()}.
-     */
-    public ItemRuntimePlan getUserDefinedFunctionCallIterator(
-            FunctionIdentifier identifier,
-            RuntimeStaticContext callerRuntimeContext,
-            List<? extends ItemRuntimePlan> arguments,
-            boolean isTailOptimization) {
-        if (checkUserDefinedFunctionExists(identifier)) {
-            return buildFunctionItemCallIterator(
-                    this.userDefinedFunctions.get(identifier),
-                    callerRuntimeContext,
-                    callerRuntimeContext.getExecutionMode(),
-                    arguments,
-                    isTailOptimization);
-        }
-        throw new UnknownFunctionCallException(
-                identifier.getName(), identifier.getArity(), callerRuntimeContext.getMetadata());
-    }
-
-    /**
      * Builds a dynamic function-item call using configuration and metadata from {@code callerRuntimeContext} and the
      * callee's {@code executionModeForFunctionCall}
      */
@@ -160,6 +140,19 @@ public class NamedFunctions implements Serializable {
 
     public boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
         return this.userDefinedFunctions.containsKey(identifier);
+    }
+
+    /**
+     * Returns the registered function item itself, shared by all calls, which must not change it. Unlike
+     * {@link #getUserDefinedFunction}, which copies it for function references, it is used for calls, which only read
+     * the function item.
+     */
+    public FunctionItem getSharedUserDefinedFunction(FunctionIdentifier identifier, ExceptionMetadata metadata) {
+        FunctionItem functionItem = this.userDefinedFunctions.get(identifier);
+        if (functionItem == null) {
+            throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
+        }
+        return functionItem;
     }
 
     public FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
