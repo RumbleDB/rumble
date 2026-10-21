@@ -89,7 +89,10 @@ public final class ModuleImportLoader {
                                     .toString())
                             .toList());
         }
-        List<String> candidates = session.locations.getOrDefault(normalizedNamespace, List.of(normalizedNamespace));
+        // Explicit hints belong to this import; cached hints only supply locations for hintless back edges.
+        List<String> candidates = locationHints.isEmpty()
+                ? session.locations.getOrDefault(normalizedNamespace, List.of(normalizedNamespace))
+                : locationHints;
         Exception lastFailure = null;
         List<LibraryModule> loaded = new ArrayList<>();
         for (String candidate : candidates) {

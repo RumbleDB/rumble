@@ -522,10 +522,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 sourceContext.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes());
                 visit(declaration, sourceContext);
                 argument.importModuleContext(sourceContext);
+                argument.getInScopeSchemaTypes().importModuleTypes(sourceContext.getInScopeSchemaTypes());
             }
-            // Function signatures must be visible throughout a mutually recursive group.
+            // Function signatures and types must be visible throughout a mutually recursive group.
             for (StaticContext sourceContext : prolog.getSourceModuleContexts().values()) {
                 sourceContext.importModuleContext(argument);
+                sourceContext.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes());
             }
         }
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
