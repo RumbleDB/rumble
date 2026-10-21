@@ -34,8 +34,6 @@ public class ConstantRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
         this.item = item;
     }
 
-    // Only for reuse as a cached argument iterator; call only while closed.
-
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return this.item;
