@@ -351,64 +351,29 @@ public class ItemFactory {
     }
 
     public Item createMapItem(Item onlyKey, List<Item> onlyValue, boolean mutable) {
-        if (!mutable) {
-            return new MapEntryItem(onlyKey, onlyValue);
-        }
-        List<Item> keys = List.of(onlyKey);
-        List<List<Item>> values = List.of(onlyValue);
-        return new MapItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+        return createMapItem(List.of(onlyKey), List.of(onlyValue), ExceptionMetadata.EMPTY_METADATA, mutable);
     }
 
-    public Item createMapItemRemovingKeys(Item original, List<Item> keysToRemove) {
-        original = rebaseDeepMapOverlay(original);
-        return new MapWithRemovedEntryItem(original, keysToRemove);
-    }
-
-    public Item createMapItemAddingKey(Item original, Item keyToAdd, List<Item> valueToAdd) {
-        original = rebaseDeepMapOverlay(original);
-        return new MapWithAdditionalEntryItem(original, keyToAdd, valueToAdd);
-    }
-
-    static int getMapOverlayChainLength(Item item) {
-        if (item instanceof MapWithAdditionalEntryItem additionalEntry) {
-            return additionalEntry.getOverlayChainLength();
-        }
-        if (item instanceof MapWithRemovedEntryItem removedEntry) {
-            return removedEntry.getOverlayChainLength();
-        }
-        return 0;
-    }
-
-    private Item rebaseDeepMapOverlay(Item original) {
-        if (getMapOverlayChainLength(original) < MapWithAdditionalEntryItem.MAX_OVERLAY_CHAIN_LENGTH) {
-            return original;
-        }
-        return createMapItem(
-                original.getItemKeys(), original.getSequenceValues(), ExceptionMetadata.EMPTY_METADATA, false);
-    }
-
-    public Item createMapItem(
-            List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
-        if (!mutable && keys.size() == 1) {
-            Item key = keys.get(0);
-            return new MapEntryItem(key, values.get(0));
-        }
-        Item result = new MapItem(keys, values, itemMetadata);
+    // These two do not set -1 on the values of an immutable map: that would visit every entry on each put or remove.
+    public Item createMapItemRemovingKeys(Item original, List<Item> keysToRemove, boolean mutable) {
+        Item result = MapItem.from(original).without(keysToRemove);
         if (mutable) {
             result.setMutabilityLevel(0);
-        } else {
-            result.setMutabilityLevel(-1);
         }
         return result;
     }
 
-    public Item createMapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata itemMetadata, boolean mutable) {
-        if (!mutable && keyValuePairs.size() == 1) {
-            Item key = keyValuePairs.keySet().iterator().next();
-            List<Item> values = keyValuePairs.get(key);
-            return new MapEntryItem(key, values);
+    public Item createMapItemAddingKey(Item original, Item keyToAdd, List<Item> valueToAdd, boolean mutable) {
+        Item result = MapItem.from(original).with(keyToAdd, valueToAdd);
+        if (mutable) {
+            result.setMutabilityLevel(0);
         }
-        Item result = new MapItem(keyValuePairs, itemMetadata);
+        return result;
+    }
+
+    public Item createMapItem(
+            List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
+        Item result = new MapItem(keys, values, itemMetadata);
         if (mutable) {
             result.setMutabilityLevel(0);
         } else {

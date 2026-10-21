@@ -1229,6 +1229,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(
                     identifier,
                     arguments,
+                    expression.getStaticContext().getFunctionSignature(identifier),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isTailCallOptimization());
         }
