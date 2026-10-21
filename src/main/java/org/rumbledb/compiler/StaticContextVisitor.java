@@ -139,16 +139,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
+        String key = libraryModule.getModuleGroupKey();
+        if (!this.importedModuleContexts.containsKey(key)) {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
-            this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
+            this.importedModuleContexts.put(key, moduleContext);
         }
-        argument.importModuleContext(this.importedModuleContexts.get(libraryModule.getNamespace()));
+        argument.importModuleContext(this.importedModuleContexts.get(key));
         argument.getInScopeSchemaTypes()
-                .importModuleTypes(this.importedModuleContexts
-                        .get(libraryModule.getNamespace())
-                        .getInScopeSchemaTypes());
+                .importModuleTypes(this.importedModuleContexts.get(key).getInScopeSchemaTypes());
         return argument;
     }
 
@@ -518,8 +517,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 visit(imported, argument);
             }
             for (Node declaration : prolog.getDeclarations()) {
-                StaticContext sourceContext = prolog.getSourceModuleContexts()
-                        .getOrDefault(declaration.getMetadata().getLocation(), argument);
+                StaticContext sourceContext = prolog.getSourceModuleContexts().getOrDefault(declaration, argument);
                 sourceContext.importModuleContext(argument);
                 sourceContext.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes());
                 visit(declaration, sourceContext);

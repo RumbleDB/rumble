@@ -84,7 +84,9 @@ final class ModuleImportGraph {
                 for (LibraryModule member : members) {
                     prolog.getDeclarations().addAll(member.getProlog().getDeclarations());
                     prolog.getSchemaImports().addAll(member.getProlog().getSchemaImports());
-                    prolog.getSourceModuleContexts().put(member.getMetadata().getLocation(), member.getStaticContext());
+                    for (var declaration : member.getProlog().getDeclarations()) {
+                        prolog.getSourceModuleContexts().put(declaration, member.getStaticContext());
+                    }
                 }
                 representative = new LibraryModule(prolog, first.getNamespace(), first.getMetadata());
                 representative.setStaticContext(first.getStaticContext());

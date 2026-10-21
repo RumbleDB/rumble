@@ -25,7 +25,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 
 /**
- * Removes duplicate declarations while retaining import visibility for shared modules.
+ * Keeps one copy of each module's declarations while retaining every import's context bindings.
  *
  */
 public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
@@ -54,12 +54,10 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
         var imports = prolog.getImportedModules().listIterator();
         while (imports.hasNext()) {
             LibraryModule module = imports.next();
-            String key = module.getProlog().getModuleGroupKey();
-            if (key == null) {
-                key = module.getMetadata().getLocation();
-            }
+            String key = module.getModuleGroupKey();
             if (!this.visitedModules.add(key)) {
-                // Keep the import visible to this module without revisiting shared declarations.
+                // The importer still needs the cached module context even though its
+                // declarations have already been visited through another import.
                 Prolog referenceProlog = new Prolog(
                         List.of(), List.of(), List.of(), module.getProlog().getMetadata());
                 referenceProlog.setModuleGroupKey(key);

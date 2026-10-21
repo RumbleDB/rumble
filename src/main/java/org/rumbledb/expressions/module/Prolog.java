@@ -41,7 +41,7 @@ public class Prolog extends Node {
     private final List<SchemaImport> schemaImports;
 
     // Cyclic import groups retain each declaration's original module settings.
-    private final Map<String, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
+    private final Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
 
     @Setter
     private String moduleGroupKey;
