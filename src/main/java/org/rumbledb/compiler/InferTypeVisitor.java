@@ -2553,6 +2553,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         FunctionSignature signature = type.getSignature();
         List<SequenceType> actualParameterTypes = new ArrayList<>();
         List<SequenceType> formalParameterTypes = signature.getParameterTypes();
+        if (formalParameterTypes.size() != expression.getArguments().size()) {
+            throwStaticTypeException(
+                    "The arguments of a dynamic function call have the wrong arity.", expression.getMetadata());
+            // With optional static typing disabled, an unreachable branch may still have
+            // a mismatched signature. Leave enforcement to the runtime call if it is evaluated.
+            return SequenceType.createSequenceType("item*");
+        }
         List<SequenceType> partialFormalParameterTypes = new ArrayList<>();
         boolean isPartialApplication = false;
         int i = 0;

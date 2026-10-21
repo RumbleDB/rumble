@@ -939,7 +939,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitDynamicFunctionCallExpression(
             DynamicFunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        if (expression.getArguments().size() == 0) {
+        if (expression.getArguments().isEmpty() || expression.getArguments().contains(null)) {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
             return argument;
         }

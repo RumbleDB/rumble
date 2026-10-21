@@ -157,8 +157,10 @@ public class NamedFunctions implements Serializable {
                 .executionMode(callerStaticContext.getExecutionMode())
                 .build();
 
-        if (!"format-number".equals(identifier.getName().getLocalName())) {
-            // Remove decimal formats definition from the context
+        if (!"format-number".equals(identifier.getName().getLocalName())
+                && !"function-lookup".equals(identifier.getName().getLocalName())) {
+            // function-lookup must retain decimal formats for references to format-number.
+            // Other builtins do not need these definitions.
             delegateContext = delegateContext.toBuilder()
                     .decimalFormats(null)
                     .defaultDecimalFormat(null)

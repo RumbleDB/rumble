@@ -73,7 +73,7 @@ public class FunctionItem implements Item {
     private Map<Name, HomogeneousItemDataFrame> dataFrameVariablesInClosure;
 
     /**
-     * When true, this item was created for a builtin named function reference ({@code name#arity}).
+     * When true, this item has a builtin function body, including partial applications of builtin references.
      */
     private boolean isBuiltin;
 
@@ -366,18 +366,10 @@ public class FunctionItem implements Item {
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
-        for (Name variable : dynamicContext.getVariableValues().getLocalVariableNames()) {
-            this.localVariablesInClosure.put(
-                    variable, dynamicContext.getVariableValues().getLocalVariableValue(variable, metadata));
-        }
-        for (Name variable : dynamicContext.getVariableValues().getRDDVariableNames()) {
-            this.RDDVariablesInClosure.put(
-                    variable, dynamicContext.getVariableValues().getRDDVariableValue(variable, metadata));
-        }
-        for (Name variable : dynamicContext.getVariableValues().getDataFrameVariableNames()) {
-            this.dataFrameVariablesInClosure.put(
-                    variable, dynamicContext.getVariableValues().getDataFrameVariableValue(variable, metadata));
-        }
+        dynamicContext
+                .getVariableValues()
+                .populateClosure(
+                        this.localVariablesInClosure, this.RDDVariablesInClosure, this.dataFrameVariablesInClosure);
     }
 
     @Override

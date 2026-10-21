@@ -304,6 +304,20 @@ public class BuiltinFunctionCatalogue {
     }
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, String queryLanguage) {
+        Name name = identifier.getName();
+        if (name.getLocalName().equals("concat")
+                && identifier.getArity() >= 2
+                && (Name.FN_NS.equals(name.getNamespace())
+                        || Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(name.getNamespace()))) {
+            return new BuiltinFunction(
+                    new FunctionIdentifier(new Name(Name.FN_NS, name.getPrefix(), "concat"), identifier.getArity()),
+                    new FunctionSignature(
+                            Collections.nCopies(
+                                    identifier.getArity(), SequenceType.createSequenceType("anyAtomicType?")),
+                            SequenceType.createSequenceType("string")),
+                    ConcatFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+        }
         if (builtinFunctions.containsKey(identifier)) {
             return forQueryLanguage(builtinFunctions.get(identifier), queryLanguage);
         }
