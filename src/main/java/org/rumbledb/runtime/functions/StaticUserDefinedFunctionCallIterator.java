@@ -51,7 +51,6 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
     // parametrized fields
     private final FunctionIdentifier functionIdentifier;
-    private final List<ItemRuntimePlan> functionArguments;
     private final boolean tailCallOptimizationCandidate;
     // The arguments converted to the declared parameter types, with null for the placeholders of a partial
     // application. A call then only looks up the function, instead of building a call plan for every call.
@@ -66,7 +65,6 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
             boolean tailCallOptimization) {
         super(List.of(), staticContext);
         this.functionIdentifier = functionIdentifier;
-        this.functionArguments = functionArguments;
         this.tailCallOptimizationCandidate = tailCallOptimization;
         this.isPartialApplication = functionArguments.contains(null);
         List<ItemRuntimePlan> convertedArguments = new ArrayList<>(functionArguments);
@@ -94,7 +92,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     }
 
     private FunctionItem getFunction(DynamicContext context) {
-        return context.getNamedFunctions().getUserDefinedFunctionToCall(this.functionIdentifier, getMetadata());
+        return context.getNamedFunctions().getSharedUserDefinedFunction(this.functionIdentifier, getMetadata());
     }
 
     private DynamicContext createCallContext(FunctionItem function, DynamicContext context) {
@@ -121,7 +119,7 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>(super.getVariableDependencies());
-        for (ItemRuntimePlan iterator : this.functionArguments) {
+        for (ItemRuntimePlan iterator : this.convertedArguments) {
             if (iterator == null) {
                 continue;
             }

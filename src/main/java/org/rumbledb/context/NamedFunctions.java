@@ -143,10 +143,11 @@ public class NamedFunctions implements Serializable {
     }
 
     /**
-     * Returns the user-defined function for a call. Unlike {@link #getUserDefinedFunction}, which is used for function
-     * references, it does not copy the function item, since a call does not change it.
+     * Returns the registered function item itself, shared by all calls, which must not change it. Unlike
+     * {@link #getUserDefinedFunction}, which copies it for function references, it is used for calls, which only read
+     * the function item.
      */
-    public FunctionItem getUserDefinedFunctionToCall(FunctionIdentifier identifier, ExceptionMetadata metadata) {
+    public FunctionItem getSharedUserDefinedFunction(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         FunctionItem functionItem = this.userDefinedFunctions.get(identifier);
         if (functionItem == null) {
             throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
