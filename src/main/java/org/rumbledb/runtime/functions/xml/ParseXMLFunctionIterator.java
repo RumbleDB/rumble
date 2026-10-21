@@ -46,11 +46,13 @@ public class ParseXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
         Document xmlDocument = XmlParsingUtils.parseDocument(
                 arg.getStringValue(), this.staticContext.getStaticURI(), "the argument of fn:parse-xml", getMetadata());
+        // XQuery retains parsed whitespace; preserve JSONiq's existing whitespace handling.
+        String queryLanguage = this.staticContext.getQueryLanguage();
         DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                 xmlDocument,
                 XMLDocumentPosition.generateConstructedTreePath(),
                 context.getRumbleConfiguration().optimization().optimizeParentPointers(),
-                true);
+                queryLanguage != null && queryLanguage.startsWith("xquery"));
         documentItem.setConstructionBaseUri(this.staticContext.getStaticURI());
         return documentItem;
     }

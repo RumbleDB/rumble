@@ -61,11 +61,13 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             source.setSystemId(resource.getSystemId().toString());
             Document xmlDocument = XmlParsingUtils.parseResource(
                     source, uri.toString(), "XML document \"" + uri + "\" for fn:doc()", getMetadata());
+            // XQuery retains parsed whitespace; preserve JSONiq's existing whitespace handling.
+            String queryLanguage = this.staticContext.getQueryLanguage();
             DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                     xmlDocument,
                     uri.toString(),
                     context.getRumbleConfiguration().optimization().optimizeParentPointers(),
-                    true);
+                    queryLanguage != null && queryLanguage.startsWith("xquery"));
             documentItem.setConstructionBaseUri(uri);
             return documentItem;
         } catch (IOException e) {
