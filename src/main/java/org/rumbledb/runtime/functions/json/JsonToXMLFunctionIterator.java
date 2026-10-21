@@ -35,17 +35,17 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.exceptions.InvalidOptionException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.ConstantRuntimeIterator;
-import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
-import org.rumbledb.types.SequenceType;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 import org.rumbledb.xml.schema.XmlSchemaValidator;
 
@@ -267,8 +267,7 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return new InvalidJSONException("fn:json-to-xml: " + message, getMetadata());
     }
 
-    private static void addEscapedAttribute(
-            List<Item> attributes, String name, String value, ParseOptions options) {
+    private static void addEscapedAttribute(List<Item> attributes, String name, String value, ParseOptions options) {
         if (options.escape() && value.indexOf('\\') >= 0) {
             attributes.add(ItemFactory.getInstance().createXmlAttributeNode(new Name(null, null, name), "true"));
         }
@@ -276,11 +275,13 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     private String convertString(String text, ParseOptions options) {
         StringBuilder result = new StringBuilder(text.length());
-        for (int i = 0; i < text.length();) {
+        for (int i = 0; i < text.length(); ) {
             int codePoint = text.codePointAt(i);
             if (options.escape()
-                    && (codePoint <= 0x1F || (codePoint >= 0x7F && codePoint <= 0x9F)
-                        || codePoint == '\\' || !isValidXmlCodePoint(codePoint))) {
+                    && (codePoint <= 0x1F
+                            || (codePoint >= 0x7F && codePoint <= 0x9F)
+                            || codePoint == '\\'
+                            || !isValidXmlCodePoint(codePoint))) {
                 result.append(escapeCodePoint(codePoint));
             } else if (isValidXmlCodePoint(codePoint)) {
                 result.appendCodePoint(codePoint);
