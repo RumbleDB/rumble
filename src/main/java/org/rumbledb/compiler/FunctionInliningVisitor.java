@@ -17,6 +17,7 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.rumbledb.context.Name;
@@ -49,7 +50,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
         for (var module : prolog.getImportedModules()) {
             if (module.getProlog().getFunctionDeclarations().contains(target)) {
                 return module.getStaticContext().isConstructionPreserve() != this.constructionPreserve
-                        || !java.util.Objects.equals(module.getStaticContext().getStaticBaseURI(), this.staticBaseUri);
+                        || !Objects.equals(module.getStaticContext().getStaticBaseURI(), this.staticBaseUri);
             }
             if (hasDifferentModuleContext(module.getProlog(), target)) {
                 return true;
