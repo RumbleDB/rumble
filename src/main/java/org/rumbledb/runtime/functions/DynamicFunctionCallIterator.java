@@ -155,7 +155,9 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
         }
         ExecutionMode calleeExecutionMode =
                 FunctionCall.calleeExecutionMode(functionItem, functionArguments, partialApplication, staticContext);
-        if (calleeExecutionMode.equals(ExecutionMode.LOCAL) && callerExecutionMode.equals(ExecutionMode.DATAFRAME)) {
+        if (calleeExecutionMode.equals(ExecutionMode.LOCAL)
+                && callerExecutionMode.equals(ExecutionMode.DATAFRAME)
+                && !(functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator)) {
             throw new OurBadException(
                     "Execution mode mismatch in dynamic function call. At this point, Rumble only supports higher-order functions "
                             + "that are either machine learning models or estimators (which process validated and structured sequences of objects at any scale), or that take and return just one item at a time.",

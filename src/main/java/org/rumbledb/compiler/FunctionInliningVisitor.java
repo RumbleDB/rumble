@@ -17,6 +17,7 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 import org.rumbledb.context.Name;
@@ -43,13 +44,15 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
     private Prolog prolog;
     private boolean constructionPreserve;
+    private java.net.URI staticBaseUri;
 
-    private boolean hasDifferentConstructionMode(Prolog prolog, FunctionDeclaration target) {
+    private boolean hasDifferentModuleContext(Prolog prolog, FunctionDeclaration target) {
         for (var module : prolog.getImportedModules()) {
             if (module.getProlog().getFunctionDeclarations().contains(target)) {
-                return module.getStaticContext().isConstructionPreserve() != this.constructionPreserve;
+                return module.getStaticContext().isConstructionPreserve() != this.constructionPreserve
+                        || !Objects.equals(module.getStaticContext().getStaticBaseURI(), this.staticBaseUri);
             }
-            if (hasDifferentConstructionMode(module.getProlog(), target)) {
+            if (hasDifferentModuleContext(module.getProlog(), target)) {
                 return true;
             }
         }
@@ -97,6 +100,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
         this.prolog = mainModule.getProlog();
         if (mainModule.getStaticContext() != null) {
             this.constructionPreserve = mainModule.getStaticContext().isConstructionPreserve();
+            this.staticBaseUri = mainModule.getStaticContext().getStaticBaseURI();
         }
         MainModule result = new MainModule(
                 mainModule.getProlog(),
@@ -133,8 +137,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 getFunctionDeclarationFromProlog(this.prolog, expression.getFunctionIdentifier());
         if (expression.isPartialApplication()
                 || targetFunction == null
-                // Rebuilding an inlined body in the caller's context would change its constructor semantics.
-                || hasDifferentConstructionMode(this.prolog, targetFunction)
+                // Rebuilding an imported body in the caller's context can change its constructors and static base URI.
+                || hasDifferentModuleContext(this.prolog, targetFunction)
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
                 || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {

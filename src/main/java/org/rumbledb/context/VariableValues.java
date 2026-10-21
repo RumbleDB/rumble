@@ -111,6 +111,29 @@ public class VariableValues implements Serializable {
         }
     }
 
+    /** Captures visible bindings, allowing inner scopes to shadow outer bindings of any representation. */
+    public void populateClosure(
+            Map<Name, List<Item>> local, Map<Name, JavaRDD<Item>> rdd, Map<Name, HomogeneousItemDataFrame> dataFrames) {
+        if (this.parent != null) {
+            this.parent.populateClosure(local, rdd, dataFrames);
+        }
+        this.localVariableValues.forEach((name, value) -> {
+            rdd.remove(name);
+            dataFrames.remove(name);
+            local.put(name, value == null ? null : new java.util.ArrayList<>(value));
+        });
+        this.rddVariableValues.forEach((name, value) -> {
+            local.remove(name);
+            dataFrames.remove(name);
+            rdd.put(name, value);
+        });
+        this.dataFrameVariableValues.forEach((name, value) -> {
+            local.remove(name);
+            rdd.remove(name);
+            dataFrames.put(name, value);
+        });
+    }
+
     public Set<Name> getLocalVariableNames() {
         return this.localVariableValues.keySet();
     }
