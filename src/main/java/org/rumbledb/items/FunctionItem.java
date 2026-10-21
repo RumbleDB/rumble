@@ -331,8 +331,10 @@ public class FunctionItem implements Item {
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
-        dynamicContext.getVariableValues().populateClosure(
-                this.localVariablesInClosure, this.RDDVariablesInClosure, this.dataFrameVariablesInClosure);
+        dynamicContext
+                .getVariableValues()
+                .populateClosure(
+                        this.localVariablesInClosure, this.RDDVariablesInClosure, this.dataFrameVariablesInClosure);
     }
 
     @Override

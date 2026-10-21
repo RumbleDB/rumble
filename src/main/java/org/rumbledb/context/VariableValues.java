@@ -113,9 +113,7 @@ public class VariableValues implements Serializable {
 
     /** Captures visible bindings, allowing inner scopes to shadow outer bindings of any representation. */
     public void populateClosure(
-            Map<Name, List<Item>> local,
-            Map<Name, JavaRDD<Item>> rdd,
-            Map<Name, HomogeneousItemDataFrame> dataFrames) {
+            Map<Name, List<Item>> local, Map<Name, JavaRDD<Item>> rdd, Map<Name, HomogeneousItemDataFrame> dataFrames) {
         if (this.parent != null) {
             this.parent.populateClosure(local, rdd, dataFrames);
         }

@@ -21,16 +21,13 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.ConstructorFunctionResolver.ResolvedConstructor;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.functions.BuiltinNamedFunctionReferenceMarkerIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -86,8 +83,14 @@ public final class FunctionItemFactory {
                 .build();
         List<ItemRuntimePlan> parameters = new ArrayList<>();
         for (int i = 0; i < arity; i++) {
-            parameters.add(new VariableReferenceIterator(paramNames.get(i), bodyContext.toBuilder()
-                    .staticType(builtinFunction.getSignature().getParameterTypes().get(i)).build()));
+            parameters.add(new VariableReferenceIterator(
+                    paramNames.get(i),
+                    bodyContext.toBuilder()
+                            .staticType(builtinFunction
+                                    .getSignature()
+                                    .getParameterTypes()
+                                    .get(i))
+                            .build()));
         }
         ItemRuntimePlan body = org.rumbledb.context.NamedFunctions.getBuiltInFunctionIterator(
                 identifier, parameters, bodyContext, true);
