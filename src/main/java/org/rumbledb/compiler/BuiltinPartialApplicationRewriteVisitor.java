@@ -27,7 +27,6 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -130,12 +129,5 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
                 .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
                 .collect(Collectors.toList());
         return rewriteBuiltinPartialApplication(expression.getFunctionName(), builtin, arguments, expression);
-    }
-
-    @Override
-    public Node visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, Node argument) {
-        // Runtime partial application validates the referenced arity and captures supplied
-        // arguments immediately, retaining the function's original static and dynamic contexts.
-        return super.visitDynamicFunctionCallExpression(expression, argument);
     }
 }
