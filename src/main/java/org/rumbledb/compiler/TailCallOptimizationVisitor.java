@@ -34,7 +34,7 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
 
         Expression body = inlineFunctionExpression.getBody().getExpression();
 
-        inlineFunctionExpression.setHasTailCalls(markTailCalls(body, fd.getFunctionIdentifier()));
+        inlineFunctionExpression.hasTailCalls(markTailCalls(body, fd.getFunctionIdentifier()));
 
         return fd;
     }

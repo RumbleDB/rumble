@@ -801,7 +801,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         result.setStaticContext(expression.getStaticContext());
         result.setSequential(expression.isSequential());
         result.setHasExitStatement(expression.hasExitStatement());
-        result.setHasTailCalls(expression.hasTailCalls());
+        result.hasTailCalls(expression.hasTailCalls());
         return result;
     }
 
