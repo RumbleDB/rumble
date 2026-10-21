@@ -90,8 +90,8 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             StringBuilder textAccumulator = null;
             boolean hasSeenNonAttributeNode = false;
             for (ItemRuntimePlan iterator : this.content) {
-                boolean previousItemWasAtomic = false;
-                for (Item childItem : materialize.apply(iterator, contextToUse)) {
+                for (Item childItem :
+                        XmlConstructorContentUtils.normalizeContent(materialize.apply(iterator, contextToUse))) {
                     List<Item> expandedItems = new ArrayList<>();
                     XmlConstructorContentUtils.appendExpandedItem(childItem, expandedItems);
                     for (Item item : expandedItems) {
@@ -120,20 +120,15 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                             }
                             // skip empty text content according to XML spec
                             if (textContent.isEmpty()) {
-                                previousItemWasAtomic = item.isAtomic();
                                 continue;
                             }
                             if (textAccumulator == null) {
                                 // start accumulating text content
                                 textAccumulator = new StringBuilder();
                             }
-                            if (item.isAtomic() && previousItemWasAtomic) {
-                                textAccumulator.append(' ');
-                            }
                             // accumulate the text content
                             textAccumulator.append(textContent);
                             hasSeenNonAttributeNode = true;
-                            previousItemWasAtomic = item.isAtomic();
                         } else {
                             hasSeenNonAttributeNode = true;
                             // non-text node encountered
@@ -144,7 +139,6 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                             }
                             // add the non-text node
                             content.add(NodeConstructionUtils.copyNode(item, this.staticContext));
-                            previousItemWasAtomic = false;
                         }
                     }
                 }
@@ -190,12 +184,9 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         // set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
         NamespaceFixupUtils.applyNamespaceFixup(elementItem);
-        // Set XML document position if this is the top-level runtime iterator
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            // This is the top-level runtime iterator - set XML document positions recursively
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            elementItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        elementItem.setXmlDocumentPosition(documentPath, 0);
         NodeConstructionUtils.initializeElement(elementItem, this.staticContext);
         return elementItem;
     }

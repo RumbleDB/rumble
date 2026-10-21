@@ -55,17 +55,13 @@ public class RemoveFunctionIterator extends ItemRuntimePlan implements LocalRunt
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        int removePosition = evaluatePosition(context);
+        int removePosition =
+                this.positionIterator.materializeFirstOrNull(context).getIntValue();
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
 
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
         JavaPairRDD<Item, Long> filteredRDD = zippedRDD.filter((item) -> item._2() != removePosition - 1);
         return filteredRDD.map((item) -> item._1);
-    }
-
-    private int evaluatePosition(DynamicContext context) {
-        Item positionItem = this.positionIterator.materializeFirstOrNull(context);
-        return positionItem.getIntValue();
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {

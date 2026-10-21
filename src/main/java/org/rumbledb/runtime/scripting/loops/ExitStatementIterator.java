@@ -57,8 +57,12 @@ public class ExitStatementIterator extends ItemRuntimePlan
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.childIterator.getRDD(dynamicContext);
+        PendingUpdateList pendingUpdateList =
+                this.childIterator.getRuntimeStaticContext().isUpdating()
+                        ? UpdatingRuntimePlan.get(this.childIterator, dynamicContext)
+                        : new PendingUpdateList();
         throw new ExitStatementException(
-                getPendingUpdateList(dynamicContext),
+                pendingUpdateList,
                 null,
                 childRDD,
                 null,
@@ -75,8 +79,12 @@ public class ExitStatementIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         HomogeneousItemDataFrame childDataFrame =
                 ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.childIterator, dynamicContext);
+        PendingUpdateList pendingUpdateList =
+                this.childIterator.getRuntimeStaticContext().isUpdating()
+                        ? UpdatingRuntimePlan.get(this.childIterator, dynamicContext)
+                        : new PendingUpdateList();
         throw new ExitStatementException(
-                getPendingUpdateList(dynamicContext),
+                pendingUpdateList,
                 null,
                 null,
                 childDataFrame,

@@ -24,10 +24,10 @@ import org.apache.spark.storage.StorageLevel;
 import lombok.NonNull;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.CollationCatalogue;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -45,19 +45,18 @@ final class ExtremumEvaluation {
         MAX
     }
 
-    private static final String CODEPOINT_COLLATION = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
-
     private ExtremumEvaluation() {}
 
-    public static Item minRDD(JavaRDD<Item> input, ExceptionMetadata metadata) {
-        return evaluateRDD(input, metadata, Kind.MIN);
+    public static Item minRDD(JavaRDD<Item> input, String collation, ExceptionMetadata metadata) {
+        return evaluateRDD(input, collation, metadata, Kind.MIN);
     }
 
-    public static Item maxRDD(JavaRDD<Item> input, ExceptionMetadata metadata) {
-        return evaluateRDD(input, metadata, Kind.MAX);
+    public static Item maxRDD(JavaRDD<Item> input, String collation, ExceptionMetadata metadata) {
+        return evaluateRDD(input, collation, metadata, Kind.MAX);
     }
 
-    private static Item evaluateRDD(JavaRDD<Item> input, ExceptionMetadata metadata, Kind kind) {
+    private static Item evaluateRDD(
+            JavaRDD<Item> input, @NonNull String collation, ExceptionMetadata metadata, Kind kind) {
         // Both passes must see the same converted input, including for non-deterministic source plans.
         JavaRDD<Item> converted =
                 input.map(item -> normalizeCandidate(item, kind, metadata)).persist(StorageLevel.MEMORY_AND_DISK());
@@ -69,7 +68,8 @@ final class ExtremumEvaluation {
             // The result's type depends on every input, including values that are not the extremum.
             // Convert to the common type before comparing, rather than returning an original RDD item.
             JavaRDD<Item> promoted = converted.map(promotion::apply);
-            ItemComparator comparator = new ItemComparator(kind == Kind.MIN, inputError(kind, metadata));
+            ItemComparator comparator =
+                    new ItemComparator(kind == Kind.MIN, inputError(kind, metadata), collation, metadata);
             return kind == Kind.MIN ? promoted.min(comparator) : promoted.max(comparator);
         } finally {
             converted.unpersist();
@@ -77,33 +77,26 @@ final class ExtremumEvaluation {
     }
 
     public static Item min(
-            ItemRuntimePlan childPlan,
-            ItemRuntimePlan collationPlan,
-            DynamicContext context,
-            ExceptionMetadata metadata) {
-        return evaluate(childPlan, collationPlan, context, metadata, Kind.MIN);
+            ItemRuntimePlan childPlan, String collation, DynamicContext context, ExceptionMetadata metadata) {
+        return evaluate(childPlan, collation, context, metadata, Kind.MIN);
     }
 
     public static Item max(
-            ItemRuntimePlan childPlan,
-            ItemRuntimePlan collationPlan,
-            DynamicContext context,
-            ExceptionMetadata metadata) {
-        return evaluate(childPlan, collationPlan, context, metadata, Kind.MAX);
+            ItemRuntimePlan childPlan, String collation, DynamicContext context, ExceptionMetadata metadata) {
+        return evaluate(childPlan, collation, context, metadata, Kind.MAX);
     }
 
     private static Item evaluate(
             @NonNull ItemRuntimePlan childPlan,
-            ItemRuntimePlan collationPlan,
+            @NonNull String collation,
             @NonNull DynamicContext context,
             @NonNull ExceptionMetadata metadata,
             @NonNull Kind kind) {
-        validateCollation(collationPlan, context, metadata);
-
         Item selected = null;
         boolean sawNull = false;
         Promotion promotion = Promotion.EMPTY;
-        ItemComparator comparator = new ItemComparator(kind == Kind.MIN, inputError(kind, metadata));
+        ItemComparator comparator =
+                new ItemComparator(kind == Kind.MIN, inputError(kind, metadata), collation, metadata);
 
         try (Cursor<Item> childCursor = childPlan.getCursor(context)) {
             while (childCursor.hasNext()) {
@@ -242,14 +235,11 @@ final class ExtremumEvaluation {
         return (item.isFloat() || item.isDouble()) && item.isNaN();
     }
 
-    static void validateCollation(ItemRuntimePlan collationPlan, DynamicContext context, ExceptionMetadata metadata) {
-        if (collationPlan == null) {
-            return;
-        }
-        Item collation = collationPlan.materializeFirstOrNull(context);
-        if (!CODEPOINT_COLLATION.equals(collation.getStringValue())) {
-            throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-        }
+    /**
+     * Whether a DataFrame column of the given type must be compared with the collation rather than natively in SQL.
+     */
+    static boolean needsCollationComparison(ItemType type, String collation) {
+        return !CollationCatalogue.CODEPOINT_COLLATION.equals(collation) && !type.isNumeric();
     }
 
     private static void ensureSupported(Item item, Kind kind, ExceptionMetadata metadata) {

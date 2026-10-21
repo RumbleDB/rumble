@@ -119,6 +119,17 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
         if (item == null) {
             return null;
         }
+        if (item.isFunction()
+                && item.getIdentifier() != null
+                && item.getIdentifier().getArity() == 0
+                && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName())) {
+            return item;
+        }
+        if (sequenceType.isEmptySequence()) {
+            throw new UnexpectedTypeException(
+                    exceptionMessage + "Expecting the empty sequence, but an item was provided.",
+                    staticContext.getMetadata());
+        }
         if (untypedAtomicCaster != null) {
             item = untypedAtomicCaster.call(item);
         }
@@ -134,12 +145,6 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
             SequenceType sequenceType,
             String exceptionMessage,
             RuntimeStaticContext staticContext) {
-        if (item.isFunction()
-                && item.getIdentifier() != null
-                && item.getIdentifier().getArity() == 0
-                && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName())) {
-            return item;
-        }
         if ((item.isFunction() || item.isMap() || item.isArray())
                 && itemType.isFunctionItemType()
                 && itemType.getSignature() != null) {

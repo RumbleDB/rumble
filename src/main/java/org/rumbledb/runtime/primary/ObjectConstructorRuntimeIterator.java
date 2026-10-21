@@ -66,7 +66,6 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
     public ObjectConstructorRuntimeIterator(
             List<? extends ItemRuntimePlan> childExpressions, RuntimeStaticContext staticContext, boolean mutable) {
         super(childExpressions, staticContext);
-        // A merged object takes its keys and values from the objects that its children return.
         this.keys = null;
         this.values = null;
         this.isMergedObject = true;

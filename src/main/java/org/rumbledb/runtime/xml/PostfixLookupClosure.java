@@ -25,6 +25,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.functions.arrays.ArrayIndexUtils;
 
 /**
  * Spark closure for postfix lookup with XQuery 3.1 semantics: array index out of bounds
@@ -90,18 +91,12 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                     }
                 }
             } else {
-                for (Item key : this.keys) {
-                    if (key.isString()) {
-                        throw new UnexpectedTypeException(
-                                "Type error; Lookup with String on Arrays is not possible", this.expressionMetadata);
-                    }
-                    if (key.isNumeric()) {
-                        int idx = key.castToIntValue() - 1;
-                        if (arg0.isArrayOfItems()) {
-                            results.add(arg0.getItemAt(idx));
-                        } else {
-                            results.addAll(arg0.getSequenceAt(idx));
-                        }
+                for (Item key : ArrayIndexUtils.atomizeLookupKeys(this.keys, this.expressionMetadata)) {
+                    int idx = ArrayIndexUtils.getZeroBasedPosition(key, arg0.getSize(), this.expressionMetadata);
+                    if (arg0.isArrayOfItems()) {
+                        results.add(arg0.getItemAt(idx));
+                    } else {
+                        results.addAll(arg0.getSequenceAt(idx));
                     }
                 }
             }
