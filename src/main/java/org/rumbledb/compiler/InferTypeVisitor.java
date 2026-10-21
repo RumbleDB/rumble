@@ -927,13 +927,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // just as the one-argument form checks its explicit argument under static typing.
         Name functionName = expression.getFunctionIdentifier().getName();
         if ((Name.FN_NS.equals(functionName.getNamespace())
-                    || Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(functionName.getNamespace()))
+                        || Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(functionName.getNamespace()))
                 && functionName.getLocalName().equals("has-children")
                 && expression.getArguments().isEmpty()) {
             SequenceType contextType = expression.getStaticContext().getContextItemStaticType();
             if (contextType != null && !contextType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.nodeItem)) {
-                throwStaticTypeException("fn:has-children() requires a node context item, but " + contextType
-                        + " was inferred.", expression.getMetadata());
+                throwStaticTypeException(
+                        "fn:has-children() requires a node context item, but " + contextType + " was inferred.",
+                        expression.getMetadata());
             }
         }
         FunctionSignature signature = null;
