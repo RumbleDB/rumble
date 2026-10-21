@@ -207,7 +207,7 @@ public class FunctionItem implements Item {
 
     @Override
     public FunctionItem copy(boolean mutable) {
-        return this.deepCopy();
+        return new FunctionItem(this);
     }
 
     @Override
@@ -267,10 +267,8 @@ public class FunctionItem implements Item {
     }
 
     /**
-     * Returns an independent function value without serializing its iterator tree.
-     *
-     * This is suitable for named-function lookup, which only extends the closure of the returned value. The closure
-     * maps are copied while immutable function metadata and the body plan are shared.
+     * Returns a copy for a named function reference, which then extends the closure of the copy. The closure maps are
+     * copied, while the immutable function metadata and the body plan are shared.
      */
     public FunctionItem copyForLookup() {
         return new FunctionItem(this);
@@ -365,10 +363,6 @@ public class FunctionItem implements Item {
     @Override
     public ItemType getDynamicType() {
         return ItemTypeFactory.createFunctionItemType(this.signature);
-    }
-
-    public FunctionItem deepCopy() {
-        return new FunctionItem(this);
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
