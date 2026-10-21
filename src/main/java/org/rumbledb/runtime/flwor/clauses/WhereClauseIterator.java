@@ -72,23 +72,11 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
      * the clauses between this clause and the left side, restricted to them, so that preparing the join does not
      * change the clauses that this clause evaluates otherwise.
      */
-    private static final class PreparedJoin {
-        private final TupleRuntimePlan leftTuples;
-        private final TupleRuntimePlan rightTuples;
-        private final List<Name> leftVariables;
-        private final List<Name> rightVariables;
-
-        private PreparedJoin(
-                TupleRuntimePlan leftTuples,
-                TupleRuntimePlan rightTuples,
-                List<Name> leftVariables,
-                List<Name> rightVariables) {
-            this.leftTuples = leftTuples;
-            this.rightTuples = rightTuples;
-            this.leftVariables = leftVariables;
-            this.rightVariables = rightVariables;
-        }
-    }
+    private record PreparedJoin(
+            TupleRuntimePlan leftTuples,
+            TupleRuntimePlan rightTuples,
+            List<Name> leftVariables,
+            List<Name> rightVariables) {}
 
     public WhereClauseIterator(
             TupleRuntimePlan child, ItemRuntimePlan whereExpression, RuntimeStaticContext staticContext) {
@@ -273,15 +261,15 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
         log.info("Rumble detected a join predicate in the where clause.");
 
         try {
-            FlworDataFrame leftTuples = (FlworDataFrame) join.leftTuples.getDataFrame(context);
-            FlworDataFrame rightTuples = (FlworDataFrame) join.rightTuples.getDataFrame(context);
+            FlworDataFrame leftTuples = (FlworDataFrame) join.leftTuples().getDataFrame(context);
+            FlworDataFrame rightTuples = (FlworDataFrame) join.rightTuples().getDataFrame(context);
             return JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
                     context,
                     leftTuples.getDataFrame(),
                     rightTuples.getDataFrame(),
                     this.outputTupleProjection,
-                    join.leftVariables,
-                    join.rightVariables,
+                    join.leftVariables(),
+                    join.rightVariables(),
                     this.expression,
                     false,
                     null,
@@ -332,8 +320,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
             rightTuples.setInputAndOutputTupleVariableDependencies(rightProjection);
             Set<Name> rightVariables = rightTuples.getOutputTupleVariableNames();
 
-            return new PreparedJoin(
-                    leftTuples, rightTuples, new ArrayList<>(leftVariables), new ArrayList<>(rightVariables));
+            return new PreparedJoin(leftTuples, rightTuples, List.copyOf(leftVariables), List.copyOf(rightVariables));
         } catch (Exception e) {
             log.warn("Could not prepare a join for the where clause; it will be evaluated without a join.");
             return null;
