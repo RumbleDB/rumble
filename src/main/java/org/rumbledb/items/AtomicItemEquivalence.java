@@ -129,7 +129,8 @@ public final class AtomicItemEquivalence {
             if (value.signum() == 0) {
                 return 0;
             }
-            return value.stripTrailingZeros().toPlainString().hashCode();
+            // Equal non-zero values have the same unscaled value and scale once trailing zeros are stripped.
+            return value.stripTrailingZeros().hashCode();
         } catch (RuntimeException e) {
             return 1;
         }
