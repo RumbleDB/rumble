@@ -146,8 +146,12 @@ public class ComparisonVisitor extends CloneVisitor {
             rightReference.setStaticSequenceType(
                     new SequenceType(rightChild.getStaticSequenceType().getItemType(), SequenceType.Arity.One));
             rightReference.setStaticContext(rightContext);
+            // Normalize each atomic pair after iteration, so casts retain the query's
+            // namespace context without accepting a sequence as their operand.
+            Expression[] normalizedPair = normalizeUntypedForGeneralComparison(
+                    leftReference, rightReference, rightContext, expression.getMetadata());
             Expression valueComparison = new ComparisonExpression(
-                    leftReference, rightReference, expression.getComparisonOperator(), expression.getMetadata());
+                    normalizedPair[0], normalizedPair[1], expression.getComparisonOperator(), expression.getMetadata());
             valueComparison.setStaticContext(rightContext);
             valueComparison.setStaticSequenceType(
                     new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
