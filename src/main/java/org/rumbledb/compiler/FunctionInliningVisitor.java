@@ -44,12 +44,14 @@ public class FunctionInliningVisitor extends CloneVisitor {
     private Prolog prolog;
     private boolean constructionPreserve;
 
-    private boolean hasDifferentConstructionMode(Prolog prolog, FunctionDeclaration target) {
+    private boolean requiresDeclaringModuleContext(Prolog prolog, FunctionDeclaration target) {
         for (var module : prolog.getImportedModules()) {
             if (module.getProlog().getFunctionDeclarations().contains(target)) {
-                return module.getStaticContext().isConstructionPreserve() != this.constructionPreserve;
+                // Schema-dependent bodies and signatures must retain the declaring module's schema imports.
+                return !module.getProlog().getSchemaImports().isEmpty()
+                    || module.getStaticContext().isConstructionPreserve() != this.constructionPreserve;
             }
-            if (hasDifferentConstructionMode(module.getProlog(), target)) {
+            if (requiresDeclaringModuleContext(module.getProlog(), target)) {
                 return true;
             }
         }
@@ -128,8 +130,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 getFunctionDeclarationFromProlog(this.prolog, expression.getFunctionIdentifier());
         if (expression.isPartialApplication()
                 || targetFunction == null
-                // Rebuilding an inlined body in the caller's context would change its constructor semantics.
-                || hasDifferentConstructionMode(this.prolog, targetFunction)
+                // Rebuilding an imported body in the caller's context can lose schema or constructor semantics.
+                || requiresDeclaringModuleContext(this.prolog, targetFunction)
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
                 || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {
