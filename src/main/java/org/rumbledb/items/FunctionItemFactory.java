@@ -72,8 +72,7 @@ public final class FunctionItemFactory {
     public static FunctionItem createBuiltinNamedReference(
             FunctionIdentifier identifier,
             DynamicContext moduleContext,
-            RumbleConfiguration conf,
-            ExceptionMetadata metadata,
+            RuntimeStaticContext staticContext,
             BuiltinFunction builtinFunction) {
         List<Name> paramNames = new ArrayList<>();
         int arity = builtinFunction.getSignature().getParameterTypes().size();
@@ -81,14 +80,17 @@ public final class FunctionItemFactory {
             paramNames.add(Name.createVariableInNoNamespace("$p" + i));
         }
         SequenceType returnType = builtinFunction.getSignature().getReturnType();
-        RuntimeStaticContext markerContext = RuntimeStaticContext.builder()
-                .configuration(conf)
+        RuntimeStaticContext bodyContext = staticContext.toBuilder()
                 .staticType(returnType)
                 .executionMode(ExecutionMode.LOCAL)
-                .metadata(metadata)
                 .build();
-        ItemRuntimePlan markerBody = new BuiltinNamedFunctionReferenceMarkerIterator(markerContext);
-        return new FunctionItem(
-                identifier, paramNames, builtinFunction.getSignature(), moduleContext, markerBody, true);
+        List<ItemRuntimePlan> parameters = new ArrayList<>();
+        for (int i = 0; i < arity; i++) {
+            parameters.add(new VariableReferenceIterator(paramNames.get(i), bodyContext.toBuilder()
+                    .staticType(builtinFunction.getSignature().getParameterTypes().get(i)).build()));
+        }
+        ItemRuntimePlan body = org.rumbledb.context.NamedFunctions.getBuiltInFunctionIterator(
+                identifier, parameters, bodyContext, true);
+        return new FunctionItem(identifier, paramNames, builtinFunction.getSignature(), moduleContext, body);
     }
 }

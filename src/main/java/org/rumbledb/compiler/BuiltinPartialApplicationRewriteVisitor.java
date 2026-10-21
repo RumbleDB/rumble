@@ -135,22 +135,8 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
     @Override
     public Node visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, Node argument) {
-        List<Expression> arguments = expression.getArguments().stream()
-                .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
-                .collect(Collectors.toList());
-        Expression rewrittenMainExpression = (Expression) visit(expression.getMainExpression(), argument);
-
-        if (!(rewrittenMainExpression instanceof NamedFunctionReferenceExpression namedFunctionReference)) {
-            return super.visitDynamicFunctionCallExpression(expression, argument);
-        }
-
-        BuiltinFunction builtin = resolveFunction(namedFunctionReference, namedFunctionReference.getIdentifier());
-        boolean isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
-        if (!isPartialApplication || builtin == null) {
-            return super.visitDynamicFunctionCallExpression(expression, argument);
-        }
-
-        return rewriteBuiltinPartialApplication(
-                namedFunctionReference.getIdentifier().getName(), builtin, arguments, expression);
+        // Runtime partial application validates the referenced arity and captures supplied
+        // arguments immediately, retaining the function's original static and dynamic contexts.
+        return super.visitDynamicFunctionCallExpression(expression, argument);
     }
 }

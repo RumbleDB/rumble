@@ -53,8 +53,7 @@ public final class NamedFunctionLookup {
             FunctionItem result = FunctionItemFactory.createBuiltinNamedReference(
                     builtin.getIdentifier(),
                     dynamicContext.getModuleContext(),
-                    staticContext.getConfiguration(),
-                    staticContext.getMetadata(),
+                    staticContext,
                     builtin);
             result.populateClosureFromDynamicContext(dynamicContext, staticContext.getMetadata());
             return result;

@@ -91,6 +91,7 @@ public class NamedFunctions implements Serializable {
             boolean isTailOptimization) {
         List<ItemRuntimePlan> arguments = new ArrayList<>(inputArguments);
         ExceptionMetadata metadata = callerRuntimeContext.getMetadata();
+        FunctionCallArgumentConversion.validateArity(functionItem, arguments, metadata);
         boolean isPartialApplication = arguments.stream().anyMatch(a -> a == null);
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
         if (isPartialApplication) {
