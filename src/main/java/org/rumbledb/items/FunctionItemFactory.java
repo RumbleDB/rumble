@@ -28,6 +28,7 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.functions.BuiltinNamedFunctionReferenceMarkerIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -81,19 +82,8 @@ public final class FunctionItemFactory {
                 .staticType(returnType)
                 .executionMode(ExecutionMode.LOCAL)
                 .build();
-        List<ItemRuntimePlan> parameters = new ArrayList<>();
-        for (int i = 0; i < arity; i++) {
-            parameters.add(new VariableReferenceIterator(
-                    paramNames.get(i),
-                    bodyContext.toBuilder()
-                            .staticType(builtinFunction
-                                    .getSignature()
-                                    .getParameterTypes()
-                                    .get(i))
-                            .build()));
-        }
-        ItemRuntimePlan body = org.rumbledb.context.NamedFunctions.getBuiltInFunctionIterator(
-                identifier, parameters, bodyContext, true);
+        // Invocation supplies the parameter execution modes; retain only the reference context here.
+        ItemRuntimePlan body = new BuiltinNamedFunctionReferenceMarkerIterator(identifier, paramNames, bodyContext);
         return new FunctionItem(identifier, paramNames, builtinFunction.getSignature(), moduleContext, body, true);
     }
 }

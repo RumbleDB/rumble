@@ -23,14 +23,10 @@ import java.util.Map;
 import org.apache.spark.api.java.JavaRDD;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.BuiltinFunction;
-import org.rumbledb.context.BuiltinFunctionCatalogue;
-import org.rumbledb.context.BuiltinFunctionExecutionModes;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
@@ -67,14 +63,6 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
         List<ItemRuntimePlan> convertedArguments = new ArrayList<>(arguments);
         FunctionCallArgumentConversion.validateArity(functionItem, convertedArguments, callerContext.getMetadata());
         boolean isPartialApplication = convertedArguments.contains(null);
-        if (functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator) {
-            if (isPartialApplication) {
-                throw new UnsupportedFeatureException(
-                        "Partial application of builtin named function references is not supported yet.",
-                        callerContext.getMetadata());
-            }
-            return new FunctionCall(builtinCallPlan(functionItem, convertedArguments, callerContext), context);
-        }
         FunctionCallArgumentConversion.wrapAccordingToSignature(
                 functionItem.getIdentifier().getName(), functionItem.getSignature(), convertedArguments, callerContext);
         if (isPartialApplication) {
@@ -85,8 +73,12 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
                     .build();
             return new FunctionCall(new ConstantRuntimeIterator(result, resultContext), context);
         }
+        DynamicContext callContext = createCallContext(functionItem, convertedArguments, context);
+        if (functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator builtin) {
+            return new FunctionCall(builtin.buildCallPlan(callContext), callContext);
+        }
         FunctionItem function = (FunctionItem) functionItem;
-        return new FunctionCall(function.getCalleePlan(), createCallContext(function, convertedArguments, context));
+        return new FunctionCall(function.getCalleePlan(), callContext);
     }
 
     /**
@@ -100,48 +92,28 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
         if (isPartialApplication) {
             return ExecutionMode.LOCAL;
         }
-        if (functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator) {
-            BuiltinFunction builtin = BuiltinFunctionCatalogue.getBuiltinFunction(
-                    functionItem.getIdentifier(), callerContext.getQueryLanguage());
-            // assume that the passed builtin function is valid
-            ExecutionMode firstArgumentMode = ExecutionMode.LOCAL;
-            for (ItemRuntimePlan argument : arguments) {
-                if (argument != null) {
-                    firstArgumentMode = argument.getRuntimeStaticContext().getExecutionMode();
-                    break;
-                }
+        FunctionCallArgumentConversion.validateArity(
+                functionItem, new ArrayList<>(arguments), callerContext.getMetadata());
+        if (functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator builtin) {
+            Name firstParameter = builtin.getFirstParameterName();
+            int argumentIndex = functionItem.getParameterNames().indexOf(firstParameter);
+            ExecutionMode firstMode;
+            if (argumentIndex >= 0) {
+                firstMode =
+                        arguments.get(argumentIndex).getRuntimeStaticContext().getExecutionMode();
+            } else if (functionItem.getDFVariablesInClosure().containsKey(firstParameter)) {
+                firstMode = ExecutionMode.DATAFRAME;
+            } else if (functionItem.getRDDVariablesInClosure().containsKey(firstParameter)) {
+                firstMode = ExecutionMode.RDD;
+            } else {
+                firstMode = ExecutionMode.LOCAL;
             }
-            return BuiltinFunctionExecutionModes.resolve(builtin, firstArgumentMode, callerContext.getConfiguration());
+            return builtin.executionMode(firstMode);
         }
         if (functionItem.getBodyIterator() instanceof FunctionCoercionRuntimeIterator coercionRuntimeIterator) {
             return coercionRuntimeIterator.getWrappedCallableExecutionMode();
         }
         return functionItem.getBodyIterator().getRuntimeStaticContext().getExecutionMode();
-    }
-
-    // A builtin function is called through its own plan, built with the arguments, as when it is called by name.
-    private static ItemRuntimePlan builtinCallPlan(
-            Item functionItem, List<ItemRuntimePlan> arguments, RuntimeStaticContext callerContext) {
-        ExecutionMode executionMode = calleeExecutionMode(functionItem, arguments, false, callerContext);
-        ItemRuntimePlan call = new BuiltinFunctionItemCallIterator(
-                functionItem,
-                arguments,
-                callerContext.toBuilder()
-                        .staticType(functionItem
-                                .getBodyIterator()
-                                .getRuntimeStaticContext()
-                                .getStaticType())
-                        .executionMode(executionMode)
-                        .build());
-        Name name = functionItem.getIdentifier().getName();
-        return FunctionCallArgumentConversion.wrapArgument(
-                call,
-                functionItem.getSignature().getReturnType(),
-                "Invalid return type for " + (name == null ? "" : name + " ") + "function. ",
-                callerContext.toBuilder()
-                        .staticType(functionItem.getSignature().getReturnType())
-                        .executionMode(executionMode)
-                        .build());
     }
 
     /**
@@ -169,6 +141,10 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
             }
         }
         for (int i = 0; i < arguments.size(); i++) {
+            // Parameters shadow captured bindings, including bindings in another representation.
+            callContext
+                    .getVariableValues()
+                    .removeVariable(functionItem.getParameterNames().get(i));
             RuntimePlanBindings.bind(
                     arguments.get(i),
                     callContext,
@@ -211,6 +187,9 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
                 partialApplicationParamTypes.add(
                         functionItem.getSignature().getParameterTypes().get(i));
             } else {
+                localArgumentValues.remove(argName);
+                RDDArgumentValues.remove(argName);
+                DFArgumentValues.remove(argName);
                 if (argIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
                     DFArgumentValues.put(argName, ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(argIterator, context));
                 } else if (argIterator
@@ -244,7 +223,8 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
                 RDDArgumentValues,
                 DFArgumentValues,
                 functionItem.isBuiltinFunction());
-        if (functionItem instanceof FunctionItem function) {
+        if (functionItem instanceof FunctionItem function
+                && !(functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator)) {
             partiallyAppliedFunction.shareCalleePlan(function);
         }
         return partiallyAppliedFunction;
