@@ -34,29 +34,34 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
 
         Expression body = inlineFunctionExpression.getBody().getExpression();
 
-        markTailCalls(body, fd.getFunctionIdentifier());
+        inlineFunctionExpression.setHasTailCalls(markTailCalls(body, fd.getFunctionIdentifier()));
 
         return fd;
     }
 
-    private void markTailCalls(Expression expression, FunctionIdentifier fd) {
+    // Returns whether a call was marked.
+    private boolean markTailCalls(Expression expression, FunctionIdentifier fd) {
         if (expression == null) {
-            return;
+            return false;
         }
 
         if (expression instanceof FunctionCallExpression functionCall) {
             if (isTailRecursiveCall(functionCall, fd)) {
                 // System.err.println("Set tail call optimization for function " + fd.getFunctionIdentifier());
                 functionCall.setTailCallOptimization(true);
+                return true;
             }
 
-            return;
+            return false;
         }
 
         if (expression instanceof ConditionalExpression conditional) {
-            markTailCalls(conditional.getBranch(), fd);
-            markTailCalls(conditional.getElseBranch(), fd);
+            boolean branchHasTailCalls = markTailCalls(conditional.getBranch(), fd);
+            boolean elseBranchHasTailCalls = markTailCalls(conditional.getElseBranch(), fd);
+            return branchHasTailCalls || elseBranchHasTailCalls;
         }
+
+        return false;
     }
 
     private boolean isTailRecursiveCall(FunctionCallExpression functionCall, FunctionIdentifier fd) {

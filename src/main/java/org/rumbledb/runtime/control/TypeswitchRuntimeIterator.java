@@ -16,7 +16,6 @@
 package org.rumbledb.runtime.control;
 
 import java.io.Serial;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -96,8 +95,8 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
         @Override
         protected void openLocal() {
             Match match = selectMatch();
-            bindMatch(match, this.context);
-            this.selected = match.typeSwitchCase.getReturnIterator().getCursor(this.context);
+            DynamicContext branchContext = bindMatch(match, this.context);
+            this.selected = match.typeSwitchCase.getReturnIterator().getCursor(branchContext);
         }
 
         @Override
@@ -119,7 +118,7 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
         }
 
         private Match selectMatch() {
-            Item testValue = this.testPlan.materializeFirstOrNull(this.context);
+            List<Item> testValue = this.testPlan.materialize(this.context);
             for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
                 if (doesTypeMatch(typeSwitchCase, testValue)) {
                     return new Match(typeSwitchCase, testValue);
@@ -131,16 +130,16 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
 
     private static final class Match {
         private final TypeswitchRuntimeIteratorCase typeSwitchCase;
-        private final Item testValue;
+        private final List<Item> testValue;
 
-        private Match(TypeswitchRuntimeIteratorCase typeSwitchCase, Item testValue) {
+        private Match(TypeswitchRuntimeIteratorCase typeSwitchCase, List<Item> testValue) {
             this.typeSwitchCase = typeSwitchCase;
             this.testValue = testValue;
         }
     }
 
     private Match selectMatch(DynamicContext context) {
-        Item testValue = this.testField.materializeFirstOrNull(context);
+        List<Item> testValue = this.testField.materialize(context);
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
             if (doesTypeMatch(typeSwitchCase, testValue)) {
                 return new Match(typeSwitchCase, testValue);
@@ -149,22 +148,28 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
         return new Match(this.defaultCase, testValue);
     }
 
-    private static void bindMatch(Match match, DynamicContext context) {
+    private static DynamicContext bindMatch(Match match, DynamicContext context) {
+        DynamicContext branchContext = new DynamicContext(context);
         if (match.typeSwitchCase.getVariableName() != null) {
-            context.getVariableValues()
-                    .addVariableValue(
-                            match.typeSwitchCase.getVariableName(), Collections.singletonList(match.testValue));
+            branchContext.getVariableValues().addVariableValue(match.typeSwitchCase.getVariableName(), match.testValue);
         }
+        return branchContext;
     }
 
-    private static boolean doesTypeMatch(TypeswitchRuntimeIteratorCase typeSwitchCase, Item testValue) {
+    private static boolean doesTypeMatch(TypeswitchRuntimeIteratorCase typeSwitchCase, List<Item> testValue) {
         if (typeSwitchCase.getSequenceTypeUnion() != null) {
             for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
-                if (testValue == null && sequenceType.isEmptySequence()) {
-                    return true;
-                }
-                if (testValue != null
-                        && InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), testValue)) {
+                var cardinality = sequenceType.getCardinality();
+                boolean matchesCardinality =
+                        switch (testValue.size()) {
+                            case 0 -> cardinality.allowsZero();
+                            case 1 -> cardinality.allowsOne();
+                            default -> cardinality.allowsMany();
+                        };
+                if (matchesCardinality
+                        && testValue.stream()
+                                .allMatch(item ->
+                                        InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), item))) {
                     return true;
                 }
             }
@@ -175,8 +180,8 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         Match match = selectMatch(dynamicContext);
-        bindMatch(match, dynamicContext);
-        return match.typeSwitchCase.getReturnIterator().getRDD(dynamicContext);
+        DynamicContext branchContext = bindMatch(match, dynamicContext);
+        return match.typeSwitchCase.getReturnIterator().getRDD(branchContext);
     }
 
     @Override
@@ -185,14 +190,14 @@ public class TypeswitchRuntimeIterator extends ItemRuntimePlan
             return new PendingUpdateList();
         }
         Match match = selectMatch(context);
-        bindMatch(match, context);
-        return UpdatingRuntimePlan.get(match.typeSwitchCase.getReturnIterator(), context);
+        DynamicContext branchContext = bindMatch(match, context);
+        return UpdatingRuntimePlan.get(match.typeSwitchCase.getReturnIterator(), branchContext);
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
         Match match = selectMatch(context);
-        bindMatch(match, context);
-        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(match.typeSwitchCase.getReturnIterator(), context);
+        DynamicContext branchContext = bindMatch(match, context);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(match.typeSwitchCase.getReturnIterator(), branchContext);
     }
 }
