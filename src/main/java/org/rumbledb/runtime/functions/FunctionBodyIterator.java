@@ -22,7 +22,9 @@ import org.apache.spark.api.java.JavaRDD;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExitStatementException;
+import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -36,10 +38,17 @@ import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 
 /**
- * The body of a user-defined function. An exit statement in the body ends the function call: its results replace the
- * rest of the body's results. Since every call of a function evaluates its body, this is the only place where an exit
- * statement in a function is handled, whatever the kind of call. Only a body that contains an exit statement reads
- * its results through an {@link ExitCatchingLocalCursor}, so that other calls do not pay for it.
+ * The body of a user-defined function. Every call of a function evaluates its body, so this is where exit statements
+ * and tail calls are handled, whatever the kind of call:
+ *
+ * <ul>
+ * <li>An exit statement ends the function call: its results replace the rest of the body's results.</li>
+ * <li>A tail call returns a function item with its arguments bound. The body of that function is then evaluated in its
+ * place, in a loop, so that a tail recursion does not grow the stack.</li>
+ * </ul>
+ *
+ * Only a body that contains an exit statement or a tail call reads its results through a
+ * {@link FunctionBodyLocalCursor}, so that other calls do not pay for it.
  */
 public class FunctionBodyIterator extends ItemRuntimePlan
         implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
@@ -49,19 +58,21 @@ public class FunctionBodyIterator extends ItemRuntimePlan
 
     private final ItemRuntimePlan body;
     private final boolean hasExitStatement;
+    private final boolean hasTailCalls;
 
-    public FunctionBodyIterator(ItemRuntimePlan body, boolean hasExitStatement) {
+    public FunctionBodyIterator(ItemRuntimePlan body, boolean hasExitStatement, boolean hasTailCalls) {
         super(List.of(body), body.getRuntimeStaticContext());
         this.body = body;
         this.hasExitStatement = hasExitStatement;
+        this.hasTailCalls = hasTailCalls;
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        if (!this.hasExitStatement) {
+        if (!this.hasExitStatement && !this.hasTailCalls) {
             return this.body.getCursor(context);
         }
-        return new ExitCatchingLocalCursor(this.body, context);
+        return new FunctionBodyLocalCursor(context);
     }
 
     @Override
@@ -89,23 +100,49 @@ public class FunctionBodyIterator extends ItemRuntimePlan
                 : new PendingUpdateList();
     }
 
-    private static final class ExitCatchingLocalCursor extends AbstractLocalCursor<Item> {
+    /**
+     * Whether an item is the result of a tail call: a function item, with all arguments bound, that stands for the rest
+     * of the evaluation.
+     */
+    private static boolean isTailCall(Item item) {
+        return item != null
+                && item.isFunction()
+                && item.getIdentifier().getArity() == 0
+                && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName());
+    }
 
-        private final ItemRuntimePlan body;
-        private final DynamicContext context;
+    private final class FunctionBodyLocalCursor extends AbstractLocalCursor<Item> {
+
+        // The body being evaluated and its context: this body in the call context, then the body of each tail call.
+        private ItemRuntimePlan body;
+        private DynamicContext context;
         private Cursor<Item> delegate;
         // The next result, read ahead because an exit statement may be raised by hasNext, or by next after hasNext
         // returned true, and may then have no results.
         private Item nextResult;
 
-        private ExitCatchingLocalCursor(ItemRuntimePlan body, DynamicContext context) {
-            super(body.getRuntimeStaticContext().getMetadata());
-            this.body = body;
+        private FunctionBodyLocalCursor(DynamicContext context) {
+            super(FunctionBodyIterator.this.getMetadata());
+            this.body = FunctionBodyIterator.this.body;
             this.context = context;
         }
 
         @Override
         protected void openLocal() {
+            evaluateBody();
+            while (FunctionBodyIterator.this.hasTailCalls && isTailCall(this.nextResult)) {
+                FunctionItem tailCall = (FunctionItem) this.nextResult;
+                closeDelegate();
+                // The body of the called function, without its FunctionBodyIterator, whose loop would be nested here.
+                // A tail call only calls the function itself (see TailCallOptimizationVisitor), so the return type
+                // conversion around this body also applies to its result.
+                this.body = ((FunctionBodyIterator) tailCall.getBodyIterator()).body;
+                this.context = FunctionItemCallIterator.createCallContext(tailCall, List.of(), this.context);
+                evaluateBody();
+            }
+        }
+
+        private void evaluateBody() {
             // Some plans evaluate their input when their cursor is created.
             try {
                 this.delegate = this.body.getCursor(this.context);

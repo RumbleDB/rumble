@@ -1189,8 +1189,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         SequenceType returnType = expression.getReturnType();
-        ItemRuntimePlan bodyIterator =
-                new FunctionBodyIterator(this.visit(expression.getBody(), argument), expression.hasExitStatement());
+        ItemRuntimePlan bodyIterator = new FunctionBodyIterator(
+                this.visit(expression.getBody(), argument), expression.hasExitStatement(), expression.hasTailCalls());
         ItemRuntimePlan runtimeIterator = new FunctionRuntimeIterator(
                 expression.getName(),
                 paramNameToSequenceTypes,

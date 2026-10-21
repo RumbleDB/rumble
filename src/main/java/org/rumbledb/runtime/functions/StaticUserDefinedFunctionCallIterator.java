@@ -17,7 +17,6 @@ package org.rumbledb.runtime.functions;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -28,9 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -159,20 +156,6 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
                             this.tailCallOptimizationCandidate);
             this.delegate = call.getCursor(this.context);
             advance();
-            while (!this.tailCallOptimizationCandidate && isTailCall(this.nextResult)) {
-                closeDelegate();
-                ItemRuntimePlan tailCall = NamedFunctions.buildFunctionItemCallIterator(
-                        this.nextResult, this.staticContext, ExecutionMode.LOCAL, Collections.emptyList(), false);
-                this.delegate = tailCall.getCursor(this.context);
-                advance();
-            }
-        }
-
-        private boolean isTailCall(Item item) {
-            return item != null
-                    && item.isFunction()
-                    && item.getIdentifier().getArity() == 0
-                    && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName());
         }
 
         private void advance() {
