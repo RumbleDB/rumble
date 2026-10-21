@@ -43,6 +43,7 @@ import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
@@ -59,6 +60,7 @@ public final class PrologBuilder {
     private boolean baseUriSet;
     private boolean defaultCollationSet;
     private boolean defaultFunctionNamespaceSet;
+    private boolean defaultElementNamespaceSet;
     private final Set<String> moduleNamespaces = new HashSet<>();
     private final Set<String> schemaNamespaces = new HashSet<>();
     private final List<LibraryModule> modules = new ArrayList<>();
@@ -83,12 +85,22 @@ public final class PrologBuilder {
         NamespaceBindingUtils.validateDefaultNamespaceDeclaration(uri, metadata);
         if (function) {
             if (this.defaultFunctionNamespaceSet) {
-                throw new SemanticException("The default function namespace has already been declared.", metadata);
+                throw new SemanticException(
+                        "The default function namespace has already been declared.",
+                        ErrorCode.DuplicateDefaultNamespaceDeclarationErrorCode,
+                        metadata);
             }
             this.translationContext.moduleContext().setDefaultFunctionNamespaceUri(uri);
             this.defaultFunctionNamespaceSet = true;
         } else {
+            if (this.defaultElementNamespaceSet) {
+                throw new SemanticException(
+                        "The default element namespace has already been declared.",
+                        ErrorCode.DuplicateDefaultNamespaceDeclarationErrorCode,
+                        metadata);
+            }
             this.translationContext.bindNamespace("", uri, metadata);
+            this.defaultElementNamespaceSet = true;
         }
     }
 
@@ -262,6 +274,27 @@ public final class PrologBuilder {
     }
 
     public void addOption(OptionDeclaration declaration) {
+        Name name = declaration.getName();
+        if (SerializationParameterUtils.SERIALIZATION_NAMESPACE.equals(name.getNamespace())) {
+            if (!this.translationContext.isMainModule()) {
+                throw new SemanticException(
+                        "Output declarations are only allowed in a main module.",
+                        ErrorCode.LibraryModuleOutputDeclarationErrorCode,
+                        declaration.getMetadata());
+            }
+            if (!SerializationParameterUtils.isOutputDeclarationParameter(name.getLocalName())) {
+                throw new SemanticException(
+                        "Invalid output declaration: " + name,
+                        ErrorCode.InvalidOutputDeclarationErrorCode,
+                        declaration.getMetadata());
+            }
+            if (this.options.stream().anyMatch(option -> option.getName().equals(name))) {
+                throw new SemanticException(
+                        "Output parameter declared more than once: " + name,
+                        ErrorCode.DuplicateOutputDeclarationErrorCode,
+                        declaration.getMetadata());
+            }
+        }
         this.options.add(declaration);
     }
 

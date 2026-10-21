@@ -34,6 +34,7 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.misc.SortKeyComparison;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
@@ -72,7 +73,6 @@ public class SortFunctionIterator extends ItemRuntimePlan implements LocalRuntim
     private List<Item> computeResult(DynamicContext context) {
         List<Item> inputItems = this.inputIterator.materialize(context);
         String collationUri = resolveCollationUri(context);
-        SortKeyComparison.checkCollationSupported(collationUri, getMetadata());
 
         KeyComputer keyComputer = buildKeyComputer(context);
         List<SortRow> rows = new ArrayList<>(inputItems.size());
@@ -100,19 +100,8 @@ public class SortFunctionIterator extends ItemRuntimePlan implements LocalRuntim
     }
 
     private String resolveCollationUri(DynamicContext context) {
-        if (this.collationIterator == null) {
-            return getRuntimeStaticContext().getDefaultCollation();
-        }
-        List<Item> collation = this.collationIterator.materialize(context);
-        if (collation.isEmpty()) {
-            return getRuntimeStaticContext().getDefaultCollation();
-        }
-        if (collation.size() != 1 || !collation.get(0).isString()) {
-            throw new UnexpectedTypeException(
-                    "Type error; second argument to fn:sort must be empty sequence or a single xs:string.",
-                    getMetadata());
-        }
-        return collation.get(0).getStringValue();
+        return CollationSupport.resolveCollationArgument(
+                this.collationIterator, context, getRuntimeStaticContext(), getMetadata());
     }
 
     private KeyComputer buildKeyComputer(DynamicContext context) {

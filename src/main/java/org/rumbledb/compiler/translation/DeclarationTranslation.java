@@ -34,6 +34,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.OptionDeclaration;
@@ -107,6 +108,15 @@ public final class DeclarationTranslation {
         if (ctx.sequenceType() != null) {
             seq = processSequenceType.apply(ctx.sequenceType());
         }
+        if ("xquery31".equals(translationContext.moduleContext().getQueryLanguage())) {
+            if (seq == null) {
+                seq = SequenceType.createSequenceType("item");
+            } else if (seq.isEmptySequence() || seq.getArity() != SequenceType.Arity.One) {
+                throw new ParsingException(
+                        "An XQuery context item declaration requires an item type without an occurrence indicator.",
+                        translationContext.metadata(ctx.sequenceType()));
+            }
+        }
         boolean external = ctx.isExternal();
         Expression expr = null;
         if (ctx.exprSingle() != null) {
@@ -145,7 +155,18 @@ public final class DeclarationTranslation {
         List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
         AnnotationValidator.validateFunctionAnnotations(annotations);
         Name name = parseFunctionName.apply(ctx.functionName());
-        FunctionDeclarationValidator.validateFunctionName(name, translationContext.metadata(ctx.functionName()));
+        boolean xquery = "xquery31".equals(translationContext.moduleContext().getQueryLanguage());
+        String lexicalName = ctx.functionName().getText();
+        if (xquery
+                && translationContext.moduleContext().getDefaultFunctionNamespaceUri() == null
+                && lexicalName.indexOf(':') < 0
+                && !lexicalName.startsWith("Q{")) {
+            // XQuery's implicit default is fn, even though calls use Rumble's shared
+            // JSONiq convenience namespace for built-in function resolution.
+            name = new Name(Name.FN_NS, "", name.getLocalName());
+        }
+        FunctionDeclarationValidator.validateFunctionName(
+                name, xquery, translationContext.metadata(ctx.functionName()));
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         Map<Name, ExceptionMetadata> parameterMetadata = new LinkedHashMap<>();
         SequenceType fnReturnType = null;

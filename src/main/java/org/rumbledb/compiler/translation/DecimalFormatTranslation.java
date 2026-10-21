@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.DecimalFormatPropertyInvalidValueException;
 import org.rumbledb.exceptions.DuplicateDecimalFormatPropertyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SemanticException;
 
 public final class DecimalFormatTranslation {
 
@@ -123,7 +122,7 @@ public final class DecimalFormatTranslation {
         validateDecimalFormat(decimalFormat, metadata);
 
         if (isDefaultDecimalFormat) {
-            moduleContext.setDefaultDecimalFormat(decimalFormat);
+            moduleContext.setDefaultDecimalFormat(decimalFormat, metadata);
         } else {
             moduleContext.addDecimalFormat(name, decimalFormat, metadata);
         }
@@ -165,8 +164,8 @@ public final class DecimalFormatTranslation {
     private static void requireValidZeroDigitFamily(int zeroDigit, ExceptionMetadata metadata) {
         for (int i = 0; i < 10; i++) {
             int cp = zeroDigit + i;
-            if (!Character.isDigit(cp)) {
-                throw new SemanticException(
+            if (Character.getType(cp) != Character.DECIMAL_DIGIT_NUMBER || Character.digit(cp, 10) != i) {
+                throw new DecimalFormatPropertyInvalidValueException(
                         "The zero-digit property must define a family of 10 consecutive digits.", metadata);
             }
         }

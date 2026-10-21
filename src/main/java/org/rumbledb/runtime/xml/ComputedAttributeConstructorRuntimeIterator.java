@@ -181,10 +181,9 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
         // 4: The parent property of the attribute node is set to empty.
         Item attributeItem =
                 ItemFactory.getInstance().createXmlAttributeNode(attributeName.getQNameValue(), attributeValue);
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            attributeItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        attributeItem.setXmlDocumentPosition(documentPath, 0);
         return attributeItem;
     }
 
