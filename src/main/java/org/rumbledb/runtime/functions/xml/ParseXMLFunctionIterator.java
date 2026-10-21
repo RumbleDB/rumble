@@ -49,7 +49,8 @@ public class ParseXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                 xmlDocument,
                 XMLDocumentPosition.generateConstructedTreePath(),
-                context.getRumbleConfiguration().optimization().optimizeParentPointers());
+                context.getRumbleConfiguration().optimization().optimizeParentPointers(),
+                    true);
         documentItem.setConstructionBaseUri(this.staticContext.getStaticURI());
         return documentItem;
     }

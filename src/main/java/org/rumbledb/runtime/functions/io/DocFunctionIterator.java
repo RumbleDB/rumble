@@ -64,7 +64,8 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                     xmlDocument,
                     uri.toString(),
-                    context.getRumbleConfiguration().optimization().optimizeParentPointers());
+                    context.getRumbleConfiguration().optimization().optimizeParentPointers(),
+                    true);
             documentItem.setConstructionBaseUri(uri);
             return documentItem;
         } catch (IOException e) {

@@ -844,7 +844,8 @@ public class ItemParser {
         return getDocumentItemFromXML(currentNode, path, removeParentPointers, false);
     }
 
-    private static DocumentItem getDocumentItemFromXML(
+    /** Converts a parsed document, retaining whitespace text when required by the caller's data model. */
+    public static DocumentItem getDocumentItemFromXML(
             Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
         List<Item> children = getChildren(currentNode, path, removeParentPointers, preserveWhitespace);
         DocumentItem documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
