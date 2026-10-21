@@ -47,7 +47,6 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
 
         if (expression instanceof FunctionCallExpression functionCall) {
             if (isTailRecursiveCall(functionCall, fd)) {
-                // System.err.println("Set tail call optimization for function " + fd.getFunctionIdentifier());
                 functionCall.setTailCallOptimization(true);
                 return true;
             }
