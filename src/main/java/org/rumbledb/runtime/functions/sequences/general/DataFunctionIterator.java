@@ -144,13 +144,6 @@ public class DataFunctionIterator extends ItemRuntimePlan
         }
 
         private List<Item> atomize(Item item) {
-            // Return conversion must let the call trampoline execute internal tail-call markers.
-            if (item.isFunction()
-                    && item.getIdentifier() != null
-                    && item.getIdentifier().getArity() == 0
-                    && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName())) {
-                return Collections.singletonList(item);
-            }
             try {
                 return item.atomizedValue();
             } catch (CannotAtomizeException exception) {
