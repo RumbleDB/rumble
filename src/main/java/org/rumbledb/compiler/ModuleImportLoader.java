@@ -18,6 +18,9 @@ package org.rumbledb.compiler;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
@@ -27,11 +30,19 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.Prolog;
 
 /** Shared module import semantics for the JSONiq and XQuery frontends. */
 public final class ModuleImportLoader {
 
     private ModuleImportLoader() {}
+
+    private static final ThreadLocal<ImportSession> CURRENT_SESSION = new ThreadLocal<>();
+
+    static final class ImportSession {
+        final Map<URI, LibraryModule> modules = new LinkedHashMap<>();
+        final Map<String, List<String>> locations = new LinkedHashMap<>();
+    }
 
     public static LibraryModule load(
             String namespace,
@@ -39,11 +50,36 @@ public final class ModuleImportLoader {
             StaticContext importingModuleContext,
             CompilationConfiguration compilationConfiguration,
             ExceptionMetadata metadata) {
+        ImportSession session = CURRENT_SESSION.get();
+        boolean outermost = session == null;
+        if (outermost) {
+            session = new ImportSession();
+            CURRENT_SESSION.set(session);
+        }
+        try {
+            LibraryModule result = loadModules(namespace, locationHints, importingModuleContext,
+                    compilationConfiguration, metadata, session);
+            return outermost ? ModuleImportGraph.normalize(result, session, compilationConfiguration.runtimeConfiguration()) : result;
+        } finally {
+            if (outermost) {
+                CURRENT_SESSION.remove();
+            }
+        }
+    }
+
+    private static LibraryModule loadModules(String namespace, List<String> locationHints,
+            StaticContext importingModuleContext, CompilationConfiguration compilationConfiguration,
+            ExceptionMetadata metadata, ImportSession session) {
         URI baseURI = importingModuleContext.getStaticBaseURI();
         String normalizedNamespace = URILiteralUtils.normalizeAsAnyURI(namespace);
-        List<String> candidates = locationHints.isEmpty() ? List.of(normalizedNamespace) : locationHints;
+        if (!locationHints.isEmpty()) {
+            // Retain absolute hints so a same-namespace import in a fragment can find its peers.
+            session.locations.putIfAbsent(normalizedNamespace, locationHints.stream()
+                    .map(hint -> URILiteralUtils.resolve(baseURI, hint, metadata).toString()).toList());
+        }
+        List<String> candidates = session.locations.getOrDefault(normalizedNamespace, List.of(normalizedNamespace));
         Exception lastFailure = null;
-
+        List<LibraryModule> loaded = new ArrayList<>();
         for (String candidate : candidates) {
             URI location;
             try {
@@ -52,29 +88,36 @@ public final class ModuleImportLoader {
                 lastFailure = e;
                 continue;
             }
-            try {
-                LibraryModule module = CompilationPipeline.prepareLibraryModuleFromLocation(
-                        location, importingModuleContext, compilationConfiguration, metadata);
-
-                if (!normalizedNamespace.equals(module.getNamespace())) {
-                    throw new ModuleNotFoundException(
-                            "A module with namespace "
-                                    + normalizedNamespace
-                                    + " was not found. The namespace of the module at this location was: "
-                                    + module.getNamespace(),
-                            metadata);
+            URI physical = compilationConfiguration.resourceResolver().resolveURI(location).normalize();
+            LibraryModule module = session.modules.get(physical);
+            if (module == null) {
+                // Back edges refer to an empty shell until this module has finished translation.
+                // The completed graph resolves these shells before any analysis pass runs.
+                ExceptionMetadata source = new ExceptionMetadata(physical.toString(), metadata.getRange(), metadata.getCode());
+                module = new LibraryModule(new Prolog(List.of(), List.of(), List.of(), source), normalizedNamespace, source);
+                session.modules.put(physical, module);
+                try {
+                    module = CompilationPipeline.prepareLibraryModuleFromLocation(
+                            location, importingModuleContext, compilationConfiguration, metadata);
+                    session.modules.put(physical, module);
+                } catch (IOException | CannotRetrieveResourceException e) {
+                    session.modules.remove(physical);
+                    lastFailure = e;
+                    continue;
                 }
-
-                return module;
-            } catch (IOException | CannotRetrieveResourceException e) {
-                lastFailure = e;
             }
+            if (!normalizedNamespace.equals(module.getNamespace())) {
+                throw new ModuleNotFoundException("A module with namespace " + normalizedNamespace
+                        + " was not found. The namespace of the module at this location was: " + module.getNamespace(), metadata);
+            }
+            loaded.add(module);
         }
-
+        if (!loaded.isEmpty()) {
+            return loaded.get(0);
+        }
         RumbleException exception = new ModuleNotFoundException(
-                "Module not found: %s, cause: %s"
-                        .formatted(normalizedNamespace, lastFailure != null ? lastFailure.getMessage() : "unknown"),
-                metadata);
+                "Module not found: %s, cause: %s".formatted(normalizedNamespace,
+                        lastFailure != null ? lastFailure.getMessage() : "unknown"), metadata);
         if (lastFailure != null) {
             exception.initCause(lastFailure);
         }

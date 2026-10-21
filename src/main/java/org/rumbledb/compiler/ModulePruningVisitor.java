@@ -15,8 +15,8 @@
  */
 package org.rumbledb.compiler;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -24,8 +24,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 
 /**
- * This visitor removes duplicate module import, by depopulating variable and function declarations upon
- * duplicate visits.
+ * Removes duplicate import edges while retaining the declarations of shared modules.
  *
  */
 public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
@@ -33,7 +32,7 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
     @SuppressWarnings("unused")
     private final RumbleConfiguration configuration;
 
-    private final List<String> visitedModules;
+    private final Set<String> visitedModules;
 
     /**
      * Builds a new visitor.
@@ -42,17 +41,31 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
      */
     ModulePruningVisitor(RumbleConfiguration configuration) {
         this.configuration = configuration;
-        this.visitedModules = new ArrayList<>();
+        this.visitedModules = new HashSet<>();
     }
 
     @Override
-    public Void visitLibraryModule(LibraryModule libraryModule, Void argument) {
-        if (this.visitedModules.contains(libraryModule.getNamespace())) {
-            Prolog prolog = libraryModule.getProlog();
-            prolog.clearDeclarations();
+    public Void visitProlog(Prolog prolog, Void argument) {
+        // Prune in depth-first order: a later sibling may already have been imported by an earlier one.
+        for (var schema : prolog.getSchemaImports()) {
+            visit(schema, argument);
         }
-        visitDescendants(libraryModule, argument);
-        this.visitedModules.add(libraryModule.getNamespace());
+        var imports = prolog.getImportedModules().iterator();
+        while (imports.hasNext()) {
+            LibraryModule module = imports.next();
+            String key = module.getProlog().getModuleGroupKey();
+            if (key == null) {
+                key = module.getMetadata().getLocation();
+            }
+            if (!this.visitedModules.add(key)) {
+                imports.remove();
+            } else {
+                visit(module, argument);
+            }
+        }
+        for (var declaration : prolog.getDeclarations()) {
+            visit(declaration, argument);
+        }
         return argument;
     }
 }

@@ -17,6 +17,9 @@ package org.rumbledb.expressions.module;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.LinkedHashMap;
+import org.rumbledb.context.StaticContext;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -36,6 +39,11 @@ public class Prolog extends Node {
 
     private final List<LibraryModule> importedModules;
     private final List<SchemaImport> schemaImports;
+
+    // Cyclic import groups retain each declaration's original module settings.
+    private final Map<String, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
+    @Setter
+    private String moduleGroupKey;
 
     public Prolog(
             List<VariableDeclaration> variableDeclarations,

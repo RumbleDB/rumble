@@ -55,6 +55,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -506,7 +507,29 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
-        StaticContext generatedContext = visitDescendants(prolog, argument);
+        StaticContext generatedContext = argument;
+        if (prolog.getSourceModuleContexts().isEmpty()) {
+            generatedContext = visitDescendants(prolog, argument);
+        } else {
+            for (SchemaImport schema : prolog.getSchemaImports()) {
+                visit(schema, argument);
+            }
+            for (LibraryModule imported : prolog.getImportedModules()) {
+                visit(imported, argument);
+            }
+            for (Node declaration : prolog.getDeclarations()) {
+                StaticContext sourceContext = prolog.getSourceModuleContexts()
+                        .getOrDefault(declaration.getMetadata().getLocation(), argument);
+                sourceContext.importModuleContext(argument);
+                sourceContext.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes());
+                visit(declaration, sourceContext);
+                argument.importModuleContext(sourceContext);
+            }
+            // Function signatures must be visible throughout a mutually recursive group.
+            for (StaticContext sourceContext : prolog.getSourceModuleContexts().values()) {
+                sourceContext.importModuleContext(argument);
+            }
+        }
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(generatedContext, prolog.getMetadata());
         }
