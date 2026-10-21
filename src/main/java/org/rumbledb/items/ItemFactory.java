@@ -364,9 +364,17 @@ public class ItemFactory {
 
     public Item createMapItem(
             List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
-        return withMutability(new MapItem(keys, values, itemMetadata), mutable);
+        Item result = new MapItem(keys, values, itemMetadata);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
+    // Unlike the other factories, this does not set -1 on the values of an immutable map: that would visit every
+    // entry on each put or remove.
     private static Item withMutability(Item map, boolean mutable) {
         if (mutable) {
             map.setMutabilityLevel(0);
