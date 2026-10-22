@@ -166,14 +166,7 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
             // If empty sequence, contentExpressionBuilder remains empty (zero-length string)
         }
         String attributeValue = contentExpressionBuilder.toString();
-        // 5: If the attribute name is xml:id, then xml:id processing is performed
-        if (isXmlIdAttribute(attributeName.getQNameValue())) {
-            attributeValue = attributeValue.replaceAll("\\s+", " ").trim();
-        }
-        // 6: If the attribute name is xml:id, the is-id property of the resulting attribute node is set to true;
-        // otherwise the is-id property is set to false. The is-idrefs property of the attribute node is unconditionally
-        // set to false.
-        // Note: we currently do not support is-id and is-idrefs properties
+        // AttributeItem applies the shared xml:id whitespace normalization and is-id property.
         // 7: If the attribute name is xml:space and the attribute value is other
         // than preserve or default, a dynamic error MAY be raised [err:XQDY0092].
         // Note: this is a MAY, so we are not mandated to raise an error here
@@ -185,11 +178,5 @@ public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostO
         String documentPath = XMLDocumentPosition.generateConstructedTreePath();
         attributeItem.setXmlDocumentPosition(documentPath, 0);
         return attributeItem;
-    }
-
-    private static boolean isXmlIdAttribute(Name attributeName) {
-        return attributeName != null
-                && "id".equals(attributeName.getLocalName())
-                && Name.XML_NS.equals(attributeName.getNamespace());
     }
 }
