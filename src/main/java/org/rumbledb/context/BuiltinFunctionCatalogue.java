@@ -3135,14 +3135,14 @@ public class BuiltinFunctionCatalogue {
             List.of(),
             "item*",
             CollectionFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME);
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction collection1 = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "collection"),
             List.of("string?"),
             "item*",
             CollectionFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME);
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction doc_available = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "doc-available"),

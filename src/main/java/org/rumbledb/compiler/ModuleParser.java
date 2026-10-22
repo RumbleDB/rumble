@@ -157,6 +157,10 @@ final class ModuleParser {
             if (isMainModule && moduleParseTree == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
+            if (language == Language.XQUERY
+                    && !configuration.runtimeConfiguration().semantics().allowScripting()) {
+                new XQuerySyntaxValidator(uri, query).visit(moduleParseTree);
+            }
             return (Module) visitor.visit(moduleParseTree);
         } catch (ParseCancellationException ex) {
             ParsingException exception = new ParsingException(

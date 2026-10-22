@@ -276,7 +276,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
         }
         if (this.translationContext.isMainModule()) {
-            if (ctx.mainModule() != null) {
+            if (!ctx.mainModule().isEmpty()) {
                 return this.visitMainModule(ctx.mainModule().get(0));
             }
             throw new ParsingException(

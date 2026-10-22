@@ -15,6 +15,7 @@
  */
 package org.rumbledb.compiler.translation.xml;
 
+import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -28,8 +29,10 @@ import org.rumbledb.compiler.context.xml.RelativePathExprContext;
 import org.rumbledb.compiler.context.xml.ReverseStepContext;
 import org.rumbledb.compiler.context.xml.StepExprContext;
 import org.rumbledb.compiler.translation.TranslationContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.expressions.xml.StepExpr;
@@ -131,10 +134,26 @@ public final class XmlPathTranslation {
                 ? forwardStep(ctx.forwardStep(), translationContext, getNodeTest)
                 : reverseStep(ctx.reverseStep(), translationContext, getNodeTest);
         Expression result = stepExpr;
+        // Axis iterators return document order. Reverse-axis predicates use proximity order,
+        // while the completed step (including all its predicates) returns document order again.
+        boolean reversePredicates =
+                ctx.reverseStep() != null && !ctx.predicates().isEmpty();
+        if (reversePredicates) {
+            result = new FunctionCallExpression(
+                    Name.createVariableInDefaultBuiltinFunctionNamespace("reverse"),
+                    List.of(result),
+                    stepExpr.getMetadata());
+        }
         for (PredicateCtx predicateCtx : ctx.predicates()) {
             Expression predicate = visitPredicate.apply(predicateCtx);
             result = new FilterExpression(
                     result, predicate, translationContext.metadata(ctx.context().getStart(), predicateCtx.getStop()));
+        }
+        if (reversePredicates) {
+            result = new FunctionCallExpression(
+                    Name.createVariableInDefaultBuiltinFunctionNamespace("reverse"),
+                    List.of(result),
+                    translationContext.metadata(ctx.context()));
         }
         return result;
     }

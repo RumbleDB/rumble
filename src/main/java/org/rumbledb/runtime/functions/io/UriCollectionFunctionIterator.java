@@ -21,11 +21,12 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnimplementedFunctionException;
-import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-public class UriCollectionFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+public class UriCollectionFunctionIterator extends CollectionFunctionIterator {
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -34,7 +35,11 @@ public class UriCollectionFunctionIterator extends AbstractAtMostOneItemRuntimeP
     }
 
     @Override
-    public Item evaluateAtMostOne(DynamicContext context) {
-        throw new UnimplementedFunctionException("fn:uri-collection", getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(
+                () -> collection(context).uris().stream()
+                        .map(uri -> ItemFactory.getInstance().createAnyURIItem(uri.toString()))
+                        .iterator(),
+                getMetadata());
     }
 }
