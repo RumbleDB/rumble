@@ -120,7 +120,14 @@ public class MapItemType extends AbstractItemType {
             FunctionSignature mapAsFunctionSignature = new FunctionSignature(
                     Collections.singletonList(
                             new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One)),
-                    this.valueSequenceType);
+                    this.valueSequenceType.isEmptySequence()
+                            ? this.valueSequenceType
+                            : new SequenceType(
+                                    this.valueSequenceType.getItemType(),
+                                    this.valueSequenceType.getArity() == SequenceType.Arity.One
+                                                    || this.valueSequenceType.getArity() == SequenceType.Arity.OneOrZero
+                                            ? SequenceType.Arity.OneOrZero
+                                            : SequenceType.Arity.ZeroOrMore));
             return mapAsFunctionSignature.isSubtypeOf(superSignature);
         }
         return false;
