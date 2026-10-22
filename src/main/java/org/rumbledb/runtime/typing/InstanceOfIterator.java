@@ -150,6 +150,11 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
                     && doesItemTypeMatchItem(documentType.getElementTestType(), elementChildren.get(0));
         }
         if (itemToMatch.isMap()) {
+            // Generic map(*) arguments must not scan all entries on every map operation.
+            // Inspect contents only when the dynamic type cannot establish the required type.
+            if (itemToMatch.getDynamicType().isSubtypeOf(itemType)) {
+                return true;
+            }
             if (itemType.isMapItemType() && !itemType.isObjectItemType()) {
                 ItemType keyType = itemType.getMapKeyItemType();
                 SequenceType valueType = itemType.getMapValueSequenceType();
@@ -174,11 +179,6 @@ public class InstanceOfIterator extends AbstractAtMostOneItemRuntimePlan {
                     return true;
                 }
                 return itemToMatch.getDynamicType().isSubtypeOf(itemType);
-            }
-            if (itemToMatch.getDynamicType().isSubtypeOf(itemType)) {
-                // if the item already has a dynamic type that is a subtype of the required type, we can skip the more
-                // expensive structural check
-                return true;
             }
             List<Item> keys = itemToMatch.getItemKeys();
             ItemType keyType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
