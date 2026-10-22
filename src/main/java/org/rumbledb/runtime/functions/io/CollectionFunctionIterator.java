@@ -23,13 +23,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.resources.ResourceCollection;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
-public class CollectionFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
-
+public class CollectionFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
 
@@ -37,23 +37,25 @@ public class CollectionFunctionIterator extends ItemRuntimePlan implements DataF
         super(children, staticContext);
     }
 
-    // TODO: implement collection function
+    protected ResourceCollection collection(DynamicContext context) {
+        Item argument = getChildren().isEmpty() ? null : getChild(0).materializeAtMostOne(context);
+        URI uri = null;
+        if (argument != null) {
+            try {
+                uri = URI.create(argument.getStringValue());
+                if (!uri.isAbsolute()) {
+                    uri = this.staticContext.getStaticURI().resolve(uri);
+                }
+            } catch (IllegalArgumentException exception) {
+                throw new CannotRetrieveResourceException(
+                        "Invalid collection URI: " + argument.getStringValue(), getMetadata());
+            }
+        }
+        return context.getResourceResolver().collection(uri, getMetadata());
+    }
 
     @Override
-    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
-        if (this.getChildren().isEmpty()) {
-            throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
-        }
-        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
-        if (stringItem == null) {
-            throw new CannotRetrieveResourceException("No default collection is defined.", getMetadata());
-        }
-        String url = stringItem.getStringValue();
-        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
-        if (!FileSystemUtil.exists(uri, getMetadata())) {
-            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
-        }
-        // DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
-        return HomogeneousItemDataFrame.emptyDataFrame();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> collection(context).items().iterator(), getMetadata());
     }
 }

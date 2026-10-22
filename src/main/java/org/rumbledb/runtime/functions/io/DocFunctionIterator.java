@@ -55,6 +55,10 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private Item loadDocument(Item path, DynamicContext context) {
         URI uri = FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
+        Item collectionDocument = context.getResourceResolver().collectionDocument(uri);
+        if (collectionDocument != null) {
+            return collectionDocument;
+        }
         try (ResolvedResource resource =
                 context.getResourceResolver().resolve(uri, getConfiguration(), getMetadata())) {
             InputSource source = new InputSource(resource.getInputStream());
