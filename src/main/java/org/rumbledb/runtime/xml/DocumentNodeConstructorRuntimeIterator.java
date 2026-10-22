@@ -110,7 +110,7 @@ public class DocumentNodeConstructorRuntimeIterator extends AbstractAtMostOneIte
 
         // Collect all content items
         if (this.contentIterator != null) {
-            for (Item contentItem : XmlConstructorContentUtils.normalizeContent(contentItems)) {
+            for (Item contentItem : XmlConstructorContentUtils.normalizeContent(contentItems, getMetadata())) {
                 List<Item> expandedItems = new ArrayList<>();
                 XmlConstructorContentUtils.appendExpandedItem(contentItem, expandedItems);
                 for (Item item : expandedItems) {

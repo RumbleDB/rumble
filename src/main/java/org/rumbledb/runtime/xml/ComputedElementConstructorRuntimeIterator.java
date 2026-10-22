@@ -191,7 +191,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
         // 1. If the content sequence contains a document node, the document node is replaced in the content
         // sequence by its children.
         List<Item> expandedContentSequence =
-                expandDocumentNodes(XmlConstructorContentUtils.normalizeContent(rawContentSequence));
+                expandDocumentNodes(XmlConstructorContentUtils.normalizeContent(rawContentSequence, getMetadata()));
 
         // 3. If the content sequence contains an attribute node or a namespace node following a node that is not an
         // attribute node or a namespace node, a type error is raised [err:XQTY0024].
