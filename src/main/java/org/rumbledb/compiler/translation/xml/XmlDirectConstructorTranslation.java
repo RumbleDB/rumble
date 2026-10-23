@@ -151,9 +151,7 @@ public final class XmlDirectConstructorTranslation {
         void append(Expression expression) {
             if (expression instanceof TextNodeExpression textExpression) {
                 String value = textExpression.getContent();
-                if (value.isEmpty()) {
-                    return;
-                }
+                // Even an empty CDATA section makes adjacent literal whitespace significant.
                 this.ensureText(textExpression.getMetadata());
                 this.text.append(value);
                 this.boundaryWhitespaceOnly =

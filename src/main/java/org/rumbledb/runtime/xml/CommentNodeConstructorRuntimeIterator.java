@@ -50,9 +50,6 @@ public class CommentNodeConstructorRuntimeIterator extends AbstractAtMostOneItem
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         List<Item> materialized = this.contentIterator.materialize(dynamicContext);
-        if (materialized.isEmpty()) {
-            return null;
-        }
         StringJoiner joiner = new StringJoiner(" ");
         for (Item item : materialized) {
             joiner.add(item.getStringValue());

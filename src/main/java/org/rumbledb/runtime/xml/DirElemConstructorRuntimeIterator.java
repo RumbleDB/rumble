@@ -191,9 +191,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         elementItem.setConstructionBaseUri(this.staticContext.getStaticURI());
         NodeConstructionUtils.initializeNamespaces(elementItem, this.staticContext);
         // Only add namespaces explicitly declared on this element
-        for (Item namespace : namespaces) {
-            elementItem.addOrReplaceNamespace(namespace);
-        }
+        NamespaceFixupUtils.addConstructorNamespaces(elementItem, namespaces, getMetadata());
         // set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
         NamespaceFixupUtils.applyNamespaceFixup(elementItem);
