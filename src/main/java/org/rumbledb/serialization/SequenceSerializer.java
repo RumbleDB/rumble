@@ -38,6 +38,9 @@ public final class SequenceSerializer {
             flattenArrays(items, flattenedItems);
             items = flattenedItems;
         }
+        if ("xml".equalsIgnoreCase(method) || "xhtml".equalsIgnoreCase(method)) {
+            validateXmlParameters(items, params, metadata);
+        }
         SerializationParameters itemParams = SerializationParameters.copy(params);
         if ("xml".equalsIgnoreCase(method)) {
             itemParams.setOmitXmlDeclaration(true);
@@ -76,6 +79,39 @@ public final class SequenceSerializer {
             }
         }
         return result.toString();
+    }
+
+    private static void validateXmlParameters(
+            List<Item> items, SerializationParameters params, ExceptionMetadata metadata) {
+        boolean standalone = params.getStandalone() != SerializationParameters.Standalone.OMIT;
+        boolean doctype = params.getDoctypeSystem() != null;
+        if (params.getOmitXmlDeclaration()
+                && (standalone || (doctype && !"1.0".equals(SerializerUtils.getEffectiveXmlVersion(params))))) {
+            throw new RumbleException(
+                    "The XML declaration cannot be omitted with these serialization parameters.",
+                    ErrorCode.InvalidXmlDeclarationParameters,
+                    metadata);
+        }
+        if (!standalone && !doctype) return;
+        List<Item> content = new ArrayList<>();
+        for (Item item : items) {
+            if (item.isDocumentNode()) content.addAll(item.children());
+            else content.add(item);
+        }
+        long elements = content.stream().filter(Item::isElementNode).count();
+        boolean text = false;
+        boolean previousAtomic = false;
+        for (Item item : content) {
+            if (item.isTextNode() && !item.getStringValue().isEmpty()) text = true;
+            if (item.isAtomic() && (!item.getStringValue().isEmpty() || previousAtomic)) text = true;
+            previousAtomic = item.isAtomic();
+        }
+        if (elements > 1 || text) {
+            throw new RumbleException(
+                    "Standalone and doctype-system require XML document content.",
+                    ErrorCode.XmlDocumentRequiredSerialization,
+                    metadata);
+        }
     }
 
     private static void flattenArrays(List<Item> items, List<Item> flattenedItems) {
