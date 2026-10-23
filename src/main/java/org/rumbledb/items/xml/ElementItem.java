@@ -282,7 +282,9 @@ public class ElementItem extends AbstractNodeItem {
             // optimization: we know that no other node types apart from element nodes can have namespaces
             // so we stop the iteration when we encounter a non-element node
             while (current != null && current.isElementNode()) {
-                ancestorFrames.add(((ElementItem) current).namespaces);
+                ElementItem ancestor = (ElementItem) current;
+                ancestorFrames.add(ancestor.namespaces);
+                if (!ancestor.inheritNamespacesFromParent) break;
                 current = current.parent();
             }
         }

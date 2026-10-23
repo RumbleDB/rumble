@@ -151,9 +151,7 @@ public final class XmlDirectConstructorTranslation {
         void append(Expression expression) {
             if (expression instanceof TextNodeExpression textExpression) {
                 String value = textExpression.getContent();
-                if (value.isEmpty()) {
-                    return;
-                }
+                // Even an empty CDATA section makes adjacent literal whitespace significant.
                 this.ensureText(textExpression.getMetadata());
                 this.text.append(value);
                 this.boundaryWhitespaceOnly =
@@ -400,7 +398,9 @@ public final class XmlDirectConstructorTranslation {
                     Function<DirectConstructorCtx, Expression> visitDirectConstructor,
                     Function<CommonContentCtx, Expression> visitCommonContent) {
         if (ctx.directConstructor() != null) {
-            return visitDirectConstructor.apply(ctx.directConstructor());
+            Expression result = visitDirectConstructor.apply(ctx.directConstructor());
+            if (result instanceof DirElemConstructorExpression element) element.setDirectlyNested(true);
+            return result;
         }
         if (ctx.commonContent() != null) {
             return visitCommonContent.apply(ctx.commonContent());
