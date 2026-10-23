@@ -34,6 +34,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
+import org.rumbledb.xml.schema.XmlSchemaValidator;
 
 public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
@@ -90,7 +92,8 @@ public class AnalyzeStringFunctionIterator extends AbstractAtMostOneItemRuntimeP
         root.addOrReplaceNamespace(factory.createXmlNamespaceNode("fn", Name.FN_NS));
         assignParentsRecursively(root);
         root.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
-        return root;
+        return new XmlSchemaValidator(XmlSchemaCatalogLoader.loadXPathFunctionsCatalog())
+                .validateStrict(root, getMetadata());
     }
 
     private Item createMatchElement(ItemFactory factory, String input, Matcher matcher, boolean quotedPattern) {
