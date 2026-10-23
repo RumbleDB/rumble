@@ -55,7 +55,7 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private Item loadDocument(Item path, DynamicContext context) {
         URI uri = FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
-        Item collectionDocument = context.getResourceResolver().collectionDocument(uri);
+        Item collectionDocument = context.getResourceResolver().document(uri);
         if (collectionDocument != null) {
             return collectionDocument;
         }
@@ -73,7 +73,8 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                     context.getRumbleConfiguration().optimization().optimizeParentPointers(),
                     queryLanguage != null && queryLanguage.startsWith("xquery"));
             documentItem.setConstructionBaseUri(uri);
-            return documentItem;
+            documentItem.setDocumentUri(uri);
+            return context.getResourceResolver().cacheDocument(uri, documentItem);
         } catch (IOException e) {
             CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
                     "Unable to read the resource supplied to fn:doc().", getMetadata());

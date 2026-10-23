@@ -1075,6 +1075,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
+        if (ctx.item.eqName() == null) {
+            throw new ParsingException(
+                    "A cast or castable target must be a simple type name.", createMetadataFromContext(ctx));
+        }
         return TypeTranslation.singleType(SingleTypeContext.from(ctx), this::processItemType);
     }
 
