@@ -76,6 +76,9 @@ public class RuntimeStaticContext implements Serializable {
     private final Map<String, String> staticallyKnownNamespaces = Collections.emptyMap();
 
     @Builder.Default
+    private final Map<String, String> constructorNamespaceBindings = Collections.emptyMap();
+
+    @Builder.Default
     private final Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
 
     private final SerializationParameters serializationParameters;
@@ -169,6 +172,7 @@ public class RuntimeStaticContext implements Serializable {
                 .staticURIString(staticContext.getStaticBaseUriString())
                 .queryLanguage(staticContext.getQueryLanguage())
                 .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
+                .constructorNamespaceBindings(staticContext.getConstructorNamespaceBindings())
                 .staticallyKnownCollations(new LinkedHashSet<>(staticContext.getStaticallyKnownCollations()))
                 .serializationParameters(staticContext.getSerializationParameters())
                 .defaultCollation(staticContext.getDefaultCollation())

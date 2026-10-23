@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -35,6 +36,11 @@ import org.rumbledb.expressions.Node;
 public class DirElemConstructorExpression extends Expression {
     /** Resolved expanded name of the element (compile-time). */
     private final Name elementName;
+
+    /** Direct constructor content is attached as a new node, rather than copied from an enclosed expression. */
+    @Getter
+    @Setter
+    private boolean directlyNested;
 
     /** The content of the element */
     @Getter

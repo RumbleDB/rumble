@@ -586,8 +586,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
+        Map<String, String> constructorBindings = new HashMap<>(argument.getConstructorNamespaceBindings());
+        for (NamespaceDeclaration declaration : expression.getNamespaceDeclarations()) {
+            constructorBindings.put(declaration.getPrefix(), declaration.getUri());
+        }
+        if (contentContext == argument) contentContext = new StaticContext(argument);
+        contentContext.setConstructorNamespaceBindings(constructorBindings);
+        expression.setStaticContext(contentContext);
         for (Expression attribute : expression.getAttributes()) {
-            this.visit(attribute, argument);
+            this.visit(attribute, contentContext);
         }
         for (Expression child : expression.getContent()) {
             this.visit(child, contentContext);

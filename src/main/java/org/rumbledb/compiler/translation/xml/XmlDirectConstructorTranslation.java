@@ -400,7 +400,9 @@ public final class XmlDirectConstructorTranslation {
                     Function<DirectConstructorCtx, Expression> visitDirectConstructor,
                     Function<CommonContentCtx, Expression> visitCommonContent) {
         if (ctx.directConstructor() != null) {
-            return visitDirectConstructor.apply(ctx.directConstructor());
+            Expression result = visitDirectConstructor.apply(ctx.directConstructor());
+            if (result instanceof DirElemConstructorExpression element) element.setDirectlyNested(true);
+            return result;
         }
         if (ctx.commonContent() != null) {
             return visitCommonContent.apply(ctx.commonContent());
