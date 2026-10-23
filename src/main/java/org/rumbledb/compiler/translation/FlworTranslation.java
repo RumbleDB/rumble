@@ -144,11 +144,15 @@ public final class FlworTranslation {
             }
         }
         Expression expr = visitExprSingle.apply(ctx.exprSingle());
-        // If the sequenceType is specified, we have to "extend" its arity to *
-        // because TreatIterator is wrapping the whole assignment expression,
-        // meaning there is not one TreatIterator for each variable we loop over.
+        // Check all input items, while retaining empty-sequence() and the requirement that an
+        // allowing-empty binding must permit the empty sequence when its input is empty.
         if (seq != null) {
-            SequenceType expressionType = new SequenceType(seq.getItemType(), SequenceType.Arity.ZeroOrMore);
+            boolean requiresItem = emptyFlag && !SequenceType.Arity.Zero.isSubtypeOf(seq.getArity());
+            SequenceType expressionType = seq.isEmptySequence()
+                    ? seq
+                    : new SequenceType(
+                            seq.getItemType(),
+                            requiresItem ? SequenceType.Arity.OneOrMore : SequenceType.Arity.ZeroOrMore);
             expr = new TreatExpression(expr, expressionType, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
