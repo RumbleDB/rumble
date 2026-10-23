@@ -26,8 +26,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
-import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
+import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
 
@@ -214,8 +214,7 @@ final class XmlSchemaTypeMapper {
                 case XSComplexTypeDefinition.CONTENTTYPE_ELEMENT -> XmlSchemaTypeAnnotation.ContentKind.ELEMENT_ONLY;
                 case XSComplexTypeDefinition.CONTENTTYPE_MIXED -> XmlSchemaTypeAnnotation.ContentKind.MIXED;
                 case XSComplexTypeDefinition.CONTENTTYPE_EMPTY -> XmlSchemaTypeAnnotation.ContentKind.EMPTY;
-                default -> throw new OurBadException("Xerces returned an unknown complex-content type.");
-            };
+                default -> throw new OurBadException("Xerces returned an unknown complex-content type.");};
         }
         return new XmlSchemaTypeAnnotation(name, hierarchy, contentKind);
     }

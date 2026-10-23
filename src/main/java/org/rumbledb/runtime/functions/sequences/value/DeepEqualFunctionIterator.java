@@ -29,7 +29,6 @@ import org.apache.spark.api.java.function.FlatMapFunction2;
 import scala.Tuple2;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.items.xml.XmlSchemaTypeAnnotation.ContentKind;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -37,6 +36,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation.ContentKind;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 import org.rumbledb.runtime.misc.CollationSupport;
@@ -327,7 +327,8 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             case ELEMENT_ONLY -> checkDeepEqual(
                     element1.children().stream().filter(Item::isElementNode).collect(Collectors.toList()),
                     element2.children().stream().filter(Item::isElementNode).collect(Collectors.toList()),
-                    collation, metadata);
+                    collation,
+                    metadata);
             case MIXED -> checkDeepEqual(
                     getElementsAndTextNodes(element1), getElementsAndTextNodes(element2), collation, metadata);
             case EMPTY -> true;

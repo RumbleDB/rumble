@@ -23,8 +23,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.StringItem;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.StringItem;
 import org.rumbledb.runtime.cursor.ContextOrArgumentLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -76,7 +76,10 @@ public class NodeNameFunctionIterator extends LocalFunctionCallIterator {
             throw new UnexpectedTypeException("The argument must be a reference to an XML node", getMetadata());
         }
         Name nodeName = node.nodeName();
-        return new StringItem(nodeName == null ? "" : ItemFactory.getInstance().createQNameItem(nodeName).getStringValue());
+        return new StringItem(
+                nodeName == null
+                        ? ""
+                        : ItemFactory.getInstance().createQNameItem(nodeName).getStringValue());
     }
 
     /**

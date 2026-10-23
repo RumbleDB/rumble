@@ -101,7 +101,9 @@ public class ElementWithIdFunctionIterator extends ItemRuntimePlan implements Lo
             for (Item attribute : node.attributes()) {
                 Name name = attribute.nodeName();
                 if (attribute.isId()
-                        || (name != null && Name.XML_NS.equals(name.getNamespace()) && "id".equals(name.getLocalName()))) {
+                        || (name != null
+                                && Name.XML_NS.equals(name.getNamespace())
+                                && "id".equals(name.getLocalName()))) {
                     String normalizedId = attribute.getStringValue().trim().replaceAll("\\s+", " ");
                     firstElementByIdValue.putIfAbsent(normalizedId, node);
                 }

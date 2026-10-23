@@ -36,7 +36,10 @@ public class XmlSchemaTypeAnnotation implements Serializable {
     private static final long serialVersionUID = 1L;
 
     public enum ContentKind {
-        SIMPLE, ELEMENT_ONLY, MIXED, EMPTY
+        SIMPLE,
+        ELEMENT_ONLY,
+        MIXED,
+        EMPTY
     }
 
     ContentKind contentKind;
@@ -50,10 +53,6 @@ public class XmlSchemaTypeAnnotation implements Serializable {
      * For non-atomic schema types, it still records the schema base-type chain and always ends at xs:anyType.
      */
     List<Name> typeHierarchy;
-
-    public XmlSchemaTypeAnnotation(@NonNull Name name, @NonNull List<Name> typeHierarchy) {
-        this(name, typeHierarchy, typeHierarchy.contains(xsName("anySimpleType")) ? ContentKind.SIMPLE : ContentKind.MIXED);
-    }
 
     public XmlSchemaTypeAnnotation(
             @NonNull Name name, @NonNull List<Name> typeHierarchy, @NonNull ContentKind contentKind) {
@@ -101,7 +100,7 @@ public class XmlSchemaTypeAnnotation implements Serializable {
         addIfAbsent(hierarchy, xsName("anyAtomicType"));
         addIfAbsent(hierarchy, xsName("anySimpleType"));
         addIfAbsent(hierarchy, xsName("anyType"));
-        return new XmlSchemaTypeAnnotation(itemType.getName(), hierarchy);
+        return new XmlSchemaTypeAnnotation(itemType.getName(), hierarchy, ContentKind.SIMPLE);
     }
 
     private static void addIfAbsent(List<Name> names, Name name) {
