@@ -24,6 +24,9 @@ import java.util.Set;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
@@ -39,6 +42,34 @@ final class NamespaceFixupUtils {
         }
         configureCopiedElementNamespaces((ElementItem) item, (ElementItem) copy, staticContext, true);
         return copy;
+    }
+
+    /** Checks constructor-supplied bindings before name fixup can rewrite conflicting prefixes. */
+    static void addConstructorNamespaces(ElementItem element, List<Item> namespaces, ExceptionMetadata metadata) {
+        Map<String, String> bindings = new LinkedHashMap<>();
+        for (Item namespace : namespaces) {
+            String prefix =
+                    namespace.nodeName() == null ? "" : namespace.nodeName().getLocalName();
+            String uri = namespace.getStringValue();
+            String previous = bindings.putIfAbsent(prefix, uri);
+            if (previous != null && !previous.equals(uri)) {
+                throw new RumbleException(
+                        "Conflicting namespace bindings for prefix '" + prefix + "'.",
+                        ErrorCode.ConflictingNamespaceBindingsErrorCode,
+                        metadata);
+            }
+            if (prefix.isEmpty()
+                    && !uri.isEmpty()
+                    && normalize(element.nodeName().getNamespace()).isEmpty()) {
+                throw new RumbleException(
+                        "A default namespace cannot be added to an element whose name is in no namespace.",
+                        ErrorCode.ConflictingNamespaceBindingsErrorCode,
+                        metadata);
+            }
+        }
+        for (Item namespace : namespaces) {
+            element.addOrReplaceNamespace(namespace);
+        }
     }
 
     static void applyNamespaceFixup(ElementItem element) {

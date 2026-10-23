@@ -77,6 +77,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode CollationDoesNotSupportCollationUnitsCode = registerBuiltIn("FOCH0004");
     public static final ErrorCode NodeNotInDocumentErrorCode = registerBuiltIn("FODC0001");
     public static final ErrorCode CannotRetrieveResourceErrorCode = registerBuiltIn("FODC0002");
+    public static final ErrorCode InvalidDocumentURIErrorCode = registerBuiltIn("FODC0005");
     public static final ErrorCode InvalidXmlDocumentErrorCode = registerBuiltIn("FODC0006");
 
     public static final ErrorCode UnidentifiedErrorExceptionCode = registerBuiltIn("FOER0000");
@@ -241,6 +242,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DuplicateNamespaceDeclarationAttributeErrorCode = registerBuiltIn("XQST0071");
     public static final ErrorCode CharacterReferenceErrorCode = registerBuiltIn("XQST0090");
     public static final ErrorCode InvalidComputedNamespaceConstructorErrorCode = registerBuiltIn("XQDY0101");
+    public static final ErrorCode ConflictingNamespaceBindingsErrorCode = registerBuiltIn("XQDY0102");
     public static final ErrorCode AttributeOrNamespaceAfterNonAttributeErrorCode = registerBuiltIn("XQTY0024");
     public static final ErrorCode DuplicateFunctionAnnotationErrorCode = registerBuiltIn("XQST0106");
     public static final ErrorCode DuplicateVariableAnnotationErrorCode = registerBuiltIn("XQST0116");
