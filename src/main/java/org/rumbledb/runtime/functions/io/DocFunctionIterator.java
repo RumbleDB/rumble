@@ -18,6 +18,7 @@ package org.rumbledb.runtime.functions.io;
 import java.io.IOException;
 import java.io.Serial;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 import org.w3c.dom.Document;
@@ -26,7 +27,9 @@ import org.xml.sax.InputSource;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.XmlParsingUtils;
 import org.rumbledb.items.xml.DocumentItem;
@@ -54,7 +57,18 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private Item loadDocument(Item path, DynamicContext context) {
-        URI uri = FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
+        URI uri;
+        try {
+            uri = FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
+        } catch (CannotRetrieveResourceException exception) {
+            if (exception.getCause() instanceof URISyntaxException) {
+                throw new RumbleException(
+                        "Invalid URI supplied to fn:doc(): " + path.getStringValue(),
+                        ErrorCode.InvalidDocumentURIErrorCode,
+                        getMetadata());
+            }
+            throw exception;
+        }
         Item collectionDocument = context.getResourceResolver().document(uri);
         if (collectionDocument != null) {
             return collectionDocument;
