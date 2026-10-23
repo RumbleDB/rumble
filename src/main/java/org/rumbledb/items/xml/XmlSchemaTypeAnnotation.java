@@ -35,6 +35,12 @@ public class XmlSchemaTypeAnnotation implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    public enum ContentKind {
+        SIMPLE, ELEMENT_ONLY, MIXED, EMPTY
+    }
+
+    ContentKind contentKind;
+
     Name name;
 
     /**
@@ -46,7 +52,13 @@ public class XmlSchemaTypeAnnotation implements Serializable {
     List<Name> typeHierarchy;
 
     public XmlSchemaTypeAnnotation(@NonNull Name name, @NonNull List<Name> typeHierarchy) {
+        this(name, typeHierarchy, typeHierarchy.contains(xsName("anySimpleType")) ? ContentKind.SIMPLE : ContentKind.MIXED);
+    }
+
+    public XmlSchemaTypeAnnotation(
+            @NonNull Name name, @NonNull List<Name> typeHierarchy, @NonNull ContentKind contentKind) {
         this.name = name;
+        this.contentKind = contentKind;
         List<Name> hierarchy = new ArrayList<>(typeHierarchy);
         // xs:numeric is an XQuery type absent from Xerces's XML Schema base-type chain.
         // Normalize here so imported types and built-in validation use the same hierarchy.

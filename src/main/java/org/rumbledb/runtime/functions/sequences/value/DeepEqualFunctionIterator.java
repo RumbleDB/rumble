@@ -29,6 +29,7 @@ import org.apache.spark.api.java.function.FlatMapFunction2;
 import scala.Tuple2;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.items.xml.XmlSchemaTypeAnnotation.ContentKind;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -313,30 +314,30 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             return false;
         }
 
-        // 3b: Either both nodes are annotated as having simple content or both nodes
-        // are annotated as having complex content. For this purpose "simple content" means
-        // either a simple type or a complex type with simple content; "complex content" means
-        // a complex type whose variety is mixed, element-only, or empty.
-        // Note: Schema type information is not yet implemented in Rumble, so we skip this check
-
-        // 3c: The two nodes have the same number of attributes, and for every attribute
-        // $a1 in $i1/@* there exists an attribute $a2 in $i2/@* such that $a1 and $a2 are deep-equal.
+        ContentKind content1 = contentKind(element1);
+        ContentKind content2 = contentKind(element2);
+        if (content1 != content2) {
+            return false;
+        }
         if (!checkAttributesDeepEqual(element1.attributes(), element2.attributes(), collation, metadata)) {
             return false;
         }
+        return switch (content1) {
+            case SIMPLE -> checkDeepEqual(element1.atomizedValue(), element2.atomizedValue(), collation, metadata);
+            case ELEMENT_ONLY -> checkDeepEqual(
+                    element1.children().stream().filter(Item::isElementNode).collect(Collectors.toList()),
+                    element2.children().stream().filter(Item::isElementNode).collect(Collectors.toList()),
+                    collation, metadata);
+            case MIXED -> checkDeepEqual(
+                    getElementsAndTextNodes(element1), getElementsAndTextNodes(element2), collation, metadata);
+            case EMPTY -> true;
+        };
+    }
 
-        // 3d: One of the following conditions holds:
-        // i. Both element nodes are annotated as having simple content (as defined in 3(b) above), and the typed value
-        // of $i1 is deep-equal to the typed value of $i2.
-        // ii. Both element nodes have a type annotation that is a complex type with variety element-only, and the
-        // sequence $i1/* is deep-equal to the sequence $i2/*.
-        // iii. Both element nodes have a type annotation that is a complex type with variety mixed, and the sequence
-        // $i1/(*|text()) is deep-equal to the sequence $i2/(*|text()).
-        // iv. Both element nodes have a type annotation that is a complex type with variety empty.
-        // For now, we assume mixed content and compare all child nodes (elements and text) (corresponds to iii.)
-        // Note: element type annotations are not yet implemented in Rumble
-        return checkDeepEqual(
-                getElementsAndTextNodes(element1), getElementsAndTextNodes(element2), collation, metadata);
+    private static ContentKind contentKind(Item element) {
+        var annotation = element.getSchemaTypeAnnotation();
+        // xs:untyped has mixed content for the purposes of deep-equal.
+        return annotation == null ? ContentKind.MIXED : annotation.contentKind();
     }
 
     /**
@@ -358,8 +359,6 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         }
 
         // 4b: The typed value of $i1 is deep-equal to the typed value of $i2.
-        // Note: we do not support type annotations on attribute nodes yet.
-        // For now, the typed value of the attribute node is untyped atomic.
         return checkDeepEqual(attr1.atomizedValue(), attr2.atomizedValue(), collation, metadata);
     }
 

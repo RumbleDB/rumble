@@ -1,0 +1,10 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    xmlns:t="urn:deep-equal" targetNamespace="urn:deep-equal">
+    <xs:complexType name="elementOnly"><xs:sequence><xs:element name="child" minOccurs="0"/></xs:sequence></xs:complexType>
+    <xs:complexType name="mixed" mixed="true"><xs:sequence><xs:element name="child" minOccurs="0"/></xs:sequence></xs:complexType>
+    <xs:complexType name="empty"/>
+    <xs:complexType name="simple"><xs:simpleContent><xs:extension base="xs:integer"/></xs:simpleContent></xs:complexType>
+    <xs:simpleType name="list"><xs:list itemType="xs:integer"/></xs:simpleType>
+    <xs:simpleType name="union"><xs:union memberTypes="xs:integer xs:string"/></xs:simpleType>
+    <xs:element name="nullable" type="xs:integer" nillable="true"/>
+</xs:schema>
