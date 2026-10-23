@@ -19,6 +19,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
 import org.rumbledb.api.Item;
@@ -32,6 +33,8 @@ public final class ResourceResolver implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
+    private final Map<URI, Item> documents = new ConcurrentHashMap<>();
 
     private final Map<URI, URI> mappings;
     private final Map<URI, ResourceCollection> collections;
@@ -71,6 +74,17 @@ public final class ResourceResolver implements Serializable {
                         .anyMatch(value -> uri.toString().equals(value.getStringValue())))
                 .findFirst()
                 .orElse(null);
+    }
+
+    /** Reuses retrieved documents so their document URIs resolve to the same node. */
+    public Item document(URI uri) {
+        Item collectionDocument = collectionDocument(uri);
+        return collectionDocument == null ? this.documents.get(uri) : collectionDocument;
+    }
+
+    public Item cacheDocument(URI uri, Item document) {
+        Item previous = this.documents.putIfAbsent(uri, document);
+        return previous == null ? document : previous;
     }
 
     public boolean hasMapping(URI requestedURI) {
