@@ -951,6 +951,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                         .map(arg -> (AttributeNodeRuntimeIterator) this.visit(arg, argument))
                         .collect(Collectors.toList()),
                 expression.getNamespaceDeclarations(),
+                expression.isDirectlyNested(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;

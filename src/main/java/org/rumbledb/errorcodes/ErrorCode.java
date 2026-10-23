@@ -241,6 +241,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DuplicateDirectAttributeErrorCode = registerBuiltIn("XQST0040");
     public static final ErrorCode DuplicateNamespaceDeclarationAttributeErrorCode = registerBuiltIn("XQST0071");
     public static final ErrorCode CharacterReferenceErrorCode = registerBuiltIn("XQST0090");
+    public static final ErrorCode DuplicateContextItemDeclarationErrorCode = registerBuiltIn("XQST0099");
     public static final ErrorCode InvalidComputedNamespaceConstructorErrorCode = registerBuiltIn("XQDY0101");
     public static final ErrorCode ConflictingNamespaceBindingsErrorCode = registerBuiltIn("XQDY0102");
     public static final ErrorCode AttributeOrNamespaceAfterNonAttributeErrorCode = registerBuiltIn("XQTY0024");

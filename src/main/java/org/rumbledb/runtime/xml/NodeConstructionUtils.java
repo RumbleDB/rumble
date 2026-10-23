@@ -33,6 +33,11 @@ final class NodeConstructionUtils {
 
     private NodeConstructionUtils() {}
 
+    static void initializeNamespaces(ElementItem element, RuntimeStaticContext context) {
+        context.getConstructorNamespaceBindings().forEach(element::declareNamespaceBinding);
+        element.setInheritNamespacesFromParent(false);
+    }
+
     static void initializeElement(ElementItem element, RuntimeStaticContext context) {
         if (context.isConstructionPreserve()) {
             element.setSchemaType(

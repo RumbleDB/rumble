@@ -72,7 +72,7 @@ public final class TranslationNameResolver {
         }
         if (role == NameRole.ELEMENT_CONSTRUCTOR) {
             String namespace = this.context.resolveNamespace("");
-            if (namespace != null) {
+            if (namespace != null && !namespace.isEmpty()) {
                 return new Name(namespace, "", localName);
             }
         }
