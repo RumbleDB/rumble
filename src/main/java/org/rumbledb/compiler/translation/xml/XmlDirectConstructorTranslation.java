@@ -618,7 +618,10 @@ public final class XmlDirectConstructorTranslation {
         validateLiteral(childText, ctx.context(), translationContext::metadata);
         ParseTree child = ctx.context().getChildCount() > 0 ? ctx.context().getChild(0) : ctx.context();
         String xmlVersion = translationContext.configuration().semantics().xmlVersion();
-        String processedContent = processLiteralContent(childText, xmlVersion, translationContext.metadata(child));
+        // Normalize only source characters, before expanding references. Values from enclosed
+        // expressions and characters produced by references retain their whitespace.
+        String processedContent = processLiteralContent(
+                normalizeLiteralAttributeWhitespace(childText), xmlVersion, translationContext.metadata(child));
         return List.of(new AttributeNodeContentExpression(processedContent, translationContext.metadata(child)));
     }
 
@@ -770,7 +773,12 @@ public final class XmlDirectConstructorTranslation {
             Function<ParseTree, ExceptionMetadata> metadataFactory) {
         String hiddenText = TokenStreamUtils.getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
         validateLiteral(hiddenText, tree, metadataFactory);
-        result.appendText(hiddenText, tree);
+        result.appendText(normalizeLiteralAttributeWhitespace(hiddenText), tree);
+    }
+
+    /** CDATA attribute normalization replaces each literal XML whitespace character with a space. */
+    private static String normalizeLiteralAttributeWhitespace(String value) {
+        return value.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ');
     }
 
     /**

@@ -46,17 +46,35 @@ public class AttributeItem extends AbstractNodeItem {
     private boolean idRefs;
 
     public AttributeItem(Node attributeNode) {
-        this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode);
-        this.stringValue = attributeNode.getNodeValue();
-        this.typeAnnotation = null;
-        this.nodeTypedValue = NodeTypedValue.untyped();
+        this(NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode), attributeNode.getNodeValue());
     }
 
     public AttributeItem(Name dmNodeName, String stringValue) {
         this.dmNodeName = dmNodeName;
-        this.stringValue = stringValue;
+        boolean xmlId = Name.XML_NS.equals(dmNodeName.getNamespace()) && "id".equals(dmNodeName.getLocalName());
+        this.stringValue = xmlId ? normalizeXmlId(stringValue) : stringValue;
         this.typeAnnotation = null;
         this.nodeTypedValue = NodeTypedValue.untyped();
+        this.id = xmlId;
+    }
+
+    /** Applies ID whitespace normalization for parsed, direct, and computed xml:id attributes alike. */
+    private static String normalizeXmlId(String value) {
+        StringBuilder normalized = new StringBuilder(value.length());
+        boolean pendingSpace = false;
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            if (character == ' ' || character == '\t' || character == '\r' || character == '\n') {
+                pendingSpace = !normalized.isEmpty();
+            } else {
+                if (pendingSpace) {
+                    normalized.append(' ');
+                    pendingSpace = false;
+                }
+                normalized.append(character);
+            }
+        }
+        return normalized.toString();
     }
 
     @Override
