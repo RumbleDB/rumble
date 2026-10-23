@@ -19,6 +19,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -172,7 +173,8 @@ public class RuntimeStaticContext implements Serializable {
                 .staticURIString(staticContext.getStaticBaseUriString())
                 .queryLanguage(staticContext.getQueryLanguage())
                 .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
-                .constructorNamespaceBindings(staticContext.getConstructorNamespaceBindings())
+                // Kryo cannot reconstruct Map.of/Map.copyOf implementations from compiler contexts.
+                .constructorNamespaceBindings(new LinkedHashMap<>(staticContext.getConstructorNamespaceBindings()))
                 .staticallyKnownCollations(new LinkedHashSet<>(staticContext.getStaticallyKnownCollations()))
                 .serializationParameters(staticContext.getSerializationParameters())
                 .defaultCollation(staticContext.getDefaultCollation())
