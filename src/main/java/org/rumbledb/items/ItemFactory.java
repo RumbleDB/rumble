@@ -121,14 +121,15 @@ public class ItemFactory {
         if (l >= Integer.MIN_VALUE && l <= Integer.MAX_VALUE) {
             return new IntItem((int) l);
         }
-        return new IntegerItem(BigInteger.valueOf(l));
+        return new LongItem(l);
     }
 
     public Item createIntegerItem(String lexicalValue) {
-        if (lexicalValue.length() >= 10) {
+        try {
+            return createLongItem(Long.parseLong(lexicalValue));
+        } catch (NumberFormatException e) {
             return new IntegerItem(new BigInteger(lexicalValue));
         }
-        return new IntItem(Integer.parseInt(lexicalValue));
     }
 
     public Item createDoubleItem(double d) {
