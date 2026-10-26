@@ -83,7 +83,7 @@ public final class XmlBaseUtils {
         if (valUri == null) {
             throw new CastException("Invalid xml:base URI: " + value, ExceptionMetadata.EMPTY_METADATA);
         }
-        if (baseUri == null || valUri == null || !baseUri.isAbsolute()) {
+        if (baseUri == null || !baseUri.isAbsolute()) {
             return null;
         }
 
