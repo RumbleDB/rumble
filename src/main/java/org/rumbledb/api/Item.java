@@ -955,6 +955,15 @@ public interface Item extends Serializable {
     }
 
     /**
+     * Returns an integer item's value as a long, rejecting values outside the long range.
+     *
+     * @return the integer value as a long.
+     */
+    default long getLongValue() {
+        return getIntegerValue().longValueExact();
+    }
+
+    /**
      * Returns the integer value of the item as a bit integer, if it is an integer.
      *
      * @return the integer value as a BigInteger.

@@ -15,7 +15,7 @@
  */
 package org.rumbledb.compiler;
 
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.rumbledb.context.BuiltinFunction;
@@ -27,19 +27,15 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
-import org.rumbledb.expressions.primary.InlineFunctionExpression;
-import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
-import org.rumbledb.types.SequenceType;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 
 /**
  * Rewrites direct partial application of builtins, e.g. {@code fn:max(0, ?)},
- * into
- * an equivalent inline function, e.g. {@code function($x) { fn:max(0, $x) }}.
- * <p>
- * This keeps builtin partial application on the same code path as ordinary
- * inline functions.
+ * into a dynamic partial application of the corresponding named function reference.
+ * Supplied arguments are evaluated in the caller's focus and captured when the
+ * partial function is created.
  */
 public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
 
@@ -76,42 +72,11 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
         }
     }
 
-    private InlineFunctionExpression rewriteBuiltinPartialApplication(
-            Name functionName, BuiltinFunction builtin, List<Expression> arguments, Expression sourceExpression) {
-        List<SequenceType> parameterTypes = builtin.getSignature().getParameterTypes();
-        Map<Name, SequenceType> params = new LinkedHashMap<>();
-
-        // We will create a new function call to builtin function, but this time
-        // replace ? with real parameters
-        List<Expression> fullArguments = new ArrayList<>(arguments.size());
-
-        for (int i = 0; i < arguments.size(); i++) {
-            Expression currentArgument = arguments.get(i);
-            if (currentArgument != null) {
-                // It was not a ?
-                fullArguments.add(currentArgument);
-                continue;
-            }
-
-            Name parameterName = Name.createVariableInNoNamespace(String.format("param%s", i));
-            params.put(parameterName, parameterTypes.get(i));
-            VariableReferenceExpression variableReference =
-                    new VariableReferenceExpression(parameterName, sourceExpression.getMetadata());
-            variableReference.setActualType(parameterTypes.get(i));
-            fullArguments.add(variableReference);
-        }
-
-        FunctionCallExpression bodyCall =
-                new FunctionCallExpression(functionName, fullArguments, sourceExpression.getMetadata());
-        StatementsAndOptionalExpr body =
-                new StatementsAndOptionalExpr(Collections.emptyList(), bodyCall, sourceExpression.getMetadata());
-        return new InlineFunctionExpression(
-                Collections.emptyList(),
-                null,
-                params,
-                builtin.getSignature().getReturnType(),
-                body,
-                sourceExpression.getMetadata());
+    private Expression rewriteBuiltinPartialApplication(
+            Name functionName, List<Expression> arguments, Expression sourceExpression) {
+        NamedFunctionReferenceExpression reference = new NamedFunctionReferenceExpression(
+                new FunctionIdentifier(functionName, arguments.size()), sourceExpression.getMetadata());
+        return new DynamicFunctionCallExpression(reference, arguments, sourceExpression.getMetadata());
     }
 
     @Override
@@ -128,6 +93,6 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
         List<Expression> arguments = expression.getArguments().stream()
                 .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
                 .collect(Collectors.toList());
-        return rewriteBuiltinPartialApplication(expression.getFunctionName(), builtin, arguments, expression);
+        return rewriteBuiltinPartialApplication(expression.getFunctionName(), arguments, expression);
     }
 }

@@ -93,18 +93,22 @@ public final class SequenceSerializer {
                     metadata);
         }
         if (!standalone && !doctype) return;
+        String separator = params.getItemSeparator();
+        boolean text = separator != null && !separator.isEmpty() && items.size() > 1;
+        boolean previousAtomic = false;
         List<Item> content = new ArrayList<>();
         for (Item item : items) {
+            // Separators are inserted before document nodes are replaced by their children.
+            if (item.isAtomic() && (!item.getStringValue().isEmpty() || (separator == null && previousAtomic))) {
+                text = true;
+            }
+            previousAtomic = item.isAtomic();
             if (item.isDocumentNode()) content.addAll(item.children());
             else content.add(item);
         }
         long elements = content.stream().filter(Item::isElementNode).count();
-        boolean text = false;
-        boolean previousAtomic = false;
         for (Item item : content) {
             if (item.isTextNode() && !item.getStringValue().isEmpty()) text = true;
-            if (item.isAtomic() && (!item.getStringValue().isEmpty() || previousAtomic)) text = true;
-            previousAtomic = item.isAtomic();
         }
         if (elements > 1 || text) {
             throw new RumbleException(

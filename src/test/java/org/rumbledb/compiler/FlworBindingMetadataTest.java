@@ -69,9 +69,10 @@ class FlworBindingMetadataTest {
                         .get(forClause.getVariableName())
                         .getMetadata());
 
-        LetClause letClause = find(nodes, LetClause.class);
-        assertRange(QUERY, "$value", letClause.getVariableMetadata());
-        assertType("xs:integer", letClause, letClause.getVariableName());
+        for (LetClause letClause : findAll(nodes, LetClause.class)) {
+            assertRange(QUERY, "$" + letClause.getVariableName().getLocalName(), letClause.getVariableMetadata());
+            assertType("xs:integer", letClause, letClause.getVariableName());
+        }
         GroupByClause groupBy = find(nodes, GroupByClause.class);
         var groupVariable = groupBy.getGroupVariables().get(0);
         assertRange(QUERY, "$key", groupVariable.getVariableMetadata());
