@@ -472,7 +472,8 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 case '\n' -> result.append("\\n");
                 case '\r' -> result.append("\\r");
                 case '\t' -> result.append("\\t");
-                case '/' -> result.append(escaped ? "\\/" : "/");
+                    // W3C bug 29665 requires solidus escaping even without escaped="true".
+                case '/' -> result.append("\\/");
                 default -> {
                     if (character < 32 || (character >= 127 && character <= 159)) {
                         result.append(String.format(Locale.ROOT, "\\u%04X", (int) character));
