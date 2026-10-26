@@ -377,7 +377,9 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         }
         if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
             Item convertedValue = null;
-            if (item.isString() || item.isUntypedAtomic()) {
+            if (item.isBoolean()) {
+                convertedValue = ItemFactory.getInstance().createBooleanItem(item.getBooleanValue());
+            } else if (item.isString() || item.isUntypedAtomic()) {
                 String lexical = item.getStringValue().trim();
                 if ("true".equals(lexical) || "1".equals(lexical)) {
                     convertedValue = ItemFactory.getInstance().createBooleanItem(true);

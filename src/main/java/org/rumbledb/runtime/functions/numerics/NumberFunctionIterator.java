@@ -22,6 +22,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -41,8 +42,12 @@ public class NumberFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     public Item evaluateAtMostOne(DynamicContext context) {
         if (this.getChildren().size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            return CastIterator.castItemToType(
-                    items.get(0), BuiltinTypesCatalogue.doubleItem, getMetadata(), this.staticContext);
+            // Atomization and cardinality errors are argument errors, not failed double conversions.
+            List<Item> atomized = items.get(0).atomizedValue();
+            if (atomized.size() > 1) {
+                throw new UnexpectedTypeException("fn:number expects at most one atomic value.", getMetadata());
+            }
+            return castOrNaN(atomized.isEmpty() ? null : atomized.get(0));
         }
 
         return castOrNaN(this.getChild(0).materializeFirstOrNull(context));

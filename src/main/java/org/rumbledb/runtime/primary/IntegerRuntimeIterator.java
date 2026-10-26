@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.primary;
 
 import java.io.Serial;
+import java.math.BigInteger;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -36,7 +37,10 @@ public class IntegerRuntimeIterator extends AbstractAtMostOneItemRuntimePlan imp
 
     public IntegerRuntimeIterator(String lexicalValue, RuntimeStaticContext staticContext) {
         super(List.of(), staticContext);
-        this.item = ItemFactory.getInstance().createIntegerItem(lexicalValue);
+        String language = staticContext.getQueryLanguage();
+        this.item = language != null && language.startsWith("xquery")
+                ? ItemFactory.getInstance().createIntegerItem(new BigInteger(lexicalValue))
+                : ItemFactory.getInstance().createIntegerItem(lexicalValue);
     }
 
     @Override

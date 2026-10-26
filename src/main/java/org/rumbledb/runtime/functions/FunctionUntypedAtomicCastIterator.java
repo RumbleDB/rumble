@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotConvertToQNameException;
+import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
@@ -121,7 +122,8 @@ public class FunctionUntypedAtomicCastIterator extends ItemRuntimePlan
 
             Item converted = CastIterator.castItemToType(item, this.targetType, this.metadata, this.staticContext);
             if (converted == null) {
-                throw unexpectedType(item);
+                throw new CastException(
+                        "The untyped atomic value cannot be cast to " + this.targetType + ".", this.metadata);
             }
             return converted;
         }
