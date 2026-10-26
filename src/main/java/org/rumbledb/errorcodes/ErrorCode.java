@@ -275,6 +275,8 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode LibraryModuleOutputDeclarationErrorCode = registerBuiltIn("XQST0108");
     public static final ErrorCode InvalidOutputDeclarationErrorCode = registerBuiltIn("XQST0109");
     public static final ErrorCode DuplicateOutputDeclarationErrorCode = registerBuiltIn("XQST0110");
+    public static final ErrorCode XmlDocumentRequiredSerialization = registerBuiltIn("SEPM0004");
+    public static final ErrorCode InvalidXmlDeclarationParameters = registerBuiltIn("SEPM0009");
     public static final ErrorCode InvalidSerializationParameterValue = registerBuiltIn("SEPM0016");
     public static final ErrorCode InvalidSerializationParameterDocument = registerBuiltIn("SEPM0017");
     public static final ErrorCode DuplicateCharacterMap = registerBuiltIn("SEPM0018");
