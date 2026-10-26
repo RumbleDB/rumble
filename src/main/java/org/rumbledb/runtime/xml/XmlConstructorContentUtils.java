@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FunctionItemInConstructorContentException;
 import org.rumbledb.items.ItemFactory;
 
 final class XmlConstructorContentUtils {
@@ -26,7 +28,7 @@ final class XmlConstructorContentUtils {
     private XmlConstructorContentUtils() {}
 
     /** Joins atomic runs before document nodes are replaced by their children. */
-    static List<Item> normalizeContent(List<Item> items) {
+    static List<Item> normalizeContent(List<Item> items, ExceptionMetadata metadata) {
         List<Item> flattened = new ArrayList<>();
         for (Item item : items) {
             appendExpandedItem(item, flattened, false);
@@ -34,6 +36,11 @@ final class XmlConstructorContentUtils {
         List<Item> result = new ArrayList<>();
         StringBuilder atomicRun = null;
         for (Item item : flattened) {
+            // Arrays have already been flattened; remaining functions and maps cannot become XML content.
+            if (item.isFunction() || item.isMap()) {
+                throw new FunctionItemInConstructorContentException(
+                        "A function item cannot be used as element or document constructor content.", metadata);
+            }
             if (!item.isNode()) {
                 if (atomicRun == null) {
                     atomicRun = new StringBuilder();

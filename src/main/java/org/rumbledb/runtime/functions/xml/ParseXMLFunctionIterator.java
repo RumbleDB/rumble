@@ -54,6 +54,8 @@ public class ParseXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 context.getRumbleConfiguration().optimization().optimizeParentPointers(),
                 queryLanguage != null && queryLanguage.startsWith("xquery"));
         documentItem.setConstructionBaseUri(this.staticContext.getStaticURI());
+        // The parser's system ID supplies a base URI, not a document retrieval URI.
+        documentItem.setDocumentUri(null);
         return documentItem;
     }
 }

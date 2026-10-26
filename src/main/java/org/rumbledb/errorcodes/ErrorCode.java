@@ -77,6 +77,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode CollationDoesNotSupportCollationUnitsCode = registerBuiltIn("FOCH0004");
     public static final ErrorCode NodeNotInDocumentErrorCode = registerBuiltIn("FODC0001");
     public static final ErrorCode CannotRetrieveResourceErrorCode = registerBuiltIn("FODC0002");
+    public static final ErrorCode InvalidDocumentURIErrorCode = registerBuiltIn("FODC0005");
     public static final ErrorCode InvalidXmlDocumentErrorCode = registerBuiltIn("FODC0006");
 
     public static final ErrorCode UnidentifiedErrorExceptionCode = registerBuiltIn("FOER0000");
@@ -102,6 +103,7 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode FunctionAtomizationErrorCode = registerBuiltIn("FOTY0013");
     public static final ErrorCode FunctionItemStringValueErrorCode = registerBuiltIn("FOTY0014");
+    public static final ErrorCode FunctionItemInConstructorContentErrorCode = registerBuiltIn("XQTY0105");
 
     public static final ErrorCode DuplicatePairNameErrorCode = registerBuiltIn("XQDY0137");
 
@@ -239,7 +241,9 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode DuplicateDirectAttributeErrorCode = registerBuiltIn("XQST0040");
     public static final ErrorCode DuplicateNamespaceDeclarationAttributeErrorCode = registerBuiltIn("XQST0071");
     public static final ErrorCode CharacterReferenceErrorCode = registerBuiltIn("XQST0090");
+    public static final ErrorCode DuplicateContextItemDeclarationErrorCode = registerBuiltIn("XQST0099");
     public static final ErrorCode InvalidComputedNamespaceConstructorErrorCode = registerBuiltIn("XQDY0101");
+    public static final ErrorCode ConflictingNamespaceBindingsErrorCode = registerBuiltIn("XQDY0102");
     public static final ErrorCode AttributeOrNamespaceAfterNonAttributeErrorCode = registerBuiltIn("XQTY0024");
     public static final ErrorCode DuplicateFunctionAnnotationErrorCode = registerBuiltIn("XQST0106");
     public static final ErrorCode DuplicateVariableAnnotationErrorCode = registerBuiltIn("XQST0116");
@@ -271,6 +275,8 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode LibraryModuleOutputDeclarationErrorCode = registerBuiltIn("XQST0108");
     public static final ErrorCode InvalidOutputDeclarationErrorCode = registerBuiltIn("XQST0109");
     public static final ErrorCode DuplicateOutputDeclarationErrorCode = registerBuiltIn("XQST0110");
+    public static final ErrorCode XmlDocumentRequiredSerialization = registerBuiltIn("SEPM0004");
+    public static final ErrorCode InvalidXmlDeclarationParameters = registerBuiltIn("SEPM0009");
     public static final ErrorCode InvalidSerializationParameterValue = registerBuiltIn("SEPM0016");
     public static final ErrorCode InvalidSerializationParameterDocument = registerBuiltIn("SEPM0017");
     public static final ErrorCode DuplicateCharacterMap = registerBuiltIn("SEPM0018");

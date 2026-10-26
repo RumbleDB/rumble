@@ -66,13 +66,17 @@ public final class TranslationNameResolver {
             if (namespace != null) {
                 return new Name(namespace, "", localName);
             }
+            String language = this.context.moduleContext().getQueryLanguage();
+            if (role == NameRole.TYPE && language != null && language.startsWith("xquery")) {
+                return Name.createVariableInNoNamespace(localName);
+            }
             return role == NameRole.TYPE
                     ? Name.createVariableInDefaultTypeNamespace(localName)
                     : Name.createNameInDefaultXQueryAnnotationsNamespace(localName);
         }
         if (role == NameRole.ELEMENT_CONSTRUCTOR) {
             String namespace = this.context.resolveNamespace("");
-            if (namespace != null) {
+            if (namespace != null && !namespace.isEmpty()) {
                 return new Name(namespace, "", localName);
             }
         }

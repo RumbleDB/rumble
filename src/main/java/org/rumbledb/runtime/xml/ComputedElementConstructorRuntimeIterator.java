@@ -167,10 +167,9 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
                 .createXmlElementNode(
                         elementName.getQNameValue(), processedContent.children, processedContent.attributes);
         elementItem.setConstructionBaseUri(this.staticContext.getStaticURI());
+        NodeConstructionUtils.initializeNamespaces(elementItem, this.staticContext);
         // Only add namespaces explicitly declared on this element
-        for (Item namespace : processedContent.namespaces) {
-            elementItem.addOrReplaceNamespace(namespace);
-        }
+        NamespaceFixupUtils.addConstructorNamespaces(elementItem, processedContent.namespaces, getMetadata());
         // Set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
         NamespaceFixupUtils.applyNamespaceFixup(elementItem);
@@ -191,7 +190,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
         // 1. If the content sequence contains a document node, the document node is replaced in the content
         // sequence by its children.
         List<Item> expandedContentSequence =
-                expandDocumentNodes(XmlConstructorContentUtils.normalizeContent(rawContentSequence));
+                expandDocumentNodes(XmlConstructorContentUtils.normalizeContent(rawContentSequence, getMetadata()));
 
         // 3. If the content sequence contains an attribute node or a namespace node following a node that is not an
         // attribute node or a namespace node, a type error is raised [err:XQTY0024].

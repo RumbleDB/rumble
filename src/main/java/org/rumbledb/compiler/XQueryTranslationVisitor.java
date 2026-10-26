@@ -276,7 +276,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
         }
         if (this.translationContext.isMainModule()) {
-            if (ctx.mainModule() != null) {
+            if (!ctx.mainModule().isEmpty()) {
                 return this.visitMainModule(ctx.mainModule().get(0));
             }
             throw new ParsingException(
@@ -1075,10 +1075,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
+        if (ctx.item.eqName() == null) {
+            throw new ParsingException(
+                    "A cast or castable target must be a simple type name.", createMetadataFromContext(ctx));
+        }
         return TypeTranslation.singleType(SingleTypeContext.from(ctx), this::processItemType);
     }
 
     public ItemType processItemType(XQueryParser.ItemTypeContext itemTypeContext) {
+        if (itemTypeContext.kindTest() != null && itemTypeContext.kindTest().anyKindTest() != null) {
+            checkAnyKindTest(itemTypeContext.kindTest().anyKindTest());
+        }
         return TypeTranslation.itemType(
                 ItemTypeContext.from(itemTypeContext),
                 this.translationContext,
@@ -1485,11 +1492,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public NodeTest visitAnyKindTest(XQueryParser.AnyKindTestContext ctx) {
+            checkAnyKindTest(ctx);
             return XmlNodeTestTranslation.anyKindTest();
         }
     }
 
     // end region
+
+    private void checkAnyKindTest(XQueryParser.AnyKindTestContext ctx) {
+        if (ctx.STAR() != null) {
+            throw new ParsingException(
+                    "The XQuery node() test does not accept a wildcard.", createMetadataFromContext(ctx));
+        }
+    }
 
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand

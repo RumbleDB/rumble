@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 
 import lombok.Setter;
@@ -42,10 +43,18 @@ public class DocumentItem extends AbstractNodeItem {
 
     @Setter
     private URI constructionBaseUri;
-    // TODO: add document-uri
+
+    @Setter
+    private URI documentUri;
 
     public DocumentItem(Node documentNode, List<Item> children) {
         this.children = children;
+        if (documentNode instanceof Document document && document.getDocumentURI() != null) {
+            URI uri = URI.create(document.getDocumentURI());
+            if (uri.isAbsolute()) {
+                this.documentUri = uri;
+            }
+        }
         // org.w3c.dom.Document#getTextContent() returns null. Derive the XDM
         // string value from the converted child nodes instead.
         this.stringValue = computeStringValue(children);
@@ -212,12 +221,13 @@ public class DocumentItem extends AbstractNodeItem {
      * "For a Document Node, dm:document-uri returns the document-uri property of the document
      * node, if it has one; otherwise it returns the empty sequence."
      *
-     * RumbleDB does not currently track document URIs, so this implementation returns null
-     * to represent the empty sequence.
+     * Resource documents retain their retrieval URI; constructed documents have no document URI.
      */
     @Override
     public List<Item> documentUri() {
-        return Collections.emptyList();
+        return this.documentUri == null
+                ? Collections.emptyList()
+                : List.of(ItemFactory.getInstance().createAnyURIItem(this.documentUri.toString()));
     }
 
     /**

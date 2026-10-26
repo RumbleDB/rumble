@@ -19,8 +19,12 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Stream;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -30,14 +34,57 @@ public final class ResourceResolver implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final Map<URI, Item> documents = new ConcurrentHashMap<>();
+
     private final Map<URI, URI> mappings;
+    private final Map<URI, ResourceCollection> collections;
+    private final ResourceCollection defaultCollection;
 
     public ResourceResolver() {
         this(Map.of());
     }
 
     public ResourceResolver(Map<URI, URI> mappings) {
+        this(mappings, Map.of(), null);
+    }
+
+    public ResourceResolver(
+            Map<URI, URI> mappings, Map<URI, ResourceCollection> collections, ResourceCollection defaultCollection) {
         this.mappings = Map.copyOf(mappings);
+        this.collections = Map.copyOf(collections);
+        this.defaultCollection = defaultCollection;
+    }
+
+    public ResourceCollection collection(URI uri, ExceptionMetadata metadata) {
+        ResourceCollection result = uri == null ? this.defaultCollection : this.collections.get(uri);
+        if (result == null) {
+            throw new CannotRetrieveResourceException(
+                    uri == null ? "No default collection is defined." : "Collection " + uri + " is not defined.",
+                    metadata);
+        }
+        return result;
+    }
+
+    /** Reuses collection document identity for fn:doc(document-uri($document)). */
+    public Item collectionDocument(URI uri) {
+        return Stream.concat(this.collections.values().stream(), Stream.ofNullable(this.defaultCollection))
+                .flatMap(collection -> collection.items().stream())
+                .filter(Item::isDocumentNode)
+                .filter(document -> document.documentUri().stream()
+                        .anyMatch(value -> uri.toString().equals(value.getStringValue())))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /** Reuses retrieved documents so their document URIs resolve to the same node. */
+    public Item document(URI uri) {
+        Item collectionDocument = collectionDocument(uri);
+        return collectionDocument == null ? this.documents.get(uri) : collectionDocument;
+    }
+
+    public Item cacheDocument(URI uri, Item document) {
+        Item previous = this.documents.putIfAbsent(uri, document);
+        return previous == null ? document : previous;
     }
 
     public boolean hasMapping(URI requestedURI) {

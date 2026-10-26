@@ -133,6 +133,17 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
+        DynamicContext result = initializeVariableDeclaration(variableDeclaration, argument);
+        if (variableDeclaration.getVariableName().equals(Name.CONTEXT_ITEM)) {
+            // Establish the initial focus only after evaluating its initializer.
+            result.getVariableValues().setPosition(1);
+            result.getVariableValues().setLast(1);
+        }
+        return result;
+    }
+
+    private DynamicContext initializeVariableDeclaration(
+            VariableDeclaration variableDeclaration, DynamicContext argument) {
         Name name = variableDeclaration.getVariableName();
         argument.addGlobalVariable(name);
         // Variable is not external: we use the expression.

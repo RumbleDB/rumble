@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
@@ -206,7 +207,16 @@ final class XmlSchemaTypeMapper {
         // Every schema type must be derived from xs:anyType
         addIfAbsent(hierarchy, xsName("anyType"));
 
-        return new XmlSchemaTypeAnnotation(name, hierarchy);
+        XmlSchemaTypeAnnotation.ContentKind contentKind = XmlSchemaTypeAnnotation.ContentKind.SIMPLE;
+        if (schemaType instanceof XSComplexTypeDefinition complexType) {
+            contentKind = switch (complexType.getContentType()) {
+                case XSComplexTypeDefinition.CONTENTTYPE_SIMPLE -> XmlSchemaTypeAnnotation.ContentKind.SIMPLE;
+                case XSComplexTypeDefinition.CONTENTTYPE_ELEMENT -> XmlSchemaTypeAnnotation.ContentKind.ELEMENT_ONLY;
+                case XSComplexTypeDefinition.CONTENTTYPE_MIXED -> XmlSchemaTypeAnnotation.ContentKind.MIXED;
+                case XSComplexTypeDefinition.CONTENTTYPE_EMPTY -> XmlSchemaTypeAnnotation.ContentKind.EMPTY;
+                default -> throw new OurBadException("Xerces returned an unknown complex-content type.");};
+        }
+        return new XmlSchemaTypeAnnotation(name, hierarchy, contentKind);
     }
 
     /**
