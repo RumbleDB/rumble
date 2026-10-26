@@ -75,7 +75,11 @@ public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan imp
             return item;
         }
         if (item.isInt()) {
-            return ItemFactory.getInstance().createLongItem(-(long) item.getIntValue());
+            int value = item.getIntValue();
+            if (value == Integer.MIN_VALUE) {
+                return ItemFactory.getInstance().createLongItem(-(long) value);
+            }
+            return ItemFactory.getInstance().createIntItem(-value);
         }
         if (item.isInteger()) {
             return ItemFactory.getInstance()

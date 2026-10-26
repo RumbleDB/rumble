@@ -30,8 +30,6 @@ import org.rumbledb.compiler.context.xml.ReverseStepContext;
 import org.rumbledb.compiler.context.xml.StepExprContext;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -44,7 +42,6 @@ import org.rumbledb.expressions.xml.axis.ReverseAxis;
 import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
-import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.types.AttributeNodeItemType;
@@ -178,13 +175,6 @@ public final class XmlPathTranslation {
                     || (nodeTest instanceof SchemaNodeTest schemaTest
                             && schemaTest.itemType() instanceof AttributeNodeItemType)) {
                 forwardAxis = ForwardAxis.ATTRIBUTE;
-            } else if (nodeTest instanceof NamespaceNodeTest
-                    && translationContext.moduleContext().getQueryLanguage() != null
-                    && translationContext.moduleContext().getQueryLanguage().startsWith("xquery")) {
-                throw new RumbleException(
-                        "An abbreviated namespace-node() step is not supported by XQuery.",
-                        ErrorCode.NamespaceNodeTestNotSupported,
-                        translationContext.metadata(ctx.context()));
             } else {
                 forwardAxis = ForwardAxis.CHILD;
             }
