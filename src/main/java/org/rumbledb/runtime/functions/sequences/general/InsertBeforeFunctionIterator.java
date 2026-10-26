@@ -16,12 +16,14 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 import java.io.Serial;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 
 import lombok.NonNull;
+import scala.Tuple2;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -63,11 +65,41 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
         long insertIndex = position <= 1 ? 0 : position - 1;
         JavaPairRDD<Item, Long> zippedRDD =
                 this.sequenceIterator.getRDD(context).zipWithIndex();
-        JavaRDD<Item> beforeRDD =
-                zippedRDD.filter(item -> item._2() < insertIndex).map(item -> item._1());
-        JavaRDD<Item> afterRDD =
-                zippedRDD.filter(item -> item._2() >= insertIndex).map(item -> item._1());
-        return beforeRDD.union(this.insertIterator.getRDD(context)).union(afterRDD);
+        if (this.insertIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
+            JavaRDD<Item> beforeRDD =
+                    zippedRDD.filter(item -> item._2() < insertIndex).map(item -> item._1());
+            JavaRDD<Item> afterRDD =
+                    zippedRDD.filter(item -> item._2() >= insertIndex).map(item -> item._1());
+            return beforeRDD.union(insertsRDD).union(afterRDD);
+        }
+
+        List<Item> inserts = this.insertIterator.materialize(context);
+        int numPartitions = zippedRDD.partitions().size();
+        // Keep the prepend sentinel separate from the first element's index.
+        long localInsertIndex = position <= 0 ? -1 : position - 1;
+        return zippedRDD.mapPartitionsWithIndex(
+                (partitionIndex, iterator) -> {
+                    List<Item> list = new ArrayList<>();
+                    long lastIndex = -1;
+                    if (partitionIndex == 0 && localInsertIndex < 0) {
+                        list.addAll(inserts);
+                    }
+                    Tuple2<Item, Long> element;
+                    while (iterator.hasNext()) {
+                        element = iterator.next();
+                        if (element._2() == localInsertIndex) {
+                            list.addAll(inserts);
+                        }
+                        list.add(element._1());
+                        lastIndex = element._2();
+                    }
+                    if (partitionIndex == numPartitions - 1 && localInsertIndex > lastIndex) {
+                        list.addAll(inserts);
+                    }
+                    return list.iterator();
+                },
+                false);
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
