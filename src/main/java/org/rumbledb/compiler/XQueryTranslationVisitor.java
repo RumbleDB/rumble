@@ -634,7 +634,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             if (variable.getExpression() != null) {
                 LetClause binding = new LetClause(
-                        variable.getVariableName(), null, variable.getExpression(), variable.getVariableMetadata());
+                        variable.getVariableName(),
+                        null,
+                        variable.getExpression(),
+                        variable.getVariableMetadata(),
+                        variable.getVariableMetadata());
                 if (previous != null) previous.chainWith(binding);
                 previous = binding;
             }
