@@ -1508,10 +1508,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public NodeTest visitNamespaceNodeTest(XQueryParser.NamespaceNodeTestContext ctx) {
-            throw new RumbleException(
-                    "namespace-node() tests are not supported by XQuery.",
-                    ErrorCode.NamespaceNodeTestNotSupported,
-                    createMetadataFromContext(ctx));
+            return XmlNodeTestTranslation.namespaceNodeTest();
         }
 
         @Override

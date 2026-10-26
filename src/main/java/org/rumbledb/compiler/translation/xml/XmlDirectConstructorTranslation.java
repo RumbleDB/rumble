@@ -480,7 +480,13 @@ public final class XmlDirectConstructorTranslation {
                             declaredPrefix, translationContext.metadata(qnameCtx));
                 }
                 String uri = getNamespaceDeclarationUri(attr.value(), tokenStream, translationContext, visitExpr);
-                if (!declaredPrefix.isEmpty() && uri.isEmpty()) {
+                if (!declaredPrefix.isEmpty()
+                        && uri.isEmpty()
+                        && !"1.1"
+                                .equals(translationContext
+                                        .configuration()
+                                        .semantics()
+                                        .xmlVersion())) {
                     throw new RumbleException(
                             "A namespace declaration attribute cannot undeclare a prefix.",
                             ErrorCode.EmptyNamespaceURIForPrefixedBindingErrorCode,
