@@ -135,6 +135,9 @@ public class DerivedAtomicItemType extends AbstractItemType {
 
     @Override
     public boolean canBePromotedTo(ItemType other) {
+        if (other.equals(BuiltinTypesCatalogue.floatItem)) {
+            return this.isSubtypeOf(BuiltinTypesCatalogue.decimalItem);
+        }
         // TODO : how about restriction types
         if (other.equals(BuiltinTypesCatalogue.stringItem)) {
             return this.isSubtypeOf(BuiltinTypesCatalogue.stringItem)

@@ -161,6 +161,7 @@ import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.WhereClause;
@@ -620,13 +621,33 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public GroupByClause visitGroupByClause(XQueryParser.GroupByClauseContext ctx) {
-        return FlworTranslation.groupByClause(
+        GroupByClause clause = FlworTranslation.groupByClause(
                 GroupByClauseContext.from(ctx),
                 this.translationContext,
                 this::parseVariableBinding,
                 this::processSequenceType,
                 this::visitExprSingle,
                 this::resolveCollationUri);
+        // Grouping bindings are preceding let bindings: later bindings may shadow earlier ones.
+        Clause previous = null;
+        List<GroupByVariableDeclaration> variables = new ArrayList<>();
+        for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
+            if (variable.getExpression() != null) {
+                LetClause binding = new LetClause(
+                        variable.getVariableName(), null, variable.getExpression(), variable.getVariableMetadata());
+                if (previous != null) previous.chainWith(binding);
+                previous = binding;
+            }
+            variables.add(new GroupByVariableDeclaration(
+                    variable.getVariableName(),
+                    variable.getActualSequenceType(),
+                    null,
+                    variable.getCollationURI(),
+                    variable.getVariableMetadata()));
+        }
+        GroupByClause normalized = new GroupByClause(variables, clause.getMetadata());
+        if (previous != null) previous.chainWith(normalized);
+        return normalized;
     }
 
     @Override
@@ -1487,7 +1508,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public NodeTest visitNamespaceNodeTest(XQueryParser.NamespaceNodeTestContext ctx) {
-            return XmlNodeTestTranslation.namespaceNodeTest();
+            throw new RumbleException(
+                    "namespace-node() tests are not supported by XQuery.",
+                    ErrorCode.NamespaceNodeTestNotSupported,
+                    createMetadataFromContext(ctx));
         }
 
         @Override

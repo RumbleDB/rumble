@@ -78,7 +78,10 @@ public final class XmlParsingUtils {
                 entity.setSystemId(FRAGMENT_ENTITY);
                 return entity;
             });
-            Document document = builder.parse(new InputSource(new StringReader(input)));
+            InputSource wrapperSource = new InputSource(new StringReader(input));
+            // A matching system ID prevents Xerces from adding synthetic xml:base attributes.
+            wrapperSource.setSystemId(FRAGMENT_ENTITY);
+            Document document = builder.parse(wrapperSource);
             Node wrapper = document.getDocumentElement();
             DocumentFragment fragment = document.createDocumentFragment();
             while (wrapper.hasChildNodes()) {
@@ -131,7 +134,7 @@ public final class XmlParsingUtils {
             source.setSystemId(baseUri.toString());
         }
         try {
-            return newDocumentBuilder(metadata).parse(source);
+            return newDocumentBuilder(metadata, false).parse(source);
         } catch (SAXException | IOException e) {
             String detail = describe(e);
             InvalidXmlDocumentException exception =
@@ -142,9 +145,14 @@ public final class XmlParsingUtils {
     }
 
     private static DocumentBuilder newDocumentBuilder(ExceptionMetadata metadata) {
+        return newDocumentBuilder(metadata, true);
+    }
+
+    private static DocumentBuilder newDocumentBuilder(ExceptionMetadata metadata, boolean expandEntities) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
+            factory.setExpandEntityReferences(expandEntities);
             DocumentBuilder builder = factory.newDocumentBuilder();
             builder.setErrorHandler(new DefaultHandler() {
                 @Override

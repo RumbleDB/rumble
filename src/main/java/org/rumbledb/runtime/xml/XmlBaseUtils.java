@@ -21,6 +21,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.CastException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.runtime.functions.strings.IriUtils;
@@ -78,6 +80,9 @@ public final class XmlBaseUtils {
 
         URI baseUri = safeParse(base);
         URI valUri = safeParse(value);
+        if (valUri == null) {
+            throw new CastException("Invalid xml:base URI: " + value, ExceptionMetadata.EMPTY_METADATA);
+        }
         if (baseUri == null || valUri == null || !baseUri.isAbsolute()) {
             return null;
         }
