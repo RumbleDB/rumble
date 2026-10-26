@@ -45,6 +45,8 @@ public class StaticContext {
     private Map<Name, InScopeVariable> inScopeVariables;
 
     private Map<String, String> staticallyKnownNamespaces;
+    private Map<String, String> constructorNamespaceBindings;
+
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private InScopeSchemaTypes inScopeSchemaTypes;
 
@@ -350,6 +352,16 @@ public class StaticContext {
 
     public boolean hasVariableInScopeOnly(Name variableName) {
         return this.inScopeVariables.containsKey(variableName);
+    }
+
+    /** Namespace declarations from lexically enclosing direct constructors, excluding prolog bindings. */
+    public Map<String, String> getConstructorNamespaceBindings() {
+        if (this.constructorNamespaceBindings != null) return this.constructorNamespaceBindings;
+        return this.parent == null ? Map.of() : this.parent.getConstructorNamespaceBindings();
+    }
+
+    public void setConstructorNamespaceBindings(Map<String, String> bindings) {
+        this.constructorNamespaceBindings = Map.copyOf(bindings);
     }
 
     public boolean bindNamespace(String prefix, String namespace) {

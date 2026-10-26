@@ -260,6 +260,15 @@ public final class PrologBuilder {
     }
 
     public void addContextItem(VariableDeclaration declaration) {
+        String language = this.translationContext.moduleContext().getQueryLanguage();
+        if (language != null
+                && language.startsWith("xquery")
+                && this.variables.stream().anyMatch(variable -> Name.CONTEXT_ITEM.equals(variable.getVariableName()))) {
+            throw new SemanticException(
+                    "A module cannot contain more than one context item declaration.",
+                    ErrorCode.DuplicateContextItemDeclarationErrorCode,
+                    declaration.getMetadata());
+        }
         this.variables.add(declaration);
     }
 

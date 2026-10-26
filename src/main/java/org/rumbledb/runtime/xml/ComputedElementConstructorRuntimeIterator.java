@@ -167,10 +167,9 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
                 .createXmlElementNode(
                         elementName.getQNameValue(), processedContent.children, processedContent.attributes);
         elementItem.setConstructionBaseUri(this.staticContext.getStaticURI());
+        NodeConstructionUtils.initializeNamespaces(elementItem, this.staticContext);
         // Only add namespaces explicitly declared on this element
-        for (Item namespace : processedContent.namespaces) {
-            elementItem.addOrReplaceNamespace(namespace);
-        }
+        NamespaceFixupUtils.addConstructorNamespaces(elementItem, processedContent.namespaces, getMetadata());
         // Set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
         NamespaceFixupUtils.applyNamespaceFixup(elementItem);

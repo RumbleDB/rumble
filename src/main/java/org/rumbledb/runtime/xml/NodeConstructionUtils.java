@@ -33,10 +33,15 @@ final class NodeConstructionUtils {
 
     private NodeConstructionUtils() {}
 
+    static void initializeNamespaces(ElementItem element, RuntimeStaticContext context) {
+        context.getConstructorNamespaceBindings().forEach(element::declareNamespaceBinding);
+        element.setInheritNamespacesFromParent(false);
+    }
+
     static void initializeElement(ElementItem element, RuntimeStaticContext context) {
         if (context.isConstructionPreserve()) {
             element.setSchemaType(
-                    new XmlSchemaTypeAnnotation(ANY_TYPE, List.of(ANY_TYPE)),
+                    new XmlSchemaTypeAnnotation(ANY_TYPE, List.of(ANY_TYPE), XmlSchemaTypeAnnotation.ContentKind.MIXED),
                     List.of(ItemFactory.getInstance().createUntypedAtomicItem(element.getStringValue())));
             element.setXmlSchemaNilled(false);
         }

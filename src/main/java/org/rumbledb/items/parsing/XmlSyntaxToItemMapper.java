@@ -68,6 +68,7 @@ public class XmlSyntaxToItemMapper implements FlatMapFunction<Iterator<Tuple2<St
                     URI docUri = URI.create(path);
                     if (docUri.isAbsolute()) {
                         documentItem.setConstructionBaseUri(docUri);
+                        documentItem.setDocumentUri(docUri);
                     }
                 } catch (IllegalArgumentException ignored) {
                 }
