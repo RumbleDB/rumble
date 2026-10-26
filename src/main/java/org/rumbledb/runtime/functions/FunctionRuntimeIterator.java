@@ -61,8 +61,7 @@ public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
                 this.bodyIterator,
                 this.staticContext.isUpdating());
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
-        String language = this.staticContext.getQueryLanguage();
-        if (this.functionName == null && language != null && language.startsWith("xquery")) {
+        if (this.functionName == null) {
             // An inline function captures lexical variables, but its focus is absent.
             for (Name name : List.of(Name.CONTEXT_ITEM, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT)) {
                 function.getLocalVariablesInClosure().remove(name);
