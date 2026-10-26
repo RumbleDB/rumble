@@ -30,12 +30,16 @@ import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
+import org.rumbledb.expressions.xml.PathRootExpression;
+import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.types.SequenceType;
 
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
@@ -44,6 +48,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
     private Prolog prolog;
     private boolean constructionPreserve;
+    private boolean xquery;
     private java.net.URI staticBaseUri;
 
     private boolean hasDifferentModuleContext(Prolog prolog, FunctionDeclaration target) {
@@ -53,6 +58,30 @@ public class FunctionInliningVisitor extends CloneVisitor {
                         || !Objects.equals(module.getStaticContext().getStaticBaseURI(), this.staticBaseUri);
             }
             if (hasDifferentModuleContext(module.getProlog(), target)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Inlining into the caller must not introduce a focus into a user-defined function body.
+    private boolean mayReadFocus(Node node) {
+        if (node instanceof ContextItemExpression
+                || node instanceof StepExpr
+                || node instanceof PathRootExpression
+                || node instanceof NamedFunctionReferenceExpression
+                || (node instanceof FunctionCallExpression call
+                        && (call.getArguments().isEmpty()
+                                || call.getFunctionName().getLocalName().equals("function-lookup")))) {
+            return true;
+        }
+        if (node instanceof Clause clause
+                && clause.getPreviousClause() != null
+                && mayReadFocus(clause.getPreviousClause())) {
+            return true;
+        }
+        for (Node child : node.getChildren()) {
+            if (mayReadFocus(child)) {
                 return true;
             }
         }
@@ -99,6 +128,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
     public Node visitMainModule(MainModule mainModule, Node argument) {
         this.prolog = mainModule.getProlog();
         if (mainModule.getStaticContext() != null) {
+            String language = mainModule.getStaticContext().getQueryLanguage();
+            this.xquery = language != null && language.startsWith("xquery");
             this.constructionPreserve = mainModule.getStaticContext().isConstructionPreserve();
             this.staticBaseUri = mainModule.getStaticContext().getStaticBaseURI();
         }
@@ -139,6 +170,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 || targetFunction == null
                 // Rebuilding an imported body in the caller's context can change its constructors and static base URI.
                 || hasDifferentModuleContext(this.prolog, targetFunction)
+                || (this.xquery && mayReadFocus(targetFunction.getExpression()))
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
                 || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {

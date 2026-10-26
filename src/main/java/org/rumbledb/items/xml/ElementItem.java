@@ -60,6 +60,11 @@ public class ElementItem extends AbstractNodeItem {
     @Setter
     private URI constructionBaseUri;
 
+    // The Infoset base URI can differ from the parent's URI across external entity boundaries.
+    @Getter
+    @Setter
+    private String parsedBaseUri;
+
     @Setter
     private boolean inheritNamespacesFromParent;
 
@@ -90,6 +95,7 @@ public class ElementItem extends AbstractNodeItem {
             Node elementNode, List<Item> children, List<Item> attributes, Map<String, String> namespaceBindings) {
         this.dmNodeName = NamespaceBindingUtils.nameFromElementOrAttributeDomNode(elementNode);
         this.stringValue = elementNode.getTextContent();
+        this.parsedBaseUri = elementNode.getBaseURI();
         this.children = children;
         this.attributes = attributes;
         this.namespaces = new HashMap<>();
@@ -135,6 +141,7 @@ public class ElementItem extends AbstractNodeItem {
         copy.idRefs = this.idRefs;
         copy.inheritNamespacesFromParent = this.inheritNamespacesFromParent;
         copy.constructionBaseUri = this.constructionBaseUri;
+        copy.parsedBaseUri = this.parsedBaseUri;
         return copy;
     }
 
@@ -208,6 +215,9 @@ public class ElementItem extends AbstractNodeItem {
      */
     @Override
     public List<Item> baseUri() {
+        if (this.parsedBaseUri != null) {
+            return List.of(ItemFactory.getInstance().createAnyURIItem(this.parsedBaseUri));
+        }
         String inherited;
         if (this.parent != null) {
             List<Item> parentBase = this.parent.baseUri();

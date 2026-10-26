@@ -46,6 +46,7 @@ public class VariableValues implements Serializable {
     private final Map<Name, JavaRDD<Item>> rddVariableValues;
     private final Map<Name, HomogeneousItemDataFrame> dataFrameVariableValues;
     private transient boolean nestedQuery;
+    private boolean inheritedFocusAbsent;
     private final VariableValues parent;
     private final RumbleConfiguration configuration;
 
@@ -111,11 +112,30 @@ public class VariableValues implements Serializable {
         }
     }
 
+    /** User-defined XQuery function bodies start with an absent focus. */
+    public void clearFocus() {
+        this.inheritedFocusAbsent = true;
+        for (Name name : List.of(Name.CONTEXT_ITEM, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT)) {
+            removeVariable(name);
+        }
+    }
+
+    private static boolean isFocusVariable(Name name) {
+        return name.equals(Name.CONTEXT_ITEM) || name.equals(Name.CONTEXT_POSITION) || name.equals(Name.CONTEXT_COUNT);
+    }
+
     /** Captures visible bindings, allowing inner scopes to shadow outer bindings of any representation. */
     public void populateClosure(
             Map<Name, List<Item>> local, Map<Name, JavaRDD<Item>> rdd, Map<Name, HomogeneousItemDataFrame> dataFrames) {
         if (this.parent != null) {
             this.parent.populateClosure(local, rdd, dataFrames);
+        }
+        if (this.inheritedFocusAbsent) {
+            for (Name name : List.of(Name.CONTEXT_ITEM, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT)) {
+                local.remove(name);
+                rdd.remove(name);
+                dataFrames.remove(name);
+            }
         }
         this.localVariableValues.forEach((name, value) -> {
             rdd.remove(name);
@@ -152,6 +172,9 @@ public class VariableValues implements Serializable {
                 || this.dataFrameVariableValues.containsKey(varName);
         if (localContains) {
             return true;
+        }
+        if (this.inheritedFocusAbsent && isFocusVariable(varName)) {
+            return false;
         }
         if (this.parent != null) {
             return this.parent.contains(varName);
@@ -217,6 +240,9 @@ public class VariableValues implements Serializable {
                     df.toRDD(metadata), this.configuration.runtime().materializationCap(), metadata);
         }
 
+        if (this.inheritedFocusAbsent && isFocusVariable(varName)) {
+            throw new AbsentPartOfDynamicContextException("The function body's focus is absent", metadata);
+        }
         if (this.parent != null) {
             return this.parent.getLocalVariableValue(varName, metadata);
         }
@@ -329,6 +355,9 @@ public class VariableValues implements Serializable {
         if (this.localVariableValues.containsKey(Name.CONTEXT_POSITION)) {
             return this.localVariableValues.get(Name.CONTEXT_POSITION).get(0);
         }
+        if (this.inheritedFocusAbsent) {
+            return null;
+        }
         if (this.parent != null) {
             return this.parent.getPosition();
         }
@@ -343,6 +372,9 @@ public class VariableValues implements Serializable {
     public Item getLast() {
         if (this.localVariableValues.containsKey(Name.CONTEXT_COUNT)) {
             return this.localVariableValues.get(Name.CONTEXT_COUNT).get(0);
+        }
+        if (this.inheritedFocusAbsent) {
+            return null;
         }
         if (this.parent != null) {
             return this.parent.getLast();

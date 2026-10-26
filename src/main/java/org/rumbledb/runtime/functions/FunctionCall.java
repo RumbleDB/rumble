@@ -130,6 +130,11 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
                 new LinkedHashMap<>(functionItem.getLocalVariablesInClosure()),
                 new LinkedHashMap<>(functionItem.getRDDVariablesInClosure()),
                 new LinkedHashMap<>(functionItem.getDFVariablesInClosure()));
+        String language =
+                functionItem.getBodyIterator().getRuntimeStaticContext().getQueryLanguage();
+        if (language != null && language.startsWith("xquery")) {
+            callContext.getVariableValues().clearFocus();
+        }
         if (functionItem.isBuiltinFunction()) {
             // The global context item must not replace the focus captured at the reference site.
             // DynamicContext removes global bindings from closure copies, so restore the captured focus.

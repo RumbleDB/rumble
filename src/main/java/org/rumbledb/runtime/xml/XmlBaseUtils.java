@@ -44,6 +44,7 @@ public final class XmlBaseUtils {
             document.setConstructionBaseUri(
                     base.isEmpty() ? null : safeParse(base.get(0).getStringValue()));
         } else if (source instanceof ElementItem element && result instanceof ElementItem validated) {
+            validated.setParsedBaseUri(element.getParsedBaseUri());
             if (source.parent() == null) {
                 validated.setConstructionBaseUri(element.getConstructionBaseUri());
             } else {

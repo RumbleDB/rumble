@@ -21,6 +21,8 @@ import java.util.List;
 
 import org.w3c.dom.Node;
 
+import lombok.Setter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
@@ -32,12 +34,16 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    @Setter
+    private String parsedBaseUri;
+
     private String target;
     private String content;
     private Item parent;
     private XMLDocumentPosition documentPos;
 
     public ProcessingInstructionItem(Node processingInstructionNode) {
+        this.parsedBaseUri = processingInstructionNode.getBaseURI();
         this.target = processingInstructionNode.getNodeName();
         this.content = processingInstructionNode.getNodeValue();
     }
@@ -55,7 +61,9 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
 
     @Override
     public Item copy(boolean mutable) {
-        return new ProcessingInstructionItem(this.target, this.content);
+        ProcessingInstructionItem copy = new ProcessingInstructionItem(this.target, this.content);
+        copy.parsedBaseUri = this.parsedBaseUri;
+        return copy;
     }
 
     @Override
@@ -157,11 +165,14 @@ public class ProcessingInstructionItem extends AbstractNodeItem {
     /**
      * XDM 3.1 Section 6.5 Processing Instruction Node Accessors — base-uri.
      *
-     * For a Processing Instruction Node, dm:base-uri returns the base URI of the parent node,
-     * if it has one; otherwise it returns the empty sequence.
+     * Parsed processing instructions retain their Infoset base URI, including external entity origins.
+     * Constructed instructions inherit the base URI of their parent, if any.
      */
     @Override
     public List<Item> baseUri() {
+        if (this.parsedBaseUri != null) {
+            return List.of(ItemFactory.getInstance().createAnyURIItem(this.parsedBaseUri));
+        }
         if (this.parent == null) {
             return Collections.emptyList();
         }

@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.xml.AttributeItem;
 import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.NamespaceItem;
+import org.rumbledb.items.xml.ProcessingInstructionItem;
 
 final class NamespaceFixupUtils {
 
@@ -37,11 +38,23 @@ final class NamespaceFixupUtils {
 
     static Item copyNodeForConstructor(Item item, RuntimeStaticContext staticContext) {
         Item copy = item.copy(true);
+        clearParsedBaseUris(copy);
         if (!item.isElementNode()) {
             return copy;
         }
         configureCopiedElementNamespaces((ElementItem) item, (ElementItem) copy, staticContext, true);
         return copy;
+    }
+
+    private static void clearParsedBaseUris(Item node) {
+        if (node instanceof ElementItem element) {
+            element.setParsedBaseUri(null);
+        } else if (node instanceof ProcessingInstructionItem instruction) {
+            instruction.setParsedBaseUri(null);
+        }
+        for (Item child : node.children()) {
+            clearParsedBaseUris(child);
+        }
     }
 
     /** Checks constructor-supplied bindings before name fixup can rewrite conflicting prefixes. */
