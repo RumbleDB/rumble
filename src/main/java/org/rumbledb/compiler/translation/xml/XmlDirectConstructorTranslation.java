@@ -43,12 +43,14 @@ import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.utils.TokenStreamUtils;
 import org.rumbledb.compiler.utils.XmlCharRefUtils;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DirectElementConstructorTagMismatchException;
 import org.rumbledb.exceptions.DuplicateDirectAttributeException;
 import org.rumbledb.exceptions.DuplicateNamespaceDeclarationAttributeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NamespaceDeclarationAttributeEnclosedExpressionException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
@@ -478,6 +480,12 @@ public final class XmlDirectConstructorTranslation {
                             declaredPrefix, translationContext.metadata(qnameCtx));
                 }
                 String uri = getNamespaceDeclarationUri(attr.value(), tokenStream, translationContext, visitExpr);
+                if (!declaredPrefix.isEmpty() && uri.isEmpty()) {
+                    throw new RumbleException(
+                            "A namespace declaration attribute cannot undeclare a prefix.",
+                            ErrorCode.EmptyNamespaceURIForPrefixedBindingErrorCode,
+                            translationContext.metadata(qnameCtx));
+                }
                 NamespaceBindingUtils.validateNamespaceDeclaration(
                         declaredPrefix, uri, translationContext.metadata(qnameCtx));
                 namespaceDeclarations.add(
