@@ -147,7 +147,6 @@ public final class CastTyping {
      * atomic values it produces; the runtime checks those properties after atomization.
      */
     private void checkCastOperand(SequenceType operandType, Node node) {
-        StaticTypeErrors.requireInferredType(operandType, node);
         if (!operandType.isEmptySequence() && !TypeAtomization.isAtomicOrNode(operandType.getItemType())) {
             this.errors.report(
                     "A cast operand must be atomic after atomization, found " + operandType,
