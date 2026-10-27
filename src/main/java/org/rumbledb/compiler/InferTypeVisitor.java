@@ -33,6 +33,7 @@ import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.compiler.typing.ArithmeticTyping;
 import org.rumbledb.compiler.typing.AtomizedOperands;
+import org.rumbledb.compiler.typing.ComparisonTyping;
 import org.rumbledb.compiler.typing.StaticTypeErrors;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
@@ -211,6 +212,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private final ArithmeticTyping arithmetic;
 
+    private final ComparisonTyping comparison;
+
     /**
      * The context type E of each type that descendant-or-self::node() inferred from a schema, so that an error in the
      * step S of E//S can name E. Compared by identity: S steps from that same type object.
@@ -226,6 +229,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
         this.errors = new StaticTypeErrors(rumbleRuntimeConfiguration);
         this.arithmetic = new ArithmeticTyping(this.errors);
+        this.comparison = new ComparisonTyping(this.errors);
     }
 
     /** Returns the type inferred for a child of the node, which every visited child has. */
@@ -664,7 +668,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ItemType inputItemType = normalizeAggregateItemType(inputType.getItemType());
         boolean nodeInput = TypeAtomization.containsNode(inputType.getItemType())
                 && TypeAtomization.isAtomicOrNode(inputType.getItemType());
-        if (!nodeInput && !hasMutuallyComparableItems(inputItemType)) {
+        if (!nodeInput && !ComparisonTyping.hasMutuallyComparableItems(inputItemType)) {
             this.errors.report(
                     functionName
                             + " requires an atomic input type other than xs:anyAtomicType whose member types can be"
@@ -677,19 +681,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return new SequenceType(
                 inputItemType,
                 TypeAtomization.inferType(inputType).getCardinality().atMostOne());
-    }
-
-    /**
-     * fn:min and fn:max compare every input item with the others, so every pair of member types must support
-     * ordering, e.g. (xs:string | xs:integer) is rejected.
-     */
-    private static boolean hasMutuallyComparableItems(ItemType itemType) {
-        if (!itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                || itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
-            return false;
-        }
-        return itemType.allMemberTypesMatch(left -> itemType.allMemberTypesMatch(
-                right -> areMemberTypesComparable(left, right, ComparisonExpression.ComparisonOperator.VC_LT)));
     }
 
     private boolean isBuiltinFunctionName(Name functionName, String localName) {
@@ -1409,151 +1400,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitComparisonExpr(ComparisonExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
-        List<Node> childrenExpressions = expression.getChildren();
-        SequenceType leftInferredType = typeOf((Expression) childrenExpressions.get(0), expression);
-        SequenceType rightInferredType = typeOf((Expression) childrenExpressions.get(1), expression);
-        SequenceType.Arity returnArity = SequenceType.Arity.One;
-
-        ComparisonExpression.ComparisonOperator operator = expression.getComparisonOperator();
-
-        // for value comparison arities * and + are not allowed, also if one return the empty sequence for sure throw
-        // XPST0005 error
-        if (operator.isValueComparison()) {
-            if (leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()) {
-                this.errors.reportInferredEmpty(expression);
-            }
-            returnArity = AtomizedOperands.resolveArities(leftInferredType, rightInferredType);
-            if (returnArity == null) {
-                this.errors.report(
-                        "'+' and '*' arities are not allowed for this comparison operator: " + operator,
-                        expression.getMetadata());
-                returnArity = SequenceType.Arity.OneOrZero;
-            }
-        }
-
-        // if any of the element is the empty sequence, we set its sequence type to the other, if both are we do not
-        // need additional checks
-        boolean isLeftEmpty = leftInferredType.isEmptySequence();
-        boolean isRightEmpty = rightInferredType.isEmptySequence();
-        if (!isLeftEmpty || !isRightEmpty) {
-
-            ItemType leftItemType = isLeftEmpty ? rightInferredType.getItemType() : leftInferredType.getItemType();
-            ItemType rightItemType = isRightEmpty ? leftInferredType.getItemType() : rightInferredType.getItemType();
-
-            if (!TypeAtomization.isAtomicOrNode(leftItemType) || !TypeAtomization.isAtomicOrNode(rightItemType)) {
-                this.errors.report(
-                        "It is not possible to compare with non-atomic types",
-                        ErrorCode.NonAtomicElementErrorCode,
-                        expression.getMetadata());
-            }
-
-            if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator)) {
-                this.errors.report(
-                        "It is not possible to compare these types: "
-                                + leftItemType
-                                + " "
-                                + operator
-                                + " "
-                                + rightItemType,
-                        expression.getMetadata());
-            }
-        }
-
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, returnArity));
+        List<Node> children = expression.getChildren();
+        expression.setStaticSequenceType(this.comparison.inferComparisonType(
+                typeOf((Expression) children.get(0), expression),
+                typeOf((Expression) children.get(1), expression),
+                expression.getComparisonOperator(),
+                expression));
         return argument;
-    }
-
-    // Static typing is pessimistic (XQuery 3.1, 2.2.3.1): every pair of member types must be comparable.
-    private static boolean areComparisonTypesCompatible(
-            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
-        return left.allMemberTypesMatch(leftMember -> right.allMemberTypesMatch(
-                rightMember -> areAtomizedComparisonTypesCompatible(leftMember, rightMember, operator)));
-    }
-
-    private static boolean areAtomizedComparisonTypesCompatible(
-            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
-        if (TypeAtomization.hasUnknownTypedValue(left) || TypeAtomization.hasUnknownTypedValue(right)) {
-            return true; // Unknown typed values require runtime comparison checks.
-        }
-        left = TypeAtomization.atomizedItemType(left);
-        right = TypeAtomization.atomizedItemType(right);
-        boolean leftUntyped = left.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem);
-        boolean rightUntyped = right.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem);
-        if (leftUntyped) {
-            left = operator.isValueComparison() || rightUntyped
-                    ? BuiltinTypesCatalogue.stringItem
-                    : right.isNumeric() ? BuiltinTypesCatalogue.doubleItem : right.getCastingPrimitiveType();
-        }
-        if (rightUntyped) {
-            right = operator.isValueComparison() || leftUntyped
-                    ? BuiltinTypesCatalogue.stringItem
-                    : left.isNumeric() ? BuiltinTypesCatalogue.doubleItem : left.getCastingPrimitiveType();
-        }
-        return areMemberTypesComparable(left, right, operator);
-    }
-
-    private static boolean areMemberTypesComparable(
-            ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
-        // JSONiq null is comparable with every atomic value, including for ordering.
-        if (left.equals(BuiltinTypesCatalogue.nullItem) || right.equals(BuiltinTypesCatalogue.nullItem)) {
-            return true;
-        }
-        boolean compatible = left.equals(right)
-                || (left.isNumeric() && right.isNumeric())
-                || (left.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
-                        && right.isSubtypeOf(BuiltinTypesCatalogue.durationItem))
-                || (left.canBePromotedTo(BuiltinTypesCatalogue.stringItem)
-                        && right.canBePromotedTo(BuiltinTypesCatalogue.stringItem));
-        if (!compatible) {
-            return false;
-        }
-        boolean ordered = operator != ComparisonExpression.ComparisonOperator.VC_EQ
-                && operator != ComparisonExpression.ComparisonOperator.VC_NE
-                && operator != ComparisonExpression.ComparisonOperator.GC_EQ
-                && operator != ComparisonExpression.ComparisonOperator.GC_NE;
-        // XQuery 3.1 supports binary ordering. Durations are ordered only within
-        // the day-time subtype or within the year-month subtype.
-        return !ordered
-                || !(left.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
-                        || right.isSubtypeOf(BuiltinTypesCatalogue.durationItem))
-                || (left.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem)
-                        && right.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem))
-                || (left.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
-                        && right.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem));
     }
 
     @Override
     public StaticContext visitNodeComparisonExpr(NodeComparisonExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
-        SequenceType leftType = typeOf(expression.getLeftExpression(), expression);
-        SequenceType rightType = typeOf(expression.getRightExpression(), expression);
-
-        SequenceType operandType = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceCardinality.ZERO_OR_ONE);
-        for (SequenceType type : List.of(leftType, rightType)) {
-            if (!type.isSubtypeOf(operandType)) {
-                this.errors.report(
-                        "A node comparison operand must be a single node or empty, found " + type,
-                        expression.getMetadata());
-            }
-        }
-
-        // XQuery 3.1 section 3.7.3: an empty operand produces an empty result. Otherwise,
-        // a successful comparison produces one boolean, even when operand checks are deferred to runtime.
-        SequenceCardinality cardinality;
-        if (leftType.isEmptySequence() || rightType.isEmptySequence()) {
-            // The strict Static Typing Feature rejects known-empty expressions other than () and data(()).
-            this.errors.reportInferredEmpty(
-                    "The node comparison is statically inferred to return an empty sequence", expression);
-            cardinality = SequenceCardinality.EMPTY;
-        } else if (leftType.getCardinality().allowsZero()
-                || rightType.getCardinality().allowsZero()) {
-            cardinality = SequenceCardinality.ZERO_OR_ONE;
-        } else {
-            cardinality = SequenceCardinality.ONE;
-        }
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, cardinality));
+        expression.setStaticSequenceType(this.comparison.inferNodeComparisonType(
+                typeOf(expression.getLeftExpression(), expression),
+                typeOf(expression.getRightExpression(), expression),
+                expression));
         return argument;
     }
 
@@ -2376,7 +2238,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // every key is compared with the others, like the input of fn:min and fn:max
             boolean sortable = atomizedKeyType != null
                     && (TypeAtomization.hasUnknownTypedValue(keyType.getItemType())
-                            || hasMutuallyComparableItems(atomizedKeyType.getItemType()));
+                            || ComparisonTyping.hasMutuallyComparableItems(atomizedKeyType.getItemType()));
             if (!sortable) {
                 this.errors.report(
                         message
