@@ -3286,7 +3286,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType variableDeclaredType = statement.getStaticContext().getVariableSequenceType(statement.getName());
         SequenceType expressionType = statement.getAssignExpression().getStaticSequenceType();
         if (!expressionType.isSubtypeOf(variableDeclaredType)) {
-            throw new UnexpectedStaticTypeException(
+            throwStaticTypeException(
                     "Declared type: "
                             + variableDeclaredType
                             + " of variable: $"
