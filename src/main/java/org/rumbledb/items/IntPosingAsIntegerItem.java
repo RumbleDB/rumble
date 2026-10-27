@@ -116,16 +116,6 @@ public class IntPosingAsIntegerItem extends AbstractAtomicItem {
     }
 
     @Override
-    public boolean isInt() {
-        return false;
-    }
-
-    @Override
-    public boolean isDouble() {
-        return false;
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.integerItem;
     }
