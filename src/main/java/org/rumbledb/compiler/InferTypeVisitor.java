@@ -1363,45 +1363,44 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitAdditiveExpr(AdditiveExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        expression.setStaticSequenceType(inferArithmeticType(
+                typeOf(expression.getLeftExpression(), expression),
+                typeOf(expression.getRightExpression(), expression),
+                expression.isMinus() ? "-" : "+",
+                (left, right) -> inferAdditiveItemType(left, right, expression.isMinus()),
+                expression));
+        return argument;
+    }
 
-        SequenceType leftInferredType = typeOf(expression.getLeftExpression(), expression);
-        SequenceType rightInferredType = typeOf(expression.getRightExpression(), expression);
-        rejectInferredEmpty(leftInferredType, expression);
-        rejectInferredEmpty(rightInferredType, expression);
+    private SequenceType inferArithmeticType(
+            SequenceType leftType,
+            SequenceType rightType,
+            String operator,
+            BiFunction<ItemType, ItemType, ItemType> operation,
+            Node node) {
+        rejectInferredEmpty(leftType, node);
+        rejectInferredEmpty(rightType, node);
 
-        ItemType inferredType = null;
-        SequenceType.Arity inferredArity = resolveArities(leftInferredType, rightInferredType);
-
-        // arity check
+        SequenceType.Arity inferredArity = resolveArities(leftType, rightType);
         if (inferredArity == null) {
             throwStaticTypeException(
-                    "'+' and '*' arities are not allowed for additive expressions", expression.getMetadata());
+                    "'+' and '*' arities are not allowed for the operands of " + operator, node.getMetadata());
             inferredArity = SequenceType.Arity.OneOrZero;
         }
 
-        ItemType leftItemType = leftInferredType.getItemType();
-        ItemType rightItemType = rightInferredType.getItemType();
-
-        inferredType = inferBinaryOperationType(
-                leftItemType, rightItemType, (left, right) -> inferAdditiveItemType(left, right, expression.isMinus()));
-
+        ItemType inferredType = inferBinaryOperationType(leftType.getItemType(), rightType.getItemType(), operation);
         if (inferredType == null) {
             if (inferredArity == SequenceType.Arity.OneOrZero) {
                 // Only possible resulting type is empty sequence so throw error XPST0005
-                reportInferredEmpty(expression);
+                reportInferredEmpty(node);
             } else {
                 throwStaticTypeException(
-                        "The following types operation is not possible: "
-                                + leftInferredType
-                                + (expression.isMinus() ? " - " : " + ")
-                                + rightInferredType,
-                        expression.getMetadata());
+                        "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
+                        node.getMetadata());
             }
             inferredType = BuiltinTypesCatalogue.atomicItem;
         }
-
-        expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
-        return argument;
+        return new SequenceType(inferredType, inferredArity);
     }
 
     // Evaluate each possible operand pair. A null result means an unsupported pair.
@@ -1577,63 +1576,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 : SequenceType.Arity.One;
     }
 
-    private boolean checkSwitchType(List<Expression> expressions, SequenceType testType, ExceptionMetadata metadata) {
-        boolean addToReturnType = false;
-        for (Expression caseExpression : expressions) {
-            // test the case expression
-            checkSwitchType(caseExpression.getStaticSequenceType(), metadata);
-            // if has overlap with the test condition will add the return type to the possible ones
-            if (caseExpression.getStaticSequenceType().hasOverlapWith(testType)) {
-                addToReturnType = true;
-            }
-        }
-        return addToReturnType;
-    }
-
     @Override
     public StaticContext visitMultiplicativeExpr(MultiplicativeExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
-        SequenceType leftInferredType = typeOf(expression.getLeftExpression(), expression);
-        SequenceType rightInferredType = typeOf(expression.getRightExpression(), expression);
-        rejectInferredEmpty(leftInferredType, expression);
-        rejectInferredEmpty(rightInferredType, expression);
-
-        ItemType inferredType = null;
-        SequenceType.Arity inferredArity = resolveArities(leftInferredType, rightInferredType);
-
-        if (inferredArity == null) {
-            throwStaticTypeException(
-                    "'+' and '*' arities are not allowed for multiplicative expressions", expression.getMetadata());
-            inferredArity = SequenceType.Arity.OneOrZero;
-        }
-
-        ItemType leftItemType = leftInferredType.getItemType();
-        ItemType rightItemType = rightInferredType.getItemType();
-
-        inferredType = inferBinaryOperationType(
-                leftItemType,
-                rightItemType,
-                (left, right) -> inferMultiplicativeItemType(left, right, expression.getMultiplicativeOperator()));
-
-        if (inferredType == null) {
-            if (inferredArity == SequenceType.Arity.OneOrZero) {
-                // Only possible resulting type is empty sequence so throw error XPST0005
-                reportInferredEmpty(expression);
-            } else {
-                throwStaticTypeException(
-                        "The following types expression is not valid: "
-                                + leftItemType
-                                + " "
-                                + expression.getMultiplicativeOperator()
-                                + " "
-                                + rightItemType,
-                        expression.getMetadata());
-            }
-            inferredType = BuiltinTypesCatalogue.atomicItem;
-        }
-
-        expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
+        expression.setStaticSequenceType(inferArithmeticType(
+                typeOf(expression.getLeftExpression(), expression),
+                typeOf(expression.getRightExpression(), expression),
+                expression.getMultiplicativeOperator().toString(),
+                (left, right) -> inferMultiplicativeItemType(left, right, expression.getMultiplicativeOperator()),
+                expression));
         return argument;
     }
 
@@ -1934,17 +1885,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitConditionalExpression(ConditionalExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        expression.setStaticSequenceType(inferConditionalType(
+                typeOf(expression.getCondition(), expression),
+                typeOf(expression.getBranch(), expression),
+                typeOf(expression.getElseBranch(), expression),
+                expression));
+        return argument;
+    }
 
-        SequenceType ifType = typeOf(expression.getCondition(), expression);
-        SequenceType thenType = typeOf(expression.getBranch(), expression);
-        SequenceType elseType = typeOf(expression.getElseBranch(), expression);
-
+    private SequenceType inferConditionalType(
+            SequenceType ifType, SequenceType thenType, SequenceType elseType, Node node) {
         if (!ifType.hasEffectiveBooleanValue()) {
             throwStaticTypeException(
                     "The condition in the 'if' must have effective boolean value, found inferred type: "
                             + ifType
                             + " (which has not effective boolean value)",
-                    expression.getMetadata());
+                    node.getMetadata());
         }
 
         // if the if branch is false at static time (i.e. subtype of null?) we only use else branch
@@ -1952,10 +1908,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 ? elseType
                 : thenType.leastCommonSupertypeWith(elseType);
 
-        rejectInferredEmpty(resultingType, expression);
-
-        expression.setStaticSequenceType(resultingType);
-        return argument;
+        rejectInferredEmpty(resultingType, node);
+        return resultingType;
     }
 
     // throw errors if [type] does not conform to switch test and cases requirements
@@ -1992,6 +1946,18 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
     }
 
+    // check the case conditions and tell whether any of them may match the test condition
+    private boolean switchCaseMayMatch(List<Expression> conditions, SequenceType testType, ExceptionMetadata metadata) {
+        boolean mayMatch = false;
+        for (Expression condition : conditions) {
+            checkSwitchType(condition.getStaticSequenceType(), metadata);
+            if (condition.getStaticSequenceType().hasOverlapWith(testType)) {
+                mayMatch = true;
+            }
+        }
+        return mayMatch;
+    }
+
     @Override
     public StaticContext visitSwitchExpression(SwitchExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
@@ -1999,12 +1965,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         checkSwitchType(testType, expression.getMetadata());
 
         SequenceType returnType = typeOf(expression.getDefaultExpression(), expression);
-
         for (SwitchCase switchCase : expression.getCases()) {
-            boolean addToReturnType =
-                    checkSwitchType(switchCase.getConditionExpressions(), testType, expression.getMetadata());
+            boolean mayMatch =
+                    switchCaseMayMatch(switchCase.getConditionExpressions(), testType, expression.getMetadata());
             SequenceType caseReturnType = typeOf(switchCase.getReturnExpression(), expression);
-            if (addToReturnType) {
+            if (mayMatch) {
                 returnType = returnType.leastCommonSupertypeWith(caseReturnType);
             }
         }
@@ -2016,61 +1981,56 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitTryCatchExpression(TryCatchExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        SequenceType inferredType = null;
-
-        for (Node childNode : expression.getChildren()) {
-            SequenceType childType = typeOf((Expression) childNode, expression);
-
-            if (inferredType == null) {
-                inferredType = childType;
-            } else {
-                inferredType = inferredType.leastCommonSupertypeWith(childType);
-            }
+        List<SequenceType> branchTypes = new ArrayList<>();
+        for (Node child : expression.getChildren()) {
+            branchTypes.add(typeOf((Expression) child, expression));
         }
-        inferredType = requireInferredType(inferredType, expression);
-
-        rejectInferredEmpty(inferredType, expression);
-        expression.setStaticSequenceType(inferredType);
+        expression.setStaticSequenceType(inferBranchesType(branchTypes, expression));
         return argument;
+    }
+
+    // the least common supertype of the types a try/catch or typeswitch may return
+    private SequenceType inferBranchesType(List<SequenceType> branchTypes, Node node) {
+        SequenceType inferredType = requireInferredType(leastCommonSupertype(branchTypes), node);
+        rejectInferredEmpty(inferredType, node);
+        return inferredType;
+    }
+
+    private static SequenceType leastCommonSupertype(List<SequenceType> types) {
+        return types.stream().reduce(SequenceType::leastCommonSupertypeWith).orElse(null);
     }
 
     @Override
     public StaticContext visitTypeSwitchExpression(TypeSwitchExpression expression, StaticContext argument) {
         visit(expression.getTestCondition(), argument);
-        SequenceType inferredType = null;
-
         SequenceType conditionType = typeOf(expression.getTestCondition(), expression);
 
+        List<SequenceType> branchTypes = new ArrayList<>();
         for (TypeswitchCase typeswitchCase : expression.getCases()) {
-            Name variableName = typeswitchCase.getVariableName();
             Expression returnExpression = typeswitchCase.getReturnExpression();
-            // if we bind a variable we add the static type of it in the context of the return expression
-            if (variableName != null) {
-                SequenceType variableType = null;
-                for (SequenceType st : typeswitchCase.getUnion()) {
-                    variableType = variableType == null ? st : variableType.leastCommonSupertypeWith(st);
-                }
-                returnExpression.getStaticContext().replaceVariableSequenceType(variableName, variableType);
-            }
-
+            bindCaseVariable(
+                    typeswitchCase.getVariableName(),
+                    leastCommonSupertype(typeswitchCase.getUnion()),
+                    returnExpression.getStaticContext());
             visit(returnExpression, argument);
-            SequenceType caseType = typeOf(returnExpression, expression);
-            inferredType = inferredType == null ? caseType : inferredType.leastCommonSupertypeWith(caseType);
+            branchTypes.add(typeOf(returnExpression, expression));
         }
 
-        Name variableName = expression.getDefaultCase().getVariableName();
-        Expression returnExpression = expression.getDefaultCase().getReturnExpression();
-        // if we bind a variable in the default case, we infer testCondition type
-        if (variableName != null) {
-            returnExpression.getStaticContext().replaceVariableSequenceType(variableName, conditionType);
-        }
-        visit(returnExpression, argument);
-        SequenceType defaultType = typeOf(returnExpression, expression);
-        inferredType = inferredType == null ? defaultType : inferredType.leastCommonSupertypeWith(defaultType);
+        Expression defaultExpression = expression.getDefaultCase().getReturnExpression();
+        bindCaseVariable(
+                expression.getDefaultCase().getVariableName(), conditionType, defaultExpression.getStaticContext());
+        visit(defaultExpression, argument);
+        branchTypes.add(typeOf(defaultExpression, expression));
 
-        rejectInferredEmpty(inferredType, expression);
-        expression.setStaticSequenceType(inferredType);
+        expression.setStaticSequenceType(inferBranchesType(branchTypes, expression));
         return argument;
+    }
+
+    // a case variable is bound to the union of the case types, the default one to the test condition type
+    private static void bindCaseVariable(Name variableName, SequenceType variableType, StaticContext caseContext) {
+        if (variableName != null) {
+            caseContext.replaceVariableSequenceType(variableName, variableType);
+        }
     }
 
     // endregion
@@ -2985,31 +2945,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitConditionalStatement(ConditionalStatement statement, StaticContext argument) {
         visitDescendants(statement, argument);
-
-        SequenceType ifType = typeOf(statement.getCondition(), statement);
-        SequenceType thenType = typeOf(statement.getBranch(), statement);
-        SequenceType elseType = typeOf(statement.getElseBranch(), statement);
-
-        if (!ifType.hasEffectiveBooleanValue()) {
-            throwStaticTypeException(
-                    "The condition in the 'if' must have effective boolean value, found inferred type: "
-                            + ifType
-                            + " (which has not effective boolean value)",
-                    statement.getMetadata());
-        }
-
-        // if the if branch is false at static time (i.e. subtype of null?) we only use else branch
-        SequenceType resultingType = ifType.isSubtypeOf(SequenceType.createSequenceType("null?"))
-                ? elseType
-                : thenType.leastCommonSupertypeWith(elseType);
-
-        rejectInferredEmpty(resultingType, statement);
-
-        statement.setStaticSequenceType(resultingType);
+        statement.setStaticSequenceType(inferConditionalType(
+                typeOf(statement.getCondition(), statement),
+                typeOf(statement.getBranch(), statement),
+                typeOf(statement.getElseBranch(), statement),
+                statement));
         return argument;
     }
 
-    // TODO: Refactor where code can be reused
     @Override
     public StaticContext visitSwitchStatement(SwitchStatement statement, StaticContext argument) {
         visitDescendants(statement, argument);
@@ -3017,12 +2960,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         checkSwitchType(testType, statement.getMetadata());
 
         SequenceType returnType = typeOf(statement.getDefaultStatement(), statement);
-
         for (SwitchCaseStatement switchCase : statement.getCases()) {
-            boolean addToReturnType =
-                    checkSwitchType(switchCase.getConditionExpressions(), testType, statement.getMetadata());
+            boolean mayMatch =
+                    switchCaseMayMatch(switchCase.getConditionExpressions(), testType, statement.getMetadata());
             SequenceType caseReturnType = typeOf(switchCase.getReturnStatement(), statement);
-            if (addToReturnType) {
+            if (mayMatch) {
                 returnType = returnType.leastCommonSupertypeWith(caseReturnType);
             }
         }
@@ -3034,60 +2976,37 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitTryCatchStatement(TryCatchStatement statement, StaticContext argument) {
         visitDescendants(statement, argument);
-        SequenceType inferredType = null;
-
-        for (Node childNode : statement.getChildren()) {
-            SequenceType childType = typeOf((BlockStatement) childNode, statement);
-
-            if (inferredType == null) {
-                inferredType = childType;
-            } else {
-                inferredType = inferredType.leastCommonSupertypeWith(childType);
-            }
+        List<SequenceType> branchTypes = new ArrayList<>();
+        for (Node child : statement.getChildren()) {
+            branchTypes.add(typeOf((BlockStatement) child, statement));
         }
-        inferredType = requireInferredType(inferredType, statement);
-
-        rejectInferredEmpty(inferredType, statement);
-        statement.setStaticSequenceType(inferredType);
+        statement.setStaticSequenceType(inferBranchesType(branchTypes, statement));
         return argument;
     }
 
     @Override
     public StaticContext visitTypeSwitchStatement(TypeSwitchStatement statement, StaticContext argument) {
         visit(statement.getTestCondition(), argument);
-        SequenceType inferredType = null;
-
         SequenceType conditionType = typeOf(statement.getTestCondition(), statement);
 
+        List<SequenceType> branchTypes = new ArrayList<>();
         for (TypeSwitchStatementCase typeswitchCase : statement.getCases()) {
-            Name variableName = typeswitchCase.getVariableName();
             Statement returnStatement = typeswitchCase.getReturnStatement();
-            // if we bind a variable we add the static type of it in the context of the return expression
-            if (variableName != null) {
-                SequenceType variableType = null;
-                for (SequenceType st : typeswitchCase.getUnion()) {
-                    variableType = variableType == null ? st : variableType.leastCommonSupertypeWith(st);
-                }
-                returnStatement.getStaticContext().replaceVariableSequenceType(variableName, variableType);
-            }
-
+            bindCaseVariable(
+                    typeswitchCase.getVariableName(),
+                    leastCommonSupertype(typeswitchCase.getUnion()),
+                    returnStatement.getStaticContext());
             visit(returnStatement, argument);
-            SequenceType caseType = typeOf(returnStatement, statement);
-            inferredType = inferredType == null ? caseType : inferredType.leastCommonSupertypeWith(caseType);
+            branchTypes.add(typeOf(returnStatement, statement));
         }
 
-        Name variableName = statement.getDefaultCase().getVariableName();
-        Statement returnStatement = statement.getDefaultCase().getReturnStatement();
-        // if we bind a variable in the default case, we infer testCondition type
-        if (variableName != null) {
-            returnStatement.getStaticContext().replaceVariableSequenceType(variableName, conditionType);
-        }
-        visit(returnStatement, argument);
-        SequenceType defaultType = typeOf(returnStatement, statement);
-        inferredType = inferredType == null ? defaultType : inferredType.leastCommonSupertypeWith(defaultType);
+        Statement defaultStatement = statement.getDefaultCase().getReturnStatement();
+        bindCaseVariable(
+                statement.getDefaultCase().getVariableName(), conditionType, defaultStatement.getStaticContext());
+        visit(defaultStatement, argument);
+        branchTypes.add(typeOf(defaultStatement, statement));
 
-        rejectInferredEmpty(inferredType, statement);
-        statement.setStaticSequenceType(inferredType);
+        statement.setStaticSequenceType(inferBranchesType(branchTypes, statement));
         return argument;
     }
 
