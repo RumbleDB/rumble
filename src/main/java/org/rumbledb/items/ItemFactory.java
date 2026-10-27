@@ -104,7 +104,17 @@ public class ItemFactory {
     }
 
     public Item createIntegerItem(BigInteger i) {
+        if (i.bitLength() <= 63) {
+            return createIntegerItemFromLong(i.longValue());
+        }
         return new IntegerItem(i);
+    }
+
+    private Item createIntegerItemFromLong(long value) {
+        if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
+            return new IntPosingAsIntegerItem((int) value);
+        }
+        return new LongPosingAsIntegerItem(value);
     }
 
     public Item createIntItem(int i) {
@@ -126,9 +136,9 @@ public class ItemFactory {
 
     public Item createIntegerItem(String lexicalValue) {
         try {
-            return createLongItem(Long.parseLong(lexicalValue));
+            return createIntegerItemFromLong(Long.parseLong(lexicalValue));
         } catch (NumberFormatException e) {
-            return new IntegerItem(new BigInteger(lexicalValue));
+            return createIntegerItem(new BigInteger(lexicalValue));
         }
     }
 
