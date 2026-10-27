@@ -275,7 +275,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     throw new UnknownFunctionCallException(
                             expression.getFunctionIdentifier().getName(),
                             expression.getFunctionIdentifier().getArity(),
-                            expression.getMetadata());
+                            expression.getMetadata(),
+                            expression.getStaticContext());
                 }
             }
         }

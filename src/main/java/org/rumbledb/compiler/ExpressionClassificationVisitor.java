@@ -373,7 +373,8 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         try {
             funcSig = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
         } catch (UnknownFunctionCallException e) {
-            throw new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata());
+            throw new UnknownFunctionCallException(
+                    expression.getFunctionIdentifier(), expression.getMetadata(), expression.getStaticContext());
         }
         ExpressionClassification result =
                 funcSig.isUpdating() ? ExpressionClassification.UPDATING : ExpressionClassification.SIMPLE;
