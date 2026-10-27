@@ -2857,6 +2857,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (atomizedKeyType == null) {
             throwStaticTypeException(
                     message + describeAtomizedType(keyType, knownAtomizedType(keyType)), clause.getMetadata());
+            // without static typing, the runtime atomizes the key or fails
+            atomizedKeyType = SequenceType.createSequenceType("anyAtomicType?");
         }
         SequenceType declaredType = groupByVar.getActualSequenceType();
         if (declaredType == null) {
