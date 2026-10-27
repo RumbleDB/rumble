@@ -220,6 +220,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return StaticTypeErrors.requireInferredType(child.getStaticSequenceType(), parent);
     }
 
+    /** Visits the children of a node whose own type does not depend on theirs, and sets that type. */
+    private StaticContext withType(Node node, SequenceType type, StaticContext argument) {
+        visitDescendants(node, argument);
+        if (node instanceof Expression expression) {
+            expression.setStaticSequenceType(type);
+        } else {
+            ((Statement) node).setStaticSequenceType(type);
+        }
+        return argument;
+    }
+
     @Override
     public StaticContext visitCommaExpression(CommaExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
@@ -314,9 +325,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitStringConstructor(StringConstructorExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.stringItem), argument);
     }
 
     @Override
@@ -377,9 +386,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitMapConstructor(MapConstructorExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.mapItem));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.mapItem), argument);
     }
 
     @Override
@@ -393,9 +400,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitDirPIConstructor(DirPIConstructorExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.processingInstructionNode));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.processingInstructionNode), argument);
     }
 
     @Override
@@ -412,33 +417,25 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitComputedPIConstructor(
             ComputedPIConstructorExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.processingInstructionNode));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.processingInstructionNode), argument);
     }
 
     @Override
     public StaticContext visitComputedAttributeConstructor(
             ComputedAttributeConstructorExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.attributeNode));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.attributeNode), argument);
     }
 
     @Override
     public StaticContext visitComputedNamespaceConstructor(
             ComputedNamespaceConstructorExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.namespaceNode));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.namespaceNode), argument);
     }
 
     @Override
     public StaticContext visitDocumentNodeConstructor(
             DocumentNodeConstructorExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.documentNode));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.documentNode), argument);
     }
 
     @Override
@@ -450,9 +447,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCommentNodeConstructor(
             CommentNodeConstructorExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.commentNode));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.commentNode), argument);
     }
 
     @Override
@@ -465,9 +460,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTextNodeConstructor(TextNodeConstructorExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.textNode));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.textNode), argument);
     }
 
     @Override
@@ -478,9 +471,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitAttributeNode(AttributeNodeExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.attributeNode));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.attributeNode), argument);
     }
 
     @Override
@@ -710,9 +701,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitInstanceOfExpression(InstanceOfExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
-        return argument;
+        return withType(expression, new SequenceType(BuiltinTypesCatalogue.booleanItem), argument);
     }
 
     @Override
@@ -768,37 +757,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitDeleteExpression(DeleteExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
     public StaticContext visitRenameExpression(RenameExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
     public StaticContext visitReplaceExpression(ReplaceExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
     public StaticContext visitInsertExpression(InsertExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
     public StaticContext visitAppendExpression(AppendExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
@@ -848,56 +827,42 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCreateCollectionExpression(
             CreateCollectionExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
     public StaticContext visitDeleteIndexFromCollectionExpression(
             DeleteIndexFromCollectionExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
     public StaticContext visitDeleteSearchFromCollectionExpression(
             DeleteSearchFromCollectionExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
     public StaticContext visitEditCollectionExpression(EditCollectionExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
     public StaticContext visitInsertIndexIntoCollectionExpression(
             InsertIndexIntoCollectionExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
     public StaticContext visitInsertSearchIntoCollectionExpression(
             InsertSearchIntoCollectionExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
     public StaticContext visitTruncateCollectionExpression(
             TruncateCollectionExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("()"), argument);
     }
 
     // endregion
@@ -1079,7 +1044,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     // throw errors if [type] does not conform to switch test and cases requirements
-    public void checkSwitchType(SequenceType type, ExceptionMetadata metadata) {
+    private void checkSwitchType(SequenceType type, ExceptionMetadata metadata) {
         if (type == null) {
             throw new OurBadException("A child expression of a SwitchExpression has no inferred type", metadata);
         }
@@ -1409,9 +1374,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitUnaryLookupExpression(UnaryLookupExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
-        return argument;
+        return withType(expression, SequenceType.createSequenceType("item*"), argument);
     }
 
     @Override
@@ -1470,7 +1433,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     // return [true] if [types] are subtype of or can be promoted to expected types, [false] otherwise
-    public boolean checkArguments(List<SequenceType> expectedTypes, List<SequenceType> types) {
+    private boolean checkArguments(List<SequenceType> expectedTypes, List<SequenceType> types) {
         int length = expectedTypes.size();
         if (length != types.size()) {
             return false;
@@ -2024,7 +1987,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // endregion
     //
-    // // begin scripting
+    // region scripting
+
     private SequenceType getSequenceTypeFromChildren(
             SequenceType inferredType, SequenceType childSequenceType, ExceptionMetadata childMetadata) {
         // if a child expression has no inferred type throw an error
@@ -2199,9 +2163,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, StaticContext argument) {
-        visitDescendants(statement, argument);
-        statement.setStaticSequenceType(SequenceType.createSequenceType("()"));
-        return argument;
+        return withType(statement, SequenceType.createSequenceType("()"), argument);
     }
 
     @Override
@@ -2268,5 +2230,5 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    // end xml
+    // endregion
 }
