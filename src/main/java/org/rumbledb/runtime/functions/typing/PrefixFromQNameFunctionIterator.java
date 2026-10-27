@@ -42,7 +42,7 @@ public class PrefixFromQNameFunctionIterator extends AbstractAtMostOneItemRuntim
             return null;
         }
         String prefix = qnameItem.getQNameValue().getPrefix();
-        if (prefix == null) return null;
+        if (prefix == null || prefix.isEmpty()) return null;
         return ItemFactory.getInstance().createNCNameItem(prefix);
     }
 }

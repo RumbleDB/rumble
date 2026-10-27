@@ -210,7 +210,7 @@ final class ExtremumEvaluation {
                     return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
                 }
             }
-            if (saw(Seen.STRING) && saw(Seen.ANY_URI) && (item.isString() || item.isAnyURI())) {
+            if (saw(Seen.STRING) && saw(Seen.ANY_URI) && item.isAnyURI()) {
                 return ItemFactory.getInstance().createStringItem(item.getStringValue());
             }
             return item;

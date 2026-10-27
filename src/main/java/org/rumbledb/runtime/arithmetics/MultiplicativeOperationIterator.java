@@ -472,8 +472,16 @@ public class MultiplicativeOperationIterator extends AbstractAtMostOneItemRuntim
             ExceptionMetadata metadata) {
         switch (multiplicativeOperator) {
             case DIV:
+                if (r.isZero()) {
+                    throw new DivisionByZeroException(metadata);
+                }
                 return ItemFactory.getInstance()
-                        .createDecimalItem(BigDecimal.valueOf(l.toNanos() / (double) r.toNanos()));
+                        .createDecimalItem(BigDecimal.valueOf(l.getSeconds())
+                                .add(BigDecimal.valueOf(l.getNano(), 9))
+                                .divide(
+                                        BigDecimal.valueOf(r.getSeconds()).add(BigDecimal.valueOf(r.getNano(), 9)),
+                                        18,
+                                        RoundingMode.HALF_EVEN));
             default:
                 throw new UnexpectedTypeException(
                         " \""
