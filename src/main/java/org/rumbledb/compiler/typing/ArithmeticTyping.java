@@ -242,14 +242,14 @@ public final class ArithmeticTyping {
         }
     }
 
-    public SequenceType inferUnaryType(SequenceType childInferredType, Node expression) {
+    public SequenceType inferUnaryType(SequenceType childInferredType, Node node) {
 
         // if the child is the empty sequence just infer the empty sequence
-        this.errors.rejectInferredEmpty(childInferredType, expression);
+        this.errors.rejectInferredEmpty(childInferredType, node);
 
         SequenceType.Arity resultArity = AtomizedOperands.atomizedSingletonArity(childInferredType);
         if (resultArity == null) {
-            this.errors.report("'+' and '*' arities are not allowed for unary expressions", expression.getMetadata());
+            this.errors.report("'+' and '*' arities are not allowed for unary expressions", node.getMetadata());
             resultArity = SequenceType.Arity.OneOrZero;
         }
 
@@ -258,11 +258,11 @@ public final class ArithmeticTyping {
         ItemType childItemType = inferUnaryItemType(childInferredType.getItemType());
         if (childItemType == null) {
             if (childInferredType.getArity() == SequenceType.Arity.OneOrZero) {
-                this.errors.reportInferredEmpty(expression);
+                this.errors.reportInferredEmpty(node);
             } else {
                 this.errors.report(
-                        "It is not possible to have an Unary expression with the following type: " + childInferredType,
-                        expression.getMetadata());
+                        "It is not possible to have an Unary node with the following type: " + childInferredType,
+                        node.getMetadata());
             }
             childItemType = BuiltinTypesCatalogue.numericItem;
         }
