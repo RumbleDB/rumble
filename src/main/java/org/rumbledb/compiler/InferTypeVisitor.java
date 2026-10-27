@@ -33,6 +33,7 @@ import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.compiler.typing.ArithmeticTyping;
 import org.rumbledb.compiler.typing.AtomizedOperands;
+import org.rumbledb.compiler.typing.CastTyping;
 import org.rumbledb.compiler.typing.ComparisonTyping;
 import org.rumbledb.compiler.typing.StaticTypeErrors;
 import org.rumbledb.config.RumbleConfiguration;
@@ -214,6 +215,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private final ComparisonTyping comparison;
 
+    private final CastTyping cast;
+
     /**
      * The context type E of each type that descendant-or-self::node() inferred from a schema, so that an error in the
      * step S of E//S can name E. Compared by identity: S steps from that same type object.
@@ -230,6 +233,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         this.errors = new StaticTypeErrors(rumbleRuntimeConfiguration);
         this.arithmetic = new ArithmeticTyping(this.errors);
         this.comparison = new ComparisonTyping(this.errors);
+        this.cast = new CastTyping(this.errors);
     }
 
     /** Returns the type inferred for a child of the node, which every visited child has. */
@@ -939,152 +943,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        XmlSchemaCatalog schemaCatalog = argument.getInScopeSchemaTypes().getXmlSchemaCatalog();
-        if (isSchemaCastTarget(expression.getSequenceType(), schemaCatalog)) {
-            checkCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
-            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
-            return argument;
-        }
-        ItemType itemType = expression.getSequenceType().getItemType();
-        if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
-            this.errors.report(
-                    "atomic item type is not allowed in castable expression",
-                    ErrorCode.CastableErrorCode,
-                    expression.getMetadata());
-        }
-        checkCastOperand(expression.getMainExpression().getStaticSequenceType(), expression);
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
+        expression.setStaticSequenceType(this.cast.inferCastableType(
+                expression.getMainExpression().getStaticSequenceType(),
+                expression.getSequenceType(),
+                argument.getInScopeSchemaTypes().getXmlSchemaCatalog(),
+                expression));
         return argument;
     }
 
     @Override
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
-        XmlSchemaCatalog schemaCatalog = argument.getInScopeSchemaTypes().getXmlSchemaCatalog();
-        if (isSchemaCastTarget(expression.getSequenceType(), schemaCatalog)) {
-            SequenceType expressionType = expression.getMainExpression().getStaticSequenceType();
-            checkCastOperand(expressionType, expression);
-
-            if (expressionType.isEmptySequence()) {
-                if (expression.getSequenceType().getArity() != SequenceType.Arity.OneOrZero) {
-                    this.errors.report(
-                            "Empty sequence cannot be cast to a non-optional XML Schema simple type.",
-                            expression.getMetadata());
-                }
-                expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.Zero));
-                return argument;
-            }
-
-            SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(expressionType);
-            if (atomizedOperand != null
-                    && !atomizedOperand.isAritySubtypeOf(
-                            expression.getSequenceType().getArity())) {
-                this.errors.report(
-                        castCardinalityMessage(expressionType, atomizedOperand, expression.getSequenceType()),
-                        expression.getMetadata());
-            }
-
-            // Check the type of result will casting to this schema type produce
-            SequenceType resultType = schemaCatalog.getSimpleTypeCastResultType(
-                    expression.getSequenceType().getItemType().getName());
-
-            if (resultType.getArity() == SequenceType.Arity.One
-                    && expression.getSequenceType().getArity() == SequenceType.Arity.OneOrZero
-                    && (atomizedOperand == null || atomizedOperand.getArity() != SequenceType.Arity.One)) {
-                // Because getSimpleTypeCastResultType does not take into account the arity of the cast expression,
-                // this if-statement is needed to ensure that the result type is correctly set to OneOrZero when the
-                // cast expression has an optional arity.
-                resultType = new SequenceType(resultType.getItemType(), SequenceType.Arity.OneOrZero);
-            }
-            expression.setStaticSequenceType(resultType);
-            return argument;
-        }
-
-        // check at static time for casting errors (note cast only allows for normal or ? arity)
-        SequenceType expressionSequenceType = expression.getMainExpression().getStaticSequenceType();
-        SequenceType castedSequenceType = expression.getSequenceType();
-
-        if (castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.atomicItem)) {
-            this.errors.report(
-                    "atomic item type is not allowed in cast expression",
-                    ErrorCode.CastableErrorCode,
-                    expression.getMetadata());
-        }
-
-        // Empty sequence case
-        if (expressionSequenceType.isEmptySequence()) {
-            if (castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
-                this.errors.report(
-                        "Empty sequence cannot be cast to type with quantifier different from '?'",
-                        expression.getMetadata());
-            } else {
-                // no additional check is needed
-                expression.setStaticSequenceType(castedSequenceType);
-                return argument;
-            }
-        }
-
-        SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(expressionSequenceType);
-        if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(castedSequenceType.getArity())) {
-            this.errors.report(
-                    castCardinalityMessage(expressionSequenceType, atomizedOperand, castedSequenceType),
-                    expression.getMetadata());
-        }
-
-        checkCastOperand(expressionSequenceType, expression);
-        // Non-atomic operands were reported above; with static typing disabled, leave them to runtime.
-        if (TypeAtomization.isAtomicOrNode(expressionSequenceType.getItemType())
-                && !castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.errorItem)
-                && !isCastOperandTypeCompatible(
-                        expressionSequenceType.getItemType(), castedSequenceType.getItemType())) {
-            this.errors.report(
-                    "It is never possible to cast a " + expressionSequenceType + " as " + castedSequenceType,
-                    ErrorCode.UnexpectedTypeErrorCode,
-                    expression.getMetadata());
-        }
-        if (TypeAtomization.inferType(expressionSequenceType).getCardinality() == SequenceCardinality.ONE) {
-            castedSequenceType = new SequenceType(castedSequenceType.getItemType(), SequenceType.Arity.One);
-        }
-        expression.setStaticSequenceType(castedSequenceType);
+        expression.setStaticSequenceType(this.cast.inferCastType(
+                expression.getMainExpression().getStaticSequenceType(),
+                expression.getSequenceType(),
+                argument.getInScopeSchemaTypes().getXmlSchemaCatalog(),
+                expression));
         return argument;
-    }
-
-    private static String castCardinalityMessage(SequenceType operand, SequenceType atomized, SequenceType target) {
-        return "with static type feature it is not possible to cast a "
-                + AtomizedOperands.describeAtomizedType(operand, atomized)
-                + " as "
-                + target;
-    }
-
-    private boolean isSchemaCastTarget(SequenceType sequenceType, XmlSchemaCatalog schemaCatalog) {
-        ItemType itemType = sequenceType.getItemType();
-        return itemType.hasName() && schemaCatalog.isSchemaCastTarget(itemType.getName());
-    }
-
-    /**
-     * Accepts atomic operands and nodes whose typed values are atomized at runtime.
-     * A node is not itself atomic, but its typed value can supply atomic cast operands.
-     * The static node types used here do not say whether atomization succeeds or how many
-     * atomic values it produces; the runtime checks those properties after atomization.
-     */
-    private void checkCastOperand(SequenceType operandType, Expression expression) {
-        StaticTypeErrors.requireInferredType(operandType, expression);
-        if (!operandType.isEmptySequence() && !TypeAtomization.isAtomicOrNode(operandType.getItemType())) {
-            this.errors.report(
-                    "A cast operand must be atomic after atomization, found " + operandType,
-                    operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
-                            ? ErrorCode.NonAtomicElementErrorCode
-                            : ErrorCode.AtomizationError,
-                    expression.getMetadata());
-        }
-    }
-
-    private boolean isCastOperandTypeCompatible(ItemType source, ItemType target) {
-        // A node is cast through its typed value: an unknown one is checked at runtime, a known one statically.
-        return source.allMemberTypesMatch(member -> TypeAtomization.hasUnknownTypedValue(member)
-                || TypeAtomization.atomizedItemType(member)
-                        .allMemberTypesMatch(atomized -> atomized.isStaticallyCastableAs(target)));
     }
 
     @Override
