@@ -90,14 +90,28 @@ public final class TimezoneNames {
 
         long millis = value.toInstant().toEpochMilli();
         int expectedOffsetMillis = value.getOffset().getTotalSeconds() * 1000;
+        // Prefer zones without seasonal changes, such as Hawaii, over an equally
+        // matching winter offset in a daylight-saving zone.
+        for (String zoneId : zoneIds) {
+            TimeZone zone = TimeZone.getTimeZone(zoneId);
+            if (!zone.useDaylightTime() && zone.getOffset(millis) == expectedOffsetMillis) {
+                return TimeZone.getCanonicalID(zoneId);
+            }
+        }
         for (String zoneId : zoneIds) {
             TimeZone zone = TimeZone.getTimeZone(zoneId);
             if (zone.getOffset(millis) == expectedOffsetMillis) {
-                return zoneId;
+                return TimeZone.getCanonicalID(zoneId);
             }
         }
 
-        return null;
+        // Country names guide the choice where the offset is ambiguous. Recognize
+        // the conventional UTC and Indian names even outside their home territories.
+        return switch (expectedOffsetMillis) {
+            case 0 -> "Etc/UTC";
+            case 19800000 -> "Asia/Kolkata";
+            default -> null;
+        };
     }
 
     private static String normalizeCountry(String place) {

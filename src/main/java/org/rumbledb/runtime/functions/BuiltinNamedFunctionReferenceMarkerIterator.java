@@ -66,6 +66,18 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends ItemRuntimePlan
                 this.staticContext.getConfiguration());
     }
 
+    /** Disabled facilities report their error without evaluating or converting arguments. */
+    public ItemRuntimePlan unavailableCallPlan() {
+        if (!Name.FN_NS.equals(this.identifier.getName().getNamespace())) {
+            return null;
+        }
+        return switch (this.identifier.getName().getLocalName()) {
+            case "load-xquery-module" -> new LoadXQueryModuleFunctionIterator(List.of(), this.staticContext);
+            case "transform" -> new TransformFunctionIterator(List.of(), this.staticContext);
+            default -> null;
+        };
+    }
+
     public ItemRuntimePlan buildCallPlan(DynamicContext context) {
         List<ItemRuntimePlan> parameters = new ArrayList<>();
         var signature = BuiltinFunctionCatalogue.getBuiltinFunction(

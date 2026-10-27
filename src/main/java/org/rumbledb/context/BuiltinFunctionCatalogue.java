@@ -22,8 +22,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
+import org.rumbledb.runtime.functions.LoadXQueryModuleFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.QNameFunctionIterator;
+import org.rumbledb.runtime.functions.TransformFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayAppendFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFilterFunctionIterator;
@@ -638,6 +640,28 @@ public class BuiltinFunctionCatalogue {
             List.of("string?", "string"),
             "QName",
             QNameFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+
+    // Optional dynamic execution facilities remain discoverable while disabled.
+    static final BuiltinFunction load_xquery_module1 = createBuiltinFunction(
+            new Name(Name.FN_NS, "fn", "load-xquery-module"),
+            List.of("string"),
+            "map",
+            LoadXQueryModuleFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+
+    static final BuiltinFunction load_xquery_module2 = createBuiltinFunction(
+            new Name(Name.FN_NS, "fn", "load-xquery-module"),
+            List.of("string", "map"),
+            "map",
+            LoadXQueryModuleFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+
+    static final BuiltinFunction transform = createBuiltinFunction(
+            new Name(Name.FN_NS, "fn", "transform"),
+            List.of("map"),
+            "map",
+            TransformFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     /**
@@ -3564,6 +3588,9 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(node_name_with_arg.getIdentifier(), node_name_with_arg);
         builtinFunctions.put(qname.getIdentifier(), qname);
         builtinFunctions.put(function_lookup.getIdentifier(), function_lookup);
+        builtinFunctions.put(load_xquery_module1.getIdentifier(), load_xquery_module1);
+        builtinFunctions.put(load_xquery_module2.getIdentifier(), load_xquery_module2);
+        builtinFunctions.put(transform.getIdentifier(), transform);
 
         builtinFunctions.put(collation_key1.getIdentifier(), collation_key1);
         builtinFunctions.put(collation_key2.getIdentifier(), collation_key2);

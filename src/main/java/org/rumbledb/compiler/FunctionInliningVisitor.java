@@ -17,7 +17,6 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 import org.rumbledb.context.Name;
@@ -43,16 +42,15 @@ import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromP
 public class FunctionInliningVisitor extends CloneVisitor {
 
     private Prolog prolog;
-    private boolean constructionPreserve;
-    private java.net.URI staticBaseUri;
 
-    private boolean hasDifferentModuleContext(Prolog prolog, FunctionDeclaration target) {
+    private boolean isImportedFunction(Prolog prolog, FunctionDeclaration target) {
         for (var module : prolog.getImportedModules()) {
             if (module.getProlog().getFunctionDeclarations().contains(target)) {
-                return module.getStaticContext().isConstructionPreserve() != this.constructionPreserve
-                        || !Objects.equals(module.getStaticContext().getStaticBaseURI(), this.staticBaseUri);
+                // Rebuilding an imported body in the caller's context loses module-local
+                // namespaces, collations, decimal formats and other static settings.
+                return true;
             }
-            if (hasDifferentModuleContext(module.getProlog(), target)) {
+            if (isImportedFunction(module.getProlog(), target)) {
                 return true;
             }
         }
@@ -98,10 +96,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
         this.prolog = mainModule.getProlog();
-        if (mainModule.getStaticContext() != null) {
-            this.constructionPreserve = mainModule.getStaticContext().isConstructionPreserve();
-            this.staticBaseUri = mainModule.getStaticContext().getStaticBaseURI();
-        }
         MainModule result = new MainModule(
                 mainModule.getProlog(),
                 (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
@@ -137,8 +131,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 getFunctionDeclarationFromProlog(this.prolog, expression.getFunctionIdentifier());
         if (expression.isPartialApplication()
                 || targetFunction == null
-                // Rebuilding an imported body in the caller's context can change its constructors and static base URI.
-                || hasDifferentModuleContext(this.prolog, targetFunction)
+                // Imported function bodies must retain their module's static settings.
+                || isImportedFunction(this.prolog, targetFunction)
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
                 || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {
