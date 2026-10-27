@@ -2406,7 +2406,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         if (mainType == null) {
             throw new OurBadException(
-                    "A child expression of a ObjectLookupExpression has no inferred type", expression.getMetadata());
+                    "A child expression of a PostfixLookupExpression has no inferred type", expression.getMetadata());
         }
 
         boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
