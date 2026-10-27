@@ -24,8 +24,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.extern.log4j.Log4j2;
-
 import org.rumbledb.compiler.typing.ArithmeticTyping;
 import org.rumbledb.compiler.typing.AtomizedOperands;
 import org.rumbledb.compiler.typing.BuiltinFunctionTyping;
@@ -178,7 +176,6 @@ import org.rumbledb.xml.schema.XmlSchemaCatalog;
 /**
  * This visitor infers a static SequenceType for each expression in the query
  */
-@Log4j2
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private final RumbleConfiguration rumbleRuntimeConfiguration;
@@ -288,13 +285,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
         SequenceType variableType = expression.getActualType();
         if (variableType == null) {
-            // if is null, no 'as [SequenceType]' part was present in the declaration, therefore we infer it
+            // Without a declared type, the type was inferred when the variable was bound.
             variableType = expression.getStaticContext().getVariableSequenceType(expression.getVariableName());
-            // we also set variableReference type
             if (variableType == null) {
-                log.warn(
-                        "Variable reference type was null so we infer it. Please let us know as we would like to look into it.");
-                variableType = SequenceType.createSequenceType("item*");
+                throw new OurBadException(
+                        "No type was inferred for $" + expression.getVariableName() + " before its use",
+                        expression.getMetadata());
             }
             expression.setActualType(variableType);
         }
