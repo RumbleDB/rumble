@@ -1989,17 +1989,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     //
     // region scripting
 
-    private SequenceType getSequenceTypeFromChildren(
-            SequenceType inferredType, SequenceType childSequenceType, ExceptionMetadata childMetadata) {
-        // if a child expression has no inferred type throw an error
-        if (childSequenceType == null) {
-            this.errors.report("A child expression of a BlockStatement has no inferred type", childMetadata);
-            return inferredType;
-        }
-
-        return inferredType.concatenateWith(childSequenceType);
-    }
-
     @Override
     public StaticContext visitBlockStatement(BlockStatement statement, StaticContext argument) {
         visitDescendants(statement, argument);
@@ -2007,8 +1996,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferredType = SequenceType.createSequenceType("()");
 
         for (Statement childStatement : statement.getBlockStatements()) {
-            inferredType = getSequenceTypeFromChildren(
-                    inferredType, childStatement.getStaticSequenceType(), childStatement.getMetadata());
+            inferredType = inferredType.concatenateWith(typeOf(childStatement, statement));
         }
 
         statement.setStaticSequenceType(inferredType);
@@ -2172,10 +2160,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferredType = SequenceType.createSequenceType("()");
         visitDescendants(statementsAndOptionalExpr, argument);
         if (statementsAndOptionalExpr.getExpression() != null) {
-            inferredType = getSequenceTypeFromChildren(
-                    inferredType,
-                    statementsAndOptionalExpr.getExpression().getStaticSequenceType(),
-                    statementsAndOptionalExpr.getExpression().getMetadata());
+            inferredType = inferredType.concatenateWith(
+                    typeOf(statementsAndOptionalExpr.getExpression(), statementsAndOptionalExpr));
         }
         statementsAndOptionalExpr.setStaticSequenceType(inferredType);
         return argument;
@@ -2184,10 +2170,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, StaticContext argument) {
         visitDescendants(statementsAndExpr, argument);
-        SequenceType inferredType = getSequenceTypeFromChildren(
-                SequenceType.createSequenceType("()"),
-                statementsAndExpr.getExpression().getStaticSequenceType(),
-                statementsAndExpr.getExpression().getMetadata());
+        SequenceType inferredType = SequenceType.createSequenceType("()")
+                .concatenateWith(typeOf(statementsAndExpr.getExpression(), statementsAndExpr));
 
         statementsAndExpr.setStaticSequenceType(inferredType);
         return argument;
