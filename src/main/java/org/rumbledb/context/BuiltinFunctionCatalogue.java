@@ -23,9 +23,9 @@ import java.util.Map;
 
 import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
 import org.rumbledb.runtime.functions.LoadXQueryModuleFunctionIterator;
-import org.rumbledb.runtime.functions.TransformFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.QNameFunctionIterator;
+import org.rumbledb.runtime.functions.TransformFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayAppendFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFilterFunctionIterator;

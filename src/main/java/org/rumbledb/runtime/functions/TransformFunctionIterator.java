@@ -37,6 +37,7 @@ public class TransformFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        throw new RumbleException("XSLT transformation is disabled.", ErrorCode.TransformationNotSupported, getMetadata());
+        throw new RumbleException(
+                "XSLT transformation is disabled.", ErrorCode.TransformationNotSupported, getMetadata());
     }
 }

@@ -37,6 +37,9 @@ public class LoadXQueryModuleFunctionIterator extends AbstractAtMostOneItemRunti
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        throw new RumbleException("Dynamic XQuery module loading is disabled.", ErrorCode.DynamicModuleLoadingNotSupported, getMetadata());
+        throw new RumbleException(
+                "Dynamic XQuery module loading is disabled.",
+                ErrorCode.DynamicModuleLoadingNotSupported,
+                getMetadata());
     }
 }
