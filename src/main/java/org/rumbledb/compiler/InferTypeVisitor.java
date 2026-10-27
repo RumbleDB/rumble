@@ -2653,13 +2653,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        checkAndUpdateVariableStaticType(
-                declaredType,
-                inferredType,
-                expression.getNextClause().getStaticContext(),
-                expression.getClass().getSimpleName(),
-                expression.getVariableName(),
-                expression.getMetadata());
+        if (declaredType == null) {
+            expression
+                    .getNextClause()
+                    .getStaticContext()
+                    .replaceVariableSequenceType(expression.getVariableName(), inferredType);
+        }
         return argument;
     }
 
@@ -2719,14 +2718,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitLetClause(LetClause expression, StaticContext argument) {
         visit(expression.getExpression(), argument);
         SequenceType declaredType = expression.getActualSequenceType();
-        SequenceType inferredType = expression.getExpression().getStaticSequenceType();
-        checkAndUpdateVariableStaticType(
-                declaredType,
-                inferredType,
-                expression.getNextClause().getStaticContext(),
-                expression.getClass().getSimpleName(),
-                expression.getVariableName(),
-                expression.getMetadata());
+        SequenceType inferredType = typeOf(expression.getExpression(), expression);
+        if (declaredType == null) {
+            expression
+                    .getNextClause()
+                    .getStaticContext()
+                    .replaceVariableSequenceType(expression.getVariableName(), inferredType);
+        }
         expression.setStaticType(inferredType);
         return argument;
     }
@@ -2870,13 +2868,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
-        checkAndUpdateVariableStaticType(
-                null,
-                SequenceType.createSequenceType("integer"),
-                clause.getNextClause().getStaticContext(),
-                clause.getClass().getSimpleName(),
-                clause.getCountVariableName(),
-                clause.getMetadata());
+        clause.getNextClause()
+                .getStaticContext()
+                .replaceVariableSequenceType(clause.getCountVariableName(), SequenceType.createSequenceType("integer"));
         return argument;
     }
 
@@ -2884,64 +2878,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region module
 
-    // if [declaredType] is not null, check if the inferred type matches or can be promoted to the declared type
-    // (otherwise throw type error)
-    // if [declaredType] is null, replace the type of [variableName] in the [context] with the inferred type
-    public void checkAndUpdateVariableStaticType(
-            SequenceType declaredType,
-            SequenceType inferredType,
-            StaticContext context,
-            String nodeName,
-            Name variableName,
-            ExceptionMetadata metadata) {
-        if (inferredType == null) {
-            throw new OurBadException("A child of a " + nodeName + " has no inferred type", metadata);
-        }
-
-        if (declaredType == null) {
-            // if declared type is null, we overwrite the type in the correspondent InScopeVariable with the inferred
-            // type
-            context.replaceVariableSequenceType(variableName, inferredType);
-        } else {
-            if (!inferredType.isSubtypeOf(declaredType)) {
-                throwStaticTypeException(
-                        "In a "
-                                + nodeName
-                                + ", the variable $"
-                                + variableName
-                                + " inferred type "
-                                + inferredType
-                                + " does not match or can be promoted to the declared type "
-                                + declaredType,
-                        metadata);
-            }
-        }
+    /** An assignable variable without a declared type can later be assigned any value. */
+    private static SequenceType inferUndeclaredVariableType(Expression initializer, boolean assignable, Node node) {
+        return initializer == null || assignable ? SequenceType.createSequenceType("item*") : typeOf(initializer, node);
     }
 
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        SequenceType declaredType = expression.getActualSequenceType();
-        SequenceType inferredType = SequenceType.createSequenceType("item*");
-        if (declaredType == null) {
-            if (expression.getExpression() != null) {
-                if (argument.getIsAssignable(expression.getVariableName())) {
-                    inferredType = SequenceType.createSequenceType("item*");
-                } else {
-                    inferredType = expression.getExpression().getStaticSequenceType();
-                }
-            }
-        } else {
-            inferredType = declaredType;
+        if (expression.getActualSequenceType() == null) {
+            argument.replaceVariableSequenceType(
+                    expression.getVariableName(),
+                    inferUndeclaredVariableType(
+                            expression.getExpression(),
+                            argument.getIsAssignable(expression.getVariableName()),
+                            expression));
         }
-        checkAndUpdateVariableStaticType(
-                declaredType,
-                inferredType,
-                argument,
-                expression.getClass().getSimpleName(),
-                expression.getVariableName(),
-                expression.getMetadata());
-
         // A non-external context initializer fixes the initial focus more precisely than its declared item type.
         // XQuery supplies item() even when the declaration has no explicit type annotation.
         if (Name.CONTEXT_ITEM.equals(expression.getVariableName())
@@ -2952,7 +2904,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 initializer = treat.getMainExpression();
             }
             SequenceType initializerType = initializer.getStaticSequenceType();
-            if (initializerType.isSubtypeOf(inferredType)) {
+            if (initializerType.isSubtypeOf(argument.getVariableSequenceType(Name.CONTEXT_ITEM))) {
                 argument.replaceVariableSequenceType(Name.CONTEXT_ITEM, initializerType);
             }
         }
@@ -3290,48 +3242,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitVariableDeclStatement(VariableDeclStatement statement, StaticContext argument) {
         visitDescendants(statement, argument);
-        SequenceType declaredType = statement.getActualSequenceType();
-        SequenceType inferredType = getInferredSequenceType(statement, declaredType);
-        if (declaredType == null) {
-            if (!statement.isAssignable()) {
-                // Non-assignable typ
-                checkAndUpdateVariableStaticType(
-                        null,
-                        inferredType,
-                        statement.getStaticContext(),
-                        statement.getClass().getSimpleName(),
-                        statement.getVariableName(),
-                        statement.getMetadata());
-            } else {
-                // Assignable variables without a declared type are have Item* type.
-                checkAndUpdateVariableStaticType(
-                        null,
-                        SequenceType.createSequenceType("item*"),
-                        statement.getStaticContext(),
-                        statement.getClass().getSimpleName(),
-                        statement.getVariableName(),
-                        statement.getMetadata());
-            }
+        if (statement.getActualSequenceType() == null) {
+            statement
+                    .getStaticContext()
+                    .replaceVariableSequenceType(
+                            statement.getVariableName(),
+                            inferUndeclaredVariableType(
+                                    statement.getVariableExpression(), statement.isAssignable(), statement));
         }
         statement.setStaticSequenceType(
                 statement.getStaticContext().getVariableSequenceType(statement.getVariableName()));
         return argument;
-    }
-
-    private static SequenceType getInferredSequenceType(VariableDeclStatement statement, SequenceType declaredType) {
-        SequenceType inferredType = SequenceType.createSequenceType("item*");
-        if (declaredType == null) {
-            if (statement.getVariableExpression() != null) {
-                inferredType = statement.getVariableExpression().getStaticSequenceType();
-            }
-        } else {
-            if (statement.getVariableExpression() != null) {
-                inferredType = statement.getVariableExpression().getStaticSequenceType();
-            } else {
-                inferredType = declaredType;
-            }
-        }
-        return inferredType;
     }
 
     @Override
