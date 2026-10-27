@@ -174,11 +174,10 @@ public final class XmlPathTranslation {
             if (ctx.isAt()) {
                 // @ equivalent with 'attribute::'
                 forwardAxis = ForwardAxis.ATTRIBUTE;
-            } else if (nodeTest instanceof NamespaceNodeTest
-                    && translationContext.moduleContext().getQueryLanguage().startsWith("xquery")) {
-                // XQuery 3.1 section 3.3.2.5: only the omitted namespace axis is unsupported.
+            } else if (nodeTest instanceof NamespaceNodeTest) {
+                // Following XQuery 3.1 section 3.3.2.5, both languages require an explicit axis.
                 throw new SemanticException(
-                        "A namespace-node() step requires an explicit axis in XQuery.",
+                        "A namespace-node() step requires an explicit axis.",
                         ErrorCode.NamespaceNodeTestNotSupported,
                         translationContext.metadata(ctx.context()));
             } else if (nodeTest instanceof AttributeTest
