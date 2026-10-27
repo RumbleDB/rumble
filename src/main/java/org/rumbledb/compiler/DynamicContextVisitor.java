@@ -19,12 +19,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serial;
+import java.io.Serializable;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -41,6 +46,7 @@ import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
+import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
@@ -77,6 +83,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     private final RumbleConfiguration configuration;
     private final ResourceResolver resourceResolver;
     private ExternalBindings externalBindings;
+    private int libraryModuleDepth;
+    private List<Item> initialContextItem;
     private Map<String, DynamicContext> importedModuleContexts;
 
     public DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
@@ -145,17 +153,27 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     private DynamicContext initializeVariableDeclaration(
             VariableDeclaration variableDeclaration, DynamicContext argument) {
         Name name = variableDeclaration.getVariableName();
-        argument.addGlobalVariable(name);
         // Variable is not external: we use the expression.
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
             ItemRuntimePlan iterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
-            RuntimePlanBindings.bind(iterator, argument, name, argument);
+            if (iterator.getRuntimeStaticContext().getExecutionMode().isLocal()
+                    && !variableDeclaration.isAssignable()
+                    && !expression.isSequential()) {
+                argument.getVariableValues()
+                        .addVariableValue(
+                                name,
+                                new GlobalVariableValue(iterator, argument, variableDeclaration.getMetadata(), name));
+            } else {
+                RuntimePlanBindings.bind(iterator, argument, name, argument);
+            }
             return argument;
         }
 
         // Variable is external. Do we have supplied items?
-        List<Item> items = this.getItemsBinding(name);
+        List<Item> items = name.equals(Name.CONTEXT_ITEM) && this.libraryModuleDepth > 0
+                ? this.initialContextItem
+                : this.getItemsBinding(name);
         if (items != null) {
             if (variableDeclaration.getSequenceType().isEmptySequence() && items.size() > 0) {
                 throw new UnexpectedTypeException(
@@ -299,7 +317,16 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         Expression expression = variableDeclaration.getExpression();
         if (expression != null) {
             ItemRuntimePlan iterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
-            RuntimePlanBindings.bind(iterator, argument, name, argument);
+            if (iterator.getRuntimeStaticContext().getExecutionMode().isLocal()
+                    && !variableDeclaration.isAssignable()
+                    && !expression.isSequential()) {
+                argument.getVariableValues()
+                        .addVariableValue(
+                                name,
+                                new GlobalVariableValue(iterator, argument, variableDeclaration.getMetadata(), name));
+            } else {
+                RuntimePlanBindings.bind(iterator, argument, name, argument);
+            }
             return argument;
         }
 
@@ -320,7 +347,13 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             DynamicContext newContext =
                     new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
             newContext.setNamedFunctions(argument.getNamedFunctions());
-            DynamicContext importedContext = visitDescendants(module, newContext);
+            DynamicContext importedContext;
+            this.libraryModuleDepth++;
+            try {
+                importedContext = visitDescendants(module, newContext);
+            } finally {
+                this.libraryModuleDepth--;
+            }
             this.importedModuleContexts.put(module.getNamespace(), importedContext);
         }
         argument.getVariableValues()
@@ -334,7 +367,55 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitProlog(Prolog prolog, DynamicContext argument) {
-        DynamicContext generatedContext = visitDescendants(prolog, argument);
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            argument.addGlobalVariable(declaration.getVariableName());
+        }
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
+            visit(declaration, argument);
+        }
+        // Context initialization can depend on another global declared in this module.
+        // Bind local immutable initializers before an imported module checks the shared focus.
+        Set<Node> earlyBound = new HashSet<>();
+        if (prolog.hasContextItemDeclaration()) {
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                Expression initializer = declaration.getExpression();
+                if (!declaration.external()
+                        && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
+                        && !declaration.isAssignable()
+                        && !initializer.isSequential()) {
+                    ItemRuntimePlan plan =
+                            new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(initializer);
+                    if (plan.getRuntimeStaticContext().getExecutionMode().isLocal()) {
+                        argument.getVariableValues()
+                                .addVariableValue(
+                                        declaration.getVariableName(),
+                                        new GlobalVariableValue(
+                                                plan,
+                                                argument,
+                                                declaration.getMetadata(),
+                                                declaration.getVariableName()));
+                        earlyBound.add(declaration);
+                    }
+                }
+            }
+        }
+        VariableDeclaration contextDeclaration = null;
+        if (this.libraryModuleDepth == 0) {
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(Name.CONTEXT_ITEM)) {
+                    contextDeclaration = declaration;
+                    visit(declaration, argument);
+                    this.initialContextItem = argument.getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, declaration.getMetadata());
+                    break;
+                }
+            }
+        }
+        DynamicContext generatedContext = argument;
+        for (Node child : prolog.getChildren()) {
+            if (!(child instanceof FunctionDeclaration) && child != contextDeclaration && !earlyBound.contains(child))
+                generatedContext = visit(child, generatedContext);
+        }
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
         }
@@ -406,5 +487,73 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             return format.name().toLowerCase();
         }
         return InputFormat.JSON.name().toLowerCase();
+    }
+
+    /** A local global initializer is evaluated once, when its value is needed. */
+    private static final class GlobalVariableValue extends AbstractList<Item> implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private final ItemRuntimePlan plan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private final Name variableName;
+        private List<Item> value;
+        private boolean evaluating;
+
+        GlobalVariableValue(
+                ItemRuntimePlan plan, DynamicContext context, ExceptionMetadata metadata, Name variableName) {
+            this.plan = plan;
+            this.context = context;
+            this.metadata = metadata;
+            this.variableName = variableName;
+        }
+
+        private List<Item> value() {
+            if (this.value != null) return this.value;
+            if (this.evaluating) {
+                throw new CycleInVariableDeclarationsException(
+                        "A global variable initializer depends on its own value.", this.metadata);
+            }
+            this.evaluating = true;
+            // The initial focus is absent while its initializer is evaluated. In particular,
+            // creating a function item must not capture the initializer's own deferred value.
+            boolean focusInitializer = Name.CONTEXT_ITEM.equals(this.variableName);
+            Item position = null;
+            Item last = null;
+            if (focusInitializer) {
+                position = this.context.getVariableValues().getPosition();
+                last = this.context.getVariableValues().getLast();
+                this.context.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
+                this.context.getVariableValues().removeVariable(Name.CONTEXT_POSITION);
+                this.context.getVariableValues().removeVariable(Name.CONTEXT_COUNT);
+            }
+            try {
+                this.value = this.plan.materialize(this.context);
+                return this.value;
+            } finally {
+                if (focusInitializer) {
+                    this.context.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this);
+                    if (position != null)
+                        this.context.getVariableValues().addVariableValue(Name.CONTEXT_POSITION, List.of(position));
+                    if (last != null)
+                        this.context.getVariableValues().addVariableValue(Name.CONTEXT_COUNT, List.of(last));
+                }
+                this.evaluating = false;
+            }
+        }
+
+        @Override
+        public Item get(int index) {
+            return value().get(index);
+        }
+
+        @Override
+        public int size() {
+            return value().size();
+        }
+
+        @Serial
+        private Object writeReplace() {
+            return new ArrayList<>(value());
+        }
     }
 }

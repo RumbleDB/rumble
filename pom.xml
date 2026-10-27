@@ -132,9 +132,9 @@
             <version>${antlr4.version}</version>
         </dependency>
         <dependency>
-            <groupId>xerces</groupId>
-            <artifactId>xercesImpl</artifactId>
-            <version>2.12.2</version>
+            <groupId>org.ibissource</groupId>
+            <artifactId>ibis-xerces</artifactId>
+            <version>2.12.2-xml-schema-1.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>xml-apis</groupId>

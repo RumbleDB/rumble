@@ -24,10 +24,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.dv.InvalidDatatypeValueException;
 import org.apache.xerces.impl.dv.ValidatedInfo;
 import org.apache.xerces.impl.dv.ValidationContext;
 import org.apache.xerces.impl.dv.XSSimpleType;
+import org.apache.xerces.impl.dv.xs.TypeValidatorHelper;
 import org.apache.xerces.impl.xs.SchemaGrammar;
 import org.apache.xerces.xs.XSTypeDefinition;
 import org.junit.jupiter.api.Assertions;
@@ -109,7 +111,9 @@ public class XercesTypedValueConverterTest {
 
     @Test
     public void doesNotMapNonAtomicSchemaTypes() {
-        Assertions.assertTrue(TYPE_MAPPER.map(SchemaGrammar.fAnyType).isEmpty());
+        Assertions.assertTrue(TYPE_MAPPER
+                .map(SchemaGrammar.getXSAnyType(Constants.SCHEMA_VERSION_1_0))
+                .isEmpty());
         Assertions.assertTrue(TYPE_MAPPER.map(builtinType("NMTOKENS")).isEmpty());
     }
 
@@ -248,7 +252,8 @@ public class XercesTypedValueConverterTest {
     }
 
     private static XSSimpleType builtinType(String name) {
-        XSTypeDefinition type = SchemaGrammar.SG_SchemaNS.getGlobalTypeDecl(name);
+        XSTypeDefinition type =
+                SchemaGrammar.getS4SGrammar(Constants.SCHEMA_VERSION_1_0).getGlobalTypeDecl(name);
         return Assertions.assertInstanceOf(XSSimpleType.class, type);
     }
 
@@ -303,6 +308,16 @@ public class XercesTypedValueConverterTest {
     }
 
     private record TestValidationContext(Map<String, String> namespaces) implements ValidationContext {
+
+        @Override
+        public TypeValidatorHelper getTypeValidatorHelper() {
+            return TypeValidatorHelper.getInstance(Constants.SCHEMA_VERSION_1_0);
+        }
+
+        @Override
+        public short getDatatypeXMLVersion() {
+            return Constants.XML_VERSION_1_0;
+        }
 
         @Override
         public boolean needFacetChecking() {

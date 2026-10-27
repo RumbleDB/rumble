@@ -19,11 +19,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.dv.InvalidDatatypeValueException;
 import org.apache.xerces.impl.dv.SchemaDVFactory;
 import org.apache.xerces.impl.dv.ValidatedInfo;
 import org.apache.xerces.impl.dv.ValidationContext;
 import org.apache.xerces.impl.dv.XSSimpleType;
+import org.apache.xerces.impl.dv.xs.TypeValidatorHelper;
 import org.apache.xerces.impl.xpath.regex.RegularExpression;
 import org.apache.xerces.xs.StringList;
 import org.apache.xerces.xs.XSObjectList;
@@ -394,6 +396,16 @@ final class XercesSimpleTypeCaster {
     private static final class SimpleTypeValidationContext implements ValidationContext {
 
         private final NamespaceResolver namespaceResolver;
+
+        @Override
+        public TypeValidatorHelper getTypeValidatorHelper() {
+            return TypeValidatorHelper.getInstance(Constants.SCHEMA_VERSION_1_0);
+        }
+
+        @Override
+        public short getDatatypeXMLVersion() {
+            return Constants.XML_VERSION_1_0;
+        }
 
         private SimpleTypeValidationContext(NamespaceResolver namespaceResolver) {
             this.namespaceResolver = namespaceResolver;
