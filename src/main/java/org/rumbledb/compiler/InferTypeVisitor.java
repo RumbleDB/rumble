@@ -15,7 +15,6 @@
  */
 package org.rumbledb.compiler;
 
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -26,13 +25,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.StructType;
-
 import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.compiler.typing.ArithmeticTyping;
 import org.rumbledb.compiler.typing.AtomizedOperands;
+import org.rumbledb.compiler.typing.BuiltinFunctionTyping;
 import org.rumbledb.compiler.typing.CastTyping;
 import org.rumbledb.compiler.typing.ComparisonTyping;
 import org.rumbledb.compiler.typing.StaticTypeErrors;
@@ -181,8 +178,6 @@ import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.AttributeNodeItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.DocumentNodeItemType;
@@ -217,6 +212,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private final CastTyping cast;
 
+    private final BuiltinFunctionTyping builtinFunctions;
+
     /**
      * The context type E of each type that descendant-or-self::node() inferred from a schema, so that an error in the
      * step S of E//S can name E. Compared by identity: S steps from that same type object.
@@ -234,6 +231,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         this.arithmetic = new ArithmeticTyping(this.errors);
         this.comparison = new ComparisonTyping(this.errors);
         this.cast = new CastTyping(this.errors);
+        this.builtinFunctions = new BuiltinFunctionTyping(this.errors);
     }
 
     /** Returns the type inferred for a child of the node, which every visited child has. */
@@ -565,255 +563,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private SequenceType validateStrictAggregateInputType(
-            FunctionCallExpression expression, Expression inputExpression, String functionName) {
-        SequenceType inputType = typeOf(inputExpression, expression);
-        if (inputType.isEmptySequence()) {
-            return inputType;
-        }
-
-        ItemType inputItemType = normalizeAggregateItemType(inputType.getItemType());
-        // A node's typed value is only known at runtime, so node inputs are checked per member type.
-        boolean validInput = TypeAtomization.containsNode(inputType.getItemType())
-                ? inputType
-                        .getItemType()
-                        .allMemberTypesMatch(member -> TypeAtomization.hasUnknownTypedValue(member)
-                                || isStrictAggregateItemType(normalizeAggregateItemType(member)))
-                : isStrictAggregateItemType(inputItemType);
-        if (!validInput) {
-            this.errors.report(
-                    functionName
-                            + " requires its inferred input sequence type to be empty or have an item type that is a subtype of xs:numeric, xs:yearMonthDuration, or xs:dayTimeDuration, found "
-                            + inputType,
-                    ErrorCode.InvalidArgumentType,
-                    expression.getMetadata());
-        }
-
-        return new SequenceType(
-                inputItemType, TypeAtomization.inferType(inputType).getCardinality());
-    }
-
-    private static boolean isStrictAggregateItemType(ItemType type) {
-        return type.isSubtypeOf(BuiltinTypesCatalogue.numericItem)
-                || type.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
-                || type.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem);
-    }
-
-    // Aggregates can convert untyped values and produce values outside a derived type's restrictions.
-    private ItemType normalizeAggregateItemType(ItemType type) {
-        if (type.isUnionType()) {
-            return ItemTypeFactory.createInferredUnionType(type.getMemberTypes().stream()
-                    .map(this::normalizeAggregateItemType)
-                    .collect(Collectors.toList()));
-        }
-        if (TypeAtomization.containsNode(type)) {
-            type = TypeAtomization.atomizedItemType(type);
-        }
-        if (type.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
-            return BuiltinTypesCatalogue.doubleItem;
-        }
-        if (type.isNumeric()
-                || type.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem)
-                || type.isSubtypeOf(BuiltinTypesCatalogue.dayTimeDurationItem)) {
-            return type.getCastingPrimitiveType();
-        }
-        if (type.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
-            return BuiltinTypesCatalogue.stringItem;
-        }
-        return type;
-    }
-
-    private SequenceType inferSumReturnType(FunctionCallExpression expression) {
-        SequenceType inputType = validateStrictAggregateInputType(
-                expression, expression.getArguments().get(0), "fn:sum");
-        SequenceType zeroType = expression.getArguments().size() > 1
-                ? expression.getArguments().get(1).getStaticSequenceType()
-                : new SequenceType(BuiltinTypesCatalogue.integerItem);
-        if (!zeroType.isEmptySequence() && TypeAtomization.containsNode(zeroType.getItemType())) {
-            zeroType = TypeAtomization.inferType(zeroType);
-            // The zero parameter is atomic?: successful function conversion has
-            // already excluded multiple typed values before sum is evaluated.
-            zeroType = new SequenceType(
-                    zeroType.getItemType(), zeroType.getCardinality().atMostOne());
-        }
-        if (inputType.isEmptySequence()) {
-            return zeroType;
-        }
-        // A non-empty input sums to one item; an empty input returns the zero argument instead.
-        SequenceType sumType = new SequenceType(inputType.getItemType());
-        if (!inputType.getCardinality().allowsZero()) {
-            return sumType;
-        }
-        return sumType.leastCommonSupertypeWith(zeroType);
-    }
-
-    private SequenceType inferStrictAggregateReturnType(FunctionCallExpression expression, Expression inputExpression) {
-        SequenceType inputType = validateStrictAggregateInputType(expression, inputExpression, "fn:avg");
-        if (inputType.isEmptySequence()) {
-            return SequenceType.createSequenceType("anyAtomicType?");
-        }
-
-        ItemType inputItemType = inputType.getItemType();
-        ItemType returnItemType = inputItemType.isSubtypeOf(BuiltinTypesCatalogue.numericItem)
-                ? BuiltinTypesCatalogue.numericItem
-                : inputType.getItemType();
-
-        return new SequenceType(returnItemType, inputType.getCardinality().atMostOne());
-    }
-
-    private SequenceType inferStrictMinMaxReturnType(
-            FunctionCallExpression expression, Expression inputExpression, String functionName) {
-        SequenceType inputType = typeOf(inputExpression, expression);
-        if (inputType.isEmptySequence()) {
-            return SequenceType.createSequenceType("anyAtomicType?");
-        }
-
-        // Untyped values are compared as xs:double. A node's typed value is only known at runtime.
-        ItemType inputItemType = normalizeAggregateItemType(inputType.getItemType());
-        boolean nodeInput = TypeAtomization.containsNode(inputType.getItemType())
-                && TypeAtomization.isAtomicOrNode(inputType.getItemType());
-        if (!nodeInput && !ComparisonTyping.hasMutuallyComparableItems(inputItemType)) {
-            this.errors.report(
-                    functionName
-                            + " requires an atomic input type other than xs:anyAtomicType whose member types can be"
-                            + " compared with each other, found "
-                            + inputType,
-                    ErrorCode.InvalidArgumentType,
-                    expression.getMetadata());
-        }
-
-        return new SequenceType(
-                inputItemType,
-                TypeAtomization.inferType(inputType).getCardinality().atMostOne());
-    }
-
-    private boolean isBuiltinFunctionName(Name functionName, String localName) {
-        return functionName.getLocalName().equals(localName)
-                && (functionName.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
-                        || functionName.getNamespace().equals(Name.FN_NS));
-    }
-
-    /**
-     * For specific input functions we read the schema and annotate static type precisely
-     *
-     * @param expression function call expression to be annotated
-     * @return true if we perform the annotation or false if it is not one of this specific cases
-     */
-    private boolean tryAnnotateSpecificFunctions(FunctionCallExpression expression, StaticContext staticContext) {
-        Name functionName = expression.getFunctionName();
-        List<Expression> args = expression.getArguments();
-
-        if (isBuiltinFunctionName(functionName, "data") && args.size() == 1) {
-            expression.setStaticSequenceType(
-                    TypeAtomization.inferType(args.get(0).getStaticSequenceType()));
-            return true;
-        }
-
-        // handle 'parquet-file' function
-        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("parquet-file"))
-                && args.size() > 0
-                && args.get(0) instanceof StringLiteralExpression stringLiteralExpr) {
-            String path = stringLiteralExpr.getValue();
-            URI uri = FileSystemUtil.resolveFileSystemURI(
-                    staticContext.getStaticBaseURI(), path, expression.getMetadata());
-            if (!FileSystemUtil.exists(uri, expression.getMetadata())) {
-                return false;
-            }
-            try {
-                StructType s = SparkSessionManager.getInstance()
-                        .getOrCreateSession()
-                        .read()
-                        .parquet(FileSystemUtil.convertURIToStringForSpark(uri))
-                        .schema();
-                ItemType schemaItemType = ItemTypeFactory.createItemType(s);
-                // TODO : check if arity is correct
-                expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
-                return true;
-            } catch (Exception e) {
-                return false;
-            }
-        }
-
-        // handle 'delta-file' function
-        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("delta-file"))
-                && args.size() > 0
-                && args.get(0) instanceof StringLiteralExpression stringLiteralExpr) {
-            String path = stringLiteralExpr.getValue();
-            URI uri = FileSystemUtil.resolveFileSystemURI(
-                    staticContext.getStaticBaseURI(), path, expression.getMetadata());
-            if (!FileSystemUtil.exists(uri, expression.getMetadata())) {
-                return false;
-            }
-            StructType s = SparkSessionManager.getInstance()
-                    .getOrCreateSession()
-                    .read()
-                    .format("delta")
-                    .load(FileSystemUtil.convertURIToStringForSpark(uri))
-                    .schema();
-            ItemType schemaItemType = ItemTypeFactory.createItemType(s);
-            // TODO : check if arity is correct
-            expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
-            return true;
-        }
-
-        // handle 'table' function
-        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("table"))
-                && args.size() > 0
-                && args.get(0) instanceof StringLiteralExpression stringLiteralExpr) {
-            String name = stringLiteralExpr.getValue();
-            SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-            if (session.catalog().tableExists(name) == false) {
-                return false;
-            }
-
-            StructType s = session.read().table(name).schema();
-            ItemType schemaItemType = ItemTypeFactory.createItemType(s);
-            expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
-            return true;
-        }
-
-        // handle 'round' function
-        if (isBuiltinFunctionName(functionName, "round")) {
-            // set output type to the same of the first argument (special handling of numeric)
-            SequenceType input = args.get(0).getStaticSequenceType();
-            expression.setStaticSequenceType(
-                    TypeAtomization.containsNode(input.getItemType())
-                            ? new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceCardinality.ZERO_OR_ONE)
-                            : input);
-            return true;
-        }
-        // handle 'size' function
-        if (isBuiltinFunctionName(functionName, "size")
-                && args.get(0).getStaticSequenceType().getArity() == SequenceType.Arity.One) {
-            // set output type to 'Integer' if inputType is 'Array'
-            expression.setStaticSequenceType(
-                    new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
-            return true;
-        }
-
-        if (isBuiltinFunctionName(functionName, "sum")) {
-            expression.setStaticSequenceType(inferSumReturnType(expression));
-            return true;
-        }
-
-        if (isBuiltinFunctionName(functionName, "avg")) {
-            expression.setStaticSequenceType(inferStrictAggregateReturnType(expression, args.get(0)));
-            return true;
-        }
-
-        if (isBuiltinFunctionName(functionName, "min")) {
-            expression.setStaticSequenceType(inferStrictMinMaxReturnType(expression, args.get(0), "fn:min"));
-            return true;
-        }
-
-        if (isBuiltinFunctionName(functionName, "max")) {
-            expression.setStaticSequenceType(inferStrictMinMaxReturnType(expression, args.get(0), "fn:max"));
-            return true;
-        }
-
-        return false;
-    }
-
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
@@ -883,8 +632,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(
                     new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature)));
         } else {
-            // try annotate specific functions
-            if (!tryAnnotateSpecificFunctions(expression, argument)) {
+            Optional<SequenceType> specificType = this.builtinFunctions.inferSpecificReturnType(expression, argument);
+            if (specificType.isPresent()) {
+                expression.setStaticSequenceType(specificType.get());
+            } else {
                 // we did not annotate a specific function, therefore we use default return type
                 SequenceType returnType = signature.getReturnType();
                 if (returnType == null) {
