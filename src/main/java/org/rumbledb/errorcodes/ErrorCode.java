@@ -61,7 +61,6 @@ public final class ErrorCode implements Serializable {
     }
 
     public static final ErrorCode LibraryContextItemInitializer = registerBuiltIn("XQST0113");
-    public static final ErrorCode NamespaceNodeTestNotSupported = registerBuiltIn("XQST0134");
     public static final ErrorCode DynamicModuleLoadingNotSupported = registerBuiltIn("FOQM0006");
     public static final ErrorCode TransformationNotSupported = registerBuiltIn("FOXT0004");
 
@@ -210,6 +209,7 @@ public final class ErrorCode implements Serializable {
     public static final ErrorCode UnknownCollationInQueryPrologOrClause = registerBuiltIn("XQST0076");
     public static final ErrorCode NoFallbackForUnsupportedPragmaErrorCode = registerBuiltIn("XQST0079");
     public static final ErrorCode EmptyNamespaceURIForPrefixedBindingErrorCode = registerBuiltIn("XQST0085");
+    public static final ErrorCode NamespaceNodeTestNotSupported = registerBuiltIn("XQST0134");
     public static final ErrorCode EmptyModuleURIErrorCode = registerBuiltIn("XQST0088");
     public static final ErrorCode PositionalVariableNameSameAsForVariable = registerBuiltIn("XQST0089");
     public static final ErrorCode InvalidGroupVariableErrorCode = registerBuiltIn("XQST0094");

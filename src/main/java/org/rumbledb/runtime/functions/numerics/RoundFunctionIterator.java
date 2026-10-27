@@ -17,9 +17,10 @@ package org.rumbledb.runtime.functions.numerics;
 
 import java.io.Serial;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -51,11 +52,11 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
                 () -> this.getChildren().size() > 1
                         ? this.getChild(1)
                                 .materializeFirstOrNull(dynamicContext)
-                                .getIntValue()
-                        : 0);
+                                .getIntegerValue()
+                        : BigInteger.ZERO);
     }
 
-    private Item evaluate(Item value, IntSupplier precisionSupplier) {
+    private Item evaluate(Item value, Supplier<BigInteger> precisionSupplier) {
         if (value == null) {
             return null;
         }
@@ -71,46 +72,30 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
                 || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))) {
             return value;
         }
-        int precision = precisionSupplier.getAsInt();
+        BigInteger precision = precisionSupplier.get();
         try {
             if (value.isInt()) {
-                BigDecimal bd = new BigDecimal(value.getIntValue()).setScale(precision, RoundingMode.HALF_UP);
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getIntValue()), precision);
                 return ItemFactory.getInstance().createIntItem(bd.intValue());
             }
             if (value.isInteger()) {
-                BigDecimal bd = new BigDecimal(value.getIntegerValue()).setScale(precision, RoundingMode.HALF_UP);
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getIntegerValue()), precision);
                 return ItemFactory.getInstance().createIntegerItem(bd.toBigInteger());
             }
             if (value.isDecimal()) {
-                double sign = getSign(value.getDecimalValue().doubleValue());
-                BigDecimal bd;
-                if (sign == 1) {
-                    bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_UP);
-                } else {
-                    bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_DOWN);
-                }
+                BigDecimal bd = roundToPrecision(value.getDecimalValue(), precision);
                 return ItemFactory.getInstance().createDecimalItem(bd);
             }
             if (value.isDouble()) {
                 double sign = getSign(value.getDoubleValue());
-                BigDecimal bd;
-                if (sign == 1) {
-                    bd = new BigDecimal(value.getDoubleValue()).setScale(precision, RoundingMode.HALF_UP);
-                } else {
-                    bd = new BigDecimal(value.getDoubleValue()).setScale(precision, RoundingMode.HALF_DOWN);
-                }
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getDoubleValue()), precision);
 
                 return ItemFactory.getInstance().createDoubleItem(sign * Math.abs(bd.doubleValue()));
             }
             if (value.isFloat()) {
 
                 double sign = getSign(value.getFloatValue());
-                BigDecimal bd;
-                if (sign == 1) {
-                    bd = new BigDecimal(value.getFloatValue()).setScale(precision, RoundingMode.HALF_UP);
-                } else {
-                    bd = new BigDecimal(value.getFloatValue()).setScale(precision, RoundingMode.HALF_DOWN);
-                }
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getFloatValue()), precision);
                 return ItemFactory.getInstance().createFloatItem((float) sign * Math.abs(bd.floatValue()));
             }
             throw new UnexpectedTypeException("Unexpected value in round(): " + value.getDynamicType(), getMetadata());
@@ -118,6 +103,14 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
+    }
+
+    private static BigDecimal roundToPrecision(BigDecimal value, BigInteger precision) {
+        if (precision.compareTo(BigInteger.valueOf(value.scale())) >= 0) return value;
+        long zeroPrecision = (long) value.scale() - value.precision();
+        if (precision.compareTo(BigInteger.valueOf(zeroPrecision)) < 0) return BigDecimal.ZERO;
+        return value.setScale(
+                precision.intValueExact(), value.signum() < 0 ? RoundingMode.HALF_DOWN : RoundingMode.HALF_UP);
     }
 
     private double getSign(double doubleValue) {

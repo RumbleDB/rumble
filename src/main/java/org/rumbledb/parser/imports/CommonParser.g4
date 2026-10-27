@@ -1057,7 +1057,7 @@ stringLiteral
 noQuotesNoBracesNoAmpNoLAng
    : (keyword | (IntegerLiteral | DecimalLiteral | DoubleLiteral
    //| stringLiteral
-   | PRAGMA | EQUAL | HASH | NOT_EQUAL | LPAREN | RPAREN | LBRACKET | RBRACKET | STAR | PLUS | MINUS | TILDE | COMMA | ARROW | MOD | DOT | GRAVE | DDOT | COLON | CARAT | COLON_EQ | SEMICOLON | SLASH | DSLASH | BACKSLASH | VBAR | RANGLE | QUESTION | AT | DOLLAR | BANG | FullQName | URIQualifiedName | NCNameWithLocalWildcard | NCNameWithPrefixWildcard | NCName | ContentChar))+
+   | PRAGMA | EQUAL | HASH | NOT_EQUAL | LPAREN | RPAREN | LBRACKET | RBRACKET | STAR | PLUS | MINUS | TILDE | COMMA | ARROW | MOD | DOT | GRAVE | DDOT | COLON | CARAT | COLON_EQ | SEMICOLON | SLASH | DSLASH | BACKSLASH | VBAR | RANGLE | QUESTION | AT | DOLLAR | BANG | FullQName | URIQualifiedName | NCNameWithLocalWildcard | NCNameWithPrefixWildcard | NCName | CHAR | ContentChar))+
    ;
 
 mainModule

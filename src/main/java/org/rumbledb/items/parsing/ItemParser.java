@@ -874,19 +874,50 @@ public class ItemParser {
     private static List<Item> getChildren(
             Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
         List<Item> children = new ArrayList<>();
+        boolean expandedEntities = false;
         NodeList nodeList = currentNode.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); ++i) {
+            if (nodeList.item(i).getNodeType() == Node.ENTITY_REFERENCE_NODE) {
+                expandedEntities = true;
+                break;
+            }
+        }
+        for (int i = 0; i < nodeList.getLength(); ++i) {
             Node childNode = nodeList.item(i);
-            if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+            if (childNode.getNodeType() == Node.ENTITY_REFERENCE_NODE) {
+                children.addAll(getChildren(childNode, path, removeParentPointers, true));
+            } else if (childNode.getNodeType() == Node.ELEMENT_NODE) {
                 children.add(getItemFromXML(childNode, path, removeParentPointers, preserveWhitespace));
             } else if (childNode.getNodeType() == Node.COMMENT_NODE) {
                 children.add(ItemFactory.getInstance().createXmlCommentNode(childNode));
             } else if (childNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
                 children.add(ItemFactory.getInstance().createXmlProcessingInstructionNode(childNode));
             } else if ((childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
-                    && (preserveWhitespace || !hasWhitespaceText(childNode))) {
+                    && (preserveWhitespace || expandedEntities || !hasWhitespaceText(childNode))) {
                 children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
             }
+        }
+        if (expandedEntities) {
+            // Entity boundaries are not nodes in XDM and must not split adjacent text.
+            List<Item> merged = new ArrayList<>();
+            StringBuilder text = new StringBuilder();
+            for (Item child : children) {
+                if (child.isTextNode()) {
+                    text.append(child.getStringValue());
+                } else {
+                    if (!text.isEmpty()
+                            && (preserveWhitespace || !text.toString().trim().isEmpty())) {
+                        merged.add(ItemFactory.getInstance().createXmlTextNode(text.toString()));
+                    }
+                    text.setLength(0);
+                    merged.add(child);
+                }
+            }
+            if (!text.isEmpty()
+                    && (preserveWhitespace || !text.toString().trim().isEmpty())) {
+                merged.add(ItemFactory.getInstance().createXmlTextNode(text.toString()));
+            }
+            return merged;
         }
         return children;
     }

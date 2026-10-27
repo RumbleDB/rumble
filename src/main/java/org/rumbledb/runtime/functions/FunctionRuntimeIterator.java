@@ -61,6 +61,12 @@ public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
                 this.bodyIterator,
                 this.staticContext.isUpdating());
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
+        if (this.functionName == null) {
+            // An inline function captures lexical variables, but its focus is absent.
+            for (Name name : List.of(Name.CONTEXT_ITEM, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT)) {
+                function.getLocalVariablesInClosure().remove(name);
+            }
+        }
         return function;
     }
 }

@@ -42,6 +42,11 @@ public class IntItem extends AbstractAtomicItem {
     }
 
     @Override
+    public long getLongValue() {
+        return this.value;
+    }
+
+    @Override
     public int getIntValue() {
         return this.value;
     }

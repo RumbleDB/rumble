@@ -480,6 +480,11 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public long getLongValue() {
+        return this.itemToAnnotate.getLongValue();
+    }
+
+    @Override
     public int getIntValue() {
         return this.itemToAnnotate.getIntValue();
     }
