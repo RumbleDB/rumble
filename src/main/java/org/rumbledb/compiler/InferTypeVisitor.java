@@ -24,7 +24,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.apache.spark.sql.SparkSession;
@@ -32,6 +31,8 @@ import org.apache.spark.sql.types.StructType;
 
 import lombok.extern.log4j.Log4j2;
 
+import org.rumbledb.compiler.typing.ArithmeticTyping;
+import org.rumbledb.compiler.typing.AtomizedOperands;
 import org.rumbledb.compiler.typing.StaticTypeErrors;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
@@ -211,6 +212,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private final StaticTypeErrors errors;
 
+    private final ArithmeticTyping arithmetic;
+
     /**
      * The context type E of each type that descendant-or-self::node() inferred from a schema, so that an error in the
      * step S of E//S can name E. Compared by identity: S steps from that same type object.
@@ -226,36 +229,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
         this.resourceResolver = resourceResolver;
         this.errors = new StaticTypeErrors(rumbleRuntimeConfiguration);
-    }
-
-    /**
-     * The error for an operand that may not be atomizable: FOTY0013, the error of atomization, when it can never be
-     * atomized, such as an object, and XPTY0004 when it only may not be.
-     */
-    private static ErrorCode nonAtomizableErrorCode(ItemType type) {
-        return TypeAtomization.isNeverAtomizable(type)
-                ? ErrorCode.FunctionAtomizationErrorCode
-                : ErrorCode.UnexpectedTypeErrorCode;
-    }
-
-    /** Checks that the operands of an operator that atomizes them, such as + or eq, can be atomized. */
-    private void checkAtomizableOperands(String operator, SequenceType left, SequenceType right, Node node) {
-        ItemType reported = null;
-        for (SequenceType operand : List.of(left, right)) {
-            ItemType type = operand.isEmptySequence() ? null : operand.getItemType();
-            // an operand that can never be atomized is reported first, since atomizing it always fails
-            if (type != null
-                    && !TypeAtomization.isAtomizable(type)
-                    && (reported == null || TypeAtomization.isNeverAtomizable(type))) {
-                reported = type;
-            }
-        }
-        if (reported != null) {
-            this.errors.report(
-                    "The operands of '" + operator + "' must be atomizable, found " + reported,
-                    nonAtomizableErrorCode(reported),
-                    node.getMetadata());
-        }
+        this.arithmetic = new ArithmeticTyping(this.errors);
     }
 
     /** Returns the type inferred for a child of the node, which every visited child has. */
@@ -1000,7 +974,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     // Function conversion atomizes arguments for atomic parameters, which fails for objects, maps and functions.
     private static ErrorCode argumentErrorCode(SequenceType actual, SequenceType expected) {
         return !actual.isEmptySequence() && expected.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                ? nonAtomizableErrorCode(actual.getItemType())
+                ? AtomizedOperands.nonAtomizableErrorCode(actual.getItemType())
                 : ErrorCode.UnexpectedTypeErrorCode;
     }
 
@@ -1080,7 +1054,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 return argument;
             }
 
-            SequenceType atomizedOperand = knownAtomizedType(expressionType);
+            SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(expressionType);
             if (atomizedOperand != null
                     && !atomizedOperand.isAritySubtypeOf(
                             expression.getSequenceType().getArity())) {
@@ -1129,7 +1103,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        SequenceType atomizedOperand = knownAtomizedType(expressionSequenceType);
+        SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(expressionSequenceType);
         if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(castedSequenceType.getArity())) {
             this.errors.report(
                     castCardinalityMessage(expressionSequenceType, atomizedOperand, castedSequenceType),
@@ -1154,32 +1128,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    /**
-     * Returns the type of an operand after atomization: one node can yield zero values (a nilled element), one value,
-     * or several (a schema list). Returns null when the typed value, or the number of values, is only known at
-     * runtime, as for an array.
-     */
-    private static SequenceType knownAtomizedType(SequenceType operand) {
-        if (!TypeAtomization.containsNodeOrArray(operand.getItemType())) {
-            return operand;
-        }
-        return TypeAtomization.hasUnknownAtomizedCount(operand.getItemType())
-                ? null
-                : TypeAtomization.inferType(operand);
-    }
-
     private static String castCardinalityMessage(SequenceType operand, SequenceType atomized, SequenceType target) {
         return "with static type feature it is not possible to cast a "
-                + describeAtomizedType(operand, atomized)
+                + AtomizedOperands.describeAtomizedType(operand, atomized)
                 + " as "
                 + target;
-    }
-
-    /** Describes an operand together with its typed value, when atomization changes it and it is known. */
-    private static String describeAtomizedType(SequenceType operand, SequenceType atomized) {
-        return atomized == null || operand.equals(atomized)
-                ? operand.toString()
-                : operand + " with typed value " + atomized;
     }
 
     private boolean isSchemaCastTarget(SequenceType sequenceType, XmlSchemaCatalog schemaCatalog) {
@@ -1198,7 +1151,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (!operandType.isEmptySequence() && !TypeAtomization.isAtomizable(operandType.getItemType())) {
             this.errors.report(
                     "A cast operand must be atomic after atomization, found " + operandType,
-                    nonAtomizableErrorCode(operandType.getItemType()),
+                    AtomizedOperands.nonAtomizableErrorCode(operandType.getItemType()),
                     expression.getMetadata());
         }
     }
@@ -1430,228 +1383,21 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitAdditiveExpr(AdditiveExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setStaticSequenceType(inferArithmeticType(
+        expression.setStaticSequenceType(this.arithmetic.inferAdditiveType(
                 typeOf(expression.getLeftExpression(), expression),
                 typeOf(expression.getRightExpression(), expression),
-                expression.isMinus() ? "-" : "+",
-                (left, right) -> inferAdditiveItemType(left, right, expression.isMinus()),
+                expression.isMinus(),
                 expression));
         return argument;
-    }
-
-    private SequenceType inferArithmeticType(
-            SequenceType leftType,
-            SequenceType rightType,
-            String operator,
-            BiFunction<ItemType, ItemType, ItemType> operation,
-            Node node) {
-        this.errors.rejectInferredEmpty(leftType, node);
-        this.errors.rejectInferredEmpty(rightType, node);
-
-        SequenceType.Arity inferredArity = resolveArities(leftType, rightType);
-        if (inferredArity == null) {
-            this.errors.report(
-                    "'+' and '*' arities are not allowed for the operands of " + operator, node.getMetadata());
-            inferredArity = SequenceType.Arity.OneOrZero;
-        }
-
-        checkAtomizableOperands(operator, leftType, rightType, node);
-        ItemType inferredType = inferBinaryOperationType(leftType.getItemType(), rightType.getItemType(), operation);
-        if (inferredType == null) {
-            if (inferredArity == SequenceType.Arity.OneOrZero) {
-                // Only possible resulting type is empty sequence so throw error XPST0005
-                this.errors.reportInferredEmpty(node);
-            } else {
-                this.errors.report(
-                        "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
-                        node.getMetadata());
-            }
-            inferredType = BuiltinTypesCatalogue.atomicItem;
-        }
-        return new SequenceType(inferredType, inferredArity);
-    }
-
-    // Evaluate each possible operand pair. A null result means an unsupported pair.
-    private ItemType inferBinaryOperationType(
-            ItemType left, ItemType right, BiFunction<ItemType, ItemType, ItemType> operation) {
-        List<ItemType> results = new ArrayList<>();
-        for (ItemType leftMember : left.getMemberTypes()) {
-            for (ItemType rightMember : right.getMemberTypes()) {
-                ItemType result = inferMemberOperationType(leftMember, rightMember, operation);
-                if (result == null) {
-                    return null;
-                }
-                results.add(result);
-            }
-        }
-        return ItemTypeFactory.createInferredUnionType(results);
-    }
-
-    private ItemType inferMemberOperationType(
-            ItemType left, ItemType right, BiFunction<ItemType, ItemType, ItemType> operation) {
-        if (!TypeAtomization.isAtomizable(left) || !TypeAtomization.isAtomizable(right)) {
-            return null;
-        }
-        if (!TypeAtomization.hasUnknownAtomizedType(left)
-                && !TypeAtomization.hasUnknownAtomizedType(right)
-                && (left.equals(BuiltinTypesCatalogue.atomicItem) || right.equals(BuiltinTypesCatalogue.atomicItem))) {
-            return null; // Retain strict checks for declared, unrefined atomic operands.
-        }
-        return operation.apply(normalizeArithmeticItemType(left), normalizeArithmeticItemType(right));
-    }
-
-    private ItemType normalizeArithmeticItemType(ItemType type) {
-        ItemType atomized = TypeAtomization.atomizedItemType(type);
-        return atomized.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
-                ? BuiltinTypesCatalogue.doubleItem
-                : atomized;
-    }
-
-    private ItemType inferAdditiveItemType(ItemType leftItemType, ItemType rightItemType, boolean minus) {
-        if (leftItemType.equals(BuiltinTypesCatalogue.atomicItem)
-                || rightItemType.equals(BuiltinTypesCatalogue.atomicItem)) {
-            // An unknown node typed value leaves successful arithmetic results atomic.
-            return BuiltinTypesCatalogue.atomicItem;
-        }
-        leftItemType = leftItemType.getCastingPrimitiveType();
-        rightItemType = rightItemType.getCastingPrimitiveType();
-        ItemType result = null;
-        // check item type combination
-        if (leftItemType.isNumeric()) {
-            if (rightItemType.isNumeric()) {
-                result = resolveNumericType(leftItemType, rightItemType);
-            }
-        } else if (leftItemType.equals(BuiltinTypesCatalogue.dateItem)
-                || leftItemType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
-            if (rightItemType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
-                    || rightItemType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
-                result = leftItemType;
-            } else if (minus && rightItemType.equals(leftItemType)) {
-                result = BuiltinTypesCatalogue.dayTimeDurationItem;
-            }
-        } else if (leftItemType.equals(BuiltinTypesCatalogue.timeItem)) {
-            if (rightItemType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
-                result = leftItemType;
-            } else if (minus && rightItemType.equals(leftItemType)) {
-                result = BuiltinTypesCatalogue.dayTimeDurationItem;
-            }
-        } else if (leftItemType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
-            if (rightItemType.equals(leftItemType)) {
-                result = leftItemType;
-            } else if (!minus
-                    && (rightItemType.equals(BuiltinTypesCatalogue.dateTimeItem)
-                            || rightItemType.equals(BuiltinTypesCatalogue.dateItem)
-                            || rightItemType.equals(BuiltinTypesCatalogue.timeItem))) {
-                result = rightItemType;
-            }
-        } else if (leftItemType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
-            if (rightItemType.equals(leftItemType)) {
-                result = leftItemType;
-            } else if (!minus
-                    && (rightItemType.equals(BuiltinTypesCatalogue.dateTimeItem)
-                            || rightItemType.equals(BuiltinTypesCatalogue.dateItem))) {
-                result = rightItemType;
-            }
-        }
-
-        return result;
-    }
-
-    private ItemType inferMultiplicativeItemType(
-            ItemType leftItemType, ItemType rightItemType, MultiplicativeExpression.MultiplicativeOperator operator) {
-        if (leftItemType.equals(BuiltinTypesCatalogue.atomicItem)
-                || rightItemType.equals(BuiltinTypesCatalogue.atomicItem)) {
-            return operator == MultiplicativeExpression.MultiplicativeOperator.IDIV
-                    ? BuiltinTypesCatalogue.integerItem
-                    : BuiltinTypesCatalogue.atomicItem;
-        }
-        leftItemType = leftItemType.getCastingPrimitiveType();
-        rightItemType = rightItemType.getCastingPrimitiveType();
-        ItemType result = null;
-        // check resulting item for each operation
-        if (leftItemType.isNumeric()) {
-            if (rightItemType.isNumeric()) {
-                if (operator == MultiplicativeExpression.MultiplicativeOperator.IDIV) {
-                    result = BuiltinTypesCatalogue.integerItem;
-                } else if (operator == MultiplicativeExpression.MultiplicativeOperator.DIV) {
-                    result = resolveNumericType(
-                            BuiltinTypesCatalogue.decimalItem, resolveNumericType(leftItemType, rightItemType));
-                } else {
-                    result = resolveNumericType(leftItemType, rightItemType);
-                }
-            } else if (rightItemType.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
-                    && !rightItemType.equals(BuiltinTypesCatalogue.durationItem)
-                    && operator == MultiplicativeExpression.MultiplicativeOperator.MUL) {
-                result = rightItemType;
-            }
-        } else if (leftItemType.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
-                && !leftItemType.equals(BuiltinTypesCatalogue.durationItem)) {
-            if (rightItemType.isNumeric()
-                    && (operator == MultiplicativeExpression.MultiplicativeOperator.MUL
-                            || operator == MultiplicativeExpression.MultiplicativeOperator.DIV)) {
-                result = leftItemType;
-            } else if (rightItemType.equals(leftItemType)) {
-                result = BuiltinTypesCatalogue.decimalItem;
-            }
-        }
-
-        return result;
-    }
-
-    // Both operands are concrete numeric types.
-    private ItemType resolveNumericType(ItemType left, ItemType right) {
-        List<ItemType> leftMembers = left.getMemberTypes();
-        List<ItemType> rightMembers = right.getMemberTypes();
-        if (leftMembers.size() > 1 || rightMembers.size() > 1) {
-            // Each member pair is promoted separately, e.g. (xs:integer | xs:double) + xs:integer
-            // is (xs:integer | xs:double).
-            List<ItemType> results = new ArrayList<>();
-            for (ItemType leftMember : leftMembers) {
-                for (ItemType rightMember : rightMembers) {
-                    results.add(resolveNumericType(leftMember, rightMember));
-                }
-            }
-            return ItemTypeFactory.createInferredUnionType(results);
-        }
-        if (left.equals(BuiltinTypesCatalogue.doubleItem) || right.equals(BuiltinTypesCatalogue.doubleItem)) {
-            return BuiltinTypesCatalogue.doubleItem;
-        } else if (left.equals(BuiltinTypesCatalogue.floatItem) || right.equals(BuiltinTypesCatalogue.floatItem)) {
-            return BuiltinTypesCatalogue.floatItem;
-        } else if (left.equals(BuiltinTypesCatalogue.decimalItem) || right.equals(BuiltinTypesCatalogue.decimalItem)) {
-            return BuiltinTypesCatalogue.decimalItem;
-        } else {
-            return BuiltinTypesCatalogue.integerItem;
-        }
-    }
-
-    // Singleton operators constrain atomized values. Unknown node typed values and the members of arrays are
-    // checked at runtime; known multi-valued atomic operands remain static errors.
-    private SequenceType.Arity atomizedSingletonArity(SequenceType source) {
-        SequenceType atomized =
-                TypeAtomization.isAtomizable(source.getItemType()) ? TypeAtomization.inferType(source) : source;
-        if (atomized.getCardinality().allowsMany() && !TypeAtomization.hasUnknownAtomizedCount(source.getItemType())) {
-            return null;
-        }
-        return atomized.getCardinality().atMostOne().toArity();
-    }
-
-    private SequenceType.Arity resolveArities(SequenceType leftType, SequenceType rightType) {
-        SequenceType.Arity left = atomizedSingletonArity(leftType);
-        SequenceType.Arity right = atomizedSingletonArity(rightType);
-        if (left == null || right == null) return null;
-        return (left == SequenceType.Arity.OneOrZero || right == SequenceType.Arity.OneOrZero)
-                ? SequenceType.Arity.OneOrZero
-                : SequenceType.Arity.One;
     }
 
     @Override
     public StaticContext visitMultiplicativeExpr(MultiplicativeExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setStaticSequenceType(inferArithmeticType(
+        expression.setStaticSequenceType(this.arithmetic.inferMultiplicativeType(
                 typeOf(expression.getLeftExpression(), expression),
                 typeOf(expression.getRightExpression(), expression),
-                expression.getMultiplicativeOperator().toString(),
-                (left, right) -> inferMultiplicativeItemType(left, right, expression.getMultiplicativeOperator()),
+                expression.getMultiplicativeOperator(),
                 expression));
         return argument;
     }
@@ -1659,52 +1405,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitUnaryExpr(UnaryExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        SequenceType childInferredType = typeOf(expression.getMainExpression(), expression);
-
-        // if the child is the empty sequence just infer the empty sequence
-        this.errors.rejectInferredEmpty(childInferredType, expression);
-
-        SequenceType.Arity resultArity = atomizedSingletonArity(childInferredType);
-        if (resultArity == null) {
-            this.errors.report("'+' and '*' arities are not allowed for unary expressions", expression.getMetadata());
-            resultArity = SequenceType.Arity.OneOrZero;
-        }
-
-        // if inferred arity does not allow for empty sequence and static type is not an accepted one throw a static
-        // error
-        ItemType childItemType = inferUnaryItemType(childInferredType.getItemType());
-        if (childItemType == null) {
-            if (childInferredType.getArity() == SequenceType.Arity.OneOrZero) {
-                this.errors.reportInferredEmpty(expression);
-            } else {
-                this.errors.report(
-                        "It is not possible to have an Unary expression with the following type: " + childInferredType,
-                        expression.getMetadata());
-            }
-            childItemType = BuiltinTypesCatalogue.numericItem;
-        }
-
-        expression.setStaticSequenceType(new SequenceType(childItemType, resultArity));
+        expression.setStaticSequenceType(
+                this.arithmetic.inferUnaryType(typeOf(expression.getMainExpression(), expression), expression));
         return argument;
-    }
-
-    private ItemType inferUnaryItemType(ItemType type) {
-        List<ItemType> results = new ArrayList<>();
-        for (ItemType member : type.getMemberTypes()) {
-            if (!TypeAtomization.isAtomizable(member)) {
-                return null;
-            }
-            if (TypeAtomization.hasUnknownAtomizedType(member)) {
-                results.add(BuiltinTypesCatalogue.numericItem);
-                continue;
-            }
-            ItemType normalized = normalizeArithmeticItemType(member);
-            if (!normalized.isNumeric()) {
-                return null;
-            }
-            results.add(normalized);
-        }
-        return ItemTypeFactory.createInferredUnionType(results);
     }
 
     // endregion
@@ -1790,7 +1493,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             if (leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()) {
                 this.errors.reportInferredEmpty(expression);
             }
-            returnArity = resolveArities(leftInferredType, rightInferredType);
+            returnArity = AtomizedOperands.resolveArities(leftInferredType, rightInferredType);
             if (returnArity == null) {
                 this.errors.report(
                         "'+' and '*' arities are not allowed for this comparison operator: " + operator,
@@ -1799,7 +1502,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        checkAtomizableOperands(operator.toString(), leftInferredType, rightInferredType, expression);
+        AtomizedOperands.checkAtomizableOperands(
+                this.errors, operator.toString(), leftInferredType, rightInferredType, expression);
 
         // if any of the element is the empty sequence, we set its sequence type to the other, if both are we do not
         // need additional checks
@@ -1998,7 +1702,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (!TypeAtomization.isAtomizable(itemType)) {
             this.errors.report(
                     "switch test condition and cases expressions must be atomizable, instead inferred: " + itemType,
-                    nonAtomizableErrorCode(itemType),
+                    AtomizedOperands.nonAtomizableErrorCode(itemType),
                     metadata);
         }
     }
@@ -2131,8 +1835,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType leftType = typeOf((Expression) children.get(0), expression);
         SequenceType rightType = typeOf((Expression) children.get(1), expression);
 
-        checkAtomizableOperands("||", leftType, rightType, expression);
-        if (resolveArities(leftType, rightType) == null) {
+        AtomizedOperands.checkAtomizableOperands(this.errors, "||", leftType, rightType, expression);
+        if (AtomizedOperands.resolveArities(leftType, rightType) == null) {
             this.errors.report(
                     "operands of the concat expression must match type atomic? instead found: "
                             + leftType
@@ -2748,7 +2452,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     && !TypeAtomization.hasUnknownAtomizedType(keyType.getItemType())
                     && !hasMutuallyComparableItems(atomizedKeyType.getItemType())) {
                 this.errors.report(
-                        message + describeAtomizedType(keyType, knownAtomizedType(keyType)), expression.getMetadata());
+                        message
+                                + AtomizedOperands.describeAtomizedType(
+                                        keyType, AtomizedOperands.knownAtomizedType(keyType)),
+                        expression.getMetadata());
             }
         }
         return argument;
@@ -2761,12 +2468,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      */
     private SequenceType checkSingleAtomizedKey(SequenceType keyType, String message, ExceptionMetadata metadata) {
         if (!keyType.isEmptySequence() && !TypeAtomization.isAtomizable(keyType.getItemType())) {
-            this.errors.report(message + keyType, nonAtomizableErrorCode(keyType.getItemType()), metadata);
+            this.errors.report(
+                    message + keyType, AtomizedOperands.nonAtomizableErrorCode(keyType.getItemType()), metadata);
             return null;
         }
         SequenceType atomizedKeyType = singleAtomizedKeyType(keyType);
         if (atomizedKeyType == null) {
-            this.errors.report(message + describeAtomizedType(keyType, knownAtomizedType(keyType)), metadata);
+            this.errors.report(
+                    message
+                            + AtomizedOperands.describeAtomizedType(
+                                    keyType, AtomizedOperands.knownAtomizedType(keyType)),
+                    metadata);
         }
         return atomizedKeyType;
     }
@@ -2780,7 +2492,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (keyType.isEmptySequence()) {
             return keyType;
         }
-        SequenceType.Arity arity = atomizedSingletonArity(keyType);
+        SequenceType.Arity arity = AtomizedOperands.atomizedSingletonArity(keyType);
         if (arity == null || !TypeAtomization.isAtomizable(keyType.getItemType())) {
             return null;
         }
