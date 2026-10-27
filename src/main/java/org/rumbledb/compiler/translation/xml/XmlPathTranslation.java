@@ -30,6 +30,8 @@ import org.rumbledb.compiler.context.xml.ReverseStepContext;
 import org.rumbledb.compiler.context.xml.StepExprContext;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -42,6 +44,7 @@ import org.rumbledb.expressions.xml.axis.ReverseAxis;
 import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
+import org.rumbledb.expressions.xml.node_test.NamespaceNodeTest;
 import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.types.AttributeNodeItemType;
@@ -171,6 +174,13 @@ public final class XmlPathTranslation {
             if (ctx.isAt()) {
                 // @ equivalent with 'attribute::'
                 forwardAxis = ForwardAxis.ATTRIBUTE;
+            } else if (nodeTest instanceof NamespaceNodeTest
+                    && translationContext.moduleContext().getQueryLanguage().startsWith("xquery")) {
+                // XQuery 3.1 section 3.3.2.5: only the omitted namespace axis is unsupported.
+                throw new SemanticException(
+                        "A namespace-node() step requires an explicit axis in XQuery.",
+                        ErrorCode.NamespaceNodeTestNotSupported,
+                        translationContext.metadata(ctx.context()));
             } else if (nodeTest instanceof AttributeTest
                     || (nodeTest instanceof SchemaNodeTest schemaTest
                             && schemaTest.itemType() instanceof AttributeNodeItemType)) {

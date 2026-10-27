@@ -1513,10 +1513,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public NodeTest visitNamespaceNodeTest(XQueryParser.NamespaceNodeTestContext ctx) {
-            throw new SemanticException(
-                    "Namespace node tests are not supported in XQuery.",
-                    ErrorCode.NamespaceNodeTestNotSupported,
-                    XQueryTranslationVisitor.this.translationContext.metadata(ctx));
+            return XmlNodeTestTranslation.namespaceNodeTest();
         }
 
         @Override
