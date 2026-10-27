@@ -44,7 +44,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -1557,16 +1556,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private SequenceCardinality visitFlworClauses(Clause clause) {
         SequenceCardinality forCardinality = SequenceCardinality.ONE;
         while (clause != null) {
-            try {
-                this.visit(clause, clause.getStaticContext());
-            } catch (UnexpectedStaticTypeException e) {
-                if (forCardinality == SequenceCardinality.EMPTY
-                        && clause.getClauseType().equals(FLWOR_CLAUSES.WHERE)) {
-                    clause = clause.getNextClause();
-                    continue;
-                }
-                throw e;
-            }
+            this.visit(clause, clause.getStaticContext());
             if (clause.getClauseType() == FLWOR_CLAUSES.FOR) {
                 // Each tuple so far is repeated once per item of the for clause's sequence.
                 SequenceType forType = ((ForClause) clause).getExpression().getStaticSequenceType();
