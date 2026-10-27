@@ -1227,16 +1227,24 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitTreatExpression(TreatExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        // check at static time for treat errors
-        SequenceType expressionSequenceType = expression.getMainExpression().getStaticSequenceType();
+        SequenceType expressionSequenceType = requireInferredType(
+                expression.getMainExpression().getStaticSequenceType(),
+                expression.getClass().getSimpleName());
         SequenceType treatedSequenceType = expression.getSequenceType();
 
-        if (expressionSequenceType == null || treatedSequenceType == null) {
-            throwStaticTypeException(
-                    "The child expression of a Treat expression has no inferred type or it is being treated as null sequence type",
-                    expression.getMetadata());
+        if (expression.checksDeclaredType()) {
+            if (!expressionSequenceType.isSubtypeOf(treatedSequenceType)) {
+                throwStaticTypeException(
+                        "The inferred type "
+                                + expressionSequenceType
+                                + " does not match the declared type, which requires "
+                                + treatedSequenceType,
+                        expression.getMetadata());
+            } else {
+                // A matching value is passed unchanged, so it keeps its more precise type.
+                treatedSequenceType = expressionSequenceType;
+            }
         }
-
         if (SequenceType.createSequenceType("item*").equals(treatedSequenceType)) {
             treatedSequenceType = expressionSequenceType;
         }
@@ -2787,10 +2795,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitLetClause(LetClause expression, StaticContext argument) {
         visit(expression.getExpression(), argument);
         SequenceType declaredType = expression.getActualSequenceType();
-        SequenceType inferredType = (declaredType == null
-                        ? expression.getExpression()
-                        : ((TreatExpression) expression.getExpression()).getMainExpression())
-                .getStaticSequenceType();
+        SequenceType inferredType = expression.getExpression().getStaticSequenceType();
         checkAndUpdateVariableStaticType(
                 declaredType,
                 inferredType,

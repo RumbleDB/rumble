@@ -53,6 +53,15 @@ public class TreatExpression extends Expression {
         return this.errorCode;
     }
 
+    /**
+     * Whether this checks the declared type of a variable, rather than being a treat as expression. A value that does
+     * not match a declared type is a type error, which static typing reports. A treat as expression defers its check
+     * to runtime, where a mismatch is a dynamic error.
+     */
+    public boolean checksDeclaredType() {
+        return this.errorCode == ErrorCode.UnexpectedTypeErrorCode;
+    }
+
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitTreatExpression(this, argument);
