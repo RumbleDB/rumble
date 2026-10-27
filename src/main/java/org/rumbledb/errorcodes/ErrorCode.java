@@ -60,6 +60,11 @@ public final class ErrorCode implements Serializable {
         return "Q{" + (namespace == null ? "" : namespace) + "}" + this.name.getLocalName();
     }
 
+    public static final ErrorCode LibraryContextItemInitializer = registerBuiltIn("XQST0113");
+    public static final ErrorCode NamespaceNodeTestNotSupported = registerBuiltIn("XQST0134");
+    public static final ErrorCode DynamicModuleLoadingNotSupported = registerBuiltIn("FOQM0006");
+    public static final ErrorCode TransformationNotSupported = registerBuiltIn("FOXT0004");
+
     public static final ErrorCode DivisionByZero = registerBuiltIn("FOAR0001");
     public static final ErrorCode NumericOverflowOrUnderflow = registerBuiltIn("FOAR0002");
     public static final ErrorCode ApplyFunctionArityMismatch = registerBuiltIn("FOAP0001");

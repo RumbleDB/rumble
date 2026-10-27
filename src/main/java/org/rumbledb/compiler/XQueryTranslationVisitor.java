@@ -149,6 +149,7 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -1487,7 +1488,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public NodeTest visitNamespaceNodeTest(XQueryParser.NamespaceNodeTestContext ctx) {
-            return XmlNodeTestTranslation.namespaceNodeTest();
+            throw new SemanticException(
+                    "Namespace node tests are not supported in XQuery.",
+                    ErrorCode.NamespaceNodeTestNotSupported,
+                    XQueryTranslationVisitor.this.translationContext.metadata(ctx));
         }
 
         @Override

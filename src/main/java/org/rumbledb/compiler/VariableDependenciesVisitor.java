@@ -35,6 +35,7 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
+import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -104,7 +105,6 @@ import org.rumbledb.expressions.update.TransformExpression;
  */
 public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
-    @SuppressWarnings("unused")
     private final RumbleConfiguration configuration;
 
     /**
@@ -460,6 +460,12 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                         variableDeclaration.getVariableName(), variableDeclaration.getMetadata());
             }
             visit(variableDeclaration, null);
+            if (this.configuration.semantics().queryLanguage().startsWith("xquery")
+                    && getInputVariableDependencies(variableDeclaration).contains(variableDeclaration.getVariableName())) {
+                throw new UndeclaredVariableException(
+                        "A variable is not in scope in its own initializer: " + variableDeclaration.getVariableName(),
+                        variableDeclaration.getMetadata());
+            }
             nameToNodeMap.put(variableDeclaration.getVariableName(), variableDeclaration);
         }
         for (FunctionDeclaration functionDeclaration : prolog.getFunctionDeclarations()) {

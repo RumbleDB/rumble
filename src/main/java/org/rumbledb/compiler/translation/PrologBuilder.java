@@ -260,6 +260,12 @@ public final class PrologBuilder {
     }
 
     public void addContextItem(VariableDeclaration declaration) {
+        if (!this.translationContext.isMainModule() && declaration.getExpression() != null) {
+            throw new SemanticException(
+                    "A library module context item declaration cannot have an initializer.",
+                    ErrorCode.LibraryContextItemInitializer,
+                    declaration.getMetadata());
+        }
         String language = this.translationContext.moduleContext().getQueryLanguage();
         if (language != null
                 && language.startsWith("xquery")
