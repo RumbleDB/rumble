@@ -150,6 +150,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.ConditionalExpression;

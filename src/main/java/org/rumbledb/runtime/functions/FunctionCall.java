@@ -73,6 +73,12 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
                     .build();
             return new FunctionCall(new ConstantRuntimeIterator(result, resultContext), context);
         }
+        if (functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator builtin) {
+            ItemRuntimePlan unavailable = builtin.unavailableCallPlan();
+            if (unavailable != null) {
+                return new FunctionCall(unavailable, context);
+            }
+        }
         DynamicContext callContext = createCallContext(functionItem, convertedArguments, context);
         if (functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator builtin) {
             return new FunctionCall(builtin.buildCallPlan(callContext), callContext);
