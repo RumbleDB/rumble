@@ -29,6 +29,7 @@ import org.rumbledb.compiler.typing.AtomizedOperands;
 import org.rumbledb.compiler.typing.BuiltinFunctionTyping;
 import org.rumbledb.compiler.typing.CastTyping;
 import org.rumbledb.compiler.typing.ComparisonTyping;
+import org.rumbledb.compiler.typing.LookupTyping;
 import org.rumbledb.compiler.typing.PathStepTyping;
 import org.rumbledb.compiler.typing.StaticTypeErrors;
 import org.rumbledb.config.RumbleConfiguration;
@@ -163,7 +164,6 @@ import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
-import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -192,6 +192,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private final PathStepTyping pathSteps;
 
+    private final LookupTyping lookups;
+
     /**
      * Builds a new visitor.
      *
@@ -205,6 +207,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         this.cast = new CastTyping(this.errors);
         this.builtinFunctions = new BuiltinFunctionTyping(this.errors);
         this.pathSteps = new PathStepTyping(this.errors);
+        this.lookups = new LookupTyping(this.errors);
     }
 
     /** Returns the type inferred for a child of the node, which every visited child has. */
@@ -1214,150 +1217,31 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitArrayLookupExpression(ArrayLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
-        SequenceType mainType = typeOf(expression.getMainExpression(), expression);
-        SequenceType lookupType = typeOf(expression.getLookupExpression(), expression);
-
-        if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("integer"))) {
-            this.errors.report(
-                    "the lookup expression type must match integer, instead " + lookupType + " was inferred",
-                    expression.getMetadata());
-        }
-
-        if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(expression);
-        }
-
-        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
-                ? SequenceType.Arity.OneOrZero
-                : SequenceType.Arity.ZeroOrMore;
-        ItemType resultItemType = BuiltinTypesCatalogue.item;
-        ItemType itemType = mainType.getItemType();
-        ItemType arrayContentType = inferArrayContentType(itemType);
-        if (arrayContentType != null) {
-            resultItemType = arrayContentType;
-        }
-        expression.setStaticSequenceType(new SequenceType(resultItemType, inferredArity));
+        expression.setStaticSequenceType(this.lookups.inferArrayLookupType(
+                typeOf(expression.getMainExpression(), expression),
+                typeOf(expression.getLookupExpression(), expression),
+                expression));
         return argument;
     }
 
     @Override
     public StaticContext visitObjectLookupExpression(ObjectLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
-        SequenceType mainType = typeOf(expression.getMainExpression(), expression);
-        SequenceType lookupType = typeOf(expression.getLookupExpression(), expression);
-
-        // must be castable to string
-        if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType"))) {
-            this.errors.report(
-                    "the lookup expression type must be castable to string (i.e. must match atomic), instead "
-                            + lookupType
-                            + " was inferred",
-                    expression.getMetadata());
-        }
-
-        boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
-        boolean overlapsMap = mainType.hasOverlapWith(SequenceType.createSequenceType("map*"));
-        if ((!overlapsObject && !overlapsMap) || mainType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(expression);
-        }
-
         String key =
                 expression.getLookupExpression() instanceof StringLiteralExpression literal ? literal.getValue() : null;
-        SequenceType result = inferObjectLookupType(mainType.getItemType(), mainType.getArity(), key);
-        this.errors.rejectInferredEmpty(result, expression);
-        expression.setStaticSequenceType(result);
+        expression.setStaticSequenceType(this.lookups.inferObjectLookupType(
+                typeOf(expression.getMainExpression(), expression),
+                typeOf(expression.getLookupExpression(), expression),
+                key,
+                expression));
         return argument;
-    }
-
-    /**
-     * Infers JSONiq dot selection separately for each possible input type.
-     * For example, selecting n from ({n: integer} | null) yields integer?:
-     * the object branch yields an integer, while the null branch yields the empty sequence.
-     * A null key here denotes an expression whose string value is not known statically.
-     */
-    private SequenceType inferObjectLookupType(ItemType itemType, SequenceType.Arity inputArity, String key) {
-        if (itemType.isUnionType()) {
-            SequenceType result = null;
-            for (ItemType member : itemType.getTypes()) {
-                SequenceType memberResult = inferObjectLookupType(member, inputArity, key);
-                // Include empty branches: they make a required field's lookup result optional.
-                result = result == null ? memberResult : result.leastCommonSupertypeWith(memberResult);
-            }
-            return result == null ? SequenceType.createSequenceType("()") : result;
-        }
-        if (itemType.isMapItemType()) {
-            return itemType.getMapValueSequenceType();
-        }
-        SequenceType.Arity outputArity = inputArity.isSubtypeOf(SequenceType.Arity.OneOrZero)
-                ? SequenceType.Arity.OneOrZero
-                : SequenceType.Arity.ZeroOrMore;
-        if (itemType.isObjectItemType() && key != null) {
-            FieldDescriptor field = itemType.getObjectContentFacet(key);
-            if (field != null) {
-                return new SequenceType(field.getType(), field.isRequired() ? inputArity : outputArity);
-            }
-            if (itemType.getClosedFacet()) {
-                return SequenceType.createSequenceType("()");
-            }
-        }
-        SequenceType type = new SequenceType(itemType, inputArity);
-        if (!type.hasOverlapWith(SequenceType.createSequenceType("object*"))
-                && !type.hasOverlapWith(SequenceType.createSequenceType("map*"))) {
-            // JSONiq object selection ignores nonobjects, including null.
-            return SequenceType.createSequenceType("()");
-        }
-        return new SequenceType(BuiltinTypesCatalogue.item, outputArity);
-    }
-
-    /**
-     * Combines content types of possible arrays for JSONiq lookup and unboxing.
-     * Nonarray alternatives contribute no results. Returns Java null when no array is possible;
-     * a broad type that could contain arrays instead contributes item.
-     */
-    private ItemType inferArrayContentType(ItemType itemType) {
-        if (itemType.isUnionType()) {
-            ItemType result = null;
-            for (ItemType member : itemType.getTypes()) {
-                ItemType memberContent = inferArrayContentType(member);
-                if (memberContent != null) {
-                    result = result == null ? memberContent : result.findLeastCommonSuperTypeWith(memberContent);
-                }
-            }
-            return result;
-        }
-        if (itemType.isArrayItemType()) {
-            return itemType.getArrayContentFacet();
-        }
-        return BuiltinTypesCatalogue.arrayItem.isSubtypeOf(itemType) ? BuiltinTypesCatalogue.item : null;
     }
 
     @Override
     public StaticContext visitPostfixLookupExpression(PostfixLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
-        SequenceType mainType = typeOf(expression.getMainExpression(), expression);
-        // no need to check lookupexpression and it might be null if wildcard
-
-        boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
-        boolean overlapsMap = mainType.hasOverlapWith(SequenceType.createSequenceType("map*"));
-        if ((!overlapsObject && !overlapsMap) || mainType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(expression);
-        }
-
-        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
-                ? SequenceType.Arity.OneOrZero
-                : SequenceType.Arity.ZeroOrMore;
-
-        ItemType inferredType = BuiltinTypesCatalogue.item;
-        if (mainType.getItemType().isMapItemType()) {
-            SequenceType mapValueType = mainType.getItemType().getMapValueSequenceType();
-            inferredType = mapValueType.getItemType();
-            inferredArity = mapValueType.getArity();
-        }
-
-        expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
+        expression.setStaticSequenceType(
+                this.lookups.inferPostfixLookupType(typeOf(expression.getMainExpression(), expression), expression));
         return argument;
     }
 
@@ -1369,19 +1253,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitArrayUnboxingExpression(ArrayUnboxingExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
-        SequenceType mainType = typeOf(expression.getMainExpression(), expression);
-
-        if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(expression);
-        }
-        ItemType contentType = inferArrayContentType(mainType.getItemType());
-        if (contentType != null) {
-            SequenceType sequenceType = new SequenceType(contentType, SequenceType.Arity.ZeroOrMore);
-            expression.setStaticSequenceType(sequenceType);
-            return argument;
-        }
-        expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
+        expression.setStaticSequenceType(
+                this.lookups.inferArrayUnboxingType(typeOf(expression.getMainExpression(), expression), expression));
         return argument;
     }
 
