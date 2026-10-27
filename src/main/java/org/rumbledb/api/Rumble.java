@@ -59,7 +59,6 @@ public class Rumble {
      */
     public Rumble(CompilationConfiguration compilationConfiguration) {
         this.compilationConfiguration = compilationConfiguration;
-        SparkSessionManager.getInstance().getOrCreateSession();
     }
 
     /**
