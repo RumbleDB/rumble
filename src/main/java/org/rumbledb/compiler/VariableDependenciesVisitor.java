@@ -105,6 +105,7 @@ import org.rumbledb.expressions.update.TransformExpression;
  */
 public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
+    @SuppressWarnings("unused")
     private final RumbleConfiguration configuration;
 
     /**
@@ -460,9 +461,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                         variableDeclaration.getVariableName(), variableDeclaration.getMetadata());
             }
             visit(variableDeclaration, null);
-            if (this.configuration.semantics().queryLanguage().startsWith("xquery")
-                    && getInputVariableDependencies(variableDeclaration)
-                            .contains(variableDeclaration.getVariableName())) {
+            if (getInputVariableDependencies(variableDeclaration).contains(variableDeclaration.getVariableName())) {
                 throw new UndeclaredVariableException(
                         "A variable is not in scope in its own initializer: " + variableDeclaration.getVariableName(),
                         variableDeclaration.getMetadata());
