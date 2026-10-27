@@ -31,7 +31,6 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 
 import org.apache.xerces.dom.DOMInputImpl;
-import org.apache.xerces.jaxp.validation.XMLSchema11Factory;
 import org.apache.xerces.jaxp.validation.XMLSchemaFactory;
 import org.apache.xerces.jaxp.validation.XSGrammarPoolContainer;
 import org.apache.xerces.xni.grammars.Grammar;
@@ -56,7 +55,7 @@ import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.resources.ResolvedResource;
 
 /**
- * Loads the XML Schema component model declared by an XQuery module's schema
+ * Loads the XSD 1.0 component model declared by an XQuery module's schema
  * imports.
  */
 public final class XmlSchemaCatalogLoader {
@@ -190,12 +189,7 @@ public final class XmlSchemaCatalogLoader {
     private static LoadedSchema loadSchema(
             List<URI> locations, SchemaResourceResolver resolver, ExceptionMetadata metadata) {
         try {
-            // Retain XSD 1.0 processing for existing schemas; use 1.1 for schemas requiring its extensions.
-            try {
-                return loadSchema(locations, resolver, metadata, new XMLSchemaFactory());
-            } catch (SchemaImportException | SAXException exception) {
-                return loadSchema(locations, resolver, metadata, new XMLSchema11Factory());
-            }
+            return loadSchema(locations, resolver, metadata, new XMLSchemaFactory());
         } catch (SchemaImportException exception) {
             throw exception;
         } catch (SAXException | RuntimeException exception) {
