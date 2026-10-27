@@ -268,79 +268,41 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
     }
 
-    private SequenceType requireInferredType(SequenceType type, String nodeName) {
+    /** Returns the type inferred for a child of the node, which every visited child has. */
+    private static SequenceType typeOf(Expression child, Node parent) {
+        return requireInferredType(child.getStaticSequenceType(), parent);
+    }
+
+    private static SequenceType typeOf(Statement child, Node parent) {
+        return requireInferredType(child.getStaticSequenceType(), parent);
+    }
+
+    private static SequenceType requireInferredType(SequenceType type, Node node) {
         if (type == null) {
-            throw new OurBadException("A child expression of a " + nodeName + " has no inferred type");
+            throw new OurBadException(
+                    "A child of a " + node.getClass().getSimpleName() + " has no inferred type", node.getMetadata());
         }
         return type;
     }
 
-    /**
-     * Perform basic checks on a list of SequenceType, available checks are for null (OurBad exception) and inferred the
-     * empty sequence (XPST0005)
-     *
-     * @param types list of sequence types to check
-     * @param nodeName name of the node to use in the errors
-     * @param nullCheck flag indicating to perform null check
-     * @param inferredEmptyCheck flag indicating to perform empty sequence check
-     */
-    private void basicChecks(
-            List<SequenceType> types,
-            String nodeName,
-            boolean nullCheck,
-            boolean inferredEmptyCheck,
-            ExceptionMetadata metadata) {
-        if (nullCheck) {
-            for (SequenceType type : types) {
-                if (type == null) {
-                    throw new OurBadException("A child expression of a " + nodeName + " has no inferred type");
-                }
-            }
-        }
-        if (inferredEmptyCheck) {
-            for (SequenceType type : types) {
-                if (type.isEmptySequence()) {
-                    throwStaticTypeException(
-                            "Inferred type for "
-                                    + nodeName
-                                    + " is empty sequence (with active static typing feature, only allowed for CommaExpression)",
-                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                            metadata);
-                }
-            }
+    /** Static typing only allows a comma expression to be inferred as the empty sequence. */
+    private void rejectInferredEmpty(SequenceType type, Node node) {
+        if (type.isEmptySequence()) {
+            reportInferredEmpty(node);
         }
     }
 
-    /**
-     * Perform basic checks on a SequenceType, available checks are for null (OurBad exception) and inferred the empty
-     * sequence (XPST0005)
-     *
-     * @param type sequence types to check
-     * @param nodeName name of the node to use in the errors
-     * @param nullCheck flag indicating to perform null check
-     * @param inferredEmptyCheck flag indicating to perform empty sequence check
-     */
-    private void basicChecks(
-            SequenceType type,
-            String nodeName,
-            boolean nullCheck,
-            boolean inferredEmptyCheck,
-            ExceptionMetadata metadata) {
-        if (nullCheck) {
-            if (type == null) {
-                throw new OurBadException("A child expression of a " + nodeName + " has no inferred type");
-            }
-        }
-        if (inferredEmptyCheck) {
-            if (type != null && type.isEmptySequence()) {
-                throwStaticTypeException(
-                        "Inferred type for "
-                                + nodeName
-                                + " is empty sequence (with active static typing feature, only allowed for CommaExpression)",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        metadata);
-            }
-        }
+    private void reportInferredEmpty(Node node) {
+        reportInferredEmpty(
+                "The inferred type of a "
+                        + node.getClass().getSimpleName()
+                        + " is the empty sequence, which static typing only allows for a comma expression",
+                node);
+    }
+
+    private void reportInferredEmpty(String message, Node node) {
+        throwStaticTypeException(
+                message, ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression, node.getMetadata());
     }
 
     @Override
@@ -350,8 +312,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferredType = SequenceType.createSequenceType("()");
 
         for (Expression childExpression : expression.getExpressions()) {
-            SequenceType childExpressionInferredType =
-                    requireInferredType(childExpression.getStaticSequenceType(), "CommaExpression");
+            SequenceType childExpressionInferredType = typeOf(childExpression, expression);
 
             inferredType = inferredType.concatenateWith(childExpressionInferredType);
         }
@@ -412,7 +373,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             expression.setActualType(variableType);
         }
-        basicChecks(variableType, expression.getClass().getSimpleName(), false, true, expression.getMetadata());
+        rejectInferredEmpty(variableType, expression);
         expression.setStaticSequenceType(variableType);
         return argument;
     }
@@ -448,9 +409,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
         if (expression.isMergedConstructor()) {
             // if it is a merged constructor the child must be a subtype of object* inferred type
-            SequenceType childSequenceType = requireInferredType(
-                    ((Expression) expression.getChildren().get(0)).getStaticSequenceType(),
-                    expression.getClass().getSimpleName());
+            SequenceType childSequenceType =
+                    typeOf((Expression) expression.getChildren().get(0), expression);
             if (!childSequenceType.isSubtypeOf(SequenceType.createSequenceType("object*"))) {
                 throwStaticTypeException(
                         "The child expression must have object* sequence type, instead found: " + childSequenceType,
@@ -458,9 +418,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         } else {
             for (Expression keyExpression : expression.getKeys()) {
-                SequenceType keySequenceType = requireInferredType(
-                        keyExpression.getStaticSequenceType(),
-                        expression.getClass().getSimpleName());
+                SequenceType keySequenceType = typeOf(keyExpression, expression);
                 if (!keySequenceType.isSubtypeOf(SequenceType.createSequenceType("string"))
                         && !keySequenceType.isSubtypeOf(SequenceType.createSequenceType("anyURI"))) {
                     throwStaticTypeException(
@@ -677,8 +635,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private SequenceType validateStrictAggregateInputType(
             FunctionCallExpression expression, Expression inputExpression, String functionName) {
-        SequenceType inputType = requireInferredType(
-                inputExpression.getStaticSequenceType(), expression.getClass().getSimpleName());
+        SequenceType inputType = typeOf(inputExpression, expression);
         if (inputType.isEmptySequence()) {
             return inputType;
         }
@@ -746,8 +703,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // The zero parameter is atomic?: successful function conversion has
             // already excluded multiple typed values before sum is evaluated.
             zeroType = new SequenceType(
-                    zeroType.getItemType(),
-                    zeroType.getCardinality().allowsZero() ? SequenceCardinality.ZERO_OR_ONE : SequenceCardinality.ONE);
+                    zeroType.getItemType(), zeroType.getCardinality().atMostOne());
         }
         if (inputType.isEmptySequence()) {
             return zeroType;
@@ -771,17 +727,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 ? BuiltinTypesCatalogue.numericItem
                 : inputType.getItemType();
 
-        SequenceType.Arity returnArity =
-                (inputType.getArity() == SequenceType.Arity.One || inputType.getArity() == SequenceType.Arity.OneOrMore)
-                        ? SequenceType.Arity.One
-                        : SequenceType.Arity.OneOrZero;
-        return new SequenceType(returnItemType, returnArity);
+        return new SequenceType(returnItemType, inputType.getCardinality().atMostOne());
     }
 
     private SequenceType inferStrictMinMaxReturnType(
             FunctionCallExpression expression, Expression inputExpression, String functionName) {
-        SequenceType inputType = requireInferredType(
-                inputExpression.getStaticSequenceType(), expression.getClass().getSimpleName());
+        SequenceType inputType = typeOf(inputExpression, expression);
         if (inputType.isEmptySequence()) {
             return SequenceType.createSequenceType("anyAtomicType?");
         }
@@ -800,12 +751,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata());
         }
 
-        inputType = TypeAtomization.inferType(inputType);
-        SequenceType.Arity returnArity =
-                (inputType.getArity() == SequenceType.Arity.One || inputType.getArity() == SequenceType.Arity.OneOrMore)
-                        ? SequenceType.Arity.One
-                        : SequenceType.Arity.OneOrZero;
-        return new SequenceType(inputItemType, returnArity);
+        return new SequenceType(
+                inputItemType,
+                TypeAtomization.inferType(inputType).getCardinality().atMostOne());
     }
 
     /**
@@ -1284,7 +1232,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      * atomic values it produces; the runtime checks those properties after atomization.
      */
     private void checkCastOperand(SequenceType operandType, Expression expression) {
-        basicChecks(operandType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        requireInferredType(operandType, expression);
         if (!operandType.isEmptySequence() && !TypeAtomization.isAtomizable(operandType.getItemType())) {
             throwStaticTypeException(
                     "A cast operand must be atomic after atomization, found " + operandType,
@@ -1329,9 +1277,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitTreatExpression(TreatExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType expressionSequenceType = requireInferredType(
-                expression.getMainExpression().getStaticSequenceType(),
-                expression.getClass().getSimpleName());
+        SequenceType expressionSequenceType = typeOf(expression.getMainExpression(), expression);
         SequenceType treatedSequenceType = expression.getSequenceType();
 
         if (expression.checksDeclaredType()) {
@@ -1360,8 +1306,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionArgumentConversion(
             FunctionArgumentConversionExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        SequenceType argumentType =
-                requireInferredType(expression.getArgument().getStaticSequenceType(), "FunctionArgumentConversion");
+        SequenceType argumentType = typeOf(expression.getArgument(), expression);
         SequenceType parameterType = expression.getParameterType();
         if (!isFunctionArgumentCompatible(argumentType, parameterType)) {
             throwStaticTypeException(
@@ -1422,8 +1367,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext copyVariables = expression.getStaticContext();
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             visit(copyDecl.getSourceExpression(), argument);
-            SequenceType sourceType = copyDecl.getSourceExpression().getStaticSequenceType();
-            basicChecks(sourceType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+            SequenceType sourceType = typeOf(copyDecl.getSourceExpression(), expression);
             copyVariables.replaceVariableSequenceType(copyDecl.getVariableName(), copiedType(sourceType));
         }
         visit(expression.getModifyExpression(), argument);
@@ -1525,15 +1469,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitAdditiveExpr(AdditiveExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType leftInferredType = expression.getLeftExpression().getStaticSequenceType();
-        SequenceType rightInferredType = expression.getRightExpression().getStaticSequenceType();
-
-        basicChecks(
-                Arrays.asList(leftInferredType, rightInferredType),
-                expression.getClass().getSimpleName(),
-                true,
-                true,
-                expression.getMetadata());
+        SequenceType leftInferredType = typeOf(expression.getLeftExpression(), expression);
+        SequenceType rightInferredType = typeOf(expression.getRightExpression(), expression);
+        rejectInferredEmpty(leftInferredType, expression);
+        rejectInferredEmpty(rightInferredType, expression);
 
         ItemType inferredType = null;
         SequenceType.Arity inferredArity = resolveArities(leftInferredType, rightInferredType);
@@ -1555,10 +1494,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (inferredType == null) {
             if (inferredArity == SequenceType.Arity.OneOrZero) {
                 // Only possible resulting type is empty sequence so throw error XPST0005
-                throwStaticTypeException(
-                        "Inferred type is empty sequence and this is not a CommaExpression",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        expression.getMetadata());
+                reportInferredEmpty(expression);
             } else {
                 throwStaticTypeException(
                         "The following types operation is not possible: "
@@ -1735,7 +1671,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (atomized.getCardinality().allowsMany() && !TypeAtomization.hasUnknownAtomizedCount(source.getItemType())) {
             return null;
         }
-        return atomized.getCardinality().allowsZero() ? SequenceType.Arity.OneOrZero : SequenceType.Arity.One;
+        return atomized.getCardinality().atMostOne().toArity();
     }
 
     private SequenceType.Arity resolveArities(SequenceType leftType, SequenceType rightType) {
@@ -1764,15 +1700,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitMultiplicativeExpr(MultiplicativeExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType leftInferredType = expression.getLeftExpression().getStaticSequenceType();
-        SequenceType rightInferredType = expression.getRightExpression().getStaticSequenceType();
-
-        basicChecks(
-                Arrays.asList(leftInferredType, rightInferredType),
-                expression.getClass().getSimpleName(),
-                true,
-                true,
-                expression.getMetadata());
+        SequenceType leftInferredType = typeOf(expression.getLeftExpression(), expression);
+        SequenceType rightInferredType = typeOf(expression.getRightExpression(), expression);
+        rejectInferredEmpty(leftInferredType, expression);
+        rejectInferredEmpty(rightInferredType, expression);
 
         ItemType inferredType = null;
         SequenceType.Arity inferredArity = resolveArities(leftInferredType, rightInferredType);
@@ -1796,10 +1727,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (inferredType == null) {
             if (inferredArity == SequenceType.Arity.OneOrZero) {
                 // Only possible resulting type is empty sequence so throw error XPST0005
-                throwStaticTypeException(
-                        "Inferred type is empty sequence and this is not a CommaExpression",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        expression.getMetadata());
+                reportInferredEmpty(expression);
             } else {
                 throwStaticTypeException(
                         "The following types expression is not valid: "
@@ -1820,16 +1748,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitUnaryExpr(UnaryExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        SequenceType childInferredType =
-                requireInferredType(expression.getMainExpression().getStaticSequenceType(), "UnaryExpression");
+        SequenceType childInferredType = typeOf(expression.getMainExpression(), expression);
 
         // if the child is the empty sequence just infer the empty sequence
-        if (childInferredType.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
-        }
+        rejectInferredEmpty(childInferredType, expression);
 
         SequenceType.Arity resultArity = atomizedSingletonArity(childInferredType);
         if (resultArity == null) {
@@ -1843,10 +1765,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ItemType childItemType = inferUnaryItemType(childInferredType.getItemType());
         if (childItemType == null) {
             if (childInferredType.getArity() == SequenceType.Arity.OneOrZero) {
-                throwStaticTypeException(
-                        "Inferred type is empty sequence and this is not a CommaExpression",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        expression.getMetadata());
+                reportInferredEmpty(expression);
             } else {
                 throwStaticTypeException(
                         "It is not possible to have an Unary expression with the following type: " + childInferredType,
@@ -1886,10 +1805,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
 
         List<Node> childrenExpressions = expression.getChildren();
-        SequenceType leftInferredType = requireInferredType(
-                ((Expression) childrenExpressions.get(0)).getStaticSequenceType(), expressionName + "Expression");
-        SequenceType rightInferredType = requireInferredType(
-                ((Expression) childrenExpressions.get(1)).getStaticSequenceType(), expressionName + "Expression");
+        SequenceType leftInferredType = typeOf((Expression) childrenExpressions.get(0), expression);
+        SequenceType rightInferredType = typeOf((Expression) childrenExpressions.get(1), expression);
 
         if (!leftInferredType.hasEffectiveBooleanValue()) {
             throwStaticTypeException(
@@ -1929,8 +1846,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitNotExpr(NotExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType childInferredType =
-                requireInferredType(expression.getMainExpression().getStaticSequenceType(), "NotExpression");
+        SequenceType childInferredType = typeOf(expression.getMainExpression(), expression);
         if (!childInferredType.hasEffectiveBooleanValue()) {
             throwStaticTypeException(
                     "The child expression of NotExpression has "
@@ -1952,10 +1868,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
 
         List<Node> childrenExpressions = expression.getChildren();
-        SequenceType leftInferredType = requireInferredType(
-                ((Expression) childrenExpressions.get(0)).getStaticSequenceType(), "ComparisonExpression");
-        SequenceType rightInferredType = requireInferredType(
-                ((Expression) childrenExpressions.get(1)).getStaticSequenceType(), "ComparisonExpression");
+        SequenceType leftInferredType = typeOf((Expression) childrenExpressions.get(0), expression);
+        SequenceType rightInferredType = typeOf((Expression) childrenExpressions.get(1), expression);
         SequenceType.Arity returnArity = SequenceType.Arity.One;
 
         ComparisonExpression.ComparisonOperator operator = expression.getComparisonOperator();
@@ -1964,10 +1878,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // XPST0005 error
         if (operator.isValueComparison()) {
             if (leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()) {
-                throwStaticTypeException(
-                        "Inferred type is empty sequence and this is not a CommaExpression",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        expression.getMetadata());
+                reportInferredEmpty(expression);
             }
             returnArity = resolveArities(leftInferredType, rightInferredType);
             if (returnArity == null) {
@@ -2068,10 +1979,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitNodeComparisonExpr(NodeComparisonExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType leftType =
-                requireInferredType(expression.getLeftExpression().getStaticSequenceType(), "NodeComparisonExpression");
-        SequenceType rightType = requireInferredType(
-                expression.getRightExpression().getStaticSequenceType(), "NodeComparisonExpression");
+        SequenceType leftType = typeOf(expression.getLeftExpression(), expression);
+        SequenceType rightType = typeOf(expression.getRightExpression(), expression);
 
         SequenceType operandType = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceCardinality.ZERO_OR_ONE);
         for (SequenceType type : List.of(leftType, rightType)) {
@@ -2087,10 +1996,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceCardinality cardinality;
         if (leftType.isEmptySequence() || rightType.isEmptySequence()) {
             // The strict Static Typing Feature rejects known-empty expressions other than () and data(()).
-            throwStaticTypeException(
-                    "The node comparison is statically inferred to return an empty sequence",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
+            reportInferredEmpty("The node comparison is statically inferred to return an empty sequence", expression);
             cardinality = SequenceCardinality.EMPTY;
         } else if (leftType.getCardinality().allowsZero()
                 || rightType.getCardinality().allowsZero()) {
@@ -2106,14 +2012,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitNodeSetExpr(NodeSetExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType leftType = expression.getLeftExpression().getStaticSequenceType();
-        SequenceType rightType = expression.getRightExpression().getStaticSequenceType();
-        basicChecks(
-                Arrays.asList(leftType, rightType),
-                expression.getClass().getSimpleName(),
-                false,
-                false,
-                expression.getMetadata());
+        SequenceType leftType = typeOf(expression.getLeftExpression(), expression);
+        SequenceType rightType = typeOf(expression.getRightExpression(), expression);
         if (!leftType.isEmptySequence() && !leftType.getItemType().isNodeItemType()) {
             throwStaticTypeException(
                     "Left operand of a node set expression must be a sequence of nodes, got " + leftType,
@@ -2138,14 +2038,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitConditionalExpression(ConditionalExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType ifType = expression.getCondition().getStaticSequenceType();
-        SequenceType thenType = expression.getBranch().getStaticSequenceType();
-        SequenceType elseType = expression.getElseBranch().getStaticSequenceType();
-
-        if (ifType == null || thenType == null || elseType == null) {
-            throw new OurBadException(
-                    "A child expression of a ConditionalExpression has no inferred type", expression.getMetadata());
-        }
+        SequenceType ifType = typeOf(expression.getCondition(), expression);
+        SequenceType thenType = typeOf(expression.getBranch(), expression);
+        SequenceType elseType = typeOf(expression.getElseBranch(), expression);
 
         if (!ifType.hasEffectiveBooleanValue()) {
             throwStaticTypeException(
@@ -2160,12 +2055,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 ? elseType
                 : thenType.leastCommonSupertypeWith(elseType);
 
-        if (resultingType.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
-        }
+        rejectInferredEmpty(resultingType, expression);
 
         expression.setStaticSequenceType(resultingType);
         return argument;
@@ -2205,20 +2095,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType testType = expression.getTestCondition().getStaticSequenceType();
         checkSwitchType(testType, expression.getMetadata());
 
-        SequenceType returnType = expression.getDefaultExpression().getStaticSequenceType();
-        if (returnType == null) {
-            throw new OurBadException(
-                    "A child expression of a SwitchExpression has no inferred type", expression.getMetadata());
-        }
+        SequenceType returnType = typeOf(expression.getDefaultExpression(), expression);
 
         for (SwitchCase switchCase : expression.getCases()) {
             boolean addToReturnType =
                     checkSwitchType(switchCase.getConditionExpressions(), testType, expression.getMetadata());
-            SequenceType caseReturnType = switchCase.getReturnExpression().getStaticSequenceType();
-            if (caseReturnType == null) {
-                throw new OurBadException(
-                        "A child expression of a SwitchExpression has no inferred type", expression.getMetadata());
-            }
+            SequenceType caseReturnType = typeOf(switchCase.getReturnExpression(), expression);
             if (addToReturnType) {
                 returnType = returnType.leastCommonSupertypeWith(caseReturnType);
             }
@@ -2234,11 +2116,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferredType = null;
 
         for (Node childNode : expression.getChildren()) {
-            SequenceType childType = ((Expression) childNode).getStaticSequenceType();
-            if (childType == null) {
-                throw new OurBadException(
-                        "A child expression of a TryCatchExpression has no inferred type", expression.getMetadata());
-            }
+            SequenceType childType = typeOf((Expression) childNode, expression);
 
             if (inferredType == null) {
                 inferredType = childType;
@@ -2246,14 +2124,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 inferredType = inferredType.leastCommonSupertypeWith(childType);
             }
         }
-        inferredType = requireInferredType(inferredType, expression.getClass().getSimpleName());
+        inferredType = requireInferredType(inferredType, expression);
 
-        if (inferredType.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
-        }
+        rejectInferredEmpty(inferredType, expression);
         expression.setStaticSequenceType(inferredType);
         return argument;
     }
@@ -2263,8 +2136,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visit(expression.getTestCondition(), argument);
         SequenceType inferredType = null;
 
-        SequenceType conditionType = expression.getTestCondition().getStaticSequenceType();
-        basicChecks(conditionType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        SequenceType conditionType = typeOf(expression.getTestCondition(), expression);
 
         for (TypeswitchCase typeswitchCase : expression.getCases()) {
             Name variableName = typeswitchCase.getVariableName();
@@ -2280,8 +2152,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
 
             visit(returnExpression, argument);
-            SequenceType caseType = returnExpression.getStaticSequenceType();
-            basicChecks(caseType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+            SequenceType caseType = typeOf(returnExpression, expression);
             inferredType = inferredType == null ? caseType : inferredType.leastCommonSupertypeWith(caseType);
         }
 
@@ -2292,11 +2163,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.getDefaultCase().getStaticContext().replaceVariableSequenceType(variableName, conditionType);
         }
         visit(returnExpression, argument);
-        SequenceType defaultType = returnExpression.getStaticSequenceType();
-        basicChecks(defaultType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        SequenceType defaultType = typeOf(returnExpression, expression);
         inferredType = inferredType == null ? defaultType : inferredType.leastCommonSupertypeWith(defaultType);
 
-        basicChecks(inferredType, expression.getClass().getSimpleName(), false, true, expression.getMetadata());
+        rejectInferredEmpty(inferredType, expression);
         expression.setStaticSequenceType(inferredType);
         return argument;
     }
@@ -2310,26 +2180,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
 
         List<Node> children = expression.getChildren();
-        SequenceType leftType = ((Expression) children.get(0)).getStaticSequenceType();
-        SequenceType rightType = ((Expression) children.get(1)).getStaticSequenceType();
-
-        if (leftType == null) {
-            throw new OurBadException(
-                    "A child expression of a RangeExpression has no inferred type",
-                    ((Expression) children.get(0)).getMetadata());
-        }
-
-        if (rightType == null) {
-            throw new OurBadException(
-                    "A child expression of a RangeExpression has no inferred type",
-                    ((Expression) children.get(1)).getMetadata());
-        }
+        SequenceType leftType = typeOf((Expression) children.get(0), expression);
+        SequenceType rightType = typeOf((Expression) children.get(1), expression);
 
         if (leftType.isEmptySequence() || rightType.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
+            reportInferredEmpty(expression);
         }
 
         SequenceType intOpt = new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.OneOrZero);
@@ -2352,13 +2207,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
 
         List<Node> children = expression.getChildren();
-        SequenceType leftType = ((Expression) children.get(0)).getStaticSequenceType();
-        SequenceType rightType = ((Expression) children.get(1)).getStaticSequenceType();
-
-        if (leftType == null || rightType == null) {
-            throw new OurBadException(
-                    "A child expression of a ConcatExpression has no inferred type", expression.getMetadata());
-        }
+        SequenceType leftType = typeOf((Expression) children.get(0), expression);
+        SequenceType rightType = typeOf((Expression) children.get(1), expression);
 
         checkAtomizableOperands("||", leftType, rightType, expression);
         if (resolveArities(leftType, rightType) == null) {
@@ -2382,13 +2232,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitArrayLookupExpression(ArrayLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType mainType = expression.getMainExpression().getStaticSequenceType();
-        SequenceType lookupType = expression.getLookupExpression().getStaticSequenceType();
-
-        if (mainType == null || lookupType == null) {
-            throw new OurBadException(
-                    "A child expression of a ArrayLookupExpression has no inferred type", expression.getMetadata());
-        }
+        SequenceType mainType = typeOf(expression.getMainExpression(), expression);
+        SequenceType lookupType = typeOf(expression.getLookupExpression(), expression);
 
         if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("integer"))) {
             throwStaticTypeException(
@@ -2397,10 +2242,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
+            reportInferredEmpty(expression);
         }
 
         SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
@@ -2420,13 +2262,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitObjectLookupExpression(ObjectLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType mainType = expression.getMainExpression().getStaticSequenceType();
-        SequenceType lookupType = expression.getLookupExpression().getStaticSequenceType();
-
-        if (mainType == null || lookupType == null) {
-            throw new OurBadException(
-                    "A child expression of a ObjectLookupExpression has no inferred type", expression.getMetadata());
-        }
+        SequenceType mainType = typeOf(expression.getMainExpression(), expression);
+        SequenceType lookupType = typeOf(expression.getLookupExpression(), expression);
 
         // must be castable to string
         if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType"))) {
@@ -2440,21 +2277,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
         boolean overlapsMap = mainType.hasOverlapWith(SequenceType.createSequenceType("map*"));
         if ((!overlapsObject && !overlapsMap) || mainType.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
+            reportInferredEmpty(expression);
         }
 
         String key =
                 expression.getLookupExpression() instanceof StringLiteralExpression literal ? literal.getValue() : null;
         SequenceType result = inferObjectLookupType(mainType.getItemType(), mainType.getArity(), key);
-        if (result.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
-        }
+        rejectInferredEmpty(result, expression);
         expression.setStaticSequenceType(result);
         return argument;
     }
@@ -2525,21 +2354,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitPostfixLookupExpression(PostfixLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType mainType = expression.getMainExpression().getStaticSequenceType();
+        SequenceType mainType = typeOf(expression.getMainExpression(), expression);
         // no need to check lookupexpression and it might be null if wildcard
-
-        if (mainType == null) {
-            throw new OurBadException(
-                    "A child expression of a PostfixLookupExpression has no inferred type", expression.getMetadata());
-        }
 
         boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
         boolean overlapsMap = mainType.hasOverlapWith(SequenceType.createSequenceType("map*"));
         if ((!overlapsObject && !overlapsMap) || mainType.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
+            reportInferredEmpty(expression);
         }
 
         SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
@@ -2568,18 +2389,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitArrayUnboxingExpression(ArrayUnboxingExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType mainType = expression.getMainExpression().getStaticSequenceType();
-
-        if (mainType == null) {
-            throw new OurBadException(
-                    "A child expression of a ArrayUnboxingExpression has no inferred type", expression.getMetadata());
-        }
+        SequenceType mainType = typeOf(expression.getMainExpression(), expression);
 
         if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
+            reportInferredEmpty(expression);
         }
         ItemType contentType = inferArrayContentType(mainType.getItemType());
         if (contentType != null) {
@@ -2594,24 +2407,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFilterExpression(FilterExpression expression, StaticContext argument) {
         visit(expression.getMainExpression(), argument);
-        SequenceType mainType = expression.getMainExpression().getStaticSequenceType();
-        basicChecks(mainType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
+        SequenceType mainType = typeOf(expression.getMainExpression(), expression);
+        rejectInferredEmpty(mainType, expression);
 
         Expression predicateExpression = expression.getPredicateExpression();
         // set context item static type
         predicateExpression.getStaticContext().setContextItemStaticType(new SequenceType(mainType.getItemType()));
         visit(predicateExpression, argument);
-        SequenceType predicateType = predicateExpression.getStaticSequenceType();
         // unset context item static type
         predicateExpression.getStaticContext().setContextItemStaticType(null);
-
-        basicChecks(predicateType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
+        SequenceType predicateType = typeOf(predicateExpression, expression);
+        rejectInferredEmpty(predicateType, expression);
         // always false so the return type is for sure ()
         if (predicateType.isSubtypeOf(SequenceType.createSequenceType("null?"))) {
-            throwStaticTypeException(
+            reportInferredEmpty(
                     "Inferred type for FilterExpression is empty sequence (with active static typing feature, only allowed for CommaExpression)",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
+                    expression);
         }
         if (!predicateType.hasEffectiveBooleanValue()) {
             throwStaticTypeException(
@@ -2668,8 +2479,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             DynamicFunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType mainType = expression.getMainExpression().getStaticSequenceType();
-        basicChecks(mainType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        SequenceType mainType = typeOf(expression.getMainExpression(), expression);
         if (mainType.isEmptySequence()) {
             expression.setStaticSequenceType(SequenceType.createSequenceType("()"));
             return argument;
@@ -2747,16 +2557,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         Expression rightExpression = (Expression) nodes.get(1);
 
         visit(leftExpression, argument);
-        SequenceType leftType = leftExpression.getStaticSequenceType();
-        basicChecks(leftType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
+        SequenceType leftType = typeOf(leftExpression, expression);
+        rejectInferredEmpty(leftType, expression);
 
         // set context item static type
         rightExpression.getStaticContext().setContextItemStaticType(new SequenceType(leftType.getItemType()));
         visit(rightExpression, argument);
         rightExpression.getStaticContext().setContextItemStaticType(null);
 
-        SequenceType rightType = rightExpression.getStaticSequenceType();
-        basicChecks(rightType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
+        SequenceType rightType = typeOf(rightExpression, expression);
+        rejectInferredEmpty(rightType, expression);
 
         // The right expression is evaluated once per item of the left expression.
         SequenceCardinality resultingCardinality = rightType.getCardinality().repeated(leftType.getCardinality());
@@ -2810,8 +2620,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         SequenceCardinality forCardinality =
                 visitFlworClauses(expression.getReturnClause().getFirstClause());
-        SequenceType returnType = expression.getReturnClause().getReturnExpr().getStaticSequenceType();
-        basicChecks(returnType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
+        SequenceType returnType = typeOf(expression.getReturnClause().getReturnExpr(), expression);
+        rejectInferredEmpty(returnType, expression);
         returnType = new SequenceType(
                 returnType.getItemType(), returnType.getCardinality().repeated(forCardinality));
         expression.setStaticSequenceType(returnType);
@@ -2822,21 +2632,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitForClause(ForClause expression, StaticContext argument) {
         visit(expression.getExpression(), argument);
         SequenceType declaredType = expression.getActualSequenceType();
-        SequenceType inferredType = SequenceType.createSequenceType("item*");
-        if (declaredType == null) {
-            inferredType = expression.getExpression().getStaticSequenceType();
-        } else {
-            inferredType = declaredType;
-        }
-
-        basicChecks(inferredType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        SequenceType inferredType =
+                declaredType == null ? typeOf(expression.getExpression(), expression) : declaredType;
         if (inferredType.isEmptySequence()) {
             if (!expression.isAllowEmpty()) {
                 // for sure we will not have any tuple to process and return the empty sequence
-                throwStaticTypeException(
+                reportInferredEmpty(
                         "In for clause Inferred type is empty sequence, empty is not allowed, so the result returned is for sure () and this is not a CommaExpression",
-                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                        expression.getMetadata());
+                        expression);
             }
         } else {
             // we take the single arity version of the inferred type or optional arity if we allow empty and the
@@ -2863,13 +2666,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitWindowClause(WindowClause expression, StaticContext argument) {
         visit(expression.getExpression(), argument);
-        SequenceType sourceType = expression.getActualSequenceType() == null
-                ? expression.getExpression().getStaticSequenceType()
-                : expression.getActualSequenceType();
-        basicChecks(sourceType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
         // Condition variables bind items of the input, while a declared type applies to the window variable.
-        ItemType inputItemType =
-                expression.getExpression().getStaticSequenceType().getItemType();
+        ItemType inputItemType = typeOf(expression.getExpression(), expression).getItemType();
         WindowClause.WindowCondition start = expression.getStartCondition();
         WindowClause.WindowCondition end = expression.getEndCondition();
         refineWindowConditionVariables(
@@ -2911,8 +2709,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private void checkWindowConditionType(Expression condition, WindowClause clause) {
-        SequenceType conditionType = condition.getStaticSequenceType();
-        basicChecks(conditionType, clause.getClass().getSimpleName(), true, false, clause.getMetadata());
+        SequenceType conditionType = typeOf(condition, clause);
         if (!conditionType.hasEffectiveBooleanValue()) {
             throwStaticTypeException("Window condition has no effective boolean value", clause.getMetadata());
         }
@@ -2937,18 +2734,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitWhereClause(WhereClause expression, StaticContext argument) {
         visit(expression.getWhereExpression(), argument);
-        SequenceType whereType = expression.getWhereExpression().getStaticSequenceType();
-        basicChecks(whereType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+        SequenceType whereType = typeOf(expression.getWhereExpression(), expression);
         if (!whereType.hasEffectiveBooleanValue()) {
             throwStaticTypeException(
                     "where clause inferred type (" + whereType + ") has no effective boolean value",
                     expression.getMetadata());
         }
         if (whereType.isEmptySequence() || whereType.isSubtypeOf(SequenceType.createSequenceType("null?"))) {
-            throwStaticTypeException(
+            reportInferredEmpty(
                     "where clause always return false, so return expression inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    expression.getMetadata());
+                    expression);
         }
         return argument;
     }
@@ -2978,8 +2773,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             keyType = clause.getStaticContext().getVariableSequenceType(variableName);
         } else {
             visit(keyExpression, keyExpression.getStaticContext());
-            keyType = requireInferredType(
-                    keyExpression.getStaticSequenceType(), clause.getClass().getSimpleName());
+            keyType = typeOf(keyExpression, clause);
         }
         SequenceType atomizedKeyType = checkSingleAtomizedKey(
                 keyType,
@@ -3026,9 +2820,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 "order by sorting expression's type must match atomic? and be comparable using 'gt' operator, instead inferred: ";
         for (OrderByClauseSortingKey orderClause : expression.getSortingKeys()) {
             visit(orderClause.getExpression(), argument);
-            SequenceType keyType = requireInferredType(
-                    orderClause.getExpression().getStaticSequenceType(),
-                    expression.getClass().getSimpleName());
+            SequenceType keyType = typeOf(orderClause.getExpression(), expression);
             SequenceType atomizedKeyType = checkSingleAtomizedKey(keyType, message, expression.getMetadata());
             // every key is compared with the others, like the input of fn:min and fn:max; a typed value only known at
             // runtime is compared then
@@ -3102,7 +2894,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             String nodeName,
             Name variableName,
             ExceptionMetadata metadata) {
-        basicChecks(inferredType, nodeName, true, false, metadata);
+        if (inferredType == null) {
+            throw new OurBadException("A child of a " + nodeName + " has no inferred type", metadata);
+        }
 
         if (declaredType == null) {
             // if declared type is null, we overwrite the type in the correspondent InScopeVariable with the inferred
@@ -3378,9 +3172,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
         visitFlworClauses(statement.getReturnStatementClause().getFirstClause());
-        SequenceType returnType =
-                statement.getReturnStatementClause().getReturnStatement().getStaticSequenceType();
-        basicChecks(returnType, statement.getClass().getSimpleName(), true, true, statement.getMetadata());
+        SequenceType returnType = typeOf(statement.getReturnStatementClause().getReturnStatement(), statement);
+        rejectInferredEmpty(returnType, statement);
         statement.setStaticSequenceType(SequenceType.createSequenceType("()"));
         return argument;
     }
@@ -3389,14 +3182,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitConditionalStatement(ConditionalStatement statement, StaticContext argument) {
         visitDescendants(statement, argument);
 
-        SequenceType ifType = statement.getCondition().getStaticSequenceType();
-        SequenceType thenType = statement.getBranch().getStaticSequenceType();
-        SequenceType elseType = statement.getElseBranch().getStaticSequenceType();
-
-        if (ifType == null || thenType == null || elseType == null) {
-            throw new OurBadException(
-                    "A child expression of a ConditionalStatement has no inferred type", statement.getMetadata());
-        }
+        SequenceType ifType = typeOf(statement.getCondition(), statement);
+        SequenceType thenType = typeOf(statement.getBranch(), statement);
+        SequenceType elseType = typeOf(statement.getElseBranch(), statement);
 
         if (!ifType.hasEffectiveBooleanValue()) {
             throwStaticTypeException(
@@ -3411,12 +3199,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 ? elseType
                 : thenType.leastCommonSupertypeWith(elseType);
 
-        if (resultingType.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    statement.getMetadata());
-        }
+        rejectInferredEmpty(resultingType, statement);
 
         statement.setStaticSequenceType(resultingType);
         return argument;
@@ -3429,20 +3212,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType testType = statement.getTestCondition().getStaticSequenceType();
         checkSwitchType(testType, statement.getMetadata());
 
-        SequenceType returnType = statement.getDefaultStatement().getStaticSequenceType();
-        if (returnType == null) {
-            throw new OurBadException(
-                    "A child statement of a SwitchExpression has no inferred type", statement.getMetadata());
-        }
+        SequenceType returnType = typeOf(statement.getDefaultStatement(), statement);
 
         for (SwitchCaseStatement switchCase : statement.getCases()) {
             boolean addToReturnType =
                     checkSwitchType(switchCase.getConditionExpressions(), testType, statement.getMetadata());
-            SequenceType caseReturnType = switchCase.getReturnStatement().getStaticSequenceType();
-            if (caseReturnType == null) {
-                throw new OurBadException(
-                        "A child statement of a SwitchStatement has no inferred type", statement.getMetadata());
-            }
+            SequenceType caseReturnType = typeOf(switchCase.getReturnStatement(), statement);
             if (addToReturnType) {
                 returnType = returnType.leastCommonSupertypeWith(caseReturnType);
             }
@@ -3458,11 +3233,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferredType = null;
 
         for (Node childNode : statement.getChildren()) {
-            SequenceType childType = ((BlockStatement) childNode).getStaticSequenceType();
-            if (childType == null) {
-                throw new OurBadException(
-                        "A child statement of a TryCatchStatement has no inferred type", statement.getMetadata());
-            }
+            SequenceType childType = typeOf((BlockStatement) childNode, statement);
 
             if (inferredType == null) {
                 inferredType = childType;
@@ -3470,14 +3241,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 inferredType = inferredType.leastCommonSupertypeWith(childType);
             }
         }
-        inferredType = requireInferredType(inferredType, statement.getClass().getSimpleName());
+        inferredType = requireInferredType(inferredType, statement);
 
-        if (inferredType.isEmptySequence()) {
-            throwStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    statement.getMetadata());
-        }
+        rejectInferredEmpty(inferredType, statement);
         statement.setStaticSequenceType(inferredType);
         return argument;
     }
@@ -3487,8 +3253,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visit(statement.getTestCondition(), argument);
         SequenceType inferredType = null;
 
-        SequenceType conditionType = statement.getTestCondition().getStaticSequenceType();
-        basicChecks(conditionType, statement.getClass().getSimpleName(), true, false, statement.getMetadata());
+        SequenceType conditionType = typeOf(statement.getTestCondition(), statement);
 
         for (TypeSwitchStatementCase typeswitchCase : statement.getCases()) {
             Name variableName = typeswitchCase.getVariableName();
@@ -3503,8 +3268,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
 
             visit(returnStatement, argument);
-            SequenceType caseType = returnStatement.getStaticSequenceType();
-            basicChecks(caseType, statement.getClass().getSimpleName(), true, false, statement.getMetadata());
+            SequenceType caseType = typeOf(returnStatement, statement);
             inferredType = inferredType == null ? caseType : inferredType.leastCommonSupertypeWith(caseType);
         }
 
@@ -3515,11 +3279,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             statement.getDefaultCase().getStaticContext().replaceVariableSequenceType(variableName, conditionType);
         }
         visit(returnStatement, argument);
-        SequenceType defaultType = returnStatement.getStaticSequenceType();
-        basicChecks(defaultType, statement.getClass().getSimpleName(), true, false, statement.getMetadata());
+        SequenceType defaultType = typeOf(returnStatement, statement);
         inferredType = inferredType == null ? defaultType : inferredType.leastCommonSupertypeWith(defaultType);
 
-        basicChecks(inferredType, statement.getClass().getSimpleName(), false, true, statement.getMetadata());
+        rejectInferredEmpty(inferredType, statement);
         statement.setStaticSequenceType(inferredType);
         return argument;
     }
@@ -3619,9 +3382,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitSlashExpr(SlashExpr slashExpr, StaticContext argument) {
         visit(slashExpr.getLeftExpression(), argument);
-        SequenceType leftType =
-                requireInferredType(slashExpr.getLeftExpression().getStaticSequenceType(), "SlashExpr");
-        basicChecks(leftType, slashExpr.getClass().getSimpleName(), true, false, slashExpr.getMetadata());
+        SequenceType leftType = typeOf(slashExpr.getLeftExpression(), slashExpr);
 
         Expression rightExpression = slashExpr.getRightExpression();
         rightExpression.getStaticContext().setContextItemStaticType(new SequenceType(leftType.getItemType()));
@@ -3630,8 +3391,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         } finally {
             rightExpression.getStaticContext().setContextItemStaticType(null);
         }
-        SequenceType rightType = requireInferredType(rightExpression.getStaticSequenceType(), "SlashExpr");
-        basicChecks(rightType, slashExpr.getClass().getSimpleName(), true, false, slashExpr.getMetadata());
+        SequenceType rightType = typeOf(rightExpression, slashExpr);
 
         // XPath removes duplicate nodes, so multiple inputs need not yield multiple results.
         SequenceType.Arity resultingArity = leftType.getArity().multiplyWith(rightType.getArity());
@@ -3654,7 +3414,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         stepExpr.setStaticSequenceType(inferredType);
-        basicChecks(inferredType, stepExpr.getClass().getSimpleName(), true, true, stepExpr.getMetadata());
+        rejectInferredEmpty(inferredType, stepExpr);
         return argument;
     }
 
@@ -3718,10 +3478,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                                 .map(type -> type.repeated(nodes.getCardinality())))
                 : contentModel.getStepType(contextType.getItemType(), attributeAxis, name);
         if (stepType.isPresent() && stepType.get().isEmptySequence()) {
-            throwStaticTypeException(
+            reportInferredEmpty(
                     undeclaredStepMessage(contentModel, contextType.getItemType(), attributeAxis, descendantAxis, name),
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    stepExpr.getMetadata());
+                    stepExpr);
         }
         return stepType.map(type -> type.repeated(contextType.getCardinality()));
     }
