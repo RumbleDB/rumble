@@ -18,12 +18,12 @@ package org.rumbledb.compiler;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
@@ -1069,7 +1069,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 return argument;
             }
 
-            SequenceType atomizedOperand = atomizedCastOperand(expressionType);
+            SequenceType atomizedOperand = knownAtomizedType(expressionType);
             if (atomizedOperand != null
                     && !atomizedOperand.isAritySubtypeOf(
                             expression.getSequenceType().getArity())) {
@@ -1118,7 +1118,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        SequenceType atomizedOperand = atomizedCastOperand(expressionSequenceType);
+        SequenceType atomizedOperand = knownAtomizedType(expressionSequenceType);
         if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(castedSequenceType.getArity())) {
             throwStaticTypeException(
                     castCardinalityMessage(expressionSequenceType, atomizedOperand, castedSequenceType),
@@ -1144,10 +1144,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     /**
-     * Cast cardinality applies after atomization: one node can yield zero values (a nilled element), one value, or
-     * several (a schema list). Returns null when the typed value is only known at runtime.
+     * Returns the type of an operand after atomization: one node can yield zero values (a nilled element), one value,
+     * or several (a schema list). Returns null when the typed value is only known at runtime.
      */
-    private static SequenceType atomizedCastOperand(SequenceType operand) {
+    private static SequenceType knownAtomizedType(SequenceType operand) {
         if (!TypeAtomization.containsNode(operand.getItemType())) {
             return operand;
         }
@@ -1155,8 +1155,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     private static String castCardinalityMessage(SequenceType operand, SequenceType atomized, SequenceType target) {
-        String found = operand.equals(atomized) ? operand.toString() : operand + " with typed value " + atomized;
-        return "with static type feature it is not possible to cast a " + found + " as " + target;
+        return "with static type feature it is not possible to cast a "
+                + describeAtomizedType(operand, atomized)
+                + " as "
+                + target;
+    }
+
+    /** Describes an operand together with its typed value, when atomization changes it and it is known. */
+    private static String describeAtomizedType(SequenceType operand, SequenceType atomized) {
+        return atomized == null || operand.equals(atomized)
+                ? operand.toString()
+                : operand + " with typed value " + atomized;
     }
 
     private boolean isSchemaCastTarget(SequenceType sequenceType, XmlSchemaCatalog schemaCatalog) {
@@ -2814,89 +2823,100 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause expression, StaticContext argument) {
-        Clause nextClause = expression.getNextClause(); // != null because group by cannot be last clause of FLOWR
-        // expression
-        Set<Name> groupingVars = new HashSet<>();
+        // group by cannot be the last clause of a FLWOR expression
+        StaticContext nextClauseContext = expression.getNextClause().getStaticContext();
+        Map<Name, SequenceType> groupingVariableTypes = new HashMap<>();
         for (GroupByVariableDeclaration groupByVar : expression.getGroupVariables()) {
-            // if we are grouping by an existing var (i.e. expr is null), then the appropriate type is already inferred
-            Expression groupByVarExpr = groupByVar.getExpression();
-            SequenceType expectedType;
-            if (groupByVarExpr != null) {
-                visit(groupByVarExpr, groupByVarExpr.getStaticContext());
-                SequenceType declaredType = groupByVar.getActualSequenceType();
-                SequenceType inferredType;
-                if (declaredType == null) {
-                    inferredType = groupByVarExpr.getStaticSequenceType();
-                    expectedType = inferredType;
-                } else {
-                    inferredType = groupByVarExpr.getStaticSequenceType();
-                    expectedType = declaredType;
-                }
-                checkAndUpdateVariableStaticType(
-                        declaredType,
-                        inferredType,
-                        nextClause.getStaticContext(),
-                        expression.getClass().getSimpleName(),
-                        groupByVar.getVariableName(),
-                        expression.getMetadata());
-            } else {
-                expectedType = expression.getStaticContext().getVariableSequenceType(groupByVar.getVariableName());
-            }
-            // check that expectedType is a subtype of atomic?
-            if (expectedType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))) {
-                throwStaticTypeException(
-                        "group by variable "
-                                + groupByVar.getVariableName()
-                                + " must match atomic? instead found "
-                                + expectedType,
-                        ErrorCode.NonAtomicElementErrorCode,
-                        expression.getMetadata());
-            }
-            if (!expectedType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType?"))) {
-                throwStaticTypeException(
-                        "group by variable "
-                                + groupByVar.getVariableName()
-                                + " must match atomic? instead found "
-                                + expectedType,
-                        expression.getMetadata());
-            }
-            groupingVars.add(groupByVar.getVariableName());
+            groupingVariableTypes.put(groupByVar.getVariableName(), inferGroupingVariableType(groupByVar, expression));
         }
-
-        // finally if there was a for clause we need to change the arity of the variables bound so far in the flwor
-        // expression, from ? to * and from 1 to +
-        // excluding the grouping variables
-        StaticContext nextClauseStaticContext = expression.getNextClause().getStaticContext();
-        nextClause.getStaticContext().incrementArities(nextClauseStaticContext, groupingVars);
+        // the other variables bound so far now hold the values of every tuple in a group, so ? becomes * and 1
+        // becomes +
+        nextClauseContext.incrementArities(nextClauseContext, groupingVariableTypes.keySet());
+        groupingVariableTypes.forEach(nextClauseContext::replaceVariableSequenceType);
         return argument;
+    }
+
+    /** A grouping variable is bound to its atomized grouping key, which the runtime also checks. */
+    private SequenceType inferGroupingVariableType(GroupByVariableDeclaration groupByVar, GroupByClause clause) {
+        Name variableName = groupByVar.getVariableName();
+        Expression keyExpression = groupByVar.getExpression();
+        SequenceType keyType;
+        if (keyExpression == null) {
+            // grouping by a variable in scope, which is how XQuery bindings are normalized, uses its value as the key
+            keyType = clause.getStaticContext().getVariableSequenceType(variableName);
+        } else {
+            visit(keyExpression, keyExpression.getStaticContext());
+            keyType = requireInferredType(
+                    keyExpression.getStaticSequenceType(), clause.getClass().getSimpleName());
+        }
+        String message = "group by variable " + variableName + " must match atomic? instead found ";
+        if (keyType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))) {
+            throwStaticTypeException(message + keyType, ErrorCode.NonAtomicElementErrorCode, clause.getMetadata());
+        }
+        SequenceType atomizedKeyType = atomizedKeyType(keyType);
+        if (atomizedKeyType == null) {
+            throwStaticTypeException(
+                    message + describeAtomizedType(keyType, knownAtomizedType(keyType)), clause.getMetadata());
+        }
+        SequenceType declaredType = groupByVar.getActualSequenceType();
+        if (declaredType == null) {
+            return atomizedKeyType;
+        }
+        if (!declaredType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType?"))) {
+            throwStaticTypeException(message + declaredType, clause.getMetadata());
+        }
+        // a typed value only known at runtime is checked against the declared type then
+        if (!TypeAtomization.hasUnknownTypedValue(keyType.getItemType())) {
+            checkAndUpdateVariableStaticType(
+                    declaredType,
+                    atomizedKeyType,
+                    clause.getStaticContext(),
+                    clause.getClass().getSimpleName(),
+                    variableName,
+                    clause.getMetadata());
+        }
+        return declaredType;
     }
 
     @Override
     public StaticContext visitOrderByClause(OrderByClause expression, StaticContext argument) {
+        String message =
+                "order by sorting expression's type must match atomic? and be comparable using 'gt' operator, instead inferred: ";
         for (OrderByClauseSortingKey orderClause : expression.getSortingKeys()) {
             visit(orderClause.getExpression(), argument);
-            SequenceType orderType = orderClause.getExpression().getStaticSequenceType();
-            basicChecks(orderType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
-            if (orderType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))) {
+            SequenceType keyType = requireInferredType(
+                    orderClause.getExpression().getStaticSequenceType(),
+                    expression.getClass().getSimpleName());
+            if (keyType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))) {
                 throwStaticTypeException(
-                        "order by sorting expression's type must match atomic? and be comparable using 'gt' operator (so duration, hexBinary, base64Binary and atomic item type are not allowed), instead inferred: "
-                                + orderType,
-                        ErrorCode.NonAtomicElementErrorCode,
-                        expression.getMetadata());
+                        message + keyType, ErrorCode.NonAtomicElementErrorCode, expression.getMetadata());
             }
-            if (!orderType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType?"))
-                    || orderType.getItemType().equals(BuiltinTypesCatalogue.atomicItem)
-                    || orderType.getItemType().equals(BuiltinTypesCatalogue.durationItem)
-                    || orderType.getItemType().equals(BuiltinTypesCatalogue.hexBinaryItem)
-                    || orderType.getItemType().equals(BuiltinTypesCatalogue.base64BinaryItem)) {
+            SequenceType atomizedKeyType = atomizedKeyType(keyType);
+            // every key is compared with the others, like the input of fn:min and fn:max
+            boolean sortable = atomizedKeyType != null
+                    && (TypeAtomization.hasUnknownTypedValue(keyType.getItemType())
+                            || hasMutuallyComparableItems(atomizedKeyType.getItemType()));
+            if (!sortable) {
                 throwStaticTypeException(
-                        "order by sorting expression's type must match atomic? and be comparable using 'gt' operator (so duration, hexBinary, base64Binary and atomic item type are not allowed), instead inferred: "
-                                + orderType,
-                        expression.getMetadata());
+                        message + describeAtomizedType(keyType, knownAtomizedType(keyType)), expression.getMetadata());
             }
         }
-
         return argument;
+    }
+
+    /**
+     * Returns the type of the at most one atomic value a group-by or order-by key atomizes to, or null when it may be
+     * more. As for singleton operators, a typed value only known at runtime is checked then.
+     */
+    private SequenceType atomizedKeyType(SequenceType keyType) {
+        if (keyType.isEmptySequence()) {
+            return keyType;
+        }
+        SequenceType.Arity arity = atomizedSingletonArity(keyType);
+        if (arity == null || !TypeAtomization.isAtomicOrNode(keyType.getItemType())) {
+            return null;
+        }
+        return new SequenceType(TypeAtomization.atomizedItemType(keyType.getItemType()), arity);
     }
 
     @Override
