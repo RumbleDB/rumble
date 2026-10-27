@@ -447,9 +447,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
         argument.setCurrentMutabilityLevel(argument.getCurrentMutabilityLevel() + 1);
-        StaticContext result = argument;
+        // One context binds every copy variable, so that type inference can refine their types in it.
+        StaticContext result = new StaticContext(argument);
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
-            result = this.visitCopyDecl(copyDecl, result, argument);
+            this.visitCopyDecl(copyDecl, result, argument);
         }
 
         result = this.visit(expression.getModifyExpression(), result);
@@ -462,22 +463,17 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private StaticContext visitCopyDecl(
-            CopyDeclaration copyDeclaration, StaticContext argument, StaticContext copyContext) {
+    private void visitCopyDecl(
+            CopyDeclaration copyDeclaration, StaticContext copyVariables, StaticContext copyContext) {
         this.visit(copyDeclaration.getSourceExpression(), copyContext);
 
-        StaticContext result = new StaticContext(argument);
-        result.addVariable(
+        // A copy has no declared type: type inference binds it from the source.
+        copyVariables.addVariable(
                 copyDeclaration.getVariableName(),
-                copyDeclaration.getSourceSequenceType(),
+                null,
                 Objects.requireNonNullElse(
                         copyDeclaration.getVariableMetadata(),
                         copyDeclaration.getSourceExpression().getMetadata()));
-        copyDeclaration
-                .getSourceSequenceType()
-                .resolve(copyContext, copyDeclaration.getSourceExpression().getMetadata());
-
-        return result;
     }
 
     @Override
