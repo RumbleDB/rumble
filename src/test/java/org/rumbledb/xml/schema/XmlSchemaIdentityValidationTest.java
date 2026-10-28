@@ -67,6 +67,27 @@ class XmlSchemaIdentityValidationTest {
     }
 
     @Test
+    void preservesExplicitXmlNamespaceSchemas(@TempDir Path directory) throws Exception {
+        for (boolean declaresId : new boolean[] {false, true}) {
+            Path schema = directory.resolve("xml-" + declaresId + ".xsd");
+            Files.writeString(schema,
+                "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema' "
+                + "targetNamespace='http://www.w3.org/XML/1998/namespace'>"
+                + "<xs:attribute name='lang' type='xs:language'/>"
+                + (declaresId ? "<xs:attribute name='id' type='xs:ID'/>" : "")
+                + "</xs:schema>");
+            Path wrapper = directory.resolve("wrapper.xsd");
+            Files.writeString(wrapper,
+                "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema' targetNamespace='urn:wrapper'>"
+                + "<xs:import namespace='http://www.w3.org/XML/1998/namespace' schemaLocation='"
+                + schema.toUri() + "'/></xs:schema>");
+            assertEquals("target", evaluate("import schema namespace t = "
+                + "'urn:wrapper' at '" + wrapper.toUri() + "'; "
+                + "string((validate lax { " + DOCUMENT + " })/root/ref)"));
+        }
+    }
+
+    @Test
     void importedSchemaValidatesOnlyIdrefMembersOfUnionLists(@TempDir Path directory) throws Exception {
         Path schema = directory.resolve("ids.xsd");
         Files.writeString(schema, """

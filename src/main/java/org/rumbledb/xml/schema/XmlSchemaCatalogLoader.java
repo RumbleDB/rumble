@@ -195,17 +195,7 @@ public final class XmlSchemaCatalogLoader {
     private static LoadedSchema loadSchema(
             List<URI> locations, SchemaResourceResolver resolver, ExceptionMetadata metadata) {
         try {
-            SchemaErrorHandler errorHandler = new SchemaErrorHandler();
-            XMLSchemaFactory schemaFactory = new XMLSchemaFactory();
-            schemaFactory.setResourceResolver(resolver);
-            schemaFactory.setErrorHandler(errorHandler);
-            List<Source> sources = new ArrayList<>(locations.stream().map(resolver::resolveSource).toList());
-            // Load the fallback last so an explicitly imported XML namespace schema takes precedence.
-            StreamSource xmlId = new StreamSource(new StringReader(XML_ID_SCHEMA));
-            xmlId.setSystemId(XML_ID_SCHEMA_SYSTEM_ID);
-            sources.add(xmlId);
-            Schema validationSchema = schemaFactory.newSchema(sources.toArray(Source[]::new));
-            return loadedSchema(validationSchema, errorHandler, metadata);
+            return loadSchema(locations, resolver, metadata, new XMLSchemaFactory());
         } catch (SchemaImportException exception) {
             throw exception;
         } catch (SAXException | RuntimeException exception) {
@@ -214,6 +204,31 @@ public final class XmlSchemaCatalogLoader {
                     metadata,
                     exception);
         }
+    }
+
+    private static LoadedSchema loadSchema(
+            List<URI> locations,
+            SchemaResourceResolver resolver,
+            ExceptionMetadata metadata,
+            javax.xml.validation.SchemaFactory schemaFactory)
+            throws SAXException {
+        SchemaErrorHandler errorHandler = new SchemaErrorHandler();
+        // Multiple location hints may contribute declarations to the same target namespace.
+        schemaFactory.setFeature("http://apache.org/xml/features/namespace-growth", true);
+        schemaFactory.setResourceResolver(resolver);
+        schemaFactory.setErrorHandler(errorHandler);
+        List<Source> sources = new ArrayList<>(locations.stream().map(resolver::resolveSource).toList());
+        LoadedSchema loaded = loadedSchema(schemaFactory.newSchema(sources.toArray(Source[]::new)), errorHandler, metadata);
+        if (loaded.schemaModel().getAttributeDeclaration("id", Name.XML_NS) != null) {
+            return loaded;
+        }
+        // Preserve explicit XML namespace declarations, adding only a missing xml:id declaration.
+        // Resolve fresh streams because Xerces consumed the first set while compiling the user schemas.
+        sources = new ArrayList<>(locations.stream().map(resolver::resolveSource).toList());
+        StreamSource xmlId = new StreamSource(new StringReader(XML_ID_SCHEMA));
+        xmlId.setSystemId(XML_ID_SCHEMA_SYSTEM_ID);
+        sources.add(xmlId);
+        return loadedSchema(schemaFactory.newSchema(sources.toArray(Source[]::new)), errorHandler, metadata);
     }
 
     private static LoadedSchema loadedSchema(
