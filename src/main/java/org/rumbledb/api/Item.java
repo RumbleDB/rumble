@@ -155,6 +155,26 @@ public interface Item extends Serializable {
     }
 
     /**
+     * Tests whether this item is an integer whose value fits in a signed 32-bit int.
+     * This does not change or test its exact dynamic type.
+     *
+     * @return true for integer values within the int range, false otherwise.
+     */
+    default boolean isWithinIntRange() {
+        return false;
+    }
+
+    /**
+     * Tests whether this item is an integer whose value fits in a signed 64-bit long.
+     * This does not change or test its exact dynamic type.
+     *
+     * @return true for integer values within the long range, false otherwise.
+     */
+    default boolean isWithinLongRange() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an atomic item of type int.
      *
      * @return true if it is an atomic item of type int, false otherwise.

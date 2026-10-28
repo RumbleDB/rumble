@@ -90,13 +90,12 @@ public class DeleteExpressionIterator extends UpdatingExpressionIterator {
                     Collections.singletonList(lookup),
                     this.getRuntimeStaticContext().getMetadata());
         } else if (main.isArray()) {
-            if (!lookup.isInteger() || lookup.getIntegerValue().bitLength() > 31) {
+            if (!lookup.isWithinIntRange()) {
                 throw new CannotCastUpdateSelectorException(
                         "Delete expression selection cannot be cast to Int type",
                         this.getRuntimeStaticContext().getMetadata());
             }
-            lookup = ItemFactory.getInstance()
-                    .createIntItem(lookup.getIntegerValue().intValue());
+            lookup = ItemFactory.getInstance().createIntItem(lookup.castToIntValue());
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target. Target mutability level: "

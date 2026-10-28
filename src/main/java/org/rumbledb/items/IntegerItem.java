@@ -92,6 +92,16 @@ public class IntegerItem extends AbstractAtomicItem {
     }
 
     @Override
+    public boolean isWithinIntRange() {
+        return this.value.bitLength() <= 31;
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return this.value.bitLength() <= 63;
+    }
+
+    @Override
     public boolean isInteger() {
         return true;
     }

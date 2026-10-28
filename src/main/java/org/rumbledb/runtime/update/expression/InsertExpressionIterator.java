@@ -114,13 +114,12 @@ public class InsertExpressionIterator extends UpdatingExpressionIterator {
                         "Insert expression selector is null",
                         this.getRuntimeStaticContext().getMetadata());
             }
-            if (!locator.isInteger() || locator.getIntegerValue().bitLength() > 31) {
+            if (!locator.isWithinIntRange()) {
                 throw new CannotCastUpdateSelectorException(
                         "Insert expression selector cannot be cast to Int type",
                         this.getRuntimeStaticContext().getMetadata());
             }
-            locator = ItemFactory.getInstance()
-                    .createIntItem(locator.getIntegerValue().intValue());
+            locator = ItemFactory.getInstance().createIntItem(locator.castToIntValue());
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target",

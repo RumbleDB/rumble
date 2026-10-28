@@ -101,6 +101,16 @@ public class LongPosingAsIntegerItem extends AbstractAtomicItem {
     }
 
     @Override
+    public boolean isWithinIntRange() {
+        return this.value >= Integer.MIN_VALUE && this.value <= Integer.MAX_VALUE;
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return true;
+    }
+
+    @Override
     public boolean isInteger() {
         return true;
     }

@@ -106,6 +106,16 @@ public class IntPosingAsIntegerItem extends AbstractAtomicItem {
     }
 
     @Override
+    public boolean isWithinIntRange() {
+        return true;
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return true;
+    }
+
+    @Override
     public boolean isInteger() {
         return true;
     }
