@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.ModifiesImmutableValueException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
@@ -89,11 +90,12 @@ public class DeleteExpressionIterator extends UpdatingExpressionIterator {
                     Collections.singletonList(lookup),
                     this.getRuntimeStaticContext().getMetadata());
         } else if (main.isArray()) {
-            if (!lookup.isInt()) {
+            if (!lookup.isInteger() || lookup.getIntegerValue().bitLength() > 31) {
                 throw new CannotCastUpdateSelectorException(
                         "Delete expression selection cannot be cast to Int type",
                         this.getRuntimeStaticContext().getMetadata());
             }
+            lookup = ItemFactory.getInstance().createIntItem(lookup.getIntegerValue().intValue());
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target. Target mutability level: "
