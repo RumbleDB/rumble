@@ -99,7 +99,16 @@ public final class SchemaContentModel {
 
     private static boolean isSchemaTypedElement(ItemType type) {
         return type instanceof SchemaElementNodeItemType
-                || (type instanceof ElementNodeItemType element && element.getSchemaTypeName() != null);
+                || (type instanceof ElementNodeItemType element
+                        && element.getSchemaTypeName() != null
+                        && !describesNoContent(element.getSchemaTypeName()));
+    }
+
+    /** xs:untyped and xs:anyType, the annotations of constructed elements, allow any content. */
+    private static boolean describesNoContent(Name typeName) {
+        return Name.XS_NS.equals(typeName.getNamespace())
+                && (typeName.getLocalName().equals("untyped")
+                        || typeName.getLocalName().equals("anyType"));
     }
 
     /**
