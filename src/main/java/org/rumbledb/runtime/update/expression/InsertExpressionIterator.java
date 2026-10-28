@@ -113,7 +113,7 @@ public class InsertExpressionIterator extends UpdatingExpressionIterator {
                         "Insert expression selector is null",
                         this.getRuntimeStaticContext().getMetadata());
             }
-            if (!locator.isInt()) {
+            if (!locator.isWithinIntRange()) {
                 throw new CannotCastUpdateSelectorException(
                         "Insert expression selector cannot be cast to Int type",
                         this.getRuntimeStaticContext().getMetadata());

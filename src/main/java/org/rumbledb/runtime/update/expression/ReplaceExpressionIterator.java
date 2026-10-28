@@ -113,7 +113,7 @@ public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
             up = factory.createReplaceInObjectPrimitive(
                     target, locator, content, this.getRuntimeStaticContext().getMetadata());
         } else if (target.isArray()) {
-            if (!locator.isInt()) {
+            if (!locator.isWithinIntRange()) {
                 throw new CannotCastUpdateSelectorException(
                         "Replace expression selection cannot be cast to Int type",
                         this.getRuntimeStaticContext().getMetadata());
