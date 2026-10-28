@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -49,6 +50,14 @@ public class LongItem extends AbstractAtomicItem {
     @Override
     public Object getVariantValue() {
         return getLongValue();
+    }
+
+    @Override
+    public int getIntValue() {
+        if (!isWithinIntRange()) {
+            throw new OurBadException("Integer value is not within the int range.");
+        }
+        return (int) this.value;
     }
 
     @Override

@@ -966,21 +966,29 @@ public interface Item extends Serializable {
     }
 
     /**
-     * Returns the int value of the item, if it is an int.
+     * Returns an integer item's value as an int, rejecting values outside the int range.
      *
      * @return the integer value as an int.
+     * @throws OurBadException if the item is not an integer within the int range.
      */
     default int getIntValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        if (!isWithinIntRange()) {
+            throw new OurBadException("Item value is not within the int range.");
+        }
+        return getIntegerValue().intValue();
     }
 
     /**
      * Returns an integer item's value as a long, rejecting values outside the long range.
      *
      * @return the integer value as a long.
+     * @throws OurBadException if the item is not an integer within the long range.
      */
     default long getLongValue() {
-        return getIntegerValue().longValueExact();
+        if (!isWithinLongRange()) {
+            throw new OurBadException("Item value is not within the long range.");
+        }
+        return getIntegerValue().longValue();
     }
 
     /**

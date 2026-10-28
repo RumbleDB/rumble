@@ -34,7 +34,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
 
     public ReplaceInArrayPrimitive(
             Item targetArray, Item positionInt, Item replacementItem, ExceptionMetadata metadata) {
-        if (positionInt.castToIntValue() <= 0 || positionInt.castToIntValue() > targetArray.getSize()) {
+        if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize()) {
             throw new CannotResolveUpdateSelectorException(
                     "Cannot replace item at index out of range of target array", metadata);
         }
@@ -56,7 +56,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public void applyItem() {
-        int index = this.selector.castToIntValue() - 1;
+        int index = this.selector.getIntValue() - 1;
         if (index >= 0 || index < this.target.getSize()) {
             this.target.removeItemAt(index);
             if (index == this.target.getSize()) {
@@ -123,7 +123,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public int getIntSelector() {
-        return this.selector.castToIntValue();
+        return this.selector.getIntValue();
     }
 
     @Override

@@ -37,7 +37,7 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
 
     public InsertIntoArrayPrimitive(
             Item targetArray, Item positionInt, List<Item> sourceSequence, ExceptionMetadata metadata) {
-        if (positionInt.castToIntValue() <= 0 || positionInt.castToIntValue() > targetArray.getSize() + 1) {
+        if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize() + 1) {
             throw new CannotResolveUpdateSelectorException(
                     "Cannot insert item at index out of range of target array", metadata);
         }
@@ -59,7 +59,7 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public void applyItem() {
-        this.target.putItemsAt(this.content, this.selector.castToIntValue() - 1);
+        this.target.putItemsAt(this.content, this.selector.getIntValue() - 1);
     }
 
     @Override
@@ -119,7 +119,7 @@ public class InsertIntoArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public int getIntSelector() {
-        return this.selector.castToIntValue();
+        return this.selector.getIntValue();
     }
 
     @Override

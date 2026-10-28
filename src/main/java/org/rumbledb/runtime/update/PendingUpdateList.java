@@ -378,9 +378,7 @@ public class PendingUpdateList {
                         continue;
                     } else {
                         throw new TooManyReplacesOnSameTargetSelectorException(
-                                target.getDynamicType().getName(),
-                                Integer.toString(selector.castToIntValue()),
-                                metadata);
+                                target.getDynamicType().getName(), Integer.toString(selector.getIntValue()), metadata);
                     }
                 }
                 tempSelSrcResMap.put(selector, tempSrc);
