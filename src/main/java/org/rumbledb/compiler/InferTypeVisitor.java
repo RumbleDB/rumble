@@ -1441,8 +1441,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             return result;
         }
-        if (type.isArrayItemType() || type.isMapItemType()) {
-            return SequenceType.createSequenceType("item*");
+        if (LookupTyping.isCallableLookupInput(type)) {
+            return LookupTyping.inferLookupCallType(type);
         }
         if (!type.isFunctionItemType()) {
             this.errors.report(

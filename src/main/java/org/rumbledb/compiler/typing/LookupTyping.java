@@ -116,6 +116,16 @@ public final class LookupTyping {
                 : new SequenceType(value.getItemType(), value.getCardinality().union(SequenceCardinality.EMPTY));
     }
 
+    /** Whether a dynamic call can select from this item, like a lookup of one key. */
+    public static boolean isCallableLookupInput(ItemType itemType) {
+        return itemType.isMapItemType() || itemType.isArrayItemType() || itemType.isXQueryArrayItemType();
+    }
+
+    /** Infers a dynamic call $m(K) of a map or an array, which selects what the lookup $m?K does. */
+    public static SequenceType inferLookupCallType(ItemType itemType) {
+        return inferItemLookupType(itemType, false);
+    }
+
     private static SequenceType inferItemLookupType(ItemType itemType, boolean wildcard) {
         if (itemType.isMapItemType()) {
             return wildcard
