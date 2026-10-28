@@ -32,7 +32,6 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.ObjectInsertContentIsNotObjectSeqException;
 import org.rumbledb.exceptions.TransformModifiesNonCopiedValueException;
 import org.rumbledb.exceptions.UpdateTargetIsEmptySeqException;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
@@ -119,7 +118,6 @@ public class InsertExpressionIterator extends UpdatingExpressionIterator {
                         "Insert expression selector cannot be cast to Int type",
                         this.getRuntimeStaticContext().getMetadata());
             }
-            locator = ItemFactory.getInstance().createIntItem(locator.castToIntValue());
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target",

@@ -31,7 +31,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
     private Collection collection;
 
     public DeleteFromArrayPrimitive(Item targetArray, Item positionInt, ExceptionMetadata metadata) {
-        if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize()) {
+        if (positionInt.castToIntValue() <= 0 || positionInt.castToIntValue() > targetArray.getSize()) {
             throw new CannotResolveUpdateSelectorException(
                     "Cannot delete item at index out of range of target array", metadata);
         }
@@ -51,7 +51,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public void applyItem() {
-        this.target.removeItemAt(this.selector.getIntValue() - 1);
+        this.target.removeItemAt(this.selector.castToIntValue() - 1);
     }
 
     @Override
@@ -104,7 +104,7 @@ public class DeleteFromArrayPrimitive implements UpdatePrimitive {
 
     @Override
     public int getIntSelector() {
-        return this.selector.getIntValue();
+        return this.selector.castToIntValue();
     }
 
     @Override

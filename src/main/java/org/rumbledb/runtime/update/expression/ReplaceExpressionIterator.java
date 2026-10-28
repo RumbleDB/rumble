@@ -118,7 +118,6 @@ public class ReplaceExpressionIterator extends UpdatingExpressionIterator {
                         "Replace expression selection cannot be cast to Int type",
                         this.getRuntimeStaticContext().getMetadata());
             }
-            locator = ItemFactory.getInstance().createIntItem(locator.castToIntValue());
             if (context.getCurrentMutabilityLevel() == 0 && target.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target",
