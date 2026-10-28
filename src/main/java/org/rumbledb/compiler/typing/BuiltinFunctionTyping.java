@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
@@ -124,6 +125,20 @@ public final class BuiltinFunctionTyping {
         addMapRule("put", (call, staticContext) -> inferMapPutType(call));
         addMapRule("remove", (call, staticContext) -> typedMapArgument(call).map(SequenceType::new));
 
+        // The array functions keep the member type of their array, where their signatures say item* or array(*).
+        addArrayRule("get", (member, call) -> member);
+        addArrayRule("head", (member, call) -> member);
+        for (String localName : List.of("tail", "reverse", "remove", "subarray", "sort", "filter")) {
+            addArrayRule(localName, (member, call) -> arrayOf(member));
+        }
+        addArrayRule(
+                "append", (member, call) -> arrayOf(member, call.getArguments().get(1)));
+        addArrayRule(
+                "insert-before",
+                (member, call) -> arrayOf(member, call.getArguments().get(2)));
+        addArrayRule(
+                "put", (member, call) -> arrayOf(member, call.getArguments().get(2)));
+
         // For input functions, we read the schema of the data to annotate the static type precisely
         this.rules.put(
                 Name.createVariableInDefaultFunctionNamespace("parquet-file"),
@@ -184,6 +199,30 @@ public final class BuiltinFunctionTyping {
 
     private void addMapRule(String localName, ReturnTypeRule rule) {
         this.rules.put(new Name(Name.MAP_NS, "map", localName), rule);
+    }
+
+    /** A rule for a function whose first argument is one array, from the type of the array's members. */
+    private void addArrayRule(String localName, BiFunction<SequenceType, FunctionCallExpression, SequenceType> rule) {
+        this.rules.put(new Name(Name.ARRAY_NS, "array", localName), (call, staticContext) -> arrayMemberType(call)
+                .map(member -> rule.apply(member, call)));
+    }
+
+    private static Optional<SequenceType> arrayMemberType(FunctionCallExpression call) {
+        SequenceType type = call.getArguments().get(0).getStaticSequenceType();
+        ItemType array = type.getItemType();
+        return type.getArity() == SequenceType.Arity.One && (array.isArrayItemType() || array.isXQueryArrayItemType())
+                ? Optional.of(LookupTyping.inferLookupCallType(array))
+                : Optional.empty();
+    }
+
+    /** An array(M), which also holds a JSON array whose members are items of type M. */
+    private static SequenceType arrayOf(SequenceType member) {
+        return new SequenceType(ItemTypeFactory.xqueryArrayOf(member));
+    }
+
+    /** An array whose members are those of an array, or the value of an argument. */
+    private static SequenceType arrayOf(SequenceType member, Expression added) {
+        return arrayOf(member.leastCommonSupertypeWith(added.getStaticSequenceType()));
     }
 
     /** The type of the map passed as the first argument, when it is one map with known key and value types. */
