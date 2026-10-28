@@ -41,7 +41,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeAtomization;
 
@@ -77,13 +76,13 @@ public final class BuiltinFunctionTyping {
             return Optional.of(TypeAtomization.inferType(input));
         });
         addBuiltinRule("doc", this::inferDocumentType);
-        // set output type to the same of the first argument (special handling of numeric)
+        // fn:round keeps the type of a numeric argument. Others, such as nodes and untyped values, are converted to
+        // xs:double first, so the signature's xs:numeric? applies.
         addBuiltinRule("round", (call, staticContext) -> {
             SequenceType input = call.getArguments().get(0).getStaticSequenceType();
-            return Optional.of(
-                    TypeAtomization.containsNodeOrArray(input.getItemType())
-                            ? new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceCardinality.ZERO_OR_ONE)
-                            : input);
+            return input.isEmptySequence() || input.getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+                    ? Optional.of(input)
+                    : Optional.empty();
         });
         // set output type to 'Integer' if inputType is 'Array'
         addBuiltinRule(
