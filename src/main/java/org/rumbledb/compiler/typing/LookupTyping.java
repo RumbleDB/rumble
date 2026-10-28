@@ -15,10 +15,13 @@
  */
 package org.rumbledb.compiler.typing;
 
+import java.util.List;
+
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 
 /** Typing rules of JSONiq object and array lookups, array unboxing and XQuery ? lookups. */
@@ -74,27 +77,53 @@ public final class LookupTyping {
         return result;
     }
 
-    public SequenceType inferPostfixLookupType(SequenceType mainType, Node node) {
-        // no need to check lookupexpression and it might be null if wildcard
+    /** The items that an XQuery lookup can select from. */
+    private static final List<SequenceType> LOOKUP_INPUTS = List.of(
+            new SequenceType(BuiltinTypesCatalogue.mapItem, SequenceCardinality.ANY),
+            new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceCardinality.ANY),
+            new SequenceType(BuiltinTypesCatalogue.xqueryArrayItem, SequenceCardinality.ANY),
+            new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceCardinality.ANY));
 
-        boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
-        boolean overlapsMap = mainType.hasOverlapWith(SequenceType.createSequenceType("map*"));
-        if ((!overlapsObject && !overlapsMap) || mainType.isEmptySequence()) {
+    /**
+     * Infers an XQuery lookup E?K, or E?* when wildcard (XQuery 3.1, 3.11.3.1). Each input item contributes
+     * separately: a map the value of its key K, which may be absent, or all its values; an array its member at
+     * position K, or all its members.
+     */
+    public SequenceType inferPostfixLookupType(SequenceType mainType, boolean wildcard, Node node) {
+        if (mainType.isEmptySequence() || LOOKUP_INPUTS.stream().noneMatch(mainType::hasOverlapWith)) {
             this.errors.reportInferredEmpty(node);
+            return SequenceType.createSequenceType("item*");
         }
-
-        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
-                ? SequenceType.Arity.OneOrZero
-                : SequenceType.Arity.ZeroOrMore;
-
-        ItemType inferredType = BuiltinTypesCatalogue.item;
-        if (mainType.getItemType().isMapItemType()) {
-            SequenceType mapValueType = mainType.getItemType().getMapValueSequenceType();
-            inferredType = mapValueType.getItemType();
-            inferredArity = mapValueType.getArity();
+        SequenceType perItem = null;
+        for (ItemType member : mainType.getItemType().getMemberTypes()) {
+            SequenceType memberType = inferItemLookupType(member, wildcard);
+            perItem = perItem == null ? memberType : perItem.leastCommonSupertypeWith(memberType);
         }
+        return perItem.repeated(mainType.getCardinality());
+    }
 
-        return new SequenceType(inferredType, inferredArity);
+    private static SequenceType inferItemLookupType(ItemType itemType, boolean wildcard) {
+        if (itemType.isMapItemType()) {
+            SequenceType value = itemType.getMapValueSequenceType();
+            if (wildcard) {
+                return value.repeated(SequenceCardinality.ANY);
+            }
+            return value.isEmptySequence()
+                    ? value
+                    : new SequenceType(
+                            value.getItemType(), value.getCardinality().union(SequenceCardinality.EMPTY));
+        }
+        SequenceType member = null;
+        if (itemType.isXQueryArrayItemType()) {
+            member = itemType.getMemberSequenceType();
+        } else if (itemType.isArrayItemType()) {
+            member = new SequenceType(itemType.getArrayContentFacet());
+        }
+        if (member == null) {
+            return SequenceType.createSequenceType("item*");
+        }
+        // A position outside the array is an error, not the empty sequence.
+        return wildcard ? member.repeated(SequenceCardinality.ANY) : member;
     }
 
     public SequenceType inferArrayUnboxingType(SequenceType mainType, Node node) {
