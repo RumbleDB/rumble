@@ -1824,13 +1824,25 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 typeOf(expression.getMainExpression(), expression).getItemType();
         ItemType resultItemType = sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)
                         || sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
-                ? sourceItemType
+                ? withoutTypeAnnotation(sourceItemType)
                 : BuiltinTypesCatalogue.nodeItem;
         resultItemType = inferValidatedType(expression, sourceItemType).orElse(resultItemType);
 
         // Successful validation always returns exactly one copied node.
         expression.setStaticSequenceType(new SequenceType(resultItemType, SequenceType.Arity.One));
         return argument;
+    }
+
+    /** Validation annotates the copy anew, so an element keeps only its name, such as element(a, xs:untyped). */
+    private static ItemType withoutTypeAnnotation(ItemType source) {
+        if (!(source instanceof ElementNodeItemType element)
+                || source instanceof SchemaElementNodeItemType
+                || element.getSchemaTypeName() == null) {
+            return source;
+        }
+        return element.getNodeName() == null
+                ? BuiltinTypesCatalogue.elementNode
+                : ItemTypeFactory.elementNodeItemType(element.getNodeName());
     }
 
     /** Validating a document validates its single element child. */
