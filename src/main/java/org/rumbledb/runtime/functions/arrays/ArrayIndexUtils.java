@@ -15,7 +15,6 @@
  */
 package org.rumbledb.runtime.functions.arrays;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,12 +52,25 @@ public final class ArrayIndexUtils {
     }
 
     public static int getZeroBasedPosition(Item selector, int arraySize, ExceptionMetadata metadata) {
-        BigInteger position =
-                selector.isInteger() ? selector.castToIntegerValue() : BigInteger.valueOf(selector.castToIntValue());
-        if (position.compareTo(BigInteger.ONE) < 0 || position.compareTo(BigInteger.valueOf(arraySize)) > 0) {
+        if (selector.isInteger()) {
+            if (selector.isWithinIntRange()) {
+                int position = selector.getIntValue();
+                if (position >= 1 && position <= arraySize) {
+                    return position - 1;
+                }
+            }
+            throw new ArrayIndexOutOfBoundsException(
+                    "Tried to access array index: "
+                            + selector.getStringValue()
+                            + ", of array with length: "
+                            + arraySize,
+                    metadata);
+        }
+        int position = selector.castToIntValue();
+        if (position < 1 || position > arraySize) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: " + position + ", of array with length: " + arraySize, metadata);
         }
-        return position.intValue() - 1;
+        return position - 1;
     }
 }
