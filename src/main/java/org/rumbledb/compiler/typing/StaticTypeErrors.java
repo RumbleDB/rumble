@@ -35,9 +35,10 @@ import org.rumbledb.types.SequenceType;
  * otherwise, since the runtime uses them.
  *
  * <p>
- * Only the first error of each top-level unit is kept: a function declaration, a global variable declaration or
- * the main body. After an error, the types inferred are fallbacks, so later errors in the same unit, or in a unit
- * that uses a global variable whose declaration had an error, are usually consequences of the first one.
+ * Only the first error of each top-level unit is kept: a function declaration, a global variable declaration, a
+ * statement of the main program or its final expression. After an error, the types inferred are fallbacks, so later
+ * errors in the same unit, or in a unit that uses a variable whose declaration had an error, are usually consequences
+ * of the first one.
  */
 public final class StaticTypeErrors {
 
@@ -45,7 +46,7 @@ public final class StaticTypeErrors {
 
     private final List<RumbleException> errors = new ArrayList<>();
 
-    /** The global variables whose declaration had an error, so that their type is not reliable. */
+    /** The variables whose declaration had an error, so that their type is not reliable. */
     private final Set<Name> unreliableVariables = new HashSet<>();
 
     /** Whether the unit being typed had an error, or uses an unreliable variable. */
@@ -97,7 +98,7 @@ public final class StaticTypeErrors {
         }
     }
 
-    /** Records that the declaration of a global variable had an error. */
+    /** Records that the declaration of a variable had an error. */
     public void markUnreliable(Name variable) {
         this.unreliableVariables.add(variable);
     }

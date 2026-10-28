@@ -101,6 +101,7 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
@@ -1779,14 +1780,39 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
-        for (Node child : mainModule.getChildren()) {
-            if (child instanceof Prolog) {
-                visit(child, mainModule.getStaticContext());
-            } else {
-                this.errors.typeUnit(() -> visit(child, mainModule.getStaticContext()));
+        visitDescendants(mainModule, mainModule.getStaticContext());
+        return argument;
+    }
+
+    /**
+     * Each statement of the main program, and its final expression, is a unit with its own first error, like a
+     * declaration of the prolog. A statement with an error makes the variables it declares unreliable.
+     */
+    @Override
+    public StaticContext visitProgram(Program program, StaticContext argument) {
+        StatementsAndOptionalExpr body = program.getStatementsAndOptionalExpr();
+        for (Statement statement : body.getStatements()) {
+            if (this.errors.typeUnit(() -> visit(statement, argument))) {
+                declaredVariables(statement).forEach(this.errors::markUnreliable);
             }
         }
+        if (body.getExpression() != null) {
+            this.errors.typeUnit(() -> visit(body.getExpression(), argument));
+        }
+        body.setStaticSequenceType(inferStatementsAndOptionalExprType(body));
         return argument;
+    }
+
+    private static List<Name> declaredVariables(Statement statement) {
+        if (statement instanceof VariableDeclStatement declaration) {
+            return List.of(declaration.getVariableName());
+        }
+        if (statement instanceof CommaVariableDeclStatement declarations) {
+            return declarations.getVariables().stream()
+                    .map(VariableDeclStatement::getVariableName)
+                    .toList();
+        }
+        return List.of();
     }
 
     @Override
@@ -2068,14 +2094,18 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitStatementsAndOptionalExpr(
             StatementsAndOptionalExpr statementsAndOptionalExpr, StaticContext argument) {
-        SequenceType inferredType = SequenceType.createSequenceType("()");
         visitDescendants(statementsAndOptionalExpr, argument);
-        if (statementsAndOptionalExpr.getExpression() != null) {
-            inferredType = inferredType.concatenateWith(
-                    typeOf(statementsAndOptionalExpr.getExpression(), statementsAndOptionalExpr));
-        }
-        statementsAndOptionalExpr.setStaticSequenceType(inferredType);
+        statementsAndOptionalExpr.setStaticSequenceType(inferStatementsAndOptionalExprType(statementsAndOptionalExpr));
         return argument;
+    }
+
+    /** Statements return nothing, so the type is that of the final expression, if any. */
+    private static SequenceType inferStatementsAndOptionalExprType(
+            StatementsAndOptionalExpr statementsAndOptionalExpr) {
+        Expression expression = statementsAndOptionalExpr.getExpression();
+        return expression == null
+                ? SequenceType.createSequenceType("()")
+                : typeOf(expression, statementsAndOptionalExpr);
     }
 
     @Override

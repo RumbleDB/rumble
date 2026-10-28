@@ -59,6 +59,17 @@ class StaticTypeErrorsTest {
     }
 
     @Test
+    void reportsAnErrorPerStatementOfTheMainProgram() {
+        // The statement on line 4 uses $a, whose declaration failed.
+        List<RumbleException> errors = errors("variable $a := 1 + \"a\";\n"
+                + "variable $b as integer := 2;\n"
+                + "$b := \"b\";\n"
+                + "variable $c := $a + 1;\n"
+                + "$b + \"c\"");
+        Assertions.assertEquals(List.of(1, 3, 5), lines(errors));
+    }
+
+    @Test
     void throwsASingleErrorAsItIs() {
         RumbleException error = Assertions.assertThrows(RumbleException.class, () -> compile("1 + \"a\""));
         Assertions.assertEquals(UnexpectedStaticTypeException.class, error.getClass());
