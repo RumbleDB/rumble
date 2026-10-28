@@ -149,7 +149,12 @@ public final class LookupTyping {
         if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
             this.errors.reportInferredEmpty(node);
         }
-        ItemType contentType = inferArrayContentType(mainType.getItemType());
+        return inferArrayMembersType(mainType);
+    }
+
+    /** Infers E[], or members(E): the members of the arrays among the items of E. */
+    public static SequenceType inferArrayMembersType(SequenceType type) {
+        ItemType contentType = inferArrayContentType(type.getItemType());
         if (contentType != null) {
             return new SequenceType(contentType, SequenceType.Arity.ZeroOrMore);
         }
@@ -201,7 +206,7 @@ public final class LookupTyping {
      * Nonarray alternatives contribute no results. Returns Java null when no array is possible;
      * a broad type that could contain arrays instead contributes item.
      */
-    private ItemType inferArrayContentType(ItemType itemType) {
+    private static ItemType inferArrayContentType(ItemType itemType) {
         if (itemType.isUnionType()) {
             ItemType result = null;
             for (ItemType member : itemType.getTypes()) {
