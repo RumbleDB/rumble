@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -60,8 +61,15 @@ import org.rumbledb.resources.ResolvedResource;
  */
 public final class XmlSchemaCatalogLoader {
 
-    private static final String EMPTY_SCHEMA = "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\"/>";
-    private static final String EMPTY_SCHEMA_SYSTEM_ID = "urn:rumbledb:built-in-schema-environment";
+    // Make xml:id visible to Xerces's ID table even when no user schema declares it.
+    private static final String XML_ID_SCHEMA =
+            """
+                <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+                           targetNamespace="http://www.w3.org/XML/1998/namespace">
+                  <xs:attribute name="id" type="xs:ID"/>
+                </xs:schema>
+                """;
+    private static final String XML_ID_SCHEMA_SYSTEM_ID = "urn:rumbledb:xml-id-schema";
 
     private XmlSchemaCatalogLoader() {}
 
@@ -72,11 +80,10 @@ public final class XmlSchemaCatalogLoader {
             XMLSchemaFactory schemaFactory = new XMLSchemaFactory();
             schemaFactory.setErrorHandler(errorHandler);
 
-            // Although the schema has no user declarations, Xerces supplies the standard built-in types such as
-            // xs:anyType.
+            // Xerces also supplies the standard built-in types such as xs:anyType.
             // This allows lax and strict validation to run even when the query has no schema imports.
-            StreamSource source = new StreamSource(new StringReader(EMPTY_SCHEMA));
-            source.setSystemId(EMPTY_SCHEMA_SYSTEM_ID);
+            StreamSource source = new StreamSource(new StringReader(XML_ID_SCHEMA));
+            source.setSystemId(XML_ID_SCHEMA_SYSTEM_ID);
 
             LoadedSchema loadedSchema = loadedSchema(schemaFactory.newSchema(source), errorHandler, metadata);
             return new XmlSchemaCatalog(loadedSchema.schemaModel(), loadedSchema.validationSchema(), Map.of());
@@ -211,8 +218,21 @@ public final class XmlSchemaCatalogLoader {
         schemaFactory.setFeature("http://apache.org/xml/features/namespace-growth", true);
         schemaFactory.setResourceResolver(resolver);
         schemaFactory.setErrorHandler(errorHandler);
-        Source[] sources = locations.stream().map(resolver::resolveSource).toArray(Source[]::new);
-        return loadedSchema(schemaFactory.newSchema(sources), errorHandler, metadata);
+        List<Source> sources =
+                new ArrayList<>(locations.stream().map(resolver::resolveSource).toList());
+        LoadedSchema loaded =
+                loadedSchema(schemaFactory.newSchema(sources.toArray(Source[]::new)), errorHandler, metadata);
+        if (loaded.schemaModel().getAttributeDeclaration("id", Name.XML_NS) != null) {
+            return loaded;
+        }
+        // Preserve explicit XML namespace declarations, adding only a missing xml:id declaration.
+        // Resolve fresh streams because Xerces consumed the first set while compiling the user schemas.
+        sources =
+                new ArrayList<>(locations.stream().map(resolver::resolveSource).toList());
+        StreamSource xmlId = new StreamSource(new StringReader(XML_ID_SCHEMA));
+        xmlId.setSystemId(XML_ID_SCHEMA_SYSTEM_ID);
+        sources.add(xmlId);
+        return loadedSchema(schemaFactory.newSchema(sources.toArray(Source[]::new)), errorHandler, metadata);
     }
 
     private static LoadedSchema loadedSchema(
