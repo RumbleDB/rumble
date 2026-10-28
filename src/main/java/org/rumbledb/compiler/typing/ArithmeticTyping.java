@@ -69,7 +69,10 @@ public final class ArithmeticTyping {
 
         SequenceType.Arity inferredArity = AtomizedOperands.resolveArities(leftType, rightType);
         if (inferredArity == null) {
-            this.errors.report("'+' and '*' arities are not allowed for the operands of " + operator, node);
+            this.errors.report(
+                    "'+' and '*' arities are not allowed for the operands of " + operator,
+                    node,
+                    AtomizedOperands.mayBeSingleton(leftType) && AtomizedOperands.mayBeSingleton(rightType));
             inferredArity = SequenceType.Arity.OneOrZero;
         }
 
@@ -82,7 +85,11 @@ public final class ArithmeticTyping {
             } else {
                 this.errors.report(
                         "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
-                        node);
+                        node,
+                        !TypeAtomization.isNeverAtomizable(leftType.getItemType())
+                                && !TypeAtomization.isNeverAtomizable(rightType.getItemType())
+                                && (TypeAtomization.mayAtomizeToAnyType(leftType.getItemType())
+                                        || TypeAtomization.mayAtomizeToAnyType(rightType.getItemType())));
             }
             inferredType = BuiltinTypesCatalogue.atomicItem;
         }
@@ -249,7 +256,10 @@ public final class ArithmeticTyping {
 
         SequenceType.Arity resultArity = AtomizedOperands.atomizedSingletonArity(childInferredType);
         if (resultArity == null) {
-            this.errors.report("'+' and '*' arities are not allowed for unary expressions", node);
+            this.errors.report(
+                    "'+' and '*' arities are not allowed for unary expressions",
+                    node,
+                    AtomizedOperands.mayBeSingleton(childInferredType));
             resultArity = SequenceType.Arity.OneOrZero;
         }
 
@@ -262,7 +272,8 @@ public final class ArithmeticTyping {
             } else {
                 this.errors.report(
                         "It is not possible to have a unary expression with the following type: " + childInferredType,
-                        node);
+                        node,
+                        TypeAtomization.mayAtomizeToAnyType(childInferredType.getItemType()));
             }
             childItemType = BuiltinTypesCatalogue.numericItem;
         }

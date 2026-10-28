@@ -50,7 +50,10 @@ public final class ComparisonTyping {
             returnArity = AtomizedOperands.resolveArities(leftInferredType, rightInferredType);
             if (returnArity == null) {
                 this.errors.report(
-                        "'+' and '*' arities are not allowed for this comparison operator: " + operator, node);
+                        "'+' and '*' arities are not allowed for this comparison operator: " + operator,
+                        node,
+                        AtomizedOperands.mayBeSingleton(leftInferredType)
+                                && AtomizedOperands.mayBeSingleton(rightInferredType));
                 returnArity = SequenceType.Arity.OneOrZero;
             }
         }
@@ -75,7 +78,9 @@ public final class ComparisonTyping {
                                 + operator
                                 + " "
                                 + rightItemType,
-                        node);
+                        node,
+                        TypeAtomization.mayAtomizeToAnyType(leftItemType)
+                                || TypeAtomization.mayAtomizeToAnyType(rightItemType));
             }
         }
 

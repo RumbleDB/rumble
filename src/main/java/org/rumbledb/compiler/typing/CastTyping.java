@@ -62,7 +62,12 @@ public final class CastTyping {
 
             SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(operandType);
             if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(targetType.getArity())) {
-                this.errors.report(castCardinalityMessage(operandType, atomizedOperand, targetType), node);
+                this.errors.report(
+                        castCardinalityMessage(operandType, atomizedOperand, targetType),
+                        node,
+                        atomizedOperand
+                                .getCardinality()
+                                .overlaps(SequenceCardinality.fromArity(targetType.getArity())));
             }
 
             // Check the type of result will casting to this schema type produce
@@ -99,7 +104,12 @@ public final class CastTyping {
 
         SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(operandType);
         if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(castedSequenceType.getArity())) {
-            this.errors.report(castCardinalityMessage(operandType, atomizedOperand, castedSequenceType), node);
+            this.errors.report(
+                    castCardinalityMessage(operandType, atomizedOperand, castedSequenceType),
+                    node,
+                    atomizedOperand
+                            .getCardinality()
+                            .overlaps(SequenceCardinality.fromArity(castedSequenceType.getArity())));
         }
 
         checkCastOperand(operandType, node);
@@ -141,7 +151,8 @@ public final class CastTyping {
             this.errors.report(
                     "A cast operand must be atomic after atomization, found " + operandType,
                     AtomizedOperands.nonAtomizableErrorCode(operandType.getItemType()),
-                    node);
+                    node,
+                    !TypeAtomization.isNeverAtomizable(operandType.getItemType()));
         }
     }
 
