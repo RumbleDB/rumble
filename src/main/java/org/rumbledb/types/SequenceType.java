@@ -22,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiPredicate;
 
 import lombok.Getter;
 import lombok.NonNull;
@@ -130,6 +131,61 @@ public class SequenceType implements Serializable {
                 && (this.itemType.isSubtypeOf(superType.itemType)
                         || this.itemType.canBePromotedTo(superType.itemType)
                         || FunctionCoercion.canItemTypeBeFunctionCoercedTo(this.itemType, superType.itemType));
+    }
+
+    /**
+     * Whether some value of this type also matches the other type: the empty sequence if both allow it, or a
+     * sequence of a size both allow, of items that may have both item types. It is false only when no value of this
+     * type matches, so that a check against the other type always fails.
+     */
+    public boolean mayMatch(SequenceType other) {
+        return mayMatch(other, ItemType::mayOverlapWith);
+    }
+
+    /** Like {@link #mayMatch}, also allowing the promotions and coercions of isSubtypeOfOrCanBePromotedTo. */
+    public boolean mayMatchOrBePromotedTo(SequenceType other) {
+        return mayMatch(
+                other,
+                (member, target) -> member.mayOverlapWith(target)
+                        || member.canBePromotedTo(target)
+                        || FunctionCoercion.canItemTypeBeFunctionCoercedTo(member, target));
+    }
+
+    private boolean mayMatch(SequenceType other, BiPredicate<ItemType, ItemType> itemsMayMatch) {
+        if (this.cardinality.allowsZero() && other.cardinality.allowsZero()) {
+            return true;
+        }
+        boolean sizesMayMatch = (this.cardinality.allowsOne() && other.cardinality.allowsOne())
+                || (this.cardinality.allowsMany() && other.cardinality.allowsMany());
+        return sizesMayMatch
+                && this.itemType.getMemberTypes().stream().anyMatch(member -> other.itemType.getMemberTypes().stream()
+                        .anyMatch(target -> itemsMayMatch.test(member, target)));
+    }
+
+    /**
+     * Whether some value of this type has an effective boolean value. It is false only when none has, so that taking
+     * it always fails.
+     */
+    public boolean mayHaveEffectiveBooleanValue() {
+        if (this.cardinality.allowsZero()) {
+            return true;
+        }
+        // A single item suffices, if one is allowed. Otherwise the first of several items must be a node or JSON.
+        SequenceCardinality size = this.cardinality.allowsOne() ? SequenceCardinality.ONE : SequenceCardinality.MANY;
+        // The kinds of items that can give a sequence its effective boolean value. BuiltinTypesCatalogue creates
+        // sequence types, so this cannot be a static field of this class.
+        List<ItemType> kinds = List.of(
+                BuiltinTypesCatalogue.nodeItem,
+                BuiltinTypesCatalogue.JSONItem,
+                BuiltinTypesCatalogue.booleanItem,
+                BuiltinTypesCatalogue.stringItem,
+                BuiltinTypesCatalogue.numericItem,
+                BuiltinTypesCatalogue.anyURIItem,
+                BuiltinTypesCatalogue.untypedAtomicItem,
+                BuiltinTypesCatalogue.nullItem);
+        return kinds.stream()
+                .anyMatch(kind ->
+                        this.itemType.mayOverlapWith(kind) && new SequenceType(kind, size).hasEffectiveBooleanValue());
     }
 
     public boolean isAritySubtypeOf(Arity superArity) {

@@ -151,7 +151,11 @@ public final class ComparisonTyping {
         SequenceType operandType = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceCardinality.ZERO_OR_ONE);
         for (SequenceType type : List.of(leftType, rightType)) {
             if (!type.isSubtypeOf(operandType)) {
-                this.errors.report("A node comparison operand must be a single node or empty, found " + type, node);
+                this.errors.reportMismatch(
+                        "A node comparison operand must be a single node or empty, found " + type,
+                        type,
+                        operandType,
+                        node);
             }
         }
 

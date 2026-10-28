@@ -649,6 +649,15 @@ public interface ItemType extends Serializable {
      * Returns the types a value of this type can have: the members of a union, with nested unions expanded, or this
      * type itself.
      */
+    /**
+     * Whether an item may have both types: some member of one is a subtype of some member of the other. Types such
+     * as xs:integer and xs:string, or element(a) and element(b), have no item in common.
+     */
+    default boolean mayOverlapWith(ItemType other) {
+        return getMemberTypes().stream().anyMatch(member -> other.getMemberTypes().stream()
+                .anyMatch(target -> member.isSubtypeOf(target) || target.isSubtypeOf(member)));
+    }
+
     default List<ItemType> getMemberTypes() {
         if (!isUnionType()) {
             return List.of(this);

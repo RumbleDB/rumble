@@ -70,6 +70,24 @@ class StaticTypeErrorsTest {
     }
 
     @Test
+    void tellsWhetherAnErrorIsCertain() {
+        // An item* value is an integer when it is one integer, but a string never is.
+        List<RumbleException> errors = errors("declare function local:f($x) as integer { $x };\n"
+                + "declare function local:g() as integer { \"a\" };\n"
+                + "1");
+        Assertions.assertEquals(List.of(false, true), certainties(errors));
+    }
+
+    @Test
+    void reportsTheErrorsAfterAPossibleOneInTheSameUnit() {
+        List<RumbleException> errors = errors("declare function local:f($x as integer) { $x };\n"
+                + "declare function local:g($y) {\n  (local:f($y),\n  1 + \"a\")\n};\n"
+                + "1");
+        Assertions.assertEquals(List.of(3, 4), lines(errors));
+        Assertions.assertEquals(List.of(false, true), certainties(errors));
+    }
+
+    @Test
     void throwsASingleErrorAsItIs() {
         RumbleException error = Assertions.assertThrows(RumbleException.class, () -> compile("1 + \"a\""));
         Assertions.assertEquals(UnexpectedStaticTypeException.class, error.getClass());
@@ -83,6 +101,12 @@ class StaticTypeErrorsTest {
     private static List<Integer> lines(List<RumbleException> errors) {
         return errors.stream()
                 .map(error -> error.getMetadata().getStart().line())
+                .toList();
+    }
+
+    private static List<Boolean> certainties(List<RumbleException> errors) {
+        return errors.stream()
+                .map(error -> ((UnexpectedStaticTypeException) error).isCertain())
                 .toList();
     }
 

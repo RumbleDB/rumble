@@ -16,7 +16,9 @@
 package org.rumbledb.compiler.typing;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -39,6 +41,12 @@ import org.rumbledb.types.SequenceType;
  * statement of the main program or its final expression. After an error, the types inferred are fallbacks, so later
  * errors in the same unit, or in a unit that uses a variable whose declaration had an error, are usually consequences
  * of the first one.
+ *
+ * <p>
+ * An error is certain when every value of the checked expression fails, and possible when only some do: an item*
+ * argument for an xs:integer parameter fails unless it is one integer. Static typing rejects both. A possible error
+ * does not make the rest of its unit unreliable, since the types inferred after it are those of the values that
+ * pass. Each node has at most one error.
  */
 public final class StaticTypeErrors {
 
@@ -49,22 +57,50 @@ public final class StaticTypeErrors {
     /** The variables whose declaration had an error, so that their type is not reliable. */
     private final Set<Name> unreliableVariables = new HashSet<>();
 
-    /** Whether the unit being typed had an error, or uses an unreliable variable. */
+    private final Set<Node> nodesWithErrors = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    /** Whether the unit being typed had a certain error, or uses an unreliable variable. */
     private boolean unitUnreliable;
 
     public StaticTypeErrors(RumbleConfiguration configuration) {
         this.configuration = configuration;
     }
 
+    /** Reports a certain error. */
     public void report(String message, Node node) {
         report(message, ErrorCode.UnexpectedTypeErrorCode, node);
     }
 
+    /** Reports a certain error. */
     public void report(String message, ErrorCode code, Node node) {
-        if (this.configuration.analysis().enableStaticTyping() && !this.unitUnreliable) {
-            this.unitUnreliable = true;
-            this.errors.add(new UnexpectedStaticTypeException(message, code, node.getMetadata()));
+        record(message, code, node, true);
+    }
+
+    /** Reports an error, which is possible when some values may still pass the check, and otherwise certain. */
+    public void report(String message, Node node, boolean mayPass) {
+        report(message, ErrorCode.UnexpectedTypeErrorCode, node, mayPass);
+    }
+
+    /** Reports an error, which is possible when some values may still pass the check, and otherwise certain. */
+    public void report(String message, ErrorCode code, Node node, boolean mayPass) {
+        record(message, code, node, !mayPass);
+    }
+
+    /** Reports that the actual type is not a subtype of the expected one, which is possible if they may overlap. */
+    public void reportMismatch(String message, SequenceType actual, SequenceType expected, Node node) {
+        report(message, node, actual.mayMatch(expected));
+    }
+
+    private void record(String message, ErrorCode code, Node node, boolean certain) {
+        if (!this.configuration.analysis().enableStaticTyping()
+                || this.unitUnreliable
+                || !this.nodesWithErrors.add(node)) {
+            return;
         }
+        if (certain) {
+            this.unitUnreliable = true;
+        }
+        this.errors.add(new UnexpectedStaticTypeException(message, code, node.getMetadata(), certain));
     }
 
     /** Static typing only allows a comma expression to be inferred as the empty sequence. */
@@ -86,7 +122,7 @@ public final class StaticTypeErrors {
         report(message, ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression, node);
     }
 
-    /** Types a top-level unit, and returns whether it had an error. */
+    /** Types a top-level unit, and returns whether it had a certain error. */
     public boolean typeUnit(Runnable typing) {
         boolean outerUnreliable = this.unitUnreliable;
         this.unitUnreliable = false;
