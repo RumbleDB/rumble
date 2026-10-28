@@ -1910,6 +1910,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         Expression leftExpression = (Expression) slashExpr.getChildren().get(0);
         Expression rightExpression = (Expression) slashExpr.getChildren().get(1);
         ItemRuntimePlan left = this.visit(leftExpression, argument);
+        if (left instanceof SlashExprIterator slash) slash.requireNodeResult();
         if (!isStaticallyGuaranteedNodeSequence(leftExpression)) {
             left = new TreatIterator(
                     left,
