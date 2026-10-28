@@ -191,7 +191,18 @@ public final class PathStepTyping {
                         && reverseStep.getReverseAxis().equals(ReverseAxis.PARENT))) {
             return SequenceType.Arity.OneOrZero;
         }
+        if (stepExpr instanceof ForwardStepExpr forwardStep
+                && forwardStep.getForwardAxis().equals(ForwardAxis.ATTRIBUTE)
+                && namesOneAttribute(stepExpr.getNodeTest())) {
+            // An element has at most one attribute of each name.
+            return SequenceType.Arity.OneOrZero;
+        }
         return SequenceType.Arity.ZeroOrMore;
+    }
+
+    private static boolean namesOneAttribute(NodeTest nodeTest) {
+        return (nodeTest instanceof NameTest nameTest && nameTest.hasQName())
+                || (nodeTest instanceof AttributeTest attributeTest && attributeTest.getAttributeName() != null);
     }
 
     private ItemType inferStepResultItemType(StepExpr stepExpr) {
