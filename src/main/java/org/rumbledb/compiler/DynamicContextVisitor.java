@@ -48,6 +48,7 @@ import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -517,35 +518,33 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
         @Serial
         private Object writeReplace() {
-            // A Spark initializer can serialize its module context before it has produced a
-            // value. Preserve a cycle check for that binding without evaluating it again merely
-            // because an unrelated task captures the context.
-            if (this.evaluating) return new InitializingGlobalVariableValue(this.metadata);
-            return new ArrayList<>(value());
+            // Capturing a module context must not turn an unrelated initializer error (or
+            // an in-progress value) into Task not serializable. The prolog will report the
+            // error normally; a task that actually reads this binding still receives it.
+            try {
+                return new ArrayList<>(value());
+            } catch (RumbleException exception) {
+                return new GlobalVariableFailure(exception);
+            }
         }
     }
 
-    private static final class InitializingGlobalVariableValue extends AbstractList<Item> implements Serializable {
+    private static final class GlobalVariableFailure extends AbstractList<Item> implements Serializable {
         private static final long serialVersionUID = 1L;
-        private final ExceptionMetadata metadata;
+        private final RumbleException exception;
 
-        InitializingGlobalVariableValue(ExceptionMetadata metadata) {
-            this.metadata = metadata;
+        GlobalVariableFailure(RumbleException exception) {
+            this.exception = exception;
         }
 
         @Override
         public Item get(int index) {
-            throw cycle();
+            throw this.exception;
         }
 
         @Override
         public int size() {
-            throw cycle();
-        }
-
-        private CycleInVariableDeclarationsException cycle() {
-            return new CycleInVariableDeclarationsException(
-                    "A global variable initializer depends on its own value.", this.metadata);
+            throw this.exception;
         }
     }
 }
