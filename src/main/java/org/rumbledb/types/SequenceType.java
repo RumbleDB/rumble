@@ -17,8 +17,7 @@ package org.rumbledb.types;
 
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -356,693 +355,80 @@ public class SequenceType implements Serializable {
         sequenceTypes = new HashMap<>();
     }
 
-    public static SequenceType createSequenceType(String userFriendlyName) {
-        // lazily caching of sequence types
-        SequenceType st = sequenceTypes.get(userFriendlyName);
-        if (st != null) {
-            return st;
+    /**
+     * Returns the sequence type of a notation such as "integer?", "item*", "node()+" or "function(item*) as boolean",
+     * whose item types are builtin types named without a prefix. Builtin function signatures are written this way.
+     */
+    public static SequenceType createSequenceType(String notation) {
+        // Not computeIfAbsent: parsing a function notation creates the sequence types of its parameters.
+        SequenceType sequenceType = sequenceTypes.get(notation);
+        if (sequenceType == null) {
+            sequenceType = parseSequenceType(notation);
+            sequenceTypes.put(notation, sequenceType);
         }
-        // if not found in cache, create the sequence type on the fly, cache it and return
-        switch (userFriendlyName) {
-            case "()":
-                st = new SequenceType();
-                break;
-            case "item":
-                st = new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.One);
-                break;
-            case "item?":
-                st = new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.OneOrZero);
-                break;
-            case "item*":
-                st = new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "item+":
-                st = new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.OneOrMore);
-                break;
-            case "object":
-                st = new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.One);
-                break;
-            case "object+":
-                st = new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "object?":
-                st = new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "object*":
-                st = new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "json-item":
-                st = new SequenceType(BuiltinTypesCatalogue.JSONItem, SequenceType.Arity.One);
-                break;
-            case "json-item?":
-                st = new SequenceType(BuiltinTypesCatalogue.JSONItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "json-item*":
-                st = new SequenceType(BuiltinTypesCatalogue.JSONItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "json-item+":
-                st = new SequenceType(BuiltinTypesCatalogue.JSONItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "array":
-                st = new SequenceType(BuiltinTypesCatalogue.xqueryArrayItem, SequenceType.Arity.One);
-                break;
-            case "array?":
-                st = new SequenceType(BuiltinTypesCatalogue.xqueryArrayItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "array*":
-                st = new SequenceType(BuiltinTypesCatalogue.xqueryArrayItem, Arity.ZeroOrMore);
-                break;
-            case "array+":
-                st = new SequenceType(BuiltinTypesCatalogue.xqueryArrayItem, Arity.OneOrMore);
-                break;
-            case "item-array":
-                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One);
-                break;
-            case "item-array?":
-                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "item-array*":
-                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.ZeroOrMore);
-                break;
-            case "item-array+":
-                st = new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.OneOrMore);
-                break;
-            case "anyAtomicType":
-                st = new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One);
-                break;
-            case "anyAtomicType+":
-                st = new SequenceType(BuiltinTypesCatalogue.atomicItem, Arity.OneOrMore);
-                break;
-            case "anyAtomicType?":
-                st = new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "anyAtomicType*":
-                st = new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "error":
-                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.One);
-                break;
-            case "error+":
-                st = new SequenceType(BuiltinTypesCatalogue.errorItem, Arity.OneOrMore);
-                break;
-            case "error?":
-                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "error*":
-                st = new SequenceType(BuiltinTypesCatalogue.errorItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "string":
-                st = new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.One);
-                break;
-            case "string?":
-                st = new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "string*":
-                st = new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "string+":
-                st = new SequenceType(BuiltinTypesCatalogue.stringItem, Arity.OneOrMore);
-                break;
-            case "integer":
-                st = new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One);
-                break;
-            case "integer?":
-                st = new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "integer*":
-                st = new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "integer+":
-                st = new SequenceType(BuiltinTypesCatalogue.integerItem, Arity.OneOrMore);
-                break;
-            case "numeric?":
-                st = new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "numeric":
-                st = new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceType.Arity.One);
-                break;
-            case "numeric+":
-                st = new SequenceType(BuiltinTypesCatalogue.numericItem, Arity.OneOrMore);
-                break;
-            case "numeric*":
-                st = new SequenceType(BuiltinTypesCatalogue.numericItem, Arity.ZeroOrMore);
-                break;
-            case "decimal":
-                st = new SequenceType(BuiltinTypesCatalogue.decimalItem, SequenceType.Arity.One);
-                break;
-            case "decimal?":
-                st = new SequenceType(BuiltinTypesCatalogue.decimalItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "decimal+":
-                st = new SequenceType(BuiltinTypesCatalogue.decimalItem, Arity.OneOrMore);
-                break;
-            case "decimal*":
-                st = new SequenceType(BuiltinTypesCatalogue.decimalItem, Arity.ZeroOrMore);
-                break;
-            case "double":
-                st = new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One);
-                break;
-            case "double?":
-                st = new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "double+":
-                st = new SequenceType(BuiltinTypesCatalogue.doubleItem, Arity.OneOrMore);
-                break;
-            case "double*":
-                st = new SequenceType(BuiltinTypesCatalogue.doubleItem, Arity.ZeroOrMore);
-                break;
-            case "float":
-                st = new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.One);
-                break;
-            case "float?":
-                st = new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "float+":
-                st = new SequenceType(BuiltinTypesCatalogue.floatItem, Arity.OneOrMore);
-                break;
-            case "float*":
-                st = new SequenceType(BuiltinTypesCatalogue.floatItem, Arity.ZeroOrMore);
-                break;
-            case "boolean":
-                st = new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One);
-                break;
-            case "boolean?":
-                st = new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "boolean+":
-                st = new SequenceType(BuiltinTypesCatalogue.booleanItem, Arity.OneOrMore);
-                break;
-            case "boolean*":
-                st = new SequenceType(BuiltinTypesCatalogue.booleanItem, Arity.ZeroOrMore);
-                break;
-            case "duration":
-                st = new SequenceType(BuiltinTypesCatalogue.durationItem, SequenceType.Arity.One);
-                break;
-            case "duration?":
-                st = new SequenceType(BuiltinTypesCatalogue.durationItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "duration+":
-                st = new SequenceType(BuiltinTypesCatalogue.durationItem, Arity.OneOrMore);
-                break;
-            case "duration*":
-                st = new SequenceType(BuiltinTypesCatalogue.durationItem, Arity.ZeroOrMore);
-                break;
-            case "yearMonthDuration":
-                st = new SequenceType(BuiltinTypesCatalogue.yearMonthDurationItem, SequenceType.Arity.One);
-                break;
-            case "yearMonthDuration?":
-                st = new SequenceType(BuiltinTypesCatalogue.yearMonthDurationItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "yearMonthDuration*":
-                st = new SequenceType(BuiltinTypesCatalogue.yearMonthDurationItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "yearMonthDuration+":
-                st = new SequenceType(BuiltinTypesCatalogue.yearMonthDurationItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "dayTimeDuration":
-                st = new SequenceType(BuiltinTypesCatalogue.dayTimeDurationItem, SequenceType.Arity.One);
-                break;
-            case "dayTimeDuration?":
-                st = new SequenceType(BuiltinTypesCatalogue.dayTimeDurationItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "dayTimeDuration*":
-                st = new SequenceType(BuiltinTypesCatalogue.dayTimeDurationItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "dayTimeDuration+":
-                st = new SequenceType(BuiltinTypesCatalogue.dayTimeDurationItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "dateTime":
-                st = new SequenceType(BuiltinTypesCatalogue.dateTimeItem, SequenceType.Arity.One);
-                break;
-            case "dateTime?":
-                st = new SequenceType(BuiltinTypesCatalogue.dateTimeItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "dateTime*":
-                st = new SequenceType(BuiltinTypesCatalogue.dateTimeItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "dateTime+":
-                st = new SequenceType(BuiltinTypesCatalogue.dateTimeItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "dateTimeStamp":
-                st = new SequenceType(BuiltinTypesCatalogue.dateTimeStampItem, SequenceType.Arity.One);
-                break;
-            case "dateTimeStamp?":
-                st = new SequenceType(BuiltinTypesCatalogue.dateTimeStampItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "dateTimeStamp*":
-                st = new SequenceType(BuiltinTypesCatalogue.dateTimeStampItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "dateTimeStamp+":
-                st = new SequenceType(BuiltinTypesCatalogue.dateTimeStampItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "date":
-                st = new SequenceType(BuiltinTypesCatalogue.dateItem, SequenceType.Arity.One);
-                break;
-            case "date?":
-                st = new SequenceType(BuiltinTypesCatalogue.dateItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "date*":
-                st = new SequenceType(BuiltinTypesCatalogue.dateItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "date+":
-                st = new SequenceType(BuiltinTypesCatalogue.dateItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "time":
-                st = new SequenceType(BuiltinTypesCatalogue.timeItem, SequenceType.Arity.One);
-                break;
-            case "time?":
-                st = new SequenceType(BuiltinTypesCatalogue.timeItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "time*":
-                st = new SequenceType(BuiltinTypesCatalogue.timeItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "time+":
-                st = new SequenceType(BuiltinTypesCatalogue.timeItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "gDay":
-                st = new SequenceType(BuiltinTypesCatalogue.gDayItem, SequenceType.Arity.One);
-                break;
-            case "gDay?":
-                st = new SequenceType(BuiltinTypesCatalogue.gDayItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "gDay*":
-                st = new SequenceType(BuiltinTypesCatalogue.gDayItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "gDay+":
-                st = new SequenceType(BuiltinTypesCatalogue.gDayItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "gMonth":
-                st = new SequenceType(BuiltinTypesCatalogue.gMonthItem, SequenceType.Arity.One);
-                break;
-            case "gMonth?":
-                st = new SequenceType(BuiltinTypesCatalogue.gMonthItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "gMonth*":
-                st = new SequenceType(BuiltinTypesCatalogue.gMonthItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "gMonth+":
-                st = new SequenceType(BuiltinTypesCatalogue.gMonthItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "gYear":
-                st = new SequenceType(BuiltinTypesCatalogue.gYearItem, SequenceType.Arity.One);
-                break;
-            case "gYear?":
-                st = new SequenceType(BuiltinTypesCatalogue.gYearItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "gYear*":
-                st = new SequenceType(BuiltinTypesCatalogue.gYearItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "gYear+":
-                st = new SequenceType(BuiltinTypesCatalogue.gYearItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "gMonthDay":
-                st = new SequenceType(BuiltinTypesCatalogue.gMonthDayItem, SequenceType.Arity.One);
-                break;
-            case "gMonthDay?":
-                st = new SequenceType(BuiltinTypesCatalogue.gMonthDayItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "gMonthDay*":
-                st = new SequenceType(BuiltinTypesCatalogue.gMonthDayItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "gMonthDay+":
-                st = new SequenceType(BuiltinTypesCatalogue.gMonthDayItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "gYearMonth":
-                st = new SequenceType(BuiltinTypesCatalogue.gYearMonthItem, SequenceType.Arity.One);
-                break;
-            case "gYearMonth?":
-                st = new SequenceType(BuiltinTypesCatalogue.gYearMonthItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "gYearMonth*":
-                st = new SequenceType(BuiltinTypesCatalogue.gYearMonthItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "gYearMonth+":
-                st = new SequenceType(BuiltinTypesCatalogue.gYearMonthItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "language":
-                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.One);
-                break;
-            case "language?":
-                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "language*":
-                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "language+":
-                st = new SequenceType(BuiltinTypesCatalogue.languageItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "anyURI":
-                st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.One);
-                break;
-            case "anyURI+":
-                st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, Arity.OneOrMore);
-                break;
-            case "anyURI*":
-                st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, Arity.ZeroOrMore);
-                break;
-            case "anyURI?":
-                st = new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "hexBinary":
-                st = new SequenceType(BuiltinTypesCatalogue.hexBinaryItem, SequenceType.Arity.One);
-                break;
-            case "hexBinary?":
-                st = new SequenceType(BuiltinTypesCatalogue.hexBinaryItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "hexBinary*":
-                st = new SequenceType(BuiltinTypesCatalogue.hexBinaryItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "hexBinary+":
-                st = new SequenceType(BuiltinTypesCatalogue.hexBinaryItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "base64Binary":
-                st = new SequenceType(BuiltinTypesCatalogue.base64BinaryItem, SequenceType.Arity.One);
-                break;
-            case "base64Binary?":
-                st = new SequenceType(BuiltinTypesCatalogue.base64BinaryItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "base64Binary*":
-                st = new SequenceType(BuiltinTypesCatalogue.base64BinaryItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "base64Binary+":
-                st = new SequenceType(BuiltinTypesCatalogue.base64BinaryItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "null":
-                st = new SequenceType(BuiltinTypesCatalogue.nullItem, SequenceType.Arity.One);
-                break;
-            case "null?":
-                st = new SequenceType(BuiltinTypesCatalogue.nullItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "null*":
-                st = new SequenceType(BuiltinTypesCatalogue.nullItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "null+":
-                st = new SequenceType(BuiltinTypesCatalogue.nullItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "function(object*, object) as object*":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Arrays.asList(
-                                new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
-                                new SequenceType(BuiltinTypesCatalogue.objectItem)),
-                        new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore))));
-                break;
-            case "function(item*, item*) as item*":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Arrays.asList(
-                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore),
-                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)),
-                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
-                break;
-            case "function(item*) as item*":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Collections.singletonList(
-                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)),
-                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
-                break;
-            case "function(item*) as boolean":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Collections.singletonList(
-                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)),
-                        new SequenceType(BuiltinTypesCatalogue.booleanItem))));
-                break;
-            case "function(item) as item*":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Collections.singletonList(new SequenceType(BuiltinTypesCatalogue.item)),
-                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
-                break;
-            case "function(item) as boolean":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Collections.singletonList(new SequenceType(BuiltinTypesCatalogue.item)),
-                        new SequenceType(BuiltinTypesCatalogue.booleanItem))));
-                break;
-            case "function(item) as anyAtomicType*":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Collections.singletonList(new SequenceType(BuiltinTypesCatalogue.item)),
-                        new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore))));
-                break;
-            case "function(object*, object) as function(object*, object) as object*":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Arrays.asList(
-                                new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
-                                new SequenceType(BuiltinTypesCatalogue.objectItem)),
-                        new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                                Arrays.asList(
-                                        new SequenceType(
-                                                BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
-                                        new SequenceType(BuiltinTypesCatalogue.objectItem)),
-                                new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore)))))));
-                break;
-            case "function(anyAtomicType, item*) as item*":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Arrays.asList(
-                                new SequenceType(BuiltinTypesCatalogue.atomicItem),
-                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)),
-                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
-                break;
-            case "function(item, item) as item*":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Arrays.asList(
-                                new SequenceType(BuiltinTypesCatalogue.item),
-                                new SequenceType(BuiltinTypesCatalogue.item)),
-                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
-                break;
-            case "function(item*, item) as item*":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Arrays.asList(
-                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore),
-                                new SequenceType(BuiltinTypesCatalogue.item)),
-                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
-                break;
-            case "function(item, item*) as item*":
-                st = new SequenceType(ItemTypeFactory.createFunctionItemType(new FunctionSignature(
-                        Arrays.asList(
-                                new SequenceType(BuiltinTypesCatalogue.item),
-                                new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore)),
-                        new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore))));
-                break;
-            case "int":
-                st = new SequenceType(BuiltinTypesCatalogue.intItem, SequenceType.Arity.One);
-                break;
-            case "int?":
-                st = new SequenceType(BuiltinTypesCatalogue.intItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "int*":
-                st = new SequenceType(BuiltinTypesCatalogue.intItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "int+":
-                st = new SequenceType(BuiltinTypesCatalogue.intItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "long":
-                st = new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.One);
-                break;
-            case "long?":
-                st = new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "long*":
-                st = new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "long+":
-                st = new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "short":
-                st = new SequenceType(BuiltinTypesCatalogue.shortItem, SequenceType.Arity.One);
-                break;
-            case "short?":
-                st = new SequenceType(BuiltinTypesCatalogue.shortItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "short*":
-                st = new SequenceType(BuiltinTypesCatalogue.shortItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "short+":
-                st = new SequenceType(BuiltinTypesCatalogue.shortItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "byte":
-                st = new SequenceType(BuiltinTypesCatalogue.byteItem, SequenceType.Arity.One);
-                break;
-            case "byte?":
-                st = new SequenceType(BuiltinTypesCatalogue.byteItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "byte*":
-                st = new SequenceType(BuiltinTypesCatalogue.byteItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "byte+":
-                st = new SequenceType(BuiltinTypesCatalogue.byteItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "positiveInteger":
-                st = new SequenceType(BuiltinTypesCatalogue.positiveIntegerItem, SequenceType.Arity.One);
-                break;
-            case "positiveInteger?":
-                st = new SequenceType(BuiltinTypesCatalogue.positiveIntegerItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "positiveInteger*":
-                st = new SequenceType(BuiltinTypesCatalogue.positiveIntegerItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "positiveInteger+":
-                st = new SequenceType(BuiltinTypesCatalogue.positiveIntegerItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "negativeInteger":
-                st = new SequenceType(BuiltinTypesCatalogue.negativeIntegerItem, SequenceType.Arity.One);
-                break;
-            case "negativeInteger?":
-                st = new SequenceType(BuiltinTypesCatalogue.negativeIntegerItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "negativeInteger*":
-                st = new SequenceType(BuiltinTypesCatalogue.negativeIntegerItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "negativeInteger+":
-                st = new SequenceType(BuiltinTypesCatalogue.negativeIntegerItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "nonPositiveInteger":
-                st = new SequenceType(BuiltinTypesCatalogue.nonPositiveIntegerItem, SequenceType.Arity.One);
-                break;
-            case "nonPositiveInteger?":
-                st = new SequenceType(BuiltinTypesCatalogue.nonPositiveIntegerItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "nonPositiveInteger*":
-                st = new SequenceType(BuiltinTypesCatalogue.nonPositiveIntegerItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "nonPositiveInteger+":
-                st = new SequenceType(BuiltinTypesCatalogue.nonPositiveIntegerItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "nonNegativeInteger":
-                st = new SequenceType(BuiltinTypesCatalogue.nonNegativeIntegerItem, SequenceType.Arity.One);
-                break;
-            case "nonNegativeInteger?":
-                st = new SequenceType(BuiltinTypesCatalogue.nonNegativeIntegerItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "nonNegativeInteger*":
-                st = new SequenceType(BuiltinTypesCatalogue.nonNegativeIntegerItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "nonNegativeInteger+":
-                st = new SequenceType(BuiltinTypesCatalogue.nonNegativeIntegerItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "unsignedInt":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedIntItem, SequenceType.Arity.One);
-                break;
-            case "unsignedInt?":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedIntItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "unsignedInt*":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedIntItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "unsignedInt+":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedIntItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "unsignedLong":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedLongItem, SequenceType.Arity.One);
-                break;
-            case "unsignedLong?":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedLongItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "unsignedLong*":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedLongItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "unsignedLong+":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedLongItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "unsignedShort":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedShortItem, SequenceType.Arity.One);
-                break;
-            case "unsignedShort?":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedShortItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "unsignedShort*":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedShortItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "unsignedShort+":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedShortItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "unsignedByte":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedByteItem, SequenceType.Arity.One);
-                break;
-            case "unsignedByte?":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedByteItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "unsignedByte*":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedByteItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "unsignedByte+":
-                st = new SequenceType(BuiltinTypesCatalogue.unsignedByteItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "map":
-                st = new SequenceType(BuiltinTypesCatalogue.mapItem, SequenceType.Arity.One);
-                break;
-            case "map?":
-                st = new SequenceType(BuiltinTypesCatalogue.mapItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "map*":
-                st = new SequenceType(BuiltinTypesCatalogue.mapItem, Arity.ZeroOrMore);
-                break;
-            case "map+":
-                st = new SequenceType(BuiltinTypesCatalogue.mapItem, Arity.OneOrMore);
-                break;
-            case "function":
-                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One);
-                break;
-            case "function(*)":
-                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.One);
-                break;
-            case "function?":
-                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.OneOrZero);
-                break;
-            case "function(*)?":
-                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.OneOrZero);
-                break;
-            case "function*":
-                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.ZeroOrMore);
-                break;
-            case "function(*)*":
-                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.ZeroOrMore);
-                break;
-            case "function+":
-                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.OneOrMore);
-                break;
-            case "function(*)+":
-                st = new SequenceType(BuiltinTypesCatalogue.anyFunctionItem, Arity.OneOrMore);
-                break;
-            case "QName":
-                st = new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.One);
-                break;
-            case "QName?":
-                st = new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "QName*":
-                st = new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "QName+":
-                st = new SequenceType(BuiltinTypesCatalogue.QNameItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "NCName":
-                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.One);
-                break;
-            case "NCName?":
-                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "NCName*":
-                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "NCName+":
-                st = new SequenceType(BuiltinTypesCatalogue.NCNameItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "node()":
-                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.One);
-                break;
-            case "node()?":
-                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.OneOrZero);
-                break;
-            case "node()*":
-                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore);
-                break;
-            case "node()+":
-                st = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.OneOrMore);
-                break;
-            case "document-node()?":
-                st = new SequenceType(BuiltinTypesCatalogue.documentNode, SequenceType.Arity.OneOrZero);
-                break;
-            default:
-                throw new OurBadException("Unrecognized type: " + userFriendlyName);
+        return sequenceType;
+    }
+
+    private static SequenceType parseSequenceType(String notation) {
+        if (notation.equals("()")) {
+            return new SequenceType();
         }
-        sequenceTypes.put(userFriendlyName, st);
-        return st;
+        // The occurrence indicator of function(item*) as item* belongs to its return type.
+        if (notation.startsWith("function(") && !notation.startsWith("function(*)")) {
+            return new SequenceType(parseFunctionItemType(notation));
+        }
+        Arity arity =
+                switch (notation.charAt(notation.length() - 1)) {
+                    case '?' -> Arity.OneOrZero;
+                    case '*' -> Arity.ZeroOrMore;
+                    case '+' -> Arity.OneOrMore;
+                    default -> Arity.One;
+                };
+        String itemType = arity == Arity.One ? notation : notation.substring(0, notation.length() - 1);
+        return new SequenceType(parseItemType(itemType), arity);
+    }
+
+    /** Resolves a builtin type by its local name, as in node() or integer, except for arrays and functions. */
+    private static ItemType parseItemType(String name) {
+        return switch (name) {
+                // Both arrays are named array: in a notation it is array(*), and item-array is the JSON array.
+            case "array" -> BuiltinTypesCatalogue.xqueryArrayItem;
+            case "item-array" -> BuiltinTypesCatalogue.arrayItem;
+            case "function", "function(*)" -> BuiltinTypesCatalogue.anyFunctionItem;
+            default -> {
+                String localName = name.endsWith("()") ? name.substring(0, name.length() - "()".length()) : name;
+                yield BuiltinTypesCatalogue.getItemTypeByName(Name.createVariableInDefaultTypeNamespace(localName));
+            }
+        };
+    }
+
+    /** Parses function(T1, ..., Tn) as R, where each type may itself be a function notation. */
+    private static ItemType parseFunctionItemType(String notation) {
+        List<String> parameters = new ArrayList<>();
+        int depth = 0;
+        int start = "function(".length();
+        int index = start;
+        for (; depth >= 0; index++) {
+            char character = notation.charAt(index);
+            if (character == '(') {
+                depth++;
+            } else if (character == ')') {
+                depth--;
+            }
+            if ((character == ',' && depth == 0) || depth < 0) {
+                String parameter = notation.substring(start, index).strip();
+                if (!parameter.isEmpty()) {
+                    parameters.add(parameter);
+                }
+                start = index + 1;
+            }
+        }
+        String returnType = notation.substring(index).strip();
+        if (!returnType.startsWith("as ")) {
+            throw new OurBadException("Unrecognized type: " + notation);
+        }
+        return ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                parameters.stream().map(SequenceType::createSequenceType).toList(),
+                createSequenceType(returnType.substring("as ".length()).strip())));
     }
 }
