@@ -102,16 +102,19 @@ public final class LookupTyping {
         return perItem.repeated(mainType.getCardinality());
     }
 
+    /** The value of one key of a map, which may be absent from it. */
+    private static SequenceType mapValueOfKey(ItemType mapType) {
+        SequenceType value = mapType.getMapValueSequenceType();
+        return value.isEmptySequence()
+                ? value
+                : new SequenceType(value.getItemType(), value.getCardinality().union(SequenceCardinality.EMPTY));
+    }
+
     private static SequenceType inferItemLookupType(ItemType itemType, boolean wildcard) {
         if (itemType.isMapItemType()) {
-            SequenceType value = itemType.getMapValueSequenceType();
-            if (wildcard) {
-                return value.repeated(SequenceCardinality.ANY);
-            }
-            return value.isEmptySequence()
-                    ? value
-                    : new SequenceType(
-                            value.getItemType(), value.getCardinality().union(SequenceCardinality.EMPTY));
+            return wildcard
+                    ? itemType.getMapValueSequenceType().repeated(SequenceCardinality.ANY)
+                    : mapValueOfKey(itemType);
         }
         SequenceType member = null;
         if (itemType.isXQueryArrayItemType()) {
@@ -154,7 +157,7 @@ public final class LookupTyping {
             return result == null ? SequenceType.createSequenceType("()") : result;
         }
         if (itemType.isMapItemType()) {
-            return itemType.getMapValueSequenceType();
+            return mapValueOfKey(itemType).repeated(SequenceCardinality.fromArity(inputArity));
         }
         SequenceType.Arity outputArity = inputArity.isSubtypeOf(SequenceType.Arity.OneOrZero)
                 ? SequenceType.Arity.OneOrZero
