@@ -421,7 +421,8 @@ public final class XmlSchemaCatalog {
 
     /** Whether this schema type permits an instance without a typed value. */
     public boolean mayHaveUnavailableTypedValue(Name name) {
-        return resolveType(name).stream().flatMap(type -> typeAndDerivedTypes(type).stream())
+        return resolveType(name).stream()
+                .flatMap(type -> typeAndDerivedTypes(type).stream())
                 .anyMatch(type -> type instanceof XSComplexTypeDefinition complex
                         && complex.getContentType() == XSComplexTypeDefinition.CONTENTTYPE_ELEMENT);
     }

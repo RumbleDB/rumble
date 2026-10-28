@@ -793,13 +793,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<Expression> args = expression.getArguments();
 
         if (isBuiltinFunctionName(functionName, "data") && args.size() == 1) {
-            for (ItemType member : args.get(0).getStaticSequenceType().getItemType().getMemberTypes()) {
+            for (ItemType member :
+                    args.get(0).getStaticSequenceType().getItemType().getMemberTypes()) {
                 if (!args.get(0).getStaticSequenceType().isEmptySequence()
-                        && member instanceof ElementNodeItemType element && element.getSchemaTypeName() != null
-                        && staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog()
+                        && member instanceof ElementNodeItemType element
+                        && element.getSchemaTypeName() != null
+                        && staticContext
+                                .getInScopeSchemaTypes()
+                                .getXmlSchemaCatalog()
                                 .mayHaveUnavailableTypedValue(element.getSchemaTypeName())) {
-                    throwStaticTypeException("The element type permits content without a typed value.",
-                            ErrorCode.AtomizationError, expression.getMetadata());
+                    throwStaticTypeException(
+                            "The element type permits content without a typed value.",
+                            ErrorCode.AtomizationError,
+                            expression.getMetadata());
                 }
             }
             expression.setStaticSequenceType(
