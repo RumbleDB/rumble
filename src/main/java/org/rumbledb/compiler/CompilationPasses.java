@@ -99,8 +99,8 @@ final class CompilationPasses {
 
     /** Requires populated static contexts and annotates expression sequence types. */
     static <M extends Module> CompilationPass<M> inferTypes() {
-        return analysis("Inferring types", (module, context) -> new InferTypeVisitor(context.configuration())
-                .visit(module, module.getStaticContext()));
+        return analysis(
+                "Inferring types", (module, context) -> InferTypeVisitor.inferTypes(module, context.configuration()));
     }
 
     /** Requires inferred types and contexts; creates typed expressions for general comparisons. */

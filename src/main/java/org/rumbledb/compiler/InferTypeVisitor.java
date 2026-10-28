@@ -41,6 +41,7 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -81,6 +82,7 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Module;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
@@ -194,11 +196,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private final LookupTyping lookups;
 
     /**
-     * Builds a new visitor.
+     * Infers the types of a module, then throws its static type errors, all at once.
      *
-     * @param rumbleRuntimeConfiguration the configuration.
+     * @param module the module, with populated static contexts.
+     * @param configuration the configuration.
      */
-    InferTypeVisitor(RumbleConfiguration rumbleRuntimeConfiguration) {
+    static void inferTypes(Module module, RumbleConfiguration configuration) {
+        InferTypeVisitor visitor = new InferTypeVisitor(configuration);
+        RumbleException stoppedBy = null;
+        try {
+            visitor.visit(module, module.getStaticContext());
+        } catch (RumbleException exception) {
+            stoppedBy = exception;
+        }
+        visitor.errors.throwCollected(stoppedBy);
+    }
+
+    private InferTypeVisitor(RumbleConfiguration rumbleRuntimeConfiguration) {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
         this.errors = new StaticTypeErrors(rumbleRuntimeConfiguration);
         this.arithmetic = new ArithmeticTyping(this.errors);
@@ -285,6 +299,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
+        this.errors.useVariable(expression.getVariableName());
         SequenceType variableType = expression.getActualType();
         if (variableType == null) {
             // Without a declared type, the type was inferred when the variable was bound.
@@ -1723,28 +1738,36 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        if (expression.getActualSequenceType() == null) {
-            argument.replaceVariableSequenceType(
-                    expression.getVariableName(),
-                    inferUndeclaredVariableType(
-                            expression.getExpression(),
-                            argument.getIsAssignable(expression.getVariableName()),
-                            expression));
+        boolean failed = this.errors.typeUnit(() -> {
+            visitDescendants(expression, argument);
+            if (expression.getActualSequenceType() == null) {
+                argument.replaceVariableSequenceType(
+                        expression.getVariableName(),
+                        inferUndeclaredVariableType(
+                                expression.getExpression(),
+                                argument.getIsAssignable(expression.getVariableName()),
+                                expression));
+            }
+        });
+        if (failed) {
+            this.errors.markUnreliable(expression.getVariableName());
         }
         return argument;
     }
 
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
+        this.errors.typeUnit(() -> typeFunctionDeclaration(expression, argument));
+        return argument;
+    }
+
+    private void typeFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
         visitDescendants(expression, argument);
         InlineFunctionExpression inlineExpression = (InlineFunctionExpression) expression.getExpression();
         SequenceType inferredType = typeOf(inlineExpression.getBody().getExpression(), expression);
         SequenceType expectedType = inlineExpression.getActualReturnType();
 
-        if (expectedType == null) {
-            expectedType = inferredType;
-        } else if (!inferredType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
+        if (expectedType != null && !inferredType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
             this.errors.report(
                     "The declared function return inferred type "
                             + inferredType
@@ -1752,14 +1775,18 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             + expectedType,
                     expression);
         }
-
-        return argument;
     }
 
     @Override
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
-        StaticContext generatedContext = visitDescendants(mainModule, mainModule.getStaticContext());
-        return generatedContext;
+        for (Node child : mainModule.getChildren()) {
+            if (child instanceof Prolog) {
+                visit(child, mainModule.getStaticContext());
+            } else {
+                this.errors.typeUnit(() -> visit(child, mainModule.getStaticContext()));
+            }
+        }
+        return argument;
     }
 
     @Override
