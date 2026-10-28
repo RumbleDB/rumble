@@ -42,9 +42,7 @@ public final class CastTyping {
         ItemType itemType = targetType.getItemType();
         if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             this.errors.report(
-                    "atomic item type is not allowed in castable expression",
-                    ErrorCode.CastableErrorCode,
-                    node.getMetadata());
+                    "atomic item type is not allowed in castable expression", ErrorCode.CastableErrorCode, node);
         }
         checkCastOperand(operandType, node);
         return new SequenceType(BuiltinTypesCatalogue.booleanItem);
@@ -57,17 +55,14 @@ public final class CastTyping {
 
             if (operandType.isEmptySequence()) {
                 if (targetType.getArity() != SequenceType.Arity.OneOrZero) {
-                    this.errors.report(
-                            "Empty sequence cannot be cast to a non-optional XML Schema simple type.",
-                            node.getMetadata());
+                    this.errors.report("Empty sequence cannot be cast to a non-optional XML Schema simple type.", node);
                 }
                 return new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.Zero);
             }
 
             SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(operandType);
             if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(targetType.getArity())) {
-                this.errors.report(
-                        castCardinalityMessage(operandType, atomizedOperand, targetType), node.getMetadata());
+                this.errors.report(castCardinalityMessage(operandType, atomizedOperand, targetType), node);
             }
 
             // Check the type of result will casting to this schema type produce
@@ -89,17 +84,13 @@ public final class CastTyping {
         SequenceType castedSequenceType = targetType;
 
         if (castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.atomicItem)) {
-            this.errors.report(
-                    "atomic item type is not allowed in cast expression",
-                    ErrorCode.CastableErrorCode,
-                    node.getMetadata());
+            this.errors.report("atomic item type is not allowed in cast expression", ErrorCode.CastableErrorCode, node);
         }
 
         // Empty sequence case
         if (operandType.isEmptySequence()) {
             if (castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
-                this.errors.report(
-                        "Empty sequence cannot be cast to type with quantifier different from '?'", node.getMetadata());
+                this.errors.report("Empty sequence cannot be cast to type with quantifier different from '?'", node);
             } else {
                 // no additional check is needed
                 return castedSequenceType;
@@ -108,8 +99,7 @@ public final class CastTyping {
 
         SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(operandType);
         if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(castedSequenceType.getArity())) {
-            this.errors.report(
-                    castCardinalityMessage(operandType, atomizedOperand, castedSequenceType), node.getMetadata());
+            this.errors.report(castCardinalityMessage(operandType, atomizedOperand, castedSequenceType), node);
         }
 
         checkCastOperand(operandType, node);
@@ -120,7 +110,7 @@ public final class CastTyping {
             this.errors.report(
                     "It is never possible to cast a " + operandType + " as " + castedSequenceType,
                     ErrorCode.UnexpectedTypeErrorCode,
-                    node.getMetadata());
+                    node);
         }
         if (TypeAtomization.inferType(operandType).getCardinality() == SequenceCardinality.ONE) {
             castedSequenceType = new SequenceType(castedSequenceType.getItemType(), SequenceType.Arity.One);
@@ -153,7 +143,7 @@ public final class CastTyping {
                     operandType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
                             ? ErrorCode.NonAtomicElementErrorCode
                             : ErrorCode.AtomizationError,
-                    node.getMetadata());
+                    node);
         }
     }
 

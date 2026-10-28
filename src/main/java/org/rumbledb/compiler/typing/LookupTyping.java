@@ -36,8 +36,7 @@ public final class LookupTyping {
     public SequenceType inferArrayLookupType(SequenceType mainType, SequenceType lookupType, Node node) {
         if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("integer"))) {
             this.errors.report(
-                    "the lookup expression type must match integer, instead " + lookupType + " was inferred",
-                    node.getMetadata());
+                    "the lookup expression type must match integer, instead " + lookupType + " was inferred", node);
         }
 
         if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
@@ -63,7 +62,7 @@ public final class LookupTyping {
                     "the lookup expression type must be castable to string (i.e. must match atomic), instead "
                             + lookupType
                             + " was inferred",
-                    node.getMetadata());
+                    node);
         }
 
         boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));

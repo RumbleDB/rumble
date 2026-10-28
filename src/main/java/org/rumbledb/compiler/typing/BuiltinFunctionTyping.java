@@ -190,7 +190,7 @@ public final class BuiltinFunctionTyping {
                             + " requires its inferred input sequence type to be empty or have an item type that is a subtype of xs:numeric, xs:yearMonthDuration, or xs:dayTimeDuration, found "
                             + inputType,
                     ErrorCode.InvalidArgumentType,
-                    expression.getMetadata());
+                    expression);
         }
 
         return new SequenceType(
@@ -284,7 +284,7 @@ public final class BuiltinFunctionTyping {
                             + " compared with each other, found "
                             + inputType,
                     ErrorCode.InvalidArgumentType,
-                    expression.getMetadata());
+                    expression);
         }
 
         return new SequenceType(

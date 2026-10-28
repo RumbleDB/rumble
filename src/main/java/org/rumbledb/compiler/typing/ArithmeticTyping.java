@@ -69,8 +69,7 @@ public final class ArithmeticTyping {
 
         SequenceType.Arity inferredArity = AtomizedOperands.resolveArities(leftType, rightType);
         if (inferredArity == null) {
-            this.errors.report(
-                    "'+' and '*' arities are not allowed for the operands of " + operator, node.getMetadata());
+            this.errors.report("'+' and '*' arities are not allowed for the operands of " + operator, node);
             inferredArity = SequenceType.Arity.OneOrZero;
         }
 
@@ -82,7 +81,7 @@ public final class ArithmeticTyping {
             } else {
                 this.errors.report(
                         "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
-                        node.getMetadata());
+                        node);
             }
             inferredType = BuiltinTypesCatalogue.atomicItem;
         }
@@ -249,7 +248,7 @@ public final class ArithmeticTyping {
 
         SequenceType.Arity resultArity = AtomizedOperands.atomizedSingletonArity(childInferredType);
         if (resultArity == null) {
-            this.errors.report("'+' and '*' arities are not allowed for unary expressions", node.getMetadata());
+            this.errors.report("'+' and '*' arities are not allowed for unary expressions", node);
             resultArity = SequenceType.Arity.OneOrZero;
         }
 
@@ -261,8 +260,7 @@ public final class ArithmeticTyping {
                 this.errors.reportInferredEmpty(node);
             } else {
                 this.errors.report(
-                        "It is not possible to have an Unary node with the following type: " + childInferredType,
-                        node.getMetadata());
+                        "It is not possible to have an Unary node with the following type: " + childInferredType, node);
             }
             childItemType = BuiltinTypesCatalogue.numericItem;
         }

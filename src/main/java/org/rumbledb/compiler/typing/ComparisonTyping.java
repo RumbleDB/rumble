@@ -51,8 +51,7 @@ public final class ComparisonTyping {
             returnArity = AtomizedOperands.resolveArities(leftInferredType, rightInferredType);
             if (returnArity == null) {
                 this.errors.report(
-                        "'+' and '*' arities are not allowed for this comparison operator: " + operator,
-                        node.getMetadata());
+                        "'+' and '*' arities are not allowed for this comparison operator: " + operator, node);
                 returnArity = SequenceType.Arity.OneOrZero;
             }
         }
@@ -70,7 +69,7 @@ public final class ComparisonTyping {
                 this.errors.report(
                         "It is not possible to compare with non-atomic types",
                         ErrorCode.NonAtomicElementErrorCode,
-                        node.getMetadata());
+                        node);
             }
 
             if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator)) {
@@ -81,7 +80,7 @@ public final class ComparisonTyping {
                                 + operator
                                 + " "
                                 + rightItemType,
-                        node.getMetadata());
+                        node);
             }
         }
 
@@ -152,8 +151,7 @@ public final class ComparisonTyping {
         SequenceType operandType = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceCardinality.ZERO_OR_ONE);
         for (SequenceType type : List.of(leftType, rightType)) {
             if (!type.isSubtypeOf(operandType)) {
-                this.errors.report(
-                        "A node comparison operand must be a single node or empty, found " + type, node.getMetadata());
+                this.errors.report("A node comparison operand must be a single node or empty, found " + type, node);
             }
         }
 

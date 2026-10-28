@@ -17,7 +17,6 @@ package org.rumbledb.compiler.typing;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.Node;
@@ -35,15 +34,15 @@ public final class StaticTypeErrors {
         this.configuration = configuration;
     }
 
-    public void report(String message, ExceptionMetadata metadata) {
+    public void report(String message, Node node) {
         if (this.configuration.analysis().enableStaticTyping()) {
-            throw new UnexpectedStaticTypeException(message, metadata);
+            throw new UnexpectedStaticTypeException(message, node.getMetadata());
         }
     }
 
-    public void report(String message, ErrorCode code, ExceptionMetadata metadata) {
+    public void report(String message, ErrorCode code, Node node) {
         if (this.configuration.analysis().enableStaticTyping()) {
-            throw new UnexpectedStaticTypeException(message, code, metadata);
+            throw new UnexpectedStaticTypeException(message, code, node.getMetadata());
         }
     }
 
@@ -63,7 +62,7 @@ public final class StaticTypeErrors {
     }
 
     public void reportInferredEmpty(String message, Node node) {
-        report(message, ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression, node.getMetadata());
+        report(message, ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression, node);
     }
 
     /** Returns the type inferred for a child of the node, which every visited child has. */
