@@ -189,13 +189,7 @@ public final class XmlSchemaCatalogLoader {
     private static LoadedSchema loadSchema(
             List<URI> locations, SchemaResourceResolver resolver, ExceptionMetadata metadata) {
         try {
-            SchemaErrorHandler errorHandler = new SchemaErrorHandler();
-            XMLSchemaFactory schemaFactory = new XMLSchemaFactory();
-            schemaFactory.setResourceResolver(resolver);
-            schemaFactory.setErrorHandler(errorHandler);
-            Source[] sources = locations.stream().map(resolver::resolveSource).toArray(Source[]::new);
-            Schema validationSchema = schemaFactory.newSchema(sources);
-            return loadedSchema(validationSchema, errorHandler, metadata);
+            return loadSchema(locations, resolver, metadata, new XMLSchemaFactory());
         } catch (SchemaImportException exception) {
             throw exception;
         } catch (SAXException | RuntimeException exception) {
@@ -204,6 +198,21 @@ public final class XmlSchemaCatalogLoader {
                     metadata,
                     exception);
         }
+    }
+
+    private static LoadedSchema loadSchema(
+            List<URI> locations,
+            SchemaResourceResolver resolver,
+            ExceptionMetadata metadata,
+            javax.xml.validation.SchemaFactory schemaFactory)
+            throws SAXException {
+        SchemaErrorHandler errorHandler = new SchemaErrorHandler();
+        // Multiple location hints may contribute declarations to the same target namespace.
+        schemaFactory.setFeature("http://apache.org/xml/features/namespace-growth", true);
+        schemaFactory.setResourceResolver(resolver);
+        schemaFactory.setErrorHandler(errorHandler);
+        Source[] sources = locations.stream().map(resolver::resolveSource).toArray(Source[]::new);
+        return loadedSchema(schemaFactory.newSchema(sources), errorHandler, metadata);
     }
 
     private static LoadedSchema loadedSchema(
