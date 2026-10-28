@@ -2,6 +2,8 @@
 
 With RumbleDB, you can query with ease a lot of different nested, heterogeneous data formats like JSON, CSV, Parquet, Avro, LibSVM, text, etc.
 
+XML Schema imports and schema validation currently support **XML Schema 1.0 only**. Schemas requiring XML Schema 1.1 are not supported.
+
 RumbleDB exposes a query language rather than a DataFrame API, for more flexibility, more productivity but also because a lot of data simply will not fit in DataFrames.
 
 You can query it in place from any local file systems or data lakes (Azure blob storage, Amazon S3, HDFS, etc).
