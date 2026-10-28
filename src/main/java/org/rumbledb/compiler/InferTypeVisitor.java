@@ -321,8 +321,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitArrayConstructor(ArrayConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         if (expression.isFixedSlotsArrayConstructor()) {
-            // Conservative: type as array(*) for fixed-slots constructors for now.
-            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));
+            expression.setStaticSequenceType(new SequenceType(inferFixedSlotsArrayType(expression)));
             return argument;
         }
         Expression contentExpr = expression.getExpression();
@@ -334,6 +333,24 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ItemType arrayType = ItemTypeFactory.createAnonymousArrayType(contentItemType);
         expression.setStaticSequenceType(new SequenceType(arrayType));
         return argument;
+    }
+
+    /**
+     * An array [E1, ..., En] whose members have the types of E1 to En. When each member is one item, it is a JSON
+     * array of these items, as the runtime builds it.
+     */
+    private static ItemType inferFixedSlotsArrayType(ArrayConstructorExpression expression) {
+        SequenceType memberType = null;
+        for (Expression member : expression.getMemberExpressions()) {
+            SequenceType type = typeOf(member, expression);
+            memberType = memberType == null ? type : memberType.leastCommonSupertypeWith(type);
+        }
+        if (memberType == null) {
+            return BuiltinTypesCatalogue.arrayItem;
+        }
+        return memberType.getArity() == SequenceType.Arity.One
+                ? ItemTypeFactory.createAnonymousArrayType(memberType.getItemType())
+                : ItemTypeFactory.xqueryArrayOf(memberType);
     }
 
     @Override
