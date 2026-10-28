@@ -124,9 +124,13 @@ import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
+import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
 
 public class CloneVisitor extends AbstractNodeVisitor<Node> {
     @Override
@@ -432,6 +436,33 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                         ? (Expression) visit(expression.getLookupExpression(), argument)
                         : null,
                 expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitSlashExpr(SlashExpr expression, Node argument) {
+        SlashExpr result = new SlashExpr(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitStepExpr(StepExpr expression, Node argument) {
+        // A step has no children, but a copy needs its own static context, which holds its context item type.
+        StepExpr result = expression instanceof ForwardStepExpr forwardStep
+                ? new ForwardStepExpr(forwardStep.getForwardAxis(), expression.getNodeTest(), expression.getMetadata())
+                : new ReverseStepExpr(
+                        ((ReverseStepExpr) expression).getReverseAxis(),
+                        expression.getNodeTest(),
+                        expression.getMetadata());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
         result.setSequential(expression.isSequential());
