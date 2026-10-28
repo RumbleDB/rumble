@@ -575,9 +575,11 @@ public class BuiltinTypesCatalogue {
             Name.createVariableInDefaultTypeNamespace("map"),
             anyFunctionItem,
             atomicItem,
-            SequenceType.createSequenceType("item*"));
+            new SequenceType(BuiltinTypesCatalogue.item, SequenceCardinality.ANY));
     public static final ItemType xqueryArrayItem = new XQueryArrayItemType(
-            new Name(Name.XS_NS, "xs", "array"), anyFunctionItem, SequenceType.createSequenceType("item*"));
+            new Name(Name.XS_NS, "xs", "array"),
+            anyFunctionItem,
+            new SequenceType(BuiltinTypesCatalogue.item, SequenceCardinality.ANY));
 
     public static boolean typeExists(Name name) {
         for (ItemType builtInItemType : builtInItemTypes) {

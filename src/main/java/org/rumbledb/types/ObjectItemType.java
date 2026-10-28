@@ -184,7 +184,7 @@ public class ObjectItemType extends AbstractItemType {
     }
 
     private ItemType getObjectAsMapType() {
-        return ItemTypeFactory.mapOf(BuiltinTypesCatalogue.stringItem, SequenceType.createSequenceType("item"));
+        return ItemTypeFactory.mapOf(BuiltinTypesCatalogue.stringItem, new SequenceType(BuiltinTypesCatalogue.item));
     }
 
     @Override

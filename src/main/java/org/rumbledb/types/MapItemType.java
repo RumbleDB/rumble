@@ -81,7 +81,7 @@ public class MapItemType extends AbstractItemType {
         if (this.name == null
                 && BuiltinTypesCatalogue.mapItem.equals(this.baseType)
                 && BuiltinTypesCatalogue.stringItem.equals(this.keyType)
-                && SequenceType.createSequenceType("item").equals(this.valueSequenceType)) {
+                && new SequenceType(BuiltinTypesCatalogue.item).equals(this.valueSequenceType)) {
             return namedTypeKey(new Name(Name.JS_NS, "js", "object"));
         }
         return structuralTypeKey(MapItemType.class, this.name, this.baseType, this.keyType, this.valueSequenceType);
@@ -101,8 +101,8 @@ public class MapItemType extends AbstractItemType {
         }
         if (superType.isObjectItemType()) {
             // js:object = map(xs:string, item)
-            ItemType objectAsMap =
-                    ItemTypeFactory.mapOf(BuiltinTypesCatalogue.stringItem, SequenceType.createSequenceType("item"));
+            ItemType objectAsMap = ItemTypeFactory.mapOf(
+                    BuiltinTypesCatalogue.stringItem, new SequenceType(BuiltinTypesCatalogue.item));
             // an object type (js:object) WITHOUT a JSound schema attached is a subtype of a map(*)
             return superType.equals(BuiltinTypesCatalogue.objectItem) && this.isSubtypeOf(objectAsMap);
         }
@@ -140,8 +140,8 @@ public class MapItemType extends AbstractItemType {
         }
         if (other.isObjectItemType()) {
             // js:object = map(xs:string, item)
-            ItemType objectAsMap =
-                    ItemTypeFactory.mapOf(BuiltinTypesCatalogue.stringItem, SequenceType.createSequenceType("item"));
+            ItemType objectAsMap = ItemTypeFactory.mapOf(
+                    BuiltinTypesCatalogue.stringItem, new SequenceType(BuiltinTypesCatalogue.item));
             return this.findLeastCommonSuperTypeWith(objectAsMap);
         }
         if (other.isFunctionItemType()) {
@@ -168,7 +168,7 @@ public class MapItemType extends AbstractItemType {
             ItemType keySuperType = this.keyType.findLeastCommonSuperTypeWith(otherMap.keyType);
             SequenceType valueSuperType = this.valueSequenceType.leastCommonSupertypeWith(otherMap.valueSequenceType);
             if (keySuperType.equals(BuiltinTypesCatalogue.atomicItem)
-                    && valueSuperType.equals(SequenceType.createSequenceType("item*"))) {
+                    && valueSuperType.equals(new SequenceType(BuiltinTypesCatalogue.item, SequenceCardinality.ANY))) {
                 return BuiltinTypesCatalogue.mapItem;
             }
             return ItemTypeFactory.mapOf(keySuperType, valueSuperType);
@@ -229,7 +229,7 @@ public class MapItemType extends AbstractItemType {
                         "Primitive map(*) must use xs:anyAtomicType for keys, got: " + this.keyType,
                         ExceptionMetadata.EMPTY_METADATA);
             }
-            if (!this.valueSequenceType.equals(SequenceType.createSequenceType("item*"))) {
+            if (!this.valueSequenceType.equals(new SequenceType(BuiltinTypesCatalogue.item, SequenceCardinality.ANY))) {
                 throw new InvalidSchemaException(
                         "Primitive map(*) must use item* for values, got: " + this.valueSequenceType,
                         ExceptionMetadata.EMPTY_METADATA);

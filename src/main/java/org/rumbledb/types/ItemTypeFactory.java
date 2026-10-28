@@ -629,7 +629,7 @@ public class ItemTypeFactory {
         if (memberSequenceType == null) {
             throw new OurBadException("Array member sequence type cannot be null.");
         }
-        if (memberSequenceType.equals(SequenceType.createSequenceType("item*"))) {
+        if (memberSequenceType.equals(new SequenceType(BuiltinTypesCatalogue.item, SequenceCardinality.ANY))) {
             return BuiltinTypesCatalogue.xqueryArrayItem;
         }
         return new XQueryArrayItemType(null, BuiltinTypesCatalogue.xqueryArrayItem, memberSequenceType);
