@@ -793,6 +793,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<Expression> args = expression.getArguments();
 
         if (isBuiltinFunctionName(functionName, "data") && args.size() == 1) {
+            for (ItemType member : args.get(0).getStaticSequenceType().getItemType().getMemberTypes()) {
+                if (!args.get(0).getStaticSequenceType().isEmptySequence()
+                        && member instanceof ElementNodeItemType element && element.getSchemaTypeName() != null
+                        && staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog()
+                                .mayHaveUnavailableTypedValue(element.getSchemaTypeName())) {
+                    throwStaticTypeException("The element type permits content without a typed value.",
+                            ErrorCode.AtomizationError, expression.getMetadata());
+                }
+            }
             expression.setStaticSequenceType(
                     TypeAtomization.inferType(args.get(0).getStaticSequenceType()));
             return true;
@@ -2932,7 +2941,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // type
             context.replaceVariableSequenceType(variableName, inferredType);
         } else {
-            if (!inferredType.isSubtypeOf(declaredType)) {
+            // A generic element path does not preserve schema annotations or exact cardinality.
+            // The binding's treat expression checks the declared schema type at runtime.
+            boolean schemaElementBinding = declaredType.getItemType() instanceof ElementNodeItemType element
+                    && element.getSchemaTypeName() != null
+                    && inferredType.getItemType().equals(BuiltinTypesCatalogue.elementNode);
+            if (!inferredType.isSubtypeOf(declaredType) && !schemaElementBinding) {
                 throwStaticTypeException(
                         "In a "
                                 + nodeName
