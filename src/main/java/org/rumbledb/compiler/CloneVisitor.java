@@ -85,7 +85,9 @@ import org.rumbledb.expressions.primary.StringConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
@@ -93,6 +95,8 @@ import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.loops.BreakStatement;
+import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
@@ -110,6 +114,20 @@ import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.typing.ValidateExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
 import org.rumbledb.expressions.xml.AttributeNodeExpression;
 import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
@@ -1436,4 +1454,209 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         return result;
     }
     // end region scripting
+
+    // region update, collection and scripting expressions
+
+    @Override
+    public Node visitTransformExpression(TransformExpression expression, Node argument) {
+        List<CopyDeclaration> copyDeclarations = expression.getCopyDeclarations().stream()
+                .map(copy -> new CopyDeclaration(
+                        copy.getVariableName(),
+                        (Expression) visit(copy.getSourceExpression(), argument),
+                        copy.getVariableMetadata()))
+                .toList();
+        TransformExpression result = new TransformExpression(
+                copyDeclarations,
+                (Expression) visit(expression.getModifyExpression(), argument),
+                (Expression) visit(expression.getReturnExpression(), argument),
+                expression.getMetadata());
+        result.setMutabilityLevel(expression.getMutabilityLevel());
+        return copied(expression, result);
+    }
+
+    @Override
+    public Node visitInsertExpression(InsertExpression expression, Node argument) {
+        return copied(
+                expression,
+                new InsertExpression(
+                        (Expression) visit(expression.getMainExpression(), argument),
+                        (Expression) visit(expression.getToInsertExpression(), argument),
+                        expression.hasPositionExpression()
+                                ? (Expression) visit(expression.getPositionExpression(), argument)
+                                : null,
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitDeleteExpression(DeleteExpression expression, Node argument) {
+        return copied(
+                expression,
+                new DeleteExpression(
+                        (Expression) visit(expression.getMainExpression(), argument),
+                        visitOptional(expression.getLocatorExpression(), argument),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitReplaceExpression(ReplaceExpression expression, Node argument) {
+        return copied(
+                expression,
+                new ReplaceExpression(
+                        (Expression) visit(expression.getMainExpression(), argument),
+                        visitOptional(expression.getLocatorExpression(), argument),
+                        (Expression) visit(expression.getReplacerExpression(), argument),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitRenameExpression(RenameExpression expression, Node argument) {
+        return copied(
+                expression,
+                new RenameExpression(
+                        (Expression) visit(expression.getMainExpression(), argument),
+                        visitOptional(expression.getLocatorExpression(), argument),
+                        (Expression) visit(expression.getNameExpression(), argument),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitAppendExpression(AppendExpression expression, Node argument) {
+        return copied(
+                expression,
+                new AppendExpression(
+                        (Expression) visit(expression.getArrayExpression(), argument),
+                        (Expression) visit(expression.getToAppendExpression(), argument),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitCreateCollectionExpression(CreateCollectionExpression expression, Node argument) {
+        return copied(
+                expression,
+                new CreateCollectionExpression(
+                        (Expression) visit(expression.getCollection(), argument),
+                        (Expression) visit(expression.getContentExpression(), argument),
+                        expression.getMode(),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitDeleteIndexFromCollectionExpression(
+            DeleteIndexFromCollectionExpression expression, Node argument) {
+        return copied(
+                expression,
+                new DeleteIndexFromCollectionExpression(
+                        (Expression) visit(expression.getCollection(), argument),
+                        visitOptional(expression.getNumDelete(), argument),
+                        expression.isFirst(),
+                        expression.getMode(),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitDeleteSearchFromCollectionExpression(
+            DeleteSearchFromCollectionExpression expression, Node argument) {
+        return copied(
+                expression,
+                new DeleteSearchFromCollectionExpression(
+                        (Expression) visit(expression.getContentExpression(), argument), expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitEditCollectionExpression(EditCollectionExpression expression, Node argument) {
+        return copied(
+                expression,
+                new EditCollectionExpression(
+                        (Expression) visit(expression.getTargetExpression(), argument),
+                        (Expression) visit(expression.getContentExpression(), argument),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitInsertIndexIntoCollectionExpression(
+            InsertIndexIntoCollectionExpression expression, Node argument) {
+        return copied(
+                expression,
+                new InsertIndexIntoCollectionExpression(
+                        (Expression) visit(expression.getCollection(), argument),
+                        (Expression) visit(expression.getContentExpression(), argument),
+                        visitOptional(expression.getPosition(), argument),
+                        expression.getMode(),
+                        expression.isFirst(),
+                        expression.isLast(),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitInsertSearchIntoCollectionExpression(
+            InsertSearchIntoCollectionExpression expression, Node argument) {
+        return copied(
+                expression,
+                new InsertSearchIntoCollectionExpression(
+                        (Expression) visit(expression.getTargetExpression(), argument),
+                        (Expression) visit(expression.getContentExpression(), argument),
+                        expression.isBefore(),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitTruncateCollectionExpression(TruncateCollectionExpression expression, Node argument) {
+        return copied(
+                expression,
+                new TruncateCollectionExpression(
+                        (Expression) visit(expression.getCollectionName(), argument),
+                        expression.getMode(),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitBlockExpr(BlockExpression expression, Node argument) {
+        return copied(
+                expression,
+                new BlockExpression(
+                        (StatementsAndExpr) visit(expression.getStatementsAndExpr(), argument),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitConditionalStatement(ConditionalStatement statement, Node argument) {
+        return copied(
+                statement,
+                new ConditionalStatement(
+                        (Expression) visit(statement.getCondition(), argument),
+                        (Statement) visit(statement.getBranch(), argument),
+                        (Statement) visit(statement.getElseBranch(), argument),
+                        statement.getMetadata()));
+    }
+
+    @Override
+    public Node visitBreakStatement(BreakStatement statement, Node argument) {
+        return copied(statement, new BreakStatement(statement.getMetadata()));
+    }
+
+    @Override
+    public Node visitContinueStatement(ContinueStatement statement, Node argument) {
+        return copied(statement, new ContinueStatement(statement.getMetadata()));
+    }
+
+    private Expression visitOptional(Expression expression, Node argument) {
+        return expression == null ? null : (Expression) visit(expression, argument);
+    }
+
+    /** Gives a copy the static type, static context and sequential flag of its source. */
+    private static <T extends Expression> T copied(Expression source, T copy) {
+        copy.setStaticSequenceType(source.getStaticSequenceType());
+        copy.setStaticContext(source.getStaticContext());
+        copy.setSequential(source.isSequential());
+        return copy;
+    }
+
+    private static <T extends Statement> T copied(Statement source, T copy) {
+        copy.setStaticSequenceType(source.getStaticSequenceType());
+        copy.setStaticContext(source.getStaticContext());
+        copy.setSequential(source.isSequential());
+        return copy;
+    }
+
+    // endregion
 }
