@@ -34,7 +34,6 @@ import org.jgrapht.traverse.TopologicalOrderIterator;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
@@ -92,7 +91,7 @@ import org.rumbledb.expressions.update.TransformExpression;
  * declare function f() { 1 };
  * declare variable $x := f();
  *
- * If a function f depends on a variable $x, then $x must be evaluated before f's closure is built.
+ * A function f can refer to a global $x without evaluating it when its closure is built.
  *
  * declare variable $x := 1;
  * declare function f() { $x };
@@ -503,19 +502,8 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
         Graph<Node, DefaultEdge> dependencyGraph = buildDependencyGraph(nameToNodeMap, prolog);
         var components = new KosarajuStrongConnectivityInspector<>(dependencyGraph);
-        // Function-only cycles are legal recursion; cycles involving variables cannot be initialized.
-        for (Graph<Node, DefaultEdge> component : components.getStronglyConnectedComponents()) {
-            if (component.edgeSet().isEmpty()) {
-                continue;
-            }
-            for (Node declaration : prolog.getDeclarations()) {
-                if (declaration instanceof VariableDeclaration && component.containsVertex(declaration)) {
-                    throw new CycleInVariableDeclarationsException(
-                            "There is a cycle in the dependencies in the variable and function declarations. It is thus impossible to build the dynamic context.",
-                            declaration.getMetadata());
-                }
-            }
-        }
+        // A dependency cycle is only an error if evaluation actually traverses it.
+        // A named function reference, for example, does not evaluate its body.
 
         List<Node> resolvedList = new ArrayList<>();
         for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
