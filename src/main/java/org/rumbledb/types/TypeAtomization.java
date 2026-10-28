@@ -27,6 +27,22 @@ public final class TypeAtomization {
                 || member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem));
     }
 
+    /** Whether some item of this type is atomic or a node, as when the type is item(). */
+    public static boolean mayBeAtomicOrNode(ItemType type) {
+        return type.mayOverlapWith(BuiltinTypesCatalogue.atomicItem)
+                || type.mayOverlapWith(BuiltinTypesCatalogue.nodeItem);
+    }
+
+    /**
+     * Whether atomizing an item of this type may give a value of any atomic type, as for item() and
+     * xs:anyAtomicType, or for a node whose typed value is only known at runtime.
+     */
+    public static boolean mayAtomizeToAnyType(ItemType type) {
+        return type.getMemberTypes().stream()
+                .anyMatch(
+                        member -> BuiltinTypesCatalogue.atomicItem.isSubtypeOf(member) || hasUnknownTypedValue(member));
+    }
+
     /** Whether atomization changes a member. The error type is both a node and atomic, and atomizes to itself. */
     public static boolean containsNode(ItemType type) {
         return type.getMemberTypes().stream()

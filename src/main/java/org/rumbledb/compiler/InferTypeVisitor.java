@@ -952,7 +952,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             + "Expression has "
                             + leftInferredType
                             + " inferred type, which has no effective boolean value",
-                    expression);
+                    expression,
+                    leftInferredType.mayHaveEffectiveBooleanValue());
         }
 
         if (!rightInferredType.hasEffectiveBooleanValue()) {
@@ -962,7 +963,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             + "Expression has "
                             + rightInferredType
                             + " inferred type, which has no effective boolean value",
-                    expression);
+                    expression,
+                    rightInferredType.mayHaveEffectiveBooleanValue());
         }
 
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
@@ -989,7 +991,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     "The child expression of NotExpression has "
                             + childInferredType
                             + " inferred type, which has no effective boolean value",
-                    expression);
+                    expression,
+                    childInferredType.mayHaveEffectiveBooleanValue());
         }
 
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
@@ -1071,7 +1074,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     "The condition in the 'if' must have effective boolean value, found inferred type: "
                             + ifType
                             + " (which has not effective boolean value)",
-                    node);
+                    node,
+                    ifType.mayHaveEffectiveBooleanValue());
         }
 
         // if the if branch is false at static time (i.e. subtype of null?) we only use else branch
@@ -1091,7 +1095,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (type.getArity() == SequenceType.Arity.OneOrMore || type.getArity() == SequenceType.Arity.ZeroOrMore) {
             this.errors.report(
                     "+ and * arities are not allowed for the expressions of switch test condition and cases",
-                    switchNode);
+                    switchNode,
+                    type.getCardinality().allowsZero() || type.getCardinality().allowsOne());
         }
         ItemType itemType = type.getItemType();
         if (itemType.isFunctionItemType()) {
@@ -1111,7 +1116,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             this.errors.report(
                     "switch test condition and cases expressions' item type must match atomic, instead inferred: "
                             + itemType,
-                    switchNode);
+                    switchNode,
+                    itemType.mayOverlapWith(BuiltinTypesCatalogue.atomicItem));
         }
     }
 
@@ -1250,7 +1256,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             + leftType
                             + " and "
                             + rightType,
-                    expression);
+                    expression,
+                    (leftType.isEmptySequence() || TypeAtomization.mayBeAtomicOrNode(leftType.getItemType()))
+                            && (rightType.isEmptySequence()
+                                    || TypeAtomization.mayBeAtomicOrNode(rightType.getItemType()))
+                            && AtomizedOperands.mayBeSingleton(leftType)
+                            && AtomizedOperands.mayBeSingleton(rightType));
         }
 
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
@@ -1330,7 +1341,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (!predicateType.hasEffectiveBooleanValue()) {
             this.errors.report(
                     "Inferred type " + predicateType + " in FilterExpression has no effective boolean value",
-                    expression);
+                    expression,
+                    predicateType.mayHaveEffectiveBooleanValue());
         }
 
         // Filtering at most one item, or selecting one position, keeps at most one item.
@@ -1624,7 +1636,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private void checkWindowConditionType(Expression condition, WindowClause clause) {
         SequenceType conditionType = typeOf(condition, clause);
         if (!conditionType.hasEffectiveBooleanValue()) {
-            this.errors.report("Window condition has no effective boolean value", clause);
+            this.errors.report(
+                    "Window condition has no effective boolean value",
+                    clause,
+                    conditionType.mayHaveEffectiveBooleanValue());
         }
     }
 
@@ -1649,7 +1664,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType whereType = typeOf(expression.getWhereExpression(), expression);
         if (!whereType.hasEffectiveBooleanValue()) {
             this.errors.report(
-                    "where clause inferred type (" + whereType + ") has no effective boolean value", expression);
+                    "where clause inferred type (" + whereType + ") has no effective boolean value",
+                    expression,
+                    whereType.mayHaveEffectiveBooleanValue());
         }
         if (whereType.isEmptySequence() || whereType.isSubtypeOf(SequenceType.createSequenceType("null?"))) {
             this.errors.reportInferredEmpty(
@@ -1696,7 +1713,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     message
                             + AtomizedOperands.describeAtomizedType(
                                     keyType, AtomizedOperands.knownAtomizedType(keyType)),
-                    clause);
+                    clause,
+                    mayAtomizeToAtMostOne(keyType));
             // without static typing, the runtime atomizes the key or fails
             atomizedKeyType = SequenceType.createSequenceType("anyAtomicType?");
         }
@@ -1717,7 +1735,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             + AtomizedOperands.describeAtomizedType(keyType, atomizedKeyType)
                             + ", which does not match its declared type "
                             + declaredType,
-                    clause);
+                    clause,
+                    atomizedKeyType.mayMatch(declaredType));
         }
         return declaredType;
     }
@@ -1742,7 +1761,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         message
                                 + AtomizedOperands.describeAtomizedType(
                                         keyType, AtomizedOperands.knownAtomizedType(keyType)),
-                        expression);
+                        expression,
+                        mayAtomizeToAtMostOne(keyType)
+                                && (atomizedKeyType == null
+                                        || TypeAtomization.mayAtomizeToAnyType(keyType.getItemType())));
             }
         }
         return argument;
@@ -1761,6 +1783,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return null;
         }
         return new SequenceType(TypeAtomization.atomizedItemType(keyType.getItemType()), arity);
+    }
+
+    /** Whether some value of a group-by or order-by key atomizes to at most one atomic value. */
+    private static boolean mayAtomizeToAtMostOne(SequenceType keyType) {
+        return keyType.isEmptySequence()
+                || (AtomizedOperands.mayBeSingleton(keyType)
+                        && TypeAtomization.mayBeAtomicOrNode(keyType.getItemType()));
     }
 
     @Override

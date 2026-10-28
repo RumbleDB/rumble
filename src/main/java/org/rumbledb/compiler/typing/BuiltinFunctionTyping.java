@@ -190,7 +190,9 @@ public final class BuiltinFunctionTyping {
                             + " requires its inferred input sequence type to be empty or have an item type that is a subtype of xs:numeric, xs:yearMonthDuration, or xs:dayTimeDuration, found "
                             + inputType,
                     ErrorCode.InvalidArgumentType,
-                    expression);
+                    expression,
+                    inputType.getCardinality().allowsZero()
+                            || TypeAtomization.mayAtomizeToAnyType(inputType.getItemType()));
         }
 
         return new SequenceType(
@@ -284,7 +286,9 @@ public final class BuiltinFunctionTyping {
                             + " compared with each other, found "
                             + inputType,
                     ErrorCode.InvalidArgumentType,
-                    expression);
+                    expression,
+                    inputType.getCardinality().allowsZero()
+                            || TypeAtomization.mayAtomizeToAnyType(inputType.getItemType()));
         }
 
         return new SequenceType(

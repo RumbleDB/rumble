@@ -20,6 +20,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
@@ -76,6 +78,27 @@ class StaticTypeErrorsTest {
                 + "declare function local:g() as integer { \"a\" };\n"
                 + "1");
         Assertions.assertEquals(List.of(false, true), certainties(errors));
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+            delimiter = '|',
+            value = {
+                // Possible: some values pass at runtime.
+                "declare function local:f($x) { $x * 2 }; 1 | false",
+                "declare function local:f($x as item()) { $x + 1 }; 1 | false",
+                "declare function local:f($x) { if ($x) then 1 else 2 }; 1 | false",
+                "declare function local:f($x as item()) { $x eq \"s\" }; 1 | false",
+                "declare function local:f($x) { $x cast as integer }; 1 | false",
+                // Certain: no value passes.
+                "1 + \"a\" | true",
+                "(1, 2) eq 1 | true",
+                "if (xs:date(\"2020-01-01\")) then 1 else 2 | true",
+                "{\"a\": 1} + 1 | true"
+            })
+    void classifiesOperandChecks(String query, boolean certain) {
+        List<RumbleException> errors = errors(query);
+        Assertions.assertEquals(List.of(certain), certainties(errors), query);
     }
 
     @Test

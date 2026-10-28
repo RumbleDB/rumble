@@ -15,6 +15,7 @@
  */
 package org.rumbledb.compiler.typing;
 
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeAtomization;
 
@@ -50,6 +51,14 @@ public final class AtomizedOperands {
             return null;
         }
         return atomized.getCardinality().atMostOne().toArity();
+    }
+
+    /** Whether some value of the operand atomizes to at most one value, as singleton operators require. */
+    public static boolean mayBeSingleton(SequenceType source) {
+        SequenceType atomized =
+                TypeAtomization.isAtomicOrNode(source.getItemType()) ? TypeAtomization.inferType(source) : source;
+        return !atomized.getCardinality().equals(SequenceCardinality.MANY)
+                || TypeAtomization.hasUnknownTypedValue(source.getItemType());
     }
 
     public static SequenceType.Arity resolveArities(SequenceType leftType, SequenceType rightType) {
