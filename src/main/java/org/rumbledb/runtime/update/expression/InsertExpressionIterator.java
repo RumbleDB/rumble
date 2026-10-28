@@ -119,7 +119,8 @@ public class InsertExpressionIterator extends UpdatingExpressionIterator {
                         "Insert expression selector cannot be cast to Int type",
                         this.getRuntimeStaticContext().getMetadata());
             }
-            locator = ItemFactory.getInstance().createIntItem(locator.getIntegerValue().intValue());
+            locator = ItemFactory.getInstance()
+                    .createIntItem(locator.getIntegerValue().intValue());
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target",

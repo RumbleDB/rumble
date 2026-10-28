@@ -95,7 +95,8 @@ public class DeleteExpressionIterator extends UpdatingExpressionIterator {
                         "Delete expression selection cannot be cast to Int type",
                         this.getRuntimeStaticContext().getMetadata());
             }
-            lookup = ItemFactory.getInstance().createIntItem(lookup.getIntegerValue().intValue());
+            lookup = ItemFactory.getInstance()
+                    .createIntItem(lookup.getIntegerValue().intValue());
             if (context.getCurrentMutabilityLevel() == 0 && main.getMutabilityLevel() == -1) {
                 throw new ModifiesImmutableValueException(
                         "Attempt to modify immutable target. Target mutability level: "
