@@ -252,9 +252,7 @@ public final class BuiltinFunctionTyping {
                             .getXmlSchemaCatalog()
                             .mayHaveUnavailableTypedValue(element.getSchemaTypeName())) {
                 this.errors.report(
-                        "The element type permits content without a typed value.",
-                        ErrorCode.AtomizationError,
-                        call.getMetadata());
+                        "The element type permits content without a typed value.", ErrorCode.AtomizationError, call);
             }
         }
     }
@@ -440,7 +438,7 @@ public final class BuiltinFunctionTyping {
                             + " requires its inferred input sequence type to be empty or have an item type that is a subtype of xs:numeric, xs:yearMonthDuration, or xs:dayTimeDuration, found "
                             + inputType,
                     ErrorCode.InvalidArgumentType,
-                    expression.getMetadata());
+                    expression);
         }
 
         return new SequenceType(
@@ -534,7 +532,7 @@ public final class BuiltinFunctionTyping {
                             + " compared with each other, found "
                             + inputType,
                     ErrorCode.InvalidArgumentType,
-                    expression.getMetadata());
+                    expression);
         }
 
         return new SequenceType(

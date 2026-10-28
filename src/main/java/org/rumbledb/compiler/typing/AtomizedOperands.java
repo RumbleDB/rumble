@@ -55,7 +55,7 @@ public final class AtomizedOperands {
             errors.report(
                     "The operands of '" + operator + "' must be atomizable, found " + reported,
                     nonAtomizableErrorCode(reported),
-                    node.getMetadata());
+                    node);
         }
     }
 
