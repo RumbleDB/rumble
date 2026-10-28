@@ -26,8 +26,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -82,6 +84,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     private final RumbleConfiguration configuration;
     private final ResourceResolver resourceResolver;
     private ExternalBindings externalBindings;
+    private int libraryModuleDepth;
+    private List<Item> initialContextItem;
     private Map<String, DynamicContext> importedModuleContexts;
 
     public DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
@@ -168,7 +172,9 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         }
 
         // Variable is external. Do we have supplied items?
-        List<Item> items = this.getItemsBinding(name);
+        List<Item> items = name.equals(Name.CONTEXT_ITEM) && this.libraryModuleDepth > 0
+                ? this.initialContextItem
+                : this.getItemsBinding(name);
         if (items != null) {
             if (variableDeclaration.getSequenceType().isEmptySequence() && items.size() > 0) {
                 throw new UnexpectedTypeException(
@@ -342,7 +348,13 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             DynamicContext newContext =
                     new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
             newContext.setNamedFunctions(argument.getNamedFunctions());
-            DynamicContext importedContext = visitDescendants(module, newContext);
+            DynamicContext importedContext;
+            this.libraryModuleDepth++;
+            try {
+                importedContext = visitDescendants(module, newContext);
+            } finally {
+                this.libraryModuleDepth--;
+            }
             this.importedModuleContexts.put(module.getNamespace(), importedContext);
         }
         argument.getVariableValues()
@@ -362,9 +374,48 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             visit(declaration, argument);
         }
+        // Context initialization can depend on another global declared in this module.
+        // Bind local immutable initializers before an imported module checks the shared focus.
+        Set<Node> earlyBound = new HashSet<>();
+        if (prolog.hasContextItemDeclaration()) {
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                Expression initializer = declaration.getExpression();
+                if (!declaration.external()
+                        && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
+                        && !declaration.isAssignable()
+                        && !initializer.isSequential()) {
+                    ItemRuntimePlan plan =
+                            new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(initializer);
+                    if (plan.getRuntimeStaticContext().getExecutionMode().isLocal()) {
+                        argument.getVariableValues()
+                                .addVariableValue(
+                                        declaration.getVariableName(),
+                                        new GlobalVariableValue(
+                                                plan,
+                                                argument,
+                                                declaration.getMetadata(),
+                                                declaration.getVariableName()));
+                        earlyBound.add(declaration);
+                    }
+                }
+            }
+        }
+        VariableDeclaration contextDeclaration = null;
+        if (this.libraryModuleDepth == 0) {
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(Name.CONTEXT_ITEM)) {
+                    contextDeclaration = declaration;
+                    visit(declaration, argument);
+                    this.initialContextItem = argument.getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, declaration.getMetadata());
+                    break;
+                }
+            }
+        }
         DynamicContext generatedContext = argument;
         for (Node child : prolog.getChildren()) {
-            if (!(child instanceof FunctionDeclaration)) generatedContext = visit(child, generatedContext);
+            if (!(child instanceof FunctionDeclaration) && child != contextDeclaration && !earlyBound.contains(child))
+                generatedContext = visit(child, generatedContext);
         }
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
