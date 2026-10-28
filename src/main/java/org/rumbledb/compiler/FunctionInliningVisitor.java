@@ -35,6 +35,19 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.types.SequenceType;
 
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
@@ -68,6 +81,50 @@ public class FunctionInliningVisitor extends CloneVisitor {
         }
         for (Node child : expression.getChildren()) {
             if (isVariableReferenced(child, name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether an expression may be updating: an update, or a call to a function declared updating. A copy-modify
+     * expression only updates its copies, and a function item is not updating itself.
+     */
+    private boolean mayBeUpdating(Node node) {
+        if (node instanceof InsertExpression
+                || node instanceof DeleteExpression
+                || node instanceof ReplaceExpression
+                || node instanceof RenameExpression
+                || node instanceof AppendExpression
+                || node instanceof CreateCollectionExpression
+                || node instanceof DeleteIndexFromCollectionExpression
+                || node instanceof DeleteSearchFromCollectionExpression
+                || node instanceof EditCollectionExpression
+                || node instanceof InsertIndexIntoCollectionExpression
+                || node instanceof InsertSearchIntoCollectionExpression
+                || node instanceof TruncateCollectionExpression) {
+            return true;
+        }
+        if (node instanceof TransformExpression transform) {
+            return mayBeUpdating(transform.getReturnExpression());
+        }
+        if (node instanceof InlineFunctionExpression) {
+            return false;
+        }
+        if (node instanceof FunctionCallExpression call) {
+            FunctionDeclaration target = getFunctionDeclarationFromProlog(this.prolog, call.getFunctionIdentifier());
+            if (target != null && ((InlineFunctionExpression) target.getExpression()).isUpdating()) {
+                return true;
+            }
+        }
+        if (node instanceof Clause clause && clause.getPreviousClause() != null) {
+            if (mayBeUpdating(clause.getPreviousClause())) {
+                return true;
+            }
+        }
+        for (Node child : node.getChildren()) {
+            if (child != null && mayBeUpdating(child)) {
                 return true;
             }
         }
@@ -125,6 +182,9 @@ public class FunctionInliningVisitor extends CloneVisitor {
     // Inlining is disabled for functions that:
     // 1. Are sequential.
     // 2. Contain an exit statement.
+    // It is also disabled for calls with an argument that may be updating, which is an error (XUST0001). Updating
+    // expressions are classified after inlining, which binds an unused argument in a let clause that is then removed,
+    // so the call is kept for this error to be reported.
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
         FunctionDeclaration targetFunction =
@@ -135,7 +195,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 || isImportedFunction(this.prolog, targetFunction)
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
-                || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {
+                || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()
+                || expression.getArguments().stream().anyMatch(arg -> arg != null && mayBeUpdating(arg))) {
             List<Expression> arguments = new ArrayList<>();
             for (Expression arg : expression.getArguments()) {
                 arguments.add(arg == null ? null : (Expression) visit(arg, argument));
