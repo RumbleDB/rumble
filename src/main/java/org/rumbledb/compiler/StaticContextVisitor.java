@@ -509,6 +509,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            argument.addVariable(
+                    declaration.getVariableName(),
+                    declaration.getActualSequenceType(),
+                    declaration.getMetadata(),
+                    declaration.isAssignable());
+        }
         StaticContext generatedContext = visitDescendants(prolog, argument);
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(generatedContext, prolog.getMetadata());

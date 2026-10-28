@@ -117,7 +117,13 @@ public class VariableValues implements Serializable {
         if (this.parent != null) {
             this.parent.populateClosure(local, rdd, dataFrames);
         }
-        this.localVariableValues.forEach((name, value) -> {
+        new java.util.LinkedHashMap<>(this.localVariableValues).forEach((name, value) -> {
+            // Module variables are read through the function's module context. Capturing them would
+            // evaluate unrelated initializers, including the initializer creating this function.
+            if (this.parent == null
+                    && !name.equals(Name.CONTEXT_ITEM)
+                    && !name.equals(Name.CONTEXT_POSITION)
+                    && !name.equals(Name.CONTEXT_COUNT)) return;
             rdd.remove(name);
             dataFrames.remove(name);
             local.put(name, value == null ? null : new java.util.ArrayList<>(value));

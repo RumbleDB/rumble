@@ -124,6 +124,16 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public boolean isWithinIntRange() {
+        return this.itemToAnnotate.isWithinIntRange();
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return this.itemToAnnotate.isWithinLongRange();
+    }
+
+    @Override
     public boolean isInteger() {
         return this.itemToAnnotate.isInteger();
     }

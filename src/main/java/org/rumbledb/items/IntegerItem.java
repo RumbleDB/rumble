@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -39,6 +40,22 @@ public class IntegerItem extends AbstractAtomicItem {
     @Override
     public Item copy(boolean mutable) {
         return new IntegerItem(this.value);
+    }
+
+    @Override
+    public int getIntValue() {
+        if (!isWithinIntRange()) {
+            throw new OurBadException("Integer value is not within the int range.");
+        }
+        return this.value.intValue();
+    }
+
+    @Override
+    public long getLongValue() {
+        if (!isWithinLongRange()) {
+            throw new OurBadException("Integer value is not within the long range.");
+        }
+        return this.value.longValue();
     }
 
     @Override
@@ -89,6 +106,16 @@ public class IntegerItem extends AbstractAtomicItem {
     @Override
     public int castToIntValue() {
         return this.value.intValue();
+    }
+
+    @Override
+    public boolean isWithinIntRange() {
+        return this.value.bitLength() <= 31;
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return this.value.bitLength() <= 63;
     }
 
     @Override
