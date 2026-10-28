@@ -419,6 +419,21 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
         }
+        // Deferred bindings resolve forward dependencies during module initialization. Complete
+        // initialization before entering the query body, where try/catch must not catch global
+        // initializer errors, and before Spark can capture initializer plans in task closures.
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            Name name = declaration.getVariableName();
+            if (generatedContext.getVariableValues().isRDD(name, declaration.getMetadata())
+                    || generatedContext.getVariableValues().isDataFrame(name, declaration.getMetadata())) {
+                continue;
+            }
+            List<Item> items =
+                    generatedContext.getVariableValues().getLocalVariableValue(name, declaration.getMetadata());
+            if (items instanceof GlobalVariableValue deferred) {
+                generatedContext.getVariableValues().addVariableValue(name, deferred.value());
+            }
+        }
         return generatedContext;
     }
 
@@ -553,7 +568,35 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
         @Serial
         private Object writeReplace() {
+            // A Spark initializer can serialize its module context before it has produced a
+            // value. Preserve a cycle check for that binding without evaluating it again merely
+            // because an unrelated task captures the context.
+            if (this.evaluating) return new InitializingGlobalVariableValue(this.metadata);
             return new ArrayList<>(value());
+        }
+    }
+
+    private static final class InitializingGlobalVariableValue extends AbstractList<Item> implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private final ExceptionMetadata metadata;
+
+        InitializingGlobalVariableValue(ExceptionMetadata metadata) {
+            this.metadata = metadata;
+        }
+
+        @Override
+        public Item get(int index) {
+            throw cycle();
+        }
+
+        @Override
+        public int size() {
+            throw cycle();
+        }
+
+        private CycleInVariableDeclarationsException cycle() {
+            return new CycleInVariableDeclarationsException(
+                    "A global variable initializer depends on its own value.", this.metadata);
         }
     }
 }
