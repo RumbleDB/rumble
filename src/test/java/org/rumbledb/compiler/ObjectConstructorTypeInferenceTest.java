@@ -150,7 +150,7 @@ class ObjectConstructorTypeInferenceTest {
     @Test
     void filteringMultipleItemsCanProduceASingleton() {
         ItemType type =
-                infer("let $v := (false, 1) return {\"b\": $v[1]}.b", "jq").getItemType();
+                infer("let $v := (false, 1) return {\"b\": $v[2]}.b", "jq").getItemType();
         assertTrue(type.isUnionType());
         assertFalse(type.getTypes().stream().anyMatch(ItemType::isArrayItemType));
         assertTrue(type.getTypes().contains(BuiltinTypesCatalogue.booleanItem));
