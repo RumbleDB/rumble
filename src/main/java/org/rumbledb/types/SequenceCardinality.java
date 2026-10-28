@@ -111,6 +111,13 @@ public enum SequenceCardinality {
         return fromPossibilities(true, allowsOne() || allowsMany(), allowsMany());
     }
 
+    /**
+     * The cardinality after removing the first item, if any: two items leave one, and more leave many.
+     */
+    public SequenceCardinality withoutFirst() {
+        return fromPossibilities(allowsZero() || allowsOne(), allowsMany(), allowsMany());
+    }
+
     public SequenceType.Arity toArity() {
         return switch (this) {
             case EMPTY -> SequenceType.Arity.Zero;

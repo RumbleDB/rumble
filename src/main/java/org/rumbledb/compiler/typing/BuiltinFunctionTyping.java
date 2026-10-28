@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import org.apache.spark.sql.SparkSession;
@@ -87,6 +88,30 @@ public final class BuiltinFunctionTyping {
             return TypeAtomization.containsNodeOrArray(input.getItemType())
                     ? Optional.of(new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceCardinality.ZERO_OR_ONE))
                     : Optional.empty();
+        });
+        // These functions return items of their first argument, so only its cardinality changes.
+        addInputItemsRule("exactly-one", cardinality -> SequenceCardinality.ONE);
+        addInputItemsRule("one-or-more", SequenceCardinality::replaceZeroWithOne);
+        addInputItemsRule("zero-or-one", SequenceCardinality::atMostOne);
+        addInputItemsRule("head", SequenceCardinality::atMostOne);
+        addInputItemsRule("tail", SequenceCardinality::withoutFirst);
+        addInputItemsRule("reverse", UnaryOperator.identity());
+        addInputItemsRule("unordered", UnaryOperator.identity());
+        addInputItemsRule("sort", UnaryOperator.identity());
+        addInputItemsRule("subsequence", SequenceCardinality::filtered);
+        addInputItemsRule("remove", SequenceCardinality::filtered);
+        addBuiltinRule(
+                "insert-before",
+                (call, staticContext) -> Optional.of(call.getArguments()
+                        .get(0)
+                        .getStaticSequenceType()
+                        .concatenateWith(call.getArguments().get(2).getStaticSequenceType())));
+        // Equal values are merged, but a value remains.
+        addBuiltinRule("distinct-values", (call, staticContext) -> {
+            SequenceType values =
+                    TypeAtomization.inferType(call.getArguments().get(0).getStaticSequenceType());
+            return Optional.of(new SequenceType(
+                    values.getItemType(), values.getCardinality().grouped()));
         });
         // set output type to 'Integer' if inputType is 'Array'
         addBuiltinRule(
@@ -230,6 +255,16 @@ public final class BuiltinFunctionTyping {
     private void addBuiltinRule(String localName, ReturnTypeRule rule) {
         this.rules.put(Name.createVariableInDefaultFunctionNamespace(localName), rule);
         this.rules.put(Name.createVariableInDefaultBuiltinFunctionNamespace(localName), rule);
+    }
+
+    /** A function that returns items of its first argument, with a cardinality that depends on the argument's. */
+    private void addInputItemsRule(String localName, UnaryOperator<SequenceCardinality> cardinality) {
+        addBuiltinRule(localName, (call, staticContext) -> {
+            SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+            return input.isEmptySequence()
+                    ? Optional.of(input)
+                    : Optional.of(new SequenceType(input.getItemType(), cardinality.apply(input.getCardinality())));
+        });
     }
 
     private void addMapRule(String localName, ReturnTypeRule rule) {
