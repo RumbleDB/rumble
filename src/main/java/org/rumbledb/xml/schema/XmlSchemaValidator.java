@@ -15,8 +15,6 @@
  */
 package org.rumbledb.xml.schema;
 
-import java.util.HashSet;
-import java.util.Set;
 import javax.xml.validation.ValidatorHandler;
 
 import org.apache.xerces.xs.PSVIProvider;
@@ -99,7 +97,7 @@ public final class XmlSchemaValidator {
     }
 
     private Item validate(Item input, XSTypeDefinition rootType, ExceptionMetadata metadata) {
-        ValidatorHandler handler = createHandler(rootType, metadata);
+        ValidatorHandler handler = createHandler(rootType, input.isDocumentNode(), metadata);
         if (!(handler instanceof PSVIProvider psviProvider)) {
             throw new OurBadException("The Xerces validator does not expose PSVI information.", metadata);
         }
@@ -108,15 +106,6 @@ public final class XmlSchemaValidator {
         try {
             new XmlItemSaxEmitter(handler, builder::comment).emit(input);
             Item result = builder.getResult();
-            if (input.isDocumentNode()) {
-                Set<String> ids = new HashSet<>();
-                Set<String> references = new HashSet<>();
-                collectIds(result, ids, references, metadata);
-                if (!ids.containsAll(references)) {
-                    throw new InvalidInstanceException(
-                            "An IDREF has no matching ID in the validated document.", metadata);
-                }
-            }
             XmlBaseUtils.preserveBaseUri(input, result);
             return result;
         } catch (SAXException exception) {
@@ -124,36 +113,15 @@ public final class XmlSchemaValidator {
         }
     }
 
-    private static void collectIds(Item node, Set<String> ids, Set<String> references, ExceptionMetadata metadata) {
-        if (node.isElementNode() || node.isAttributeNode()) {
-            if (node.isId()) {
-                String id =
-                        node.getStringValue().replaceAll("[\\t\\n\\r ]+", " ").trim();
-                if (!ids.add(id)) {
-                    throw new InvalidInstanceException("Duplicate ID in the validated document: " + id, metadata);
-                }
-            }
-            if (node.isIdrefs()) {
-                for (String reference : node.getStringValue().trim().split("[\\t\\n\\r ]+")) {
-                    if (!reference.isEmpty()) references.add(reference);
-                }
-            }
-        }
-        if (node.isElementNode()) {
-            for (Item attribute : node.attributes()) collectIds(attribute, ids, references, metadata);
-        }
-        for (Item child : node.children()) collectIds(child, ids, references, metadata);
-    }
-
     /**
-     * Creates a Xerces ValidatorHandler configured for the given root type.
+     * Creates a Xerces ValidatorHandler configured for the given root type and document validation mode.
      */
-    private ValidatorHandler createHandler(XSTypeDefinition rootType, ExceptionMetadata metadata) {
+    private ValidatorHandler createHandler(
+            XSTypeDefinition rootType, boolean documentValidation, ExceptionMetadata metadata) {
         ValidatorHandler handler = this.catalog.getValidationSchema().newValidatorHandler();
         handler.setErrorHandler(new ThrowingErrorHandler());
         try {
-            // Check document-level IDs on the resulting XDM tree, which also recognizes xml:id.
-            handler.setFeature(ID_IDREF_CHECKING, false);
+            handler.setFeature(ID_IDREF_CHECKING, documentValidation);
             handler.setFeature(UNPARSED_ENTITY_CHECKING, false);
             if (rootType != null) {
                 handler.setProperty(ROOT_TYPE_DEFINITION, rootType);
