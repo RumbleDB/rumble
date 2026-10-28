@@ -1286,14 +1286,38 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata());
         }
 
-        // if we are filter one or less items or we use an integer to select a specific position we return at most one
-        // element, otherwise *
-        SequenceType.Arity inferredArity = (mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
-                        || predicateType.getItemType().equals(BuiltinTypesCatalogue.integerItem))
+        // Filtering at most one item, or selecting one position, keeps at most one item.
+        boolean selectsOnePosition = predicateType.getItemType().equals(BuiltinTypesCatalogue.integerItem)
+                && isSameForEveryItem(predicateExpression);
+        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) || selectsOnePosition
                 ? SequenceType.Arity.OneOrZero
                 : SequenceType.Arity.ZeroOrMore;
         expression.setStaticSequenceType(new SequenceType(mainType.getItemType(), inferredArity));
         return argument;
+    }
+
+    /**
+     * Whether a predicate has the same value for every item it filters, so that an integer selects one position:
+     * e.g. $s[1], $s[$i] or $s[last() - 1], but not $s[position()] or $s[.], which may select every item.
+     */
+    private static boolean isSameForEveryItem(Expression predicate) {
+        if (predicate instanceof IntegerLiteralExpression || predicate instanceof VariableReferenceExpression) {
+            return true;
+        }
+        if (predicate instanceof FunctionCallExpression call) {
+            // last() is the size of the filtered sequence, which all its items share.
+            Name name = call.getFunctionName();
+            return call.getArguments().isEmpty()
+                    && name.getLocalName().equals("last")
+                    && (Name.FN_NS.equals(name.getNamespace())
+                            || Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(name.getNamespace()));
+        }
+        if (predicate instanceof AdditiveExpression
+                || predicate instanceof MultiplicativeExpression
+                || predicate instanceof UnaryExpression) {
+            return predicate.getChildren().stream().allMatch(child -> isSameForEveryItem((Expression) child));
+        }
+        return false;
     }
 
     // return [true] if [types] are subtype of or can be promoted to expected types, [false] otherwise
