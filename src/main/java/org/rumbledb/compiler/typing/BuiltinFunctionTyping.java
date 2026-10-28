@@ -17,6 +17,7 @@ package org.rumbledb.compiler.typing;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -91,6 +92,12 @@ public final class BuiltinFunctionTyping {
                 (call, staticContext) -> Optional.of(
                         inferStrictMinMaxReturnType(call, call.getArguments().get(0), "fn:max")));
 
+        // The map functions keep the key and value types of the maps they build, where their signatures say map(*).
+        addMapRule("entry", (call, staticContext) -> inferMapEntryType(call));
+        addMapRule("get", (call, staticContext) -> typedMapArgument(call).map(LookupTyping::inferLookupCallType));
+        addMapRule("put", (call, staticContext) -> inferMapPutType(call));
+        addMapRule("remove", (call, staticContext) -> typedMapArgument(call).map(SequenceType::new));
+
         // For input functions, we read the schema of the data to annotate the static type precisely
         this.rules.put(
                 Name.createVariableInDefaultFunctionNamespace("parquet-file"),
@@ -137,6 +144,51 @@ public final class BuiltinFunctionTyping {
     private void addBuiltinRule(String localName, ReturnTypeRule rule) {
         this.rules.put(Name.createVariableInDefaultFunctionNamespace(localName), rule);
         this.rules.put(Name.createVariableInDefaultBuiltinFunctionNamespace(localName), rule);
+    }
+
+    private void addMapRule(String localName, ReturnTypeRule rule) {
+        this.rules.put(new Name(Name.MAP_NS, "map", localName), rule);
+    }
+
+    /** The type of the map passed as the first argument, when it is one map with known key and value types. */
+    private static Optional<ItemType> typedMapArgument(FunctionCallExpression call) {
+        SequenceType type = call.getArguments().get(0).getStaticSequenceType();
+        return type.getArity() == SequenceType.Arity.One
+                        && type.getItemType().isMapItemType()
+                        && !type.getItemType().equals(BuiltinTypesCatalogue.mapItem)
+                ? Optional.of(type.getItemType())
+                : Optional.empty();
+    }
+
+    /** The type of a key argument, which is atomized. A key that is always empty makes the call fail. */
+    private static Optional<ItemType> atomizedKeyType(Expression key) {
+        SequenceType type = key.getStaticSequenceType();
+        return type.isEmptySequence()
+                ? Optional.empty()
+                : Optional.of(TypeAtomization.atomizedItemType(type.getItemType()));
+    }
+
+    /** map:entry($key, $value) is a map from the key's type to the value's type. */
+    private static Optional<SequenceType> inferMapEntryType(FunctionCallExpression call) {
+        SequenceType valueType = call.getArguments().get(1).getStaticSequenceType();
+        return atomizedKeyType(call.getArguments().get(0)).map(keyType -> mapType(keyType, valueType));
+    }
+
+    /** map:put($map, $key, $value) adds the key's type and the value's type to those of the map. */
+    private static Optional<SequenceType> inferMapPutType(FunctionCallExpression call) {
+        Optional<ItemType> map = typedMapArgument(call);
+        Optional<ItemType> keyType = atomizedKeyType(call.getArguments().get(1));
+        if (map.isEmpty() || keyType.isEmpty()) {
+            return Optional.empty();
+        }
+        SequenceType valueType = call.getArguments().get(2).getStaticSequenceType();
+        return Optional.of(mapType(
+                ItemTypeFactory.createInferredUnionType(List.of(map.get().getMapKeyItemType(), keyType.get())),
+                map.get().getMapValueSequenceType().leastCommonSupertypeWith(valueType)));
+    }
+
+    private static SequenceType mapType(ItemType keyType, SequenceType valueType) {
+        return new SequenceType(ItemTypeFactory.mapOf(keyType, valueType));
     }
 
     /**
