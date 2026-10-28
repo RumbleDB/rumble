@@ -29,7 +29,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NodeAndNonNodeException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -48,6 +51,12 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
 
     private static final Comparator<Item> DOCUMENT_ORDER_COMPARATOR =
             Comparator.comparing(Item::getXmlDocumentPosition, Comparator.nullsLast(Comparator.naturalOrder()));
+    private boolean intermediateStep;
+
+    public void requireNodeResult() {
+        this.intermediateStep = true;
+    }
+
     private final ItemRuntimePlan leftIterator;
     private final ItemRuntimePlan rightIterator;
 
@@ -55,6 +64,9 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
             ItemRuntimePlan sequence, ItemRuntimePlan stepIterator, RuntimeStaticContext staticContext) {
         super(Arrays.asList(sequence, stepIterator), staticContext);
         this.leftIterator = sequence;
+        if (sequence instanceof SlashExprIterator slash) {
+            slash.intermediateStep = true;
+        }
         this.rightIterator = stepIterator;
     }
 
@@ -120,7 +132,7 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
         } else if (allNonNodes) {
             return result;
         } else {
-            throw new NodeAndNonNodeException(
+            throw mixedResultError(
                     "A mix of nodes and non-nodes was encountered as a result of a step expression.", getMetadata());
         }
     }
@@ -131,6 +143,7 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
         long last = left.size();
         long position = 0;
         for (Item currentItem : left) {
+            requireNode(currentItem, getMetadata());
             DynamicContext currentContext = new DynamicContext(context);
             currentContext
                     .getVariableValues()
@@ -152,9 +165,23 @@ public class SlashExprIterator extends ItemRuntimePlan implements LocalRuntimePl
             localResults = new ArrayList<>(new LinkedHashSet<>(localResults));
             localResults.sort(DOCUMENT_ORDER_COMPARATOR);
         } else if (!allNonNodes) {
-            throw new NodeAndNonNodeException(
+            throw mixedResultError(
                     "A mix of nodes and non-nodes was encountered as a result of a step expression.", getMetadata());
         }
         return localResults;
+    }
+
+    static void requireNode(Item item, ExceptionMetadata metadata) {
+        if (!item.isNode()) {
+            throw new RumbleException(
+                    "An intermediate path step must contain only nodes.", ErrorCode.UnexpectedNode, metadata);
+        }
+    }
+
+    private RuntimeException mixedResultError(String message, ExceptionMetadata metadata) {
+        if (this.intermediateStep) {
+            return new RumbleException(message, ErrorCode.UnexpectedNode, metadata);
+        }
+        return new NodeAndNonNodeException(message, metadata);
     }
 }
