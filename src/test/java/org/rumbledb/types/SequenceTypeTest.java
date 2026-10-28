@@ -25,8 +25,42 @@ import org.junit.jupiter.params.provider.EnumSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 
 class SequenceTypeTest {
+    @Test
+    void notationsNameBuiltinTypes() {
+        assertEquals(
+                new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.OneOrZero),
+                SequenceType.createSequenceType("integer?"));
+        assertEquals(
+                new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.OneOrMore),
+                SequenceType.createSequenceType("node()+"));
+        assertEquals(
+                BuiltinTypesCatalogue.xqueryArrayItem,
+                SequenceType.createSequenceType("array").getItemType());
+        assertEquals(
+                BuiltinTypesCatalogue.arrayItem,
+                SequenceType.createSequenceType("item-array").getItemType());
+        assertThrows(OurBadException.class, () -> SequenceType.createSequenceType("no-such-type"));
+    }
+
+    @Test
+    void functionNotationsGiveTheOccurrenceIndicatorToTheReturnType() {
+        SequenceType function = SequenceType.createSequenceType("function(object*, object) as function(item) as item*");
+        assertEquals(SequenceType.Arity.One, function.getArity());
+        FunctionSignature signature = function.getItemType().getSignature();
+        assertEquals(
+                List.of(SequenceType.createSequenceType("object*"), SequenceType.createSequenceType("object")),
+                signature.getParameterTypes());
+        assertEquals(
+                List.of(SequenceType.createSequenceType("item")),
+                signature.getReturnType().getItemType().getSignature().getParameterTypes());
+        assertEquals(
+                SequenceType.createSequenceType("item*"),
+                signature.getReturnType().getItemType().getSignature().getReturnType());
+    }
+
     @ParameterizedTest
     @EnumSource(SequenceCardinality.class)
     void atomicUnionEffectiveBooleanValueRespectsCardinality(SequenceCardinality cardinality) {
