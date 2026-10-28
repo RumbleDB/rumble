@@ -3220,14 +3220,14 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction parse_xml = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "parse-xml"),
             List.of("string?"),
-            "item?",
+            "document-node()?",
             ParseXMLFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction parse_xml_fragment = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "parse-xml-fragment"),
             List.of("string?"),
-            "item?",
+            "document-node()?",
             ParseXMLFragmentFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
