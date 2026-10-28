@@ -119,6 +119,13 @@ public final class BuiltinFunctionTyping {
                 (call, staticContext) -> Optional.of(
                         inferStrictMinMaxReturnType(call, call.getArguments().get(0), "fn:max")));
 
+        addJsoniqRule(
+                "members",
+                (call, staticContext) -> Optional.of(LookupTyping.inferArrayMembersType(
+                        call.getArguments().get(0).getStaticSequenceType())));
+        addJsoniqRule("project", (call, staticContext) -> Optional.of(inferObjectsChangedType(call)));
+        addJsoniqRule("remove-keys", (call, staticContext) -> Optional.of(inferObjectsChangedType(call)));
+
         // The map functions keep the key and value types of the maps they build, where their signatures say map(*).
         addMapRule("entry", (call, staticContext) -> inferMapEntryType(call));
         addMapRule("get", (call, staticContext) -> typedMapArgument(call).map(LookupTyping::inferLookupCallType));
@@ -195,6 +202,24 @@ public final class BuiltinFunctionTyping {
                     ? Optional.of(input)
                     : Optional.of(new SequenceType(input.getItemType(), cardinality.apply(input.getCardinality())));
         });
+    }
+
+    // A JSONiq function can be called in the JSONiq default function namespace or in the jn namespace.
+    private void addJsoniqRule(String localName, ReturnTypeRule rule) {
+        this.rules.put(Name.createVariableInDefaultFunctionNamespace(localName), rule);
+        this.rules.put(new Name(Name.JN_NS, "jn", localName), rule);
+    }
+
+    /** jn:project and jn:remove-keys change the fields of each object, and return other items unchanged. */
+    private static SequenceType inferObjectsChangedType(FunctionCallExpression call) {
+        SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+        if (input.isEmptySequence()) {
+            return input;
+        }
+        List<ItemType> members = input.getItemType().getMemberTypes().stream()
+                .map(member -> member.isObjectItemType() ? BuiltinTypesCatalogue.objectItem : member)
+                .toList();
+        return new SequenceType(ItemTypeFactory.createInferredUnionType(members), input.getCardinality());
     }
 
     private void addMapRule(String localName, ReturnTypeRule rule) {
