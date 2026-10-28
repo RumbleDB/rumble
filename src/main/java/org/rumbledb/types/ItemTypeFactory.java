@@ -658,6 +658,24 @@ public class ItemTypeFactory {
     }
 
     /**
+     * The type of a constructed element, which is not validated: element(N, xs:untyped), or element(N, xs:anyType)
+     * in construction mode preserve. Either way its typed value is its string value, as one xs:untypedAtomic.
+     *
+     * @param nodeName the element name, or null when it is only known at runtime
+     * @param preserve whether the construction mode is preserve
+     */
+    public static ItemType constructedElementNodeItemType(Name nodeName, boolean preserve) {
+        Name anyType = new Name(Name.XS_NS, "xs", "anyType");
+        Name untyped = new Name(Name.XS_NS, "xs", "untyped");
+        return new ElementNodeItemType(
+                nodeName,
+                preserve ? anyType : untyped,
+                preserve ? List.of(anyType) : List.of(untyped, anyType),
+                false,
+                new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem));
+    }
+
+    /**
      * Wildcard XQuery attribute node type attribute().
      *
      * @return wildcard attribute node type

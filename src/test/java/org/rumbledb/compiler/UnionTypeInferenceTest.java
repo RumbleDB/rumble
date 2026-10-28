@@ -52,7 +52,7 @@ class UnionTypeInferenceTest {
     void mixedAtomicNodeUnionKeepsBothMembers() {
         ItemType union = infer("for $i in ('3', <h3/>) return $i", URI.create("file:///mixed-union.xq"))
                 .getItemType();
-        ItemType h3 = ItemTypeFactory.elementNodeItemType(Name.createVariableInNoNamespace("h3"));
+        ItemType h3 = ItemTypeFactory.constructedElementNodeItemType(Name.createVariableInNoNamespace("h3"), false);
         assertEquals(List.of(BuiltinTypesCatalogue.stringItem, h3), union.getTypes());
         // Joins and overlap checks rely on a node type being a subtype of a union that contains it.
         assertTrue(h3.isSubtypeOf(union));
