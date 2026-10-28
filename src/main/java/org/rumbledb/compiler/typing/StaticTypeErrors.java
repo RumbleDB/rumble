@@ -44,6 +44,11 @@ import org.rumbledb.types.SequenceType;
  * with that type report nothing: they would only repeat the error that the operand already had. A variable bound to
  * such an expression has the unknown type too, so its uses report nothing either, but a variable with a declared type
  * keeps it. Each node has at most one error.
+ *
+ * <p>
+ * An error is certain when every value of the checked expression fails, and possible when only some do: an item*
+ * argument for an xs:integer parameter fails unless it is one integer. Static typing rejects both. A possible error
+ * does not make its expression unknown, since the types inferred after it are those of the values that pass.
  */
 public final class StaticTypeErrors {
 
@@ -57,7 +62,9 @@ public final class StaticTypeErrors {
 
     private final List<RumbleException> errors = new ArrayList<>();
 
-    /** The nodes with an error, reported or not, which are typed as unknown. */
+    private final Set<Node> nodesWithErrors = Collections.newSetFromMap(new IdentityHashMap<>());
+
+    /** The nodes with a certain error, or with an error that is not reported, which are typed as unknown. */
     private final Set<Node> failedNodes = Collections.newSetFromMap(new IdentityHashMap<>());
 
     public StaticTypeErrors(RumbleConfiguration configuration) {
@@ -72,17 +79,44 @@ public final class StaticTypeErrors {
         return type != null && !type.isEmptySequence() && type.getItemType() == UNKNOWN_ITEM;
     }
 
+    /** Reports a certain error. */
     public void report(String message, Node node) {
         report(message, ErrorCode.UnexpectedTypeErrorCode, node);
     }
 
+    /** Reports a certain error. */
     public void report(String message, ErrorCode code, Node node) {
-        if (!this.configuration.analysis().enableStaticTyping() || !this.failedNodes.add(node)) {
+        record(message, code, node, true);
+    }
+
+    /** Reports an error, which is possible when some values may still pass the check, and otherwise certain. */
+    public void report(String message, Node node, boolean mayPass) {
+        report(message, ErrorCode.UnexpectedTypeErrorCode, node, mayPass);
+    }
+
+    /** Reports an error, which is possible when some values may still pass the check, and otherwise certain. */
+    public void report(String message, ErrorCode code, Node node, boolean mayPass) {
+        record(message, code, node, !mayPass);
+    }
+
+    /** Reports that the actual type is not a subtype of the expected one, which is possible if they may overlap. */
+    public void reportMismatch(String message, SequenceType actual, SequenceType expected, Node node) {
+        report(message, node, actual.mayMatch(expected));
+    }
+
+    private void record(String message, ErrorCode code, Node node, boolean certain) {
+        if (!this.configuration.analysis().enableStaticTyping() || !this.nodesWithErrors.add(node)) {
             return;
         }
-        if (!hasUnknownOperand(node)) {
-            this.errors.add(new UnexpectedStaticTypeException(message, code, node.getMetadata()));
+        // An error of a node with an unknown operand only repeats the operand's, so the node is unknown too.
+        if (hasUnknownOperand(node)) {
+            this.failedNodes.add(node);
+            return;
         }
+        if (certain) {
+            this.failedNodes.add(node);
+        }
+        this.errors.add(new UnexpectedStaticTypeException(message, code, node.getMetadata(), certain));
     }
 
     /** Whether an error was reported. */
@@ -90,7 +124,7 @@ public final class StaticTypeErrors {
         return !this.errors.isEmpty();
     }
 
-    /** Whether the node had an error, reported or not, so that its type is unknown. */
+    /** Whether the node had a certain error, or an error that is not reported, so that its type is unknown. */
     public boolean hasFailed(Node node) {
         return this.failedNodes.contains(node);
     }
