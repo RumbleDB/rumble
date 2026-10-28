@@ -15,6 +15,7 @@
  */
 package org.rumbledb.compiler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1386,14 +1387,38 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     predicateType.mayHaveEffectiveBooleanValue());
         }
 
-        // Filtering at most one item, or selecting one position, keeps at most one item.
+        // Filtering at most one item, or selecting one position, keeps at most one item. A nonempty sequence always
+        // has a first and a last item.
         boolean selectsOnePosition = predicateType.getItemType().equals(BuiltinTypesCatalogue.integerItem)
                 && isSameForEveryItem(predicateExpression);
-        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) || selectsOnePosition
-                ? SequenceType.Arity.OneOrZero
-                : SequenceType.Arity.ZeroOrMore;
+        boolean selectsAnEnd = isFirstPosition(predicateExpression) || isLastCall(predicateExpression);
+        SequenceType.Arity inferredArity;
+        if (selectsAnEnd && !mainType.getCardinality().allowsZero()) {
+            inferredArity = SequenceType.Arity.One;
+        } else if (mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) || selectsOnePosition) {
+            inferredArity = SequenceType.Arity.OneOrZero;
+        } else {
+            inferredArity = SequenceType.Arity.ZeroOrMore;
+        }
         expression.setStaticSequenceType(new SequenceType(mainType.getItemType(), inferredArity));
         return argument;
+    }
+
+    private static boolean isFirstPosition(Expression predicate) {
+        return predicate instanceof IntegerLiteralExpression literal
+                && new BigInteger(literal.getLexicalValue()).equals(BigInteger.ONE);
+    }
+
+    /** Whether the predicate is last(), the size of the filtered sequence. */
+    private static boolean isLastCall(Expression predicate) {
+        if (!(predicate instanceof FunctionCallExpression call)) {
+            return false;
+        }
+        Name name = call.getFunctionName();
+        return call.getArguments().isEmpty()
+                && name.getLocalName().equals("last")
+                && (Name.FN_NS.equals(name.getNamespace())
+                        || Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(name.getNamespace()));
     }
 
     /**
@@ -1401,16 +1426,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      * e.g. $s[1], $s[$i] or $s[last() - 1], but not $s[position()] or $s[.], which may select every item.
      */
     private static boolean isSameForEveryItem(Expression predicate) {
-        if (predicate instanceof IntegerLiteralExpression || predicate instanceof VariableReferenceExpression) {
+        if (predicate instanceof IntegerLiteralExpression
+                || predicate instanceof VariableReferenceExpression
+                || isLastCall(predicate)) {
             return true;
-        }
-        if (predicate instanceof FunctionCallExpression call) {
-            // last() is the size of the filtered sequence, which all its items share.
-            Name name = call.getFunctionName();
-            return call.getArguments().isEmpty()
-                    && name.getLocalName().equals("last")
-                    && (Name.FN_NS.equals(name.getNamespace())
-                            || Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(name.getNamespace()));
         }
         if (predicate instanceof AdditiveExpression
                 || predicate instanceof MultiplicativeExpression
