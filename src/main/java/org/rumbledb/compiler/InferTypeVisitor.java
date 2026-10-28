@@ -404,7 +404,31 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitMapConstructor(MapConstructorExpression expression, StaticContext argument) {
-        return withType(expression, new SequenceType(BuiltinTypesCatalogue.mapItem), argument);
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(new SequenceType(inferMapConstructorType(expression)));
+        return argument;
+    }
+
+    /**
+     * A map whose keys have the atomized types of the key expressions, and whose values have their types. An empty
+     * map, or one with a key that is always empty, and so always fails, is typed map(*).
+     */
+    private static ItemType inferMapConstructorType(MapConstructorExpression expression) {
+        List<ItemType> keyTypes = new ArrayList<>();
+        SequenceType valueType = null;
+        for (int i = 0; i < expression.getKeys().size(); i++) {
+            SequenceType keyType = typeOf(expression.getKeys().get(i), expression);
+            if (keyType.isEmptySequence()) {
+                return BuiltinTypesCatalogue.mapItem;
+            }
+            keyTypes.add(TypeAtomization.atomizedItemType(keyType.getItemType()));
+            SequenceType entryValueType = typeOf(expression.getValues().get(i), expression);
+            valueType = valueType == null ? entryValueType : valueType.leastCommonSupertypeWith(entryValueType);
+        }
+        if (keyTypes.isEmpty()) {
+            return BuiltinTypesCatalogue.mapItem;
+        }
+        return ItemTypeFactory.mapOf(ItemTypeFactory.createInferredUnionType(keyTypes), valueType);
     }
 
     @Override
