@@ -45,6 +45,11 @@ public final class RegexPatternUtils {
     private RegexPatternUtils() {}
 
     public static CompiledRegex compileRegex(String pattern, String flagsString, ExceptionMetadata metadata) {
+        return compileRegex(pattern, flagsString, metadata, "1.1");
+    }
+
+    public static CompiledRegex compileRegex(
+            String pattern, String flagsString, ExceptionMetadata metadata, String xsdVersion) {
         boolean quote = false;
         boolean ignoreWhitespace = false;
         int flags = 0;
@@ -75,6 +80,9 @@ public final class RegexPatternUtils {
             pattern = removePatternWhitespace(pattern);
         }
         validateXQueryRegex(pattern, quote, metadata);
+        if (!quote && "1.0".equals(xsdVersion)) {
+            validateXsd10Classes(pattern, metadata);
+        }
         if (quote) {
             pattern = Pattern.quote(pattern);
         }
@@ -100,6 +108,48 @@ public final class RegexPatternUtils {
     }
 
     /** XPath's non-multiline '$' matches only the end, whereas Java also accepts a final line terminator. */
+    private static void validateXsd10Classes(String pattern, ExceptionMetadata metadata) {
+        for (int i = 0; i < pattern.length(); i++) {
+            if (pattern.charAt(i) == '\\') {
+                i++;
+                continue;
+            }
+            if (pattern.charAt(i) != '[') {
+                continue;
+            }
+            int index = i + 1;
+            if (index < pattern.length() && pattern.charAt(index) == '^') {
+                index++;
+            }
+            int start = index;
+            while (index < pattern.length() && pattern.charAt(index) != ']') {
+                if (pattern.charAt(index) == '-' && index + 1 < pattern.length() && pattern.charAt(index + 1) == '[') {
+                    break;
+                }
+                if (pattern.charAt(index) == '-'
+                        && index != start
+                        && index + 1 < pattern.length()
+                        && pattern.charAt(index + 1) != ']') {
+                    throw new InvalidRegexPatternException(
+                            "Unescaped interior hyphen in XSD 1.0 character class", metadata);
+                }
+                ClassToken left = readClassToken(pattern, index, index == start);
+                index = left.nextIndex;
+                if (index + 1 < pattern.length()
+                        && pattern.charAt(index) == '-'
+                        && pattern.charAt(index + 1) != '['
+                        && pattern.charAt(index + 1) != ']') {
+                    ClassToken right = readClassToken(pattern, index + 1, false);
+                    if (isRange(left, right, pattern, index + 1)) {
+                        index = right.nextIndex;
+                    }
+                }
+            }
+            // Leave nested subtraction classes to the outer scan.
+            i = index;
+        }
+    }
+
     private static String translateEndAnchors(String pattern) {
         StringBuilder result = new StringBuilder(pattern.length());
         int classDepth = 0;

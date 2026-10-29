@@ -118,16 +118,39 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
 
     public static Item castItemToType(
             Item item, ItemType targetType, ExceptionMetadata metadata, RuntimeStaticContext staticContext) {
-        return castItemToType(item, targetType, metadata, NamespaceBindingUtils.namespaceResolver(staticContext));
+        return castItemToType(
+                item,
+                targetType,
+                metadata,
+                NamespaceBindingUtils.namespaceResolver(staticContext),
+                staticContext == null
+                        ? "1.1"
+                        : staticContext.getConfiguration().semantics().xsdVersion());
     }
 
     public static Item castItemToType(
             Item item, ItemType targetType, ExceptionMetadata metadata, StaticContext staticContext) {
-        return castItemToType(item, targetType, metadata, NamespaceBindingUtils.namespaceResolver(staticContext));
+        return castItemToType(
+                item,
+                targetType,
+                metadata,
+                NamespaceBindingUtils.namespaceResolver(staticContext),
+                staticContext == null
+                        ? "1.1"
+                        : staticContext.getRumbleConfiguration().semantics().xsdVersion());
     }
 
     public static Item castItemToType(
             Item item, ItemType targetType, ExceptionMetadata metadata, NamespaceResolver namespaceResolver) {
+        return castItemToType(item, targetType, metadata, namespaceResolver, "1.1");
+    }
+
+    private static Item castItemToType(
+            Item item,
+            ItemType targetType,
+            ExceptionMetadata metadata,
+            NamespaceResolver namespaceResolver,
+            String xsdVersion) {
         Item converted = null;
         // first we try to atomize if item is not atomic
         if (!item.isAtomic()) {
@@ -149,7 +172,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         // F&O 3.1 §19.3.5: union targets use dedicated member-iteration logic;
         // must be checked before isStaticallyCastableAs which lacks union-target support.
         if (targetType.isUnionType()) {
-            return castToUnionType(item, targetType, metadata, namespaceResolver);
+            return castToUnionType(item, targetType, metadata, namespaceResolver, xsdVersion);
         }
 
         // xs:error has an empty value space, so every cast to it must fail dynamically.
@@ -162,6 +185,25 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                     "\"%s\": a value of type %s is not castable to type %s",
                     item.serialize(), item.getDynamicType(), targetType);
             throw new UnexpectedTypeException(message, metadata);
+        }
+
+        // Xerces supplies the XSD 1.0 lexical restrictions that differ from our default 1.1 casts.
+        // Keep this per query; schema import/validation uses Xerces independently of this setting.
+        if ("1.0".equals(xsdVersion) && (item.isString() || item.isUntypedAtomic())) {
+            String name = targetType.getCastingPrimitiveType().getName().getLocalName();
+            if (java.util.Set.of("anyURI", "float", "double", "date", "dateTime", "gYear", "gYearMonth")
+                    .contains(name)) {
+                try {
+                    org.apache.xerces.impl.dv.SchemaDVFactory.getInstance()
+                            .getBuiltInType(name)
+                            .validate(
+                                    item.getStringValue(),
+                                    new org.apache.xerces.impl.validation.ValidationState(),
+                                    null);
+                } catch (org.apache.xerces.impl.dv.InvalidDatatypeValueException e) {
+                    return null;
+                }
+            }
         }
 
         try {
@@ -294,7 +336,11 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
      * @return the cast result, or {@code null} if no member type accepts the value
      */
     private static Item castToUnionType(
-            Item item, ItemType targetType, ExceptionMetadata metadata, NamespaceResolver namespaceResolver) {
+            Item item,
+            ItemType targetType,
+            ExceptionMetadata metadata,
+            NamespaceResolver namespaceResolver,
+            String xsdVersion) {
         List<ItemType> memberTypes = targetType.getTypes();
 
         // §19.3.5 Rule 1: source is xs:string or xs:untypedAtomic
@@ -304,7 +350,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                     continue;
                 }
                 try {
-                    Item result = castItemToType(item, memberType, metadata, namespaceResolver);
+                    Item result = castItemToType(item, memberType, metadata, namespaceResolver, xsdVersion);
                     if (result != null) {
                         return result;
                     }
@@ -329,7 +375,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                 continue;
             }
             try {
-                Item result = castItemToType(item, memberType, metadata, namespaceResolver);
+                Item result = castItemToType(item, memberType, metadata, namespaceResolver, xsdVersion);
                 if (result != null) {
                     return result;
                 }

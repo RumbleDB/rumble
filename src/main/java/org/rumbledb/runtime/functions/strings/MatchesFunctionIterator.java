@@ -50,7 +50,11 @@ public class MatchesFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 flags = flagsItem.getStringValue();
             }
         }
-        Matcher matcher = RegexPatternUtils.compileRegex(pattern, flags, getMetadata())
+        Matcher matcher = RegexPatternUtils.compileRegex(
+                        pattern,
+                        flags,
+                        getMetadata(),
+                        getConfiguration().semantics().xsdVersion())
                 .getPattern()
                 .matcher(stringItem.getStringValue());
         boolean result = matcher.find();
