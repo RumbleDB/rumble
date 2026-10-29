@@ -16,20 +16,25 @@
 package org.rumbledb.items.parsing;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
+import java.util.Optional;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
 
 import org.w3c.dom.Document;
 import org.w3c.dom.DocumentFragment;
 import org.w3c.dom.Node;
+import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidXmlDocumentException;
@@ -44,6 +49,40 @@ public final class XmlParsingUtils {
     private static final String FRAGMENT_ENTITY = "urn:rumbledb:parse-xml-fragment";
 
     private XmlParsingUtils() {}
+
+    /**
+     * Reads only through the first element start tag, without building a tree or validating the document.
+     * DTDs can affect namespaces and names through entities/defaults, so those inputs retain a generic type.
+     * The caller owns the stream. Inspection failures do not replace runtime XML diagnostics.
+     */
+    public static Optional<Name> peekDocumentElementName(InputStream input)
+            throws SAXException, IOException, ParserConfigurationException {
+        SAXParserFactory factory = SAXParserFactory.newInstance();
+        factory.setNamespaceAware(true);
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        Name[] root = new Name[1];
+        SAXException rootFound = new SAXException("Document element found");
+        try {
+            factory.newSAXParser().parse(input, new DefaultHandler() {
+                @Override
+                public void startElement(String uri, String localName, String qName, Attributes attributes)
+                        throws SAXException {
+                    root[0] = new Name(uri, null, localName);
+                    throw rootFound;
+                }
+
+                @Override
+                public void fatalError(SAXParseException exception) throws SAXException {
+                    throw exception;
+                }
+            });
+        } catch (SAXException exception) {
+            if (exception != rootFound) {
+                throw exception;
+            }
+        }
+        return Optional.ofNullable(root[0]);
+    }
 
     /** Parses a document string. The description names the input in error messages. */
     public static Document parseDocument(String xml, String description, ExceptionMetadata metadata) {
