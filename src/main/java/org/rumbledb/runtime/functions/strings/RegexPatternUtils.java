@@ -140,7 +140,7 @@ public final class RegexPatternUtils {
                         && pattern.charAt(index + 1) != '['
                         && pattern.charAt(index + 1) != ']') {
                     ClassToken right = readClassToken(pattern, index + 1, false);
-                    if (isRange(left, right, pattern, index + 1)) {
+                    if (isSingleCharacterToken(left) && isSingleCharacterToken(right)) {
                         index = right.nextIndex;
                     }
                 }
@@ -148,6 +148,13 @@ public final class RegexPatternUtils {
             // Leave nested subtraction classes to the outer scan.
             i = index;
         }
+    }
+
+    private static boolean isSingleCharacterToken(ClassToken token) {
+        return token.isLiteral
+                || (token.text.length() == 2
+                        && token.text.charAt(0) == '\\'
+                        && "sSiIcCdDwWpP".indexOf(token.text.charAt(1)) < 0);
     }
 
     private static String translateEndAnchors(String pattern) {

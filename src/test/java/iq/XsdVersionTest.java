@@ -82,8 +82,21 @@ public class XsdVersionTest {
             Assertions.assertDoesNotThrow(() -> RegexPatternUtils.compileRegex(pattern, "", metadata, "1.1"));
             Assertions.assertDoesNotThrow(() -> RegexPatternUtils.compileRegex(pattern, "q", metadata, "1.0"));
         }
-        for (String pattern : new String[] {"[-a-z]", "[a-z-]", "[a-z-[b-d]]", "[a-z\\-x]"}) {
+        for (String pattern : new String[] {
+            "[-a-z]", "[a-z-]", "[a-z-[b-d]]", "[a-z\\-x]", "[a-\\}]", "[a-\\}-]", "[1-\\]]", "[X-\\]]"
+        }) {
             Assertions.assertDoesNotThrow(() -> RegexPatternUtils.compileRegex(pattern, "", metadata, "1.0"));
+        }
+    }
+
+    @Test
+    public void escapedRangeEndpointsRemainValid() {
+        for (String version : new String[] {"1.0", "1.1"}) {
+            var pattern = RegexPatternUtils.compileRegex("[1-\\]]", "", ExceptionMetadata.EMPTY_METADATA, version)
+                    .getPattern();
+            Assertions.assertTrue(pattern.matcher("]").matches());
+            Assertions.assertTrue(pattern.matcher("A").matches());
+            Assertions.assertFalse(pattern.matcher("0").matches());
         }
     }
 }

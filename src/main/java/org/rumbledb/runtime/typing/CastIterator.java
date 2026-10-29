@@ -187,12 +187,15 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
             throw new UnexpectedTypeException(message, metadata);
         }
 
-        // Xerces supplies the XSD 1.0 lexical restrictions that differ from our default 1.1 casts.
-        // Keep this per query; schema import/validation uses Xerces independently of this setting.
+        // Apply only the version-specific lexical restrictions. In particular, let the existing
+        // date parser report representational overflow as FODT0001 rather than Xerces FORG0001.
         if ("1.0".equals(xsdVersion) && (item.isString() || item.isUntypedAtomic())) {
             String name = targetType.getCastingPrimitiveType().getName().getLocalName();
-            if (java.util.Set.of("anyURI", "float", "double", "date", "dateTime", "gYear", "gYearMonth")
-                    .contains(name)) {
+            if (java.util.Set.of("date", "dateTime", "gYear", "gYearMonth").contains(name)
+                    && item.getStringValue().trim().matches("-?0{4,}(?:$|[-+ZT].*)")) {
+                return null;
+            }
+            if (java.util.Set.of("anyURI", "float", "double").contains(name)) {
                 try {
                     org.apache.xerces.impl.dv.SchemaDVFactory.getInstance()
                             .getBuiltInType(name)
