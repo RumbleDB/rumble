@@ -42,6 +42,9 @@ public class RuntimeStaticContext implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    /** Null for contexts built without a compiler static context. */
+    private final Set<FunctionIdentifier> visibleFunctionIdentifiers;
+
     private final URI staticURI;
     private final String staticURIString;
 
@@ -172,6 +175,7 @@ public class RuntimeStaticContext implements Serializable {
                 .staticURI(staticContext.getStaticBaseURI())
                 .staticURIString(staticContext.getStaticBaseUriString())
                 .queryLanguage(staticContext.getQueryLanguage())
+                .visibleFunctionIdentifiers(staticContext.getVisibleFunctionIdentifiers())
                 .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
                 // Kryo cannot reconstruct Map.of/Map.copyOf implementations from compiler contexts.
                 .constructorNamespaceBindings(new LinkedHashMap<>(staticContext.getConstructorNamespaceBindings()))
