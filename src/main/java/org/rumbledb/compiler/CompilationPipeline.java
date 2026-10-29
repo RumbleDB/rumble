@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
+import org.rumbledb.resources.ResourceResolver;
 
 import static org.rumbledb.compiler.CompilationDiagnostics.debugPrintHeader;
 import static org.rumbledb.compiler.CompilationDiagnostics.debugPrintTree;
@@ -73,7 +74,8 @@ public final class CompilationPipeline {
         ModuleParser.Language language = ModuleParser.detectLanguage(query, uri, configuration);
         MainModule module =
                 ModuleParser.parseMainModule(query, uri, compilationConfiguration, externalBindings, language);
-        CompilationContext context = new CompilationContext(configuration, externalBindings);
+        CompilationContext context =
+                new CompilationContext(configuration, externalBindings, compilationConfiguration.resourceResolver());
         List<CompilationPass<MainModule>> passes = mainModulePasses(language, configuration);
         return run(module, context, passes);
     }
@@ -87,7 +89,10 @@ public final class CompilationPipeline {
         LibraryModule module = ModuleParser.parseLibraryModule(query, uri, importingContext, configuration);
         return run(
                 module,
-                new CompilationContext(configuration.runtimeConfiguration(), ExternalBindings.empty()),
+                new CompilationContext(
+                        configuration.runtimeConfiguration(),
+                        ExternalBindings.empty(),
+                        configuration.resourceResolver()),
                 List.of(CompilationPasses.resolveDependencies()));
     }
 
@@ -98,7 +103,7 @@ public final class CompilationPipeline {
                 prepareLibraryModule(query, uri, importingContext, new CompilationConfiguration(configuration));
         return run(
                 module,
-                new CompilationContext(configuration, ExternalBindings.empty()),
+                new CompilationContext(configuration, ExternalBindings.empty(), new ResourceResolver()),
                 List.of(CompilationPasses.populateStaticContext(), CompilationPasses.inferTypes()));
     }
 
