@@ -35,6 +35,11 @@ public final class URILiteralUtils {
 
     public static URI resolve(URI baseURI, String literal, ExceptionMetadata metadata) {
         String normalizedLiteral = normalizeAsAnyURI(literal);
+        // An empty reference identifies the base resource. URI.resolve("") instead
+        // drops its final path segment, so handle this case before delegating.
+        if (normalizedLiteral.isEmpty()) {
+            return baseURI;
+        }
         try {
             return FileSystemUtil.resolveURI(baseURI, normalizedLiteral, metadata);
         } catch (CannotRetrieveResourceException exception) {

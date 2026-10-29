@@ -33,6 +33,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.UndefinedTypeException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -104,6 +105,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
     private final Map<String, StaticContext> importedModuleContexts;
+    private final List<SequenceType> contextItemTypes = new ArrayList<>();
 
     StaticContextVisitor() {
         this.importedModuleContexts = new HashMap<>();
@@ -136,6 +138,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
         this.importedModuleContexts.clear();
+        this.contextItemTypes.clear();
         StaticContext generatedContext = visitDescendants(mainModule, argument);
         return generatedContext;
     }
@@ -421,6 +424,27 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration variableDeclaration, StaticContext argument) {
+        if (variableDeclaration.getActualSequenceType() != null) {
+            variableDeclaration.getActualSequenceType().resolve(argument, variableDeclaration.getMetadata());
+            if (Name.CONTEXT_ITEM.equals(variableDeclaration.getVariableName())) {
+                SequenceType type = variableDeclaration.getActualSequenceType();
+                // Atomic type families cannot intersect unless one contains a member of the other.
+                // Structured function/array tests can overlap without either being a subtype.
+                for (SequenceType other : this.contextItemTypes) {
+                    if (type.getItemType().allMemberTypesMatch(ItemType::isAtomicItemType)
+                            && other.getItemType().allMemberTypesMatch(ItemType::isAtomicItemType)
+                            && !type.hasOverlapWith(other)) {
+                        throw new UnexpectedTypeException(
+                                "The context item declarations in different modules require disjoint types: "
+                                        + type
+                                        + " and "
+                                        + other,
+                                variableDeclaration.getMetadata());
+                    }
+                }
+                this.contextItemTypes.add(type);
+            }
+        }
         if (variableDeclaration.getExpression() != null) {
             this.visit(variableDeclaration.getExpression(), argument);
         }
