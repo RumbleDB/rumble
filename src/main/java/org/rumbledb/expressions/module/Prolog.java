@@ -16,7 +16,9 @@
 package org.rumbledb.expressions.module;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -24,6 +26,7 @@ import lombok.Setter;
 
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
@@ -36,6 +39,12 @@ public class Prolog extends Node {
 
     private final List<LibraryModule> importedModules;
     private final List<SchemaImport> schemaImports;
+
+    // Module fragment groups retain each declaration's original module settings.
+    private final Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
+
+    @Setter
+    private String moduleGroupKey;
 
     public Prolog(
             List<VariableDeclaration> variableDeclarations,

@@ -1,0 +1,122 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.compiler;
+
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.Prolog;
+
+/** Combines fragments sharing a target namespace before compiler visitors run. */
+final class ModuleImportGraph {
+    private ModuleImportGraph() {}
+
+    static LibraryModule normalize(
+            LibraryModule root, ModuleImportLoader.ImportSession session, RumbleConfiguration configuration) {
+        var graph = new DefaultDirectedGraph<LibraryModule, DefaultEdge>(DefaultEdge.class);
+        List<LibraryModule> modules = new ArrayList<>(new LinkedHashSet<>(session.modules.values()));
+        modules.forEach(graph::addVertex);
+        Map<LibraryModule, LibraryModule> canonical = new IdentityHashMap<>();
+        Map<LibraryModule, URI> sourceLocations = new IdentityHashMap<>();
+        session.modules.forEach((location, module) -> sourceLocations.put(module, location));
+        for (LibraryModule module : modules) {
+            canonical.put(module, module);
+            for (LibraryModule imported : module.getProlog().getImportedModules()) {
+                // Diagnostic locations may be overridden by a shared static base URI.
+                // Back edges must resolve through the loader's module identities instead.
+                LibraryModule target = session.completedModules.getOrDefault(imported, imported);
+                if (!graph.containsVertex(target)) {
+                    throw new IllegalStateException(
+                            "Imported module has no completed translation: " + imported.getNamespace());
+                }
+                canonical.put(imported, target);
+                graph.addEdge(module, target);
+            }
+        }
+        Map<String, Set<LibraryModule>> namespaces = new LinkedHashMap<>();
+        for (LibraryModule module : modules) {
+            namespaces
+                    .computeIfAbsent(module.getNamespace(), ignored -> new LinkedHashSet<>())
+                    .add(module);
+        }
+        Map<LibraryModule, LibraryModule> groups = new IdentityHashMap<>();
+        Set<LibraryModule> representatives = new LinkedHashSet<>();
+        for (Set<LibraryModule> component : namespaces.values()) {
+            List<LibraryModule> members = component.stream()
+                    .sorted(Comparator.comparing(
+                            module -> sourceLocations.get(module).toString()))
+                    .toList();
+            LibraryModule first = members.get(0);
+            LibraryModule representative = first;
+            if (members.size() > 1) {
+                Prolog prolog = new Prolog(
+                        List.of(), List.of(), List.of(), first.getProlog().getMetadata());
+                for (LibraryModule member : members) {
+                    prolog.getDeclarations().addAll(member.getProlog().getDeclarations());
+                    prolog.getSchemaImports().addAll(member.getProlog().getSchemaImports());
+                    for (var declaration : member.getProlog().getDeclarations()) {
+                        prolog.getSourceModuleContexts().put(declaration, member.getStaticContext());
+                    }
+                }
+                representative = new LibraryModule(prolog, first.getNamespace(), first.getMetadata());
+                representative.setStaticContext(first.getStaticContext());
+            }
+            // Pruning must distinguish modules even when their configured base URI is identical.
+            representative
+                    .getProlog()
+                    .setModuleGroupKey(members.stream()
+                            .map(module -> sourceLocations.get(module).toString())
+                            .collect(Collectors.joining("|")));
+            representatives.add(representative);
+            for (LibraryModule member : members) {
+                groups.put(member, representative);
+            }
+        }
+        // Snapshot the edges before replacing any prologs, since singleton groups retain their AST.
+        Map<LibraryModule, Set<LibraryModule>> imports = new IdentityHashMap<>();
+        representatives.forEach(group -> imports.put(group, new LinkedHashSet<>()));
+        for (DefaultEdge edge : graph.edgeSet()) {
+            LibraryModule from = groups.get(graph.getEdgeSource(edge));
+            LibraryModule to = groups.get(graph.getEdgeTarget(edge));
+            if (from != to) {
+                imports.get(from).add(to);
+            }
+        }
+        for (LibraryModule group : representatives) {
+            group.getProlog().getImportedModules().clear();
+            group.getProlog().getImportedModules().addAll(imports.get(group));
+            new VariableDependenciesVisitor(configuration).visit(group.getProlog(), null);
+        }
+        LibraryModule group = groups.get(canonical.getOrDefault(root, root));
+        // The importing prefix still denotes the requested namespace, even when a group spans several namespaces.
+        LibraryModule result = new LibraryModule(group.getProlog(), root.getNamespace(), group.getMetadata());
+        result.setStaticContext(group.getStaticContext());
+        return result;
+    }
+}
