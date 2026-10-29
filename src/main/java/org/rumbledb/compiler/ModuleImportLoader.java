@@ -22,15 +22,18 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 
 /** Shared module import semantics for the JSONiq and XQuery frontends. */
@@ -44,6 +47,26 @@ public final class ModuleImportLoader {
         final Map<URI, LibraryModule> modules = new LinkedHashMap<>();
         final Map<String, List<String>> locations = new LinkedHashMap<>();
         final Map<LibraryModule, LibraryModule> completedModules = new IdentityHashMap<>();
+    }
+
+    /** Normalize all imports together so sibling imports share the same fragment groups. */
+    static MainModule loadMainModule(Supplier<MainModule> parser, RumbleConfiguration configuration) {
+        ImportSession previous = CURRENT_SESSION.get();
+        ImportSession session = new ImportSession();
+        CURRENT_SESSION.set(session);
+        try {
+            MainModule module = parser.get();
+            List<LibraryModule> imports = module.getProlog().getImportedModules();
+            if (!imports.isEmpty()) {
+                List<LibraryModule> normalized = ModuleImportGraph.normalize(imports, session, configuration);
+                imports.clear();
+                imports.addAll(normalized);
+            }
+            return module;
+        } finally {
+            if (previous == null) CURRENT_SESSION.remove();
+            else CURRENT_SESSION.set(previous);
+        }
     }
 
     public static LibraryModule load(

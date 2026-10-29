@@ -40,6 +40,11 @@ final class ModuleImportGraph {
 
     static LibraryModule normalize(
             LibraryModule root, ModuleImportLoader.ImportSession session, RumbleConfiguration configuration) {
+        return normalize(List.of(root), session, configuration).get(0);
+    }
+
+    static List<LibraryModule> normalize(
+            List<LibraryModule> roots, ModuleImportLoader.ImportSession session, RumbleConfiguration configuration) {
         var graph = new DefaultDirectedGraph<LibraryModule, DefaultEdge>(DefaultEdge.class);
         List<LibraryModule> modules = new ArrayList<>(new LinkedHashSet<>(session.modules.values()));
         modules.forEach(graph::addVertex);
@@ -117,10 +122,14 @@ final class ModuleImportGraph {
             group.getProlog().getImportedModules().addAll(imports.get(group));
             new VariableDependenciesVisitor(configuration).visit(group.getProlog(), null);
         }
-        LibraryModule group = groups.get(canonical.getOrDefault(root, root));
-        // The importing prefix still denotes the requested namespace, even when a group spans several namespaces.
-        LibraryModule result = new LibraryModule(group.getProlog(), root.getNamespace(), group.getMetadata());
-        result.setStaticContext(group.getStaticContext());
-        return result;
+        List<LibraryModule> results = new ArrayList<>();
+        for (LibraryModule root : roots) {
+            LibraryModule group = groups.get(canonical.getOrDefault(root, root));
+            // Preserve each importing prefix's namespace when a group spans multiple namespaces.
+            LibraryModule result = new LibraryModule(group.getProlog(), root.getNamespace(), group.getMetadata());
+            result.setStaticContext(group.getStaticContext());
+            results.add(result);
+        }
+        return results;
     }
 }
