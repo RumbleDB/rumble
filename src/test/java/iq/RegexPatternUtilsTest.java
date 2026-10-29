@@ -24,6 +24,29 @@ import org.rumbledb.runtime.functions.strings.RegexPatternUtils;
 public class RegexPatternUtilsTest {
 
     @Test
+    public void unmatchedBackreferencesUseXPathCaptureSemantics() {
+        String[][] cases = {
+            {"(a)|\\1", "x"},
+            {"(?:(b)?a)\\1", "a"},
+            {"^((.)?a\\2)+$", "babadad"},
+            {"^(a)?\\1$", ""},
+            {"^(a)?\\1$", "aa"},
+            {"^(a|(b))*(?:c)\\2$", "bac"}
+        };
+        for (String[] test : cases) {
+            for (String version : new String[] {"1.0", "1.1"}) {
+                var regex = RegexPatternUtils.compileRegex(test[0], "", ExceptionMetadata.EMPTY_METADATA, version);
+                Assertions.assertTrue(RegexPatternUtils.containsMatch(regex, test[1]), test[0] + " / " + test[1]);
+            }
+        }
+        var regex = RegexPatternUtils.compileRegex("^(a)?\\1$", "", ExceptionMetadata.EMPTY_METADATA);
+        Assertions.assertFalse(RegexPatternUtils.containsMatch(regex, "a"));
+        Assertions.assertFalse(RegexPatternUtils.containsMatch(regex, "ab"));
+        var insensitive = RegexPatternUtils.compileRegex("^(a)?\\1$", "i", ExceptionMetadata.EMPTY_METADATA);
+        Assertions.assertTrue(RegexPatternUtils.containsMatch(insensitive, "aA"));
+    }
+
+    @Test
     public void caseInsensitiveNegatedClassesDoNotMatchEquivalentLetters() {
         RegexPatternUtils.CompiledRegex compiledRegex =
                 RegexPatternUtils.compileRegex("[^i]", "i", ExceptionMetadata.EMPTY_METADATA);

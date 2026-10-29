@@ -107,6 +107,13 @@ public final class RegexPatternUtils {
         }
     }
 
+    public static boolean containsMatch(CompiledRegex regex, String input) {
+        if (!regex.isQuote() && XPathBackreferenceMatcher.hasBackreference(regex.getEffectivePattern())) {
+            return XPathBackreferenceMatcher.containsMatch(regex.getPattern(), input);
+        }
+        return regex.getPattern().matcher(input).find();
+    }
+
     /** XPath's non-multiline '$' matches only the end, whereas Java also accepts a final line terminator. */
     private static void validateXsd10Classes(String pattern, ExceptionMetadata metadata) {
         for (int i = 0; i < pattern.length(); i++) {
