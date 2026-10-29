@@ -419,6 +419,14 @@ public final class XmlSchemaCatalog {
         return Optional.ofNullable(result).filter(typedValue -> !typedValue.isEmptySequence());
     }
 
+    /** Whether this schema type permits an instance without a typed value. */
+    public boolean mayHaveUnavailableTypedValue(Name name) {
+        return resolveType(name).stream()
+                .flatMap(type -> typeAndDerivedTypes(type).stream())
+                .anyMatch(type -> type instanceof XSComplexTypeDefinition complex
+                        && complex.getContentType() == XSComplexTypeDefinition.CONTENTTYPE_ELEMENT);
+    }
+
     /** Resolves a named type, or an anonymous type through the internal name it was given. */
     Optional<XSTypeDefinition> resolveType(Name name) {
         return getTypeDefinition(name).or(() -> this.typeMapper.anonymousType(name));
