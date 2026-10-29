@@ -39,6 +39,10 @@ public final class NamedFunctionLookup {
     public static Item lookupOrNull(
             FunctionIdentifier identifier, DynamicContext dynamicContext, RuntimeStaticContext staticContext) {
         if (dynamicContext.getNamedFunctions().checkUserDefinedFunctionExists(identifier)) {
+            if (staticContext.getVisibleFunctionIdentifiers() != null
+                    && !staticContext.getVisibleFunctionIdentifiers().contains(identifier)) {
+                return null;
+            }
             FunctionItem result = dynamicContext.getNamedFunctions().getUserDefinedFunction(identifier);
             return result;
         }

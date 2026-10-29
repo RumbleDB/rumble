@@ -63,6 +63,8 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
+import org.rumbledb.expressions.scripting.annotations.AnnotationConstants;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
@@ -507,8 +509,25 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    private static boolean hasPrivateAnnotation(List<Annotation> annotations) {
+        return annotations != null
+                && annotations.stream()
+                        .anyMatch(annotation -> annotation.getAnnotationName().equals(AnnotationConstants.PRIVATE));
+    }
+
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            if (hasPrivateAnnotation(declaration.getAnnotations())) {
+                argument.markPrivateVariable(declaration.getVariableName());
+            }
+        }
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
+            InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
+            if (hasPrivateAnnotation(expression.getAnnotations())) {
+                argument.markPrivateFunction(expression.getFunctionIdentifier());
+            }
+        }
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
             argument.addVariable(
                     declaration.getVariableName(),
