@@ -85,6 +85,24 @@ public class StaticContext {
     private SequenceType contextItemStaticType;
 
     private Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
+    private final Set<Name> privateVariables = new LinkedHashSet<>();
+    private final Set<FunctionIdentifier> privateFunctions = new LinkedHashSet<>();
+
+    public void markPrivateVariable(Name name) {
+        this.privateVariables.add(name);
+    }
+
+    public void markPrivateFunction(FunctionIdentifier identifier) {
+        this.privateFunctions.add(identifier);
+    }
+
+    public Set<FunctionIdentifier> getVisibleFunctionIdentifiers() {
+        Set<FunctionIdentifier> identifiers =
+                this.parent == null ? new LinkedHashSet<>() : this.parent.getVisibleFunctionIdentifiers();
+        identifiers.addAll(this.staticallyKnownFunctionSignatures.keySet());
+        return identifiers;
+    }
+
     private static final Map<String, String> defaultBindings;
 
     private DecimalFormatDefinition defaultDecimalFormat;
@@ -509,11 +527,15 @@ public class StaticContext {
     public void importModuleContext(StaticContext moduleContext) {
         for (Name name : moduleContext.inScopeVariables.keySet()) {
             InScopeVariable variable = moduleContext.inScopeVariables.get(name);
-            this.inScopeVariables.put(name, variable);
+            if (!moduleContext.privateVariables.contains(name)) {
+                this.inScopeVariables.put(name, variable);
+            }
         }
         for (FunctionIdentifier fi : moduleContext.staticallyKnownFunctionSignatures.keySet()) {
             FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
-            this.staticallyKnownFunctionSignatures.put(fi, signature);
+            if (!moduleContext.privateFunctions.contains(fi)) {
+                this.staticallyKnownFunctionSignatures.put(fi, signature);
+            }
         }
     }
 
