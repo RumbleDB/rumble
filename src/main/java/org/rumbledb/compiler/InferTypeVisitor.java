@@ -176,6 +176,9 @@ import org.rumbledb.expressions.xml.node_test.NodeTest;
 import org.rumbledb.expressions.xml.node_test.PITest;
 import org.rumbledb.expressions.xml.node_test.SchemaNodeTest;
 import org.rumbledb.expressions.xml.node_test.TextTest;
+import org.rumbledb.items.parsing.XmlParsingUtils;
+import org.rumbledb.resources.ResolvedResource;
+import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.spark.SparkSessionManager;
@@ -204,6 +207,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private static final int MAX_LISTED_STEP_NAMES = 10;
 
     private final RumbleConfiguration rumbleRuntimeConfiguration;
+    private final ResourceResolver resourceResolver;
 
     /**
      * The context type E of each type that descendant-or-self::node() inferred from a schema, so that an error in the
@@ -216,8 +220,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      *
      * @param rumbleRuntimeConfiguration the configuration.
      */
-    InferTypeVisitor(RumbleConfiguration rumbleRuntimeConfiguration) {
+    InferTypeVisitor(RumbleConfiguration rumbleRuntimeConfiguration, ResourceResolver resourceResolver) {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
+        this.resourceResolver = resourceResolver;
     }
 
     private void throwStaticTypeException(String message, ExceptionMetadata metadata) {
@@ -819,6 +824,32 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(
                     TypeAtomization.inferType(args.get(0).getStaticSequenceType()));
             return true;
+        }
+
+        // Inspect only a literal document's root name; validation supplies its schema annotation later.
+        if (isBuiltinFunctionName(functionName, "doc")
+                && args.size() == 1
+                && args.get(0) instanceof StringLiteralExpression literal) {
+            try {
+                URI uri = FileSystemUtil.resolveURI(
+                        staticContext.getStaticBaseURI(), literal.getValue(), expression.getMetadata());
+                // A supplied/cached document takes precedence over the physical resource at runtime.
+                if (this.resourceResolver.document(uri) == null) {
+                    try (ResolvedResource resource = this.resourceResolver.resolve(
+                            uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
+                        Optional<Name> root = XmlParsingUtils.peekDocumentElementName(resource.getInputStream());
+                        if (root.isPresent()) {
+                            expression.setStaticSequenceType(new SequenceType(
+                                    ItemTypeFactory.documentNodeItemType(
+                                            ItemTypeFactory.elementNodeItemType(root.get())),
+                                    SequenceType.Arity.One));
+                            return true;
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+                // Retrieval and parsing errors belong to evaluation, including in unexecuted branches.
+            }
         }
 
         // handle 'parquet-file' function
@@ -2994,6 +3025,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getVariableName(),
                 expression.getMetadata());
 
+        // A non-external context initializer fixes the initial focus more precisely than its declared item type.
+        // XQuery supplies item() even when the declaration has no explicit type annotation.
+        if (Name.CONTEXT_ITEM.equals(expression.getVariableName())
+                && !expression.external()
+                && expression.getExpression() != null) {
+            Expression initializer = expression.getExpression();
+            if (initializer instanceof TreatExpression treat) {
+                initializer = treat.getMainExpression();
+            }
+            SequenceType initializerType = initializer.getStaticSequenceType();
+            if (initializerType.isSubtypeOf(inferredType)) {
+                argument.replaceVariableSequenceType(Name.CONTEXT_ITEM, initializerType);
+            }
+        }
         return argument;
     }
 
