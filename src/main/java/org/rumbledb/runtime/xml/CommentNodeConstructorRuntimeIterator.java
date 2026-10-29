@@ -50,9 +50,6 @@ public class CommentNodeConstructorRuntimeIterator extends AbstractAtMostOneItem
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         List<Item> materialized = this.contentIterator.materialize(dynamicContext);
-        if (materialized.isEmpty()) {
-            return null;
-        }
         StringJoiner joiner = new StringJoiner(" ");
         for (Item item : materialized) {
             joiner.add(item.getStringValue());
@@ -64,10 +61,9 @@ public class CommentNodeConstructorRuntimeIterator extends AbstractAtMostOneItem
             throw new InvalidCommentContentException(commentContent, getMetadata());
         }
         Item commentItem = ItemFactory.getInstance().createXmlCommentNode(commentContent);
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            commentItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        commentItem.setXmlDocumentPosition(documentPath, 0);
         return commentItem;
     }
 }

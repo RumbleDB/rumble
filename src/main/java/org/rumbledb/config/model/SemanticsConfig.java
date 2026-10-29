@@ -40,6 +40,9 @@ public class SemanticsConfig implements Serializable {
     public static final String DEFAULT_QUERY_LANGUAGE = "jsoniq10";
     public static final String DEFAULT_XML_VERSION = "1.1";
 
+    /** Allows the XQuery Scripting Extension grammar; disable for strict XQuery conformance. */
+    boolean allowScripting;
+
     boolean datesWithTimeZone;
     boolean laxJSONNullValidation;
     String queryLanguage;
@@ -48,11 +51,13 @@ public class SemanticsConfig implements Serializable {
 
     @Builder(toBuilder = true)
     private SemanticsConfig(
+            Boolean allowScripting,
             Boolean datesWithTimeZone,
             Boolean laxJSONNullValidation,
             String queryLanguage,
             String xmlVersion,
             String staticBaseUri) {
+        this.allowScripting = Objects.requireNonNullElse(allowScripting, true);
         this.datesWithTimeZone = Objects.requireNonNullElse(datesWithTimeZone, DEFAULT_DATES_WITH_TIMEZONE);
         this.laxJSONNullValidation =
                 Objects.requireNonNullElse(laxJSONNullValidation, DEFAULT_LAX_JSON_NULL_VALIDATION);

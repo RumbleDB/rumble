@@ -1,0 +1,168 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.items;
+
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
+public class LongItem extends AbstractAtomicItem {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private long value;
+
+    public LongItem(long value) {
+        this.value = value;
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new LongItem(this.value);
+    }
+
+    @Override
+    public long getLongValue() {
+        return this.value;
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return getLongValue();
+    }
+
+    @Override
+    public int getIntValue() {
+        if (!isWithinIntRange()) {
+            throw new OurBadException("Integer value is not within the int range.");
+        }
+        return (int) this.value;
+    }
+
+    @Override
+    public BigInteger getIntegerValue() {
+        return BigInteger.valueOf(this.value);
+    }
+
+    @Override
+    public BigDecimal getDecimalValue() {
+        return BigDecimal.valueOf(this.value);
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return this.value != 0;
+    }
+
+    @Override
+    public String getStringValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public double castToDoubleValue() {
+        return this.value;
+    }
+
+    @Override
+    public float castToFloatValue() {
+        return this.value;
+    }
+
+    @Override
+    public BigDecimal castToDecimalValue() {
+        return BigDecimal.valueOf(this.value);
+    }
+
+    @Override
+    public BigInteger castToIntegerValue() {
+        return BigInteger.valueOf(this.value);
+    }
+
+    @Override
+    public int castToIntValue() {
+        return (int) this.value;
+    }
+
+    @Override
+    public boolean isWithinIntRange() {
+        return this.value >= Integer.MIN_VALUE && this.value <= Integer.MAX_VALUE;
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return true;
+    }
+
+    @Override
+    public boolean isInteger() {
+        return true;
+    }
+
+    @Override
+    public boolean isDecimal() {
+        return true;
+    }
+
+    @Override
+    public boolean isDouble() {
+        return false;
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return BuiltinTypesCatalogue.longItem;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return new NativeClauseContext(context, "" + this.value, SequenceType.createSequenceType("long"));
+    }
+
+    @Override
+    public boolean isNumeric() {
+        return true;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "BIGINT";
+    }
+}

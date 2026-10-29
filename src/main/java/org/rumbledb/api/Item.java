@@ -155,6 +155,26 @@ public interface Item extends Serializable {
     }
 
     /**
+     * Tests whether this item is an integer whose value fits in a signed 32-bit int.
+     * This does not change or test its exact dynamic type.
+     *
+     * @return true for integer values within the int range, false otherwise.
+     */
+    default boolean isWithinIntRange() {
+        return false;
+    }
+
+    /**
+     * Tests whether this item is an integer whose value fits in a signed 64-bit long.
+     * This does not change or test its exact dynamic type.
+     *
+     * @return true for integer values within the long range, false otherwise.
+     */
+    default boolean isWithinLongRange() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an atomic item of type int.
      *
      * @return true if it is an atomic item of type int, false otherwise.
@@ -946,12 +966,29 @@ public interface Item extends Serializable {
     }
 
     /**
-     * Returns the int value of the item, if it is an int.
+     * Returns an integer item's value as an int, rejecting values outside the int range.
      *
      * @return the integer value as an int.
+     * @throws OurBadException if the item is not an integer within the int range.
      */
     default int getIntValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+        if (!isWithinIntRange()) {
+            throw new OurBadException("Item value is not within the int range.");
+        }
+        return getIntegerValue().intValue();
+    }
+
+    /**
+     * Returns an integer item's value as a long, rejecting values outside the long range.
+     *
+     * @return the integer value as a long.
+     * @throws OurBadException if the item is not an integer within the long range.
+     */
+    default long getLongValue() {
+        if (!isWithinLongRange()) {
+            throw new OurBadException("Item value is not within the long range.");
+        }
+        return getIntegerValue().longValue();
     }
 
     /**

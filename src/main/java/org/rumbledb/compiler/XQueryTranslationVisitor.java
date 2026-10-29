@@ -148,7 +148,9 @@ import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.ConditionalExpression;
@@ -160,6 +162,7 @@ import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.WhereClause;
@@ -251,6 +254,15 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region module
     @Override
     public Module visitModule(XQueryParser.ModuleContext ctx) {
+        if (ctx.encoding != null) {
+            String encoding = processStringLiteral(ctx.encoding);
+            if (!encoding.matches("[A-Za-z][A-Za-z0-9._-]*")) {
+                throw new SemanticException(
+                        "Invalid encoding name: " + encoding,
+                        ErrorCode.InvalidEncodingNameErrorCode,
+                        createMetadataFromContext(ctx.encoding));
+            }
+        }
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             String version = processStringLiteral(ctx.vers).trim();
             if (version.equals("1.0")) {
@@ -266,7 +278,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             }
         }
         if (this.translationContext.isMainModule()) {
-            if (ctx.mainModule() != null) {
+            if (!ctx.mainModule().isEmpty()) {
                 return this.visitMainModule(ctx.mainModule().get(0));
             }
             throw new ParsingException(
@@ -610,13 +622,37 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public GroupByClause visitGroupByClause(XQueryParser.GroupByClauseContext ctx) {
-        return FlworTranslation.groupByClause(
+        GroupByClause clause = FlworTranslation.groupByClause(
                 GroupByClauseContext.from(ctx),
                 this.translationContext,
                 this::parseVariableBinding,
                 this::processSequenceType,
                 this::visitExprSingle,
                 this::resolveCollationUri);
+        // Grouping bindings are preceding let bindings: later bindings may shadow earlier ones.
+        Clause previous = null;
+        List<GroupByVariableDeclaration> variables = new ArrayList<>();
+        for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
+            if (variable.getExpression() != null) {
+                LetClause binding = new LetClause(
+                        variable.getVariableName(),
+                        null,
+                        variable.getExpression(),
+                        variable.getVariableMetadata(),
+                        variable.getVariableMetadata());
+                if (previous != null) previous.chainWith(binding);
+                previous = binding;
+            }
+            variables.add(new GroupByVariableDeclaration(
+                    variable.getVariableName(),
+                    variable.getActualSequenceType(),
+                    null,
+                    variable.getCollationURI(),
+                    variable.getVariableMetadata()));
+        }
+        GroupByClause normalized = new GroupByClause(variables, clause.getMetadata());
+        if (previous != null) previous.chainWith(normalized);
+        return normalized;
     }
 
     @Override
@@ -1065,10 +1101,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
+        if (ctx.item.eqName() == null) {
+            throw new ParsingException(
+                    "A cast or castable target must be a simple type name.", createMetadataFromContext(ctx));
+        }
         return TypeTranslation.singleType(SingleTypeContext.from(ctx), this::processItemType);
     }
 
     public ItemType processItemType(XQueryParser.ItemTypeContext itemTypeContext) {
+        if (itemTypeContext.kindTest() != null && itemTypeContext.kindTest().anyKindTest() != null) {
+            checkAnyKindTest(itemTypeContext.kindTest().anyKindTest());
+        }
         return TypeTranslation.itemType(
                 ItemTypeContext.from(itemTypeContext),
                 this.translationContext,
@@ -1475,11 +1518,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public NodeTest visitAnyKindTest(XQueryParser.AnyKindTestContext ctx) {
+            checkAnyKindTest(ctx);
             return XmlNodeTestTranslation.anyKindTest();
         }
     }
 
     // end region
+
+    private void checkAnyKindTest(XQueryParser.AnyKindTestContext ctx) {
+        if (ctx.STAR() != null) {
+            throw new ParsingException(
+                    "The XQuery node() test does not accept a wildcard.", createMetadataFromContext(ctx));
+        }
+    }
 
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand

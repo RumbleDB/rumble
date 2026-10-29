@@ -23,6 +23,8 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Stream;
 
+import lombok.Getter;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -48,6 +50,10 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
     private static final long serialVersionUID = 1L;
 
     private final Name elementName;
+
+    @Getter
+    private final boolean directlyNested;
+
     private final List<ItemRuntimePlan> content;
     private final List<AttributeNodeRuntimeIterator> attributes;
     private final List<NamespaceDeclaration> namespaceDeclarations;
@@ -57,6 +63,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             List<ItemRuntimePlan> content,
             List<AttributeNodeRuntimeIterator> attributes,
             List<NamespaceDeclaration> namespaceDeclarations,
+            boolean directlyNested,
             RuntimeStaticContext staticContext) {
         super(
                 Stream.concat(attributes.stream().<ItemRuntimePlan>map(iterator -> iterator), content.stream())
@@ -66,6 +73,7 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         this.attributes = attributes;
         this.namespaceDeclarations = namespaceDeclarations;
         this.elementName = elementName;
+        this.directlyNested = directlyNested;
     }
 
     @Override
@@ -90,8 +98,8 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
             StringBuilder textAccumulator = null;
             boolean hasSeenNonAttributeNode = false;
             for (ItemRuntimePlan iterator : this.content) {
-                for (Item childItem :
-                        XmlConstructorContentUtils.normalizeContent(materialize.apply(iterator, contextToUse))) {
+                for (Item childItem : XmlConstructorContentUtils.normalizeContent(
+                        materialize.apply(iterator, contextToUse), getMetadata())) {
                     List<Item> expandedItems = new ArrayList<>();
                     XmlConstructorContentUtils.appendExpandedItem(childItem, expandedItems);
                     for (Item item : expandedItems) {
@@ -138,7 +146,11 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
                                 textAccumulator = null;
                             }
                             // add the non-text node
-                            content.add(NodeConstructionUtils.copyNode(item, this.staticContext));
+                            content.add(
+                                    iterator instanceof DirElemConstructorRuntimeIterator direct
+                                                    && direct.isDirectlyNested()
+                                            ? item
+                                            : NodeConstructionUtils.copyNode(item, this.staticContext));
                         }
                     }
                 }
@@ -177,19 +189,15 @@ public class DirElemConstructorRuntimeIterator extends AbstractAtMostOneItemRunt
         // create and return the element item
         ElementItem elementItem = ItemFactory.getInstance().createXmlElementNode(this.elementName, content, attributes);
         elementItem.setConstructionBaseUri(this.staticContext.getStaticURI());
+        NodeConstructionUtils.initializeNamespaces(elementItem, this.staticContext);
         // Only add namespaces explicitly declared on this element
-        for (Item namespace : namespaces) {
-            elementItem.addOrReplaceNamespace(namespace);
-        }
+        NamespaceFixupUtils.addConstructorNamespaces(elementItem, namespaces, getMetadata());
         // set the parent of the child nodes to the element node
         elementItem.addParentToDescendants();
         NamespaceFixupUtils.applyNamespaceFixup(elementItem);
-        // Set XML document position if this is the top-level runtime iterator
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            // This is the top-level runtime iterator - set XML document positions recursively
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            elementItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        elementItem.setXmlDocumentPosition(documentPath, 0);
         NodeConstructionUtils.initializeElement(elementItem, this.staticContext);
         return elementItem;
     }

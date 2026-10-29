@@ -262,6 +262,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         } catch (DatetimeOverflowOrUnderflow
                 | DurationOverflowOrUnderflow
                 | InvalidLexicalValueException
+                | NoNamespaceFoundForPrefixException
                 | CastException e) {
             throw e;
         } catch (Exception e) {
@@ -376,7 +377,9 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         }
         if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
             Item convertedValue = null;
-            if (item.isString() || item.isUntypedAtomic()) {
+            if (item.isBoolean()) {
+                convertedValue = ItemFactory.getInstance().createBooleanItem(item.getBooleanValue());
+            } else if (item.isString() || item.isUntypedAtomic()) {
                 String lexical = item.getStringValue().trim();
                 if ("true".equals(lexical) || "1".equals(lexical)) {
                     convertedValue = ItemFactory.getInstance().createBooleanItem(true);
@@ -657,7 +660,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
             }
             if (item.isString() || item.isUntypedAtomic()) {
                 String lexical = NamespaceBindingUtils.collapseQNameLexical(item.getStringValue());
-                Name expanded = NamespaceBindingUtils.parseLexicalQName(lexical, namespaceResolver, metadata);
+                Name expanded = NamespaceBindingUtils.parseLexicalQNameForCast(lexical, namespaceResolver, metadata);
                 Item q = ItemFactory.getInstance().createQNameItem(expanded);
                 return finalizeAtomicBranchValue(q, targetType, BuiltinTypesCatalogue.QNameItem);
             }

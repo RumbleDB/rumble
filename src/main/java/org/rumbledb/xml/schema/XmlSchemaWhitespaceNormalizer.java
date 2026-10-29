@@ -27,12 +27,19 @@ import org.apache.xerces.xs.XSValue;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 
-/** Reconciles simple element content with Xerces's schema-normalized value. */
+/** Reconciles schema-validated element content with XDM whitespace rules and Xerces's normalized value. */
 final class XmlSchemaWhitespaceNormalizer {
 
     private XmlSchemaWhitespaceNormalizer() {}
 
     static void normalize(List<Item> children, ElementPSVI psvi) {
+        if (psvi.getTypeDefinition() instanceof XSComplexTypeDefinition complexType
+                && complexType.getContentType() == XSComplexTypeDefinition.CONTENTTYPE_ELEMENT) {
+            // XDM construction from PSVI discards whitespace-only text in element-only content.
+            children.removeIf(child -> child.isTextNode()
+                    && child.getStringValue().chars().allMatch(character -> isXmlWhitespace((char) character)));
+            return;
+        }
         XSValue schemaValue = psvi.getSchemaValue();
         if (schemaValue == null) {
             return;

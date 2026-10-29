@@ -124,7 +124,15 @@ public class RangeOperationIterator extends ItemRuntimePlan
 
     private Item materializeBound(ItemRuntimePlan plan, DynamicContext context) {
         try {
-            return plan.materializeAtMostOne(context);
+            Item bound = plan.materializeAtMostOne(context);
+            if (bound == null || !bound.isNode()) {
+                return bound;
+            }
+            List<Item> atoms = bound.atomizedValue();
+            if (atoms.size() > 1) {
+                throw new UnexpectedTypeException("Range endpoint atomizes to more than one item", getMetadata());
+            }
+            return atoms.isEmpty() ? null : atoms.get(0);
         } catch (MoreThanOneItemException exception) {
             throw new UnexpectedTypeException(
                     "Range expression must have integer input, but instead received more than one item", getMetadata());

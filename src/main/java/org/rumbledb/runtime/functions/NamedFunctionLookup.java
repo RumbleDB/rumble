@@ -33,13 +33,13 @@ public final class NamedFunctionLookup {
     private NamedFunctionLookup() {}
 
     /**
-     * @return a {@link FunctionItem} bound to the current dynamic context, or {@code null} if none exists
+     * @return a {@link FunctionItem} retaining its lexical module context (and the current focus for builtins),
+     *         or {@code null} if none exists
      */
     public static Item lookupOrNull(
             FunctionIdentifier identifier, DynamicContext dynamicContext, RuntimeStaticContext staticContext) {
         if (dynamicContext.getNamedFunctions().checkUserDefinedFunctionExists(identifier)) {
             FunctionItem result = dynamicContext.getNamedFunctions().getUserDefinedFunction(identifier);
-            result.populateClosureFromDynamicContext(dynamicContext, staticContext.getMetadata());
             return result;
         }
         var constructor = ConstructorFunctionResolver.resolve(identifier, staticContext);
@@ -51,11 +51,7 @@ public final class NamedFunctionLookup {
                 BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext.getQueryLanguage());
         if (builtin != null) {
             FunctionItem result = FunctionItemFactory.createBuiltinNamedReference(
-                    builtin.getIdentifier(),
-                    dynamicContext.getModuleContext(),
-                    staticContext.getConfiguration(),
-                    staticContext.getMetadata(),
-                    builtin);
+                    builtin.getIdentifier(), dynamicContext.getModuleContext(), staticContext, builtin);
             result.populateClosureFromDynamicContext(dynamicContext, staticContext.getMetadata());
             return result;
         }

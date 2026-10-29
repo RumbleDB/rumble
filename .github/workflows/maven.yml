@@ -102,6 +102,7 @@ jobs:
           "SparkRuntimeTestsNativeDeactivated",
           "SparkRuntimeTestsDataFramesDeactivated",
           "SparkRuntimeTestsParallelismDeactivated",
+          "SparkRuntimeTestsNoInlining",
           "Bugs",
           "NativeFLWORRuntimeTests",
           "NativeFLWORRuntimeTestsNativeDeactivated",

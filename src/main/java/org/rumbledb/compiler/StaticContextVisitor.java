@@ -17,6 +17,7 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -25,11 +26,13 @@ import org.rumbledb.context.ConstructorFunctionResolver;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.CastableException;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
+import org.rumbledb.exceptions.UndefinedTypeException;
 import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -506,6 +509,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            argument.addVariable(
+                    declaration.getVariableName(),
+                    declaration.getActualSequenceType(),
+                    declaration.getMetadata(),
+                    declaration.isAssignable());
+        }
         StaticContext generatedContext = argument;
         if (prolog.getSourceModuleContexts().isEmpty()) {
             generatedContext = visitDescendants(prolog, argument);
@@ -569,6 +579,16 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // and therefore cannot be resolved through InScopeSchemaTypes.
         ItemType itemType = sequenceType.getItemType();
         XmlSchemaCatalog schemaCatalog = staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog();
+        boolean xquery = staticContext.getQueryLanguage() != null
+                && staticContext.getQueryLanguage().startsWith("xquery");
+        if (xquery
+                && itemType.hasName()
+                && Name.XS_NS.equals(itemType.getName().getNamespace())
+                && List.of("anySimpleType", "anyAtomicType", "NOTATION")
+                        .contains(itemType.getName().getLocalName())) {
+            throw new CastableException(
+                    "The type " + itemType.getName() + " cannot be used as a cast target.", metadata);
+        }
         if (itemType.hasName() && !BuiltinTypesCatalogue.typeExists(itemType.getName())) {
             if (schemaCatalog.isSchemaCastTarget(itemType.getName())) {
                 return;
@@ -581,7 +601,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         metadata);
             }
         }
-        sequenceType.resolve(staticContext, metadata);
+        try {
+            sequenceType.resolve(staticContext, metadata);
+        } catch (UndefinedTypeException exception) {
+            if (!xquery) {
+                throw exception;
+            }
+            throw new UnknownCastTypeException(exception.getMessage(), metadata);
+        }
     }
 
     @Override
@@ -609,8 +636,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
+        Map<String, String> constructorBindings = new HashMap<>(argument.getConstructorNamespaceBindings());
+        for (NamespaceDeclaration declaration : expression.getNamespaceDeclarations()) {
+            constructorBindings.put(declaration.getPrefix(), declaration.getUri());
+        }
+        if (contentContext == argument) contentContext = new StaticContext(argument);
+        contentContext.setConstructorNamespaceBindings(constructorBindings);
+        expression.setStaticContext(contentContext);
         for (Expression attribute : expression.getAttributes()) {
-            this.visit(attribute, argument);
+            this.visit(attribute, contentContext);
         }
         for (Expression child : expression.getContent()) {
             this.visit(child, contentContext);

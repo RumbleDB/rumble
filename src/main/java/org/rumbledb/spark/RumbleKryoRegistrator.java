@@ -53,6 +53,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.HexBinaryItem;
 import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
+import org.rumbledb.items.LongItem;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.QNameItem;
@@ -111,6 +112,7 @@ public class RumbleKryoRegistrator implements KryoRegistrator {
         kryo.register(HexBinaryItem.class);
         kryo.register(IntegerItem.class);
         kryo.register(IntItem.class);
+        kryo.register(LongItem.class);
         kryo.register(NullItem.class);
         kryo.register(QNameItem.class);
         kryo.register(StringItem.class);
