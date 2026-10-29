@@ -534,7 +534,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitPathRootExpr(PathRootExpression expression, StaticContext argument) {
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.documentNode));
+        SequenceType contextType = expression.getStaticContext().getContextItemStaticType();
+        if (contextType == null && expression.getStaticContext().isInScope(Name.CONTEXT_ITEM)) {
+            contextType = expression.getStaticContext().getVariableSequenceType(Name.CONTEXT_ITEM);
+        }
+        ItemType rootType =
+                contextType != null && contextType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.documentNode)
+                        ? contextType.getItemType()
+                        : BuiltinTypesCatalogue.documentNode;
+        expression.setStaticSequenceType(new SequenceType(rootType));
         return argument;
     }
 
@@ -793,6 +801,21 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<Expression> args = expression.getArguments();
 
         if (isBuiltinFunctionName(functionName, "data") && args.size() == 1) {
+            for (ItemType member :
+                    args.get(0).getStaticSequenceType().getItemType().getMemberTypes()) {
+                if (!args.get(0).getStaticSequenceType().isEmptySequence()
+                        && member instanceof ElementNodeItemType element
+                        && element.getSchemaTypeName() != null
+                        && staticContext
+                                .getInScopeSchemaTypes()
+                                .getXmlSchemaCatalog()
+                                .mayHaveUnavailableTypedValue(element.getSchemaTypeName())) {
+                    throwStaticTypeException(
+                            "The element type permits content without a typed value.",
+                            ErrorCode.AtomizationError,
+                            expression.getMetadata());
+                }
+            }
             expression.setStaticSequenceType(
                     TypeAtomization.inferType(args.get(0).getStaticSequenceType()));
             return true;
