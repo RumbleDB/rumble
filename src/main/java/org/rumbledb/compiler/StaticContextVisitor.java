@@ -149,7 +149,16 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(libraryModule.getProlog(), moduleContext);
             this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
         }
-        argument.importModuleContext(this.importedModuleContexts.get(libraryModule.getNamespace()));
+        StaticContext importedContext = this.importedModuleContexts.get(libraryModule.getNamespace());
+        for (var entry : importedContext.getInScopeVariables().entrySet()) {
+            Name name = entry.getKey();
+            var existing = argument.getInScopeVariables().get(name);
+            // Repeated imports share the cached variable; a distinct declaration is a collision.
+            if (!Name.CONTEXT_ITEM.equals(name) && existing != null && existing != entry.getValue()) {
+                throw new VariableAlreadyExistsException(name, existing.getMetadata());
+            }
+        }
+        argument.importModuleContext(importedContext);
         argument.getInScopeSchemaTypes()
                 .importModuleTypes(this.importedModuleContexts
                         .get(libraryModule.getNamespace())

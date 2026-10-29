@@ -348,6 +348,12 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             DynamicContext newContext =
                     new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
             newContext.setNamedFunctions(argument.getNamedFunctions());
+            // A library without its own context declaration uses the query's initial focus.
+            if (!module.getProlog().hasContextItemDeclaration() && this.initialContextItem != null) {
+                newContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this.initialContextItem);
+                newContext.getVariableValues().setPosition(1);
+                newContext.getVariableValues().setLast(1);
+            }
             DynamicContext importedContext;
             this.libraryModuleDepth++;
             try {
