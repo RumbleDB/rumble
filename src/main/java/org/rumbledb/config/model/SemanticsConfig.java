@@ -47,6 +47,7 @@ public class SemanticsConfig implements Serializable {
     boolean laxJSONNullValidation;
     String queryLanguage;
     String xmlVersion;
+    String xsdVersion;
     String staticBaseUri;
 
     @Builder(toBuilder = true)
@@ -56,6 +57,7 @@ public class SemanticsConfig implements Serializable {
             Boolean laxJSONNullValidation,
             String queryLanguage,
             String xmlVersion,
+            String xsdVersion,
             String staticBaseUri) {
         this.allowScripting = Objects.requireNonNullElse(allowScripting, true);
         this.datesWithTimeZone = Objects.requireNonNullElse(datesWithTimeZone, DEFAULT_DATES_WITH_TIMEZONE);
@@ -63,7 +65,19 @@ public class SemanticsConfig implements Serializable {
                 Objects.requireNonNullElse(laxJSONNullValidation, DEFAULT_LAX_JSON_NULL_VALIDATION);
         this.queryLanguage = Objects.requireNonNullElse(queryLanguage, DEFAULT_QUERY_LANGUAGE);
         this.xmlVersion = Objects.requireNonNullElse(xmlVersion, DEFAULT_XML_VERSION);
+        this.xsdVersion = normalizeXsdVersion(xsdVersion);
         this.staticBaseUri = staticBaseUri;
+    }
+
+    private static String normalizeXsdVersion(String version) {
+        if (version == null) {
+            return "1.1";
+        }
+        String normalized = version.trim();
+        if ("1.0".equals(normalized) || "1.1".equals(normalized)) {
+            return normalized;
+        }
+        throw new CliException("Argument --xsd-version must be 1.0 or 1.1 (was: " + version + ").");
     }
 
     private static String normalizeXmlVersion(String xmlVersion) {

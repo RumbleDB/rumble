@@ -33,6 +33,7 @@ import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.context.UserDefinedFunctionExecutionModes;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -154,6 +155,23 @@ final class ModuleParser {
         parser.setErrorHandler(new BailErrorStrategy());
 
         try {
+            if (!isMainModule) {
+                // A namespace URI may retrieve an HTML page or a main query rather than a library.
+                // Reject those as failed module resolution, preserving syntax errors inside real libraries.
+                if (language == Language.XQUERY && tokens.LA(1) == XQueryParser.KW_XQUERY) {
+                    ((XQueryParser) parser).versionDecl();
+                } else if (language == Language.JSONIQ && tokens.LA(1) == JsoniqParser.KW_JSONIQ) {
+                    ((JsoniqParser) parser).versionDecl();
+                }
+                int moduleToken = language == Language.XQUERY ? XQueryParser.KW_MODULE : JsoniqParser.KW_MODULE;
+                if (tokens.LA(1) != moduleToken) {
+                    throw new ModuleNotFoundException(
+                            "The imported resource is not a library module.",
+                            ExceptionMetadata.fromPoint(
+                                    uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
+                }
+                tokens.seek(0);
+            }
             // TODO Handle module extras
             ParseTree moduleParseTree = parseTreeSupplier.get();
             if (isMainModule && moduleParseTree == null) {

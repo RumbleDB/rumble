@@ -27,7 +27,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.resources.ResolvedResource;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-/** Loads module text and applies the configured static base URI without changing resolver ownership. */
+/** Loads module text while preserving resolved source locations and resolver ownership. */
 final class ModuleSourceLoader {
 
     private ModuleSourceLoader() {}
@@ -49,12 +49,14 @@ final class ModuleSourceLoader {
         try (ResolvedResource resource =
                 compilationConfiguration.resourceResolver().resolve(location, configuration, metadata)) {
             String query = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
-            URI systemId = resource.getSystemId();
-            if (configuration.semantics().staticBaseUri() != null) {
-                systemId = resolveStaticBaseUri(configuration.semantics().staticBaseUri());
-            }
-            return new ModuleSource(query, systemId);
+            return new ModuleSource(query, resource.getSystemId());
         }
+    }
+
+    /** The configured base URI applies to the main module, not to imported library modules. */
+    static URI mainModuleLocation(URI sourceLocation, RumbleConfiguration configuration) {
+        String url = configuration.semantics().staticBaseUri();
+        return url == null ? sourceLocation : resolveStaticBaseUri(url);
     }
 
     static URI queryLocation(RumbleConfiguration configuration) {
