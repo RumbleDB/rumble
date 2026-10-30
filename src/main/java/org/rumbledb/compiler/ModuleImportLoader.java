@@ -122,19 +122,20 @@ public final class ModuleImportLoader {
                             location, importingModuleContext, compilationConfiguration, metadata);
                     session.modules.put(physical, module);
                     session.completedModules.put(placeholder, module);
-                } catch (IOException | CannotRetrieveResourceException e) {
+                } catch (IOException | CannotRetrieveResourceException | ModuleNotFoundException e) {
                     session.modules.remove(physical);
                     lastFailure = e;
                     continue;
                 }
             }
             if (!normalizedNamespace.equals(module.getNamespace())) {
-                throw new ModuleNotFoundException(
+                lastFailure = new ModuleNotFoundException(
                         "A module with namespace "
                                 + normalizedNamespace
                                 + " was not found. The namespace of the module at this location was: "
                                 + module.getNamespace(),
                         metadata);
+                continue;
             }
             loaded.add(module);
         }
