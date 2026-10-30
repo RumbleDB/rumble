@@ -160,10 +160,20 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         List<LibraryModule> libraryModules = expression.getImportedModules().stream()
                 .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
                 .collect(Collectors.toList());
+        Map<Node, org.rumbledb.context.StaticContext> sourceModuleContexts = new LinkedHashMap<>();
         List<Node> declarations = expression.getDeclarations().stream()
-                .map(expr -> visit(expr, argument))
+                .map(expr -> {
+                    Node clone = visit(expr, argument);
+                    var sourceContext = expression.getSourceModuleContexts().get(expr);
+                    if (sourceContext != null) {
+                        sourceModuleContexts.put(clone, sourceContext);
+                    }
+                    return clone;
+                })
                 .collect(Collectors.toList());
         expression.setDeclarations(declarations);
+        expression.getSourceModuleContexts().clear();
+        expression.getSourceModuleContexts().putAll(sourceModuleContexts);
         expression.getSchemaImports().clear();
         expression.getSchemaImports().addAll(schemaImports);
         expression.getImportedModules().clear();

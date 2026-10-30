@@ -59,6 +59,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -146,12 +147,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
+        String key = libraryModule.getModuleGroupKey();
+        if (!this.importedModuleContexts.containsKey(key)) {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
-            this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
+            this.importedModuleContexts.put(key, moduleContext);
         }
-        StaticContext importedContext = this.importedModuleContexts.get(libraryModule.getNamespace());
+        StaticContext importedContext = this.importedModuleContexts.get(key);
         for (var entry : importedContext.getInScopeVariables().entrySet()) {
             Name name = entry.getKey();
             var existing = argument.getInScopeVariables().get(name);
@@ -162,9 +164,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         argument.importModuleContext(importedContext);
         argument.getInScopeSchemaTypes()
-                .importModuleTypes(this.importedModuleContexts
-                        .get(libraryModule.getNamespace())
-                        .getInScopeSchemaTypes());
+                .importModuleTypes(this.importedModuleContexts.get(key).getInScopeSchemaTypes());
         return argument;
     }
 
@@ -568,7 +568,30 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     declaration.getMetadata(),
                     declaration.isAssignable());
         }
-        StaticContext generatedContext = visitDescendants(prolog, argument);
+        StaticContext generatedContext = argument;
+        if (prolog.getSourceModuleContexts().isEmpty()) {
+            generatedContext = visitDescendants(prolog, argument);
+        } else {
+            for (SchemaImport schema : prolog.getSchemaImports()) {
+                visit(schema, argument);
+            }
+            for (LibraryModule imported : prolog.getImportedModules()) {
+                visit(imported, argument);
+            }
+            for (Node declaration : prolog.getDeclarations()) {
+                StaticContext sourceContext = prolog.getSourceModuleContexts().getOrDefault(declaration, argument);
+                sourceContext.importModuleContext(argument);
+                sourceContext.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes());
+                visit(declaration, sourceContext);
+                argument.importModuleContext(sourceContext);
+                argument.getInScopeSchemaTypes().importModuleTypes(sourceContext.getInScopeSchemaTypes());
+            }
+            // Function signatures and types must be visible throughout a mutually recursive group.
+            for (StaticContext sourceContext : prolog.getSourceModuleContexts().values()) {
+                sourceContext.importModuleContext(argument);
+                sourceContext.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes());
+            }
+        }
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(generatedContext, prolog.getMetadata());
         }

@@ -85,19 +85,12 @@ public final class CompilationPipeline {
     }
 
     /**
-     * Imported modules have their declarations ordered now. Context population and type inference
-     * happen later through the importing main module, using the shared function execution-mode registry.
+     * Translate imported modules without running analysis on an incomplete import graph.
+     * The import loader orders declarations after collapsing cyclic groups.
      */
     static LibraryModule prepareLibraryModule(
             String query, URI uri, StaticContext importingContext, CompilationConfiguration configuration) {
-        LibraryModule module = ModuleParser.parseLibraryModule(query, uri, importingContext, configuration);
-        return run(
-                module,
-                new CompilationContext(
-                        configuration.runtimeConfiguration(),
-                        ExternalBindings.empty(),
-                        configuration.resourceResolver()),
-                List.of(CompilationPasses.resolveDependencies()));
+        return ModuleParser.parseLibraryModule(query, uri, importingContext, configuration);
     }
 
     /** Standalone library analysis for language-server callers; deliberately does not run the main-module pipeline. */
@@ -108,7 +101,10 @@ public final class CompilationPipeline {
         return run(
                 module,
                 new CompilationContext(configuration, ExternalBindings.empty(), new ResourceResolver()),
-                List.of(CompilationPasses.populateStaticContext(), CompilationPasses.inferTypes()));
+                List.of(
+                        CompilationPasses.resolveDependencies(),
+                        CompilationPasses.populateStaticContext(),
+                        CompilationPasses.inferTypes()));
     }
 
     /**

@@ -73,7 +73,9 @@ final class ModuleParser {
             ExternalBindings bindings,
             Language language) {
         StaticContext moduleContext = createModuleContext(uri, configuration.runtimeConfiguration());
-        return (MainModule) parseModule(query, uri, configuration, bindings, language, moduleContext, true);
+        return ModuleImportLoader.loadMainModule(
+                () -> (MainModule) parseModule(query, uri, configuration, bindings, language, moduleContext, true),
+                configuration.runtimeConfiguration());
     }
 
     static LibraryModule parseLibraryModule(
