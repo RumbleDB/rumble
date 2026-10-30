@@ -50,10 +50,7 @@ final class PsviNodeBuilder extends DefaultHandler {
      * This is used to accumulate the children and attributes of the element before it is finalized.
      */
     private record ElementFrame(
-            Name name,
-            List<Item> children,
-            List<Item> attributes,
-            Map<String, String> inScopeNamespaces) {}
+            Name name, List<Item> children, List<Item> attributes, Map<String, String> inScopeNamespaces) {}
 
     private final PSVIProvider psviProvider;
     private final XmlSchemaCatalog catalog;

@@ -74,7 +74,8 @@ final class XmlItemSaxEmitter {
         }
         for (Item namespace : element.declaredNamespaceNodes()) {
             if (namespace.getStringValue().isEmpty()) {
-                namespaces.remove(namespace.nodeName() == null ? "" : namespace.nodeName().getLocalName());
+                namespaces.remove(
+                        namespace.nodeName() == null ? "" : namespace.nodeName().getLocalName());
             }
         }
         List<String> prefixes = new ArrayList<>();
