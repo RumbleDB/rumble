@@ -44,7 +44,11 @@ public final class CompilationPipeline {
             throws IOException {
         ModuleSourceLoader.ModuleSource source =
                 ModuleSourceLoader.readModuleSource(location, configuration, ExceptionMetadata.EMPTY_METADATA);
-        return compileMainModule(source.query(), source.systemId(), configuration, externalBindings);
+        return compileMainModule(
+                source.query(),
+                ModuleSourceLoader.mainModuleLocation(source.systemId(), configuration.runtimeConfiguration()),
+                configuration,
+                externalBindings);
     }
 
     /** Compiles query text using the configured static base URI. */
