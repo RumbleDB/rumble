@@ -66,7 +66,7 @@ public final class ModuleImportLoader {
                 }
 
                 return module;
-            } catch (IOException | CannotRetrieveResourceException e) {
+            } catch (IOException | CannotRetrieveResourceException | ModuleNotFoundException e) {
                 lastFailure = e;
             }
         }
