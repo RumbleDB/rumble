@@ -35,6 +35,8 @@ import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.InScopeSchemaTypes;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.SchemaImportException;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.resources.ResourceResolver;
 
@@ -46,6 +48,24 @@ import org.rumbledb.resources.ResourceResolver;
 public class XmlSchemaCatalogLoaderTest {
 
     private static final String NAMESPACE = "urn:test";
+
+    @Test
+    public void rejectsXsd11DurationTypesAsInvalidSchema(@TempDir Path directory) throws Exception {
+        Files.writeString(
+                directory.resolve("types.xsd"),
+                schema(NAMESPACE, """
+                        <xs:simpleType name="ShortDuration">
+                          <xs:restriction base="xs:dayTimeDuration"/>
+                        </xs:simpleType>
+                        """));
+        var exception = Assertions.assertThrows(
+                SchemaImportException.class,
+                () -> compile(
+                        "import schema namespace t = \"urn:test\" at \"types.xsd\"; ()",
+                        directory.resolve("query.xq").toUri(),
+                        new ResourceResolver()));
+        Assertions.assertEquals(ErrorCode.InvalidSchemaErrorCode, exception.getErrorCode());
+    }
 
     @Test
     public void typesKeepTheImportPrefix(@TempDir Path directory) throws Exception {
