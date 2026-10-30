@@ -49,7 +49,6 @@ import lombok.NonNull;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.SchemaImportException;
@@ -240,9 +239,7 @@ public final class XmlSchemaCatalogLoader {
             Schema validationSchema, SchemaErrorHandler errorHandler, ExceptionMetadata metadata) {
         if (errorHandler.getFirstError() != null) {
             throw new SchemaImportException(
-                    "Unable to process an imported XML Schema: " + errorHandler.getFirstError(),
-                    ErrorCode.InvalidSchemaErrorCode,
-                    metadata);
+                    "Unable to process an imported XML Schema: " + errorHandler.getFirstError(), metadata);
         }
         if (!(validationSchema instanceof XSGrammarPoolContainer grammarPoolContainer)) {
             throw new SchemaImportException("The Xerces validation grammar pool is unavailable.", metadata);
