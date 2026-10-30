@@ -172,7 +172,8 @@ public final class IntegerPictureFormatter {
         return toTitleCaseWords(result);
     }
 
-    /** Optional sequences: enclosed numbers 1..20, Greek bijective alphabetic numbering,
+    /**
+     * Optional sequences: enclosed numbers 1..20, Greek bijective alphabetic numbering,
      * and Japanese numerals below 10^20. Values outside these ranges use decimal fallback.
      */
     private static String handleNumberingSequence(
@@ -198,9 +199,9 @@ public final class IntegerPictureFormatter {
             }
             return result.reverse().toString();
         } else if ("一".equals(token) && value.compareTo(BigInteger.TEN.pow(20)) < 0) {
-            String[] units = { "", "万", "億", "兆", "京" };
+            String[] units = {"", "万", "億", "兆", "京"};
             String digits = "零一二三四五六七八九";
-            String[] smallUnits = { "", "十", "百", "千" };
+            String[] smallUnits = {"", "十", "百", "千"};
             String result = "";
             int group = 0;
             while (value.signum() > 0) {
