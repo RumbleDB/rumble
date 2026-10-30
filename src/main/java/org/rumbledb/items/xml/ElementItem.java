@@ -60,6 +60,7 @@ public class ElementItem extends AbstractNodeItem {
     @Setter
     private URI constructionBaseUri;
 
+    @Getter
     @Setter
     private boolean inheritNamespacesFromParent;
 
