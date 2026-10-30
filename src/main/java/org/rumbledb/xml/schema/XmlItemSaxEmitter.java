@@ -16,7 +16,9 @@
 package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import javax.xml.validation.ValidatorHandler;
 
@@ -25,6 +27,7 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.items.xml.ElementItem;
 
 /**
  * Emits a Rumble XML element or document as namespace-aware SAX events.
@@ -45,10 +48,10 @@ final class XmlItemSaxEmitter {
         this.handler.startDocument();
         if (root.isDocumentNode()) {
             for (Item child : root.children()) {
-                emitChild(child, true);
+                emitChild(child, Map.of());
             }
         } else {
-            emitElement(root, true);
+            emitElement(root, Map.of());
         }
         this.handler.endDocument();
     }
@@ -56,17 +59,38 @@ final class XmlItemSaxEmitter {
     /**
      * Emits an element node and its children as SAX events.
      */
-    private void emitElement(Item element, boolean root) throws SAXException {
-        List<Item> namespaces = root ? element.namespaceNodes() : element.declaredNamespaceNodes();
-        List<String> prefixes = new ArrayList<>(namespaces.size());
-        for (Item namespace : namespaces) {
+    private void emitElement(Item element, Map<String, String> inheritedNamespaces) throws SAXException {
+        // Carry inherited bindings explicitly: parsed trees may omit parent pointers.
+        Map<String, String> namespaces = ((ElementItem) element).isInheritNamespacesFromParent()
+                ? new LinkedHashMap<>(inheritedNamespaces)
+                : new LinkedHashMap<>();
+        for (Item namespace : element.namespaceNodes()) {
             String prefix =
                     namespace.nodeName() == null ? "" : namespace.nodeName().getLocalName();
             if ("xml".equals(prefix)) {
                 continue;
             }
-            prefixes.add(prefix);
-            this.handler.startPrefixMapping(prefix, namespace.getStringValue());
+            namespaces.put(prefix, namespace.getStringValue());
+        }
+        for (Item namespace : element.declaredNamespaceNodes()) {
+            if (namespace.getStringValue().isEmpty()) {
+                namespaces.remove(namespace.nodeName() == null ? "" : namespace.nodeName().getLocalName());
+            }
+        }
+        List<String> prefixes = new ArrayList<>();
+        // XDM children need not inherit every parent binding. Explicitly end those bindings
+        // in the SAX namespace context so validation sees exactly the source node's scope.
+        for (String prefix : inheritedNamespaces.keySet()) {
+            if (!namespaces.containsKey(prefix)) {
+                prefixes.add(prefix);
+                this.handler.startPrefixMapping(prefix, "");
+            }
+        }
+        for (Map.Entry<String, String> binding : namespaces.entrySet()) {
+            if (!binding.getValue().equals(inheritedNamespaces.get(binding.getKey()))) {
+                prefixes.add(binding.getKey());
+                this.handler.startPrefixMapping(binding.getKey(), binding.getValue());
+            }
         }
 
         Name name = element.nodeName();
@@ -74,7 +98,7 @@ final class XmlItemSaxEmitter {
         String qualifiedName = XmlNameCodec.qualifiedName(name);
         this.handler.startElement(namespace, name.getLocalName(), qualifiedName, attributes(element));
         for (Item child : element.children()) {
-            emitChild(child, false);
+            emitChild(child, namespaces);
         }
         this.handler.endElement(namespace, name.getLocalName(), qualifiedName);
 
@@ -86,9 +110,9 @@ final class XmlItemSaxEmitter {
     /**
      * Emits a child node as SAX events.
      */
-    private void emitChild(Item child, boolean documentChild) throws SAXException {
+    private void emitChild(Item child, Map<String, String> inheritedNamespaces) throws SAXException {
         if (child.isElementNode()) {
-            emitElement(child, documentChild);
+            emitElement(child, inheritedNamespaces);
         } else if (child.isTextNode()) {
             char[] text = child.getStringValue().toCharArray();
             this.handler.characters(text, 0, text.length);

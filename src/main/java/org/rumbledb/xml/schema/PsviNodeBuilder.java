@@ -35,6 +35,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.ElementItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
@@ -52,7 +53,6 @@ final class PsviNodeBuilder extends DefaultHandler {
             Name name,
             List<Item> children,
             List<Item> attributes,
-            Map<String, String> declaredNamespaces,
             Map<String, String> inScopeNamespaces) {}
 
     private final PSVIProvider psviProvider;
@@ -90,12 +90,17 @@ final class PsviNodeBuilder extends DefaultHandler {
         Map<String, String> inScopeNamespaces = this.elements.isEmpty()
                 ? new LinkedHashMap<>()
                 : new LinkedHashMap<>(this.elements.peek().inScopeNamespaces());
-        inScopeNamespaces.putAll(declaredNamespaces);
+        declaredNamespaces.forEach((prefix, namespace) -> {
+            if (namespace.isEmpty()) {
+                inScopeNamespaces.remove(prefix);
+            } else {
+                inScopeNamespaces.put(prefix, namespace);
+            }
+        });
         this.elements.push(new ElementFrame(
                 XmlNameCodec.fromSax(uri, localName, qualifiedName),
                 new ArrayList<>(),
                 this.createAttributes(attributes, declaredNamespaces, inScopeNamespaces),
-                declaredNamespaces,
                 inScopeNamespaces));
         this.pendingNamespaces.clear();
     }
@@ -132,9 +137,11 @@ final class PsviNodeBuilder extends DefaultHandler {
         }
 
         XmlSchemaWhitespaceNormalizer.normalize(frame.children(), psvi);
-        Item element =
+        ElementItem element =
                 ItemFactory.getInstance().createXmlElementNode(frame.name(), frame.children(), frame.attributes());
-        for (Map.Entry<String, String> namespace : frame.declaredNamespaces().entrySet()) {
+        // Store the complete scope so attaching a parent cannot introduce extra namespace bindings.
+        element.setInheritNamespacesFromParent(false);
+        for (Map.Entry<String, String> namespace : frame.inScopeNamespaces().entrySet()) {
             element.addOrReplaceNamespace(
                     ItemFactory.getInstance().createXmlNamespaceNode(namespace.getKey(), namespace.getValue()));
         }
