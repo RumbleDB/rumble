@@ -418,6 +418,9 @@ public class DerivedAtomicItemType extends AbstractItemType {
 
     @Override
     public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
+        if (this.isSubtypeOf(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            return true;
+        }
         return this.baseType.isCompatibleWithDataFrames(configuration);
     }
 
