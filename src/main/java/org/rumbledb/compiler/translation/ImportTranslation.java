@@ -79,6 +79,12 @@ public final class ImportTranslation {
                 .map(processURILiteral)
                 .map(URILiteralUtils::normalizeAsAnyURI)
                 .toList();
+        if (ModuleImportLoader.isActive(namespace)) {
+            if (ctx.prefix() != null) {
+                translationContext.bindNamespace(ctx.prefix(), namespace, metadata);
+            }
+            return ModuleImportLoader.activeReference(namespace, metadata);
+        }
         LibraryModule libraryModule = ModuleImportLoader.load(
                 namespace,
                 locationHints,
