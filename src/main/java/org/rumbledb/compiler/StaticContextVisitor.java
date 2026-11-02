@@ -64,8 +64,6 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
-import org.rumbledb.expressions.scripting.annotations.Annotation;
-import org.rumbledb.expressions.scripting.annotations.AnnotationConstants;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
@@ -97,6 +95,8 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
+
+import static org.rumbledb.compiler.utils.AnnotationValidator.hasPrivateAnnotation;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -148,8 +148,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
         if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
             StaticContext moduleContext = libraryModule.getStaticContext();
-            this.visit(libraryModule.getProlog(), moduleContext);
             this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
+            this.visit(libraryModule.getProlog(), moduleContext);
         }
         StaticContext importedContext = this.importedModuleContexts.get(libraryModule.getNamespace());
         for (var entry : importedContext.getInScopeVariables().entrySet()) {
@@ -542,12 +542,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private static boolean hasPrivateAnnotation(List<Annotation> annotations) {
-        return annotations != null
-                && annotations.stream()
-                        .anyMatch(annotation -> annotation.getAnnotationName().equals(AnnotationConstants.PRIVATE));
-    }
-
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
@@ -557,6 +551,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
+            argument.addFunctionSignature(
+                    expression.getFunctionIdentifier(),
+                    new FunctionSignature(
+                            new ArrayList<>(expression.getParams().values()),
+                            expression.getReturnType(),
+                            expression.isUpdating()));
             if (hasPrivateAnnotation(expression.getAnnotations())) {
                 argument.markPrivateFunction(expression.getFunctionIdentifier());
             }
