@@ -37,8 +37,8 @@ public final class ResourceResolver implements Serializable {
     private final Map<String, String> unparsedTexts = new ConcurrentHashMap<>();
 
     /** Stable text values shared by all contexts within the current scripting snapshot. */
-    public synchronized String unparsedText(URI uri, String encoding, String xmlVersion,
-            java.util.function.Supplier<String> loader) {
+    public synchronized String unparsedText(
+            URI uri, String encoding, String xmlVersion, java.util.function.Supplier<String> loader) {
         String key = uri.toString() + "\u0000" + encoding + "\u0000" + xmlVersion;
         return this.unparsedTexts.computeIfAbsent(key, ignored -> loader.get());
     }

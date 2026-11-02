@@ -200,7 +200,9 @@ public class Rumble {
                 .getEffectiveConfiguration(
                         mainModule, this.compilationConfiguration.runtimeConfiguration().toBuilder());
         DynamicContext dynamicContext = new DynamicContextVisitor(
-                        effectiveConfiguration, bindings, this.compilationConfiguration.resourceResolver().forExecution())
+                        effectiveConfiguration,
+                        bindings,
+                        this.compilationConfiguration.resourceResolver().forExecution())
                 .visit(mainModule, null);
         ItemRuntimePlan plan = new RuntimeIteratorVisitor(effectiveConfiguration).generateRuntimePlan(mainModule);
 
