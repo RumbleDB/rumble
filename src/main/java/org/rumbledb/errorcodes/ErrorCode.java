@@ -61,6 +61,10 @@ public final class ErrorCode implements Serializable {
     }
 
     public static final ErrorCode LibraryContextItemInitializer = registerBuiltIn("XQST0113");
+    public static final ErrorCode EmptyDynamicModuleURI = registerBuiltIn("FOQM0001");
+    public static final ErrorCode DynamicModuleNotFound = registerBuiltIn("FOQM0002");
+    public static final ErrorCode InvalidDynamicModule = registerBuiltIn("FOQM0003");
+    public static final ErrorCode DynamicModuleParameterType = registerBuiltIn("FOQM0005");
     public static final ErrorCode DynamicModuleLoadingNotSupported = registerBuiltIn("FOQM0006");
     public static final ErrorCode TransformationNotSupported = registerBuiltIn("FOXT0004");
 

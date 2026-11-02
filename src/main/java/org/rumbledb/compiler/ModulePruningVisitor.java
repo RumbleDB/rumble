@@ -47,6 +47,9 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitLibraryModule(LibraryModule libraryModule, Void argument) {
+        if (libraryModule.isImportBackReference()) {
+            return argument;
+        }
         if (this.visitedModules.contains(libraryModule.getNamespace())) {
             Prolog prolog = libraryModule.getProlog();
             prolog.clearDeclarations();
