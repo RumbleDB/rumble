@@ -72,7 +72,6 @@ public class BuiltinNamedFunctionReferenceMarkerIterator extends ItemRuntimePlan
             return null;
         }
         return switch (this.identifier.getName().getLocalName()) {
-            case "load-xquery-module" -> new LoadXQueryModuleFunctionIterator(List.of(), this.staticContext);
             case "transform" -> new TransformFunctionIterator(List.of(), this.staticContext);
             default -> null;
         };
