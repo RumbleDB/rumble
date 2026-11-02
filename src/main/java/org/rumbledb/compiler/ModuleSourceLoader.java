@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.resources.ResolvedResource;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -46,6 +47,9 @@ final class ModuleSourceLoader {
             URI location, CompilationConfiguration compilationConfiguration, ExceptionMetadata metadata)
             throws IOException {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
+        if (compilationConfiguration.resourceResolver().resolveURI(location).isOpaque()) {
+            throw new CannotRetrieveResourceException("No module resource mapping for " + location, metadata);
+        }
         try (ResolvedResource resource =
                 compilationConfiguration.resourceResolver().resolve(location, configuration, metadata)) {
             String query = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);

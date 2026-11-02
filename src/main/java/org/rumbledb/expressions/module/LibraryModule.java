@@ -32,6 +32,10 @@ public class LibraryModule extends Module {
     protected StaticContext staticContext;
 
     @Getter
+    @Setter
+    private boolean importBackReference;
+
+    @Getter
     private final String namespace;
 
     @Getter
