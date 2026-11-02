@@ -73,6 +73,12 @@ public final class UnparsedTextReader {
                     "A URI containing a fragment identifier is not valid for fn:unparsed-text().", metadata);
         }
 
+        return resolver.unparsedText(uri, encoding, xmlVersion,
+                () -> readResolved(uri, encoding, xmlVersion, resolver, metadata));
+    }
+
+    private static String readResolved(URI uri, String encoding, String xmlVersion,
+            ResourceResolver resolver, ExceptionMetadata metadata) {
         byte[] bytes;
         try {
             bytes = TextResourceUtil.fetchBytes(resolver.resolveURI(uri), metadata);

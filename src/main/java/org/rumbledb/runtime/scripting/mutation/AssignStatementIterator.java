@@ -44,6 +44,7 @@ public class AssignStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     public Item evaluateAtMostOne(DynamicContext context) {
         List<Item> exprItems = this.assignExpression.materialize(context);
         context.getVariableValues().changeVariableValue(this.variableName, exprItems);
+        context.getResourceResolver().clearUnparsedTexts();
         return null;
     }
 }
