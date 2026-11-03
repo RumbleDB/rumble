@@ -19,6 +19,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 
+import org.w3c.dom.Attr;
 import org.w3c.dom.Node;
 
 import lombok.NonNull;
@@ -47,6 +48,11 @@ public class AttributeItem extends AbstractNodeItem {
 
     public AttributeItem(Node attributeNode) {
         this(NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode), attributeNode.getNodeValue());
+        if (attributeNode instanceof Attr attribute) {
+            this.id |= attribute.isId();
+            String typeName = attribute.getSchemaTypeInfo().getTypeName();
+            this.idRefs = "IDREF".equals(typeName) || "IDREFS".equals(typeName);
+        }
     }
 
     public AttributeItem(Name dmNodeName, String stringValue) {

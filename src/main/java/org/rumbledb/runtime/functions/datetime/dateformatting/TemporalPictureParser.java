@@ -177,7 +177,7 @@ final class TemporalPictureParser {
             return VariableMarker.forFractionalSeconds(
                     component, "", width.minWidth, width.maxWidth, secondPresentationModifier);
         }
-        if (component == 'F' || component == 'P') {
+        if (component == 'F' || component == 'P' || component == 'E') {
             return VariableMarker.forName(
                     component,
                     "",
@@ -208,7 +208,7 @@ final class TemporalPictureParser {
     private static final Set<Character> RECOGNIZED_COMPONENTS =
             Set.of('Y', 'M', 'D', 'd', 'F', 'W', 'w', 'H', 'h', 'P', 'm', 's', 'f', 'Z', 'z', 'C', 'E');
 
-    private static final Set<Character> NAME_PRESENTABLE_COMPONENTS = Set.of('M', 'F', 'P');
+    private static final Set<Character> NAME_PRESENTABLE_COMPONENTS = Set.of('M', 'F', 'P', 'E');
 
     private static final Set<Character> FORMAT_INTEGER_PRESENTABLE_COMPONENTS =
             Set.of('Y', 'M', 'D', 'd', 'F', 'W', 'w', 'H', 'h', 'm', 's');
