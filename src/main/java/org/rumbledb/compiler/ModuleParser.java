@@ -116,6 +116,7 @@ final class ModuleParser {
             StaticContext moduleContext,
             boolean isMainModule) {
         if (language == Language.XQUERY) {
+            moduleContext.setConstructionPreserve(true);
             // XQuery source line endings are normalized before tokenization, including inside literals.
             query = query.replace("\r\n", "\n");
             if ("1.1".equals(configuration.runtimeConfiguration().semantics().xmlVersion())) {
