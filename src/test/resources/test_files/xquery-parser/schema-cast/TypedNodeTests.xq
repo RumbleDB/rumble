@@ -21,7 +21,7 @@ return (
     $document instance of document-node(element(t:root, t:Record)),
     not($nilled instance of element(t:root, t:Record)),
     $nilled instance of element(t:root, t:Record?),
-    (<plain/> instance of element(*, xs:untyped))
+    not(<plain/> instance of element(*, xs:untyped))
     and not($nilled instance of element(*, xs:numeric?))
     and ($root/t:amount instance of element(*, xs:numeric))
     and not(document { <plain/>, text { "extra" } } instance of document-node(element(*)))
