@@ -35,6 +35,12 @@ public final class AnnotationValidator {
 
     private AnnotationValidator() {}
 
+    public static boolean hasPrivateAnnotation(List<Annotation> annotations) {
+        return annotations != null
+                && annotations.stream()
+                        .anyMatch(annotation -> annotation.getAnnotationName().equals(AnnotationConstants.PRIVATE));
+    }
+
     /**
      * Validates an annotation name against reserved namespaces according to W3C XQuery 3.1 §4.17/§4.18 [err:XQST0045].
      *

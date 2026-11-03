@@ -45,6 +45,7 @@ import org.rumbledb.bindings.StandardInputBinding;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -83,6 +84,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     private final RumbleConfiguration configuration;
     private final ResourceResolver resourceResolver;
+    private final ErrorCode externalBindingTypeErrorCode;
     private ExternalBindings externalBindings;
     private int libraryModuleDepth;
     private List<Item> initialContextItem;
@@ -94,6 +96,16 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     public DynamicContextVisitor(
             RumbleConfiguration configuration, ExternalBindings externalBindings, ResourceResolver resourceResolver) {
+        this(configuration, externalBindings, resourceResolver, null);
+    }
+
+    /** Allows dynamic module loading to report binding mismatches using its standard error code. */
+    public DynamicContextVisitor(
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings,
+            ResourceResolver resourceResolver,
+            ErrorCode externalBindingTypeErrorCode) {
+        this.externalBindingTypeErrorCode = externalBindingTypeErrorCode;
         this.configuration = configuration;
         this.resourceResolver = resourceResolver;
         this.externalBindings = externalBindings;
@@ -177,32 +189,32 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 : this.getItemsBinding(name);
         if (items != null) {
             if (variableDeclaration.getSequenceType().isEmptySequence() && items.size() > 0) {
-                throw new UnexpectedTypeException(
+                throw externalBindingTypeError(
                         "External variable values does not match sequence type ().", variableDeclaration.getMetadata());
             }
             if (!variableDeclaration.getSequenceType().isEmptySequence()
                     && variableDeclaration.getSequenceType().getArity() == Arity.One
                     && items.size() != 1) {
-                throw new UnexpectedTypeException(
+                throw externalBindingTypeError(
                         "External variable values does not match sequence arity 1.", variableDeclaration.getMetadata());
             }
             if (!variableDeclaration.getSequenceType().isEmptySequence()
                     && variableDeclaration.getSequenceType().getArity() == Arity.OneOrZero
                     && items.size() > 1) {
-                throw new UnexpectedTypeException(
+                throw externalBindingTypeError(
                         "External variable values does not match sequence arity ?.", variableDeclaration.getMetadata());
             }
             if (!variableDeclaration.getSequenceType().isEmptySequence()
                     && variableDeclaration.getSequenceType().getArity() == Arity.OneOrMore
                     && items.size() == 0) {
-                throw new UnexpectedTypeException(
+                throw externalBindingTypeError(
                         "External variable values does not match sequence arity +.", variableDeclaration.getMetadata());
             }
             for (Item item : items) {
                 if (variableDeclaration.getSequenceType().isEmptySequence()
                         || !InstanceOfIterator.doesItemTypeMatchItem(
                                 variableDeclaration.getSequenceType().getItemType(), item)) {
-                    throw new UnexpectedTypeException(
+                    throw externalBindingTypeError(
                             "External variable value ("
                                     + item
                                     + ") does not match the expected type ("
@@ -379,12 +391,22 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             visit(declaration, argument);
         }
-        // Context initialization can depend on another global declared in this module.
-        // Bind local immutable initializers before an imported module checks the shared focus.
+        // Register deferred globals before following imports, so circular imports can share
+        // their bindings and context initialization can refer to another global in this module.
         Set<Node> earlyBound = new HashSet<>();
-        if (prolog.hasContextItemDeclaration()) {
+        if (prolog.hasContextItemDeclaration() || this.libraryModuleDepth > 0) {
             for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
                 Expression initializer = declaration.getExpression();
+                if (this.libraryModuleDepth > 0
+                        && declaration.external()
+                        && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
+                        && (this.getItemsBinding(declaration.getVariableName()) != null
+                                || (initializer != null
+                                        && initializer.getHighestExecutionMode().isLocal()))) {
+                    initializeVariableDeclaration(declaration, argument);
+                    earlyBound.add(declaration);
+                    continue;
+                }
                 if (!declaration.external()
                         && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
                         && !declaration.isAssignable()
@@ -441,6 +463,12 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             }
         }
         return generatedContext;
+    }
+
+    private RumbleException externalBindingTypeError(String message, ExceptionMetadata metadata) {
+        return this.externalBindingTypeErrorCode == null
+                ? new UnexpectedTypeException(message, metadata)
+                : new RumbleException(message, this.externalBindingTypeErrorCode, metadata);
     }
 
     private Item parseJSONItem(String value, ExceptionMetadata metadata) {

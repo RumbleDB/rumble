@@ -33,7 +33,7 @@ import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.context.UserDefinedFunctionExecutionModes;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.ModuleNotFoundException;
+import org.rumbledb.exceptions.NotLibraryModuleException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -142,8 +142,7 @@ final class ModuleParser {
         if (language == Language.XQUERY) {
             XQueryParser xqueryParser = new XQueryParser(tokens);
             parser = xqueryParser;
-            parseTreeSupplier =
-                    isMainModule ? () -> xqueryParser.moduleAndThisIsIt().module() : xqueryParser::module;
+            parseTreeSupplier = () -> xqueryParser.moduleAndThisIsIt().module();
             visitor = new XQueryTranslationVisitor(moduleContext, isMainModule, configuration, bindings, query, tokens);
         } else {
             JsoniqParser jsoniqParser = new JsoniqParser(tokens);
@@ -165,7 +164,7 @@ final class ModuleParser {
                 }
                 int moduleToken = language == Language.XQUERY ? XQueryParser.KW_MODULE : JsoniqParser.KW_MODULE;
                 if (tokens.LA(1) != moduleToken) {
-                    throw new ModuleNotFoundException(
+                    throw new NotLibraryModuleException(
                             "The imported resource is not a library module.",
                             ExceptionMetadata.fromPoint(
                                     uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
