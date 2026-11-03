@@ -35,6 +35,8 @@ public class ElementNodeItemType extends AbstractItemType {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private static final Name ANY_TYPE = new Name(Name.XS_NS, "xs", "anyType");
+
     private Name catalogueName;
 
     @Getter
@@ -176,8 +178,10 @@ public class ElementNodeItemType extends AbstractItemType {
     }
 
     private boolean hasCompatibleSchemaType(ElementNodeItemType superType) {
-        return this.schemaTypeName != null
-                && superType.schemaTypeAlternatives.stream().anyMatch(this.schemaTypeHierarchy::contains)
+        if (this.schemaTypeName == null) {
+            return superType.nillable && superType.schemaTypeAlternatives.contains(ANY_TYPE);
+        }
+        return superType.schemaTypeAlternatives.stream().anyMatch(this.schemaTypeHierarchy::contains)
                 && (!this.nillable || superType.nillable);
     }
 
