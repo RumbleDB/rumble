@@ -954,6 +954,24 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return true;
         }
 
+        // handle cardinality functions: keep the argument's item type, only narrow the arity
+        SequenceType.Arity cardinalityArity = null;
+        if (isBuiltinFunctionName(functionName, "exactly-one")) {
+            cardinalityArity = SequenceType.Arity.One;
+        } else if (isBuiltinFunctionName(functionName, "zero-or-one")) {
+            cardinalityArity = SequenceType.Arity.OneOrZero;
+        } else if (isBuiltinFunctionName(functionName, "one-or-more")) {
+            cardinalityArity = SequenceType.Arity.OneOrMore;
+        }
+        if (cardinalityArity != null && args.size() == 1) {
+            SequenceType input = args.get(0).getStaticSequenceType();
+            if (input.isEmptySequence()) {
+                return false;
+            }
+            expression.setStaticSequenceType(new SequenceType(input.getItemType(), cardinalityArity));
+            return true;
+        }
+
         return false;
     }
 
