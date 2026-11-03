@@ -34,6 +34,20 @@ public final class ResourceResolver implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private final Map<String, String> unparsedTexts = new ConcurrentHashMap<>();
+
+    /** Stable text values shared by all contexts within the current scripting snapshot. */
+    public synchronized String unparsedText(
+            URI uri, String encoding, String xmlVersion, java.util.function.Supplier<String> loader) {
+        String key = uri.toString() + "\u0000" + encoding + "\u0000" + xmlVersion;
+        return this.unparsedTexts.computeIfAbsent(key, ignored -> loader.get());
+    }
+
+    /** Start a new snapshot after a scripting side effect. */
+    public synchronized void clearUnparsedTexts() {
+        this.unparsedTexts.clear();
+    }
+
     private final Map<URI, Item> documents = new ConcurrentHashMap<>();
 
     private final Map<URI, URI> mappings;
@@ -53,6 +67,10 @@ public final class ResourceResolver implements Serializable {
         this.mappings = Map.copyOf(mappings);
         this.collections = Map.copyOf(collections);
         this.defaultCollection = defaultCollection;
+    }
+
+    public ResourceResolver forExecution() {
+        return new ResourceResolver(this.mappings, this.collections, this.defaultCollection);
     }
 
     public ResourceCollection collection(URI uri, ExceptionMetadata metadata) {

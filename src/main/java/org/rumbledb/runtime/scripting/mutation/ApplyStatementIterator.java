@@ -41,6 +41,7 @@ public class ApplyStatementIterator extends AbstractAtMostOneItemRuntimePlan imp
     public Item evaluateAtMostOne(DynamicContext context) {
         this.exprIterator.materialize(context);
         applyUpdates(context);
+        context.getResourceResolver().clearUnparsedTexts();
         return null;
     }
 
