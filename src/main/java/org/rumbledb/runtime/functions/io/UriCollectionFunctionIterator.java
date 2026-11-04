@@ -37,7 +37,7 @@ public class UriCollectionFunctionIterator extends CollectionFunctionIterator {
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new IteratorLocalCursor<>(
-                () -> collection(context).uris().stream()
+                () -> context.getResourceResolver().collectionUris(collectionUri(context), getMetadata()).stream()
                         .map(uri -> ItemFactory.getInstance().createAnyURIItem(uri.toString()))
                         .iterator(),
                 getMetadata());
