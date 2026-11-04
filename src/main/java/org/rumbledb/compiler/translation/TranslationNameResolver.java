@@ -18,7 +18,6 @@ package org.rumbledb.compiler.translation;
 import org.rumbledb.compiler.URIQualifiedNameParser;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
 
 /** Resolves lexical names after a grammar-specific visitor has extracted their components. */
@@ -55,21 +54,6 @@ public final class TranslationNameResolver {
         return this.resolveEQName(lexicalName, NameRole.FUNCTION, metadata);
     }
 
-    public Name resolveQName(
-            String fullQName, String prefix, String localName, NameRole role, ExceptionMetadata metadata) {
-        if (fullQName != null) {
-            int colonIndex = fullQName.indexOf(':');
-            if (colonIndex < 0) {
-                throw new ParsingException("Invalid FullQName format: " + fullQName, metadata);
-            }
-            prefix = fullQName.substring(0, colonIndex);
-            localName = fullQName.substring(colonIndex + 1);
-        }
-        return prefix == null
-                ? this.resolveUnprefixedName(localName, role)
-                : this.resolvePrefixedName(prefix, localName, metadata);
-    }
-
     private Name resolveUnprefixedName(String localName, NameRole role) {
         if (role == NameRole.FUNCTION) {
             String namespace = this.context.moduleContext().getDefaultFunctionNamespaceUri();
@@ -82,13 +66,17 @@ public final class TranslationNameResolver {
             if (namespace != null) {
                 return new Name(namespace, "", localName);
             }
+            String language = this.context.moduleContext().getQueryLanguage();
+            if (role == NameRole.TYPE && language != null && language.startsWith("xquery")) {
+                return Name.createVariableInNoNamespace(localName);
+            }
             return role == NameRole.TYPE
                     ? Name.createVariableInDefaultTypeNamespace(localName)
                     : Name.createNameInDefaultXQueryAnnotationsNamespace(localName);
         }
         if (role == NameRole.ELEMENT_CONSTRUCTOR) {
             String namespace = this.context.resolveNamespace("");
-            if (namespace != null) {
+            if (namespace != null && !namespace.isEmpty()) {
                 return new Name(namespace, "", localName);
             }
         }

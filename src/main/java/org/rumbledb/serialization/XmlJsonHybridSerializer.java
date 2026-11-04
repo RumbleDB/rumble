@@ -31,6 +31,7 @@ public class XmlJsonHybridSerializer implements Serializer, Serializable {
     private static final long serialVersionUID = 1L;
 
     private final SerializationParameters params;
+    private final NamespaceSerializationContext namespaceContext = new NamespaceSerializationContext();
 
     public XmlJsonHybridSerializer(SerializationParameters params) {
         this.params = params;
@@ -153,26 +154,12 @@ public class XmlJsonHybridSerializer implements Serializer, Serializable {
             return;
         }
         if (item.isElementNode()) {
-            sb.append(indent);
-            sb.append("<");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            for (Item attribute : item.attributes()) {
-                serialize(attribute, sb, indent, isTopLevel);
+            this.namespaceContext.enterElement(item);
+            try {
+                serializeElementNode(item, sb, indent, isTopLevel);
+            } finally {
+                this.namespaceContext.leaveElement();
             }
-            for (Item namespace : item.declaredNamespaceNodes()) {
-                serialize(namespace, sb, indent, isTopLevel);
-            }
-            sb.append(">");
-            sb.append("\n");
-
-            for (Item child : item.children()) {
-                serialize(child, sb, indent + "  ", isTopLevel);
-            }
-            sb.append(indent);
-            sb.append("</");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            sb.append(">");
-            sb.append("\n");
             return;
         }
         if (item.isNamespaceNode()) {
@@ -226,6 +213,29 @@ public class XmlJsonHybridSerializer implements Serializer, Serializable {
             sb.append("\n");
             return;
         }
+    }
+
+    private void serializeElementNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
+        sb.append(indent);
+        sb.append("<");
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        for (Item attribute : item.attributes()) {
+            serialize(attribute, sb, indent, isTopLevel);
+        }
+        for (Item namespace : this.namespaceContext.declarations(item, (prefix, uri) -> prefix.isEmpty())) {
+            serialize(namespace, sb, indent, isTopLevel);
+        }
+        sb.append(">");
+        sb.append("\n");
+
+        for (Item child : item.children()) {
+            serialize(child, sb, indent + "  ", isTopLevel);
+        }
+        sb.append(indent);
+        sb.append("</");
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        sb.append(">");
+        sb.append("\n");
     }
 
     private void appendJSONAtomicItem(Item item, StringBuilder sb) {

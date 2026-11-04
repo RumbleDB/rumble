@@ -71,9 +71,9 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Name variableName; // for efficient use in local iteration
-    private SequenceType sequenceType;
-    private ItemRuntimePlan assignmentIterator;
+    private final Name variableName; // for efficient use in local iteration
+    private final SequenceType sequenceType;
+    private final ItemRuntimePlan assignmentIterator;
 
     public LetClauseIterator(
             TupleRuntimePlan child,

@@ -28,14 +28,35 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
+import org.rumbledb.resources.ResourceResolver;
 
 import static org.rumbledb.compiler.CompilationDiagnostics.debugPrintHeader;
 import static org.rumbledb.compiler.CompilationDiagnostics.debugPrintTree;
 
 /** Orders analysis and rewrite passes. Visitors mutate annotations and may replace the module tree. */
-final class CompilationPipeline {
+public final class CompilationPipeline {
 
     private CompilationPipeline() {}
+
+    /** Loads and compiles a main module using its resolved source URI. */
+    public static MainModule compileMainModuleFromLocation(
+            URI location, CompilationConfiguration configuration, ExternalBindings externalBindings)
+            throws IOException {
+        ModuleSourceLoader.ModuleSource source =
+                ModuleSourceLoader.readModuleSource(location, configuration, ExceptionMetadata.EMPTY_METADATA);
+        return compileMainModule(
+                source.query(),
+                ModuleSourceLoader.mainModuleLocation(source.systemId(), configuration.runtimeConfiguration()),
+                configuration,
+                externalBindings);
+    }
+
+    /** Compiles query text using the configured static base URI. */
+    public static MainModule compileMainModuleFromQuery(
+            String query, CompilationConfiguration configuration, ExternalBindings externalBindings) {
+        URI location = ModuleSourceLoader.queryLocation(configuration.runtimeConfiguration());
+        return compileMainModule(query, location, configuration, externalBindings);
+    }
 
     static LibraryModule prepareLibraryModuleFromLocation(
             URI location,
@@ -47,7 +68,8 @@ final class CompilationPipeline {
         return prepareLibraryModule(source.query(), source.systemId(), importingContext, configuration);
     }
 
-    static MainModule compileMainModule(
+    /** Compiles main-module text with the supplied source URI and annotates the returned tree. */
+    public static MainModule compileMainModule(
             String query,
             URI uri,
             CompilationConfiguration compilationConfiguration,
@@ -56,7 +78,8 @@ final class CompilationPipeline {
         ModuleParser.Language language = ModuleParser.detectLanguage(query, uri, configuration);
         MainModule module =
                 ModuleParser.parseMainModule(query, uri, compilationConfiguration, externalBindings, language);
-        CompilationContext context = new CompilationContext(configuration, externalBindings);
+        CompilationContext context =
+                new CompilationContext(configuration, externalBindings, compilationConfiguration.resourceResolver());
         List<CompilationPass<MainModule>> passes = mainModulePasses(language, configuration);
         return run(module, context, passes);
     }
@@ -70,18 +93,21 @@ final class CompilationPipeline {
         LibraryModule module = ModuleParser.parseLibraryModule(query, uri, importingContext, configuration);
         return run(
                 module,
-                new CompilationContext(configuration.runtimeConfiguration(), ExternalBindings.empty()),
+                new CompilationContext(
+                        configuration.runtimeConfiguration(),
+                        ExternalBindings.empty(),
+                        configuration.resourceResolver()),
                 List.of(CompilationPasses.resolveDependencies()));
     }
 
     /** Standalone library analysis for language-server callers; deliberately does not run the main-module pipeline. */
-    static LibraryModule analyzeLibraryModule(String query, URI uri, RumbleConfiguration configuration) {
+    public static LibraryModule analyzeLibraryModule(String query, URI uri, RumbleConfiguration configuration) {
         StaticContext importingContext = ModuleParser.createModuleContext(uri, configuration);
         LibraryModule module =
                 prepareLibraryModule(query, uri, importingContext, new CompilationConfiguration(configuration));
         return run(
                 module,
-                new CompilationContext(configuration, ExternalBindings.empty()),
+                new CompilationContext(configuration, ExternalBindings.empty(), new ResourceResolver()),
                 List.of(CompilationPasses.populateStaticContext(), CompilationPasses.inferTypes()));
     }
 

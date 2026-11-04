@@ -27,7 +27,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
-import org.objenesis.strategy.StdInstantiatorStrategy;
 
 import lombok.Getter;
 
@@ -43,6 +42,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.spark.RumbleKryoRegistrator;
 import org.rumbledb.types.ItemType;
 
 /**
@@ -153,10 +153,7 @@ public class DataFrameContext implements Serializable {
     }
 
     private void initializeKryo() {
-        this.kryo = new Kryo();
-        this.kryo.setInstantiatorStrategy(new Kryo.DefaultInstantiatorStrategy(new StdInstantiatorStrategy()));
-        this.kryo.setReferences(true);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.kryo = RumbleKryoRegistrator.newKryo();
         this.output = new Output(128, -1);
         this.input = new Input();
     }

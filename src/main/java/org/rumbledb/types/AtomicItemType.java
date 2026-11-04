@@ -474,6 +474,9 @@ public class AtomicItemType extends AbstractItemType {
 
     @Override
     public boolean canBePromotedTo(ItemType other) {
+        if (other.equals(floatItem)) {
+            return this.isSubtypeOf(decimalItem);
+        }
         if (other.equals(stringItem)) {
             return this.equals(stringItem) || this.equals(anyURIItem);
         }

@@ -42,6 +42,8 @@ public class SlashExprClosure implements FlatMapFunction<Item, Item> {
 
     @Override
     public Iterator<Item> call(Item item) throws Exception {
+        SlashExprIterator.requireNode(
+                item, this.rightIterator.getRuntimeStaticContext().getMetadata());
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(item);
         this.dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);

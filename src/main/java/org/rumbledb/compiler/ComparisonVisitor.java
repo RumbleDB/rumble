@@ -40,9 +40,11 @@ import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeAtomization;
 
 public class ComparisonVisitor extends CloneVisitor {
     /**
@@ -72,6 +74,10 @@ public class ComparisonVisitor extends CloneVisitor {
         // ComparisonIterator can remain simple and only implement the value-comparison
         // “untyped as string” rule.
         if (!expression.getComparisonOperator().isValueComparison()) {
+            // A singleton node can atomize to a sequence. Select the rewrite using
+            // atomic-value cardinality, not the number of source nodes.
+            leftChild = atomizeIfNeeded(leftChild);
+            rightChild = atomizeIfNeeded(rightChild);
             Expression[] normalized = normalizeUntypedForGeneralComparison(
                     leftChild, rightChild, expression.getStaticContext(), expression.getMetadata());
             leftChild = normalized[0];
@@ -141,8 +147,12 @@ public class ComparisonVisitor extends CloneVisitor {
             rightReference.setStaticSequenceType(
                     new SequenceType(rightChild.getStaticSequenceType().getItemType(), SequenceType.Arity.One));
             rightReference.setStaticContext(rightContext);
+            // Normalize each atomic pair after iteration, so casts retain the query's
+            // namespace context without accepting a sequence as their operand.
+            Expression[] normalizedPair = normalizeUntypedForGeneralComparison(
+                    leftReference, rightReference, rightContext, expression.getMetadata());
             Expression valueComparison = new ComparisonExpression(
-                    leftReference, rightReference, expression.getComparisonOperator(), expression.getMetadata());
+                    normalizedPair[0], normalizedPair[1], expression.getComparisonOperator(), expression.getMetadata());
             valueComparison.setStaticContext(rightContext);
             valueComparison.setStaticSequenceType(
                     new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
@@ -174,10 +184,7 @@ public class ComparisonVisitor extends CloneVisitor {
         }
         // otherwise, use ([left op right, false][[1]])
         ComparisonExpression comparisonExpression = new ComparisonExpression(
-                (Expression) visit(expression.getChildren().get(0), argument),
-                (Expression) visit(expression.getChildren().get(1), argument),
-                expression.getComparisonOperator(),
-                expression.getMetadata());
+                leftChild, rightChild, expression.getComparisonOperator(), expression.getMetadata());
         comparisonExpression.setStaticSequenceType(expression.getStaticSequenceType());
         comparisonExpression.setStaticContext(expression.getStaticContext());
         BooleanLiteralExpression booleanExpression = new BooleanLiteralExpression(false, expression.getMetadata());
@@ -203,11 +210,23 @@ public class ComparisonVisitor extends CloneVisitor {
         return result;
     }
 
+    @Override
+    public Node visitSlashExpr(SlashExpr expression, Node argument) {
+        // CloneVisitor leaves path expressions unchanged. Comparisons inside their
+        // predicates still need the same atomization and pairwise rewrite as top-level comparisons.
+        SlashExpr result = new SlashExpr(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
     private static Expression atomizeIfNeeded(Expression child) {
-        if (!child.getStaticSequenceType().getItemType().isAtomicItemType()) {
-            SequenceType type = new SequenceType(
-                    BuiltinTypesCatalogue.atomicItem,
-                    child.getStaticSequenceType().getArity());
+        if (!child.getStaticSequenceType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+            SequenceType type = TypeAtomization.inferType(child.getStaticSequenceType());
             ExecutionMode mode = child.getHighestExecutionMode();
             StaticContext staticContext = child.getStaticContext();
             child = new FunctionCallExpression(
@@ -240,7 +259,12 @@ public class ComparisonVisitor extends CloneVisitor {
             Expression left, Expression right, StaticContext context, ExceptionMetadata metadata) {
         SequenceType leftType = left.getStaticSequenceType();
         SequenceType rightType = right.getStaticSequenceType();
-        if (leftType == null || rightType == null) {
+        // Casts operate on at most one value. Keep sequence cardinalities intact so the
+        // general-comparison rewrite can compare individual pairs, casting at runtime.
+        if (leftType == null
+                || rightType == null
+                || !leftType.getArity().isSubtypeOf(SequenceType.Arity.OneOrZero)
+                || !rightType.getArity().isSubtypeOf(SequenceType.Arity.OneOrZero)) {
             return new Expression[] {left, right};
         }
         ItemType leftItemType = leftType.getItemType();
@@ -270,8 +294,8 @@ public class ComparisonVisitor extends CloneVisitor {
         SequenceType untypedSeqType = untypedOnLeft ? leftType : rightType;
         ItemType otherItemType = untypedOnLeft ? rightItemType : leftItemType;
 
-        if (!otherItemType.isAtomicItemType()) {
-            // If the other side is not atomic, do not attempt any rewrite here.
+        if (!otherItemType.isAtomicItemType() || otherItemType.equals(BuiltinTypesCatalogue.atomicItem)) {
+            // Without a known atomic type on the other side, leave the comparison to runtime.
             return new Expression[] {left, right};
         }
 

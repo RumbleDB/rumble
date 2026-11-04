@@ -41,8 +41,7 @@ public class NumberFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     public Item evaluateAtMostOne(DynamicContext context) {
         if (this.getChildren().size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            return CastIterator.castItemToType(
-                    items.get(0), BuiltinTypesCatalogue.doubleItem, getMetadata(), this.staticContext);
+            return castOrNaN(items.get(0));
         }
 
         return castOrNaN(this.getChild(0).materializeFirstOrNull(context));

@@ -33,6 +33,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.functions.arrays.ArrayIndexUtils;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -157,18 +158,12 @@ public class PostfixLookupIterator extends ItemRuntimePlan implements LocalRunti
                 }
                 return results;
             }
-            for (Item key : keys) {
-                if (key.isString()) {
-                    throw new UnexpectedTypeException(
-                            "Type error; Lookup with String on Arrays is not possible", staticContext.getMetadata());
-                }
-                if (key.isNumeric()) {
-                    int index = key.castToIntValue() - 1;
-                    if (item.isArrayOfItems()) {
-                        results.add(item.getItemAt(index));
-                    } else {
-                        results.addAll(item.getSequenceAt(index));
-                    }
+            for (Item key : ArrayIndexUtils.atomizeLookupKeys(keys, staticContext.getMetadata())) {
+                int index = ArrayIndexUtils.getZeroBasedPosition(key, item.getSize(), staticContext.getMetadata());
+                if (item.isArrayOfItems()) {
+                    results.add(item.getItemAt(index));
+                } else {
+                    results.addAll(item.getSequenceAt(index));
                 }
             }
             return results;
@@ -185,7 +180,7 @@ public class PostfixLookupIterator extends ItemRuntimePlan implements LocalRunti
 
     private final ItemRuntimePlan iterator;
     private final ItemRuntimePlan lookupIterator;
-    private boolean wildcard;
+    private final boolean wildcard;
 
     public PostfixLookupIterator(
             ItemRuntimePlan object, ItemRuntimePlan lookupIterator, RuntimeStaticContext staticContext) {

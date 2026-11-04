@@ -24,6 +24,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class CollationKeyFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -37,14 +38,12 @@ public class CollationKeyFunctionIterator extends AbstractAtMostOneItemRuntimePl
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item keyItem = this.getChild(0).materializeFirstOrNull(context);
-        String collationUri = null;
-        if (this.getChildren().size() > 1) {
-            Item collationItem = this.getChild(1).materializeFirstOrNull(context);
-            collationUri = collationItem == null ? null : collationItem.getStringValue();
-        } else {
-            collationUri = this.staticContext.getDefaultCollation();
-        }
-        byte[] bytes = CollationResolver.collationKeyBytes(keyItem.getStringValue(), collationUri, getMetadata());
+        String collationUri = CollationSupport.resolveCollationArgument(
+                this.getChildren().size() > 1 ? this.getChild(1) : null,
+                context,
+                getRuntimeStaticContext(),
+                getMetadata());
+        byte[] bytes = CollationSupport.collationKey(keyItem.getStringValue(), collationUri, getMetadata());
         return ItemFactory.getInstance()
                 .createBase64BinaryItem(Base64.getEncoder().encodeToString(bytes));
     }

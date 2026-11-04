@@ -37,7 +37,6 @@ public class SubstringFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        String result;
         Item stringItem = this.getChild(0).materializeFirstOrNull(context);
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
@@ -47,34 +46,32 @@ public class SubstringFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             throw new UnexpectedTypeException(
                     "Type error; Start index parameter can't be empty sequence ", getMetadata());
         }
-        int index = (int) Math.round(indexItem.getDoubleValue() - 1);
-        if (index >= stringItem.getStringValue().length()) {
-            return ItemFactory.getInstance().createStringItem("");
-        }
+        double start = roundPosition(indexItem.getDoubleValue());
+        double end = Double.POSITIVE_INFINITY;
         if (this.getChildren().size() > 2) {
-            Item endIndexItem = this.getChild(2).materializeFirstOrNull(context);
-            if (endIndexItem == null) {
+            Item lengthItem = this.getChild(2).materializeFirstOrNull(context);
+            if (lengthItem == null) {
                 throw new UnexpectedTypeException(
                         "Type error; End index parameter can't be empty sequence ", getMetadata());
             }
-            double endIndex = sanitizeEndIndex(stringItem, endIndexItem, index);
-            if (endIndex < index || endIndex <= 0) {
-                return ItemFactory.getInstance().createStringItem("");
-            }
-            result = stringItem.getStringValue().substring(Math.max(index, 0), (int) Math.round(endIndex));
-        } else {
-            if (index <= 0) {
-                result = stringItem.getStringValue();
-            } else {
-                result = stringItem.getStringValue().substring(index);
-            }
+            end = start + roundPosition(lengthItem.getDoubleValue());
         }
 
+        String value = stringItem.getStringValue();
+        int characterCount = value.codePointCount(0, value.length());
+        // Keep positions as doubles until clamping so NaN, infinities and very large values
+        // retain their specified comparison behavior. Positions count Unicode code points.
+        if (Double.isNaN(start) || Double.isNaN(end) || start >= end || start > characterCount || end <= 1) {
+            return ItemFactory.getInstance().createStringItem("");
+        }
+        int from = (int) Math.max(0, start - 1);
+        int to = (int) Math.min(characterCount, end - 1);
+        String result = value.substring(value.offsetByCodePoints(0, from), value.offsetByCodePoints(0, to));
         return ItemFactory.getInstance().createStringItem(result);
     }
 
-    private double sanitizeEndIndex(Item stringItem, Item endIndexItem, int startIndex) {
-        // char indexing starts from 1 in JSONiq
-        return Math.min(stringItem.getStringValue().length(), startIndex + endIndexItem.getDoubleValue());
+    private static double roundPosition(double value) {
+        double floor = Math.floor(value);
+        return value - floor >= 0.5 ? floor + 1 : floor;
     }
 }

@@ -20,21 +20,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import org.apache.spark.api.java.JavaRDD;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.UnsupportedCollationException;
-import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -47,8 +43,6 @@ public class MaxFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final String CODEPOINT_COLLATION = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
-
     private final ItemRuntimePlan iterator;
 
     public MaxFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
@@ -58,10 +52,14 @@ public class MaxFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
+        String collation = CollationSupport.resolveCollationArgument(
+                this.getChildren().size() > 1 ? this.getChild(1) : null,
+                context,
+                getRuntimeStaticContext(),
+                getMetadata());
         if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            return ExtremumLocalEvaluation.max(this.iterator, getCollationPlan(), context, getMetadata());
+            return ExtremumEvaluation.max(this.iterator, collation, context, getMetadata());
         }
-        validateCollation(context);
 
         if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, context);
@@ -77,6 +75,9 @@ public class MaxFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
             } else {
                 maxType = df.getItemType();
             }
+            if (ExtremumEvaluation.needsCollationComparison(maxType, collation)) {
+                return ExtremumEvaluation.maxRDD(df.toRDD(getMetadata()), collation, getMetadata());
+            }
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             HomogeneousItemDataFrame maxDF = df.evaluateSQL(
                     String.format(
@@ -88,30 +89,7 @@ public class MaxFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
             return itemTypePromotion(maxDF.getExactlyOneItem());
         }
 
-        JavaRDD<Item> rdd = this.iterator.getRDD(context);
-        if (rdd.isEmpty()) {
-            return null;
-        }
-        return rdd.max(new ItemComparator(
-                false,
-                new InvalidArgumentTypeException(
-                        "Max expression input error. Input has to be non-null atomics of matching types",
-                        getMetadata())));
-    }
-
-    private ItemRuntimePlan getCollationPlan() {
-        return this.getChildren().size() > 1 ? this.getChild(1) : null;
-    }
-
-    private void validateCollation(DynamicContext context) {
-        ItemRuntimePlan collationPlan = getCollationPlan();
-        if (collationPlan == null) {
-            return;
-        }
-        Item collation = collationPlan.materializeFirstOrNull(context);
-        if (!CODEPOINT_COLLATION.equals(collation.getStringValue())) {
-            throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
-        }
+        return ExtremumEvaluation.maxRDD(this.iterator.getRDD(context), collation, getMetadata());
     }
 
     @Override

@@ -53,6 +53,7 @@ import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
 import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.update.AppendExpression;
 import org.rumbledb.expressions.update.CopyDeclaration;
@@ -155,6 +156,14 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
     public ExpressionClassification visitTreatExpression(
             TreatExpression expression, ExpressionClassification argument) {
         ExpressionClassification result = this.visit(expression.getMainExpression(), argument);
+        expression.setExpressionClassification(result);
+        return result;
+    }
+
+    @Override
+    public ExpressionClassification visitFunctionArgumentConversion(
+            FunctionArgumentConversionExpression expression, ExpressionClassification argument) {
+        ExpressionClassification result = this.visit(expression.getArgument(), argument);
         expression.setExpressionClassification(result);
         return result;
     }

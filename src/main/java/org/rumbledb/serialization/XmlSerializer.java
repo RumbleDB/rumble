@@ -19,11 +19,8 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 
 import org.rumbledb.api.Item;
@@ -40,6 +37,7 @@ public class XmlSerializer implements Serializer, Serializable {
     private static final long serialVersionUID = 1L;
 
     protected final SerializationParameters params;
+    private final NamespaceSerializationContext namespaceContext = new NamespaceSerializationContext();
     // Cached once per serializer instance — encoding is fixed for the lifetime of a serialization pass.
     private final CharsetEncoder encodingChecker;
 
@@ -94,7 +92,12 @@ public class XmlSerializer implements Serializer, Serializable {
             return;
         }
         if (item.isElementNode()) {
-            serializeElementNode(item, sb, indent, isTopLevel);
+            this.namespaceContext.enterElement(item);
+            try {
+                serializeElementNode(item, sb, indent, isTopLevel);
+            } finally {
+                this.namespaceContext.leaveElement();
+            }
             return;
         }
         if (item.isAttributeNode() || item.isNamespaceNode()) {
@@ -230,29 +233,8 @@ public class XmlSerializer implements Serializer, Serializable {
     }
 
     protected List<Item> getNamespaceNodesToSerialize(Item element) {
-        Map<String, String> currentScope = getEffectiveNamespaceScope(element);
-        Map<String, String> parentScope = getEffectiveNamespaceScope(getParentElement(element));
-        List<Item> result = new ArrayList<>();
-
-        for (Map.Entry<String, String> entry : currentScope.entrySet()) {
-            String prefix = entry.getKey();
-            String uri = entry.getValue();
-            if (!Objects.equals(parentScope.get(prefix), uri)) {
-                result.add(createNamespaceNode(element, prefix, uri));
-            }
-        }
-
-        for (Map.Entry<String, String> entry : parentScope.entrySet()) {
-            String prefix = entry.getKey();
-            if (currentScope.containsKey(prefix)) {
-                continue;
-            }
-            if (shouldEmitNamespaceUndeclaration(prefix, entry.getValue(), element)) {
-                result.add(createNamespaceNode(element, prefix, ""));
-            }
-        }
-
-        return result;
+        return this.namespaceContext.declarations(
+                element, (prefix, uri) -> shouldEmitNamespaceUndeclaration(prefix, uri, element));
     }
 
     protected boolean shouldEmitNamespaceUndeclaration(String prefix, String previousUri, Item element) {
@@ -275,32 +257,6 @@ public class XmlSerializer implements Serializer, Serializable {
 
     protected boolean supportsPrefixUndeclaration(Item element) {
         return true;
-    }
-
-    protected Map<String, String> getEffectiveNamespaceScope(Item element) {
-        LinkedHashMap<String, String> scope = new LinkedHashMap<>();
-        if (element == null || !element.isElementNode()) {
-            return scope;
-        }
-        for (Item namespaceNode : element.namespaceNodes()) {
-            NamespaceItem namespaceItem = (NamespaceItem) namespaceNode;
-            scope.put(namespaceItem.getPrefix(), namespaceItem.getUri());
-        }
-        return scope;
-    }
-
-    protected Item getParentElement(Item item) {
-        if (item == null) {
-            return null;
-        }
-        Item parent = item.parent();
-        return parent != null && parent.isElementNode() ? parent : null;
-    }
-
-    protected Item createNamespaceNode(Item parent, String prefix, String uri) {
-        Item namespaceItem = new NamespaceItem(prefix, uri);
-        namespaceItem.setParent(parent);
-        return namespaceItem;
     }
 
     protected String prepareAttributeValue(Item attribute) {

@@ -16,11 +16,18 @@
 package iq;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.List;
 
 import iq.base.SparkAnnotationsTestsBase;
+import iq.base.TestFileDiscovery;
 
 import org.rumbledb.config.RumbleConfiguration;
 
+/**
+ * Runs the static-typing fixtures with static typing enabled. A fixture's output is checked when it declares one;
+ * use {@code is statically} to check inferred types and {@code fn:item-type} to check runtime types.
+ */
 public class StaticTypeTests extends SparkAnnotationsTestsBase {
 
     protected static final RumbleConfiguration configuration = RumbleConfiguration.builder()
@@ -41,7 +48,7 @@ public class StaticTypeTests extends SparkAnnotationsTestsBase {
     }
 
     @Override
-    protected boolean checkOutput() {
-        return false;
+    protected List<File> testFiles() throws IOException {
+        return TestFileDiscovery.files(testDirectory(), ".jq", ".xq");
     }
 }

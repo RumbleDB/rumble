@@ -42,6 +42,11 @@ public class IntItem extends AbstractAtomicItem {
     }
 
     @Override
+    public long getLongValue() {
+        return this.value;
+    }
+
+    @Override
     public int getIntValue() {
         return this.value;
     }
@@ -94,6 +99,16 @@ public class IntItem extends AbstractAtomicItem {
     @Override
     public int castToIntValue() {
         return this.value;
+    }
+
+    @Override
+    public boolean isWithinIntRange() {
+        return true;
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return true;
     }
 
     @Override

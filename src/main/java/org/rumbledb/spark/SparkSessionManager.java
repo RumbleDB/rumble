@@ -15,60 +15,14 @@
  */
 package org.rumbledb.spark;
 
-import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.types.BooleanType;
-import org.apache.spark.sql.types.DoubleType;
-import org.apache.spark.sql.types.FloatType;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 
 import lombok.extern.log4j.Log4j2;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.cli.LoggingConfiguration;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.FunctionIdentifier;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.AnnotatedItem;
-import org.rumbledb.items.AnyURIItem;
-import org.rumbledb.items.ArrayItem;
-import org.rumbledb.items.Base64BinaryItem;
-import org.rumbledb.items.BooleanItem;
-import org.rumbledb.items.DateItem;
-import org.rumbledb.items.DateTimeItem;
-import org.rumbledb.items.DateTimeStampItem;
-import org.rumbledb.items.DayTimeDurationItem;
-import org.rumbledb.items.DecimalItem;
-import org.rumbledb.items.DoubleItem;
-import org.rumbledb.items.DurationItem;
-import org.rumbledb.items.FloatItem;
-import org.rumbledb.items.FunctionItem;
-import org.rumbledb.items.HexBinaryItem;
-import org.rumbledb.items.IntItem;
-import org.rumbledb.items.IntegerItem;
-import org.rumbledb.items.NullItem;
-import org.rumbledb.items.ObjectItem;
-import org.rumbledb.items.QNameItem;
-import org.rumbledb.items.StringItem;
-import org.rumbledb.items.TimeItem;
-import org.rumbledb.items.YearMonthDurationItem;
-import org.rumbledb.items.xml.AttributeItem;
-import org.rumbledb.items.xml.CommentItem;
-import org.rumbledb.items.xml.DocumentItem;
-import org.rumbledb.items.xml.ElementItem;
-import org.rumbledb.items.xml.NamespaceItem;
-import org.rumbledb.items.xml.ProcessingInstructionItem;
-import org.rumbledb.items.xml.TextItem;
-import org.rumbledb.runtime.TupleRuntimePlan;
-import org.rumbledb.runtime.flwor.tuple.FlworKey;
-import org.rumbledb.runtime.flwor.tuple.FlworTuple;
-import org.rumbledb.runtime.plan.RuntimePlan;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
 
 @Log4j2
 public class SparkSessionManager {
@@ -199,59 +153,7 @@ public class SparkSessionManager {
         if (!this.configuration.contains("spark.serializer")) {
             this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
             // this.configuration.set("spark.kryo.registrationRequired", "true");
-            Class<?>[] serializedClasses = new Class[] {
-                Item.class,
-                AnnotatedItem.class,
-                ArrayItem.class,
-                ObjectItem.class,
-                AnyURIItem.class,
-                Base64BinaryItem.class,
-                BooleanItem.class,
-                DateItem.class,
-                DateTimeItem.class,
-                DateTimeStampItem.class,
-                DayTimeDurationItem.class,
-                DecimalItem.class,
-                DoubleItem.class,
-                DurationItem.class,
-                FloatItem.class,
-                HexBinaryItem.class,
-                IntegerItem.class,
-                IntItem.class,
-                NullItem.class,
-                QNameItem.class,
-                StringItem.class,
-                TimeItem.class,
-                YearMonthDurationItem.class,
-                DocumentItem.class,
-                ElementItem.class,
-                AttributeItem.class,
-                NamespaceItem.class,
-                CommentItem.class,
-                ProcessingInstructionItem.class,
-                TextItem.class,
-                FunctionItem.class,
-                FunctionIdentifier.class,
-                Name.class,
-                SequenceType.class,
-                SequenceType.Arity.class,
-                ItemType.class,
-                DynamicContext.class,
-                FlworTuple.class,
-                FlworKey.class,
-                RuntimePlan.class,
-                TupleRuntimePlan.class,
-                StructType.class,
-                StructType[].class,
-                StructField.class,
-                StructField[].class,
-                BooleanType.class,
-                DoubleType.class,
-                FloatType.class,
-                IntType.class,
-            };
-
-            this.configuration.registerKryoClasses(serializedClasses);
+            this.configuration.set("spark.kryo.registrator", RumbleKryoRegistrator.class.getName());
         }
     }
 

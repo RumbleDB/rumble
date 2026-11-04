@@ -17,6 +17,8 @@ package org.rumbledb.compiler;
 
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.resources.ResourceResolver;
 
 /** Inputs shared by compilation passes, separate from the language's lexical StaticContext. */
-record CompilationContext(RumbleConfiguration configuration, ExternalBindings externalBindings) {}
+record CompilationContext(
+        RumbleConfiguration configuration, ExternalBindings externalBindings, ResourceResolver resourceResolver) {}

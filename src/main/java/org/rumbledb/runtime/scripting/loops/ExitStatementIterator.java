@@ -43,7 +43,6 @@ public class ExitStatementIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     private final ItemRuntimePlan childIterator;
-    private PendingUpdateList pendingUpdateList;
 
     public ExitStatementIterator(ItemRuntimePlan childIterator, RuntimeStaticContext staticContext) {
         super(Collections.singletonList(childIterator), staticContext);
@@ -58,12 +57,12 @@ public class ExitStatementIterator extends ItemRuntimePlan
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.childIterator.getRDD(dynamicContext);
-        this.pendingUpdateList = new PendingUpdateList();
-        if (this.childIterator.getRuntimeStaticContext().isUpdating()) {
-            this.pendingUpdateList = UpdatingRuntimePlan.get(this.childIterator, dynamicContext);
-        }
+        PendingUpdateList pendingUpdateList =
+                this.childIterator.getRuntimeStaticContext().isUpdating()
+                        ? UpdatingRuntimePlan.get(this.childIterator, dynamicContext)
+                        : new PendingUpdateList();
         throw new ExitStatementException(
-                this.pendingUpdateList,
+                pendingUpdateList,
                 null,
                 childRDD,
                 null,
@@ -80,12 +79,12 @@ public class ExitStatementIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         HomogeneousItemDataFrame childDataFrame =
                 ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.childIterator, dynamicContext);
-        this.pendingUpdateList = new PendingUpdateList();
-        if (this.childIterator.getRuntimeStaticContext().isUpdating()) {
-            this.pendingUpdateList = UpdatingRuntimePlan.get(this.childIterator, dynamicContext);
-        }
+        PendingUpdateList pendingUpdateList =
+                this.childIterator.getRuntimeStaticContext().isUpdating()
+                        ? UpdatingRuntimePlan.get(this.childIterator, dynamicContext)
+                        : new PendingUpdateList();
         throw new ExitStatementException(
-                this.pendingUpdateList,
+                pendingUpdateList,
                 null,
                 null,
                 childDataFrame,
