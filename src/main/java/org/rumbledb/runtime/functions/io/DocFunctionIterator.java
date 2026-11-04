@@ -45,10 +45,10 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item path = this.getChild(0).materializeFirstOrNull(context);
-        return path == null ? null : loadDocument(path, context);
+        return path == null ? null : loadXMLDocument(path, context);
     }
 
-    private Item loadDocument(Item path, DynamicContext context) {
+    private Item loadXMLDocument(Item path, DynamicContext context) {
         URI uri;
         try {
             uri = FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
@@ -62,7 +62,7 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             throw exception;
         }
         return context.getResourceResolver()
-                .loadDocument(
+                .loadXMLDocument(
                         uri, this.staticContext.getQueryLanguage(), context.getRumbleConfiguration(), getMetadata());
     }
 }
