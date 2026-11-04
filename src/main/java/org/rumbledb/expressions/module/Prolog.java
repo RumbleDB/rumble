@@ -16,9 +16,7 @@
 package org.rumbledb.expressions.module;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -36,7 +34,7 @@ public class Prolog extends Node {
 
     @Getter
     @Setter
-    private List<Node> declarations;
+    private List<PrologDeclaration> declarations;
 
     // Every module the query imports, flattened into one. A library itself imports nothing.
     @Setter
@@ -45,16 +43,13 @@ public class Prolog extends Node {
     @Getter
     private final List<SchemaImport> schemaImports;
 
-    // The imported library's declarations each retain their source module's context.
-    private final Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
-
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
             List<FunctionDeclaration> functionDeclarations,
             List<TypeDeclaration> typeDeclarations,
             ExceptionMetadata metadata) {
         super(metadata);
-        this.declarations = new ArrayList<Node>(variableDeclarations);
+        this.declarations = new ArrayList<PrologDeclaration>(variableDeclarations);
         this.declarations.addAll(functionDeclarations);
         this.declarations.addAll(typeDeclarations);
         this.schemaImports = new ArrayList<>();
@@ -65,22 +60,12 @@ public class Prolog extends Node {
         this(List.of(), List.of(), List.of(), metadata);
     }
 
-    /** The context a declaration belongs to: its source module's in the imported library, otherwise the given one. */
-    public StaticContext getDeclarationContext(Node declaration, StaticContext defaultContext) {
-        return this.sourceModuleContexts.getOrDefault(declaration, defaultContext);
-    }
-
-    /** The contexts of the imported library's modules. Empty for any other prolog. */
-    public List<StaticContext> getSourceContexts() {
-        return this.sourceModuleContexts.values().stream().distinct().toList();
-    }
-
-    /** Keeps a declaration's source module when a pass replaces it with a copy. */
-    public void replaceInSourceModule(Node declaration, Node replacement) {
-        StaticContext context = this.sourceModuleContexts.remove(declaration);
-        if (context != null) {
-            this.sourceModuleContexts.put(replacement, context);
-        }
+    /** The contexts of the modules these declarations belong to, each once. */
+    public List<StaticContext> getModuleContexts() {
+        return this.declarations.stream()
+                .map(PrologDeclaration::getModuleContext)
+                .distinct()
+                .toList();
     }
 
     public Optional<LibraryModule> getImportedLibrary() {
@@ -133,14 +118,8 @@ public class Prolog extends Node {
         return false;
     }
 
-    public void addDeclaration(Node declaration) {
+    public void addDeclaration(PrologDeclaration declaration) {
         this.declarations.add(declaration);
-    }
-
-    /** Adds a declaration of the imported library, which keeps the context of its source module. */
-    public void addDeclaration(Node declaration, StaticContext sourceModuleContext) {
-        addDeclaration(declaration);
-        this.sourceModuleContexts.put(declaration, sourceModuleContext);
     }
 
     @Override

@@ -314,6 +314,7 @@ public final class PrologBuilder {
         Prolog result = new Prolog(this.variables, this.functions, this.types, metadata);
         this.schemas.forEach(result::addSchemaImport);
         this.options.forEach(result::addDeclaration);
+        result.getDeclarations().forEach(d -> d.setModuleContext(this.translationContext.moduleContext()));
         return result;
     }
 

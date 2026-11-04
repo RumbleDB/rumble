@@ -61,6 +61,7 @@ import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.PrologDeclaration;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -160,10 +161,10 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         expression
                 .getImportedLibrary()
                 .ifPresent(library -> expression.setImportedLibrary((LibraryModule) visit(library, argument)));
-        List<Node> declarations = new ArrayList<>();
-        for (Node declaration : expression.getDeclarations()) {
-            Node clone = visit(declaration, argument);
-            expression.replaceInSourceModule(declaration, clone);
+        List<PrologDeclaration> declarations = new ArrayList<>();
+        for (PrologDeclaration declaration : expression.getDeclarations()) {
+            PrologDeclaration clone = (PrologDeclaration) visit(declaration, argument);
+            clone.setModuleContext(declaration.getModuleContext());
             declarations.add(clone);
         }
         expression.setDeclarations(declarations);

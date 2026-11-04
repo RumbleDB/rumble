@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 
@@ -77,14 +76,12 @@ public final class ModuleImportLoader {
                 .toList();
     }
 
-    /** Each declaration keeps its module's context; the library's own context collects their public declarations. */
+    /** Declarations keep their module's context; the library's own context collects their public declarations. */
     private static LibraryModule merge(List<LibraryModule> members) {
         LibraryModule first = members.get(0);
         Prolog prolog = new Prolog(first.getProlog().getMetadata());
         for (LibraryModule member : members) {
-            for (Node declaration : member.getProlog().getDeclarations()) {
-                prolog.addDeclaration(declaration, member.getStaticContext());
-            }
+            member.getProlog().getDeclarations().forEach(prolog::addDeclaration);
         }
         StaticContext publicDeclarations = new StaticContext(
                 first.getStaticContext().getStaticBaseURI(),

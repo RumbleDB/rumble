@@ -56,6 +56,7 @@ import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.PrologDeclaration;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -508,11 +509,11 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         // A dependency cycle is only an error if evaluation actually traverses it.
         // A named function reference, for example, does not evaluate its body.
 
-        List<Node> resolvedList = new ArrayList<>();
+        List<PrologDeclaration> resolvedList = new ArrayList<>();
         for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
             resolvedList.add(typeDeclaration);
         }
-        for (Node declaration : prolog.getDeclarations()) {
+        for (PrologDeclaration declaration : prolog.getDeclarations()) {
             if (!(declaration instanceof TypeDeclaration)
                     && !(declaration instanceof VariableDeclaration)
                     && !(declaration instanceof FunctionDeclaration)) {
@@ -535,6 +536,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             group.stream()
                     .filter(declaration -> !(declaration instanceof TypeDeclaration))
                     .sorted(Comparator.comparingInt(declarationOrder::get))
+                    .map(PrologDeclaration.class::cast)
                     .forEach(resolvedList::add);
         }
         prolog.setDeclarations(resolvedList);

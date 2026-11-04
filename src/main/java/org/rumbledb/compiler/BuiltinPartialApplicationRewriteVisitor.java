@@ -16,6 +16,7 @@
 package org.rumbledb.compiler;
 
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.rumbledb.context.BuiltinFunction;
@@ -25,8 +26,10 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.PrologDeclaration;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
@@ -61,13 +64,21 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
     }
 
     @Override
-    public Node visitLibraryModule(LibraryModule module, Node argument) {
+    public Node visitVariableDeclaration(VariableDeclaration declaration, Node argument) {
+        return inModuleOf(declaration, () -> super.visitVariableDeclaration(declaration, argument));
+    }
+
+    @Override
+    public Node visitFunctionDeclaration(FunctionDeclaration declaration, Node argument) {
+        return inModuleOf(declaration, () -> super.visitFunctionDeclaration(declaration, argument));
+    }
+
+    private Node inModuleOf(PrologDeclaration declaration, Supplier<Node> visit) {
         StaticContext previousContext = this.moduleContext;
-        this.moduleContext = module.getStaticContext();
+        this.moduleContext = declaration.getModuleContext();
         try {
-            return super.visitLibraryModule(module, argument);
+            return visit.get();
         } finally {
-            // Resume resolving constructors in the importing module after visiting this library.
             this.moduleContext = previousContext;
         }
     }

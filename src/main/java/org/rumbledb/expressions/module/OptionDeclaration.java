@@ -26,7 +26,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 
 @Getter
-public class OptionDeclaration extends Node {
+public class OptionDeclaration extends PrologDeclaration {
 
     private final Name name;
     private final String value;

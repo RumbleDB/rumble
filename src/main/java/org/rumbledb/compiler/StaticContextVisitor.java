@@ -59,6 +59,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.PrologDeclaration;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -523,24 +524,25 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
             if (hasPrivateAnnotation(declaration.getAnnotations())) {
-                prolog.getDeclarationContext(declaration, argument).markPrivateVariable(declaration.getVariableName());
+                declaration.getModuleContext().markPrivateVariable(declaration.getVariableName());
             }
         }
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-            StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
-            declarationContext.addFunctionSignature(
+            StaticContext moduleContext = declaration.getModuleContext();
+            moduleContext.addFunctionSignature(
                     expression.getFunctionIdentifier(),
                     new FunctionSignature(
                             new ArrayList<>(expression.getParams().values()),
                             expression.getReturnType(),
                             expression.isUpdating()));
             if (hasPrivateAnnotation(expression.getAnnotations())) {
-                declarationContext.markPrivateFunction(expression.getFunctionIdentifier());
+                moduleContext.markPrivateFunction(expression.getFunctionIdentifier());
             }
         }
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-            prolog.getDeclarationContext(declaration, argument)
+            declaration
+                    .getModuleContext()
                     .addVariable(
                             declaration.getVariableName(),
                             declaration.getActualSequenceType(),
@@ -548,14 +550,18 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                             declaration.isAssignable());
         }
         // Every module is declared before any is visited, so import cycles need no special treatment.
-        List<StaticContext> libraryContexts = prolog.getSourceContexts();
+        // Only the flattened library holds declarations of modules other than its own context.
+        List<StaticContext> libraryContexts = prolog.getModuleContexts().stream()
+                .filter(context -> context != argument)
+                .toList();
         libraryContexts.forEach(argument::addPublicDeclarationsOf);
         libraryContexts.forEach(context -> context.linkImports(argument));
-        for (Node child : prolog.getChildren()) {
-            StaticContext declarationContext = prolog.getDeclarationContext(child, argument);
-            visit(child, declarationContext);
+        prolog.getImportedLibrary().ifPresent(library -> visit(library, argument));
+        for (PrologDeclaration declaration : prolog.getDeclarations()) {
+            StaticContext moduleContext = declaration.getModuleContext();
+            visit(declaration, moduleContext);
             // Declared types are visible across the imported library.
-            argument.getInScopeSchemaTypes().importModuleTypes(declarationContext.getInScopeSchemaTypes());
+            argument.getInScopeSchemaTypes().importModuleTypes(moduleContext.getInScopeSchemaTypes());
             libraryContexts.forEach(
                     context -> context.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes()));
         }

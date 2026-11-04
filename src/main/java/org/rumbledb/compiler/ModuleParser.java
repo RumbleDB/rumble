@@ -78,7 +78,7 @@ final class ModuleParser {
         MainModule module =
                 (MainModule) parseModule(query, uri, configuration, language, moduleContext, true, importLoader);
         importLoader.flattenImports(module.getProlog(), moduleContext);
-        ExternalVariableTranslation.process(module.getProlog(), bindings, module.getMetadata());
+        ExternalVariableTranslation.process(module.getProlog(), moduleContext, bindings, module.getMetadata());
         return module;
     }
 
