@@ -115,7 +115,6 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
 
     @Override
     public DescendentSequentialProperties visitProlog(Prolog node, DescendentSequentialProperties argument) {
-        node.getImportedLibrary().ifPresent(library -> visit(library, argument));
         // Visit variables first as they may be modified in a function.
         node.getVariableDeclarations().forEach(variableDeclaration -> visit(variableDeclaration, argument));
         node.getFunctionDeclarations().forEach(functionDeclaration -> visit(functionDeclaration, argument));

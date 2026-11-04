@@ -199,7 +199,6 @@ public class ProjectionPushdownDetectionVisitor
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             visit(declaration, null);
         }
-        prolog.getImportedLibrary().ifPresent(library -> visit(library, null));
         return null;
     }
 

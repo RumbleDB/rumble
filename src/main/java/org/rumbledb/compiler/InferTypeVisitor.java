@@ -3077,7 +3077,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
-        prolog.getImportedLibrary().ifPresent(library -> visit(library, argument));
         prolog.getDeclarations().forEach(declaration -> visit(declaration, declaration.getModuleContext()));
         return argument;
     }

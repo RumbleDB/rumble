@@ -158,9 +158,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         List<SchemaImport> schemaImports = expression.getSchemaImports().stream()
                 .map(schemaImport -> (SchemaImport) visit(schemaImport, argument))
                 .collect(Collectors.toList());
-        expression
-                .getImportedLibrary()
-                .ifPresent(library -> expression.setImportedLibrary((LibraryModule) visit(library, argument)));
         List<PrologDeclaration> declarations = new ArrayList<>();
         for (PrologDeclaration declaration : expression.getDeclarations()) {
             PrologDeclaration clone = (PrologDeclaration) visit(declaration, argument);

@@ -312,6 +312,7 @@ public final class PrologBuilder {
 
     public Prolog build(ExceptionMetadata metadata) {
         Prolog result = new Prolog(this.variables, this.functions, this.types, metadata);
+        result.setModuleContext(this.translationContext.moduleContext());
         this.schemas.forEach(result::addSchemaImport);
         this.options.forEach(result::addDeclaration);
         result.getDeclarations().forEach(d -> d.setModuleContext(this.translationContext.moduleContext()));
