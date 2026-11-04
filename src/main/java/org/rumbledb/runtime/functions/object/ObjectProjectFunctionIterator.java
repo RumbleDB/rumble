@@ -122,7 +122,7 @@ public class ObjectProjectFunctionIterator extends ItemRuntimePlan
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemRuntimePlan iterator;
+    private final ItemRuntimePlan iterator;
 
     public ObjectProjectFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);

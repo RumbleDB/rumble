@@ -81,7 +81,6 @@ public class ReturnClauseIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
 
     private final TupleRuntimePlan child;
-    private transient DynamicContext tupleContext;
     private final ItemRuntimePlan expression;
 
     public ReturnClauseIterator(
@@ -517,14 +516,14 @@ public class ReturnClauseIterator extends ItemRuntimePlan
         PendingUpdateList result = new PendingUpdateList();
 
         if (!this.expression.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            this.tupleContext = new DynamicContext(context); // assign current context
+            DynamicContext tupleContext = new DynamicContext(context);
             try (Cursor<FlworTuple> cursor = this.child.createNativeCursor(context)) {
                 while (cursor.hasNext()) {
                     FlworTuple tuple = cursor.next();
-                    this.tupleContext.getVariableValues().removeAllVariables();
-                    this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
+                    tupleContext.getVariableValues().removeAllVariables();
+                    tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
                     result.mergeUpdates(
-                            UpdatingRuntimePlan.get(this.expression, this.tupleContext),
+                            UpdatingRuntimePlan.get(this.expression, tupleContext),
                             this.getRuntimeStaticContext().getMetadata());
                 }
             }

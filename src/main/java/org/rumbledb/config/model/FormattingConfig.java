@@ -17,6 +17,7 @@ package org.rumbledb.config.model;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Locale;
 import java.util.Objects;
 
 import lombok.Builder;
@@ -99,7 +100,9 @@ public class FormattingConfig implements Serializable {
     private static String normalizeFormattingLanguage(String language) {
         String normalized = LanguageSupport.normalizeLanguage(language);
         if (FormattingLanguageSupport.isSupportedFormattingLanguage(normalized)) {
-            return normalized;
+            // Keep the conventional BCP 47 casing exposed by fn:default-language().
+            // Formatting code normalizes tags separately when resolving a locale.
+            return Locale.forLanguageTag(normalized).toLanguageTag();
         }
 
         throw new CliException("Invalid argument supplied for default-formatting-language: " + language);

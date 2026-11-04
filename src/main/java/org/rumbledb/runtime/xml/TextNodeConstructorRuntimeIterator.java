@@ -76,10 +76,9 @@ public class TextNodeConstructorRuntimeIterator extends AbstractAtMostOneItemRun
         textContent.deleteCharAt(textContent.length() - 1);
         // Create and return the text node item
         Item textItem = ItemFactory.getInstance().createXmlTextNode(textContent.toString());
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            textItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        textItem.setXmlDocumentPosition(documentPath, 0);
         return textItem;
     }
 }

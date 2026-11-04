@@ -19,7 +19,7 @@ import java.util.Objects;
 
 import org.rumbledb.resources.ResourceResolver;
 
-/** Configuration and resource resolution services used during compilation. */
+/** Configuration and resource resolution services shared by compilation and execution. */
 public record CompilationConfiguration(RumbleConfiguration runtimeConfiguration, ResourceResolver resourceResolver) {
 
     public CompilationConfiguration {

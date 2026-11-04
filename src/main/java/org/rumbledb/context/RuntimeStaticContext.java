@@ -19,6 +19,7 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.net.URI;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +41,9 @@ import org.rumbledb.xml.schema.XmlSchemaCatalog;
 public class RuntimeStaticContext implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
+
+    /** Null for contexts built without a compiler static context. */
+    private final Set<FunctionIdentifier> visibleFunctionIdentifiers;
 
     private final URI staticURI;
     private final String staticURIString;
@@ -74,6 +78,9 @@ public class RuntimeStaticContext implements Serializable {
 
     @Builder.Default
     private final Map<String, String> staticallyKnownNamespaces = Collections.emptyMap();
+
+    @Builder.Default
+    private final Map<String, String> constructorNamespaceBindings = Collections.emptyMap();
 
     @Builder.Default
     private final Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
@@ -168,7 +175,10 @@ public class RuntimeStaticContext implements Serializable {
                 .staticURI(staticContext.getStaticBaseURI())
                 .staticURIString(staticContext.getStaticBaseUriString())
                 .queryLanguage(staticContext.getQueryLanguage())
+                .visibleFunctionIdentifiers(staticContext.getVisibleFunctionIdentifiers())
                 .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
+                // Kryo cannot reconstruct Map.of/Map.copyOf implementations from compiler contexts.
+                .constructorNamespaceBindings(new LinkedHashMap<>(staticContext.getConstructorNamespaceBindings()))
                 .staticallyKnownCollations(new LinkedHashSet<>(staticContext.getStaticallyKnownCollations()))
                 .serializationParameters(staticContext.getSerializationParameters())
                 .defaultCollation(staticContext.getDefaultCollation())

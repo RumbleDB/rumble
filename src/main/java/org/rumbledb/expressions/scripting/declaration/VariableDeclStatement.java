@@ -44,6 +44,9 @@ public class VariableDeclStatement extends Statement {
     @Getter
     private final Name variableName;
 
+    @Getter
+    private final ExceptionMetadata variableMetadata;
+
     private final SequenceType variableSequenceType;
 
     @Getter
@@ -57,10 +60,12 @@ public class VariableDeclStatement extends Statement {
             Name variableName,
             SequenceType variableSequenceType,
             Expression variableExpression,
-            ExceptionMetadata metadata) {
+            ExceptionMetadata metadata,
+            ExceptionMetadata variableMetadata) {
         super(metadata);
         this.annotations = annotations;
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
         this.variableSequenceType = variableSequenceType;
         this.variableExpression = variableExpression;
         if (this.annotations != null) {

@@ -212,7 +212,7 @@ final class VariableMarker {
             ExceptionMetadata metadata) {
         switch (this.component) {
             case 'Y':
-                return CalendarFields.year(value, formattingContext);
+                return Math.abs(CalendarFields.year(value, formattingContext));
             case 'M':
                 return CalendarFields.monthInYear(value, formattingContext);
             case 'D':
@@ -246,6 +246,8 @@ final class VariableMarker {
             String pictureString,
             ExceptionMetadata metadata) {
         switch (this.component) {
+            case 'E':
+                return value.getYear() < 0 ? "BC" : "AD";
             case 'F':
                 return DateNames.dayName(value, formattingContext, this.minWidth, this.maxWidth);
             case 'M':

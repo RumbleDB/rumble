@@ -58,8 +58,7 @@ public final class XmlSchemaCastableIterator extends AbstractAtMostOneItemRuntim
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        List<Item> atomizedValue =
-                XmlSchemaCastSupport.materializeAtomizedAtMostTwo(this.operand, context, getMetadata());
+        List<Item> atomizedValue = CastAtomization.materializeAtomizedAtMostTwo(this.operand, context, getMetadata());
         if (atomizedValue.size() > 1) {
             return booleanItem(false);
         }

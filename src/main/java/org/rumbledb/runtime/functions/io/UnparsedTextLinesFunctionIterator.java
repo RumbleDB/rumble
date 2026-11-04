@@ -59,6 +59,7 @@ public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implement
                 hrefItem.getStringValue(),
                 encoding,
                 getConfiguration().semantics().xmlVersion(),
+                context.getResourceResolver(),
                 getMetadata());
 
         String[] split = LINE_SPLIT_PATTERN.split(text, -1);

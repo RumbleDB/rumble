@@ -27,6 +27,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.functions.arrays.ArrayIndexUtils;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 
@@ -115,18 +116,12 @@ public class UnaryLookupIterator extends ItemRuntimePlan implements LocalRuntime
             }
             return;
         }
-        for (Item key : keys) {
-            if (key.isString()) {
-                throw new UnexpectedTypeException(
-                        "Type error; Lookup with String on Arrays is not possible", getMetadata());
-            }
-            if (key.isNumeric()) {
-                int index = key.castToIntValue() - 1;
-                if (array.isArrayOfItems()) {
-                    results.add(array.getItemAt(index));
-                } else {
-                    results.addAll(array.getSequenceAt(index));
-                }
+        for (Item key : ArrayIndexUtils.atomizeLookupKeys(keys, getMetadata())) {
+            int index = ArrayIndexUtils.getZeroBasedPosition(key, array.getSize(), getMetadata());
+            if (array.isArrayOfItems()) {
+                results.add(array.getItemAt(index));
+            } else {
+                results.addAll(array.getSequenceAt(index));
             }
         }
     }

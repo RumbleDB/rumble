@@ -35,13 +35,19 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.exceptions.InvalidOptionException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.xml.DocumentItem;
 import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
+import org.rumbledb.xml.schema.XmlSchemaValidator;
 
 public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
@@ -72,7 +78,9 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
         boolean liberal = false;
         boolean escape = false;
+        boolean validate = false;
         String duplicates = DUPLICATES_RETAIN;
+        Item fallback = null;
         if (this.getChildren().size() > 1) {
             Item optionsItem = this.getChild(1).materializeFirstOrNull(context);
             if (optionsItem == null || !optionsItem.isMap()) {
@@ -81,20 +89,21 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             }
             liberal = readBooleanOption(optionsItem, "liberal", false);
             escape = readBooleanOption(optionsItem, "escape", false);
-            duplicates = readDuplicatesOption(optionsItem);
-            checkValidateOption(optionsItem);
+            validate = readBooleanOption(optionsItem, "validate", false);
+            duplicates = readDuplicatesOption(optionsItem, validate);
             checkFallbackOption(optionsItem, escape);
+            List<Item> fallbackValue = optionsItem.getSequenceByKey("fallback");
+            fallback = fallbackValue == null ? null : fallbackValue.get(0);
         }
-        if (escape) {
-            throw new UnsupportedFeatureException(
-                    "fn:json-to-xml: option 'escape' is not supported yet.", getMetadata());
+        if (validate && DUPLICATES_RETAIN.equals(duplicates)) {
+            throw new InvalidOptionException(
+                    "fn:json-to-xml: duplicates='retain' is incompatible with validate=true().", getMetadata());
         }
-
         JsonReader reader = new JsonReader(new StringReader(jsonText.getStringValue()));
         reader.setStrictness(liberal ? Strictness.LENIENT : Strictness.STRICT);
         Item root;
         try {
-            root = parseValue(reader, null, duplicates);
+            root = parseValue(reader, null, new ParseOptions(escape, fallback, duplicates, context));
             if (reader.peek() != JsonToken.END_DOCUMENT) {
                 throw invalidJson("Unexpected content after the JSON value.");
             }
@@ -118,13 +127,21 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             documentItem.addParentToDescendants();
         }
         documentItem.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
+        if (validate) {
+            return new XmlSchemaValidator(XmlSchemaCatalogLoader.loadXPathFunctionsCatalog())
+                    .validateStrict(documentItem, getMetadata());
+        }
         return documentItem;
     }
 
-    private Item parseValue(JsonReader reader, String key, String duplicates) throws IOException {
+    private record ParseOptions(boolean escape, Item fallback, String duplicates, DynamicContext context) {}
+
+    private Item parseValue(JsonReader reader, String key, ParseOptions options) throws IOException {
         List<Item> attributes = new ArrayList<>();
         if (key != null) {
-            attributes.add(ItemFactory.getInstance().createXmlAttributeNode(KEY_NAME, sanitizeForXml(key)));
+            String convertedKey = convertString(key, options);
+            attributes.add(ItemFactory.getInstance().createXmlAttributeNode(KEY_NAME, convertedKey));
+            addEscapedAttribute(attributes, "escaped-key", convertedKey, options);
         }
 
         JsonToken token = reader.peek();
@@ -139,13 +156,16 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 // nextString() on a NUMBER token returns the raw lexical text, preserving the exact
                 // JSON representation as required by the spec.
                 return textElement(NUMBER_NAME, reader.nextString(), attributes);
-            case STRING:
-                return textElement(STRING_NAME, sanitizeForXml(reader.nextString()), attributes);
+            case STRING: {
+                String value = convertString(reader.nextString(), options);
+                addEscapedAttribute(attributes, "escaped", value, options);
+                return textElement(STRING_NAME, value, attributes);
+            }
             case BEGIN_ARRAY: {
                 reader.beginArray();
                 List<Item> children = new ArrayList<>();
                 while (reader.hasNext()) {
-                    children.add(parseValue(reader, null, duplicates));
+                    children.add(parseValue(reader, null, options));
                 }
                 reader.endArray();
                 return declareNamespace(
@@ -157,16 +177,17 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 Set<String> seenKeys = new HashSet<>();
                 while (reader.hasNext()) {
                     String childKey = reader.nextName();
-                    boolean isDuplicate = !seenKeys.add(childKey);
-                    if (isDuplicate && DUPLICATES_REJECT.equals(duplicates)) {
+                    String comparisonKey = options.escape() ? convertString(childKey, options) : childKey;
+                    boolean isDuplicate = !seenKeys.add(comparisonKey);
+                    if (isDuplicate && DUPLICATES_REJECT.equals(options.duplicates())) {
                         throw new DuplicateJSONKeyException(
                                 "fn:json-to-xml: duplicate key '" + childKey + "'", getMetadata());
                     }
-                    if (isDuplicate && DUPLICATES_USE_FIRST.equals(duplicates)) {
+                    if (isDuplicate && DUPLICATES_USE_FIRST.equals(options.duplicates())) {
                         reader.skipValue();
                         continue;
                     }
-                    children.add(parseValue(reader, childKey, duplicates));
+                    children.add(parseValue(reader, childKey, options));
                 }
                 reader.endObject();
                 return declareNamespace(ItemFactory.getInstance().createXmlElementNode(MAP_NAME, children, attributes));
@@ -199,10 +220,10 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return sequence.get(0).getBooleanValue();
     }
 
-    private String readDuplicatesOption(Item optionsItem) {
+    private String readDuplicatesOption(Item optionsItem, boolean validate) {
         List<Item> sequence = optionsItem.getSequenceByKey("duplicates");
         if (sequence == null) {
-            return DUPLICATES_RETAIN;
+            return validate ? DUPLICATES_REJECT : DUPLICATES_RETAIN;
         }
         if (sequence.size() != 1 || !sequence.get(0).isString()) {
             throw new UnexpectedTypeException(
@@ -217,22 +238,6 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                     "fn:json-to-xml: invalid value for option 'duplicates': '" + value + "'", getMetadata());
         }
         return value;
-    }
-
-    private void checkValidateOption(Item optionsItem) {
-        List<Item> sequence = optionsItem.getSequenceByKey("validate");
-        if (sequence == null) {
-            return;
-        }
-        if (sequence.size() != 1 || !sequence.get(0).isBoolean()) {
-            throw new UnexpectedTypeException(
-                    "The 'validate' option of fn:json-to-xml must be a single xs:boolean [err:XPTY0004].",
-                    getMetadata());
-        }
-        if (sequence.get(0).getBooleanValue()) {
-            throw new UnsupportedFeatureException(
-                    "fn:json-to-xml: option 'validate' is not supported yet.", getMetadata());
-        }
     }
 
     private void checkFallbackOption(Item optionsItem, boolean escape) {
@@ -262,19 +267,65 @@ public class JsonToXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return new InvalidJSONException("fn:json-to-xml: " + message, getMetadata());
     }
 
-    private static String sanitizeForXml(String text) {
+    private static void addEscapedAttribute(List<Item> attributes, String name, String value, ParseOptions options) {
+        if (options.escape() && value.indexOf('\\') >= 0) {
+            attributes.add(ItemFactory.getInstance().createXmlAttributeNode(new Name(null, null, name), "true"));
+        }
+    }
+
+    private String convertString(String text, ParseOptions options) {
         StringBuilder result = new StringBuilder(text.length());
-        int i = 0;
-        while (i < text.length()) {
+        for (int i = 0; i < text.length(); ) {
             int codePoint = text.codePointAt(i);
-            if (isValidXmlCodePoint(codePoint)) {
+            if (options.escape()
+                    && (codePoint <= 0x1F
+                            || (codePoint >= 0x7F && codePoint <= 0x9F)
+                            || codePoint == '\\'
+                            || !isValidXmlCodePoint(codePoint))) {
+                result.append(escapeCodePoint(codePoint));
+            } else if (isValidXmlCodePoint(codePoint)) {
                 result.appendCodePoint(codePoint);
-            } else {
+            } else if (options.fallback() == null) {
                 result.append('\uFFFD');
+            } else {
+                result.append(invokeFallback(options, escapeCodePoint(codePoint)));
             }
             i += Character.charCount(codePoint);
         }
         return result.toString();
+    }
+
+    private String invokeFallback(ParseOptions options, String escaped) {
+        RuntimeStaticContext localContext = this.staticContext.toBuilder()
+                .executionMode(ExecutionMode.LOCAL)
+                .staticType(SequenceType.createSequenceType("item*"))
+                .build();
+        ItemRuntimePlan callback = new DynamicFunctionCallIterator(
+                new ConstantRuntimeIterator(options.fallback(), localContext),
+                List.of(new ConstantRuntimeIterator(ItemFactory.getInstance().createStringItem(escaped), localContext)),
+                localContext);
+        Item replacement;
+        try {
+            replacement = callback.materializeAtMostOne(options.context());
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException("The fallback function must return one string.", getMetadata());
+        }
+        if (replacement == null || !replacement.isString()) {
+            throw new UnexpectedTypeException("The fallback function must return one string.", getMetadata());
+        }
+        return replacement.getStringValue();
+    }
+
+    private static String escapeCodePoint(int codePoint) {
+        return switch (codePoint) {
+            case '\\' -> "\\\\";
+            case '\b' -> "\\b";
+            case '\f' -> "\\f";
+            case '\n' -> "\\n";
+            case '\r' -> "\\r";
+            case '\t' -> "\\t";
+            default -> String.format("\\u%04X", codePoint);
+        };
     }
 
     private static boolean isValidXmlCodePoint(int c) {

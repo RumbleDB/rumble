@@ -51,7 +51,7 @@ public class ParseIETFDateFunctionIterator extends AbstractAtMostOneItemRuntimeP
     private static final String DAYNUM = "(\\d{1,2})";
     private static final String YEAR = "(\\d{2}|\\d{4})";
     private static final String TZNAME = "(UT|UTC|GMT|EST|EDT|CST|CDT|MST|MDT|PST|PDT)";
-    private static final String TZOFFSET = "([+-])(\\d{1,2})(?::?(\\d{2}))?";
+    private static final String TZOFFSET = "([+-])(\\d{1,2}):?(\\d{2})?";
     private static final String TIMEZONE =
             "(?:" + TZNAME + "|" + TZOFFSET + "(?:" + OPT_S + "\\(" + OPT_S + TZNAME + OPT_S + "\\))?" + ")";
     private static final String TIME =
@@ -197,6 +197,9 @@ public class ParseIETFDateFunctionIterator extends AbstractAtMostOneItemRuntimeP
         int year = parseYear(yearString);
         LocalDate date = LocalDate.of(year, month, day);
         LocalTime time = parseTime(hourString, minuteString, secondString, fractionalSecondString);
+        if (Integer.parseInt(hourString) == 24) {
+            date = date.plusDays(1);
+        }
         ZoneOffset offset =
                 parseZoneOffset(timezoneString, timezoneName, timezoneSign, timezoneHourString, timezoneMinuteString);
         return new ParsedDateTime(OffsetDateTime.of(date, time, offset), true);
@@ -236,6 +239,13 @@ public class ParseIETFDateFunctionIterator extends AbstractAtMostOneItemRuntimeP
                         String.format("%-9s", fractionalSecondString).replace(' ', '0'));
             }
         }
+        if (hour == 24
+                && minute == 0
+                && second == 0
+                && (fractionalSecondString == null
+                        || fractionalSecondString.chars().allMatch(c -> c == '0'))) {
+            return LocalTime.MIDNIGHT;
+        }
         return LocalTime.of(hour, minute, second, nanoseconds);
     }
 
@@ -258,6 +268,9 @@ public class ParseIETFDateFunctionIterator extends AbstractAtMostOneItemRuntimeP
         int sign = "-".equals(timezoneSign) ? -1 : 1;
         int hours = Integer.parseInt(timezoneHourString);
         int minutes = timezoneMinuteString == null ? 0 : Integer.parseInt(timezoneMinuteString);
+        if (hours > 14 || (hours == 14 && minutes != 0)) {
+            throw new IllegalArgumentException("Timezone offset must be between -14:00 and +14:00.");
+        }
         return ZoneOffset.ofHoursMinutes(sign * hours, sign * minutes);
     }
 

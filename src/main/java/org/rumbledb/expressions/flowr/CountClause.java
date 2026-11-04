@@ -18,6 +18,8 @@ package org.rumbledb.expressions.flowr;
 import java.util.Collections;
 import java.util.List;
 
+import lombok.Getter;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -26,9 +28,13 @@ import org.rumbledb.expressions.Node;
 public class CountClause extends Clause {
     private final Name variableName;
 
-    public CountClause(Name variableName, ExceptionMetadata metadata) {
+    @Getter
+    private final ExceptionMetadata variableMetadata;
+
+    public CountClause(Name variableName, ExceptionMetadata metadata, ExceptionMetadata variableMetadata) {
         super(FLWOR_CLAUSES.COUNT, metadata);
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
     }
 
     @Override

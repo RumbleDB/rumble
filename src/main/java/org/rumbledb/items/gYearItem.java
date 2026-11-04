@@ -16,6 +16,7 @@
 package org.rumbledb.items;
 
 import java.io.Serial;
+import java.time.DateTimeException;
 import java.time.OffsetDateTime;
 import java.time.Year;
 import java.time.ZoneOffset;
@@ -23,6 +24,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -62,17 +65,24 @@ public class gYearItem extends AbstractAtomicItem {
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gYear: \"" + gYearString + "\"");
         }
-        if (gYearString.startsWith("-")) {
-            this.year = Year.of(-Integer.parseInt(matcher.group(1)));
-        } else {
-            this.year = Year.of(Integer.parseInt(matcher.group(1)));
-        }
+        this.year = parseYear(matcher.group(1), gYearString.startsWith("-"));
         String tz = matcher.group(2);
         if (tz == null) {
             this.hasTimeZone = false;
         } else {
             this.hasTimeZone = true;
             this.offset = ZoneOffset.of(tz);
+        }
+    }
+
+    /** Called only after the complete Gregorian lexical representation has been validated. */
+    static Year parseYear(String digits, boolean negative) {
+        try {
+            int year = Integer.parseInt(digits);
+            return Year.of(negative ? -year : year);
+        } catch (NumberFormatException | DateTimeException exception) {
+            throw new DatetimeOverflowOrUnderflow(
+                    "The year is outside the supported range.", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 

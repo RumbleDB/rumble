@@ -20,10 +20,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
-import org.apache.spark.api.java.function.Function2;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -44,21 +40,8 @@ public class ObjectAccumulateFunctionIterator extends AbstractAtMostOneItemRunti
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        ItemRuntimePlan iterator = this.getChild(0);
-
-        if (!iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-            return accumulate(iterator.materialize(context));
-        }
-
-        JavaRDD<Item> childRDD = iterator.getRDD(context);
-        Function<Item, Item> mapTransformation =
-                new ObjectIntersectMapClosure(this.getRuntimeStaticContext().isQuerySideEffecting());
-        JavaRDD<Item> mapResult = childRDD.map(mapTransformation);
-
-        Function2<Item, Item, Item> reductionTransformation = new ObjectIntersectReduceClosure();
-        Item result = mapResult.reduce(reductionTransformation);
-
-        return result;
+        // The values of each key keep the input order, so the input is collected rather than reduced on Spark.
+        return accumulate(this.getChild(0).materialize(context));
     }
 
     private Item accumulate(List<Item> items) {

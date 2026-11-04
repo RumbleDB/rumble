@@ -1,0 +1,33 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package iq;
+
+import org.rumbledb.config.RumbleConfiguration;
+
+/**
+ * Runs the Spark runtime tests without function inlining, so that calls of user-defined functions are evaluated as
+ * calls, including on RDDs and DataFrames.
+ */
+public class SparkRuntimeTestsNoInlining extends SparkRuntimeTests {
+
+    public RumbleConfiguration getConfiguration() {
+        return RumbleConfiguration.builder()
+                .configureRuntime(runtime -> runtime.resultsSizeCap(200).materializationCap(100000))
+                .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
+                .configureOptimization(optimization -> optimization.useFunctionInlining(false))
+                .build();
+    }
+}

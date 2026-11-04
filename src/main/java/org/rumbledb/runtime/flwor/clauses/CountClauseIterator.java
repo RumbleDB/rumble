@@ -54,7 +54,7 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private Name variableName;
+    private final Name variableName;
 
     public CountClauseIterator(TupleRuntimePlan child, Name variableName, RuntimeStaticContext staticContext) {
         super(child, staticContext);

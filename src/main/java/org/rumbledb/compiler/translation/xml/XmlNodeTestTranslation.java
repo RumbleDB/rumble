@@ -30,9 +30,9 @@ import org.rumbledb.compiler.context.xml.SchemaAttributeTestContext;
 import org.rumbledb.compiler.context.xml.SchemaElementTestContext;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
+import org.rumbledb.compiler.translation.TypeTranslation;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.xml.node_test.AnyKindTest;
 import org.rumbledb.expressions.xml.node_test.AttributeTest;
 import org.rumbledb.expressions.xml.node_test.CommentTest;
@@ -88,24 +88,13 @@ public final class XmlNodeTestTranslation {
             ElementTestContext<EqNameCtx> ctx,
             TranslationContext translationContext,
             BiFunction<EqNameCtx, NameRole, Name> parseEqName) {
-        if (ctx.hasOptional()) {
-            throw new UnsupportedFeatureException(
-                    "Nillable element tests (element(name, type?)) are not supported (validation feature)",
-                    translationContext.metadata(ctx.context()));
+        if (ctx.typeNameEqName() != null) {
+            return new SchemaNodeTest(TypeTranslation.elementTestAsItemType(ctx, translationContext, parseEqName));
         }
         if (ctx.hasElementNameOrWildcard()) {
             if (!ctx.isWildcard()) {
                 Name elementName = parseEqName.apply(ctx.elementNameEqName(), NameRole.ELEMENT_CONSTRUCTOR);
-                if (ctx.typeNameEqName() == null) {
-                    return new ElementTest(elementName, null);
-                }
-                Name typeName = parseEqName.apply(ctx.typeNameEqName(), NameRole.TYPE);
-                return new ElementTest(elementName, typeName);
-            }
-            // Wildcard case: element(*) or element(*, type)
-            if (ctx.typeNameEqName() != null) {
-                Name typeName = parseEqName.apply(ctx.typeNameEqName(), NameRole.TYPE);
-                return new ElementTest(typeName);
+                return new ElementTest(elementName, null);
             }
             return new ElementTest(true);
         }
@@ -116,21 +105,14 @@ public final class XmlNodeTestTranslation {
             AttributeTestContext<EqNameCtx> ctx,
             TranslationContext translationContext,
             BiFunction<EqNameCtx, NameRole, Name> parseEqName) {
+        if (ctx.typeNameEqName() != null) {
+            return new SchemaNodeTest(TypeTranslation.attributeTestAsItemType(ctx, translationContext, parseEqName));
+        }
         if (ctx.hasAttributeNameOrWildcard()) {
             if (!ctx.isWildcard()) {
                 Name attributeName = parseEqName.apply(ctx.attributeNameEqName(), NameRole.NO_DEFAULT_NAMESPACE);
-                if (ctx.typeNameEqName() != null) {
-                    Name typeName = parseEqName.apply(ctx.typeNameEqName(), NameRole.TYPE);
-                    return new AttributeTest(attributeName, typeName);
-                } else {
-                    return new AttributeTest(attributeName, null);
-                }
+                return new AttributeTest(attributeName, null);
             } else {
-                // Wildcard case: attribute(*) or attribute(*, type)
-                if (ctx.typeNameEqName() != null) {
-                    Name typeName = parseEqName.apply(ctx.typeNameEqName(), NameRole.TYPE);
-                    return new AttributeTest(typeName);
-                }
                 return new AttributeTest(true);
             }
         }

@@ -26,7 +26,9 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedNodeException;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -85,6 +87,14 @@ public abstract class AxisIterator extends ItemRuntimePlan implements LocalRunti
         if (contextItems.isEmpty()) {
             throw new UnexpectedNodeException(
                     "Expected at least a node type as context item", staticContext.getMetadata());
+        }
+        for (Item item : contextItems) {
+            if (!item.isNode()) {
+                throw new RumbleException(
+                        "An axis step requires a node context item, but got " + item.getDynamicType() + ".",
+                        ErrorCode.AxisStepContextItemTypeErrorCode,
+                        staticContext.getMetadata());
+            }
         }
         List<Item> selectedItems = selectAxis(axis, contextItems);
         if (resultOrder == ResultOrder.PRESERVE_SELECTION_ORDER) {

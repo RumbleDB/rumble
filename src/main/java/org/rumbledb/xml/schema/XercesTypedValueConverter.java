@@ -121,7 +121,9 @@ final class XercesTypedValueConverter {
                     case XSConstants.QNAME_DT -> ItemFactory.getInstance().createQNameItem(expandedName(actualValue));
                     case XSConstants.NOTATION_DT -> ItemFactory.getInstance()
                             .createNotationItem(expandedName(actualValue));
-                    default -> convertLexicalValue(lexicalValue, itemType);
+                        // Xerces has already checked the derived type's facets. Materialize its
+                        // casting primitive, then restore the validated type annotation below.
+                    default -> convertLexicalValue(lexicalValue, itemType.getCastingPrimitiveType());
                 };
 
         if (!result.getDynamicType().equals(itemType)) {

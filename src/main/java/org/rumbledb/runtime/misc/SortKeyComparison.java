@@ -20,12 +20,9 @@ import java.util.Collections;
 import java.util.List;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.CollationCatalogue;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.exceptions.UnsupportedCollationException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
@@ -38,13 +35,6 @@ public final class SortKeyComparison {
 
     private SortKeyComparison() {}
 
-    public static void checkCollationSupported(String collationUri, ExceptionMetadata metadata) {
-        if (CollationCatalogue.isDefaultStaticallyKnownCollation(collationUri)) {
-            return;
-        }
-        throw new UnsupportedCollationException("Wrong collation parameter", metadata);
-    }
-
     public static boolean sortKeysDeepEqual(
             List<Item> a, List<Item> b, String collationUri, RuntimeStaticContext staticContext) {
         if (a.size() != b.size()) {
@@ -52,7 +42,7 @@ public final class SortKeyComparison {
         }
         ExceptionMetadata metadata = staticContext.getMetadata();
         for (int i = 0; i < a.size(); i++) {
-            if (!sortKeyItemDeepEqual(a.get(i), b.get(i), collationUri, staticContext, metadata)) {
+            if (!sortKeyItemDeepEqual(a.get(i), b.get(i), collationUri, metadata)) {
                 return false;
             }
         }
@@ -70,7 +60,7 @@ public final class SortKeyComparison {
         }
         Item headA = a.get(0);
         Item headB = b.get(0);
-        if (sortKeyItemDeepEqual(headA, headB, collationUri, staticContext, metadata)) {
+        if (sortKeyItemDeepEqual(headA, headB, collationUri, metadata)) {
             return sortKeysDeepLessThan(tail(a), tail(b), collationUri, staticContext);
         }
         if (isNumericNaN(headA)) {
@@ -96,26 +86,21 @@ public final class SortKeyComparison {
         return new ArrayList<>(seq.subList(1, seq.size()));
     }
 
-    private static boolean sortKeyItemDeepEqual(
-            Item a, Item b, String collationUri, RuntimeStaticContext staticContext, ExceptionMetadata metadata) {
+    private static boolean sortKeyItemDeepEqual(Item a, Item b, String collationUri, ExceptionMetadata metadata) {
         if (isNumericNaN(a) && isNumericNaN(b)) {
             return true;
         }
         if (isStringCollationType(a) && isStringCollationType(b)) {
             return compareStringCollationTypes(a, b, collationUri, metadata) == 0;
         }
-        DeepEqualFunctionIterator deepEqual = new DeepEqualFunctionIterator(Collections.emptyList(), staticContext);
-        return deepEqual.checkDeepEqual(Collections.singletonList(a), Collections.singletonList(b));
+        return DeepEqualFunctionIterator.checkDeepEqual(
+                Collections.singletonList(a), Collections.singletonList(b), collationUri, metadata);
     }
 
     private static int compareStringCollationTypes(Item a, Item b, String collationUri, ExceptionMetadata metadata) {
-        checkCollationSupported(collationUri, metadata);
         String sa = normalizeUntypedAtomic(a).getStringValue();
         String sb = normalizeUntypedAtomic(b).getStringValue();
-        if (collationUri.equals(Name.DEFAULT_COLLATION_NS)) {
-            return CollationSupport.compareByCodePoint(sa, sb);
-        }
-        return String.CASE_INSENSITIVE_ORDER.compare(sa, sb);
+        return CollationSupport.compareStrings(sa, sb, collationUri, metadata);
     }
 
     private static Item normalizeUntypedAtomic(Item item) {

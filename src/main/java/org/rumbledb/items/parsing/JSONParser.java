@@ -15,6 +15,7 @@
  */
 package org.rumbledb.items.parsing;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
@@ -25,6 +26,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateJSONKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidJSONException;
+import org.rumbledb.exceptions.SourcePosition;
+import org.rumbledb.exceptions.SourceRange;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.xml.XMLUtils;
 
@@ -75,6 +78,8 @@ public final class JSONParser {
     private static final int MAX_NESTING_DEPTH = 1000;
 
     private final String input;
+    private final String inputDescription;
+    private final URI resourceUri;
     private final ExceptionMetadata metadata;
     private final JSONParsingOptions options;
     private final String xmlVersion;
@@ -87,15 +92,16 @@ public final class JSONParser {
             JSONParsingOptions options,
             String xmlVersion,
             boolean isJSONiq10,
+            String inputDescription,
+            URI resourceUri,
             ExceptionMetadata metadata) {
-        if (input != null && !input.isEmpty() && input.charAt(0) == '\uFEFF') {
-            this.input = input.substring(1);
-        } else {
-            this.input = input;
-        }
+        this.resourceUri = resourceUri;
+        this.input = input;
+        this.inputDescription = inputDescription;
         this.options = options == null ? JSONParsingOptions.defaultInstance(isJSONiq10) : options;
         this.metadata = metadata;
-        this.position = 0;
+        // Skip a leading BOM without removing it, so diagnostics retain original input offsets.
+        this.position = !input.isEmpty() && input.charAt(0) == '\uFEFF' ? 1 : 0;
         this.xmlVersion = xmlVersion;
         this.isJSONiq10 = isJSONiq10;
     }
@@ -107,11 +113,44 @@ public final class JSONParser {
             String xmlVersion,
             boolean isJSONiq10,
             ExceptionMetadata metadata) {
+        return parse(jsonText, options, xmlVersion, isJSONiq10, "JSON input", metadata);
+    }
+
+    /**
+     * Parses a string. The description names the input in error messages, e.g. "the argument of fn:parse-json".
+     * Exceptions raised by the fallback function propagate without relabeling or wrapping.
+     */
+    public static Item parse(
+            String jsonText,
+            JSONParsingOptions options,
+            String xmlVersion,
+            boolean isJSONiq10,
+            String inputDescription,
+            ExceptionMetadata metadata) {
         if (jsonText == null) {
             return null;
         }
-        JSONParser parser = new JSONParser(jsonText, options, xmlVersion, isJSONiq10, metadata);
-        return parser.parseDocument();
+        return new JSONParser(jsonText, options, xmlVersion, isJSONiq10, inputDescription, null, metadata)
+                .parseDocument();
+    }
+
+    /**
+     * Parses a retrieved resource. Syntax and duplicate-key errors point into the resource;
+     * exceptions from user fallback functions retain their own metadata.
+     */
+    public static Item parseResource(
+            String jsonText,
+            JSONParsingOptions options,
+            String xmlVersion,
+            boolean isJSONiq10,
+            URI resourceUri,
+            String inputDescription,
+            ExceptionMetadata metadata) {
+        if (jsonText == null) {
+            return null;
+        }
+        return new JSONParser(jsonText, options, xmlVersion, isJSONiq10, inputDescription, resourceUri, metadata)
+                .parseDocument();
     }
 
     // BY CONVENTION JAVA NULL IS THE EMPTY SEQUENCE
@@ -120,11 +159,8 @@ public final class JSONParser {
         Item result = parseValue();
         skipIgnorable();
         if (!isEnd()) {
-            throw new InvalidJSONException(
-                    "Extra content found after the end of the JSON value. JSON is not well-formed! [position "
-                            + this.position
-                            + "]",
-                    this.metadata);
+            throw invalidJSON(
+                    "Extra content found after the end of the JSON value. JSON is not well-formed!", this.position);
         }
         return result;
     }
@@ -134,9 +170,7 @@ public final class JSONParser {
         skipIgnorable();
 
         if (isEnd()) {
-            throw new InvalidJSONException(
-                    "Unexpected end of input while parsing JSON value. [position " + this.position + "]",
-                    this.metadata);
+            throw invalidJSON("Unexpected end of input while parsing JSON value.", this.position);
         }
 
         char c = peek();
@@ -151,11 +185,8 @@ public final class JSONParser {
                 if (this.options.isLiberal()) {
                     return ItemFactory.getInstance().createStringItem(parseString().resultValue);
                 }
-                throw new InvalidJSONException(
-                        "Single-quoted strings are not allowed unless option 'liberal' is true. [position "
-                                + this.position
-                                + "]",
-                        this.metadata);
+                throw invalidJSON(
+                        "Single-quoted strings are not allowed unless option 'liberal' is true.", this.position);
             case 't':
                 parseLiteral("true");
                 return ItemFactory.getInstance().createBooleanItem(true);
@@ -170,13 +201,8 @@ public final class JSONParser {
                 if (c == '-' || isDigit(c) || (this.options.isLiberal() && c == '+')) {
                     return parseNumber();
                 }
-                throw new InvalidJSONException(
-                        "Unexpected character '"
-                                + printable(c)
-                                + "' while parsing JSON value. [position "
-                                + this.position
-                                + "]",
-                        this.metadata);
+                throw invalidJSON(
+                        "Unexpected character '" + printable(c) + "' while parsing JSON value.", this.position);
         }
     }
 
@@ -206,11 +232,10 @@ public final class JSONParser {
             skipIgnorable();
 
             if (isEnd()) {
-                throw new InvalidJSONException(
-                        "Unexpected end of input while parsing JSON object. [position " + this.position + "]",
-                        this.metadata);
+                throw invalidJSON("Unexpected end of input while parsing JSON object.", this.position);
             }
 
+            int keyStart = this.position;
             ParsedString key;
             char c = peek();
             if (c == '"' || (this.options.isLiberal() && c == '\'')) {
@@ -218,10 +243,10 @@ public final class JSONParser {
             } else if (this.options.isLiberal()) {
                 key = parseUnquotedKey();
             } else {
-                throw new InvalidJSONException(
-                        "Expected object key string. [position " + this.position + "]", this.metadata);
+                throw invalidJSON("Expected object key string.", this.position);
             }
 
+            int keyEnd = this.position;
             skipIgnorable();
             expect(':');
             skipIgnorable();
@@ -239,7 +264,8 @@ public final class JSONParser {
 
                 if (JSONParsingOptions.DUPLICATES_REJECT.equals(policy)) {
                     throw new DuplicateJSONKeyException(
-                            "Duplicate key '" + key.resultValue + "' found in JSON object.", this.metadata);
+                            describe("Duplicate key '" + key.resultValue + "' found in JSON object.", keyStart),
+                            errorMetadata(keyStart, keyEnd));
                 }
 
                 if (JSONParsingOptions.DUPLICATES_USE_LAST.equals(policy)) {
@@ -361,24 +387,20 @@ public final class JSONParser {
         }
 
         if (isEnd()) {
-            throw new InvalidJSONException(
-                    "Unexpected end of input while parsing number. [position " + this.position + "]", this.metadata);
+            throw invalidJSON("Unexpected end of input while parsing number.", this.position);
         }
 
         if (peek() == '0') {
             advance();
             if (!isEnd() && isDigit(peek()) && !this.options.isLiberal()) {
-                throw new InvalidJSONException(
-                        "Leading zeroes are not allowed in JSON numbers. [position " + this.position + "]",
-                        this.metadata);
+                throw invalidJSON("Leading zeroes are not allowed in JSON numbers.", this.position);
             }
             while (this.options.isLiberal() && !isEnd() && isDigit(peek())) {
                 advance();
             }
         } else {
             if (!isDigit19(peek())) {
-                throw new InvalidJSONException(
-                        "Invalid number: expected digit. [position " + this.position + "]", this.metadata);
+                throw invalidJSON("Invalid number: expected digit.", this.position);
             }
             while (!isEnd() && isDigit(peek())) {
                 advance();
@@ -388,9 +410,7 @@ public final class JSONParser {
         if (!isEnd() && peek() == '.') {
             advance();
             if (isEnd() || !isDigit(peek())) {
-                throw new InvalidJSONException(
-                        "Invalid number: expected digit after decimal point. [position " + this.position + "]",
-                        this.metadata);
+                throw invalidJSON("Invalid number: expected digit after decimal point.", this.position);
             }
             while (!isEnd() && isDigit(peek())) {
                 advance();
@@ -403,8 +423,7 @@ public final class JSONParser {
                 advance();
             }
             if (isEnd() || !isDigit(peek())) {
-                throw new InvalidJSONException(
-                        "Invalid number: expected digit in exponent. [position " + this.position + "]", this.metadata);
+                throw invalidJSON("Invalid number: expected digit in exponent.", this.position);
             }
             while (!isEnd() && isDigit(peek())) {
                 advance();
@@ -415,8 +434,7 @@ public final class JSONParser {
         try {
             return JSONLiteralParsingUtils.getItemFromJSONNumber(number, this.options.getNumberFormat());
         } catch (NumberFormatException e) {
-            InvalidJSONException error = new InvalidJSONException(
-                    "Invalid number literal '" + number + "'. [position " + start + "]", this.metadata);
+            InvalidJSONException error = invalidJSON("Invalid number literal '" + number + "'.", start);
             error.initCause(e);
             throw error;
         }
@@ -459,13 +477,12 @@ public final class JSONParser {
      */
     private ParsedString parseString() {
         if (isEnd()) {
-            throw new InvalidJSONException(
-                    "Unexpected end of input while parsing string. [position " + this.position + "]", this.metadata);
+            throw invalidJSON("Unexpected end of input while parsing string.", this.position);
         }
 
         char quote = peek();
         if (quote != '"' && !(this.options.isLiberal() && quote == '\'')) {
-            throw new InvalidJSONException("Expected string literal. [position " + this.position + "]", this.metadata);
+            throw invalidJSON("Expected string literal.", this.position);
         }
         advance();
 
@@ -482,8 +499,7 @@ public final class JSONParser {
 
             if (c == '\\') {
                 if (isEnd()) {
-                    throw new InvalidJSONException(
-                            "Unterminated escape sequence in string. [position " + this.position + "]", this.metadata);
+                    throw invalidJSON("Unterminated escape sequence in string.", this.position);
                 }
 
                 if (peek() == '\'' && this.options.isLiberal()) {
@@ -492,30 +508,25 @@ public final class JSONParser {
                     continue;
                 }
 
+                JSONLiteralParsingUtils.DecodedEscape decodedEscape;
                 try {
-                    JSONLiteralParsingUtils.DecodedEscape decodedEscape =
-                            JSONLiteralParsingUtils.decodeEscapeSequence(this.input, this.position - 1);
-                    this.position = decodedEscape.getNextIndex();
-                    keyComparisonValue = appendDecodedEscape(
-                            resultValue,
-                            keyComparisonValue,
-                            decodedEscape.getDecodedText(),
-                            decodedEscape.getRawEscape());
+                    decodedEscape = JSONLiteralParsingUtils.decodeEscapeSequence(this.input, this.position - 1);
                 } catch (IllegalArgumentException e) {
-                    throw new InvalidJSONException(e.getMessage() + " [position " + this.position + "]", this.metadata);
+                    InvalidJSONException error = invalidJSON(e.getMessage(), this.position - 1);
+                    error.initCause(e);
+                    throw error;
                 }
+                this.position = decodedEscape.getNextIndex();
+                keyComparisonValue = appendDecodedEscape(
+                        resultValue, keyComparisonValue, decodedEscape.getDecodedText(), decodedEscape.getRawEscape());
                 continue;
             }
 
             if (c <= 0x1F) {
                 if (!this.options.isLiberal()) {
-                    throw new InvalidJSONException(
-                            "Unescaped control character U+"
-                                    + hex4(c)
-                                    + " is not allowed in JSON strings. [position "
-                                    + this.position
-                                    + "]",
-                            this.metadata);
+                    throw invalidJSON(
+                            "Unescaped control character U+" + hex4(c) + " is not allowed in JSON strings.",
+                            this.position - 1);
                 }
             }
 
@@ -533,7 +544,7 @@ public final class JSONParser {
             }
         }
 
-        throw new InvalidJSONException("Unterminated string literal. [position " + this.position + "]", this.metadata);
+        throw invalidJSON("Unterminated string literal.", this.position);
     }
 
     private StringBuilder appendDecodedEscape(
@@ -657,18 +668,13 @@ public final class JSONParser {
      */
     private ParsedString parseUnquotedKey() {
         if (!this.options.isLiberal()) {
-            throw new InvalidJSONException(
-                    "Unquoted object keys are not allowed unless option 'liberal' is true. [position "
-                            + this.position
-                            + "]",
-                    this.metadata);
+            throw invalidJSON("Unquoted object keys are not allowed unless option 'liberal' is true.", this.position);
         }
 
         int start = this.position;
         char first = peek();
         if (!isIdentifierStart(first)) {
-            throw new InvalidJSONException(
-                    "Invalid unquoted object key. [position " + this.position + "]", this.metadata);
+            throw invalidJSON("Invalid unquoted object key.", this.position);
         }
 
         advance();
@@ -682,10 +688,10 @@ public final class JSONParser {
 
     private void parseLiteral(String literal) {
         for (int i = 0; i < literal.length(); i++) {
-            if (isEnd() || advance() != literal.charAt(i)) {
-                throw new InvalidJSONException(
-                        "Expected literal '" + literal + "'. [position " + this.position + "]", this.metadata);
+            if (isEnd() || peek() != literal.charAt(i)) {
+                throw invalidJSON("Expected literal '" + literal + "'.", this.position);
             }
+            advance();
         }
     }
 
@@ -718,8 +724,7 @@ public final class JSONParser {
                         this.position += 2;
                         while (true) {
                             if (isEnd()) {
-                                throw new InvalidJSONException(
-                                        "Unterminated block comment. [position " + this.position + "]", this.metadata);
+                                throw invalidJSON("Unterminated block comment.", this.position);
                             }
                             if (peek() == '*'
                                     && this.position + 1 < this.input.length()
@@ -745,15 +750,13 @@ public final class JSONParser {
      */
     private void expect(char expected) {
         if (isEnd() || peek() != expected) {
-            throw new InvalidJSONException(
+            throw invalidJSON(
                     "Expected '"
                             + expected
                             + "', but found "
                             + (isEnd() ? "end of input" : "'" + printable(peek()) + "'")
-                            + ". [position "
-                            + this.position
-                            + "]",
-                    this.metadata);
+                            + ".",
+                    this.position);
         }
         advance();
     }
@@ -773,14 +776,66 @@ public final class JSONParser {
     private void enterContainer() {
         this.nestingDepth++;
         if (this.nestingDepth > MAX_NESTING_DEPTH) {
-            throw new InvalidJSONException(
-                    "JSON nesting depth exceeds the maximum supported depth of "
-                            + MAX_NESTING_DEPTH
-                            + ". [position "
-                            + this.position
-                            + "]",
-                    this.metadata);
+            throw invalidJSON(
+                    "JSON nesting depth exceeds the maximum supported depth of " + MAX_NESTING_DEPTH + ".",
+                    this.position);
         }
+    }
+
+    private InvalidJSONException invalidJSON(String message, int offset) {
+        return new InvalidJSONException(describe(message, offset), errorMetadata(offset, characterEnd(offset)));
+    }
+
+    private String describe(String message, int offset) {
+        SourcePosition position = inputPosition(offset);
+        return "Unable to parse "
+                + this.inputDescription
+                + " at line "
+                + position.line()
+                + ", column "
+                + (position.column() + 1)
+                + ": "
+                + message;
+    }
+
+    /** Points into the resource when it has a URI, and to the caller otherwise. */
+    private ExceptionMetadata errorMetadata(int startOffset, int endOffset) {
+        if (this.resourceUri == null) {
+            return this.metadata;
+        }
+        return new ExceptionMetadata(
+                this.resourceUri.toString(), new SourceRange(inputPosition(startOffset), inputPosition(endOffset)), "");
+    }
+
+    /** The end of the character at the offset, treating a CRLF line break as one character. */
+    private int characterEnd(int offset) {
+        if (offset >= this.input.length()) {
+            return offset;
+        }
+        int end = offset + Character.charCount(this.input.codePointAt(offset));
+        if (this.input.charAt(offset) == '\r' && end < this.input.length() && this.input.charAt(end) == '\n') {
+            end++;
+        }
+        return end;
+    }
+
+    /** Scans only on failure; successful parsing pays no line/column tracking cost. */
+    private SourcePosition inputPosition(int offset) {
+        int line = 1;
+        int column = 0;
+        for (int i = 0; i < offset; i++) {
+            char c = this.input.charAt(i);
+            if (c == '\r' || c == '\n') {
+                if (c == '\r' && i + 1 < offset && this.input.charAt(i + 1) == '\n') {
+                    i++;
+                }
+                line++;
+                column = 0;
+            } else {
+                column++;
+            }
+        }
+        return new SourcePosition(line, column);
     }
 
     private void exitContainer() {

@@ -26,7 +26,9 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -39,6 +41,9 @@ final class RandomNumberGeneratorMapBuilder {
     static final Name PERMUTE_PARAM_NAME = Name.createVariableInDefaultFunctionNamespace(
             "random-number-generator-permute-arg-b3f6a3f0-6c39-4d3b-9c62-2a6e6b0f9a49");
 
+    private static final SequenceType GENERATOR_MAP_TYPE = new SequenceType(
+            ItemTypeFactory.mapOf(BuiltinTypesCatalogue.stringItem, SequenceType.createSequenceType("item")));
+
     private RandomNumberGeneratorMapBuilder() {}
 
     static Item build(
@@ -49,7 +54,7 @@ final class RandomNumberGeneratorMapBuilder {
                 new FunctionIdentifier(
                         Name.createVariableInDefaultFunctionNamespace("random-number-generator-next-" + seed), 0),
                 List.of(),
-                new FunctionSignature(List.of(), SequenceType.createSequenceType("map")),
+                new FunctionSignature(List.of(), GENERATOR_MAP_TYPE),
                 moduleContext,
                 new RandomNumberGeneratorNextBodyIterator(seed, staticContext));
 

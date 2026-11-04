@@ -18,12 +18,12 @@ package org.rumbledb.types;
 import java.io.Serial;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
-
 import lombok.Getter;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 /**
  * Class representing processing-instruction() and processing-instruction(N) item types.
@@ -51,7 +51,8 @@ public class PINodeItemType extends AbstractItemType {
             throw new IllegalArgumentException("Processing-instruction target cannot be null.");
         }
         this.catalogueName = null;
-        this.normalizedTarget = StringUtils.normalizeSpace(targetName);
+        this.normalizedTarget =
+                NamespaceBindingUtils.normalizePITestTarget(targetName, ExceptionMetadata.EMPTY_METADATA);
     }
 
     private boolean isWildcardPI() {

@@ -59,23 +59,13 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
  * </pre>
  *
  * <p>
- * This implementation stays local-only and mirrors that behaviour using the existing MapItem
- * representation and {@code MapAtomicSameKey} key equality via {@code MapItem.getSequenceByKey()}.
+ * This implementation stays local-only, collects the entries using atomic same-key equality, and builds the map
+ * once.
  */
 public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
-
-    private static class AccumulatedEntry {
-        private Item key;
-        private List<Item> values;
-
-        private AccumulatedEntry(Item key, List<Item> values) {
-            this.key = key;
-            this.values = values;
-        }
-    }
 
     private final ItemRuntimePlan mapsIterator;
     private final ItemRuntimePlan optionsIterator; // may be null for
@@ -150,12 +140,11 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             }
         }
 
-        // 3. Implement fold-left over maps with a hashed same-key accumulator.
-        // Streaming consumption avoids materializing huge sequences of maps.
-        Map<Item, AccumulatedEntry> accumulator = new HashMap<>();
-        boolean sawAnyMap = false;
-        boolean allKeysString = true;
-        boolean allValuesSingletons = true;
+        // 3. Collect the entries, with the key of the latest map that set each one, as a fold of map:put
+        // would, then build the map in one go. Streaming consumption avoids materializing huge sequences of maps.
+        Map<Item, Integer> positions = new HashMap<>();
+        List<Item> keys = new ArrayList<>();
+        List<List<Item>> values = new ArrayList<>();
         try (Cursor<Item> maps = this.mapsIterator.getCursor(context)) {
             while (maps.hasNext()) {
                 Item mapItem = maps.next();
@@ -163,53 +152,26 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                     throw new UnexpectedTypeException(
                             "map:merge expects a sequence of map(*) items as first argument [err:XPTY0004].", metadata);
                 }
-                sawAnyMap = true;
-                List<Item> bKeys = mapItem.getItemKeys();
-                for (Item bKey : bKeys) {
-                    List<Item> bSeq = mapItem.getSequenceByKey(bKey);
-                    if (bSeq == null) {
-                        bSeq = new ArrayList<>();
-                    }
-
-                    AccumulatedEntry existing = accumulator.get(bKey);
-                    if (existing == null) {
-                        accumulator.put(bKey, new AccumulatedEntry(bKey, new ArrayList<>(bSeq)));
-                        if (allKeysString && !bKey.isString()) {
-                            allKeysString = false;
-                        }
-                        if (allValuesSingletons && bSeq.size() != 1) {
-                            allValuesSingletons = false;
-                        }
+                for (Item key : mapItem.getItemKeys()) {
+                    List<Item> value = mapItem.getSequenceByKey(key);
+                    Integer position = positions.putIfAbsent(key, keys.size());
+                    if (position == null) {
+                        keys.add(key);
+                        values.add(value);
                         continue;
                     }
-
                     switch (policy) {
                         case USE_FIRST:
-                            break;
-                        case USE_LAST:
-                            existing.key = bKey;
-                            existing.values = new ArrayList<>(bSeq);
-                            if (allKeysString && !bKey.isString()) {
-                                allKeysString = false;
-                            }
-                            if (allValuesSingletons && bSeq.size() != 1) {
-                                allValuesSingletons = false;
-                            }
-                            break;
                         case USE_ANY:
+                            continue;
+                        case USE_LAST:
                             break;
                         case COMBINE:
-                            List<Item> combined = new ArrayList<>(existing.values.size() + bSeq.size());
-                            combined.addAll(existing.values);
-                            combined.addAll(bSeq);
-                            existing.key = bKey;
-                            existing.values = combined;
-                            if (allKeysString && !bKey.isString()) {
-                                allKeysString = false;
-                            }
-                            if (allValuesSingletons && combined.size() != 1) {
-                                allValuesSingletons = false;
-                            }
+                            List<Item> existing = values.get(position);
+                            List<Item> combined = new ArrayList<>(existing.size() + value.size());
+                            combined.addAll(existing);
+                            combined.addAll(value);
+                            value = combined;
                             break;
                         case REJECT:
                             throw new DuplicateJSONKeyException(
@@ -218,36 +180,13 @@ public class MapMergeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                         default:
                             throw new OurBadException("Unexpected duplicates policy in map:merge.");
                     }
+                    keys.set(position, key);
+                    values.set(position, value);
                 }
             }
         }
-
-        // Empty input -> empty map.
-        if (!sawAnyMap) {
-            return ItemFactory.getInstance().createObjectItemOptimized(new HashMap<>(), false);
-        }
-
-        if (allKeysString && allValuesSingletons) {
-            // fast path: construct an object item
-            HashMap<String, Item> newKeyValuePairs = new HashMap<>();
-            for (AccumulatedEntry entry : accumulator.values()) {
-                Item key = entry.key;
-                List<Item> values = entry.values;
-                newKeyValuePairs.put(key.getStringValue(), values.get(0));
-            }
-            return ItemFactory.getInstance().createObjectItemOptimized(newKeyValuePairs, false);
-        } else {
-            // construct a map item
-            // 4. Build final MapItem from accumulator via map overload to avoid duplicate-key verification.
-            Map<Item, List<Item>> finalKeyValuePairs = new HashMap<>();
-            for (AccumulatedEntry entry : accumulator.values()) {
-                finalKeyValuePairs.put(entry.key, entry.values);
-            }
-            return ItemFactory.getInstance()
-                    .createMapItem(
-                            finalKeyValuePairs,
-                            metadata,
-                            this.getRuntimeStaticContext().isQuerySideEffecting());
-        }
+        return ItemFactory.getInstance()
+                .createMapItem(
+                        keys, values, metadata, this.getRuntimeStaticContext().isQuerySideEffecting());
     }
 }
