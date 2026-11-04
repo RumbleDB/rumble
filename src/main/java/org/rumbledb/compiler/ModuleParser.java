@@ -28,6 +28,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.translation.ExternalVariableTranslation;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
@@ -74,9 +75,10 @@ final class ModuleParser {
             Language language) {
         StaticContext moduleContext = createModuleContext(uri, configuration.runtimeConfiguration());
         ModuleImportLoader importLoader = new ModuleImportLoader(configuration);
-        MainModule module = (MainModule)
-                parseModule(query, uri, configuration, bindings, language, moduleContext, true, importLoader);
-        importLoader.flattenImports(module.getProlog());
+        MainModule module =
+                (MainModule) parseModule(query, uri, configuration, language, moduleContext, true, importLoader);
+        importLoader.flattenImports(module.getProlog(), moduleContext);
+        ExternalVariableTranslation.process(module.getProlog(), bindings, module.getMetadata());
         return module;
     }
 
@@ -90,8 +92,7 @@ final class ModuleParser {
         Language language = detectLanguage(query, uri, runtimeConfiguration);
         StaticContext moduleContext = new StaticContext(uri, runtimeConfiguration);
         moduleContext.setUserDefinedFunctionsExecutionModes(importingContext.getUserDefinedFunctionsExecutionModes());
-        return (LibraryModule) parseModule(
-                query, uri, configuration, ExternalBindings.empty(), language, moduleContext, false, importLoader);
+        return (LibraryModule) parseModule(query, uri, configuration, language, moduleContext, false, importLoader);
     }
 
     private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
@@ -119,7 +120,6 @@ final class ModuleParser {
             String query,
             URI uri,
             CompilationConfiguration configuration,
-            ExternalBindings bindings,
             Language language,
             StaticContext moduleContext,
             boolean isMainModule,
@@ -152,13 +152,12 @@ final class ModuleParser {
             parser = xqueryParser;
             parseTreeSupplier = () -> xqueryParser.moduleAndThisIsIt().module();
             visitor = new XQueryTranslationVisitor(
-                    moduleContext, isMainModule, configuration, bindings, query, tokens, importLoader);
+                    moduleContext, isMainModule, configuration, query, tokens, importLoader);
         } else {
             JsoniqParser jsoniqParser = new JsoniqParser(tokens);
             parser = jsoniqParser;
             parseTreeSupplier = () -> jsoniqParser.moduleAndThisIsIt().module();
-            visitor = new TranslationVisitor(
-                    moduleContext, isMainModule, configuration, bindings, query, tokens, importLoader);
+            visitor = new TranslationVisitor(moduleContext, isMainModule, configuration, query, tokens, importLoader);
         }
 
         parser.setErrorHandler(new BailErrorStrategy());

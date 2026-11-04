@@ -18,6 +18,8 @@ package org.rumbledb.compiler.translation;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.bindings.DataFrameBinding;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.context.Name;
@@ -29,18 +31,17 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 /** Adds global declarations implied by external API bindings. */
+@Log4j2
 public final class ExternalVariableTranslation {
 
     private ExternalVariableTranslation() {}
 
-    /** Returns whether a context-item declaration was synthesized. */
-    public static boolean process(Prolog prolog, ExternalBindings externalBindings, ExceptionMetadata metadata) {
-        boolean addedContextItem = false;
+    public static void process(Prolog prolog, ExternalBindings externalBindings, ExceptionMetadata metadata) {
         if (!prolog.hasContextItemDeclaration()
                 && getExternalVariableType(externalBindings, Name.CONTEXT_ITEM) != null) {
             prolog.addDeclaration(new VariableDeclaration(
                     Name.CONTEXT_ITEM, true, SequenceType.createSequenceType("item"), null, null, metadata));
-            addedContextItem = true;
+            log.warn("Adding context item declaration.");
         }
 
         for (Name externalVariable : externalBindings.names()) {
@@ -53,7 +54,6 @@ public final class ExternalVariableTranslation {
                         new VariableDeclaration(externalVariable, true, sequenceType, null, null, metadata));
             }
         }
-        return addedContextItem;
     }
 
     private static boolean hasDeclaration(Prolog prolog, Name variableName) {

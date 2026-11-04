@@ -39,7 +39,6 @@ public final class ModuleImportLoader {
 
     private final CompilationConfiguration configuration;
     private final Map<URI, LibraryModule> modules = new LinkedHashMap<>();
-    private final Map<String, List<URI>> locationsByNamespace = new LinkedHashMap<>();
 
     ModuleImportLoader(CompilationConfiguration configuration) {
         this.configuration = configuration;
@@ -49,35 +48,33 @@ public final class ModuleImportLoader {
      * Replaces a root module's imports with one library holding the declarations of every reachable module. This
      * removes import cycles from the tree, and lets dependency ordering work across module boundaries.
      */
-    void flattenImports(Prolog rootProlog) {
-        List<LibraryModule> imports = rootProlog.getImportedModules();
+    void flattenImports(Prolog rootProlog, StaticContext rootContext) {
         // Only what the root reaches: failed location hints can leave unrelated modules behind.
         Set<String> reachable = new HashSet<>();
-        imports.forEach(imported -> collectReachable(imported, reachable));
-        if (reachable.isEmpty()) {
-            return;
+        collectReachable(rootContext, reachable);
+        if (!reachable.isEmpty()) {
+            rootProlog.addImportedModule(merge(this.modules.values().stream()
+                    .filter(module -> reachable.contains(module.getNamespace()))
+                    .toList()));
         }
-        LibraryModule library = merge(this.modules.values().stream()
-                .filter(module -> reachable.contains(module.getNamespace()))
-                .toList());
-        imports.clear();
-        imports.add(library);
     }
 
-    private void collectReachable(LibraryModule imported, Set<String> reachable) {
-        String namespace = imported.getNamespace();
-        if (!reachable.add(namespace)) {
-            return;
-        }
-        List<LibraryModule> modules = this.modules.values().stream()
+    private void collectReachable(StaticContext importer, Set<String> reachable) {
+        importer.getImportedNamespaces().forEach((namespace, metadata) -> {
+            if (reachable.add(namespace)) {
+                // Every hint has been followed by now, so a namespace still without modules is its own location.
+                if (modulesOf(namespace).isEmpty()) {
+                    load(namespace, List.of(namespace), importer, metadata);
+                }
+                modulesOf(namespace).forEach(module -> collectReachable(module.getStaticContext(), reachable));
+            }
+        });
+    }
+
+    private List<LibraryModule> modulesOf(String namespace) {
+        return this.modules.values().stream()
                 .filter(module -> namespace.equals(module.getNamespace()))
                 .toList();
-        if (modules.isEmpty()) {
-            throw new ModuleNotFoundException("Module not found: " + namespace, imported.getMetadata());
-        }
-        for (LibraryModule module : modules) {
-            module.getProlog().getImportedModules().forEach(next -> collectReachable(next, reachable));
-        }
     }
 
     /** Each declaration keeps its module's context; the library's own context collects their public declarations. */
@@ -102,44 +99,32 @@ public final class ModuleImportLoader {
     }
 
     /** Loads every location of the namespace, as modules sharing a namespace are compiled together. */
-    public LibraryModule load(
+    public void load(
             String namespace, List<String> locationHints, StaticContext importingContext, ExceptionMetadata metadata) {
         List<URI> locations;
         try {
-            locations = findLocations(namespace, locationHints, importingContext.getStaticBaseURI(), metadata);
+            locations = locationHints.stream()
+                    .map(hint -> URILiteralUtils.resolve(importingContext.getStaticBaseURI(), hint, metadata))
+                    .toList();
         } catch (RumbleException e) {
             throw moduleNotFound(namespace, e, metadata);
         }
-        LibraryModule firstLoaded = null;
+        boolean loaded = false;
         Exception lastFailure = null;
         for (URI location : locations) {
             try {
-                LibraryModule module = loadLocation(location, namespace, importingContext, metadata);
-                firstLoaded = firstLoaded == null ? module : firstLoaded;
+                loadLocation(location, namespace, importingContext, metadata);
+                loaded = true;
             } catch (IOException | CannotRetrieveResourceException | ModuleNotFoundException e) {
                 lastFailure = e;
             }
         }
-        if (firstLoaded == null) {
+        if (!loaded) {
             throw moduleNotFound(namespace, lastFailure, metadata);
         }
-        return firstLoaded;
     }
 
-    /** An import without hints reuses the hints seen for its namespace, or else treats the namespace as a location. */
-    private List<URI> findLocations(String namespace, List<String> hints, URI baseURI, ExceptionMetadata metadata) {
-        if (hints.isEmpty()) {
-            List<URI> known = this.locationsByNamespace.get(namespace);
-            return known != null ? known : List.of(URILiteralUtils.resolve(baseURI, namespace, metadata));
-        }
-        List<URI> locations = hints.stream()
-                .map(hint -> URILiteralUtils.resolve(baseURI, hint, metadata))
-                .toList();
-        this.locationsByNamespace.putIfAbsent(namespace, locations);
-        return locations;
-    }
-
-    private LibraryModule loadLocation(
+    private void loadLocation(
             URI location, String namespace, StaticContext importingContext, ExceptionMetadata metadata)
             throws IOException {
         URI resolved =
@@ -147,7 +132,7 @@ public final class ModuleImportLoader {
         LibraryModule module = this.modules.get(resolved);
         if (module == null) {
             // An import cycle reaches this location again while it is being translated. An empty module
-            // answers that import, of which flattening only reads the namespace.
+            // answers that import, and translation replaces it before flattening.
             this.modules.put(resolved, new LibraryModule(new Prolog(metadata), namespace, metadata));
             try {
                 module = translate(location, importingContext, metadata);
@@ -165,7 +150,6 @@ public final class ModuleImportLoader {
                             + module.getNamespace(),
                     metadata);
         }
-        return module;
     }
 
     private LibraryModule translate(URI location, StaticContext importingContext, ExceptionMetadata metadata)

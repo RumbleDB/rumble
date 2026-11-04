@@ -18,6 +18,7 @@ package org.rumbledb.context;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -86,7 +87,10 @@ public class StaticContext {
     private SequenceType contextItemStaticType;
 
     private Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
-    private final Set<String> importedNamespaces = new LinkedHashSet<>();
+
+    @Getter
+    private final Map<String, ExceptionMetadata> importedNamespaces = new LinkedHashMap<>();
+
     private final Set<Name> privateVariables = new LinkedHashSet<>();
     private final Set<FunctionIdentifier> privateFunctions = new LinkedHashSet<>();
 
@@ -548,14 +552,14 @@ public class StaticContext {
         this.getInScopeSchemaTypes().importModuleTypes(moduleContext.getInScopeSchemaTypes());
     }
 
-    public void addImportedNamespace(String namespace) {
-        this.importedNamespaces.add(namespace);
+    public void addImportedNamespace(String namespace, ExceptionMetadata metadata) {
+        this.importedNamespaces.put(namespace, metadata);
     }
 
     /** A module sees what it declares, plus the public declarations of the namespaces it imports (XQuery 4.12). */
     public void linkImports(StaticContext publicDeclarations) {
         publicDeclarations.inScopeVariables.forEach((name, variable) -> {
-            if (this.importedNamespaces.contains(name.getNamespace())) {
+            if (this.importedNamespaces.containsKey(name.getNamespace())) {
                 InScopeVariable existing = this.inScopeVariables.get(name);
                 if (existing != null && existing != variable) {
                     throw new VariableAlreadyExistsException(name, existing.getMetadata());
@@ -564,7 +568,7 @@ public class StaticContext {
             }
         });
         publicDeclarations.staticallyKnownFunctionSignatures.forEach((id, signature) -> {
-            if (this.importedNamespaces.contains(id.getName().getNamespace())) {
+            if (this.importedNamespaces.containsKey(id.getName().getNamespace())) {
                 this.staticallyKnownFunctionSignatures.put(id, signature);
             }
         });

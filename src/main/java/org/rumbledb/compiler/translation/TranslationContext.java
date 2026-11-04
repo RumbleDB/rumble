@@ -24,7 +24,6 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.ModuleImportLoader;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
@@ -39,7 +38,6 @@ public final class TranslationContext {
     private final StaticContext moduleContext;
     private final CompilationConfiguration compilationConfiguration;
     private final RumbleConfiguration configuration;
-    private final ExternalBindings externalBindings;
     private final boolean mainModule;
     private final String source;
     private final ArrayDeque<Map<String, String>> constructorNamespaceFrames;
@@ -50,7 +48,6 @@ public final class TranslationContext {
     public TranslationContext(
             StaticContext moduleContext,
             CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings,
             boolean mainModule,
             String source,
             ModuleImportLoader importLoader) {
@@ -58,7 +55,6 @@ public final class TranslationContext {
         this.moduleContext.bindDefaultNamespaces();
         this.compilationConfiguration = compilationConfiguration;
         this.configuration = compilationConfiguration.runtimeConfiguration();
-        this.externalBindings = externalBindings;
         this.mainModule = mainModule;
         this.source = source;
         this.constructorNamespaceFrames = new ArrayDeque<>();
@@ -76,10 +72,6 @@ public final class TranslationContext {
 
     public RumbleConfiguration configuration() {
         return this.configuration;
-    }
-
-    public ExternalBindings externalBindings() {
-        return this.externalBindings;
     }
 
     public boolean isMainModule() {

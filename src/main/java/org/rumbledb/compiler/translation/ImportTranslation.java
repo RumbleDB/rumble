@@ -26,7 +26,6 @@ import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
-import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
@@ -52,7 +51,8 @@ public final class ImportTranslation {
                 translationContext.metadata(ctx.context()));
     }
 
-    public static <UriLiteralCtx extends ParserRuleContext> LibraryModule moduleImport(
+    /** Returns the imported namespace. Its modules are linked to the prolog once all imports are loaded. */
+    public static <UriLiteralCtx extends ParserRuleContext> String moduleImport(
             ModuleImportContext<UriLiteralCtx> ctx,
             TranslationContext translationContext,
             Function<UriLiteralCtx, String> processURILiteral) {
@@ -78,10 +78,13 @@ public final class ImportTranslation {
                 .map(processURILiteral)
                 .map(URILiteralUtils::normalizeAsAnyURI)
                 .toList();
-        translationContext.moduleContext().addImportedNamespace(namespace);
-        LibraryModule libraryModule = translationContext
-                .importLoader()
-                .load(namespace, locationHints, translationContext.moduleContext(), metadata);
+        translationContext.moduleContext().addImportedNamespace(namespace, metadata);
+        // An import without hints is resolved after loading, as a later import may provide the namespace's modules.
+        if (!locationHints.isEmpty()) {
+            translationContext
+                    .importLoader()
+                    .load(namespace, locationHints, translationContext.moduleContext(), metadata);
+        }
         if (ctx.prefix() != null) {
             // A module may import its own namespace under the prefix of its module declaration.
             boolean ownModulePrefix = namespace.equals(translationContext.libraryModuleNamespace())
@@ -93,6 +96,6 @@ public final class ImportTranslation {
                 translationContext.bindNamespace(ctx.prefix(), namespace, metadata);
             }
         }
-        return libraryModule;
+        return namespace;
     }
 }
