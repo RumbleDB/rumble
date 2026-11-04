@@ -58,14 +58,29 @@ public final class ResourceResolver implements Serializable {
     private final Map<URI, ResourceCollection> collections;
     private final ResourceCollection defaultCollection;
 
+    /**
+     * Creates a resolver with no registered resources.
+     */
     public ResourceResolver() {
         this(Map.of());
     }
 
+    /**
+     * Creates a resolver with URI mappings and no registered collections.
+     *
+     * @param mappings logical URIs mapped to physical resource URIs
+     */
     public ResourceResolver(Map<URI, URI> mappings) {
         this(mappings, Map.of(), null);
     }
 
+    /**
+     * Creates a resolver with the supplied mappings and collections.
+     *
+     * @param mappings logical URIs mapped to physical resource URIs
+     * @param collections named collections keyed by their absolute URIs
+     * @param defaultCollection the default collection, or {@code null} if none is defined
+     */
     public ResourceResolver(
             Map<URI, URI> mappings, Map<URI, ResourceCollection> collections, ResourceCollection defaultCollection) {
         this.mappings = Map.copyOf(mappings);
@@ -73,11 +88,25 @@ public final class ResourceResolver implements Serializable {
         this.defaultCollection = defaultCollection;
     }
 
-    /** Starts a query with the same registered resources and fresh retrieval caches. */
+    /**
+     * Starts a query with the same registered resources and fresh retrieval caches.
+     *
+     * @return a resolver for the new query
+     */
     public ResourceResolver forQuery() {
         return new ResourceResolver(this.mappings, this.collections, this.defaultCollection);
     }
 
+    /**
+     * Returns a registered collection or loads and caches a local directory collection.
+     *
+     * @param uri the collection URI, or {@code null} for the default collection
+     * @param queryLanguage the query language used to select parsing semantics
+     * @param configuration the configuration governing resource parsing
+     * @param metadata the query location used in error reports
+     * @return the collection items and member URIs
+     * @throws CannotRetrieveResourceException if the collection is undefined or a resource cannot be read
+     */
     public ResourceCollection collection(
             URI uri, String queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         ResourceCollection registered = registeredCollection(uri);
@@ -98,15 +127,35 @@ public final class ResourceResolver implements Serializable {
         });
     }
 
+    /**
+     * Lists collection member URIs without loading their contents.
+     *
+     * @param uri the collection URI, or {@code null} for the default collection
+     * @param metadata the query location used in error reports
+     * @return the registered member URIs or the cached directory listing
+     */
     public List<URI> collectionUris(URI uri, ExceptionMetadata metadata) {
         ResourceCollection registered = registeredCollection(uri);
         return registered == null ? directoryMembers(uri, metadata) : registered.uris();
     }
 
+    /**
+     * Looks up a registered collection.
+     *
+     * @param uri the collection URI, or {@code null} for the default collection
+     * @return the registered collection, or {@code null} if none is defined
+     */
     private ResourceCollection registeredCollection(URI uri) {
         return uri == null ? this.defaultCollection : this.collections.get(uri);
     }
 
+    /**
+     * Returns the directory listing cached for this query, discovering members on first access.
+     *
+     * @param uri the directory URI
+     * @param metadata the query location used in error reports
+     * @return the member URIs in sorted path order
+     */
     private List<URI> directoryMembers(URI uri, ExceptionMetadata metadata) {
         if (uri == null) {
             throw new CannotRetrieveResourceException("No default collection is defined.", metadata);
@@ -114,6 +163,14 @@ public final class ResourceResolver implements Serializable {
         return this.directoryMembers.computeIfAbsent(uri, key -> listDirectory(key, metadata));
     }
 
+    /**
+     * Lists immediate regular files with XML, JSON, or JSON Lines extensions in a local directory.
+     *
+     * @param uri the local directory URI
+     * @param metadata the query location used in error reports
+     * @return the supported member URIs in sorted path order
+     * @throws CannotRetrieveResourceException if the URI is unsupported or the directory cannot be listed
+     */
     private List<URI> listDirectory(URI uri, ExceptionMetadata metadata) {
         if (!uri.isOpaque()
                 && "file".equalsIgnoreCase(uri.getScheme())
@@ -144,6 +201,15 @@ public final class ResourceResolver implements Serializable {
         throw new CannotRetrieveResourceException("Collection " + uri + " is not defined.", metadata);
     }
 
+    /**
+     * Appends a UTF-8 JSON file value or the values of a JSON Lines file in line order.
+     *
+     * @param uri the local JSON or JSON Lines file URI
+     * @param queryLanguage the query language used to select JSON parsing semantics
+     * @param configuration the configuration supplying the XML character rules for JSON strings
+     * @param items the destination list for parsed items
+     * @param metadata the query location used in error reports
+     */
     private void loadJsonFile(
             URI uri,
             String queryLanguage,
@@ -189,6 +255,15 @@ public final class ResourceResolver implements Serializable {
         }
     }
 
+    /**
+     * Returns an existing XML document node or parses and caches it.
+     *
+     * @param uri the logical document URI
+     * @param queryLanguage the query language used to determine whitespace handling
+     * @param configuration the configuration governing resource access and node construction
+     * @param metadata the query location used in error reports
+     * @return the document node associated with the URI
+     */
     public Item loadDocument(
             URI uri, String queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         Item collectionDocument = document(uri);
@@ -217,7 +292,12 @@ public final class ResourceResolver implements Serializable {
         }
     }
 
-    /** Reuses collection document identity for fn:doc(document-uri($document)). */
+    /**
+     * Finds a document by its URI in the registered collections, including the default collection.
+     *
+     * @param uri the document URI
+     * @return the matching document node, or {@code null} if none is registered
+     */
     public Item collectionDocument(URI uri) {
         return Stream.concat(this.collections.values().stream(), Stream.ofNullable(this.defaultCollection))
                 .flatMap(collection -> collection.items().stream())
@@ -228,26 +308,58 @@ public final class ResourceResolver implements Serializable {
                 .orElse(null);
     }
 
-    /** Reuses retrieved documents so their document URIs resolve to the same node. */
+    /**
+     * Looks up a document in registered collections and then in the retrieval cache.
+     *
+     * @param uri the document URI
+     * @return the matching document node, or {@code null} if it has not been registered or cached
+     */
     public Item document(URI uri) {
         Item collectionDocument = collectionDocument(uri);
         return collectionDocument == null ? this.documents.get(uri) : collectionDocument;
     }
 
+    /**
+     * Caches a retrieved document while preserving the identity of any previously cached node.
+     *
+     * @param uri the document URI used as the cache key
+     * @param document the retrieved document node
+     * @return the cached node for the URI
+     */
     public Item cacheDocument(URI uri, Item document) {
         Item previous = this.documents.putIfAbsent(uri, document);
         return previous == null ? document : previous;
     }
 
+    /**
+     * Checks whether an explicit physical URI mapping exists.
+     *
+     * @param requestedURI the logical resource URI
+     * @return whether the URI has an explicit mapping
+     */
     public boolean hasMapping(URI requestedURI) {
         return this.mappings.containsKey(requestedURI);
     }
 
+    /**
+     * Opens a resource at its mapped physical URI.
+     *
+     * @param requestedURI the logical resource URI
+     * @param configuration the runtime configuration, reserved for resource access settings
+     * @param metadata the query location used in error reports
+     * @return the physical URI and open stream, which the caller must close
+     */
     public ResolvedResource resolve(URI requestedURI, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         URI physicalURI = resolveURI(requestedURI);
         return new ResolvedResource(physicalURI, FileSystemUtil.getDataInputStream(physicalURI, metadata));
     }
 
+    /**
+     * Looks up the physical URI for a resource.
+     *
+     * @param requestedURI the logical resource URI
+     * @return the mapped physical URI or the requested URI if it has no explicit mapping
+     */
     public URI resolveURI(URI requestedURI) {
         return this.mappings.getOrDefault(requestedURI, requestedURI);
     }
