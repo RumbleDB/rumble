@@ -50,8 +50,8 @@ public class Main {
             if (args.length == 0) {
                 ConsoleOutput.error(
                         """
-                            Use run to execute a query or repl to start an interactive shell.
-                            Use --help for available commands and options.
+                            Use rumbledb run to execute a query or rumbledb repl to start an interactive shell.
+                            Use rumbledb --help for available commands and options.
                             Documentation is available at https://docs.rumbledb.org/.
                             """
                                 .stripTrailing());
