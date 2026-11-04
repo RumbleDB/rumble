@@ -3078,7 +3078,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         for (Node child : prolog.getChildren()) {
-            visit(child, argument);
+            StaticContext declarationContext = prolog.getDeclarationContext(child, argument);
+            visit(child, declarationContext);
+            // Inferring a variable's type replaces its entry in one context only.
+            if (!prolog.getSourceModuleContexts().isEmpty()) {
+                prolog.shareGroupDeclarations(declarationContext, argument);
+            }
         }
         return argument;
     }

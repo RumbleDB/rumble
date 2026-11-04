@@ -385,9 +385,11 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitProlog(Prolog prolog, DynamicContext argument) {
-        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-            argument.addGlobalVariable(declaration.getVariableName());
-        }
+        // Modules of a group may each declare the context item.
+        prolog.getVariableDeclarations().stream()
+                .map(VariableDeclaration::getVariableName)
+                .distinct()
+                .forEach(argument::addGlobalVariable);
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             visit(declaration, argument);
         }

@@ -59,6 +59,21 @@ public class Prolog extends Node {
         this.schemaImports = new ArrayList<>();
     }
 
+    /** The context a declaration belongs to: its source module's in a group, otherwise the given one. */
+    public StaticContext getDeclarationContext(Node declaration, StaticContext defaultContext) {
+        return this.sourceModuleContexts.getOrDefault(declaration, defaultContext);
+    }
+
+    /** Publishes one context's public declarations across a group; private ones stay where they are. */
+    public void shareGroupDeclarations(StaticContext changedContext, StaticContext groupContext) {
+        groupContext.importModuleContext(changedContext);
+        groupContext.getInScopeSchemaTypes().importModuleTypes(changedContext.getInScopeSchemaTypes());
+        for (StaticContext sourceContext : this.sourceModuleContexts.values()) {
+            sourceContext.importModuleContext(groupContext);
+            sourceContext.getInScopeSchemaTypes().importModuleTypes(groupContext.getInScopeSchemaTypes());
+        }
+    }
+
     public void addImportedModule(LibraryModule importedModule) {
         this.importedModules.add(importedModule);
     }
