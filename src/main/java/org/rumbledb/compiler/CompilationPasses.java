@@ -29,8 +29,7 @@ final class CompilationPasses {
 
     /** Removes duplicate imported declarations before dependency ordering. */
     static <M extends Module> CompilationPass<M> pruneModules() {
-        return analysis("Pruning modules", (module, context) -> new ModulePruningVisitor(context.configuration())
-                .visit(module, null));
+        return analysis("Pruning modules", (module, context) -> new ModulePruningVisitor().visit(module, null));
     }
 
     /** Collects declaration dependencies and orders initialization, rejecting illegal cycles. */

@@ -501,6 +501,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitProlog(Prolog prolog, Void argument) {
+        prolog.getImportedModules().forEach(imported -> visit(imported.getProlog(), null));
         Map<Name, Node> nameToNodeMap = buildNameToNodeMap(prolog);
 
         Graph<Node, DefaultEdge> dependencyGraph = buildDependencyGraph(nameToNodeMap, prolog);

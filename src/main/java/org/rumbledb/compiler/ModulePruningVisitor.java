@@ -16,62 +16,34 @@
 package org.rumbledb.compiler;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
-import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 
-/**
- * Keeps one copy of each module's declarations while retaining every import's context bindings.
- *
- */
+/** Keeps one copy of each imported module's declarations; repeated imports keep only its context bindings. */
 public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
 
-    @SuppressWarnings("unused")
-    private final RumbleConfiguration configuration;
-
-    private final Set<String> visitedModules;
-
-    /**
-     * Builds a new visitor.
-     *
-     * @param configuration the configuration. This is used for trigerring or not debug output.
-     */
-    ModulePruningVisitor(RumbleConfiguration configuration) {
-        this.configuration = configuration;
-        this.visitedModules = new HashSet<>();
-    }
+    private final Set<StaticContext> visitedModules = new HashSet<>();
 
     @Override
     public Void visitProlog(Prolog prolog, Void argument) {
-        // Prune in depth-first order: a later sibling may already have been imported by an earlier one.
-        for (var schema : prolog.getSchemaImports()) {
-            visit(schema, argument);
-        }
-        var imports = prolog.getImportedModules().listIterator();
-        while (imports.hasNext()) {
-            LibraryModule module = imports.next();
-            String key = module.getModuleGroupKey();
-            if (!this.visitedModules.add(key)) {
-                // The importer still needs the cached module context even though its
-                // declarations have already been visited through another import.
-                Prolog referenceProlog = new Prolog(
-                        List.of(), List.of(), List.of(), module.getProlog().getMetadata());
-                referenceProlog.setModuleGroupKey(key);
-                LibraryModule reference =
-                        new LibraryModule(referenceProlog, module.getNamespace(), module.getMetadata());
-                reference.setStaticContext(module.getStaticContext());
-                imports.set(reference);
-            } else {
+        prolog.getImportedModules().replaceAll(module -> {
+            if (this.visitedModules.add(module.getStaticContext())) {
                 visit(module, argument);
+                return module;
             }
-        }
-        for (var declaration : prolog.getDeclarations()) {
-            visit(declaration, argument);
-        }
+            return emptyReferenceTo(module);
+        });
         return argument;
+    }
+
+    private static LibraryModule emptyReferenceTo(LibraryModule module) {
+        LibraryModule reference = new LibraryModule(
+                new Prolog(module.getProlog().getMetadata()), module.getNamespace(), module.getMetadata());
+        reference.setStaticContext(module.getStaticContext());
+        return reference;
     }
 }

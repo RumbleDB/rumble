@@ -17,8 +17,6 @@ package org.rumbledb.compiler;
 
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,107 +31,107 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 
-/** Shared module import semantics for the JSONiq and XQuery frontends. */
+/** Loads the modules imported by one compilation, each from its location only once. */
 public final class ModuleImportLoader {
 
     private final CompilationConfiguration configuration;
-    final Map<URI, LibraryModule> modules = new LinkedHashMap<>();
-    final Map<LibraryModule, LibraryModule> completedModules = new IdentityHashMap<>();
-    private final Map<String, List<String>> locations = new LinkedHashMap<>();
+    private final Map<URI, LibraryModule> modules = new LinkedHashMap<>();
+    private final Map<String, List<URI>> locationsByNamespace = new LinkedHashMap<>();
 
-    /** Holds the state of one compilation's imports, so create one per compiled module tree. */
     ModuleImportLoader(CompilationConfiguration configuration) {
         this.configuration = configuration;
     }
 
-    CompilationConfiguration configuration() {
-        return this.configuration;
-    }
-
-    /** Normalize all of a root module's imports together so siblings share the same fragment groups. */
+    /** Replaces a root module's imports with their acyclic groups, once every import has been loaded. */
     void normalizeImports(Prolog rootProlog) {
         List<LibraryModule> imports = rootProlog.getImportedModules();
-        if (!imports.isEmpty()) {
-            List<LibraryModule> normalized = ModuleImportGraph.normalize(imports, this);
-            imports.clear();
-            imports.addAll(normalized);
-        }
+        List<LibraryModule> normalized = ModuleImportGraph.normalize(List.copyOf(imports), this.modules.values());
+        imports.clear();
+        imports.addAll(normalized);
     }
 
+    /** Loads every location of the namespace, as modules sharing a namespace are compiled together. */
     public LibraryModule load(
-            String namespace,
-            List<String> locationHints,
-            StaticContext importingModuleContext,
-            ExceptionMetadata metadata) {
-        URI baseURI = importingModuleContext.getStaticBaseURI();
-        String normalizedNamespace = URILiteralUtils.normalizeAsAnyURI(namespace);
-        if (!locationHints.isEmpty()) {
-            // Retain absolute hints so a same-namespace import in a fragment can find its peers.
-            this.locations.putIfAbsent(
-                    normalizedNamespace,
-                    locationHints.stream()
-                            .map(hint -> URILiteralUtils.resolve(baseURI, hint, metadata)
-                                    .toString())
-                            .toList());
+            String namespace, List<String> locationHints, StaticContext importingContext, ExceptionMetadata metadata) {
+        List<URI> locations;
+        try {
+            locations = findLocations(namespace, locationHints, importingContext.getStaticBaseURI(), metadata);
+        } catch (RumbleException e) {
+            throw moduleNotFound(namespace, e, metadata);
         }
-        // Explicit hints belong to this import; cached hints only supply locations for hintless back edges.
-        List<String> candidates = locationHints.isEmpty()
-                ? this.locations.getOrDefault(normalizedNamespace, List.of(normalizedNamespace))
-                : locationHints;
+        LibraryModule firstLoaded = null;
         Exception lastFailure = null;
-        List<LibraryModule> loaded = new ArrayList<>();
-        for (String candidate : candidates) {
-            URI location;
+        for (URI location : locations) {
             try {
-                location = URILiteralUtils.resolve(baseURI, candidate, metadata);
-            } catch (RumbleException e) {
+                LibraryModule module = loadLocation(location, namespace, importingContext, metadata);
+                firstLoaded = firstLoaded == null ? module : firstLoaded;
+            } catch (IOException | CannotRetrieveResourceException | ModuleNotFoundException e) {
                 lastFailure = e;
-                continue;
             }
-            URI physical =
-                    this.configuration.resourceResolver().resolveURI(location).normalize();
-            LibraryModule module = this.modules.get(physical);
-            if (module == null) {
-                // Back edges refer to an empty shell until this module has finished translation.
-                // The completed graph resolves these shells before any analysis pass runs.
-                ExceptionMetadata source =
-                        new ExceptionMetadata(physical.toString(), metadata.getRange(), metadata.getCode());
-                module = new LibraryModule(
-                        new Prolog(List.of(), List.of(), List.of(), source), normalizedNamespace, source);
-                this.modules.put(physical, module);
-                LibraryModule placeholder = module;
-                try {
-                    module = CompilationPipeline.prepareLibraryModuleFromLocation(
-                            location, importingModuleContext, this, metadata);
-                    this.modules.put(physical, module);
-                    this.completedModules.put(placeholder, module);
-                } catch (IOException | CannotRetrieveResourceException | ModuleNotFoundException e) {
-                    this.modules.remove(physical);
-                    lastFailure = e;
-                    continue;
-                }
-            }
-            if (!normalizedNamespace.equals(module.getNamespace())) {
-                lastFailure = new ModuleNotFoundException(
-                        "A module with namespace "
-                                + normalizedNamespace
-                                + " was not found. The namespace of the module at this location was: "
-                                + module.getNamespace(),
-                        metadata);
-                continue;
-            }
-            loaded.add(module);
         }
-        if (!loaded.isEmpty()) {
-            return loaded.get(0);
+        if (firstLoaded == null) {
+            throw moduleNotFound(namespace, lastFailure, metadata);
         }
+        return firstLoaded;
+    }
+
+    /** An import without hints reuses the hints seen for its namespace, or else treats the namespace as a location. */
+    private List<URI> findLocations(String namespace, List<String> hints, URI baseURI, ExceptionMetadata metadata) {
+        if (hints.isEmpty()) {
+            List<URI> known = this.locationsByNamespace.get(namespace);
+            return known != null ? known : List.of(URILiteralUtils.resolve(baseURI, namespace, metadata));
+        }
+        List<URI> locations = hints.stream()
+                .map(hint -> URILiteralUtils.resolve(baseURI, hint, metadata))
+                .toList();
+        this.locationsByNamespace.putIfAbsent(namespace, locations);
+        return locations;
+    }
+
+    private LibraryModule loadLocation(
+            URI location, String namespace, StaticContext importingContext, ExceptionMetadata metadata)
+            throws IOException {
+        URI resolved =
+                this.configuration.resourceResolver().resolveURI(location).normalize();
+        LibraryModule module = this.modules.get(resolved);
+        if (module == null) {
+            // An import cycle reaches this location again while it is being translated. An empty module
+            // answers that import, which ModuleImportGraph only reads the namespace of.
+            this.modules.put(resolved, new LibraryModule(new Prolog(metadata), namespace, metadata));
+            try {
+                module = translate(location, importingContext, metadata);
+                this.modules.put(resolved, module);
+            } catch (IOException | RuntimeException e) {
+                this.modules.remove(resolved);
+                throw e;
+            }
+        }
+        if (!namespace.equals(module.getNamespace())) {
+            throw new ModuleNotFoundException(
+                    "A module with namespace "
+                            + namespace
+                            + " was not found. The namespace of the module at this location was: "
+                            + module.getNamespace(),
+                    metadata);
+        }
+        return module;
+    }
+
+    private LibraryModule translate(URI location, StaticContext importingContext, ExceptionMetadata metadata)
+            throws IOException {
+        ModuleSourceLoader.ModuleSource source =
+                ModuleSourceLoader.readModuleSource(location, this.configuration, metadata);
+        return ModuleParser.parseLibraryModule(
+                source.query(), source.systemId(), importingContext, this.configuration, this);
+    }
+
+    private static RumbleException moduleNotFound(String namespace, Exception cause, ExceptionMetadata metadata) {
         RumbleException exception = new ModuleNotFoundException(
-                "Module not found: %s, cause: %s"
-                        .formatted(normalizedNamespace, lastFailure != null ? lastFailure.getMessage() : "unknown"),
+                "Module not found: %s, cause: %s".formatted(namespace, cause != null ? cause.getMessage() : "unknown"),
                 metadata);
-        if (lastFailure != null) {
-            exception.initCause(lastFailure);
+        if (cause != null) {
+            exception.initCause(cause);
         }
-        throw exception;
+        return exception;
     }
 }

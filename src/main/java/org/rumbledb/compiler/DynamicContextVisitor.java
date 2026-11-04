@@ -45,6 +45,7 @@ import org.rumbledb.bindings.StandardInputBinding;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
@@ -88,7 +89,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     private ExternalBindings externalBindings;
     private int libraryModuleDepth;
     private List<Item> initialContextItem;
-    private Map<String, DynamicContext> importedModuleContexts;
+    private Map<StaticContext, DynamicContext> importedModuleContexts;
 
     public DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
         this(configuration, externalBindings, new ResourceResolver());
@@ -356,8 +357,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
-        String key = module.getModuleGroupKey();
-        if (!this.importedModuleContexts.containsKey(key)) {
+        DynamicContext importedContext = this.importedModuleContexts.get(module.getStaticContext());
+        if (importedContext == null) {
             DynamicContext newContext =
                     new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
             newContext.setNamedFunctions(argument.getNamedFunctions());
@@ -367,19 +368,16 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 newContext.getVariableValues().setPosition(1);
                 newContext.getVariableValues().setLast(1);
             }
-            DynamicContext importedContext;
             this.libraryModuleDepth++;
             try {
                 importedContext = visitDescendants(module, newContext);
             } finally {
                 this.libraryModuleDepth--;
             }
-            this.importedModuleContexts.put(key, importedContext);
+            this.importedModuleContexts.put(module.getStaticContext(), importedContext);
         }
-        argument.getVariableValues()
-                .importModuleValues(this.importedModuleContexts.get(key).getVariableValues());
-        argument.getInScopeSchemaTypes()
-                .importModuleTypes(this.importedModuleContexts.get(key).getInScopeSchemaTypes());
+        argument.getVariableValues().importModuleValues(importedContext.getVariableValues());
+        argument.getInScopeSchemaTypes().importModuleTypes(importedContext.getInScopeSchemaTypes());
         return argument;
     }
 
@@ -393,8 +391,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             visit(declaration, argument);
         }
-        // Register deferred globals before following imports, so circular imports can share
-        // their bindings and context initialization can refer to another global in this module.
+        // Register deferred globals first, so context initialization can refer to another global
+        // in this module and a global initializer depending on itself raises XQDY0054.
         Set<Node> earlyBound = new HashSet<>();
         if (prolog.hasContextItemDeclaration() || this.libraryModuleDepth > 0) {
             for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {

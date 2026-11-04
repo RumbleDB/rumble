@@ -43,9 +43,6 @@ public class Prolog extends Node {
     // Cyclic import groups retain each declaration's original module settings.
     private final Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
 
-    @Setter
-    private String moduleGroupKey;
-
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
             List<FunctionDeclaration> functionDeclarations,
@@ -59,6 +56,11 @@ public class Prolog extends Node {
         this.schemaImports = new ArrayList<>();
     }
 
+    /** A prolog without declarations, to be filled in or to stand in for an imported module. */
+    public Prolog(ExceptionMetadata metadata) {
+        this(List.of(), List.of(), List.of(), metadata);
+    }
+
     /** The context a declaration belongs to: its source module's in a group, otherwise the given one. */
     public StaticContext getDeclarationContext(Node declaration, StaticContext defaultContext) {
         return this.sourceModuleContexts.getOrDefault(declaration, defaultContext);
@@ -66,12 +68,11 @@ public class Prolog extends Node {
 
     /** Publishes one context's public declarations across a group; private ones stay where they are. */
     public void shareGroupDeclarations(StaticContext changedContext, StaticContext groupContext) {
-        groupContext.importModuleContext(changedContext);
-        groupContext.getInScopeSchemaTypes().importModuleTypes(changedContext.getInScopeSchemaTypes());
-        for (StaticContext sourceContext : this.sourceModuleContexts.values()) {
-            sourceContext.importModuleContext(groupContext);
-            sourceContext.getInScopeSchemaTypes().importModuleTypes(groupContext.getInScopeSchemaTypes());
+        if (this.sourceModuleContexts.isEmpty()) {
+            return;
         }
+        groupContext.importModuleContext(changedContext);
+        this.sourceModuleContexts.values().forEach(context -> context.importModuleContext(groupContext));
     }
 
     public void addImportedModule(LibraryModule importedModule) {
@@ -126,10 +127,6 @@ public class Prolog extends Node {
 
     public void addDeclaration(Node declaration) {
         this.declarations.add(declaration);
-    }
-
-    public void clearDeclarations() {
-        this.declarations.clear();
     }
 
     @Override

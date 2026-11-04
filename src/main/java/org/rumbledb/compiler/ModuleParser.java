@@ -81,8 +81,11 @@ final class ModuleParser {
     }
 
     static LibraryModule parseLibraryModule(
-            String query, URI uri, StaticContext importingContext, ModuleImportLoader importLoader) {
-        CompilationConfiguration configuration = importLoader.configuration();
+            String query,
+            URI uri,
+            StaticContext importingContext,
+            CompilationConfiguration configuration,
+            ModuleImportLoader importLoader) {
         RumbleConfiguration runtimeConfiguration = configuration.runtimeConfiguration();
         Language language = detectLanguage(query, uri, runtimeConfiguration);
         StaticContext moduleContext = new StaticContext(uri, runtimeConfiguration);

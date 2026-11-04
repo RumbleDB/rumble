@@ -537,6 +537,7 @@ public class StaticContext {
                 this.staticallyKnownFunctionSignatures.put(fi, signature);
             }
         }
+        this.getInScopeSchemaTypes().importModuleTypes(moduleContext.getInScopeSchemaTypes());
     }
 
     public void setUserDefinedFunctionsExecutionModes(

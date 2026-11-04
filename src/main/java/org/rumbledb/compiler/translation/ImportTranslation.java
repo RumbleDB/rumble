@@ -82,15 +82,14 @@ public final class ImportTranslation {
                 .importLoader()
                 .load(namespace, locationHints, translationContext.moduleContext(), metadata);
         if (ctx.prefix() != null) {
-            boolean sameModuleBinding = libraryModule.getNamespace().equals(translationContext.libraryModuleNamespace())
-                    && libraryModule
-                            .getNamespace()
-                            .equals(translationContext
-                                    .moduleContext()
-                                    .getInScopeNamespaceBindings()
-                                    .get(ctx.prefix()));
-            if (!sameModuleBinding) {
-                translationContext.bindNamespace(ctx.prefix(), libraryModule.getNamespace(), metadata);
+            // A module may import its own namespace under the prefix of its module declaration.
+            boolean ownModulePrefix = namespace.equals(translationContext.libraryModuleNamespace())
+                    && namespace.equals(translationContext
+                            .moduleContext()
+                            .getInScopeNamespaceBindings()
+                            .get(ctx.prefix()));
+            if (!ownModulePrefix) {
+                translationContext.bindNamespace(ctx.prefix(), namespace, metadata);
             }
         }
         return libraryModule;
