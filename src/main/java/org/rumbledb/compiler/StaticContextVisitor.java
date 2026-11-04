@@ -17,12 +17,10 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 
 import org.rumbledb.context.ConstructorFunctionResolver;
 import org.rumbledb.context.Name;
@@ -107,12 +105,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
-    private final Set<StaticContext> visitedModules;
     private final List<SequenceType> contextItemTypes = new ArrayList<>();
-
-    StaticContextVisitor() {
-        this.visitedModules = new HashSet<>();
-    }
 
     @Override
     protected StaticContext defaultAction(Node node, StaticContext argument) {
@@ -140,7 +133,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
-        this.visitedModules.clear();
         this.contextItemTypes.clear();
         StaticContext generatedContext = visitDescendants(mainModule, argument);
         return generatedContext;
@@ -148,19 +140,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        StaticContext importedContext = libraryModule.getStaticContext();
-        if (this.visitedModules.add(importedContext)) {
-            this.visit(libraryModule.getProlog(), importedContext);
-        }
-        for (var entry : importedContext.getInScopeVariables().entrySet()) {
-            Name name = entry.getKey();
-            var existing = argument.getInScopeVariables().get(name);
-            // Repeated imports share the cached variable; a distinct declaration is a collision.
-            if (!Name.CONTEXT_ITEM.equals(name) && existing != null && existing != entry.getValue()) {
-                throw new VariableAlreadyExistsException(name, existing.getMetadata());
-            }
-        }
-        argument.importModuleContext(importedContext);
+        this.visit(libraryModule.getProlog(), libraryModule.getStaticContext());
+        argument.linkImports(libraryModule.getStaticContext());
         return argument;
     }
 
@@ -566,14 +547,17 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                             declaration.getMetadata(),
                             declaration.isAssignable());
         }
-        // Function signatures and types must be visible throughout a mutually recursive group.
-        for (StaticContext sourceContext : prolog.getSourceContexts()) {
-            prolog.shareGroupDeclarations(sourceContext, argument);
-        }
+        // Every module is declared before any is visited, so import cycles need no special treatment.
+        List<StaticContext> libraryContexts = prolog.getSourceContexts();
+        libraryContexts.forEach(argument::addPublicDeclarationsOf);
+        libraryContexts.forEach(context -> context.linkImports(argument));
         for (Node child : prolog.getChildren()) {
             StaticContext declarationContext = prolog.getDeclarationContext(child, argument);
             visit(child, declarationContext);
-            prolog.shareGroupDeclarations(declarationContext, argument);
+            // Declared types are visible across the imported library.
+            argument.getInScopeSchemaTypes().importModuleTypes(declarationContext.getInScopeSchemaTypes());
+            libraryContexts.forEach(
+                    context -> context.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes()));
         }
         for (ItemType itemType : argument.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(argument, prolog.getMetadata());

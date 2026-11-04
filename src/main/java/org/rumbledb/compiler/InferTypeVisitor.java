@@ -2984,7 +2984,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (declaredType == null) {
             // if declared type is null, we overwrite the type in the correspondent InScopeVariable with the inferred
             // type
-            context.replaceVariableSequenceType(variableName, inferredType);
+            context.setInferredVariableSequenceType(variableName, inferredType);
         } else {
             if (!inferredType.isSubtypeOf(declaredType)) {
                 throwStaticTypeException(
@@ -3078,10 +3078,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         for (Node child : prolog.getChildren()) {
-            StaticContext declarationContext = prolog.getDeclarationContext(child, argument);
-            visit(child, declarationContext);
-            // Inferring a variable's type replaces its entry in one context only.
-            prolog.shareGroupDeclarations(declarationContext, argument);
+            visit(child, prolog.getDeclarationContext(child, argument));
         }
         return argument;
     }

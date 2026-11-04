@@ -135,7 +135,7 @@ public class LoadXQueryModuleFunctionIterator extends AbstractAtMostOneItemRunti
         Map<Item, Map<Item, List<Item>>> functionExports = new LinkedHashMap<>();
         ItemFactory factory = ItemFactory.getInstance();
         for (var library : module.getProlog().getImportedModules()) {
-            // A library can hold other namespaces' declarations when their modules import each other in a cycle.
+            // The imported library holds the declarations of every module the requested one reaches.
             for (var declaration : library.getProlog().getVariableDeclarations()) {
                 Name name = declaration.getVariableName();
                 if (namespace.equals(name.getNamespace()) && !hasPrivateAnnotation(declaration.getAnnotations())) {

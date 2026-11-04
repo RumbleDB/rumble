@@ -81,7 +81,7 @@ public final class CompilationPipeline {
         ModuleImportLoader importLoader = new ModuleImportLoader(compilationConfiguration);
         LibraryModule module =
                 ModuleParser.parseLibraryModule(query, uri, importingContext, compilationConfiguration, importLoader);
-        importLoader.normalizeImports(module.getProlog());
+        importLoader.flattenImports(module.getProlog());
         return run(
                 module,
                 new CompilationContext(configuration, ExternalBindings.empty(), new ResourceResolver()),
@@ -101,7 +101,6 @@ public final class CompilationPipeline {
             ModuleParser.Language language, RumbleConfiguration configuration) {
         boolean isJSONiq = language == ModuleParser.Language.JSONIQ;
         List<CompilationPass<MainModule>> passes = new ArrayList<>();
-        passes.add(CompilationPasses.pruneModules());
         passes.add(CompilationPasses.resolveDependencies());
         if (isJSONiq) {
             passes.add(CompilationPasses.classifySequentialExpressions());

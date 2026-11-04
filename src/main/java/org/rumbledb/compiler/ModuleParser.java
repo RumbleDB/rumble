@@ -76,7 +76,7 @@ final class ModuleParser {
         ModuleImportLoader importLoader = new ModuleImportLoader(configuration);
         MainModule module = (MainModule)
                 parseModule(query, uri, configuration, bindings, language, moduleContext, true, importLoader);
-        importLoader.normalizeImports(module.getProlog());
+        importLoader.flattenImports(module.getProlog());
         return module;
     }
 

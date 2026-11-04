@@ -78,6 +78,7 @@ public final class ImportTranslation {
                 .map(processURILiteral)
                 .map(URILiteralUtils::normalizeAsAnyURI)
                 .toList();
+        translationContext.moduleContext().addImportedNamespace(namespace);
         LibraryModule libraryModule = translationContext
                 .importLoader()
                 .load(namespace, locationHints, translationContext.moduleContext(), metadata);

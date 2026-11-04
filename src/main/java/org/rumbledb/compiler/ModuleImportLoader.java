@@ -17,9 +17,11 @@ package org.rumbledb.compiler;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
@@ -28,6 +30,7 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 
@@ -42,12 +45,60 @@ public final class ModuleImportLoader {
         this.configuration = configuration;
     }
 
-    /** Replaces a root module's imports with their acyclic groups, once every import has been loaded. */
-    void normalizeImports(Prolog rootProlog) {
+    /**
+     * Replaces a root module's imports with one library holding the declarations of every reachable module. This
+     * removes import cycles from the tree, and lets dependency ordering work across module boundaries.
+     */
+    void flattenImports(Prolog rootProlog) {
         List<LibraryModule> imports = rootProlog.getImportedModules();
-        List<LibraryModule> normalized = ModuleImportGraph.normalize(List.copyOf(imports), this.modules.values());
+        // Only what the root reaches: failed location hints can leave unrelated modules behind.
+        Set<String> reachable = new HashSet<>();
+        imports.forEach(imported -> collectReachable(imported, reachable));
+        if (reachable.isEmpty()) {
+            return;
+        }
+        LibraryModule library = merge(this.modules.values().stream()
+                .filter(module -> reachable.contains(module.getNamespace()))
+                .toList());
         imports.clear();
-        imports.addAll(normalized);
+        imports.add(library);
+    }
+
+    private void collectReachable(LibraryModule imported, Set<String> reachable) {
+        String namespace = imported.getNamespace();
+        if (!reachable.add(namespace)) {
+            return;
+        }
+        List<LibraryModule> modules = this.modules.values().stream()
+                .filter(module -> namespace.equals(module.getNamespace()))
+                .toList();
+        if (modules.isEmpty()) {
+            throw new ModuleNotFoundException("Module not found: " + namespace, imported.getMetadata());
+        }
+        for (LibraryModule module : modules) {
+            module.getProlog().getImportedModules().forEach(next -> collectReachable(next, reachable));
+        }
+    }
+
+    /** Each declaration keeps its module's context; the library's own context collects their public declarations. */
+    private static LibraryModule merge(List<LibraryModule> members) {
+        LibraryModule first = members.get(0);
+        Prolog prolog = new Prolog(first.getProlog().getMetadata());
+        for (LibraryModule member : members) {
+            prolog.getSchemaImports().addAll(member.getProlog().getSchemaImports());
+            for (Node declaration : member.getProlog().getDeclarations()) {
+                prolog.addDeclaration(declaration);
+                prolog.getSourceModuleContexts().put(declaration, member.getStaticContext());
+            }
+        }
+        StaticContext publicDeclarations = new StaticContext(
+                first.getStaticContext().getStaticBaseURI(),
+                first.getStaticContext().getRumbleConfiguration());
+        publicDeclarations.setUserDefinedFunctionsExecutionModes(
+                first.getStaticContext().getUserDefinedFunctionsExecutionModes());
+        LibraryModule library = new LibraryModule(prolog, first.getNamespace(), first.getMetadata());
+        library.setStaticContext(publicDeclarations);
+        return library;
     }
 
     /** Loads every location of the namespace, as modules sharing a namespace are compiled together. */
@@ -96,7 +147,7 @@ public final class ModuleImportLoader {
         LibraryModule module = this.modules.get(resolved);
         if (module == null) {
             // An import cycle reaches this location again while it is being translated. An empty module
-            // answers that import, which ModuleImportGraph only reads the namespace of.
+            // answers that import, of which flattening only reads the namespace.
             this.modules.put(resolved, new LibraryModule(new Prolog(metadata), namespace, metadata));
             try {
                 module = translate(location, importingContext, metadata);

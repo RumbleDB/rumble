@@ -455,10 +455,9 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     private Map<Name, Node> buildNameToNodeMap(Prolog prolog) {
         Map<Name, Node> nameToNodeMap = new TreeMap<>();
         for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
-            boolean contextItemInGroup = Name.CONTEXT_ITEM.equals(variableDeclaration.getVariableName())
-                    && !prolog.getSourceModuleContexts().isEmpty();
-            // Each module of a group may declare the one context item the query supplies.
-            if (nameToNodeMap.containsKey(variableDeclaration.getVariableName()) && !contextItemInGroup) {
+            // Each module of the imported library may declare the one context item the query supplies.
+            if (nameToNodeMap.containsKey(variableDeclaration.getVariableName())
+                    && !Name.CONTEXT_ITEM.equals(variableDeclaration.getVariableName())) {
                 throw new VariableAlreadyExistsException(
                         variableDeclaration.getVariableName(), variableDeclaration.getMetadata());
             }

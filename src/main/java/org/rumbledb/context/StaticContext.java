@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.serialization.SerializationParameterUtils;
 import org.rumbledb.serialization.SerializationParameters;
@@ -85,6 +86,7 @@ public class StaticContext {
     private SequenceType contextItemStaticType;
 
     private Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
+    private final Set<String> importedNamespaces = new LinkedHashSet<>();
     private final Set<Name> privateVariables = new LinkedHashSet<>();
     private final Set<FunctionIdentifier> privateFunctions = new LinkedHashSet<>();
 
@@ -299,6 +301,11 @@ public class StaticContext {
                         variable.getMetadata(),
                         variable.getStorageMode(),
                         variable.isAssignable()));
+    }
+
+    /** Updates the variable itself, so that the modules importing it see its inferred type as well. */
+    public void setInferredVariableSequenceType(Name varName, SequenceType inferredType) {
+        getInScopeVariable(varName).setSequenceType(inferredType);
     }
 
     public SequenceType getVariableSequenceType(Name varName) {
@@ -524,7 +531,8 @@ public class StaticContext {
         return "Q{" + namespace + "}" + localName;
     }
 
-    public void importModuleContext(StaticContext moduleContext) {
+    /** Collects a module's public declarations in the imported library's context, for modules to link against. */
+    public void addPublicDeclarationsOf(StaticContext moduleContext) {
         for (Name name : moduleContext.inScopeVariables.keySet()) {
             InScopeVariable variable = moduleContext.inScopeVariables.get(name);
             if (!moduleContext.privateVariables.contains(name)) {
@@ -538,6 +546,29 @@ public class StaticContext {
             }
         }
         this.getInScopeSchemaTypes().importModuleTypes(moduleContext.getInScopeSchemaTypes());
+    }
+
+    public void addImportedNamespace(String namespace) {
+        this.importedNamespaces.add(namespace);
+    }
+
+    /** A module sees what it declares, plus the public declarations of the namespaces it imports (XQuery 4.12). */
+    public void linkImports(StaticContext publicDeclarations) {
+        publicDeclarations.inScopeVariables.forEach((name, variable) -> {
+            if (this.importedNamespaces.contains(name.getNamespace())) {
+                InScopeVariable existing = this.inScopeVariables.get(name);
+                if (existing != null && existing != variable) {
+                    throw new VariableAlreadyExistsException(name, existing.getMetadata());
+                }
+                this.inScopeVariables.put(name, variable);
+            }
+        });
+        publicDeclarations.staticallyKnownFunctionSignatures.forEach((id, signature) -> {
+            if (this.importedNamespaces.contains(id.getName().getNamespace())) {
+                this.staticallyKnownFunctionSignatures.put(id, signature);
+            }
+        });
+        this.getInScopeSchemaTypes().importModuleTypes(publicDeclarations.getInScopeSchemaTypes());
     }
 
     public void setUserDefinedFunctionsExecutionModes(

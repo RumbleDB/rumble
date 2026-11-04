@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
@@ -162,18 +161,12 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
                 .collect(Collectors.toList());
         List<Node> declarations = new ArrayList<>();
-        Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
         for (Node declaration : expression.getDeclarations()) {
             Node clone = visit(declaration, argument);
+            expression.replaceInSourceModule(declaration, clone);
             declarations.add(clone);
-            StaticContext sourceContext = expression.getSourceModuleContexts().get(declaration);
-            if (sourceContext != null) {
-                sourceModuleContexts.put(clone, sourceContext);
-            }
         }
         expression.setDeclarations(declarations);
-        expression.getSourceModuleContexts().clear();
-        expression.getSourceModuleContexts().putAll(sourceModuleContexts);
         expression.getSchemaImports().clear();
         expression.getSchemaImports().addAll(schemaImports);
         expression.getImportedModules().clear();

@@ -40,7 +40,7 @@ public class Prolog extends Node {
     private final List<LibraryModule> importedModules;
     private final List<SchemaImport> schemaImports;
 
-    // Cyclic import groups retain each declaration's original module settings.
+    // The imported library's declarations each retain their source module's context.
     private final Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
 
     public Prolog(
@@ -61,23 +61,22 @@ public class Prolog extends Node {
         this(List.of(), List.of(), List.of(), metadata);
     }
 
-    /** The context a declaration belongs to: its source module's in a group, otherwise the given one. */
+    /** The context a declaration belongs to: its source module's in the imported library, otherwise the given one. */
     public StaticContext getDeclarationContext(Node declaration, StaticContext defaultContext) {
         return this.sourceModuleContexts.getOrDefault(declaration, defaultContext);
     }
 
-    /** The contexts of a group's modules, each once. Empty if this prolog is a single module. */
+    /** The contexts of the imported library's modules. Empty for any other prolog. */
     public List<StaticContext> getSourceContexts() {
         return this.sourceModuleContexts.values().stream().distinct().toList();
     }
 
-    /** Publishes one context's public declarations across a group; private ones stay where they are. */
-    public void shareGroupDeclarations(StaticContext changedContext, StaticContext groupContext) {
-        if (this.sourceModuleContexts.isEmpty()) {
-            return;
+    /** Keeps a declaration's source module when a pass replaces it with a copy. */
+    public void replaceInSourceModule(Node declaration, Node replacement) {
+        StaticContext context = this.sourceModuleContexts.remove(declaration);
+        if (context != null) {
+            this.sourceModuleContexts.put(replacement, context);
         }
-        groupContext.importModuleContext(changedContext);
-        getSourceContexts().forEach(context -> context.importModuleContext(groupContext));
     }
 
     public void addImportedModule(LibraryModule importedModule) {
