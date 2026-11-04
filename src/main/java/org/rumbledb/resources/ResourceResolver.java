@@ -117,10 +117,16 @@ public final class ResourceResolver implements Serializable {
         return this.directoryCollections.computeIfAbsent(uri, key -> {
             List<Item> items = new ArrayList<>();
             for (URI member : members) {
-                if (member.getPath().endsWith(".xml")) {
-                    items.add(loadDocument(member, queryLanguage, configuration, metadata));
-                } else {
+                String path = member.getPath();
+                if (path.endsWith(".xml")) {
+                    items.add(loadXMLDocument(member, queryLanguage, configuration, metadata));
+                } else if (path.endsWith(".json")) {
                     loadJsonFile(member, queryLanguage, configuration, items, metadata);
+                } else if (path.endsWith(".jsonl")) {
+                    loadJsonLinesFile(member, queryLanguage, configuration, items, metadata);
+                } else {
+                    // Ignore unsupported files, as in directory discovery.
+                    continue;
                 }
             }
             return new ResourceCollection(items, members);
@@ -202,9 +208,9 @@ public final class ResourceResolver implements Serializable {
     }
 
     /**
-     * Appends a UTF-8 JSON file value or the values of a JSON Lines file in line order.
+     * Reads a UTF-8 JSON file and appends its parsed value to the collection.
      *
-     * @param uri the local JSON or JSON Lines file URI
+     * @param uri the local JSON file URI
      * @param queryLanguage the query language used to select JSON parsing semantics
      * @param configuration the configuration supplying the XML character rules for JSON strings
      * @param items the destination list for parsed items
@@ -216,43 +222,100 @@ public final class ResourceResolver implements Serializable {
             RumbleConfiguration configuration,
             List<Item> items,
             ExceptionMetadata metadata) {
-        boolean jsoniq10 = "jsoniq10".equals(queryLanguage);
-        JSONParsingOptions options = JSONParsingOptions.defaultInstance(jsoniq10);
-        String xmlVersion = configuration.semantics().xmlVersion();
-        Path file = Path.of(uri);
         try {
-            if (file.getFileName().toString().endsWith(".jsonl")) {
-                try (BufferedReader reader = Files.newBufferedReader(file)) {
-                    String line;
-                    long lineNumber = 0;
-                    while ((line = reader.readLine()) != null) {
-                        lineNumber++;
-                        Item item = JSONParser.parseResource(
-                                line,
-                                options,
-                                xmlVersion,
-                                jsoniq10,
-                                uri,
-                                "JSON Lines file " + uri + ", line " + lineNumber,
-                                metadata);
-                        if (item != null) {
-                            items.add(item);
-                        }
-                    }
-                }
-            } else {
-                Item item = JSONParser.parseResource(
-                        Files.readString(file), options, xmlVersion, jsoniq10, uri, "JSON file " + uri, metadata);
-                if (item != null) {
-                    items.add(item);
-                }
+            appendJsonValue(
+                    Files.readString(Path.of(uri)),
+                    uri,
+                    "JSON file " + uri,
+                    queryLanguage,
+                    configuration,
+                    items,
+                    metadata);
+        } catch (IOException exception) {
+            throw unreadableMember(uri, metadata, exception);
+        }
+    }
+
+    /**
+     * Reads a UTF-8 JSON Lines file and appends its parsed values in line order.
+     *
+     * @param uri the local JSON Lines file URI
+     * @param queryLanguage the query language used to select JSON parsing semantics
+     * @param configuration the configuration supplying the XML character rules for JSON strings
+     * @param items the destination list for parsed items
+     * @param metadata the query location used in error reports
+     */
+    private void loadJsonLinesFile(
+            URI uri,
+            String queryLanguage,
+            RumbleConfiguration configuration,
+            List<Item> items,
+            ExceptionMetadata metadata) {
+        try (BufferedReader reader = Files.newBufferedReader(Path.of(uri))) {
+            String line;
+            long lineNumber = 0;
+            while ((line = reader.readLine()) != null) {
+                lineNumber++;
+                appendJsonValue(
+                        line,
+                        uri,
+                        "JSON Lines file " + uri + ", line " + lineNumber,
+                        queryLanguage,
+                        configuration,
+                        items,
+                        metadata);
             }
         } catch (IOException exception) {
-            CannotRetrieveResourceException error =
-                    new CannotRetrieveResourceException("Unable to read collection member " + uri + ".", metadata);
-            error.initCause(exception);
-            throw error;
+            throw unreadableMember(uri, metadata, exception);
         }
+    }
+
+    /**
+     * Parses a JSON value and appends it when the language represents it as an item.
+     *
+     * @param text the JSON source text
+     * @param uri the source file URI
+     * @param description the input description used in parser errors
+     * @param queryLanguage the query language used to select JSON parsing semantics
+     * @param configuration the configuration supplying the XML character rules for JSON strings
+     * @param items the destination list for parsed items
+     * @param metadata the query location used in error reports
+     */
+    private void appendJsonValue(
+            String text,
+            URI uri,
+            String description,
+            String queryLanguage,
+            RumbleConfiguration configuration,
+            List<Item> items,
+            ExceptionMetadata metadata) {
+        boolean jsoniq10 = "jsoniq10".equals(queryLanguage);
+        Item item = JSONParser.parseResource(
+                text,
+                JSONParsingOptions.defaultInstance(jsoniq10),
+                configuration.semantics().xmlVersion(),
+                jsoniq10,
+                uri,
+                description,
+                metadata);
+        if (item != null) {
+            items.add(item);
+        }
+    }
+
+    /**
+     * Creates a retrieval error for a collection member that could not be read.
+     *
+     * @param uri the member URI
+     * @param metadata the query location used in error reports
+     * @param cause the underlying read failure
+     * @return the retrieval error with the original cause
+     */
+    private CannotRetrieveResourceException unreadableMember(URI uri, ExceptionMetadata metadata, IOException cause) {
+        CannotRetrieveResourceException error =
+                new CannotRetrieveResourceException("Unable to read collection member " + uri + ".", metadata);
+        error.initCause(cause);
+        return error;
     }
 
     /**
@@ -264,7 +327,7 @@ public final class ResourceResolver implements Serializable {
      * @param metadata the query location used in error reports
      * @return the document node associated with the URI
      */
-    public Item loadDocument(
+    public Item loadXMLDocument(
             URI uri, String queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         Item collectionDocument = document(uri);
         if (collectionDocument != null) {
