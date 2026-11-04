@@ -157,9 +157,9 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         List<SchemaImport> schemaImports = expression.getSchemaImports().stream()
                 .map(schemaImport -> (SchemaImport) visit(schemaImport, argument))
                 .collect(Collectors.toList());
-        List<LibraryModule> libraryModules = expression.getImportedModules().stream()
-                .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
-                .collect(Collectors.toList());
+        expression
+                .getImportedLibrary()
+                .ifPresent(library -> expression.setImportedLibrary((LibraryModule) visit(library, argument)));
         List<Node> declarations = new ArrayList<>();
         for (Node declaration : expression.getDeclarations()) {
             Node clone = visit(declaration, argument);
@@ -169,8 +169,6 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         expression.setDeclarations(declarations);
         expression.getSchemaImports().clear();
         expression.getSchemaImports().addAll(schemaImports);
-        expression.getImportedModules().clear();
-        expression.getImportedModules().addAll(libraryModules);
         return expression;
     }
 

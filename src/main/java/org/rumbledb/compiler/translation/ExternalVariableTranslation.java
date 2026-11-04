@@ -59,8 +59,9 @@ public final class ExternalVariableTranslation {
     private static boolean hasDeclaration(Prolog prolog, Name variableName) {
         return prolog.getVariableDeclarations().stream()
                         .anyMatch(declaration -> declaration.getVariableName().equals(variableName))
-                || prolog.getImportedModules().stream()
-                        .anyMatch(module -> hasDeclaration(module.getProlog(), variableName));
+                || prolog.getImportedLibrary()
+                        .filter(library -> hasDeclaration(library.getProlog(), variableName))
+                        .isPresent();
     }
 
     private static SequenceType getExternalVariableType(ExternalBindings externalBindings, Name variableName) {

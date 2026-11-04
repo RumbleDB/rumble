@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -37,10 +39,15 @@ public class Prolog extends Node {
     @Setter
     private List<Node> declarations;
 
-    private final List<LibraryModule> importedModules;
+    // Every module the query imports, flattened into one. A library itself imports nothing.
+    @Getter(AccessLevel.NONE)
+    @Setter
+    private LibraryModule importedLibrary;
+
     private final List<SchemaImport> schemaImports;
 
     // The imported library's declarations each retain their source module's context.
+    @Getter(AccessLevel.NONE)
     private final Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
 
     public Prolog(
@@ -52,7 +59,6 @@ public class Prolog extends Node {
         this.declarations = new ArrayList<Node>(variableDeclarations);
         this.declarations.addAll(functionDeclarations);
         this.declarations.addAll(typeDeclarations);
-        this.importedModules = new ArrayList<>();
         this.schemaImports = new ArrayList<>();
     }
 
@@ -79,8 +85,8 @@ public class Prolog extends Node {
         }
     }
 
-    public void addImportedModule(LibraryModule importedModule) {
-        this.importedModules.add(importedModule);
+    public Optional<LibraryModule> getImportedLibrary() {
+        return Optional.ofNullable(this.importedLibrary);
     }
 
     public void addSchemaImport(SchemaImport schemaImport) {
@@ -133,11 +139,17 @@ public class Prolog extends Node {
         this.declarations.add(declaration);
     }
 
+    /** Adds a declaration of the imported library, which keeps the context of its source module. */
+    public void addDeclaration(Node declaration, StaticContext sourceModuleContext) {
+        addDeclaration(declaration);
+        this.sourceModuleContexts.put(declaration, sourceModuleContext);
+    }
+
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.addAll(this.schemaImports);
-        result.addAll(this.importedModules);
+        getImportedLibrary().ifPresent(result::add);
         result.addAll(this.declarations);
         return result;
     }
@@ -147,9 +159,7 @@ public class Prolog extends Node {
         for (SchemaImport schemaImport : this.schemaImports) {
             schemaImport.serializeToJSONiq(sb, indent);
         }
-        for (LibraryModule importedModule : this.importedModules) {
-            importedModule.serializeToJSONiq(sb, indent);
-        }
+        getImportedLibrary().ifPresent(library -> library.serializeToJSONiq(sb, indent));
         for (Node declaration : this.declarations) {
             declaration.serializeToJSONiq(sb, indent);
         }
@@ -167,12 +177,8 @@ public class Prolog extends Node {
                 return declaration;
             }
         }
-        for (LibraryModule module : prolog.getImportedModules()) {
-            FunctionDeclaration result = getFunctionDeclarationFromProlog(module.getProlog(), functionIdentifier);
-            if (result != null) {
-                return result;
-            }
-        }
-        return null;
+        return prolog.getImportedLibrary()
+                .map(library -> getFunctionDeclarationFromProlog(library.getProlog(), functionIdentifier))
+                .orElse(null);
     }
 }

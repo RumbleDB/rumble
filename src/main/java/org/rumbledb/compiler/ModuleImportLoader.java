@@ -45,15 +45,15 @@ public final class ModuleImportLoader {
     }
 
     /**
-     * Replaces a root module's imports with one library holding the declarations of every reachable module. This
-     * removes import cycles from the tree, and lets dependency ordering work across module boundaries.
+     * Gives a root module one imported library, holding the declarations of every reachable module. This keeps
+     * import cycles out of the tree, and lets dependency ordering work across module boundaries.
      */
     void flattenImports(Prolog rootProlog, StaticContext rootContext) {
         // Only what the root reaches: failed location hints can leave unrelated modules behind.
         Set<String> reachable = new HashSet<>();
         collectReachable(rootContext, reachable);
         if (!reachable.isEmpty()) {
-            rootProlog.addImportedModule(merge(this.modules.values().stream()
+            rootProlog.setImportedLibrary(merge(this.modules.values().stream()
                     .filter(module -> reachable.contains(module.getNamespace()))
                     .toList()));
         }
@@ -82,10 +82,8 @@ public final class ModuleImportLoader {
         LibraryModule first = members.get(0);
         Prolog prolog = new Prolog(first.getProlog().getMetadata());
         for (LibraryModule member : members) {
-            prolog.getSchemaImports().addAll(member.getProlog().getSchemaImports());
             for (Node declaration : member.getProlog().getDeclarations()) {
-                prolog.addDeclaration(declaration);
-                prolog.getSourceModuleContexts().put(declaration, member.getStaticContext());
+                prolog.addDeclaration(declaration, member.getStaticContext());
             }
         }
         StaticContext publicDeclarations = new StaticContext(

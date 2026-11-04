@@ -134,29 +134,28 @@ public class LoadXQueryModuleFunctionIterator extends AbstractAtMostOneItemRunti
         Map<Item, List<Item>> variableExports = new LinkedHashMap<>();
         Map<Item, Map<Item, List<Item>>> functionExports = new LinkedHashMap<>();
         ItemFactory factory = ItemFactory.getInstance();
-        for (var library : module.getProlog().getImportedModules()) {
-            // The imported library holds the declarations of every module the requested one reaches.
-            for (var declaration : library.getProlog().getVariableDeclarations()) {
-                Name name = declaration.getVariableName();
-                if (namespace.equals(name.getNamespace()) && !hasPrivateAnnotation(declaration.getAnnotations())) {
-                    variableExports.put(
-                            factory.createQNameItem(name),
-                            loaded.getVariableValues().getLocalVariableValue(name, getMetadata()));
-                }
+        // The imported library holds the declarations of every module the requested one reaches.
+        var library = module.getProlog().getImportedLibrary().orElseThrow();
+        for (var declaration : library.getProlog().getVariableDeclarations()) {
+            Name name = declaration.getVariableName();
+            if (namespace.equals(name.getNamespace()) && !hasPrivateAnnotation(declaration.getAnnotations())) {
+                variableExports.put(
+                        factory.createQNameItem(name),
+                        loaded.getVariableValues().getLocalVariableValue(name, getMetadata()));
             }
-            for (var declaration : library.getProlog().getFunctionDeclarations()) {
-                var id = declaration.getFunctionIdentifier();
-                if (!namespace.equals(id.getName().getNamespace())
-                        || hasPrivateAnnotation(
-                                ((InlineFunctionExpression) declaration.getExpression()).getAnnotations())) {
-                    continue;
-                }
-                functionExports
-                        .computeIfAbsent(factory.createQNameItem(id.getName()), ignored -> new LinkedHashMap<>())
-                        .put(
-                                factory.createIntItem(id.getArity()),
-                                List.of(loaded.getNamedFunctions().getUserDefinedFunction(id)));
+        }
+        for (var declaration : library.getProlog().getFunctionDeclarations()) {
+            var id = declaration.getFunctionIdentifier();
+            if (!namespace.equals(id.getName().getNamespace())
+                    || hasPrivateAnnotation(
+                            ((InlineFunctionExpression) declaration.getExpression()).getAnnotations())) {
+                continue;
             }
+            functionExports
+                    .computeIfAbsent(factory.createQNameItem(id.getName()), ignored -> new LinkedHashMap<>())
+                    .put(
+                            factory.createIntItem(id.getArity()),
+                            List.of(loaded.getNamedFunctions().getUserDefinedFunction(id)));
         }
         Map<Item, List<Item>> functions = new LinkedHashMap<>();
         functionExports.forEach((name, arities) -> functions.put(name, List.of(map(arities))));

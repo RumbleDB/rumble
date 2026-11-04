@@ -26,7 +26,6 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.*;
 import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.postfix.FilterExpression;
@@ -200,9 +199,7 @@ public class ProjectionPushdownDetectionVisitor
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             visit(declaration, null);
         }
-        for (LibraryModule libraryModule : prolog.getImportedModules()) {
-            visit(libraryModule, null);
-        }
+        prolog.getImportedLibrary().ifPresent(library -> visit(library, null));
         return null;
     }
 
