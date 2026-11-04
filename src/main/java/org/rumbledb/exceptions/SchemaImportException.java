@@ -26,7 +26,11 @@ public class SchemaImportException extends SemanticException {
     private static final long serialVersionUID = 1L;
 
     public SchemaImportException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCode.SchemaImportErrorCode, metadata);
+        this(message, ErrorCode.SchemaImportErrorCode, metadata);
+    }
+
+    public SchemaImportException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
+        super(message, errorCode, metadata);
     }
 
     public SchemaImportException(String message, ExceptionMetadata metadata, Throwable cause) {

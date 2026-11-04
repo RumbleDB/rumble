@@ -26,13 +26,11 @@ import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.arrays.ArrayFunctionCallIterator;
 import org.rumbledb.runtime.functions.maps.MapFunctionCallIterator;
@@ -72,7 +70,7 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return this.getPlan(context).getCursor(context);
+        return this.getCall(context).getCursor();
     }
 
     public ExecutionMode getWrappedCallableExecutionMode() {
@@ -86,7 +84,8 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
         return callableItem.getBodyIterator().getRuntimeStaticContext().getExecutionMode();
     }
 
-    private ItemRuntimePlan getPlan(DynamicContext context) {
+    // The call of the wrapped item, whose result is converted to the expected return type.
+    private FunctionCall getCall(DynamicContext context) {
         List<ItemRuntimePlan> arguments = new ArrayList<>(this.parameterNames.size());
         for (Name parameterName : this.parameterNames) {
             arguments.add(buildArgumentIterator(parameterName, context, this.staticContext));
@@ -99,24 +98,27 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
                 .build();
 
         if (this.callableItem.isArray()) {
-            return new ArrayFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
+            return new FunctionCall(
+                    new ArrayFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext), context);
         }
         if (this.callableItem.isMap()) {
-            return new MapFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext);
+            return new FunctionCall(
+                    new MapFunctionCallIterator(this.callableItem, arguments.get(0), callStaticContext), context);
         }
         if (!this.callableItem.isFunction()) {
             throw new OurBadException(
                     "Function coercion can only wrap functions, maps, or arrays.", this.staticContext.getMetadata());
         }
-        ItemRuntimePlan callIterator = NamedFunctions.buildFunctionItemCallIterator(
-                this.callableItem, callStaticContext, wrappedCallableExecutionMode, arguments, false);
-        return FunctionCallArgumentConversion.wrapForFunctionConversion(
-                callIterator,
+        FunctionCall call = FunctionCall.of(this.callableItem, arguments, callStaticContext, context);
+        // The conversion only passes its context on to the call, so it is evaluated in the context of the call.
+        ItemRuntimePlan convertedResult = FunctionCallArgumentConversion.wrapForFunctionConversion(
+                call.plan(),
                 this.expectedReturnType,
                 this.exceptionMessage,
                 callStaticContext.toBuilder()
                         .staticType(this.expectedReturnType)
                         .build());
+        return new FunctionCall(convertedResult, call.context());
     }
 
     private static ItemRuntimePlan buildArgumentIterator(
@@ -138,14 +140,12 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        ItemRuntimePlan call = this.getPlan(context);
-        return call.getRDD(context);
+        return this.getCall(context).getRDD();
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        ItemRuntimePlan call = this.getPlan(dynamicContext);
-        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
+        return this.getCall(dynamicContext).getDataFrame();
     }
 
     @Override

@@ -19,12 +19,17 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.Serial;
+import java.io.Serializable;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -40,10 +45,13 @@ import org.rumbledb.bindings.StandardInputBinding;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
+import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -58,6 +66,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.RuntimePlanBindings;
@@ -74,11 +83,31 @@ import org.rumbledb.types.SequenceType.Arity;
 public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     private final RumbleConfiguration configuration;
+    private final ResourceResolver resourceResolver;
+    private final ErrorCode externalBindingTypeErrorCode;
     private ExternalBindings externalBindings;
+    private int libraryModuleDepth;
+    private List<Item> initialContextItem;
     private Map<String, DynamicContext> importedModuleContexts;
 
-    DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
+    public DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
+        this(configuration, externalBindings, new ResourceResolver());
+    }
+
+    public DynamicContextVisitor(
+            RumbleConfiguration configuration, ExternalBindings externalBindings, ResourceResolver resourceResolver) {
+        this(configuration, externalBindings, resourceResolver, null);
+    }
+
+    /** Allows dynamic module loading to report binding mismatches using its standard error code. */
+    public DynamicContextVisitor(
+            RumbleConfiguration configuration,
+            ExternalBindings externalBindings,
+            ResourceResolver resourceResolver,
+            ErrorCode externalBindingTypeErrorCode) {
+        this.externalBindingTypeErrorCode = externalBindingTypeErrorCode;
         this.configuration = configuration;
+        this.resourceResolver = resourceResolver;
         this.externalBindings = externalBindings;
         this.importedModuleContexts = new HashMap<>();
     }
@@ -92,7 +121,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visit(Node node, DynamicContext argument) {
         if (argument == null) {
-            argument = new DynamicContext(this.configuration, this.externalBindings);
+            argument = new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
         }
         return node.accept(this, argument);
     }
@@ -108,7 +137,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         if (!expression.getReturnType().isResolved()) {
             expression.getReturnType().resolve(argument, expression.getMetadata());
         }
-        ItemRuntimePlan bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+        ItemRuntimePlan bodyIterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
         List<Item> functionInList = bodyIterator.materialize(argument);
         if (functionInList.size() != 1) {
             throw new OurBadException("A function declaration should produce exactly one function");
@@ -123,65 +152,69 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         return defaultAction(expression, argument);
     }
 
-    // @Override
-    // public DynamicContext visitTransformExpression(TransformExpression expression, DynamicContext argument) {
-    //
-    // for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
-    // Expression child = copyDecl.getSourceExpression();
-    // this.visit(child, argument);
-    // ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(child, this.configuration);
-    // iterator.bindToVariableInDynamicContext(argument, copyDecl.getVariableName(), argument);
-    // }
-    //
-    // this.visit(expression.getModifyExpression(), argument);
-    //
-    // this.visit(expression.getReturnExpression(), argument);
-    //
-    // return argument;
-    // }
-
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
+        DynamicContext result = initializeVariableDeclaration(variableDeclaration, argument);
+        if (variableDeclaration.getVariableName().equals(Name.CONTEXT_ITEM)) {
+            // Establish the initial focus only after evaluating its initializer.
+            result.getVariableValues().setPosition(1);
+            result.getVariableValues().setLast(1);
+        }
+        return result;
+    }
+
+    private DynamicContext initializeVariableDeclaration(
+            VariableDeclaration variableDeclaration, DynamicContext argument) {
         Name name = variableDeclaration.getVariableName();
-        argument.addGlobalVariable(name);
         // Variable is not external: we use the expression.
         if (!variableDeclaration.external()) {
             Expression expression = variableDeclaration.getExpression();
-            ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-            RuntimePlanBindings.bind(iterator, argument, name, argument);
+            ItemRuntimePlan iterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
+            if (iterator.getRuntimeStaticContext().getExecutionMode().isLocal()
+                    && !variableDeclaration.isAssignable()
+                    && !expression.isSequential()) {
+                argument.getVariableValues()
+                        .addVariableValue(
+                                name,
+                                new GlobalVariableValue(iterator, argument, variableDeclaration.getMetadata(), name));
+            } else {
+                RuntimePlanBindings.bind(iterator, argument, name, argument);
+            }
             return argument;
         }
 
         // Variable is external. Do we have supplied items?
-        List<Item> items = this.getItemsBinding(name);
+        List<Item> items = name.equals(Name.CONTEXT_ITEM) && this.libraryModuleDepth > 0
+                ? this.initialContextItem
+                : this.getItemsBinding(name);
         if (items != null) {
             if (variableDeclaration.getSequenceType().isEmptySequence() && items.size() > 0) {
-                throw new UnexpectedTypeException(
+                throw externalBindingTypeError(
                         "External variable values does not match sequence type ().", variableDeclaration.getMetadata());
             }
             if (!variableDeclaration.getSequenceType().isEmptySequence()
                     && variableDeclaration.getSequenceType().getArity() == Arity.One
                     && items.size() != 1) {
-                throw new UnexpectedTypeException(
+                throw externalBindingTypeError(
                         "External variable values does not match sequence arity 1.", variableDeclaration.getMetadata());
             }
             if (!variableDeclaration.getSequenceType().isEmptySequence()
                     && variableDeclaration.getSequenceType().getArity() == Arity.OneOrZero
                     && items.size() > 1) {
-                throw new UnexpectedTypeException(
+                throw externalBindingTypeError(
                         "External variable values does not match sequence arity ?.", variableDeclaration.getMetadata());
             }
             if (!variableDeclaration.getSequenceType().isEmptySequence()
                     && variableDeclaration.getSequenceType().getArity() == Arity.OneOrMore
                     && items.size() == 0) {
-                throw new UnexpectedTypeException(
+                throw externalBindingTypeError(
                         "External variable values does not match sequence arity +.", variableDeclaration.getMetadata());
             }
             for (Item item : items) {
                 if (variableDeclaration.getSequenceType().isEmptySequence()
                         || !InstanceOfIterator.doesItemTypeMatchItem(
                                 variableDeclaration.getSequenceType().getItemType(), item)) {
-                    throw new UnexpectedTypeException(
+                    throw externalBindingTypeError(
                             "External variable value ("
                                     + item
                                     + ") does not match the expected type ("
@@ -296,8 +329,17 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Variable is external and we do not have any supplied value: we fall back to expression, if any.
         Expression expression = variableDeclaration.getExpression();
         if (expression != null) {
-            ItemRuntimePlan iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-            RuntimePlanBindings.bind(iterator, argument, name, argument);
+            ItemRuntimePlan iterator = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(expression);
+            if (iterator.getRuntimeStaticContext().getExecutionMode().isLocal()
+                    && !variableDeclaration.isAssignable()
+                    && !expression.isSequential()) {
+                argument.getVariableValues()
+                        .addVariableValue(
+                                name,
+                                new GlobalVariableValue(iterator, argument, variableDeclaration.getMetadata(), name));
+            } else {
+                RuntimePlanBindings.bind(iterator, argument, name, argument);
+            }
             return argument;
         }
 
@@ -315,9 +357,23 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
         if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
-            DynamicContext newContext = new DynamicContext(this.configuration, this.externalBindings);
+            DynamicContext newContext =
+                    new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
             newContext.setNamedFunctions(argument.getNamedFunctions());
-            DynamicContext importedContext = visitDescendants(module, newContext);
+            // A library without its own context declaration uses the query's initial focus.
+            if (!module.getProlog().hasContextItemDeclaration() && this.initialContextItem != null) {
+                newContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this.initialContextItem);
+                newContext.getVariableValues().setPosition(1);
+                newContext.getVariableValues().setLast(1);
+            }
+            DynamicContext importedContext;
+            this.importedModuleContexts.put(module.getNamespace(), newContext);
+            this.libraryModuleDepth++;
+            try {
+                importedContext = visitDescendants(module, newContext);
+            } finally {
+                this.libraryModuleDepth--;
+            }
             this.importedModuleContexts.put(module.getNamespace(), importedContext);
         }
         argument.getVariableValues()
@@ -331,11 +387,90 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitProlog(Prolog prolog, DynamicContext argument) {
-        DynamicContext generatedContext = visitDescendants(prolog, argument);
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            argument.addGlobalVariable(declaration.getVariableName());
+        }
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
+            visit(declaration, argument);
+        }
+        // Register deferred globals before following imports, so circular imports can share
+        // their bindings and context initialization can refer to another global in this module.
+        Set<Node> earlyBound = new HashSet<>();
+        if (prolog.hasContextItemDeclaration() || this.libraryModuleDepth > 0) {
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                Expression initializer = declaration.getExpression();
+                if (this.libraryModuleDepth > 0
+                        && declaration.external()
+                        && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
+                        && (this.getItemsBinding(declaration.getVariableName()) != null
+                                || (initializer != null
+                                        && initializer.getHighestExecutionMode().isLocal()))) {
+                    initializeVariableDeclaration(declaration, argument);
+                    earlyBound.add(declaration);
+                    continue;
+                }
+                if (!declaration.external()
+                        && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
+                        && !declaration.isAssignable()
+                        && !initializer.isSequential()) {
+                    ItemRuntimePlan plan =
+                            new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(initializer);
+                    if (plan.getRuntimeStaticContext().getExecutionMode().isLocal()) {
+                        argument.getVariableValues()
+                                .addVariableValue(
+                                        declaration.getVariableName(),
+                                        new GlobalVariableValue(
+                                                plan,
+                                                argument,
+                                                declaration.getMetadata(),
+                                                declaration.getVariableName()));
+                        earlyBound.add(declaration);
+                    }
+                }
+            }
+        }
+        VariableDeclaration contextDeclaration = null;
+        if (this.libraryModuleDepth == 0) {
+            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+                if (declaration.getVariableName().equals(Name.CONTEXT_ITEM)) {
+                    contextDeclaration = declaration;
+                    visit(declaration, argument);
+                    this.initialContextItem = argument.getVariableValues()
+                            .getLocalVariableValue(Name.CONTEXT_ITEM, declaration.getMetadata());
+                    break;
+                }
+            }
+        }
+        DynamicContext generatedContext = argument;
+        for (Node child : prolog.getChildren()) {
+            if (!(child instanceof FunctionDeclaration) && child != contextDeclaration && !earlyBound.contains(child))
+                generatedContext = visit(child, generatedContext);
+        }
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
         }
+        // Deferred bindings resolve forward dependencies during module initialization. Complete
+        // initialization before entering the query body, where try/catch must not catch global
+        // initializer errors, and before Spark can capture initializer plans in task closures.
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            Name name = declaration.getVariableName();
+            if (generatedContext.getVariableValues().isRDD(name, declaration.getMetadata())
+                    || generatedContext.getVariableValues().isDataFrame(name, declaration.getMetadata())) {
+                continue;
+            }
+            List<Item> items =
+                    generatedContext.getVariableValues().getLocalVariableValue(name, declaration.getMetadata());
+            if (items instanceof GlobalVariableValue deferred) {
+                generatedContext.getVariableValues().addVariableValue(name, deferred.value());
+            }
+        }
         return generatedContext;
+    }
+
+    private RumbleException externalBindingTypeError(String message, ExceptionMetadata metadata) {
+        return this.externalBindingTypeErrorCode == null
+                ? new UnexpectedTypeException(message, metadata)
+                : new RumbleException(message, this.externalBindingTypeErrorCode, metadata);
     }
 
     private Item parseJSONItem(String value, ExceptionMetadata metadata) {
@@ -403,5 +538,99 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             return format.name().toLowerCase();
         }
         return InputFormat.JSON.name().toLowerCase();
+    }
+
+    /** A local global initializer is evaluated once, when its value is needed. */
+    private static final class GlobalVariableValue extends AbstractList<Item> implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private final ItemRuntimePlan plan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private final Name variableName;
+        private List<Item> value;
+        private boolean evaluating;
+
+        GlobalVariableValue(
+                ItemRuntimePlan plan, DynamicContext context, ExceptionMetadata metadata, Name variableName) {
+            this.plan = plan;
+            this.context = context;
+            this.metadata = metadata;
+            this.variableName = variableName;
+        }
+
+        private List<Item> value() {
+            if (this.value != null) return this.value;
+            if (this.evaluating) {
+                throw new CycleInVariableDeclarationsException(
+                        "A global variable initializer depends on its own value.", this.metadata);
+            }
+            this.evaluating = true;
+            // The initial focus is absent while its initializer is evaluated. In particular,
+            // creating a function item must not capture the initializer's own deferred value.
+            boolean focusInitializer = Name.CONTEXT_ITEM.equals(this.variableName);
+            Item position = null;
+            Item last = null;
+            if (focusInitializer) {
+                position = this.context.getVariableValues().getPosition();
+                last = this.context.getVariableValues().getLast();
+                this.context.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
+                this.context.getVariableValues().removeVariable(Name.CONTEXT_POSITION);
+                this.context.getVariableValues().removeVariable(Name.CONTEXT_COUNT);
+            }
+            try {
+                this.value = this.plan.materialize(this.context);
+                return this.value;
+            } finally {
+                if (focusInitializer) {
+                    this.context.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this);
+                    if (position != null)
+                        this.context.getVariableValues().addVariableValue(Name.CONTEXT_POSITION, List.of(position));
+                    if (last != null)
+                        this.context.getVariableValues().addVariableValue(Name.CONTEXT_COUNT, List.of(last));
+                }
+                this.evaluating = false;
+            }
+        }
+
+        @Override
+        public Item get(int index) {
+            return value().get(index);
+        }
+
+        @Override
+        public int size() {
+            return value().size();
+        }
+
+        @Serial
+        private Object writeReplace() {
+            // Capturing a module context must not turn an unrelated initializer error (or
+            // an in-progress value) into Task not serializable. The prolog will report the
+            // error normally; a task that actually reads this binding still receives it.
+            try {
+                return new ArrayList<>(value());
+            } catch (RumbleException exception) {
+                return new GlobalVariableFailure(exception);
+            }
+        }
+    }
+
+    private static final class GlobalVariableFailure extends AbstractList<Item> implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private final RumbleException exception;
+
+        GlobalVariableFailure(RumbleException exception) {
+            this.exception = exception;
+        }
+
+        @Override
+        public Item get(int index) {
+            throw this.exception;
+        }
+
+        @Override
+        public int size() {
+            throw this.exception;
+        }
     }
 }

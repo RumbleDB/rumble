@@ -29,6 +29,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
+import org.rumbledb.compiler.context.EnclosedExprContext;
 import org.rumbledb.compiler.context.xml.CommonContentContext;
 import org.rumbledb.compiler.context.xml.DirAttributeContentContext;
 import org.rumbledb.compiler.context.xml.DirAttributeListContext;
@@ -36,17 +37,20 @@ import org.rumbledb.compiler.context.xml.DirAttributeValueContext;
 import org.rumbledb.compiler.context.xml.DirElemContentContext;
 import org.rumbledb.compiler.context.xml.DirElemOpenCloseContext;
 import org.rumbledb.compiler.context.xml.DirectConstructorContext;
+import org.rumbledb.compiler.translation.SequenceTranslation;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.utils.TokenStreamUtils;
 import org.rumbledb.compiler.utils.XmlCharRefUtils;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DirectElementConstructorTagMismatchException;
 import org.rumbledb.exceptions.DuplicateDirectAttributeException;
 import org.rumbledb.exceptions.DuplicateNamespaceDeclarationAttributeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.NamespaceDeclarationAttributeEnclosedExpressionException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
@@ -149,9 +153,7 @@ public final class XmlDirectConstructorTranslation {
         void append(Expression expression) {
             if (expression instanceof TextNodeExpression textExpression) {
                 String value = textExpression.getContent();
-                if (value.isEmpty()) {
-                    return;
-                }
+                // Even an empty CDATA section makes adjacent literal whitespace significant.
                 this.ensureText(textExpression.getMetadata());
                 this.text.append(value);
                 this.boundaryWhitespaceOnly =
@@ -283,6 +285,7 @@ public final class XmlDirectConstructorTranslation {
                     BiFunction<QnameCtx, NameRole, Name> parseName,
                     Function<DirElemContentCtx, Expression> visitDirElemContent,
                     Function<ExprCtx, Expression> visitExpr) {
+        validateTagSyntax(ctx, tokenStream, translationContext);
         DirElemOpenCloseContext<QnameCtx, DirElemContentCtx> openClose = ctx.openClose();
         if (openClose != null
                 && openClose.closeTagName() != null
@@ -321,6 +324,61 @@ public final class XmlDirectConstructorTranslation {
         }
     }
 
+    private static void validateTagGap(
+            Token left,
+            Token right,
+            boolean whitespaceRequired,
+            boolean adjacent,
+            TranslationContext translationContext) {
+        String gap = left.getInputStream()
+                .getText(org.antlr.v4.runtime.misc.Interval.of(left.getStopIndex() + 1, right.getStartIndex() - 1));
+        if ((whitespaceRequired && gap.isEmpty())
+                || (adjacent && !gap.isEmpty())
+                || !gap.chars().allMatch(c -> isXmlWhitespace((char) c))) {
+            throw new ParsingException(
+                    "Invalid whitespace or comment in an XML tag.", translationContext.metadata(left, right));
+        }
+    }
+
+    private static List<Token> tagTokens(CommonTokenStream tokens, int start, int stop) {
+        return tokens.getTokens(start, stop).stream()
+                .filter(token -> token.getChannel() == Token.DEFAULT_CHANNEL)
+                .toList();
+    }
+
+    private static <Q extends ParserRuleContext, E extends ParserRuleContext, D extends ParserRuleContext>
+            void validateTagSyntax(
+                    DirectConstructorContext<Q, E, D> ctx,
+                    CommonTokenStream tokens,
+                    TranslationContext translationContext) {
+        validateTagGap(ctx.context().getStart(), ctx.openTagName().getStart(), false, true, translationContext);
+        Token previous = ctx.openTagName().getStop();
+        for (var attribute : ctx.attributes().attributes()) {
+            validateTagGap(previous, attribute.name().getStart(), true, false, translationContext);
+            Token equals = tagTokens(
+                            tokens,
+                            attribute.name().getStop().getTokenIndex() + 1,
+                            attribute.value().context().getStart().getTokenIndex() - 1)
+                    .get(0);
+            validateTagGap(attribute.name().getStop(), equals, false, false, translationContext);
+            validateTagGap(equals, attribute.value().context().getStart(), false, false, translationContext);
+            previous = attribute.value().context().getStop();
+        }
+        Token openEnd = ctx.openClose() == null
+                ? ctx.context().getStop()
+                : ctx.openClose().endOpen();
+        List<Token> endTokens = tagTokens(tokens, previous.getTokenIndex(), openEnd.getTokenIndex());
+        for (int i = 1; i < endTokens.size(); i++) {
+            validateTagGap(endTokens.get(i - 1), endTokens.get(i), false, i > 1, translationContext);
+        }
+        if (ctx.openClose() != null) {
+            Q closeName = ctx.openClose().closeTagName();
+            validateTagGap(ctx.openClose().startClose(), ctx.openClose().slashClose(), false, true, translationContext);
+            validateTagGap(ctx.openClose().slashClose(), closeName.getStart(), false, true, translationContext);
+            validateTagGap(closeName.getStop(), ctx.context().getStop(), false, false, translationContext);
+        }
+    }
+
     /**
      * Translates direct element content (nested direct constructor, common content, CDATA, or literal text)
      * into an {@link Expression}.
@@ -342,7 +400,9 @@ public final class XmlDirectConstructorTranslation {
                     Function<DirectConstructorCtx, Expression> visitDirectConstructor,
                     Function<CommonContentCtx, Expression> visitCommonContent) {
         if (ctx.directConstructor() != null) {
-            return visitDirectConstructor.apply(ctx.directConstructor());
+            Expression result = visitDirectConstructor.apply(ctx.directConstructor());
+            if (result instanceof DirElemConstructorExpression element) element.setDirectlyNested(true);
+            return result;
         }
         if (ctx.commonContent() != null) {
             return visitCommonContent.apply(ctx.commonContent());
@@ -368,8 +428,9 @@ public final class XmlDirectConstructorTranslation {
             CommonContentContext<ExprCtx> ctx,
             TranslationContext translationContext,
             Function<ExprCtx, Expression> visitExpr) {
-        if (ctx.expr() != null) {
-            return visitExpr.apply(ctx.expr());
+        if (ctx.isEnclosed()) {
+            return SequenceTranslation.enclosedExpr(
+                    new EnclosedExprContext<>(ctx.expr(), ctx.context()), translationContext, visitExpr);
         }
         String xmlVersion = translationContext.configuration().semantics().xmlVersion();
         String processedContent =
@@ -419,6 +480,18 @@ public final class XmlDirectConstructorTranslation {
                             declaredPrefix, translationContext.metadata(qnameCtx));
                 }
                 String uri = getNamespaceDeclarationUri(attr.value(), tokenStream, translationContext, visitExpr);
+                if (!declaredPrefix.isEmpty()
+                        && uri.isEmpty()
+                        && !"1.1"
+                                .equals(translationContext
+                                        .configuration()
+                                        .semantics()
+                                        .xmlVersion())) {
+                    throw new RumbleException(
+                            "A namespace declaration attribute cannot undeclare a prefix.",
+                            ErrorCode.EmptyNamespaceURIForPrefixedBindingErrorCode,
+                            translationContext.metadata(qnameCtx));
+                }
                 NamespaceBindingUtils.validateNamespaceDeclaration(
                         declaredPrefix, uri, translationContext.metadata(qnameCtx));
                 namespaceDeclarations.add(
@@ -551,14 +624,18 @@ public final class XmlDirectConstructorTranslation {
                         "Namespace declaration attributes cannot contain enclosed expressions.",
                         translationContext.metadata(ctx.context()));
             }
-            return List.of(visitExpr.apply(ctx.expr()));
+            return List.of(SequenceTranslation.enclosedExpr(
+                    new EnclosedExprContext<>(ctx.expr(), ctx.context()), translationContext, visitExpr));
         }
 
         String childText = tokenStream.getText(ctx.context().getSourceInterval());
         validateLiteral(childText, ctx.context(), translationContext::metadata);
         ParseTree child = ctx.context().getChildCount() > 0 ? ctx.context().getChild(0) : ctx.context();
         String xmlVersion = translationContext.configuration().semantics().xmlVersion();
-        String processedContent = processLiteralContent(childText, xmlVersion, translationContext.metadata(child));
+        // Normalize only source characters, before expanding references. Values from enclosed
+        // expressions and characters produced by references retain their whitespace.
+        String processedContent = processLiteralContent(
+                normalizeLiteralAttributeWhitespace(childText), xmlVersion, translationContext.metadata(child));
         return List.of(new AttributeNodeContentExpression(processedContent, translationContext.metadata(child)));
     }
 
@@ -710,7 +787,12 @@ public final class XmlDirectConstructorTranslation {
             Function<ParseTree, ExceptionMetadata> metadataFactory) {
         String hiddenText = TokenStreamUtils.getHiddenTextAfter(tokenStream, previousToken.getTokenIndex());
         validateLiteral(hiddenText, tree, metadataFactory);
-        result.appendText(hiddenText, tree);
+        result.appendText(normalizeLiteralAttributeWhitespace(hiddenText), tree);
+    }
+
+    /** CDATA attribute normalization replaces each literal XML whitespace character with a space. */
+    private static String normalizeLiteralAttributeWhitespace(String value) {
+        return value.replace('\t', ' ').replace('\n', ' ').replace('\r', ' ');
     }
 
     /**

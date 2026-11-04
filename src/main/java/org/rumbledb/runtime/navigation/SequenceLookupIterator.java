@@ -112,7 +112,8 @@ public class SequenceLookupIterator extends AbstractAtMostOneItemRuntimePlan imp
         }
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
         JavaPairRDD<Item, Long> filteredRDD;
-        filteredRDD = zippedRDD.filter((input) -> input._2() == this.position - 1);
+        int position = this.position;
+        filteredRDD = zippedRDD.filter((input) -> input._2() == position - 1);
         List<Tuple2<Item, Long>> results = filteredRDD.take(1);
         if (results.isEmpty()) {
             return null;

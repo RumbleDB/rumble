@@ -35,6 +35,8 @@ public class ElementNodeItemType extends AbstractItemType {
     @Serial
     private static final long serialVersionUID = 1L;
 
+    private static final Name ANY_TYPE = new Name(Name.XS_NS, "xs", "anyType");
+
     private Name catalogueName;
 
     @Getter
@@ -51,6 +53,9 @@ public class ElementNodeItemType extends AbstractItemType {
 
     @Getter
     private final boolean nillable;
+
+    /** The typed value of a non-nilled instance, or null when it is only known to be xs:anyAtomicType*. */
+    private SequenceType typedValueType;
 
     public ElementNodeItemType() {
         this.catalogueName = Name.createVariableInDefaultTypeNamespace("element");
@@ -71,7 +76,12 @@ public class ElementNodeItemType extends AbstractItemType {
         this.nillable = false;
     }
 
-    public ElementNodeItemType(Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, boolean nillable) {
+    public ElementNodeItemType(
+            Name nodeName,
+            Name schemaTypeName,
+            List<Name> schemaTypeHierarchy,
+            boolean nillable,
+            SequenceType typedValueType) {
         if (schemaTypeName == null || schemaTypeHierarchy == null || schemaTypeHierarchy.isEmpty()) {
             throw new IllegalArgumentException("A typed element test requires a schema type hierarchy.");
         }
@@ -81,6 +91,7 @@ public class ElementNodeItemType extends AbstractItemType {
         this.schemaTypeHierarchy = List.copyOf(schemaTypeHierarchy);
         this.schemaTypeAlternatives = List.of(schemaTypeName);
         this.nillable = nillable;
+        this.typedValueType = typedValueType;
     }
 
     public ElementNodeItemType(
@@ -88,8 +99,9 @@ public class ElementNodeItemType extends AbstractItemType {
             Name schemaTypeName,
             List<Name> schemaTypeHierarchy,
             boolean nillable,
-            List<Name> schemaTypeAlternatives) {
-        this(nodeName, schemaTypeName, schemaTypeHierarchy, nillable);
+            List<Name> schemaTypeAlternatives,
+            SequenceType typedValueType) {
+        this(nodeName, schemaTypeName, schemaTypeHierarchy, nillable, typedValueType);
         this.schemaTypeAlternatives = List.copyOf(schemaTypeAlternatives);
     }
 
@@ -127,6 +139,17 @@ public class ElementNodeItemType extends AbstractItemType {
     }
 
     @Override
+    public SequenceType getTypedValueType() {
+        if (this.typedValueType == null || !this.nillable) {
+            return this.typedValueType;
+        }
+        // A nilled element has an empty typed value.
+        return new SequenceType(
+                this.typedValueType.getItemType(),
+                this.typedValueType.getCardinality().union(SequenceCardinality.EMPTY));
+    }
+
+    @Override
     public boolean isSubtypeOf(ItemType superType) {
         if (superType.isUnionType()) {
             for (ItemType unionItemType : superType.getTypes()) {
@@ -155,8 +178,10 @@ public class ElementNodeItemType extends AbstractItemType {
     }
 
     private boolean hasCompatibleSchemaType(ElementNodeItemType superType) {
-        return this.schemaTypeName != null
-                && superType.schemaTypeAlternatives.stream().anyMatch(this.schemaTypeHierarchy::contains)
+        if (this.schemaTypeName == null) {
+            return superType.nillable && superType.schemaTypeAlternatives.contains(ANY_TYPE);
+        }
+        return superType.schemaTypeAlternatives.stream().anyMatch(this.schemaTypeHierarchy::contains)
                 && (!this.nillable || superType.nillable);
     }
 
@@ -207,7 +232,7 @@ public class ElementNodeItemType extends AbstractItemType {
         if (this.schemaTypeName == null) {
             return "element(" + name + ")";
         }
-        return "element(" + name + ", " + this.schemaTypeName + (this.nillable ? "?" : "") + ")";
+        return "element(" + name + ", " + schemaTypeDisplayName(this.schemaTypeName) + (this.nillable ? "?" : "") + ")";
     }
 
     @Override

@@ -124,6 +124,16 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public boolean isWithinIntRange() {
+        return this.itemToAnnotate.isWithinIntRange();
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return this.itemToAnnotate.isWithinLongRange();
+    }
+
+    @Override
     public boolean isInteger() {
         return this.itemToAnnotate.isInteger();
     }
@@ -480,6 +490,11 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public long getLongValue() {
+        return this.itemToAnnotate.getLongValue();
+    }
+
+    @Override
     public int getIntValue() {
         return this.itemToAnnotate.getIntValue();
     }
@@ -502,6 +517,11 @@ public class AnnotatedItem implements Item {
     @Override
     public Duration getDurationValue() {
         return this.itemToAnnotate.getDurationValue();
+    }
+
+    @Override
+    public Duration getDayTimeDurationComponent() {
+        return this.itemToAnnotate.getDayTimeDurationComponent();
     }
 
     @Override

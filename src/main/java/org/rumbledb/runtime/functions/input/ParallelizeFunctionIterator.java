@@ -16,21 +16,24 @@
 package org.rumbledb.runtime.functions.input;
 
 import java.io.Serial;
+import java.math.BigInteger;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
 
 import lombok.NonNull;
+import scala.Tuple2;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidArgumentValueException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
-import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
@@ -61,43 +64,55 @@ public class ParallelizeFunctionIterator extends ItemRuntimePlan
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        if (this.sequenceIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
-            RuntimeDataFrame<Item> dataFrame = this.sequenceIterator.getDataFrame(context);
-            JavaRDD<Item> rdd = dataFrame.toRDD(this.getRuntimeStaticContext().getMetadata());
-            if (this.partitionsIterator == null) {
-                return rdd;
-            }
-            return rdd.repartition(getNumberOfPartitions(this.partitionsIterator, context, getMetadata())
-                    .getIntValue());
-        }
-        List<Item> contents = this.sequenceIterator.materialize(context);
         if (this.partitionsIterator == null) {
-            return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
+            return this.sequenceIterator.getRDD(context);
         }
-        Item partitions = getNumberOfPartitions(this.partitionsIterator, context, getMetadata());
-        return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents, partitions.getIntValue());
+        int partitions = evaluateNumberOfPartitions(this.partitionsIterator, context, getMetadata());
+        // A distributed sequence is kept distributed rather than collected and distributed again. It is sorted by
+        // position into the requested number of partitions, because repartition would not preserve the item order.
+        if (this.sequenceIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            return this.sequenceIterator
+                    .getRDD(context)
+                    .zipWithIndex()
+                    .mapToPair(Tuple2::swap)
+                    .sortByKey(true, partitions)
+                    .values();
+        }
+        // A local sequence is split into contiguous slices directly, which preserves the order without a shuffle.
+        return SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .parallelize(this.sequenceIterator.materialize(context), partitions);
     }
 
-    private static Item getNumberOfPartitions(
+    private static int evaluateNumberOfPartitions(
             ItemRuntimePlan partitionsPlan, DynamicContext context, ExceptionMetadata metadata) {
         Item partitions;
         try {
-            partitions = partitionsPlan.materializeAtMostOne(context);
+            partitions = partitionsPlan.materializeExactlyOne(context);
+        } catch (NoItemException e) {
+            throw new UnexpectedTypeException(
+                    "The second parameter of parallelize must be an integer, but an empty sequence is supplied.",
+                    metadata);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but a sequence with more than one item is supplied.",
-                    metadata);
-        }
-        if (partitions == null) {
-            throw new UnexpectedTypeException(
-                    "The second parameter of parallelize must be an integer, but an empty sequence is supplied.",
                     metadata);
         }
         if (!partitions.isInteger()) {
             throw new UnexpectedTypeException(
                     "The second parameter of parallelize must be an integer, but a non-integer is supplied.", metadata);
         }
-        return partitions;
+        BigInteger numberOfPartitions = partitions.getIntegerValue();
+        if (numberOfPartitions.signum() <= 0 || numberOfPartitions.bitLength() >= Integer.SIZE) {
+            throw new InvalidArgumentValueException(
+                    "The second parameter of parallelize must be a positive integer no greater than "
+                            + Integer.MAX_VALUE
+                            + ", but "
+                            + numberOfPartitions
+                            + " is supplied.",
+                    metadata);
+        }
+        return numberOfPartitions.intValue();
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
@@ -123,7 +138,7 @@ public class ParallelizeFunctionIterator extends ItemRuntimePlan
         @Override
         protected void openLocal() {
             this.sequenceCursor = this.sequencePlan.getCursor(this.context);
-            getNumberOfPartitions(this.partitionsPlan, this.context, this.metadata);
+            evaluateNumberOfPartitions(this.partitionsPlan, this.context, this.metadata);
         }
 
         @Override

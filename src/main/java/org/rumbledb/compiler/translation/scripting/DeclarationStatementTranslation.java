@@ -67,7 +67,12 @@ public final class DeclarationStatementTranslation {
                 }
             }
             variables.add(new VariableDeclStatement(
-                    annotations, var, seq, exprSingle, translationContext.metadata(varDecl.context())));
+                    annotations,
+                    var,
+                    seq,
+                    exprSingle,
+                    translationContext.metadata(varDecl.context()),
+                    translationContext.metadata(varDecl.varRef())));
         }
         if (variables.size() == 1) {
             return variables.get(0);

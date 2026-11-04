@@ -16,7 +16,9 @@
 package org.rumbledb.compiler.translation;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -142,15 +144,27 @@ public final class FlworTranslation {
             }
         }
         Expression expr = visitExprSingle.apply(ctx.exprSingle());
-        // If the sequenceType is specified, we have to "extend" its arity to *
-        // because TreatIterator is wrapping the whole assignment expression,
-        // meaning there is not one TreatIterator for each variable we loop over.
+        // Check all input items, while retaining empty-sequence() and the requirement that an
+        // allowing-empty binding must permit the empty sequence when its input is empty.
         if (seq != null) {
-            SequenceType expressionType = new SequenceType(seq.getItemType(), SequenceType.Arity.ZeroOrMore);
+            boolean requiresItem = emptyFlag && !SequenceType.Arity.Zero.isSubtypeOf(seq.getArity());
+            SequenceType expressionType = seq.isEmptySequence()
+                    ? seq
+                    : new SequenceType(
+                            seq.getItemType(),
+                            requiresItem ? SequenceType.Arity.OneOrMore : SequenceType.Arity.ZeroOrMore);
             expr = new TreatExpression(expr, expressionType, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
-        return new ForClause(var, emptyFlag, seq, atVar, expr, translationContext.metadata(ctx.context()));
+        return new ForClause(
+                var,
+                emptyFlag,
+                seq,
+                atVar,
+                expr,
+                translationContext.metadata(ctx.context()),
+                translationContext.metadata(ctx.varRef()),
+                ctx.at() == null ? null : translationContext.metadata(ctx.at()));
     }
 
     public static <
@@ -196,7 +210,8 @@ public final class FlworTranslation {
             expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
-        return new LetClause(var, seq, expr, translationContext.metadata(ctx.context()));
+        return new LetClause(
+                var, seq, expr, translationContext.metadata(ctx.context()), translationContext.metadata(ctx.varRef()));
     }
 
     public static <ExprSingleCtx extends ParserRuleContext> WhereClause whereClause(
@@ -212,7 +227,9 @@ public final class FlworTranslation {
             TranslationContext translationContext,
             Function<VarBindingCtx, Name> parseVariableBinding) {
         return new CountClause(
-                parseVariableBinding.apply(ctx.varBinding()), translationContext.metadata(ctx.context()));
+                parseVariableBinding.apply(ctx.varBinding()),
+                translationContext.metadata(ctx.context()),
+                translationContext.metadata(ctx.varBinding()));
     }
 
     public static <
@@ -241,7 +258,8 @@ public final class FlworTranslation {
             SequenceType seq = varCtx.seq() != null ? processSequenceType.apply(varCtx.seq()) : null;
             Expression expr = varCtx.exprSingle() != null ? visitExprSingle.apply(varCtx.exprSingle()) : null;
             Name var = parseVariableBinding.apply(varCtx.varRef());
-            vars.add(new GroupByVariableDeclaration(var, seq, expr, collationUri));
+            vars.add(new GroupByVariableDeclaration(
+                    var, seq, expr, collationUri, translationContext.metadata(varCtx.varRef())));
         }
         return new GroupByClause(vars, translationContext.metadata(ctx.context()));
     }
@@ -279,14 +297,21 @@ public final class FlworTranslation {
                     Function<VarBindingCtx, Name> parseVariableBinding,
                     Function<SeqTypeCtx, SequenceType> processSequenceType,
                     Function<ExprSingleCtx, Expression> visitExprSingle) {
-        Name windowVariable = parseVariableBinding.apply(ctx.windowVariable());
+        Map<Name, ExceptionMetadata> variableMetadata = new LinkedHashMap<>();
+        Name windowVariable =
+                parseWindowVariable(ctx.windowVariable(), parseVariableBinding, translationContext, variableMetadata);
         SequenceType sequenceType = ctx.seqType() == null ? null : processSequenceType.apply(ctx.seqType());
         Expression expression = visitExprSingle.apply(ctx.expression());
-        WindowClause.WindowCondition start =
-                buildWindowCondition(ctx.startCondition(), parseVariableBinding, visitExprSingle);
+        WindowClause.WindowCondition start = buildWindowCondition(
+                ctx.startCondition(), parseVariableBinding, visitExprSingle, translationContext, variableMetadata);
         WindowClause.WindowCondition end = ctx.endCondition() == null
                 ? null
-                : buildWindowCondition(ctx.endCondition(), parseVariableBinding, visitExprSingle);
+                : buildWindowCondition(
+                        ctx.endCondition(),
+                        parseVariableBinding,
+                        visitExprSingle,
+                        translationContext,
+                        variableMetadata);
         validateWindowVariables(windowVariable, start, end, translationContext.metadata(ctx.context()));
         return new WindowClause(
                 ctx.windowType(),
@@ -295,25 +320,46 @@ public final class FlworTranslation {
                 expression,
                 start,
                 end,
-                translationContext.metadata(ctx.context()));
+                translationContext.metadata(ctx.context()),
+                variableMetadata);
     }
 
     private static <VarBindingCtx extends ParserRuleContext, ExprSingleCtx extends ParserRuleContext>
             WindowClause.WindowCondition buildWindowCondition(
                     WindowConditionContext<VarBindingCtx, ExprSingleCtx> ctx,
                     Function<VarBindingCtx, Name> parseVariableBinding,
-                    Function<ExprSingleCtx, Expression> visitExprSingle) {
+                    Function<ExprSingleCtx, Expression> visitExprSingle,
+                    TranslationContext translationContext,
+                    Map<Name, ExceptionMetadata> variableMetadata) {
         return new WindowClause.WindowCondition(
-                buildWindowVars(ctx.vars(), parseVariableBinding), visitExprSingle.apply(ctx.exprSingle()), ctx.only());
+                buildWindowVars(ctx.vars(), parseVariableBinding, translationContext, variableMetadata),
+                visitExprSingle.apply(ctx.exprSingle()),
+                ctx.only());
     }
 
     private static <VarBindingCtx extends ParserRuleContext> WindowClause.WindowVars buildWindowVars(
-            WindowVarsContext<VarBindingCtx> ctx, Function<VarBindingCtx, Name> parseVariableBinding) {
-        Name current = ctx.currentItem() == null ? null : parseVariableBinding.apply(ctx.currentItem());
-        Name position = ctx.positionalVar() == null ? null : parseVariableBinding.apply(ctx.positionalVar());
-        Name previous = ctx.previousItem() == null ? null : parseVariableBinding.apply(ctx.previousItem());
-        Name next = ctx.nextItem() == null ? null : parseVariableBinding.apply(ctx.nextItem());
-        return new WindowClause.WindowVars(current, position, previous, next);
+            WindowVarsContext<VarBindingCtx> ctx,
+            Function<VarBindingCtx, Name> parseVariableBinding,
+            TranslationContext translationContext,
+            Map<Name, ExceptionMetadata> variableMetadata) {
+        return new WindowClause.WindowVars(
+                parseWindowVariable(ctx.currentItem(), parseVariableBinding, translationContext, variableMetadata),
+                parseWindowVariable(ctx.positionalVar(), parseVariableBinding, translationContext, variableMetadata),
+                parseWindowVariable(ctx.previousItem(), parseVariableBinding, translationContext, variableMetadata),
+                parseWindowVariable(ctx.nextItem(), parseVariableBinding, translationContext, variableMetadata));
+    }
+
+    private static <VarBindingCtx extends ParserRuleContext> Name parseWindowVariable(
+            VarBindingCtx ctx,
+            Function<VarBindingCtx, Name> parseVariableBinding,
+            TranslationContext translationContext,
+            Map<Name, ExceptionMetadata> variableMetadata) {
+        if (ctx == null) {
+            return null;
+        }
+        Name name = parseVariableBinding.apply(ctx);
+        variableMetadata.put(name, translationContext.metadata(ctx));
+        return name;
     }
 
     private static void validateWindowVariables(

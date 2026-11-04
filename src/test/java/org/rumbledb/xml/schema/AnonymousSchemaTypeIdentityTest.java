@@ -16,6 +16,7 @@
 package org.rumbledb.xml.schema;
 
 import java.io.File;
+import java.util.Map;
 
 import org.apache.xerces.dom.DOMInputImpl;
 import org.apache.xerces.impl.xs.XMLSchemaLoader;
@@ -50,7 +51,7 @@ class AnonymousSchemaTypeIdentityTest {
                 model.getElementDeclaration("count", "urn:anonymous-types").getTypeDefinition();
         XSTypeDefinition second =
                 model.getElementDeclaration("otherCount", "urn:anonymous-types").getTypeDefinition();
-        XmlSchemaTypeMapper mapper = new XmlSchemaTypeMapper();
+        XmlSchemaTypeMapper mapper = new XmlSchemaTypeMapper(Map.of());
         // Map the first definition as a node annotation first, and the second as an atomic type first.
         var annotation = mapper.mapTypeAnnotation(first);
         var atomic = mapper.mapGeneralizedAtomicType(first).orElseThrow();
@@ -58,6 +59,8 @@ class AnonymousSchemaTypeIdentityTest {
         assertEquals(annotation.name(), atomic.getName());
         assertEquals(otherAtomic.getName(), mapper.mapTypeAnnotation(second).name());
         assertNotEquals(atomic, otherAtomic);
+        // Internal names stay out of displayed types.
+        assertEquals("<anonymous xs:integer>", atomic.toString());
         // Assigning an internal name must preserve the original inheritance relationship.
         assertTrue(atomic.isSubtypeOf(BuiltinTypesCatalogue.integerItem));
         assertTrue(annotation.isDerivedFrom(BuiltinTypesCatalogue.integerItem.getName()));
@@ -92,7 +95,7 @@ class AnonymousSchemaTypeIdentityTest {
         var simple = complex.getSimpleType();
         assertTrue(simple.getAnonymous());
         assertTrue(simple.getBaseType().getAnonymous());
-        XmlSchemaTypeMapper mapper = new XmlSchemaTypeMapper();
+        XmlSchemaTypeMapper mapper = new XmlSchemaTypeMapper(Map.of());
         var base = mapper.mapGeneralizedAtomicType(simple.getBaseType()).orElseThrow();
         var derived = mapper.mapGeneralizedAtomicType(simple).orElseThrow();
         assertTrue(derived.isSubtypeOf(base));

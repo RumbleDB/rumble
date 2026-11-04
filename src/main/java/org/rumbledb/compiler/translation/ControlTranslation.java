@@ -107,7 +107,11 @@ public final class ControlTranslation {
                 }
             }
             Expression expression = visitExprSingle.apply(expr.ret());
-            cases.add(new TypeswitchCase(variableName, union, expression));
+            cases.add(new TypeswitchCase(
+                    variableName,
+                    union,
+                    expression,
+                    expr.varRef() == null ? null : translationContext.metadata(expr.varRef())));
         }
         Name defaultVariableName = null;
         if (ctx.defaultVar() != null) {
@@ -117,7 +121,10 @@ public final class ControlTranslation {
         return new TypeSwitchExpression(
                 condition,
                 cases,
-                new TypeswitchCase(defaultVariableName, defaultCase),
+                new TypeswitchCase(
+                        defaultVariableName,
+                        defaultCase,
+                        ctx.defaultVar() == null ? null : translationContext.metadata(ctx.defaultVar())),
                 translationContext.metadata(ctx.context()));
     }
 

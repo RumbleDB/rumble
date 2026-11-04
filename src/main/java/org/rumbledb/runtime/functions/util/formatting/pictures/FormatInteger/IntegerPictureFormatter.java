@@ -44,6 +44,9 @@ public final class IntegerPictureFormatter {
      * <li><b>Decimal patterns:</b> full BigInteger range.</li>
      * <li><b>Roman numerals (I, i):</b> 1..3999; otherwise fallback to decimal.</li>
      * <li><b>Alphabetic sequences (A, a):</b> 1..Integer.MAX_VALUE; otherwise fallback to decimal.</li>
+     * <li><b>Enclosed numbers (①, ⑴, ⒈):</b> 1..20.</li>
+     * <li><b>Greek sequences (Α, α):</b> positive BigInteger values, using the 24-letter alphabet.</li>
+     * <li><b>Japanese numerals (一):</b> 1..10^20-1, using 万, 億, 兆, and 京.</li>
      * <li><b>Word formats (w, W, Ww):</b> ICU-backed locale data, up to Integer.MAX_VALUE;
      * otherwise fallback to decimal.</li>
      * </ul>
@@ -85,7 +88,7 @@ public final class IntegerPictureFormatter {
                     case PrimaryFormatToken.WORDS_LOWER,
                             PrimaryFormatToken.WORDS_UPPER,
                             PrimaryFormatToken.WORDS_TITLE -> handleWords(absValue, primary, modifier, language);
-                    default -> handleOther(absValue, modifier, language);
+                    default -> handleNumberingSequence(absValue, primary.getOtherToken(), modifier, language);
                 };
 
         // Invariant: value => 0
@@ -167,6 +170,62 @@ public final class IntegerPictureFormatter {
             return result.toUpperCase(Locale.ROOT);
         }
         return toTitleCaseWords(result);
+    }
+
+    /**
+     * Optional sequences: enclosed numbers 1..20, Greek bijective alphabetic numbering,
+     * and Japanese numerals below 10^20. Values outside these ranges use decimal fallback.
+     */
+    private static String handleNumberingSequence(
+            BigInteger value, String token, IntegerFormatModifier modifier, String language) {
+        if (value.signum() == 0) {
+            return handleOther(value, modifier, language);
+        }
+        if ("①".equals(token) || "⑴".equals(token) || "⒈".equals(token)) {
+            if (value.compareTo(BigInteger.valueOf(20)) <= 0) {
+                return Character.toString(token.codePointAt(0) + value.intValueExact() - 1);
+            }
+        } else if ("α".equals(token) || "Α".equals(token)) {
+            String alphabet = "αβγδεζηθικλμνξοπρστυφχψω";
+            if ("Α".equals(token)) {
+                alphabet = alphabet.toUpperCase(Locale.ROOT);
+            }
+            StringBuilder result = new StringBuilder();
+            BigInteger radix = BigInteger.valueOf(alphabet.length());
+            while (value.signum() > 0) {
+                BigInteger[] parts = value.subtract(BigInteger.ONE).divideAndRemainder(radix);
+                result.append(alphabet.charAt(parts[1].intValueExact()));
+                value = parts[0];
+            }
+            return result.reverse().toString();
+        } else if ("一".equals(token) && value.compareTo(BigInteger.TEN.pow(20)) < 0) {
+            String[] units = {"", "万", "億", "兆", "京"};
+            String digits = "零一二三四五六七八九";
+            String[] smallUnits = {"", "十", "百", "千"};
+            String result = "";
+            int group = 0;
+            while (value.signum() > 0) {
+                BigInteger[] parts = value.divideAndRemainder(BigInteger.valueOf(10000));
+                int number = parts[1].intValueExact();
+                if (number != 0) {
+                    StringBuilder section = new StringBuilder();
+                    for (int place = 3, divisor = 1000; place >= 0; place--, divisor /= 10) {
+                        int digit = number / divisor % 10;
+                        if (digit != 0) {
+                            if (digit != 1 || place == 0) {
+                                section.append(digits.charAt(digit));
+                            }
+                            section.append(smallUnits[place]);
+                        }
+                    }
+                    result = section + units[group] + result;
+                }
+                value = parts[0];
+                group++;
+            }
+            return result;
+        }
+        return handleOther(value, modifier, language);
     }
 
     private static String handleOther(BigInteger value, IntegerFormatModifier modifier, String language) {

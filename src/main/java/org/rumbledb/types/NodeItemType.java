@@ -58,6 +58,9 @@ public class NodeItemType extends AbstractItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            return superType.getTypes().stream().anyMatch(this::isSubtypeOf);
+        }
         return superType.equals(BuiltinTypesCatalogue.item) || superType.equals(nodeItem);
     }
 

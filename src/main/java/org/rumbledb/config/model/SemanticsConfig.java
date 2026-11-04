@@ -40,25 +40,44 @@ public class SemanticsConfig implements Serializable {
     public static final String DEFAULT_QUERY_LANGUAGE = "jsoniq10";
     public static final String DEFAULT_XML_VERSION = "1.1";
 
+    /** Allows the XQuery Scripting Extension grammar; disable for strict XQuery conformance. */
+    boolean allowScripting;
+
     boolean datesWithTimeZone;
     boolean laxJSONNullValidation;
     String queryLanguage;
     String xmlVersion;
+    String xsdVersion;
     String staticBaseUri;
 
     @Builder(toBuilder = true)
     private SemanticsConfig(
+            Boolean allowScripting,
             Boolean datesWithTimeZone,
             Boolean laxJSONNullValidation,
             String queryLanguage,
             String xmlVersion,
+            String xsdVersion,
             String staticBaseUri) {
+        this.allowScripting = Objects.requireNonNullElse(allowScripting, true);
         this.datesWithTimeZone = Objects.requireNonNullElse(datesWithTimeZone, DEFAULT_DATES_WITH_TIMEZONE);
         this.laxJSONNullValidation =
                 Objects.requireNonNullElse(laxJSONNullValidation, DEFAULT_LAX_JSON_NULL_VALIDATION);
         this.queryLanguage = Objects.requireNonNullElse(queryLanguage, DEFAULT_QUERY_LANGUAGE);
         this.xmlVersion = Objects.requireNonNullElse(xmlVersion, DEFAULT_XML_VERSION);
+        this.xsdVersion = normalizeXsdVersion(xsdVersion);
         this.staticBaseUri = staticBaseUri;
+    }
+
+    private static String normalizeXsdVersion(String version) {
+        if (version == null) {
+            return "1.1";
+        }
+        String normalized = version.trim();
+        if ("1.0".equals(normalized) || "1.1".equals(normalized)) {
+            return normalized;
+        }
+        throw new CliException("Argument --xsd-version must be 1.0 or 1.1 (was: " + version + ").");
     }
 
     private static String normalizeXmlVersion(String xmlVersion) {

@@ -18,6 +18,7 @@ package org.rumbledb.expressions.flowr;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 import lombok.Getter;
@@ -76,6 +77,10 @@ public class WindowClause extends Clause {
 
     private final SequenceType sequenceType;
 
+    /** Token metadata for each variable declared by the window, whose names are distinct. */
+    @Getter
+    private final Map<Name, ExceptionMetadata> variableMetadata;
+
     @Getter
     private final Expression expression;
 
@@ -92,9 +97,11 @@ public class WindowClause extends Clause {
             Expression expression,
             WindowCondition startCondition,
             WindowCondition endCondition,
-            ExceptionMetadata metadata) {
+            ExceptionMetadata metadata,
+            Map<Name, ExceptionMetadata> variableMetadata) {
         super(FLWOR_CLAUSES.WINDOW, metadata);
         this.windowType = windowType;
+        this.variableMetadata = Map.copyOf(variableMetadata);
         this.windowVariable = windowVariable;
         this.sequenceType = sequenceType;
         this.expression = expression;

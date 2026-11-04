@@ -62,11 +62,7 @@ public class gYearMonthItem extends AbstractAtomicItem {
         if (!matcher.matches()) {
             throw new IllegalArgumentException("Invalid xs:gYearMonth: \"" + gYearMonthString + "\"");
         }
-        if (gYearMonthString.startsWith("-")) {
-            this.year = Year.of(-Integer.parseInt(matcher.group(1)));
-        } else {
-            this.year = Year.of(Integer.parseInt(matcher.group(1)));
-        }
+        this.year = gYearItem.parseYear(matcher.group(1), gYearMonthString.startsWith("-"));
         this.month = Month.of(Integer.parseInt(matcher.group(2)));
         String tz = matcher.group(3);
         if (tz == null) {
