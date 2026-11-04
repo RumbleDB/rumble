@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -33,21 +32,20 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 
-@Getter
 public class Prolog extends Node {
 
+    @Getter
     @Setter
     private List<Node> declarations;
 
     // Every module the query imports, flattened into one. A library itself imports nothing.
-    @Getter(AccessLevel.NONE)
     @Setter
     private LibraryModule importedLibrary;
 
+    @Getter
     private final List<SchemaImport> schemaImports;
 
     // The imported library's declarations each retain their source module's context.
-    @Getter(AccessLevel.NONE)
     private final Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
 
     public Prolog(
