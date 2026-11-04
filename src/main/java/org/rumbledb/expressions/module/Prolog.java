@@ -66,13 +66,18 @@ public class Prolog extends Node {
         return this.sourceModuleContexts.getOrDefault(declaration, defaultContext);
     }
 
+    /** The contexts of a group's modules, each once. Empty if this prolog is a single module. */
+    public List<StaticContext> getSourceContexts() {
+        return this.sourceModuleContexts.values().stream().distinct().toList();
+    }
+
     /** Publishes one context's public declarations across a group; private ones stay where they are. */
     public void shareGroupDeclarations(StaticContext changedContext, StaticContext groupContext) {
         if (this.sourceModuleContexts.isEmpty()) {
             return;
         }
         groupContext.importModuleContext(changedContext);
-        this.sourceModuleContexts.values().forEach(context -> context.importModuleContext(groupContext));
+        getSourceContexts().forEach(context -> context.importModuleContext(groupContext));
     }
 
     public void addImportedModule(LibraryModule importedModule) {

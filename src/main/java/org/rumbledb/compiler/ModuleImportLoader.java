@@ -127,11 +127,8 @@ public final class ModuleImportLoader {
 
     private static RumbleException moduleNotFound(String namespace, Exception cause, ExceptionMetadata metadata) {
         RumbleException exception = new ModuleNotFoundException(
-                "Module not found: %s, cause: %s".formatted(namespace, cause != null ? cause.getMessage() : "unknown"),
-                metadata);
-        if (cause != null) {
-            exception.initCause(cause);
-        }
+                "Module not found: %s, cause: %s".formatted(namespace, cause.getMessage()), metadata);
+        exception.initCause(cause);
         return exception;
     }
 }

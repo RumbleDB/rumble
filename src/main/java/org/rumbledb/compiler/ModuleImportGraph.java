@@ -15,9 +15,7 @@
  */
 package org.rumbledb.compiler;
 
-import java.util.ArrayDeque;
 import java.util.Collection;
-import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +28,7 @@ import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
 import org.rumbledb.exceptions.ModuleNotFoundException;
+import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 
@@ -43,7 +42,9 @@ final class ModuleImportGraph {
     static List<LibraryModule> normalize(List<LibraryModule> roots, Collection<LibraryModule> loadedModules) {
         Map<String, List<LibraryModule>> modulesByNamespace =
                 loadedModules.stream().collect(Collectors.groupingBy(LibraryModule::getNamespace));
-        Graph<String, DefaultEdge> graph = buildNamespaceGraph(roots, modulesByNamespace);
+        // Only namespaces reachable from the roots: failed location hints can leave unrelated modules behind.
+        Graph<String, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
+        roots.forEach(root -> addNamespace(root.getNamespace(), graph, modulesByNamespace));
 
         Map<String, LibraryModule> groups = new HashMap<>();
         for (Set<String> namespaces : new KosarajuStrongConnectivityInspector<>(graph).stronglyConnectedSets()) {
@@ -67,32 +68,21 @@ final class ModuleImportGraph {
                 .toList();
     }
 
-    /** Only namespaces reachable from the roots: failed location hints can leave unrelated modules behind. */
-    private static Graph<String, DefaultEdge> buildNamespaceGraph(
-            List<LibraryModule> roots, Map<String, List<LibraryModule>> modulesByNamespace) {
-        Graph<String, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
-        Deque<String> pending = new ArrayDeque<>();
-        for (LibraryModule root : roots) {
-            if (graph.addVertex(root.getNamespace())) {
-                pending.add(root.getNamespace());
-            }
+    private static void addNamespace(
+            String namespace, Graph<String, DefaultEdge> graph, Map<String, List<LibraryModule>> modulesByNamespace) {
+        if (!graph.addVertex(namespace)) {
+            return;
         }
-        while (!pending.isEmpty()) {
-            String namespace = pending.poll();
-            for (LibraryModule module : modulesByNamespace.get(namespace)) {
-                for (LibraryModule imported : module.getProlog().getImportedModules()) {
-                    String target = imported.getNamespace();
-                    if (!modulesByNamespace.containsKey(target)) {
-                        throw new ModuleNotFoundException("Module not found: " + target, imported.getMetadata());
-                    }
-                    if (graph.addVertex(target)) {
-                        pending.add(target);
-                    }
-                    graph.addEdge(namespace, target);
+        for (LibraryModule module : modulesByNamespace.get(namespace)) {
+            for (LibraryModule imported : module.getProlog().getImportedModules()) {
+                String target = imported.getNamespace();
+                if (!modulesByNamespace.containsKey(target)) {
+                    throw new ModuleNotFoundException("Module not found: " + target, imported.getMetadata());
                 }
+                addNamespace(target, graph, modulesByNamespace);
+                graph.addEdge(namespace, target);
             }
         }
-        return graph;
     }
 
     /** Each declaration keeps its own module's static context, so private names and settings stay per module. */
@@ -104,7 +94,7 @@ final class ModuleImportGraph {
         Prolog prolog = new Prolog(first.getProlog().getMetadata());
         for (LibraryModule member : members) {
             prolog.getSchemaImports().addAll(member.getProlog().getSchemaImports());
-            for (var declaration : member.getProlog().getDeclarations()) {
+            for (Node declaration : member.getProlog().getDeclarations()) {
                 prolog.addDeclaration(declaration);
                 prolog.getSourceModuleContexts().put(declaration, member.getStaticContext());
             }

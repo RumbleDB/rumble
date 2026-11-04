@@ -161,18 +161,16 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         List<LibraryModule> libraryModules = expression.getImportedModules().stream()
                 .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
                 .collect(Collectors.toList());
+        List<Node> declarations = new ArrayList<>();
         Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
-        List<Node> declarations = expression.getDeclarations().stream()
-                .map(expr -> {
-                    Node clone = visit(expr, argument);
-                    StaticContext sourceContext =
-                            expression.getSourceModuleContexts().get(expr);
-                    if (sourceContext != null) {
-                        sourceModuleContexts.put(clone, sourceContext);
-                    }
-                    return clone;
-                })
-                .collect(Collectors.toList());
+        for (Node declaration : expression.getDeclarations()) {
+            Node clone = visit(declaration, argument);
+            declarations.add(clone);
+            StaticContext sourceContext = expression.getSourceModuleContexts().get(declaration);
+            if (sourceContext != null) {
+                sourceModuleContexts.put(clone, sourceContext);
+            }
+        }
         expression.setDeclarations(declarations);
         expression.getSourceModuleContexts().clear();
         expression.getSourceModuleContexts().putAll(sourceModuleContexts);
