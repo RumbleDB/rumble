@@ -27,6 +27,7 @@ import java.util.jar.JarFile;
 import java.util.zip.GZIPInputStream;
 
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -113,6 +114,7 @@ public class CLIJarIT {
     @Nested
     class LakehouseFormats {
         @Test
+        @Disabled("Re-enable when a Delta release supports Spark 4.3.")
         void deltaFilePersistsUpdatesAcrossCliInvocations() throws Exception {
             Path table = directory.resolve("delta table");
             List<String> conf = List.of(
@@ -130,6 +132,7 @@ public class CLIJarIT {
         }
 
         @Test
+        @Disabled("Re-enable when a Iceberg release supports Spark 4.3.")
         void icebergTablePersistsUpdatesWithConfiguredSessionCatalog() throws Exception {
             Path warehouse = directory.resolve("iceberg warehouse");
             List<String> conf = List.of(
