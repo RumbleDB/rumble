@@ -23,7 +23,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.resources.ResourceCollection;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -37,7 +36,7 @@ public class CollectionFunctionIterator extends ItemRuntimePlan implements Local
         super(children, staticContext);
     }
 
-    protected ResourceCollection collection(DynamicContext context) {
+    protected URI collectionUri(DynamicContext context) {
         Item argument = getChildren().isEmpty() ? null : getChild(0).materializeAtMostOne(context);
         URI uri = null;
         if (argument != null) {
@@ -51,11 +50,20 @@ public class CollectionFunctionIterator extends ItemRuntimePlan implements Local
                         "Invalid collection URI: " + argument.getStringValue(), getMetadata());
             }
         }
-        return context.getResourceResolver().collection(uri, getMetadata());
+        return uri;
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new IteratorLocalCursor<>(() -> collection(context).items().iterator(), getMetadata());
+        return new IteratorLocalCursor<>(
+                () -> context.getResourceResolver()
+                        .collection(
+                                collectionUri(context),
+                                this.staticContext.getQueryLanguage(),
+                                getConfiguration(),
+                                getMetadata())
+                        .items()
+                        .iterator(),
+                getMetadata());
     }
 }
