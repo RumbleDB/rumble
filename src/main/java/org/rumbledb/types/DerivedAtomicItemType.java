@@ -135,6 +135,9 @@ public class DerivedAtomicItemType extends AbstractItemType {
 
     @Override
     public boolean canBePromotedTo(ItemType other) {
+        if (other.equals(BuiltinTypesCatalogue.floatItem)) {
+            return this.isSubtypeOf(BuiltinTypesCatalogue.decimalItem);
+        }
         // TODO : how about restriction types
         if (other.equals(BuiltinTypesCatalogue.stringItem)) {
             return this.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
@@ -406,11 +409,18 @@ public class DerivedAtomicItemType extends AbstractItemType {
 
     @Override
     public String toString() {
+        // Unlike a node's type annotation, which is only a name, an anonymous atomic type can show its base type.
+        if (this.hasName() && isAnonymousSchemaTypeName(this.name)) {
+            return "<anonymous " + this.baseType + ">";
+        }
         return getIdentifierString();
     }
 
     @Override
     public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
+        if (this.isSubtypeOf(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            return true;
+        }
         return this.baseType.isCompatibleWithDataFrames(configuration);
     }
 

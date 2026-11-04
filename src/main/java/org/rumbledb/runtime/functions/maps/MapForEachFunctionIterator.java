@@ -22,7 +22,6 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -31,6 +30,7 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.functions.FunctionCall;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.types.SequenceType;
@@ -102,7 +102,8 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan implements Local
         return new Invocation(mapItem, actionFunction, keyArgumentContext, valueArgumentContext);
     }
 
-    private static ItemRuntimePlan buildCallback(Invocation invocation, Item key, RuntimeStaticContext staticContext) {
+    private static FunctionCall buildCallback(
+            Invocation invocation, Item key, RuntimeStaticContext staticContext, DynamicContext context) {
         List<ItemRuntimePlan> valueChildren = new ArrayList<>();
         List<Item> values = invocation.map.getSequenceByKey(key);
         if (values != null) {
@@ -110,14 +111,13 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan implements Local
                 valueChildren.add(new ConstantRuntimeIterator(value, invocation.valueContext));
             }
         }
-        return NamedFunctions.buildFunctionItemCallIterator(
+        return FunctionCall.of(
                 invocation.action,
-                staticContext,
-                ExecutionMode.LOCAL,
                 List.of(
                         new ConstantRuntimeIterator(key, invocation.keyContext),
                         new CommaExpressionIterator(valueChildren, invocation.valueContext)),
-                false);
+                staticContext,
+                context);
     }
 
     private static final class Invocation {
@@ -169,8 +169,9 @@ public class MapForEachFunctionIterator extends ItemRuntimePlan implements Local
                 if (!this.keys.hasNext()) {
                     return false;
                 }
-                ItemRuntimePlan callback = buildCallback(this.invocation, this.keys.next(), this.staticContext);
-                this.callbackCursor = callback.getCursor(this.context);
+                FunctionCall callback =
+                        buildCallback(this.invocation, this.keys.next(), this.staticContext, this.context);
+                this.callbackCursor = callback.getCursor();
             }
             return true;
         }

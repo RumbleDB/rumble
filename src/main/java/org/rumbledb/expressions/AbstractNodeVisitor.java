@@ -85,6 +85,7 @@ import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
@@ -413,6 +414,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitTreatExpression(TreatExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitFunctionArgumentConversion(FunctionArgumentConversionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

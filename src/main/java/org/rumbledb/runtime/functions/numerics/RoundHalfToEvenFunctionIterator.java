@@ -17,9 +17,10 @@ package org.rumbledb.runtime.functions.numerics;
 
 import java.io.Serial;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.List;
-import java.util.function.IntSupplier;
+import java.util.function.Supplier;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -45,11 +46,11 @@ public class RoundHalfToEvenFunctionIterator extends AbstractAtMostOneItemRuntim
         return evaluate(
                 value,
                 () -> this.getChildren().size() > 1
-                        ? this.getChild(1).materializeFirstOrNull(context).getIntValue()
-                        : 0);
+                        ? this.getChild(1).materializeFirstOrNull(context).getIntegerValue()
+                        : BigInteger.ZERO);
     }
 
-    private Item evaluate(Item value, IntSupplier precisionSupplier) {
+    private Item evaluate(Item value, Supplier<BigInteger> precisionSupplier) {
         if (value == null) {
             return null;
         }
@@ -66,28 +67,28 @@ public class RoundHalfToEvenFunctionIterator extends AbstractAtMostOneItemRuntim
             return value;
         }
 
-        int precision = precisionSupplier.getAsInt();
+        BigInteger precision = precisionSupplier.get();
         try {
             if (value.isInt()) {
-                BigDecimal bd = new BigDecimal(value.getIntValue()).setScale(precision, RoundingMode.HALF_EVEN);
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getIntValue()), precision);
                 return ItemFactory.getInstance().createIntItem(bd.intValue());
             }
             if (value.isInteger()) {
-                BigDecimal bd = new BigDecimal(value.getIntegerValue()).setScale(precision, RoundingMode.HALF_EVEN);
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getIntegerValue()), precision);
                 return ItemFactory.getInstance().createIntegerItem(bd.toBigInteger());
             }
             if (value.isDecimal()) {
-                BigDecimal bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_EVEN);
+                BigDecimal bd = roundToPrecision(value.getDecimalValue(), precision);
                 return ItemFactory.getInstance().createDecimalItem(bd);
             }
             if (value.isDouble()) {
                 double sign = getSign(value.getDoubleValue());
-                BigDecimal bd = new BigDecimal(value.getDoubleValue()).setScale(precision, RoundingMode.HALF_EVEN);
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getDoubleValue()), precision);
                 return ItemFactory.getInstance().createDoubleItem(sign * Math.abs(bd.doubleValue()));
             }
             if (value.isFloat()) {
                 double sign = getSign(value.getFloatValue());
-                BigDecimal bd = new BigDecimal(value.getFloatValue()).setScale(precision, RoundingMode.HALF_EVEN);
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getFloatValue()), precision);
                 return ItemFactory.getInstance().createFloatItem((float) sign * Math.abs(bd.floatValue()));
             }
             throw new UnexpectedTypeException(
@@ -96,6 +97,19 @@ public class RoundHalfToEvenFunctionIterator extends AbstractAtMostOneItemRuntim
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
+    }
+
+    private static BigDecimal roundToPrecision(BigDecimal value, BigInteger precision) {
+        // Large positive precisions leave the value unchanged; large negative ones round to zero.
+        // Check these bounds before narrowing xs:integer or allocating a power of ten in setScale().
+        if (precision.compareTo(BigInteger.valueOf(value.scale())) >= 0) {
+            return value;
+        }
+        long zeroPrecision = (long) value.scale() - value.precision();
+        if (precision.compareTo(BigInteger.valueOf(zeroPrecision)) < 0) {
+            return BigDecimal.ZERO;
+        }
+        return value.setScale(precision.intValueExact(), RoundingMode.HALF_EVEN);
     }
 
     private double getSign(double doubleValue) {

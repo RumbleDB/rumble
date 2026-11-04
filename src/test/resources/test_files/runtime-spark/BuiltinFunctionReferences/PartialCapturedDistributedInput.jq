@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="(3, 3)" :)
+(: Resolve the mode from the captured first argument, including through repeated partial application. :)
+let $f := (subsequence#3)(parallelize(1 to 100001), ?, 3)
+let $g := (subsequence#3)(?, ?, 3)(parallelize(1 to 100001), ?)
+return (count($f(1)), count($g(1)))

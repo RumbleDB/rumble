@@ -44,11 +44,13 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
         return new TokenizeLocalCursor(this.getChildren(), context, getMetadata());
     }
 
-    private static String[] tokenize(String input, String separator, String flags, ExceptionMetadata metadata) {
+    private static String[] tokenize(
+            String input, String separator, String flags, ExceptionMetadata metadata, String xsdVersion) {
         if (separator == null) {
             return RegexPatternUtils.tokenizeOnXmlWhitespace(input);
         }
-        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(separator, flags, metadata);
+        RegexPatternUtils.CompiledRegex compiledRegex =
+                RegexPatternUtils.compileRegex(separator, flags, metadata, xsdVersion);
         if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
             throw new MatchesEmptyStringException(
                     "'" + compiledRegex.getEffectivePattern() + "' matches empty string", metadata);
@@ -88,7 +90,12 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
                     flags = flagsItem == null ? null : flagsItem.getStringValue();
                 }
             }
-            this.results = tokenize(inputItem.getStringValue(), separator, flags, this.metadata);
+            this.results = tokenize(
+                    inputItem.getStringValue(),
+                    separator,
+                    flags,
+                    this.metadata,
+                    this.context.getRumbleConfiguration().semantics().xsdVersion());
             this.position = 0;
         }
 

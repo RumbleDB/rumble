@@ -57,35 +57,16 @@ public final class RuntimePlanConversions {
                 metadata);
     }
 
-    public static <T> JavaRDD<T> cursorToRDD(Cursor<T> cursor, int materializationCap, ExceptionMetadata metadata) {
-        return SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .parallelize(materializeCursor(cursor, materializationCap, metadata));
+    public static <T> JavaRDD<T> cursorToRDD(Cursor<T> cursor) {
+        // The items are produced on the driver either way, so the materialization cap, which guards against collecting
+        // distributed sequences to the driver, does not apply here.
+        return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(materializeCursor(cursor));
     }
 
     public static <T> List<T> materializeCursor(Cursor<T> cursor) {
         List<T> items = new ArrayList<>();
         try (cursor) {
             while (cursor.hasNext()) {
-                items.add(cursor.next());
-            }
-        }
-        return items;
-    }
-
-    private static <T> List<T> materializeCursor(Cursor<T> cursor, int materializationCap, ExceptionMetadata metadata) {
-        List<T> items = new ArrayList<>();
-        try (cursor) {
-            while (cursor.hasNext()) {
-                if (materializationCap > 0 && items.size() == materializationCap) {
-                    throw new CannotMaterializeException(
-                            "Cannot convert a local sequence containing more than "
-                                    + materializationCap
-                                    + " items to an RDD because the materialization limit is set to "
-                                    + materializationCap
-                                    + ".",
-                            metadata);
-                }
                 items.add(cursor.next());
             }
         }

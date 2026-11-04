@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.DuplicateDecimalFormatDeclarationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
@@ -44,6 +45,8 @@ public class StaticContext {
     private Map<Name, InScopeVariable> inScopeVariables;
 
     private Map<String, String> staticallyKnownNamespaces;
+    private Map<String, String> constructorNamespaceBindings;
+
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private InScopeSchemaTypes inScopeSchemaTypes;
 
@@ -82,9 +85,28 @@ public class StaticContext {
     private SequenceType contextItemStaticType;
 
     private Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
+    private final Set<Name> privateVariables = new LinkedHashSet<>();
+    private final Set<FunctionIdentifier> privateFunctions = new LinkedHashSet<>();
+
+    public void markPrivateVariable(Name name) {
+        this.privateVariables.add(name);
+    }
+
+    public void markPrivateFunction(FunctionIdentifier identifier) {
+        this.privateFunctions.add(identifier);
+    }
+
+    public Set<FunctionIdentifier> getVisibleFunctionIdentifiers() {
+        Set<FunctionIdentifier> identifiers =
+                this.parent == null ? new LinkedHashSet<>() : this.parent.getVisibleFunctionIdentifiers();
+        identifiers.addAll(this.staticallyKnownFunctionSignatures.keySet());
+        return identifiers;
+    }
+
     private static final Map<String, String> defaultBindings;
 
     private DecimalFormatDefinition defaultDecimalFormat;
+    private boolean defaultDecimalFormatDeclared;
     private Map<Name, DecimalFormatDefinition> decimalFormats;
 
     @Setter
@@ -350,6 +372,16 @@ public class StaticContext {
         return this.inScopeVariables.containsKey(variableName);
     }
 
+    /** Namespace declarations from lexically enclosing direct constructors, excluding prolog bindings. */
+    public Map<String, String> getConstructorNamespaceBindings() {
+        if (this.constructorNamespaceBindings != null) return this.constructorNamespaceBindings;
+        return this.parent == null ? Map.of() : this.parent.getConstructorNamespaceBindings();
+    }
+
+    public void setConstructorNamespaceBindings(Map<String, String> bindings) {
+        this.constructorNamespaceBindings = Map.copyOf(bindings);
+    }
+
     public boolean bindNamespace(String prefix, String namespace) {
         if (this.staticallyKnownNamespaces == null) {
             this.staticallyKnownNamespaces = new HashMap<>();
@@ -495,11 +527,15 @@ public class StaticContext {
     public void importModuleContext(StaticContext moduleContext) {
         for (Name name : moduleContext.inScopeVariables.keySet()) {
             InScopeVariable variable = moduleContext.inScopeVariables.get(name);
-            this.inScopeVariables.put(name, variable);
+            if (!moduleContext.privateVariables.contains(name)) {
+                this.inScopeVariables.put(name, variable);
+            }
         }
         for (FunctionIdentifier fi : moduleContext.staticallyKnownFunctionSignatures.keySet()) {
             FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
-            this.staticallyKnownFunctionSignatures.put(fi, signature);
+            if (!moduleContext.privateFunctions.contains(fi)) {
+                this.staticallyKnownFunctionSignatures.put(fi, signature);
+            }
         }
     }
 
@@ -694,10 +730,18 @@ public class StaticContext {
     }
 
     public void setDefaultDecimalFormat(DecimalFormatDefinition decimalFormat) {
+        setDefaultDecimalFormat(decimalFormat, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    public void setDefaultDecimalFormat(DecimalFormatDefinition decimalFormat, ExceptionMetadata metadata) {
         if (this.parent != null) {
-            this.parent.setDefaultDecimalFormat(decimalFormat);
+            this.parent.setDefaultDecimalFormat(decimalFormat, metadata);
             return;
         }
+        if (this.defaultDecimalFormatDeclared) {
+            throw new DuplicateDecimalFormatDeclarationException("Default decimal format already declared.", metadata);
+        }
+        this.defaultDecimalFormatDeclared = true;
         this.defaultDecimalFormat = decimalFormat;
     }
 
@@ -707,7 +751,7 @@ public class StaticContext {
             return;
         }
         if (this.decimalFormats.containsKey(name)) {
-            throw new SemanticException("Decimal format already declared: " + name, metadata);
+            throw new DuplicateDecimalFormatDeclarationException("Decimal format already declared: " + name, metadata);
         }
         this.decimalFormats.put(name, decimalFormat);
     }

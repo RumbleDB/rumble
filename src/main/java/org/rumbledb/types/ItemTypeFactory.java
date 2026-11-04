@@ -154,7 +154,7 @@ public class ItemTypeFactory {
      * Create an anonymous object type from keys and values.
      *
      * @param keys a list of String representing the keys of the object
-     * @param values a list of ItemType of the values, all with arity == Arity.One
+     * @param values the item types of the stored field values, after sequence-to-value conversion
      * @return an anonymous object type based on the provided keys and values
      */
     public static ItemType createAnonymousObjectType(List<String> keys, List<ItemType> values) {
@@ -180,6 +180,76 @@ public class ItemTypeFactory {
                 content,
                 Collections.emptyList(),
                 Collections.emptyList());
+    }
+
+    /**
+     * Infers the item stored in an object field from its value expression's sequence type.
+     * Object constructors store a singleton as-is, an empty sequence as JSON null,
+     * and a sequence of multiple items as an array. The field remains required in all cases.
+     * This conversion is specific to JSONiq objects; XQuery maps retain the original sequence value.
+     * For example, xs:double? becomes (xs:double | js:null), a single stored item with two possible types.
+     *
+     * @param valueType the sequence type of the value expression
+     * @return an item type covering all possible stored values
+     */
+    public static ItemType createObjectFieldType(SequenceType valueType) {
+        if (valueType.isEmptySequence()) {
+            return BuiltinTypesCatalogue.nullItem;
+        }
+        ItemType itemType = valueType.getItemType();
+        SequenceCardinality cardinality = valueType.getCardinality();
+        List<ItemType> alternatives = new ArrayList<>();
+        if (cardinality.allowsOne()) {
+            alternatives.add(itemType);
+        }
+        if (cardinality.allowsMany()) {
+            alternatives.add(createAnonymousArrayType(itemType));
+        }
+        if (cardinality.allowsZero()) {
+            alternatives.add(BuiltinTypesCatalogue.nullItem);
+        }
+        return createInferredUnionType(alternatives);
+    }
+
+    /**
+     * Preserves alternatives inferred from expressions, removing duplicates and subsumed types.
+     * Named schema unions retain their identity; only anonymous inference unions are flattened.
+     */
+    public static ItemType createInferredUnionType(List<ItemType> alternatives) {
+        List<ItemType> flattened = new ArrayList<>();
+        for (ItemType alternative : alternatives) {
+            collectInferredUnionMembers(alternative, flattened);
+        }
+        List<ItemType> members = new ArrayList<>();
+        for (ItemType candidate : flattened) {
+            if (members.stream().anyMatch(candidate::isSubtypeOf)) {
+                continue;
+            }
+            members.removeIf(member -> member.isSubtypeOf(candidate));
+            members.add(candidate);
+        }
+        if (members.isEmpty()) {
+            throw new OurBadException("An inferred union must contain at least one item type.");
+        }
+        if (members.size() == 1) {
+            return members.get(0);
+        }
+        // isSubtypeOf checks the base type before the members, so the base must cover every member:
+        // xs:anyAtomicType only if all members are atomic, otherwise item (e.g. when one is an array).
+        ItemType baseType = members.stream().allMatch(type -> type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))
+                ? BuiltinTypesCatalogue.atomicItem
+                : BuiltinTypesCatalogue.item;
+        return new UnionItemType(null, baseType, members, false);
+    }
+
+    private static void collectInferredUnionMembers(ItemType type, List<ItemType> members) {
+        if (type.isUnionType() && !type.hasName() && !type.isUserDefined()) {
+            for (ItemType member : type.getTypes()) {
+                collectInferredUnionMembers(member, members);
+            }
+        } else {
+            members.add(type);
+        }
     }
 
     /**
@@ -587,11 +657,6 @@ public class ItemTypeFactory {
         return new ElementNodeItemType(nodeName);
     }
 
-    public static ItemType elementNodeItemType(
-            Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy, boolean nillable) {
-        return new ElementNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy, nillable);
-    }
-
     /**
      * Wildcard XQuery attribute node type attribute().
      *
@@ -612,10 +677,6 @@ public class ItemTypeFactory {
             throw new OurBadException("Attribute node name cannot be null.");
         }
         return new AttributeNodeItemType(nodeName);
-    }
-
-    public static ItemType attributeNodeItemType(Name nodeName, Name schemaTypeName, List<Name> schemaTypeHierarchy) {
-        return new AttributeNodeItemType(nodeName, schemaTypeName, schemaTypeHierarchy);
     }
 
     /**

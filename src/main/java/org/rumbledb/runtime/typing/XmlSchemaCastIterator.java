@@ -63,8 +63,7 @@ public final class XmlSchemaCastIterator extends ItemRuntimePlan implements Loca
     }
 
     private List<Item> evaluate(DynamicContext context) {
-        List<Item> atomizedValue =
-                XmlSchemaCastSupport.materializeAtomizedAtMostTwo(this.operand, context, getMetadata());
+        List<Item> atomizedValue = CastAtomization.materializeAtomizedAtMostTwo(this.operand, context, getMetadata());
         if (atomizedValue.size() > 1) {
             throw cardinalityError();
         }

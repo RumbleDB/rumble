@@ -51,6 +51,7 @@ public class UnparsedTextFunctionIterator extends AbstractAtMostOneItemRuntimePl
                 hrefItem.getStringValue(),
                 encoding,
                 getConfiguration().semantics().xmlVersion(),
+                context.getResourceResolver(),
                 getMetadata());
         return ItemFactory.getInstance().createStringItem(result);
     }

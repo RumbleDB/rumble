@@ -23,7 +23,8 @@ import org.rumbledb.parser.xquery.XQueryParser;
 public record DirAttributeContentContext<ExprCtx extends ParserRuleContext>(ExprCtx expr, ParserRuleContext context) {
 
     public boolean isEnclosed() {
-        return this.expr != null;
+        return "{".equals(this.context.getStart().getText())
+                && "}".equals(this.context.getStop().getText());
     }
 
     public static DirAttributeContentContext<JsoniqParser.ExprContext> from(

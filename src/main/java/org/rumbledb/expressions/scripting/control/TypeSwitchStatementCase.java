@@ -20,6 +20,7 @@ import java.util.List;
 import lombok.Getter;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.types.SequenceType;
 
@@ -31,17 +32,25 @@ import org.rumbledb.types.SequenceType;
 @Getter
 public class TypeSwitchStatementCase {
     private final Name variableName;
+    private final ExceptionMetadata variableMetadata;
+
     private final List<SequenceType> union;
     private final Statement returnStatement;
 
-    public TypeSwitchStatementCase(Name variableName, List<SequenceType> union, Statement returnStatement) {
+    public TypeSwitchStatementCase(
+            Name variableName,
+            List<SequenceType> union,
+            Statement returnStatement,
+            ExceptionMetadata variableMetadata) {
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
         this.union = union;
         this.returnStatement = returnStatement;
     }
 
-    public TypeSwitchStatementCase(Name variableName, Statement returnStatement) {
+    public TypeSwitchStatementCase(Name variableName, Statement returnStatement, ExceptionMetadata variableMetadata) {
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
         this.union = null;
         this.returnStatement = returnStatement;
     }

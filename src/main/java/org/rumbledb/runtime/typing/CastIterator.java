@@ -89,16 +89,14 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         if (targetItemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             throw new CastableException("Invalid target type for cast expression: xs:anyAtomicType", metadata);
         }
-        Item item;
-        try {
-            item = child.materializeAtMostOne(dynamicContext);
-            if (item != null && !item.getDynamicType().isResolved()) {
-                item.getDynamicType().resolve(dynamicContext, metadata);
-            }
-        } catch (MoreThanOneItemException e) {
+        // A node's typed value can be empty or a list. Cast cardinality is checked
+        // after atomization, including when several source nodes yield one value.
+        List<Item> atomized = CastAtomization.materializeAtomizedAtMostTwo(child, dynamicContext, metadata);
+        if (atomized.size() > 1) {
             throw new UnexpectedTypeException(
                     " Sequence of more than one item can not be treated as type " + sequenceType.toString(), metadata);
         }
+        Item item = atomized.isEmpty() ? null : atomized.get(0);
         if (item == null && !sequenceType.isEmptySequence() && sequenceType.getArity() != Arity.OneOrZero) {
             throw new UnexpectedTypeException(" Empty sequence can not be cast to type with quantifier '1'", metadata);
         }
@@ -120,16 +118,39 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
 
     public static Item castItemToType(
             Item item, ItemType targetType, ExceptionMetadata metadata, RuntimeStaticContext staticContext) {
-        return castItemToType(item, targetType, metadata, NamespaceBindingUtils.namespaceResolver(staticContext));
+        return castItemToType(
+                item,
+                targetType,
+                metadata,
+                NamespaceBindingUtils.namespaceResolver(staticContext),
+                staticContext == null
+                        ? "1.1"
+                        : staticContext.getConfiguration().semantics().xsdVersion());
     }
 
     public static Item castItemToType(
             Item item, ItemType targetType, ExceptionMetadata metadata, StaticContext staticContext) {
-        return castItemToType(item, targetType, metadata, NamespaceBindingUtils.namespaceResolver(staticContext));
+        return castItemToType(
+                item,
+                targetType,
+                metadata,
+                NamespaceBindingUtils.namespaceResolver(staticContext),
+                staticContext == null
+                        ? "1.1"
+                        : staticContext.getRumbleConfiguration().semantics().xsdVersion());
     }
 
     public static Item castItemToType(
             Item item, ItemType targetType, ExceptionMetadata metadata, NamespaceResolver namespaceResolver) {
+        return castItemToType(item, targetType, metadata, namespaceResolver, "1.1");
+    }
+
+    private static Item castItemToType(
+            Item item,
+            ItemType targetType,
+            ExceptionMetadata metadata,
+            NamespaceResolver namespaceResolver,
+            String xsdVersion) {
         Item converted = null;
         // first we try to atomize if item is not atomic
         if (!item.isAtomic()) {
@@ -151,7 +172,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         // F&O 3.1 §19.3.5: union targets use dedicated member-iteration logic;
         // must be checked before isStaticallyCastableAs which lacks union-target support.
         if (targetType.isUnionType()) {
-            return castToUnionType(item, targetType, metadata, namespaceResolver);
+            return castToUnionType(item, targetType, metadata, namespaceResolver, xsdVersion);
         }
 
         // xs:error has an empty value space, so every cast to it must fail dynamically.
@@ -164,6 +185,28 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                     "\"%s\": a value of type %s is not castable to type %s",
                     item.serialize(), item.getDynamicType(), targetType);
             throw new UnexpectedTypeException(message, metadata);
+        }
+
+        // Apply only the version-specific lexical restrictions. In particular, let the existing
+        // date parser report representational overflow as FODT0001 rather than Xerces FORG0001.
+        if ("1.0".equals(xsdVersion) && (item.isString() || item.isUntypedAtomic())) {
+            String name = targetType.getCastingPrimitiveType().getName().getLocalName();
+            if (java.util.Set.of("date", "dateTime", "gYear", "gYearMonth").contains(name)
+                    && item.getStringValue().trim().matches("-?0{4,}(?:$|[-+ZT].*)")) {
+                return null;
+            }
+            if (java.util.Set.of("anyURI", "float", "double").contains(name)) {
+                try {
+                    org.apache.xerces.impl.dv.SchemaDVFactory.getInstance()
+                            .getBuiltInType(name)
+                            .validate(
+                                    item.getStringValue(),
+                                    new org.apache.xerces.impl.validation.ValidationState(),
+                                    null);
+                } catch (org.apache.xerces.impl.dv.InvalidDatatypeValueException e) {
+                    return null;
+                }
+            }
         }
 
         try {
@@ -264,6 +307,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         } catch (DatetimeOverflowOrUnderflow
                 | DurationOverflowOrUnderflow
                 | InvalidLexicalValueException
+                | NoNamespaceFoundForPrefixException
                 | CastException e) {
             throw e;
         } catch (Exception e) {
@@ -295,7 +339,11 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
      * @return the cast result, or {@code null} if no member type accepts the value
      */
     private static Item castToUnionType(
-            Item item, ItemType targetType, ExceptionMetadata metadata, NamespaceResolver namespaceResolver) {
+            Item item,
+            ItemType targetType,
+            ExceptionMetadata metadata,
+            NamespaceResolver namespaceResolver,
+            String xsdVersion) {
         List<ItemType> memberTypes = targetType.getTypes();
 
         // §19.3.5 Rule 1: source is xs:string or xs:untypedAtomic
@@ -305,7 +353,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                     continue;
                 }
                 try {
-                    Item result = castItemToType(item, memberType, metadata, namespaceResolver);
+                    Item result = castItemToType(item, memberType, metadata, namespaceResolver, xsdVersion);
                     if (result != null) {
                         return result;
                     }
@@ -330,7 +378,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                 continue;
             }
             try {
-                Item result = castItemToType(item, memberType, metadata, namespaceResolver);
+                Item result = castItemToType(item, memberType, metadata, namespaceResolver, xsdVersion);
                 if (result != null) {
                     return result;
                 }
@@ -378,7 +426,9 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         }
         if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
             Item convertedValue = null;
-            if (item.isString() || item.isUntypedAtomic()) {
+            if (item.isBoolean()) {
+                convertedValue = ItemFactory.getInstance().createBooleanItem(item.getBooleanValue());
+            } else if (item.isString() || item.isUntypedAtomic()) {
                 String lexical = item.getStringValue().trim();
                 if ("true".equals(lexical) || "1".equals(lexical)) {
                     convertedValue = ItemFactory.getInstance().createBooleanItem(true);
@@ -572,7 +622,8 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                 convertedValue = ItemFactory.getInstance()
                         .createDayTimeDurationItem(item.getStringValue().trim());
             } else if (item.isDuration() || item.isYearMonthDuration()) {
-                convertedValue = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
+                convertedValue =
+                        ItemFactory.getInstance().createDayTimeDurationItem(item.getDayTimeDurationComponent());
             }
             return finalizeAtomicBranchValue(convertedValue, targetType, BuiltinTypesCatalogue.dayTimeDurationItem);
         }
@@ -658,7 +709,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
             }
             if (item.isString() || item.isUntypedAtomic()) {
                 String lexical = NamespaceBindingUtils.collapseQNameLexical(item.getStringValue());
-                Name expanded = NamespaceBindingUtils.parseLexicalQName(lexical, namespaceResolver, metadata);
+                Name expanded = NamespaceBindingUtils.parseLexicalQNameForCast(lexical, namespaceResolver, metadata);
                 Item q = ItemFactory.getInstance().createQNameItem(expanded);
                 return finalizeAtomicBranchValue(q, targetType, BuiltinTypesCatalogue.QNameItem);
             }

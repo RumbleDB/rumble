@@ -32,6 +32,7 @@ import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class DynamicContext implements Serializable {
@@ -42,6 +43,7 @@ public class DynamicContext implements Serializable {
     private DynamicContext parent;
     private RumbleConfiguration conf;
     private ExternalBindings externalBindings;
+    private ResourceResolver resourceResolver;
 
     @Getter
     private VariableValues variableValues;
@@ -73,10 +75,16 @@ public class DynamicContext implements Serializable {
     }
 
     public DynamicContext(RumbleConfiguration conf, ExternalBindings externalBindings) {
+        this(conf, externalBindings, new ResourceResolver());
+    }
+
+    public DynamicContext(
+            RumbleConfiguration conf, ExternalBindings externalBindings, ResourceResolver resourceResolver) {
         this.parent = null;
         this.variableValues = new VariableValues(conf);
         this.conf = conf;
         this.externalBindings = externalBindings;
+        this.resourceResolver = resourceResolver;
         this.namedFunctions = new NamedFunctions();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
         this.currentDateTime = OffsetDateTime.now();
@@ -129,6 +137,10 @@ public class DynamicContext implements Serializable {
             return this.parent.getRumbleConfiguration();
         }
         return null;
+    }
+
+    public ResourceResolver getResourceResolver() {
+        return this.resourceResolver == null ? this.parent.getResourceResolver() : this.resourceResolver;
     }
 
     public ExternalBindings getExternalBindings() {

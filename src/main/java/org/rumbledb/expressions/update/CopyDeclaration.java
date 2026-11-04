@@ -18,6 +18,7 @@ package org.rumbledb.expressions.update;
 import lombok.Getter;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
 
@@ -25,13 +26,15 @@ import org.rumbledb.types.SequenceType;
 public class CopyDeclaration {
 
     private Name variableName;
+    private final ExceptionMetadata variableMetadata;
     private Expression sourceExpression;
 
-    public CopyDeclaration(Name variableName, Expression sourceExpression) {
+    public CopyDeclaration(Name variableName, Expression sourceExpression, ExceptionMetadata variableMetadata) {
         if (variableName == null) {
             throw new IllegalArgumentException("Copy clause var decls cannot be empty");
         }
         this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
         this.sourceExpression = sourceExpression;
     }
 

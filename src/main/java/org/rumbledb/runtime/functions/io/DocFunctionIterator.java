@@ -16,24 +16,24 @@
 package org.rumbledb.runtime.functions.io;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serial;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.w3c.dom.Document;
-import org.xml.sax.SAXException;
+import org.xml.sax.InputSource;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.XmlParsingUtils;
 import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.resources.ResolvedResource;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -57,33 +57,41 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     }
 
     private Item loadDocument(Item path, DynamicContext context) {
+        URI uri;
         try {
-            URI uri =
-                    FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
-            DocumentBuilderFactory documentBuilderFactory = DocumentBuilderFactory.newInstance();
-            documentBuilderFactory.setNamespaceAware(true);
-            DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
-            try (InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getMetadata())) {
-                Document xmlDocument = documentBuilder.parse(xmlFileStream);
-                DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
-                        xmlDocument,
-                        uri.toString(),
-                        context.getRumbleConfiguration().optimization().optimizeParentPointers());
-                documentItem.setConstructionBaseUri(uri);
-                return documentItem;
+            uri = FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
+        } catch (CannotRetrieveResourceException exception) {
+            if (exception.getCause() instanceof URISyntaxException) {
+                throw new RumbleException(
+                        "Invalid URI supplied to fn:doc(): " + path.getStringValue(),
+                        ErrorCode.InvalidDocumentURIErrorCode,
+                        getMetadata());
             }
-        } catch (ParserConfigurationException e) {
-            throw new OurBadException("Document builder creation failed with: " + e);
-        } catch (CannotRetrieveResourceException e) {
-            throw e;
+            throw exception;
+        }
+        Item collectionDocument = context.getResourceResolver().document(uri);
+        if (collectionDocument != null) {
+            return collectionDocument;
+        }
+        try (ResolvedResource resource =
+                context.getResourceResolver().resolve(uri, getConfiguration(), getMetadata())) {
+            InputSource source = new InputSource(resource.getInputStream());
+            source.setSystemId(resource.getSystemId().toString());
+            Document xmlDocument = XmlParsingUtils.parseResource(
+                    source, uri.toString(), "XML document \"" + uri + "\" for fn:doc()", getMetadata());
+            // XQuery retains parsed whitespace; preserve JSONiq's existing whitespace handling.
+            String queryLanguage = this.staticContext.getQueryLanguage();
+            DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
+                    xmlDocument,
+                    uri.toString(),
+                    context.getRumbleConfiguration().optimization().optimizeParentPointers(),
+                    queryLanguage != null && queryLanguage.startsWith("xquery"));
+            documentItem.setConstructionBaseUri(uri);
+            documentItem.setDocumentUri(uri);
+            return context.getResourceResolver().cacheDocument(uri, documentItem);
         } catch (IOException e) {
             CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
                     "Unable to read the resource supplied to fn:doc().", getMetadata());
-            ex.initCause(e);
-            throw ex;
-        } catch (SAXException e) {
-            CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
-                    "Unable to parse the resource supplied to fn:doc() as well-formed XML.", getMetadata());
             ex.initCause(e);
             throw ex;
         }

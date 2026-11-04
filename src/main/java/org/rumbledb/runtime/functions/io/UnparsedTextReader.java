@@ -25,6 +25,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidEncodingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnavailableResourceException;
+import org.rumbledb.resources.ResourceResolver;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.xml.XMLUtils;
 
@@ -41,6 +42,16 @@ public final class UnparsedTextReader {
 
     public static String read(
             URI staticBaseUri, String href, String encoding, String xmlVersion, ExceptionMetadata metadata) {
+        return read(staticBaseUri, href, encoding, xmlVersion, new ResourceResolver(), metadata);
+    }
+
+    public static String read(
+            URI staticBaseUri,
+            String href,
+            String encoding,
+            String xmlVersion,
+            ResourceResolver resolver,
+            ExceptionMetadata metadata) {
         URI uri;
         try {
             uri = resolveHref(staticBaseUri, href, metadata);
@@ -64,7 +75,7 @@ public final class UnparsedTextReader {
 
         byte[] bytes;
         try {
-            bytes = TextResourceUtil.fetchBytes(uri, metadata);
+            bytes = TextResourceUtil.fetchBytes(resolver.resolveURI(uri), metadata);
         } catch (UnavailableResourceException e) {
             throw e;
         } catch (RumbleException e) {
