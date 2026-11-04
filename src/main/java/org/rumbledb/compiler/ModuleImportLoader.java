@@ -22,90 +22,54 @@ import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
-import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.LibraryModule;
-import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 
 /** Shared module import semantics for the JSONiq and XQuery frontends. */
 public final class ModuleImportLoader {
 
-    private ModuleImportLoader() {}
+    private final CompilationConfiguration configuration;
+    final Map<URI, LibraryModule> modules = new LinkedHashMap<>();
+    final Map<LibraryModule, LibraryModule> completedModules = new IdentityHashMap<>();
+    private final Map<String, List<String>> locations = new LinkedHashMap<>();
 
-    private static final ThreadLocal<ImportSession> CURRENT_SESSION = new ThreadLocal<>();
-
-    static final class ImportSession {
-        final Map<URI, LibraryModule> modules = new LinkedHashMap<>();
-        final Map<String, List<String>> locations = new LinkedHashMap<>();
-        final Map<LibraryModule, LibraryModule> completedModules = new IdentityHashMap<>();
+    /** Holds the state of one compilation's imports, so create one per compiled module tree. */
+    ModuleImportLoader(CompilationConfiguration configuration) {
+        this.configuration = configuration;
     }
 
-    /** Normalize all imports together so sibling imports share the same fragment groups. */
-    static MainModule loadMainModule(Supplier<MainModule> parser, RumbleConfiguration configuration) {
-        ImportSession previous = CURRENT_SESSION.get();
-        ImportSession session = new ImportSession();
-        CURRENT_SESSION.set(session);
-        try {
-            MainModule module = parser.get();
-            List<LibraryModule> imports = module.getProlog().getImportedModules();
-            if (!imports.isEmpty()) {
-                List<LibraryModule> normalized = ModuleImportGraph.normalize(imports, session, configuration);
-                imports.clear();
-                imports.addAll(normalized);
-            }
-            return module;
-        } finally {
-            if (previous == null) CURRENT_SESSION.remove();
-            else CURRENT_SESSION.set(previous);
+    CompilationConfiguration configuration() {
+        return this.configuration;
+    }
+
+    /** Normalize all of a root module's imports together so siblings share the same fragment groups. */
+    void normalizeImports(Prolog rootProlog) {
+        List<LibraryModule> imports = rootProlog.getImportedModules();
+        if (!imports.isEmpty()) {
+            List<LibraryModule> normalized = ModuleImportGraph.normalize(imports, this);
+            imports.clear();
+            imports.addAll(normalized);
         }
     }
 
-    public static LibraryModule load(
+    public LibraryModule load(
             String namespace,
             List<String> locationHints,
             StaticContext importingModuleContext,
-            CompilationConfiguration compilationConfiguration,
             ExceptionMetadata metadata) {
-        ImportSession session = CURRENT_SESSION.get();
-        boolean outermost = session == null;
-        if (outermost) {
-            session = new ImportSession();
-            CURRENT_SESSION.set(session);
-        }
-        try {
-            LibraryModule result = loadModules(
-                    namespace, locationHints, importingModuleContext, compilationConfiguration, metadata, session);
-            return outermost
-                    ? ModuleImportGraph.normalize(result, session, compilationConfiguration.runtimeConfiguration())
-                    : result;
-        } finally {
-            if (outermost) {
-                CURRENT_SESSION.remove();
-            }
-        }
-    }
-
-    private static LibraryModule loadModules(
-            String namespace,
-            List<String> locationHints,
-            StaticContext importingModuleContext,
-            CompilationConfiguration compilationConfiguration,
-            ExceptionMetadata metadata,
-            ImportSession session) {
         URI baseURI = importingModuleContext.getStaticBaseURI();
         String normalizedNamespace = URILiteralUtils.normalizeAsAnyURI(namespace);
         if (!locationHints.isEmpty()) {
             // Retain absolute hints so a same-namespace import in a fragment can find its peers.
-            session.locations.putIfAbsent(
+            this.locations.putIfAbsent(
                     normalizedNamespace,
                     locationHints.stream()
                             .map(hint -> URILiteralUtils.resolve(baseURI, hint, metadata)
@@ -114,7 +78,7 @@ public final class ModuleImportLoader {
         }
         // Explicit hints belong to this import; cached hints only supply locations for hintless back edges.
         List<String> candidates = locationHints.isEmpty()
-                ? session.locations.getOrDefault(normalizedNamespace, List.of(normalizedNamespace))
+                ? this.locations.getOrDefault(normalizedNamespace, List.of(normalizedNamespace))
                 : locationHints;
         Exception lastFailure = null;
         List<LibraryModule> loaded = new ArrayList<>();
@@ -126,11 +90,9 @@ public final class ModuleImportLoader {
                 lastFailure = e;
                 continue;
             }
-            URI physical = compilationConfiguration
-                    .resourceResolver()
-                    .resolveURI(location)
-                    .normalize();
-            LibraryModule module = session.modules.get(physical);
+            URI physical =
+                    this.configuration.resourceResolver().resolveURI(location).normalize();
+            LibraryModule module = this.modules.get(physical);
             if (module == null) {
                 // Back edges refer to an empty shell until this module has finished translation.
                 // The completed graph resolves these shells before any analysis pass runs.
@@ -138,15 +100,15 @@ public final class ModuleImportLoader {
                         new ExceptionMetadata(physical.toString(), metadata.getRange(), metadata.getCode());
                 module = new LibraryModule(
                         new Prolog(List.of(), List.of(), List.of(), source), normalizedNamespace, source);
-                session.modules.put(physical, module);
+                this.modules.put(physical, module);
                 LibraryModule placeholder = module;
                 try {
                     module = CompilationPipeline.prepareLibraryModuleFromLocation(
-                            location, importingModuleContext, compilationConfiguration, metadata);
-                    session.modules.put(physical, module);
-                    session.completedModules.put(placeholder, module);
+                            location, importingModuleContext, this, metadata);
+                    this.modules.put(physical, module);
+                    this.completedModules.put(placeholder, module);
                 } catch (IOException | CannotRetrieveResourceException | ModuleNotFoundException e) {
-                    session.modules.remove(physical);
+                    this.modules.remove(physical);
                     lastFailure = e;
                     continue;
                 }

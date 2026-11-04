@@ -59,13 +59,11 @@ public final class CompilationPipeline {
     }
 
     static LibraryModule prepareLibraryModuleFromLocation(
-            URI location,
-            StaticContext importingContext,
-            CompilationConfiguration configuration,
-            ExceptionMetadata metadata)
+            URI location, StaticContext importingContext, ModuleImportLoader importLoader, ExceptionMetadata metadata)
             throws IOException {
-        ModuleSourceLoader.ModuleSource source = ModuleSourceLoader.readModuleSource(location, configuration, metadata);
-        return prepareLibraryModule(source.query(), source.systemId(), importingContext, configuration);
+        ModuleSourceLoader.ModuleSource source =
+                ModuleSourceLoader.readModuleSource(location, importLoader.configuration(), metadata);
+        return prepareLibraryModule(source.query(), source.systemId(), importingContext, importLoader);
     }
 
     /** Compiles main-module text with the supplied source URI and annotates the returned tree. */
@@ -89,15 +87,16 @@ public final class CompilationPipeline {
      * The import loader orders declarations after collapsing cyclic groups.
      */
     static LibraryModule prepareLibraryModule(
-            String query, URI uri, StaticContext importingContext, CompilationConfiguration configuration) {
-        return ModuleParser.parseLibraryModule(query, uri, importingContext, configuration);
+            String query, URI uri, StaticContext importingContext, ModuleImportLoader importLoader) {
+        return ModuleParser.parseLibraryModule(query, uri, importingContext, importLoader);
     }
 
     /** Standalone library analysis for language-server callers; deliberately does not run the main-module pipeline. */
     public static LibraryModule analyzeLibraryModule(String query, URI uri, RumbleConfiguration configuration) {
         StaticContext importingContext = ModuleParser.createModuleContext(uri, configuration);
-        LibraryModule module =
-                prepareLibraryModule(query, uri, importingContext, new CompilationConfiguration(configuration));
+        ModuleImportLoader importLoader = new ModuleImportLoader(new CompilationConfiguration(configuration));
+        LibraryModule module = prepareLibraryModule(query, uri, importingContext, importLoader);
+        importLoader.normalizeImports(module.getProlog());
         return run(
                 module,
                 new CompilationContext(configuration, ExternalBindings.empty(), new ResourceResolver()),

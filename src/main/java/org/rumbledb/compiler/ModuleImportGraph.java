@@ -32,7 +32,6 @@ import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 
-import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
@@ -41,21 +40,15 @@ import org.rumbledb.expressions.module.Prolog;
 final class ModuleImportGraph {
     private ModuleImportGraph() {}
 
-    static LibraryModule normalize(
-            LibraryModule root, ModuleImportLoader.ImportSession session, RumbleConfiguration configuration) {
-        return normalize(List.of(root), session, configuration).get(0);
-    }
-
-    static List<LibraryModule> normalize(
-            List<LibraryModule> roots, ModuleImportLoader.ImportSession session, RumbleConfiguration configuration) {
+    static List<LibraryModule> normalize(List<LibraryModule> roots, ModuleImportLoader loader) {
         var graph = new DefaultDirectedGraph<LibraryModule, DefaultEdge>(DefaultEdge.class);
-        List<LibraryModule> modules = findReachableModules(roots, session);
+        List<LibraryModule> modules = findReachableModules(roots, loader);
         modules.forEach(graph::addVertex);
         Map<LibraryModule, URI> sourceLocations = new IdentityHashMap<>();
-        session.modules.forEach((location, module) -> sourceLocations.put(module, location));
+        loader.modules.forEach((location, module) -> sourceLocations.put(module, location));
         for (LibraryModule module : modules) {
             for (LibraryModule imported : module.getProlog().getImportedModules()) {
-                graph.addEdge(module, resolveImport(imported, session));
+                graph.addEdge(module, resolveImport(imported, loader));
             }
         }
         // Fragments with one target namespace form one module, including same-namespace back edges.
@@ -113,11 +106,12 @@ final class ModuleImportGraph {
         for (LibraryModule group : representatives) {
             group.getProlog().getImportedModules().clear();
             group.getProlog().getImportedModules().addAll(imports.get(group));
-            new VariableDependenciesVisitor(configuration).visit(group.getProlog(), null);
+            new VariableDependenciesVisitor(loader.configuration().runtimeConfiguration())
+                    .visit(group.getProlog(), null);
         }
         List<LibraryModule> results = new ArrayList<>();
         for (LibraryModule root : roots) {
-            LibraryModule group = groups.get(completedModule(root, session));
+            LibraryModule group = groups.get(completedModule(root, loader));
             // Preserve each importing prefix's namespace when a group spans multiple namespaces.
             LibraryModule result = new LibraryModule(group.getProlog(), root.getNamespace(), group.getMetadata());
             result.setStaticContext(group.getStaticContext());
@@ -127,41 +121,36 @@ final class ModuleImportGraph {
     }
 
     /** Failed location hints can leave translated modules behind, which are not part of the query. */
-    private static List<LibraryModule> findReachableModules(
-            List<LibraryModule> roots, ModuleImportLoader.ImportSession session) {
-        Map<String, List<LibraryModule>> fragments = session.modules.values().stream()
-                .collect(Collectors.groupingBy(LibraryModule::getNamespace));
+    private static List<LibraryModule> findReachableModules(List<LibraryModule> roots, ModuleImportLoader loader) {
+        Map<String, List<LibraryModule>> fragments =
+                loader.modules.values().stream().collect(Collectors.groupingBy(LibraryModule::getNamespace));
         Set<LibraryModule> reachable = new LinkedHashSet<>();
         Deque<LibraryModule> pending = new ArrayDeque<>();
-        roots.forEach(root -> pending.add(completedModule(root, session)));
+        roots.forEach(root -> pending.add(completedModule(root, loader)));
         while (!pending.isEmpty()) {
             LibraryModule module = pending.poll();
             if (reachable.add(module)) {
                 pending.addAll(fragments.get(module.getNamespace()));
                 module.getProlog()
                         .getImportedModules()
-                        .forEach(imported -> pending.add(resolveImport(imported, session)));
+                        .forEach(imported -> pending.add(resolveImport(imported, loader)));
             }
         }
         return new ArrayList<>(reachable);
     }
 
     /** Diagnostic locations may be overridden by a shared static base URI, so follow the loader's identities. */
-    private static LibraryModule completedModule(LibraryModule module, ModuleImportLoader.ImportSession session) {
-        LibraryModule completed = module;
-        while (session.completedModules.containsKey(completed)) {
-            completed = session.completedModules.get(completed);
-        }
-        return completed;
+    private static LibraryModule completedModule(LibraryModule module, ModuleImportLoader loader) {
+        return loader.completedModules.getOrDefault(module, module);
     }
 
-    private static LibraryModule resolveImport(LibraryModule imported, ModuleImportLoader.ImportSession session) {
-        LibraryModule target = completedModule(imported, session);
-        if (session.modules.containsValue(target)) {
+    private static LibraryModule resolveImport(LibraryModule imported, ModuleImportLoader loader) {
+        LibraryModule target = completedModule(imported, loader);
+        if (loader.modules.containsValue(target)) {
             return target;
         }
         // The location this import named failed to load, but another location may supply its namespace.
-        return session.modules.values().stream()
+        return loader.modules.values().stream()
                 .filter(module -> module.getNamespace().equals(target.getNamespace()))
                 .findFirst()
                 .orElseThrow(() -> new ModuleNotFoundException(

@@ -73,19 +73,22 @@ final class ModuleParser {
             ExternalBindings bindings,
             Language language) {
         StaticContext moduleContext = createModuleContext(uri, configuration.runtimeConfiguration());
-        return ModuleImportLoader.loadMainModule(
-                () -> (MainModule) parseModule(query, uri, configuration, bindings, language, moduleContext, true),
-                configuration.runtimeConfiguration());
+        ModuleImportLoader importLoader = new ModuleImportLoader(configuration);
+        MainModule module = (MainModule)
+                parseModule(query, uri, configuration, bindings, language, moduleContext, true, importLoader);
+        importLoader.normalizeImports(module.getProlog());
+        return module;
     }
 
     static LibraryModule parseLibraryModule(
-            String query, URI uri, StaticContext importingContext, CompilationConfiguration configuration) {
+            String query, URI uri, StaticContext importingContext, ModuleImportLoader importLoader) {
+        CompilationConfiguration configuration = importLoader.configuration();
         RumbleConfiguration runtimeConfiguration = configuration.runtimeConfiguration();
         Language language = detectLanguage(query, uri, runtimeConfiguration);
         StaticContext moduleContext = new StaticContext(uri, runtimeConfiguration);
         moduleContext.setUserDefinedFunctionsExecutionModes(importingContext.getUserDefinedFunctionsExecutionModes());
-        return (LibraryModule)
-                parseModule(query, uri, configuration, ExternalBindings.empty(), language, moduleContext, false);
+        return (LibraryModule) parseModule(
+                query, uri, configuration, ExternalBindings.empty(), language, moduleContext, false, importLoader);
     }
 
     private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
@@ -116,7 +119,8 @@ final class ModuleParser {
             ExternalBindings bindings,
             Language language,
             StaticContext moduleContext,
-            boolean isMainModule) {
+            boolean isMainModule,
+            ModuleImportLoader importLoader) {
         if (language == Language.XQUERY) {
             moduleContext.setConstructionPreserve(true);
             // XQuery source line endings are normalized before tokenization, including inside literals.
@@ -144,12 +148,14 @@ final class ModuleParser {
             XQueryParser xqueryParser = new XQueryParser(tokens);
             parser = xqueryParser;
             parseTreeSupplier = () -> xqueryParser.moduleAndThisIsIt().module();
-            visitor = new XQueryTranslationVisitor(moduleContext, isMainModule, configuration, bindings, query, tokens);
+            visitor = new XQueryTranslationVisitor(
+                    moduleContext, isMainModule, configuration, bindings, query, tokens, importLoader);
         } else {
             JsoniqParser jsoniqParser = new JsoniqParser(tokens);
             parser = jsoniqParser;
             parseTreeSupplier = () -> jsoniqParser.moduleAndThisIsIt().module();
-            visitor = new TranslationVisitor(moduleContext, isMainModule, configuration, bindings, query, tokens);
+            visitor = new TranslationVisitor(
+                    moduleContext, isMainModule, configuration, bindings, query, tokens, importLoader);
         }
 
         parser.setErrorHandler(new BailErrorStrategy());

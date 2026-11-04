@@ -20,7 +20,6 @@ import java.util.function.Function;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import org.rumbledb.compiler.ModuleImportLoader;
 import org.rumbledb.compiler.context.ModuleImportContext;
 import org.rumbledb.compiler.context.SchemaImportContext;
 import org.rumbledb.compiler.utils.URILiteralUtils;
@@ -79,12 +78,9 @@ public final class ImportTranslation {
                 .map(processURILiteral)
                 .map(URILiteralUtils::normalizeAsAnyURI)
                 .toList();
-        LibraryModule libraryModule = ModuleImportLoader.load(
-                namespace,
-                locationHints,
-                translationContext.moduleContext(),
-                translationContext.compilationConfiguration(),
-                metadata);
+        LibraryModule libraryModule = translationContext
+                .importLoader()
+                .load(namespace, locationHints, translationContext.moduleContext(), metadata);
         if (ctx.prefix() != null) {
             boolean sameModuleBinding = libraryModule.getNamespace().equals(translationContext.libraryModuleNamespace())
                     && libraryModule

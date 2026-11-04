@@ -25,6 +25,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.ModuleImportLoader;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
@@ -43,6 +44,7 @@ public final class TranslationContext {
     private final String source;
     private final ArrayDeque<Map<String, String>> constructorNamespaceFrames;
     private final TranslationNameResolver nameResolver;
+    private final ModuleImportLoader importLoader;
     private String libraryModuleNamespace;
 
     public TranslationContext(
@@ -50,7 +52,8 @@ public final class TranslationContext {
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings,
             boolean mainModule,
-            String source) {
+            String source,
+            ModuleImportLoader importLoader) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
         this.compilationConfiguration = compilationConfiguration;
@@ -60,6 +63,7 @@ public final class TranslationContext {
         this.source = source;
         this.constructorNamespaceFrames = new ArrayDeque<>();
         this.nameResolver = new TranslationNameResolver(this);
+        this.importLoader = importLoader;
     }
 
     public StaticContext moduleContext() {
@@ -88,6 +92,10 @@ public final class TranslationContext {
 
     public void setLibraryModuleNamespace(String libraryModuleNamespace) {
         this.libraryModuleNamespace = libraryModuleNamespace;
+    }
+
+    public ModuleImportLoader importLoader() {
+        return this.importLoader;
     }
 
     public TranslationNameResolver names() {
