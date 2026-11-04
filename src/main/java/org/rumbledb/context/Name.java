@@ -17,6 +17,7 @@ package org.rumbledb.context;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.Comparator;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -50,6 +51,10 @@ public class Name implements Comparable<Name>, Serializable {
     @EqualsAndHashCode.Include
     private final String localName;
 
+    // The module a non-public global belongs to. Two modules may declare the same expanded name this way.
+    @EqualsAndHashCode.Include
+    private final String owner;
+
     public static final String JSONIQ_DEFAULT_TYPE_NS = "http://jsoniq.org/default-type-namespace";
     public static final String JSONIQ_DEFAULT_FUNCTION_NS = "http://jsoniq.org/default-function-namespace";
     public static final String FN_NS = "http://www.w3.org/2005/xpath-functions";
@@ -69,6 +74,11 @@ public class Name implements Comparable<Name>, Serializable {
     public static final String DEFAULT_COLLATION_NS = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
     public static final String ERROR_NS = "http://www.w3.org/2005/xqt-errors";
 
+    private static final Comparator<Name> COMPARATOR = Comparator.comparing(
+                    Name::getNamespace, Comparator.nullsFirst(Comparator.naturalOrder()))
+            .thenComparing(Name::getLocalName)
+            .thenComparing(Name::getOwner, Comparator.nullsFirst(Comparator.naturalOrder()));
+
     public static final Name CONTEXT_ITEM = createVariableInNoNamespace("$");
     public static final Name CONTEXT_POSITION = createVariableInNoNamespace("$position");
     public static final Name CONTEXT_COUNT = createVariableInNoNamespace("$count");
@@ -78,12 +88,27 @@ public class Name implements Comparable<Name>, Serializable {
             createVariableInNoNamespace("$186e9958-978d-421c-96dd-9306ff5644b8");
 
     public Name(String namespace, String prefix, String localName) {
+        this(namespace, prefix, localName, null);
+    }
+
+    private Name(String namespace, String prefix, String localName, String owner) {
         this.namespace = namespace;
         this.prefix = prefix;
         this.localName = localName;
+        this.owner = owner;
         if (this.prefix != null && this.namespace == null) {
             throw new OurBadException("Namespace is null, but prefix is present");
         }
+    }
+
+    /** The same expanded name, as declared by the given module. It prints as the name does. */
+    public Name ownedBy(String module) {
+        return new Name(this.namespace, this.prefix, this.localName, module);
+    }
+
+    /** The expanded name the query sees, whichever module declared it. */
+    public Name withoutOwner() {
+        return this.owner == null ? this : new Name(this.namespace, this.prefix, this.localName, null);
     }
 
     /**
@@ -205,7 +230,7 @@ public class Name implements Comparable<Name>, Serializable {
      * @return the expanded name
      */
     public Name addArityToFunctionName(int arity) {
-        return new Name(this.namespace, this.prefix, this.localName + "#" + arity);
+        return new Name(this.namespace, this.prefix, this.localName + "#" + arity, this.owner);
     }
 
     /**
@@ -228,20 +253,6 @@ public class Name implements Comparable<Name>, Serializable {
 
     @Override
     public int compareTo(Name o) {
-        Name other = (Name) o;
-        if (this.namespace == null && other.namespace != null) {
-            return -1;
-        }
-        if (this.namespace != null && other.namespace == null) {
-            return 1;
-        }
-        if (this.namespace == null && other.namespace == null) {
-            return this.localName.compareTo(other.localName);
-        }
-        int compare = this.namespace.compareTo(other.namespace);
-        if (compare != 0) {
-            return compare;
-        }
-        return this.localName.compareTo(other.localName);
+        return COMPARATOR.compare(this, o);
     }
 }

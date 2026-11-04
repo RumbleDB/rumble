@@ -132,7 +132,8 @@ public final class PrimaryTranslation {
             VarRefContext<EqNameCtx> ctx,
             TranslationContext translationContext,
             BiFunction<EqNameCtx, NameRole, Name> parseEqName) {
-        Name name = parseEqName.apply(ctx.eqName(), NameRole.NO_DEFAULT_NAMESPACE);
+        Name name =
+                translationContext.names().variableName(parseEqName.apply(ctx.eqName(), NameRole.NO_DEFAULT_NAMESPACE));
         return new VariableReferenceExpression(name, translationContext.metadata(ctx.context()));
     }
 

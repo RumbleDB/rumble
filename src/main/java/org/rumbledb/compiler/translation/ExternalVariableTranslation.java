@@ -65,7 +65,8 @@ public final class ExternalVariableTranslation {
 
     private static boolean hasDeclaration(Prolog prolog, Name variableName) {
         return prolog.getVariableDeclarations().stream()
-                        .anyMatch(declaration -> declaration.getVariableName().equals(variableName))
+                        .anyMatch(declaration ->
+                                declaration.getVariableName().withoutOwner().equals(variableName))
                 || prolog.getImportedLibrary()
                         .filter(library -> hasDeclaration(library.getProlog(), variableName))
                         .isPresent();

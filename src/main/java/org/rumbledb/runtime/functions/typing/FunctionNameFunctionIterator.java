@@ -66,7 +66,7 @@ public class FunctionNameFunctionIterator extends AbstractAtMostOneItemRuntimePl
         if (function.getIdentifier() == null || function.getIdentifier().getName() == null) {
             return null;
         }
-        Name name = function.getIdentifier().getName();
+        Name name = function.getIdentifier().getName().withoutOwner();
         return ItemFactory.getInstance().createQNameItem(name);
     }
 }

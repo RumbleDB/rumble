@@ -63,7 +63,8 @@ public final class ExternalBindings implements Serializable {
     }
 
     public Optional<Binding> get(Name name) {
-        return Optional.ofNullable(this.variables.get(Objects.requireNonNull(name, "name")));
+        return Optional.ofNullable(
+                this.variables.get(Objects.requireNonNull(name, "name").withoutOwner()));
     }
 
     public <T extends Binding> Optional<T> get(Name name, Class<T> bindingClass) {

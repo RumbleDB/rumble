@@ -38,9 +38,18 @@ public final class ModuleImportLoader {
 
     private final CompilationConfiguration configuration;
     private final Map<URI, LibraryModule> modules = new LinkedHashMap<>();
+    private int moduleOwners;
 
     ModuleImportLoader(CompilationConfiguration configuration) {
         this.configuration = configuration;
+    }
+
+    public String newModuleOwner() {
+        return "module-" + this.moduleOwners++;
+    }
+
+    public boolean hasModules(String namespace) {
+        return !modulesOf(namespace).isEmpty();
     }
 
     /**
