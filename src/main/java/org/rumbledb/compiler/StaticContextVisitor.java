@@ -495,9 +495,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTypeDeclaration(TypeDeclaration declaration, StaticContext argument) {
-        ItemType type = declaration.getDefinition();
-        // only first pass
-        argument.getInScopeSchemaTypes().addInScopeSchemaType(type, declaration.getMetadata());
+        declaration.getDefinition().resolve(argument, declaration.getMetadata());
         return argument;
     }
 
@@ -557,15 +555,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 .toList();
         libraryContexts.forEach(argument::addPublicDeclarationsOf);
         // Declared types are visible across the imported library, so they join its context before linking.
-        prolog.getTypeDeclarations().forEach(declaration -> visit(declaration, argument));
+        prolog.getTypeDeclarations().forEach(declaration -> argument.getInScopeSchemaTypes()
+                .addInScopeSchemaType(declaration.getDefinition(), declaration.getMetadata()));
         libraryContexts.forEach(context -> context.linkImports(argument));
+        // Dependency ordering put type declarations first, so each resolves in its module before anything uses it.
         for (PrologDeclaration declaration : prolog.getDeclarations()) {
-            if (!(declaration instanceof TypeDeclaration)) {
-                visit(declaration, declaration.getModuleContext());
-            }
-        }
-        for (ItemType itemType : argument.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
-            itemType.resolve(argument, prolog.getMetadata());
+            visit(declaration, declaration.getModuleContext());
         }
         return argument;
     }

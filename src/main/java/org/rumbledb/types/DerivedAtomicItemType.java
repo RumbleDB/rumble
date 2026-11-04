@@ -425,6 +425,11 @@ public class DerivedAtomicItemType extends AbstractItemType {
     }
 
     @Override
+    public boolean isResolved() {
+        return this.baseType.isResolved();
+    }
+
+    @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
         if (!this.baseType.isResolved()) {
             this.baseType.resolve(context, metadata);
@@ -444,6 +449,11 @@ public class DerivedAtomicItemType extends AbstractItemType {
         this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
         if (this.baseType.isAtomicItemType()) {
             this.primitiveType = this.baseType.getPrimitiveType();
+            // A base type resolves first, so it only still lacks its primitive type if it is deriving from this type.
+            if (this.primitiveType instanceof ItemTypeReference) {
+                throw new InvalidSchemaException(
+                        "Type " + this.name + " derives from itself.", ExceptionMetadata.EMPTY_METADATA);
+            }
 
             if (this.length == null) {
                 if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.LENGTH)) {
