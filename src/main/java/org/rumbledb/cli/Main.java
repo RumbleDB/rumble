@@ -47,6 +47,15 @@ public class Main {
             LoggingConfiguration.configure(configuration);
         } catch (Exception e) {
             ConsoleOutput.error("⚠️ CLI Error: " + e.getMessage());
+            if (args.length == 0) {
+                ConsoleOutput.error(
+                        """
+                            Use run to execute a query or repl to start an interactive shell.
+                            Use --help for available commands and options.
+                            Documentation is available at https://docs.rumbledb.org/.
+                            """
+                                .stripTrailing());
+            }
             System.exit(42);
             return;
         }
