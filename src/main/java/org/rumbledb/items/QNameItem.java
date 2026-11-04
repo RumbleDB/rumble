@@ -33,8 +33,9 @@ public class QNameItem extends AbstractAtomicItem {
 
     private Name name;
 
+    /** A QName value is what the query sees, so it never carries the module that owns a name. */
     public QNameItem(Name name) {
-        this.name = Objects.requireNonNull(name, "name");
+        this.name = Objects.requireNonNull(name, "name").withoutOwner();
     }
 
     @Override

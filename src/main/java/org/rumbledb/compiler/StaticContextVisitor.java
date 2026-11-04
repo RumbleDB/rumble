@@ -494,9 +494,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTypeDeclaration(TypeDeclaration declaration, StaticContext argument) {
-        ItemType type = declaration.getDefinition();
-        // only first pass
-        argument.getInScopeSchemaTypes().addInScopeSchemaType(type, declaration.getMetadata());
+        declaration.getDefinition().resolve(argument, declaration.getMetadata());
         return argument;
     }
 
@@ -558,18 +556,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         importedContexts.forEach(argument::linkImports);
         // Declared types are shared by all modules, so this context collects them before passing them on.
-        importedContexts.forEach(
-                context -> argument.getInScopeSchemaTypes().importModuleTypes(context.getInScopeSchemaTypes()));
-        prolog.getTypeDeclarations().forEach(declaration -> visit(declaration, argument));
+        prolog.getTypeDeclarations().forEach(declaration -> argument.getInScopeSchemaTypes()
+                .addInScopeSchemaType(declaration.getDefinition(), declaration.getMetadata()));
         importedContexts.forEach(
                 context -> context.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes()));
+        // Dependency ordering put type declarations first, so each resolves in its module before anything uses it.
         for (PrologDeclaration declaration : prolog.getDeclarations()) {
-            if (!(declaration instanceof TypeDeclaration)) {
-                visit(declaration, declaration.getModuleContext());
-            }
-        }
-        for (ItemType itemType : argument.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
-            itemType.resolve(argument, prolog.getMetadata());
+            visit(declaration, declaration.getModuleContext());
         }
         return argument;
     }

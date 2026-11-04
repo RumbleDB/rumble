@@ -22,7 +22,6 @@ import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -66,7 +65,7 @@ public class FunctionNameFunctionIterator extends AbstractAtMostOneItemRuntimePl
         if (function.getIdentifier() == null || function.getIdentifier().getName() == null) {
             return null;
         }
-        Name name = function.getIdentifier().getName().withoutOwner();
-        return ItemFactory.getInstance().createQNameItem(name);
+        return ItemFactory.getInstance()
+                .createQNameItem(function.getIdentifier().getName());
     }
 }
