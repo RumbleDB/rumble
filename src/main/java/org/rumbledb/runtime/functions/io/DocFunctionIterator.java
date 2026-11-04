@@ -15,26 +15,17 @@
  */
 package org.rumbledb.runtime.functions.io;
 
-import java.io.IOException;
 import java.io.Serial;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.items.parsing.XmlParsingUtils;
-import org.rumbledb.items.xml.DocumentItem;
-import org.rumbledb.resources.ResolvedResource;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -70,34 +61,8 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             }
             throw exception;
         }
-        return loadDocument(uri, context, this.staticContext.getQueryLanguage(), getMetadata());
-    }
-
-    static Item loadDocument(URI uri, DynamicContext context, String queryLanguage, ExceptionMetadata metadata) {
-        Item collectionDocument = context.getResourceResolver().document(uri);
-        if (collectionDocument != null) {
-            return collectionDocument;
-        }
-        try (ResolvedResource resource =
-                context.getResourceResolver().resolve(uri, context.getRumbleConfiguration(), metadata)) {
-            InputSource source = new InputSource(resource.getInputStream());
-            source.setSystemId(resource.getSystemId().toString());
-            Document xmlDocument = XmlParsingUtils.parseResource(
-                    source, uri.toString(), "XML document \"" + uri + "\" for fn:doc()", metadata);
-            // XQuery retains parsed whitespace; preserve JSONiq's existing whitespace handling.
-            DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
-                    xmlDocument,
-                    uri.toString(),
-                    context.getRumbleConfiguration().optimization().optimizeParentPointers(),
-                    queryLanguage != null && queryLanguage.startsWith("xquery"));
-            documentItem.setConstructionBaseUri(uri);
-            documentItem.setDocumentUri(uri);
-            return context.getResourceResolver().cacheDocument(uri, documentItem);
-        } catch (IOException e) {
-            CannotRetrieveResourceException ex =
-                    new CannotRetrieveResourceException("Unable to read the resource supplied to fn:doc().", metadata);
-            ex.initCause(e);
-            throw ex;
-        }
+        return context.getResourceResolver()
+                .loadDocument(
+                        uri, this.staticContext.getQueryLanguage(), context.getRumbleConfiguration(), getMetadata());
     }
 }
