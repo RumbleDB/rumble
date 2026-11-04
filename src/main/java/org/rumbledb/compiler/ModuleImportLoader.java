@@ -86,8 +86,6 @@ public final class ModuleImportLoader {
         StaticContext publicDeclarations = new StaticContext(
                 first.getStaticContext().getStaticBaseURI(),
                 first.getStaticContext().getRumbleConfiguration());
-        publicDeclarations.setUserDefinedFunctionsExecutionModes(
-                first.getStaticContext().getUserDefinedFunctionsExecutionModes());
         LibraryModule library = new LibraryModule(prolog, first.getNamespace(), first.getMetadata());
         library.setStaticContext(publicDeclarations);
         return library;

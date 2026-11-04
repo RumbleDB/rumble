@@ -549,21 +549,20 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                             declaration.getMetadata(),
                             declaration.isAssignable());
         }
+        prolog.getImportedLibrary().ifPresent(library -> visit(library, argument));
         // Every module is declared before any is visited, so import cycles need no special treatment.
         // Only the flattened library holds declarations of modules other than its own context.
         List<StaticContext> libraryContexts = prolog.getModuleContexts().stream()
                 .filter(context -> context != argument)
                 .toList();
         libraryContexts.forEach(argument::addPublicDeclarationsOf);
+        // Declared types are visible across the imported library, so they join its context before linking.
+        prolog.getTypeDeclarations().forEach(declaration -> visit(declaration, argument));
         libraryContexts.forEach(context -> context.linkImports(argument));
-        prolog.getImportedLibrary().ifPresent(library -> visit(library, argument));
         for (PrologDeclaration declaration : prolog.getDeclarations()) {
-            StaticContext moduleContext = declaration.getModuleContext();
-            visit(declaration, moduleContext);
-            // Declared types are visible across the imported library.
-            argument.getInScopeSchemaTypes().importModuleTypes(moduleContext.getInScopeSchemaTypes());
-            libraryContexts.forEach(
-                    context -> context.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes()));
+            if (!(declaration instanceof TypeDeclaration)) {
+                visit(declaration, declaration.getModuleContext());
+            }
         }
         for (ItemType itemType : argument.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(argument, prolog.getMetadata());
