@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="true" :)
-(: The function signature must resolve a type declared in another fragment. :)
+(: RumbleDB shares JSONiq declared types across the imported modules. XQuery has no such declaration. :)
 import module namespace m = "urn:import-regression:types"
     at "fragment-a-functions.jq", "fragment-b-types.jq";
 exists(m:f#1)
