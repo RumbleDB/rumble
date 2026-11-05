@@ -44,8 +44,7 @@ final class XQuerySyntaxValidator extends XQueryParserBaseVisitor<Void> {
 
     @Override
     public Void visitProgram(XQueryParser.ProgramContext context) {
-        var body = context.statementsAndOptionalExpr();
-        if (body.expr() == null || !body.statements().statement().isEmpty()) {
+        if (context.statementsAndOptionalExpr().expr() == null) {
             throw invalid(context);
         }
         return visitChildren(context);
