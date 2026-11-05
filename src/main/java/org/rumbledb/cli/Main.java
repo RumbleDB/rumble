@@ -20,7 +20,6 @@ import java.net.ConnectException;
 import java.util.Objects;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.logging.log4j.util.PropertiesUtil;
 import org.apache.spark.SparkException;
 
 import org.rumbledb.config.RumbleConfiguration;
@@ -33,11 +32,6 @@ public class Main {
     public static RumbleJLineShell terminal = null;
 
     public static void main(String[] args) throws IOException {
-        // Must run before Log4j2 initializes. Keeps log messages out of the query results on stdout.
-        if (PropertiesUtil.getProperties().getStringProperty("log4j.configurationFile") == null) {
-            System.setProperty("log4j.configurationFile", "classpath:rumble-cli-log4j2.properties");
-        }
-
         String javaVersion = System.getProperty("java.version");
         if (!javaVersion.startsWith("17") && !javaVersion.startsWith("21")) {
             ConsoleOutput.error(
