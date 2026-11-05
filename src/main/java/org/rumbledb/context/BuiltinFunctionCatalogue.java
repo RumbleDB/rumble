@@ -347,7 +347,8 @@ public class BuiltinFunctionCatalogue {
     }
 
     private static BuiltinFunction forQueryLanguage(BuiltinFunction function, QueryLanguage queryLanguage) {
-        if (queryLanguage == QueryLanguage.XQUERY_31 && (function == string_join1 || function == string_join2)) {
+        if (StringJoinFunctionIterator.acceptsAtomicItems(queryLanguage)
+                && (function == string_join1 || function == string_join2)) {
             return createBuiltinFunction(
                     function.getIdentifier().getName(),
                     function.getIdentifier().getArity() == 1

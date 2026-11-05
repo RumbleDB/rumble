@@ -36,6 +36,11 @@ public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan
         super(arguments, staticContext);
     }
 
+    /** XQuery 3.1 widened fn:string-join to atomic items; JSONiq and XQuery 1.0 still require strings. */
+    public static boolean acceptsAtomicItems(QueryLanguage queryLanguage) {
+        return queryLanguage != null && queryLanguage.isXQuery() && queryLanguage.isAtLeast(QueryLanguage.Version.V3_1);
+    }
+
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item joinString = ItemFactory.getInstance().createStringItem("");
@@ -50,8 +55,7 @@ public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan
         StringBuilder stringBuilder = new StringBuilder();
         boolean first = true;
         for (Item item : strings) {
-            if (!item.isString()
-                    && !(this.staticContext.getQueryLanguage() == QueryLanguage.XQUERY_31 && item.isAtomic())) {
+            if (!item.isString() && !(acceptsAtomicItems(this.staticContext.getQueryLanguage()) && item.isAtomic())) {
                 throw new UnexpectedTypeException(
                         "String item expected",
                         this.getChild(0).getRuntimeStaticContext().getMetadata());
