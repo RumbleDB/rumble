@@ -92,6 +92,14 @@ public class ReturnClauseIterator extends ItemRuntimePlan
     }
 
     @Override
+    public void print(StringBuilder buffer, int indent) {
+        super.print(buffer, indent);
+        if (this.child != null) {
+            this.child.print(buffer, indent + 1);
+        }
+    }
+
+    @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new ReturnLocalCursor(this.child, this.expression, context, getMetadata());
     }
