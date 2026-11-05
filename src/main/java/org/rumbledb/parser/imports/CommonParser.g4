@@ -33,6 +33,11 @@ moduleAndThisIsIt
 module
    : decl = versionDecl? (libraryModule | main = mainModule)
    ;
+   // How a library module starts. No main module can start this way, so this tells the two kinds apart without parsing the whole source.
+   
+libraryModuleStart
+   : versionDecl? KW_MODULE KW_NAMESPACE
+   ;
    // Both keywords are accepted so that either grammar can read the declaration that selects the language.
    
 versionDecl

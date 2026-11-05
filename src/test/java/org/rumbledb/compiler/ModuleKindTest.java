@@ -62,16 +62,25 @@ class ModuleKindTest {
         assertTrue(exception.getMessage().contains("Main module expected, but library module found."));
     }
 
-    @Test
-    void anImportedMainModuleThatStartsWithTheWordModuleIsRejected() throws IOException {
-        RumbleException exception = importFailure("module + 1");
-        assertTrue(exception instanceof ParsingException, exception.toString());
-        assertTrue(exception.getMessage().contains("Library module expected, but main module found."));
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "1",
+                "module + 1",
+                "<html/>",
+                "xquery version \"3.1\"; 1",
+                "xquery version 3.1; module namespace a = \"urn:a\";",
+                "jsoniq version 3.1; module namespace a = \"urn:a\";"
+            })
+    void importedResourcesThatDoNotStartLikeALibraryAreNotLibraries(String resource) throws IOException {
+        RumbleException exception = importFailure(resource);
+        assertTrue(exception instanceof ModuleNotFoundException, exception.toString());
     }
 
     @Test
-    void anImportedMainModuleIsNotALibrary() throws IOException {
-        assertTrue(importFailure("1") instanceof ModuleNotFoundException);
+    void syntaxErrorsInsideALibraryAreStillReportedAsSyntaxErrors() throws IOException {
+        RumbleException exception = importFailure("xquery version \"3.1\"; module namespace a = ;");
+        assertTrue(exception instanceof ParsingException, exception.toString());
     }
 
     @Test
