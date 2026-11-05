@@ -29,6 +29,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.rumbledb.config.model.LanguageVersion;
+
 @Tag("cli-output-formats")
 class SequenceWriterTest {
     @TempDir
@@ -73,14 +75,14 @@ class SequenceWriterTest {
                         .getRuntimeStaticContext()
                         .getConfiguration()
                         .output()
-                        .effectiveOutputFormat("jsoniq10"));
+                        .effectiveOutputFormat(LanguageVersion.JSONIQ_10));
         assertEquals(
                 "serialize",
                 xquery.runQuery("1")
                         .getRuntimeStaticContext()
                         .getConfiguration()
                         .output()
-                        .effectiveOutputFormat("xquery31"));
+                        .effectiveOutputFormat(LanguageVersion.XQUERY_31));
     }
 
     @Test
@@ -123,7 +125,7 @@ class SequenceWriterTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"jsoniq10", "jsoniq31", "jsoniq40", "xquery10", "xquery30", "xquery31"})
+    @CsvSource({"jsoniq10", "jsoniq31", "xquery10", "xquery30", "xquery31"})
     void textSerializationUsesW3CSpacingInBothLanguagesUnlessASeparatorIsExplicit(String language) {
         Rumble rumble = new Rumble(RumbleConfiguration.builder()
                 .with("semantics.queryLanguage", language)

@@ -20,6 +20,7 @@ import java.util.*;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -80,7 +81,7 @@ public class ItemTypeReference extends AbstractItemType {
      * with anyAtomicType depending on the jsoniq version.
      */
     public static Name renameAtomic(StaticContext context, Name oldName) {
-        if (context.getQueryLanguage().equals("jsoniq10")) {
+        if (context.getQueryLanguage() == LanguageVersion.JSONIQ_10) {
             if (oldName.getNamespace() != null && oldName.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
                 if (oldAtomicName.getLocalName().equals(oldName.getLocalName())) {
                     return newAtomicName;
