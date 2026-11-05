@@ -28,9 +28,10 @@ parser grammar CommonParser;
 moduleAndThisIsIt
    : module EOF
    ;
-
+   // rumble-test-suite reads the main label, so it must stay even though this repository does not use it.
+   
 module
-   : decl = versionDecl? (libraryModule | mainModule)
+   : decl = versionDecl? (libraryModule | main = mainModule)
    ;
    // Both keywords are accepted so that either grammar can read the declaration that selects the language.
    
