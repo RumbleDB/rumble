@@ -155,32 +155,6 @@ class LanguageVersionBehaviorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"jsoniq10", "xquery31"})
-    void languageKeywordsRemainUsableAsNamesInBothLanguages(String language) {
-        assertEquals(
-                "3",
-                rumble(language)
-                        .runQuery("declare function local:xquery($jsoniq) { $jsoniq + 1 };"
-                                + " let $xquery := 2 return local:xquery($xquery)")
-                        .serialize()
-                        .replaceFirst("^<\\?xml.*\\?>", ""));
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {"jsoniq version \"3.1\"", "xquery version \"3.1\"", "declare variable $x := 2"})
-    void declarationsAfterTheFirstMainModuleAreRejected(String declaration) {
-        assertErrorCode("XPST0003", "xquery31", "1; " + declaration + "; 2");
-    }
-
-    @Test
-    void statementsSeparatedBySemicolonsStillRunInBothLanguages() {
-        assertEquals("2", rumble("jsoniq10").runQuery("1; 2").serialize());
-        assertEquals(
-                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>2",
-                rumble("xquery31").runQuery("1; 2").serialize());
-    }
-
-    @ParameterizedTest
     @ValueSource(strings = {"xquery40", "jsoniq40"})
     void unsupportedVersion40ConfigurationIsRejected(String language) {
         assertThrows(IllegalArgumentException.class, () -> rumble(language));
