@@ -891,9 +891,10 @@ keyword
    | keywordNotOKForFunction
    ;
 
-keywordOKForFunction
+commonKeywordOKForFunction
    // These keywords do not conflict with function syntax, including decimal-format properties.
-   : dialectKeywordOKForFunction
+   : KW_JSONIQ
+   | KW_XQUERY
    | DFPropertyName
    | KW_AFTER
    | KW_ALLOWING
