@@ -128,9 +128,8 @@ itemType
    | parenthesizedItemTest
    ;
 
-dialectKeywordOKForFunction
-   : KW_JSONIQ
-   | KW_XQUERY
+keywordOKForFunction
+   : commonKeywordOKForFunction
    | KW_NULL
    | KW_TRUE
    | KW_FALSE

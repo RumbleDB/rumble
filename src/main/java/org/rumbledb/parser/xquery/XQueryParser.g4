@@ -96,9 +96,8 @@ itemType
    | parenthesizedItemTest
    ;
 
-dialectKeywordOKForFunction
-   : KW_JSONIQ
-   | KW_XQUERY
+keywordOKForFunction
+   : commonKeywordOKForFunction
    ;
 
 stringLiteralQuot
