@@ -17,7 +17,6 @@ package org.rumbledb.runtime.functions.strings;
 
 import java.io.Serial;
 import java.util.List;
-import java.util.regex.Matcher;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -50,10 +49,9 @@ public class MatchesFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 flags = flagsItem.getStringValue();
             }
         }
-        Matcher matcher = RegexPatternUtils.compileRegex(pattern, flags, getMetadata())
-                .getPattern()
-                .matcher(stringItem.getStringValue());
-        boolean result = matcher.find();
+        RegexPatternUtils.CompiledRegex regex = RegexPatternUtils.compileRegex(
+                pattern, flags, getMetadata(), getConfiguration().semantics().xsdVersion());
+        boolean result = RegexPatternUtils.containsMatch(regex, stringItem.getStringValue());
         return ItemFactory.getInstance().createBooleanItem(result);
     }
 }

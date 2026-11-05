@@ -86,10 +86,19 @@ public class ApplyFunctionIterator extends ItemRuntimePlan
                 .executionMode(ExecutionMode.LOCAL)
                 .build();
 
-        if (functionItem.getParameterNames().size() != argumentsArray.getSize()) {
+        if (functionItem == null
+                || (!functionItem.isFunction() && !functionItem.isMap() && !functionItem.isArray())
+                || argumentsArray == null
+                || !argumentsArray.isArray()) {
+            throw new UnexpectedTypeException("fn:apply expects one function and one array.", getMetadata());
+        }
+        int arity = functionItem.isMap() || functionItem.isArray()
+                ? 1
+                : functionItem.getParameterNames().size();
+        if (arity != argumentsArray.getSize()) {
             throw new RumbleException(
                     "fn:apply called with a function of arity "
-                            + functionItem.getParameterNames().size()
+                            + arity
                             + " and an array of size "
                             + argumentsArray.getSize()
                             + ".",

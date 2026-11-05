@@ -28,12 +28,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
-import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -41,6 +41,7 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.types.FunctionSignature;
 
 public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
         implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
@@ -50,58 +51,75 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
     private static final long serialVersionUID = 1L;
     // parametrized fields
     private final FunctionIdentifier functionIdentifier;
-    private final List<ItemRuntimePlan> functionArguments;
     private final boolean tailCallOptimizationCandidate;
+    // The arguments converted to the declared parameter types, with null for the placeholders of a partial
+    // application. A call then only looks up the function, instead of building a call plan for every call.
+    private final List<ItemRuntimePlan> convertedArguments;
+    private final boolean isPartialApplication;
 
     public StaticUserDefinedFunctionCallIterator(
             FunctionIdentifier functionIdentifier,
             List<ItemRuntimePlan> functionArguments,
+            FunctionSignature signature,
             RuntimeStaticContext staticContext,
             boolean tailCallOptimization) {
         super(List.of(), staticContext);
         this.functionIdentifier = functionIdentifier;
-        this.functionArguments = functionArguments;
         this.tailCallOptimizationCandidate = tailCallOptimization;
+        this.isPartialApplication = functionArguments.contains(null);
+        List<ItemRuntimePlan> convertedArguments = new ArrayList<>(functionArguments);
+        FunctionCallArgumentConversion.wrapAccordingToSignature(
+                functionIdentifier.getName(), signature, convertedArguments, staticContext);
+        this.convertedArguments = Collections.unmodifiableList(convertedArguments);
     }
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new UserDefinedCallLocalCursor(
-                this.functionIdentifier,
-                this.functionArguments,
-                this.tailCallOptimizationCandidate,
-                this.staticContext,
-                context);
+        if (this.isPartialApplication || this.tailCallOptimizationCandidate) {
+            // The result is a function item with the supplied arguments bound. For a tail call, the body of the
+            // function evaluates it (see FunctionBodyIterator).
+            return new IteratorLocalCursor<>(
+                    () -> List.<Item>of(FunctionCall.partiallyApply(
+                                    getFunction(context),
+                                    this.convertedArguments,
+                                    this.tailCallOptimizationCandidate,
+                                    context))
+                            .iterator(),
+                    getMetadata());
+        }
+        FunctionItem function = getFunction(context);
+        return function.getCalleePlan().getCursor(createCallContext(function, context));
+    }
+
+    private FunctionItem getFunction(DynamicContext context) {
+        return context.getNamedFunctions().getSharedUserDefinedFunction(this.functionIdentifier, getMetadata());
+    }
+
+    private DynamicContext createCallContext(FunctionItem function, DynamicContext context) {
+        if (this.isPartialApplication) {
+            throw new OurBadException(
+                    "Unexpected program state reached. Partially applied function calls must be evaluated locally.");
+        }
+        return FunctionCall.createCallContext(function, this.convertedArguments, context);
     }
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        ItemRuntimePlan call = dynamicContext
-                .getNamedFunctions()
-                .getUserDefinedFunctionCallIterator(
-                        this.functionIdentifier,
-                        this.staticContext,
-                        new ArrayList<ItemRuntimePlan>(this.functionArguments),
-                        false);
-        return call.getRDD(dynamicContext);
+        FunctionItem function = getFunction(dynamicContext);
+        return function.getCalleePlan().getRDD(createCallContext(function, dynamicContext));
     }
 
     @Override
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
-        ItemRuntimePlan call = dynamicContext
-                .getNamedFunctions()
-                .getUserDefinedFunctionCallIterator(
-                        this.functionIdentifier,
-                        this.staticContext,
-                        new ArrayList<ItemRuntimePlan>(this.functionArguments),
-                        false);
-        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(call, dynamicContext);
+        FunctionItem function = getFunction(dynamicContext);
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(
+                function.getCalleePlan(), createCallContext(function, dynamicContext));
     }
 
     @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>(super.getVariableDependencies());
-        for (ItemRuntimePlan iterator : this.functionArguments) {
+        for (ItemRuntimePlan iterator : this.convertedArguments) {
             if (iterator == null) {
                 continue;
             }
@@ -115,106 +133,10 @@ public class StaticUserDefinedFunctionCallIterator extends ItemRuntimePlan
         if (!this.staticContext.isUpdating()) {
             return new PendingUpdateList();
         }
-        ItemRuntimePlan call = context.getNamedFunctions()
-                .getUserDefinedFunctionCallIterator(
-                        this.functionIdentifier,
-                        this.staticContext,
-                        new ArrayList<ItemRuntimePlan>(this.functionArguments),
-                        false);
-        return UpdatingRuntimePlan.get(call, context);
-    }
-
-    private static final class UserDefinedCallLocalCursor extends AbstractLocalCursor<Item> {
-
-        private final FunctionIdentifier functionIdentifier;
-        private final List<ItemRuntimePlan> functionArguments;
-        private final boolean tailCallOptimizationCandidate;
-        private final RuntimeStaticContext staticContext;
-        private final DynamicContext context;
-        private Cursor<Item> delegate;
-        private Item nextResult;
-
-        private UserDefinedCallLocalCursor(
-                FunctionIdentifier functionIdentifier,
-                List<ItemRuntimePlan> functionArguments,
-                boolean tailCallOptimizationCandidate,
-                RuntimeStaticContext staticContext,
-                DynamicContext context) {
-            super(staticContext.getMetadata());
-            this.functionIdentifier = functionIdentifier;
-            this.functionArguments = functionArguments;
-            this.tailCallOptimizationCandidate = tailCallOptimizationCandidate;
-            this.staticContext = staticContext;
-            this.context = context;
-        }
-
-        @Override
-        protected void openLocal() {
-            ItemRuntimePlan call = this.context
-                    .getNamedFunctions()
-                    .getUserDefinedFunctionCallIterator(
-                            this.functionIdentifier,
-                            this.staticContext,
-                            new ArrayList<ItemRuntimePlan>(this.functionArguments),
-                            this.tailCallOptimizationCandidate);
-            this.delegate = call.getCursor(this.context);
-            advance();
-            while (!this.tailCallOptimizationCandidate && isTailCall(this.nextResult)) {
-                closeDelegate();
-                ItemRuntimePlan tailCall = NamedFunctions.buildFunctionItemCallIterator(
-                        this.nextResult, this.staticContext, ExecutionMode.LOCAL, Collections.emptyList(), false);
-                this.delegate = tailCall.getCursor(this.context);
-                advance();
-            }
-        }
-
-        private boolean isTailCall(Item item) {
-            return item != null
-                    && item.isFunction()
-                    && item.getIdentifier().getArity() == 0
-                    && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName());
-        }
-
-        private void advance() {
-            this.nextResult = null;
-            try {
-                if (this.delegate.hasNext()) {
-                    this.nextResult = this.delegate.next();
-                } else {
-                    closeDelegate();
-                }
-            } catch (RuntimeException e) {
-                closeDelegate();
-                throw e;
-            }
-        }
-
-        @Override
-        protected boolean hasNextLocal() {
-            return this.nextResult != null;
-        }
-
-        @Override
-        protected Item nextLocal() {
-            if (this.nextResult == null) {
-                throw invalidState("No more user-defined function results are available.");
-            }
-            Item result = this.nextResult;
-            advance();
-            return result;
-        }
-
-        private void closeDelegate() {
-            if (this.delegate != null) {
-                this.delegate.close();
-                this.delegate = null;
-            }
-        }
-
-        @Override
-        protected void closeLocal() {
-            closeDelegate();
-            this.nextResult = null;
-        }
+        // Updates come from the body: the return type conversion does not apply.
+        FunctionItem function = getFunction(context);
+        DynamicContext contextForUpdates = new DynamicContext(createCallContext(function, context));
+        contextForUpdates.setCurrentMutabilityLevel(context.getCurrentMutabilityLevel());
+        return UpdatingRuntimePlan.get(function.getBodyIterator(), contextForUpdates);
     }
 }

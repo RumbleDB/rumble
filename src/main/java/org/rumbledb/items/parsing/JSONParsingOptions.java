@@ -25,10 +25,10 @@ import lombok.Getter;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.functions.FunctionCall;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.SequenceType;
@@ -126,10 +126,8 @@ public final class JSONParsingOptions {
 
             List<ItemRuntimePlan> arguments = new ArrayList<>(1);
             arguments.add(new StringRuntimeIterator(escapedSequence, callContext));
-            ItemRuntimePlan call = NamedFunctions.buildFunctionItemCallIterator(
-                    functionItem, callContext, ExecutionMode.LOCAL, arguments, false);
-
-            List<Item> results = call.materialize(dynamicContext);
+            List<Item> results = FunctionCall.of(functionItem, arguments, callContext, dynamicContext)
+                    .materialize();
             if (results.size() != 1 || !results.get(0).isString()) {
                 throw new InvalidJSONException(
                         "Invalid result returned by option 'fallback': expected exactly one xs:string.", metadata);

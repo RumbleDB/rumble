@@ -17,7 +17,9 @@ package org.rumbledb.compiler;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
@@ -27,11 +29,33 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.Prolog;
 
 /** Shared module import semantics for the JSONiq and XQuery frontends. */
 public final class ModuleImportLoader {
 
     private ModuleImportLoader() {}
+
+    private static final ThreadLocal<Map<String, StaticContext>> ACTIVE_IMPORTS = ThreadLocal.withInitial(HashMap::new);
+
+    /** Active imports are linked by context, without repeating their declaration trees. */
+    public static boolean isActive(String namespace) {
+        return ACTIVE_IMPORTS.get().containsKey(namespace);
+    }
+
+    public static void registerActiveContext(String namespace, StaticContext context) {
+        if (isActive(namespace)) {
+            ACTIVE_IMPORTS.get().put(namespace, context);
+        }
+    }
+
+    public static LibraryModule activeReference(String namespace, ExceptionMetadata metadata) {
+        LibraryModule reference =
+                new LibraryModule(new Prolog(List.of(), List.of(), List.of(), metadata), namespace, metadata);
+        reference.setStaticContext(ACTIVE_IMPORTS.get().get(namespace));
+        reference.setImportBackReference(true);
+        return reference;
+    }
 
     public static LibraryModule load(
             String namespace,
@@ -53,8 +77,18 @@ public final class ModuleImportLoader {
                 continue;
             }
             try {
-                LibraryModule module = CompilationPipeline.prepareLibraryModuleFromLocation(
-                        location, importingModuleContext, compilationConfiguration, metadata);
+                LibraryModule module;
+                Map<String, StaticContext> active = ACTIVE_IMPORTS.get();
+                active.put(normalizedNamespace, null);
+                try {
+                    module = CompilationPipeline.prepareLibraryModuleFromLocation(
+                            location, importingModuleContext, compilationConfiguration, metadata);
+                } finally {
+                    active.remove(normalizedNamespace);
+                    if (active.isEmpty()) {
+                        ACTIVE_IMPORTS.remove();
+                    }
+                }
 
                 if (!normalizedNamespace.equals(module.getNamespace())) {
                     throw new ModuleNotFoundException(
@@ -66,7 +100,7 @@ public final class ModuleImportLoader {
                 }
 
                 return module;
-            } catch (IOException | CannotRetrieveResourceException e) {
+            } catch (IOException | CannotRetrieveResourceException | ModuleNotFoundException e) {
                 lastFailure = e;
             }
         }

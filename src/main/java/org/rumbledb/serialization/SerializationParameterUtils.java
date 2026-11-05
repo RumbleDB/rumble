@@ -665,7 +665,7 @@ public final class SerializationParameterUtils {
             }
             if ("cdata-section-elements".equals(name.getLocalName())
                     || "suppress-indentation".equals(name.getLocalName())) {
-                value = expandLexicalQNames(value, element, false);
+                value = expandLexicalQNames(value, element, true);
             }
             try {
                 applySpecString(params, name.getLocalName(), value, metadata);

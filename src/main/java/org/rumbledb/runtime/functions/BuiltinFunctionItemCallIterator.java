@@ -57,7 +57,11 @@ public class BuiltinFunctionItemCallIterator extends ItemRuntimePlan
         this.functionArguments = functionArguments;
 
         FunctionCallArgumentConversion.validateArity(functionItem, this.functionArguments, getMetadata());
-        FunctionCallArgumentConversion.wrapAccordingToSignature(functionItem, this.functionArguments, staticContext);
+        FunctionCallArgumentConversion.wrapAccordingToSignature(
+                functionItem.getIdentifier().getName(),
+                functionItem.getSignature(),
+                this.functionArguments,
+                staticContext);
     }
 
     @Override

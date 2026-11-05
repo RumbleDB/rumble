@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-Bundled by RumbleDB on 2026-10-16; schema declarations are unchanged.
+Bundled by RumbleDB on 2026-10-16; JSON schema declarations are unchanged.
+Extended on 2026-10-23 with the analyze-string declarations from F&O 3.1 Appendix C.1.
 
 W3C SOFTWARE NOTICE AND LICENSE
 
@@ -197,4 +198,26 @@ Source: https://www.w3.org/Consortium/Legal/copyright-software-19980720
         <xs:attribute name="escaped-key" type="xs:boolean" use="optional" default="false"/>
     </xs:attributeGroup>
     
+    <!-- F&O 3.1 Appendix C.1: schema for fn:analyze-string results. -->
+    <xs:element name="analyze-string-result" type="j:analyze-string-result-type"/>
+    <xs:element name="match" type="j:match-type"/>
+    <xs:element name="non-match" type="xs:string"/>
+    <xs:element name="group" type="j:group-type"/>
+    <xs:complexType name="analyze-string-result-type" mixed="true">
+        <xs:choice minOccurs="0" maxOccurs="unbounded">
+            <xs:element ref="j:match"/>
+            <xs:element ref="j:non-match"/>
+        </xs:choice>
+    </xs:complexType>
+    <xs:complexType name="match-type" mixed="true">
+        <xs:sequence>
+            <xs:element ref="j:group" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:complexType name="group-type" mixed="true">
+        <xs:sequence>
+            <xs:element ref="j:group" minOccurs="0" maxOccurs="unbounded"/>
+        </xs:sequence>
+        <xs:attribute name="nr" type="xs:positiveInteger"/>
+    </xs:complexType>
 </xs:schema>

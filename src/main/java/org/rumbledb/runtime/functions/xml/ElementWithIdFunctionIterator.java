@@ -22,7 +22,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -34,12 +33,11 @@ import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 public class ElementWithIdFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
     @Serial
     private static final long serialVersionUID = 1L;
-
-    private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
 
     public ElementWithIdFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
@@ -59,7 +57,7 @@ public class ElementWithIdFunctionIterator extends ItemRuntimePlan implements Lo
                 continue;
             }
             for (String token : normalized.split(" ")) {
-                if (NCNAME_PATTERN.matcher(token).matches()) {
+                if (NamespaceBindingUtils.isValidNcName(token)) {
                     tokens.add(token);
                 }
             }
@@ -95,9 +93,17 @@ public class ElementWithIdFunctionIterator extends ItemRuntimePlan implements Lo
 
     private static void indexIds(Item node, Map<String, Item> firstElementByIdValue) {
         if (node.isElementNode()) {
+            // An ID-typed element identifies its parent for fn:element-with-id.
+            if (node.isId() && node.parent() != null && node.parent().isElementNode()) {
+                String normalizedId = node.getStringValue().trim().replaceAll("\\s+", " ");
+                firstElementByIdValue.putIfAbsent(normalizedId, node.parent());
+            }
             for (Item attribute : node.attributes()) {
                 Name name = attribute.nodeName();
-                if (name != null && Name.XML_NS.equals(name.getNamespace()) && "id".equals(name.getLocalName())) {
+                if (attribute.isId()
+                        || (name != null
+                                && Name.XML_NS.equals(name.getNamespace())
+                                && "id".equals(name.getLocalName()))) {
                     String normalizedId = attribute.getStringValue().trim().replaceAll("\\s+", " ");
                     firstElementByIdValue.putIfAbsent(normalizedId, node);
                 }

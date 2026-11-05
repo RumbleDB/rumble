@@ -33,6 +33,7 @@ import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.context.UserDefinedFunctionExecutionModes;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.NotLibraryModuleException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -114,6 +115,15 @@ final class ModuleParser {
             Language language,
             StaticContext moduleContext,
             boolean isMainModule) {
+        if (language == Language.XQUERY) {
+            moduleContext.setConstructionPreserve(true);
+            // XQuery source line endings are normalized before tokenization, including inside literals.
+            query = query.replace("\r\n", "\n");
+            if ("1.1".equals(configuration.runtimeConfiguration().semantics().xmlVersion())) {
+                query = query.replace("\r\u0085", "\n").replace('\u0085', '\n').replace('\u2028', '\n');
+            }
+            query = query.replace('\r', '\n');
+        }
         // File extensions and version declarations can select a language different from the configured default.
         if (language == Language.XQUERY && !moduleContext.getQueryLanguage().startsWith("xquery")) {
             moduleContext.setQueryLanguage("xquery31");
@@ -131,8 +141,7 @@ final class ModuleParser {
         if (language == Language.XQUERY) {
             XQueryParser xqueryParser = new XQueryParser(tokens);
             parser = xqueryParser;
-            parseTreeSupplier =
-                    isMainModule ? () -> xqueryParser.moduleAndThisIsIt().module() : xqueryParser::module;
+            parseTreeSupplier = () -> xqueryParser.moduleAndThisIsIt().module();
             visitor = new XQueryTranslationVisitor(moduleContext, isMainModule, configuration, bindings, query, tokens);
         } else {
             JsoniqParser jsoniqParser = new JsoniqParser(tokens);
@@ -144,10 +153,31 @@ final class ModuleParser {
         parser.setErrorHandler(new BailErrorStrategy());
 
         try {
+            if (!isMainModule) {
+                // A namespace URI may retrieve an HTML page or a main query rather than a library.
+                // Reject those as failed module resolution, preserving syntax errors inside real libraries.
+                if (language == Language.XQUERY && tokens.LA(1) == XQueryParser.KW_XQUERY) {
+                    ((XQueryParser) parser).versionDecl();
+                } else if (language == Language.JSONIQ && tokens.LA(1) == JsoniqParser.KW_JSONIQ) {
+                    ((JsoniqParser) parser).versionDecl();
+                }
+                int moduleToken = language == Language.XQUERY ? XQueryParser.KW_MODULE : JsoniqParser.KW_MODULE;
+                if (tokens.LA(1) != moduleToken) {
+                    throw new NotLibraryModuleException(
+                            "The imported resource is not a library module.",
+                            ExceptionMetadata.fromPoint(
+                                    uri.toString(), lexer.getLine(), lexer.getCharPositionInLine(), query));
+                }
+                tokens.seek(0);
+            }
             // TODO Handle module extras
             ParseTree moduleParseTree = parseTreeSupplier.get();
             if (isMainModule && moduleParseTree == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
+            }
+            if (language == Language.XQUERY
+                    && !configuration.runtimeConfiguration().semantics().allowScripting()) {
+                new XQuerySyntaxValidator(uri, query).visit(moduleParseTree);
             }
             return (Module) visitor.visit(moduleParseTree);
         } catch (ParseCancellationException ex) {

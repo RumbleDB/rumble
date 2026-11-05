@@ -20,7 +20,6 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -28,6 +27,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.functions.FunctionCall;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.types.SequenceType;
@@ -84,20 +84,20 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan implements Loca
                 .build();
     }
 
-    private static ItemRuntimePlan buildCallback(
+    private static FunctionCall buildCallback(
             Item action,
             Item first,
             Item second,
             RuntimeStaticContext argumentContext,
-            RuntimeStaticContext staticContext) {
-        return NamedFunctions.buildFunctionItemCallIterator(
+            RuntimeStaticContext staticContext,
+            DynamicContext context) {
+        return FunctionCall.of(
                 action,
-                staticContext,
-                ExecutionMode.LOCAL,
                 List.of(
                         new ConstantRuntimeIterator(first, argumentContext),
                         new ConstantRuntimeIterator(second, argumentContext)),
-                false);
+                staticContext,
+                context);
     }
 
     private static final class ForEachPairLocalCursor extends AbstractLocalCursor<Item> {
@@ -144,14 +144,15 @@ public class ForEachPairFunctionIterator extends ItemRuntimePlan implements Loca
                 if (this.pairIndex >= Math.min(this.firstItems.size(), this.secondItems.size())) {
                     return false;
                 }
-                ItemRuntimePlan callback = buildCallback(
+                FunctionCall callback = buildCallback(
                         this.action,
                         this.firstItems.get(this.pairIndex),
                         this.secondItems.get(this.pairIndex),
                         this.argumentContext,
-                        this.staticContext);
+                        this.staticContext,
+                        this.context);
                 this.pairIndex++;
-                this.callbackCursor = callback.getCursor(this.context);
+                this.callbackCursor = callback.getCursor();
             }
             return true;
         }

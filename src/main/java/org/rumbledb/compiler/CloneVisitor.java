@@ -557,6 +557,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
         DirElemConstructorExpression result = new DirElemConstructorExpression(
                 expression.getNodeName(), content, attributes, namespaceDeclarations, expression.getMetadata());
+        result.setDirectlyNested(expression.isDirectlyNested());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setSequential(expression.isSequential());
@@ -801,6 +802,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         result.setStaticContext(expression.getStaticContext());
         result.setSequential(expression.isSequential());
         result.setHasExitStatement(expression.hasExitStatement());
+        result.setHasTailCalls(expression.hasTailCalls());
         return result;
     }
 

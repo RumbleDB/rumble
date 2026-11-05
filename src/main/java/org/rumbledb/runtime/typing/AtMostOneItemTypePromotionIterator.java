@@ -20,7 +20,6 @@ import java.util.Collections;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
@@ -118,12 +117,6 @@ public class AtMostOneItemTypePromotionIterator extends AbstractAtMostOneItemRun
         }
         if (item == null) {
             return null;
-        }
-        if (item.isFunction()
-                && item.getIdentifier() != null
-                && item.getIdentifier().getArity() == 0
-                && Name.TAIL_CALL_OPTIMIZATION.equals(item.getIdentifier().getName())) {
-            return item;
         }
         if (sequenceType.isEmptySequence()) {
             throw new UnexpectedTypeException(

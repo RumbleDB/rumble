@@ -53,10 +53,6 @@ public class MapEntryFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
         List<Item> valueSequence = this.valueIterator.materialize(dynamicContext);
 
-        return createEntry(key, valueSequence);
-    }
-
-    private Item createEntry(Item key, List<Item> valueSequence) {
         return ItemFactory.getInstance()
                 .createMapItem(
                         key, valueSequence, this.getRuntimeStaticContext().isQuerySideEffecting());

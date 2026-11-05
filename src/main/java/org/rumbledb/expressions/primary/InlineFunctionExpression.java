@@ -68,6 +68,10 @@ public class InlineFunctionExpression extends Expression {
     @Setter
     private boolean hasExitStatement;
 
+    // Whether the body contains a call marked by TailCallOptimizationVisitor.
+    @Setter
+    private boolean hasTailCalls;
+
     @Getter
     private final boolean isExternal;
 
@@ -103,6 +107,7 @@ public class InlineFunctionExpression extends Expression {
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
         this.isExternal = isExternal;
         this.hasExitStatement = false;
+        this.hasTailCalls = false;
         if (annotations != null) {
             this.setSequentialFromAnnotations();
         } else {
@@ -258,5 +263,9 @@ public class InlineFunctionExpression extends Expression {
 
     public boolean hasExitStatement() {
         return this.hasExitStatement;
+    }
+
+    public boolean hasTailCalls() {
+        return this.hasTailCalls;
     }
 }
