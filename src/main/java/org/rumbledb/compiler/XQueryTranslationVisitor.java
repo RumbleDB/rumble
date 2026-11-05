@@ -147,6 +147,7 @@ import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
 import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
