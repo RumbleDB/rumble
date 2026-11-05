@@ -583,9 +583,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 visit(imported, argument);
             }
             // Function signatures and types must be visible throughout a mutually recursive group.
-            for (StaticContext moduleContext : prolog.getModuleContexts()) {
-                prolog.shareGroupDeclarations(moduleContext, argument);
-            }
+            prolog.shareGroupDeclarations(argument);
             for (PrologDeclaration declaration : prolog.getDeclarations()) {
                 visit(declaration, declaration.getModuleContext());
                 prolog.shareGroupDeclarations(declaration.getModuleContext(), argument);

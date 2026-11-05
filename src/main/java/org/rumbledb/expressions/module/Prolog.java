@@ -59,11 +59,16 @@ public class Prolog extends Node {
     }
 
     /** The contexts of the modules these declarations belong to, each once. */
-    public List<StaticContext> getModuleContexts() {
+    private List<StaticContext> getModuleContexts() {
         return this.declarations.stream()
                 .map(PrologDeclaration::getModuleContext)
                 .distinct()
                 .toList();
+    }
+
+    /** Publishes every module's public declarations across a group. */
+    public void shareGroupDeclarations(StaticContext groupContext) {
+        getModuleContexts().forEach(context -> shareGroupDeclarations(context, groupContext));
     }
 
     /** Publishes one context's public declarations across a group; private ones stay where they are. */
