@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
-import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DefaultCollationException;
@@ -267,9 +266,7 @@ public final class PrologBuilder {
                     ErrorCode.LibraryContextItemInitializer,
                     declaration.getMetadata());
         }
-        LanguageVersion language = this.translationContext.moduleContext().getQueryLanguage();
-        if (language != null
-                && language.isXQuery()
+        if (this.translationContext.moduleContext().getQueryLanguage().isXQuery()
                 && this.variables.stream().anyMatch(variable -> Name.CONTEXT_ITEM.equals(variable.getVariableName()))) {
             throw new SemanticException(
                     "A module cannot contain more than one context item declaration.",

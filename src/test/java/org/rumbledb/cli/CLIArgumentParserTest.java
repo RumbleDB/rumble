@@ -355,6 +355,12 @@ public class CLIArgumentParserTest {
                 CliException.class, () -> CLIArgumentParser.parse("run", "--query", "1", "--xml-version", "2.0"));
         Assertions.assertThrows(
                 CliException.class,
+                () -> CLIArgumentParser.parse("run", "--query", "1", "--default-language", "bogus"));
+        Assertions.assertThrows(
+                CliException.class,
+                () -> CLIArgumentParser.parse("run", "--query", "1", "--default-language", "jsoniq40"));
+        Assertions.assertThrows(
+                CliException.class,
                 () -> CLIArgumentParser.parse("run", "--query", "1", "--default-formatting-place", "Not/AZone"));
         Assertions.assertThrows(
                 CliException.class,

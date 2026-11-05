@@ -16,7 +16,6 @@
 package org.rumbledb.compiler.translation;
 
 import org.rumbledb.compiler.URIQualifiedNameParser;
-import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
@@ -67,8 +66,8 @@ public final class TranslationNameResolver {
             if (namespace != null) {
                 return new Name(namespace, "", localName);
             }
-            LanguageVersion language = this.context.moduleContext().getQueryLanguage();
-            if (role == NameRole.TYPE && language != null && language.isXQuery()) {
+            if (role == NameRole.TYPE
+                    && this.context.moduleContext().getQueryLanguage().isXQuery()) {
                 return Name.createVariableInNoNamespace(localName);
             }
             return role == NameRole.TYPE
