@@ -18,7 +18,7 @@ package org.rumbledb.compiler;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
@@ -46,7 +46,7 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
         StaticContext context =
                 expression.getStaticContext() != null ? expression.getStaticContext() : this.moduleContext;
         return context == null
-                ? BuiltinFunctionCatalogue.getBuiltinFunction(identifier, (QueryLanguage) null)
+                ? BuiltinFunctionCatalogue.getBuiltinFunction(identifier, (LanguageVersion) null)
                 : BuiltinFunctionCatalogue.getBuiltinFunction(identifier, context);
     }
 

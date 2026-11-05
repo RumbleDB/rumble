@@ -162,7 +162,7 @@ import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
 import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
@@ -289,7 +289,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             String version = processStringLiteral(ctx.vers).trim();
             this.translationContext
                     .moduleContext()
-                    .setQueryLanguage(QueryLanguage.fromDeclaration(QueryLanguage.Standard.JSONIQ, version)
+                    .setQueryLanguage(LanguageVersion.fromDeclaration(LanguageVersion.Language.JSONIQ, version)
                             .orElseThrow(() -> new JsoniqVersionException(createMetadataFromContext(ctx))));
         }
         if (this.translationContext.isMainModule()) {
@@ -1161,7 +1161,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Expression lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr stepExpr) {
-                    if (this.translationContext.moduleContext().getQueryLanguage() == QueryLanguage.JSONIQ_10) {
+                    if (this.translationContext.moduleContext().getQueryLanguage() == LanguageVersion.JSONIQ_10) {
                         keys.add(new StringLiteralExpression(
                                 stepExpr.getNodeTest().toString(), lhs.getMetadata()));
                     } else {
@@ -1174,7 +1174,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
                 values.add(this.visitExprSingle(currentPair.rhs));
             }
-            if (this.translationContext.moduleContext().getQueryLanguage() == QueryLanguage.JSONIQ_10) {
+            if (this.translationContext.moduleContext().getQueryLanguage() == LanguageVersion.JSONIQ_10) {
                 return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
             } else {
                 return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));

@@ -34,7 +34,7 @@ import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.serialization.SerializationParameterUtils;
 
-class QueryLanguageBehaviorTest {
+class LanguageVersionBehaviorTest {
 
     private static Rumble rumble(String language) {
         return new Rumble(RumbleConfiguration.builder()
@@ -87,9 +87,9 @@ class QueryLanguageBehaviorTest {
     void outputOptionsDoNotKeepTheConfiguredLanguageMethodForAJsoniqFile(@TempDir Path directory) throws IOException {
         URI plain = write(directory, "plain.jq", "1");
         RumbleConfiguration configuration = RumbleConfiguration.builder()
-                .configureSemantics(semantics -> semantics.queryLanguage(QueryLanguage.XQUERY_31))
-                .configureOutput(output -> output.serializationParameters(
-                        SerializationParameterUtils.buildFromConfig(Map.of("indent", "yes"), QueryLanguage.XQUERY_31)))
+                .configureSemantics(semantics -> semantics.queryLanguage(LanguageVersion.XQUERY_31))
+                .configureOutput(output -> output.serializationParameters(SerializationParameterUtils.buildFromConfig(
+                        Map.of("indent", "yes"), LanguageVersion.XQUERY_31)))
                 .build();
         assertEquals("1", new Rumble(configuration).runQuery(plain).serialize());
     }

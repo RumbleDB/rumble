@@ -34,7 +34,7 @@ import org.xml.sax.InputSource;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.parsing.ItemParser;
@@ -109,7 +109,7 @@ public final class ResourceResolver implements Serializable {
      * @throws CannotRetrieveResourceException if the collection is undefined or a resource cannot be read
      */
     public ResourceCollection collection(
-            URI uri, QueryLanguage queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
+            URI uri, LanguageVersion queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         ResourceCollection registered = registeredCollection(uri);
         if (registered != null) {
             return registered;
@@ -219,7 +219,7 @@ public final class ResourceResolver implements Serializable {
      */
     private void loadJsonFile(
             URI uri,
-            QueryLanguage queryLanguage,
+            LanguageVersion queryLanguage,
             RumbleConfiguration configuration,
             List<Item> items,
             ExceptionMetadata metadata) {
@@ -248,7 +248,7 @@ public final class ResourceResolver implements Serializable {
      */
     private void loadJsonLinesFile(
             URI uri,
-            QueryLanguage queryLanguage,
+            LanguageVersion queryLanguage,
             RumbleConfiguration configuration,
             List<Item> items,
             ExceptionMetadata metadata) {
@@ -286,11 +286,11 @@ public final class ResourceResolver implements Serializable {
             String text,
             URI uri,
             String description,
-            QueryLanguage queryLanguage,
+            LanguageVersion queryLanguage,
             RumbleConfiguration configuration,
             List<Item> items,
             ExceptionMetadata metadata) {
-        boolean jsoniq10 = queryLanguage == QueryLanguage.JSONIQ_10;
+        boolean jsoniq10 = queryLanguage == LanguageVersion.JSONIQ_10;
         Item item = JSONParser.parseResource(
                 text,
                 JSONParsingOptions.defaultInstance(jsoniq10),
@@ -329,7 +329,7 @@ public final class ResourceResolver implements Serializable {
      * @return the document node associated with the URI
      */
     public Item loadXMLDocument(
-            URI uri, QueryLanguage queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
+            URI uri, LanguageVersion queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         Item collectionDocument = document(uri);
         if (collectionDocument != null) {
             return collectionDocument;

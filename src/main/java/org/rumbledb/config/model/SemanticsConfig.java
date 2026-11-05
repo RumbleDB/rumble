@@ -37,7 +37,7 @@ public class SemanticsConfig implements Serializable {
 
     public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
     public static final boolean DEFAULT_LAX_JSON_NULL_VALIDATION = true;
-    public static final QueryLanguage DEFAULT_QUERY_LANGUAGE = QueryLanguage.DEFAULT_JSONIQ;
+    public static final LanguageVersion DEFAULT_QUERY_LANGUAGE = LanguageVersion.DEFAULT_JSONIQ;
     public static final String DEFAULT_XML_VERSION = "1.1";
 
     /** Allows the XQuery Scripting Extension grammar; disable for strict XQuery conformance. */
@@ -45,7 +45,7 @@ public class SemanticsConfig implements Serializable {
 
     boolean datesWithTimeZone;
     boolean laxJSONNullValidation;
-    QueryLanguage queryLanguage;
+    LanguageVersion queryLanguage;
     String xmlVersion;
     String xsdVersion;
     String staticBaseUri;
@@ -55,7 +55,7 @@ public class SemanticsConfig implements Serializable {
             Boolean allowScripting,
             Boolean datesWithTimeZone,
             Boolean laxJSONNullValidation,
-            QueryLanguage queryLanguage,
+            LanguageVersion queryLanguage,
             String xmlVersion,
             String xsdVersion,
             String staticBaseUri) {
@@ -95,14 +95,14 @@ public class SemanticsConfig implements Serializable {
 
     @JsonPOJOBuilder(withPrefix = "")
     public static class SemanticsConfigBuilder {
-        public SemanticsConfigBuilder queryLanguage(QueryLanguage queryLanguage) {
+        public SemanticsConfigBuilder queryLanguage(LanguageVersion queryLanguage) {
             this.queryLanguage = queryLanguage;
             return this;
         }
 
         /** Accepts the external name of a query language, such as "xquery31". */
         public SemanticsConfigBuilder queryLanguage(String queryLanguage) {
-            this.queryLanguage = queryLanguage == null ? null : QueryLanguage.fromId(queryLanguage);
+            this.queryLanguage = queryLanguage == null ? null : LanguageVersion.fromId(queryLanguage);
             return this;
         }
 

@@ -17,7 +17,7 @@ package org.rumbledb.context;
 
 import java.util.List;
 
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
@@ -43,7 +43,7 @@ public final class ConstructorFunctionResolver {
     }
 
     /** Resolves the built-in constructors supported in the selected query language. */
-    public static ResolvedConstructor resolveBuiltIn(FunctionIdentifier identifier, QueryLanguage queryLanguage) {
+    public static ResolvedConstructor resolveBuiltIn(FunctionIdentifier identifier, LanguageVersion queryLanguage) {
         Name functionName = identifier.getName();
         if (identifier.getArity() != 1) {
             return null;

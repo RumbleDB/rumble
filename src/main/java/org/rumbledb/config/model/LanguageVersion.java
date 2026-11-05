@@ -26,21 +26,21 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import org.rumbledb.exceptions.CliException;
 
 /**
- * A supported query language: a standard together with a version of that standard.
+ * A supported query language at a specific version.
  */
-public enum QueryLanguage {
-    JSONIQ_10(Standard.JSONIQ, Version.V1_0),
-    JSONIQ_31(Standard.JSONIQ, Version.V3_1),
-    XQUERY_10(Standard.XQUERY, Version.V1_0),
-    XQUERY_31(Standard.XQUERY, Version.V3_1);
+public enum LanguageVersion {
+    JSONIQ_10(Language.JSONIQ, Version.V1_0),
+    JSONIQ_31(Language.JSONIQ, Version.V3_1),
+    XQUERY_10(Language.XQUERY, Version.V1_0),
+    XQUERY_31(Language.XQUERY, Version.V3_1);
 
-    /** The version of JSONiq used when nothing selects one explicitly. */
-    public static final QueryLanguage DEFAULT_JSONIQ = JSONIQ_10;
+    /** The JSONiq version used when nothing selects one explicitly. */
+    public static final LanguageVersion DEFAULT_JSONIQ = JSONIQ_10;
 
-    /** The version of XQuery used when nothing selects one explicitly. */
-    public static final QueryLanguage DEFAULT_XQUERY = XQUERY_31;
+    /** The XQuery version used when nothing selects one explicitly. */
+    public static final LanguageVersion DEFAULT_XQUERY = XQUERY_31;
 
-    public enum Standard {
+    public enum Language {
         JSONIQ,
         XQUERY
     }
@@ -57,23 +57,23 @@ public enum QueryLanguage {
         }
     }
 
-    private final Standard standard;
+    private final Language language;
     private final Version version;
     private final String id;
 
-    QueryLanguage(Standard standard, Version version) {
-        this.standard = standard;
+    LanguageVersion(Language language, Version version) {
+        this.language = language;
         this.version = version;
-        this.id = standard.name().toLowerCase(Locale.ROOT) + version.label.replace(".", "");
+        this.id = language.name().toLowerCase(Locale.ROOT) + version.label.replace(".", "");
     }
 
-    /** The language used for a module of the given standard when no version is selected explicitly. */
-    public static QueryLanguage defaultFor(Standard standard) {
-        return standard == Standard.XQUERY ? DEFAULT_XQUERY : DEFAULT_JSONIQ;
+    /** The version used for a module in the given language when none is selected explicitly. */
+    public static LanguageVersion defaultFor(Language language) {
+        return language == Language.XQUERY ? DEFAULT_XQUERY : DEFAULT_JSONIQ;
     }
 
-    public Standard standard() {
-        return this.standard;
+    public Language language() {
+        return this.language;
     }
 
     public Version version() {
@@ -87,11 +87,11 @@ public enum QueryLanguage {
     }
 
     public boolean isXQuery() {
-        return this.standard == Standard.XQUERY;
+        return this.language == Language.XQUERY;
     }
 
     public boolean isJsoniq() {
-        return this.standard == Standard.JSONIQ;
+        return this.language == Language.JSONIQ;
     }
 
     public boolean isAtLeast(Version minimum) {
@@ -99,19 +99,20 @@ public enum QueryLanguage {
     }
 
     /**
-     * Parses a configuration value. XQuery 3.0 is accepted as an alias of XQuery 3.1, as in version declarations.
+     * Parses a configuration value such as "xquery31". XQuery 3.0 is accepted as an alias of XQuery 3.1, as in version
+     * declarations.
      *
      * @throws CliException if the value does not name a supported query language
      */
     @JsonCreator
-    public static QueryLanguage fromId(String id) {
+    public static LanguageVersion fromId(String id) {
         String normalized = id.trim();
         String resolved = normalized.equals("xquery30") ? XQUERY_31.id : normalized;
         return Arrays.stream(values())
-                .filter(language -> language.id.equals(resolved))
+                .filter(candidate -> candidate.id.equals(resolved))
                 .findFirst()
                 .orElseThrow(() -> new CliException("Argument --default-language must be one of "
-                        + Arrays.stream(values()).map(QueryLanguage::id).collect(Collectors.joining(", "))
+                        + Arrays.stream(values()).map(LanguageVersion::id).collect(Collectors.joining(", "))
                         + " (was: "
                         + id
                         + ")."));
@@ -120,12 +121,12 @@ public enum QueryLanguage {
     /**
      * Resolves the version named by a version declaration, such as {@code xquery version "3.1";}.
      *
-     * @return the language, or empty if the standard has no such supported version
+     * @return the language version, or empty if the language has no such supported version
      */
-    public static Optional<QueryLanguage> fromDeclaration(Standard standard, String version) {
-        String resolved = standard == Standard.XQUERY && version.equals("3.0") ? Version.V3_1.label : version;
+    public static Optional<LanguageVersion> fromDeclaration(Language language, String version) {
+        String resolved = language == Language.XQUERY && version.equals("3.0") ? Version.V3_1.label : version;
         return Arrays.stream(values())
-                .filter(language -> language.standard == standard && language.version.label.equals(resolved))
+                .filter(candidate -> candidate.language == language && candidate.version.label.equals(resolved))
                 .findFirst();
     }
 

@@ -19,8 +19,8 @@ import java.util.Map;
 
 import picocli.CommandLine.Option;
 
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.config.model.OutputConfig;
-import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.serialization.SerializationParameterUtils;
 
 public final class OutputArguments {
@@ -75,7 +75,7 @@ public final class OutputArguments {
                     "Options to further specify the output format, for example a separator character for CSV or a compression format.")
     private Map<String, String> outputFormatOptions;
 
-    public OutputConfig toConfig(QueryLanguage queryLanguage) {
+    public OutputConfig toConfig(LanguageVersion queryLanguage) {
         OutputConfig.OutputConfigBuilder builder = OutputConfig.builder();
 
         OptionConversion.applyBooleanIfPresent(this.overwrite, builder::allowOverwrite);

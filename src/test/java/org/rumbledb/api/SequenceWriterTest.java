@@ -29,7 +29,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 
 @Tag("cli-output-formats")
 class SequenceWriterTest {
@@ -75,14 +75,14 @@ class SequenceWriterTest {
                         .getRuntimeStaticContext()
                         .getConfiguration()
                         .output()
-                        .effectiveOutputFormat(QueryLanguage.JSONIQ_10));
+                        .effectiveOutputFormat(LanguageVersion.JSONIQ_10));
         assertEquals(
                 "serialize",
                 xquery.runQuery("1")
                         .getRuntimeStaticContext()
                         .getConfiguration()
                         .output()
-                        .effectiveOutputFormat(QueryLanguage.XQUERY_31));
+                        .effectiveOutputFormat(LanguageVersion.XQUERY_31));
     }
 
     @Test

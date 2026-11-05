@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -60,7 +60,7 @@ public class NamedFunctions implements Serializable {
             throw new OurBadException("Only a function item can be added as a user-defined function.");
         }
         FunctionIdentifier functionIdentifier = function.getIdentifier();
-        QueryLanguage queryLanguage = function.getModuleDynamicContext()
+        LanguageVersion queryLanguage = function.getModuleDynamicContext()
                 .getRumbleConfiguration()
                 .semantics()
                 .queryLanguage();

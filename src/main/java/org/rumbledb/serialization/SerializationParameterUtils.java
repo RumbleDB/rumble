@@ -29,7 +29,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -82,7 +82,7 @@ public final class SerializationParameterUtils {
     // Public API — fn:serialize / element-document paths
     // -------------------------------------------------------------------------
 
-    public static SerializationParameters defaultsForSerializeFunction(QueryLanguage queryLanguage) {
+    public static SerializationParameters defaultsForSerializeFunction(LanguageVersion queryLanguage) {
         SerializationParameters params = new SerializationParameters();
         if (queryLanguage == null || !queryLanguage.isXQuery()) {
             params.setMethod("xml-json-hybrid");
@@ -175,7 +175,7 @@ public final class SerializationParameterUtils {
      * given query language to determine the default serialization method.
      * Uses lenient boolean parsing. Intended for CLI / Spark DataFrameWriter options.
      */
-    public static SerializationParameters buildFromConfig(Map<String, String> options, QueryLanguage queryLanguage) {
+    public static SerializationParameters buildFromConfig(Map<String, String> options, LanguageVersion queryLanguage) {
         SerializationParameters params = SerializationParameters.defaults(queryLanguage);
         if (options != null) {
             options.forEach((k, v) -> applyConfigOption(params, k, v));

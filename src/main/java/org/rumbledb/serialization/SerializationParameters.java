@@ -27,7 +27,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 
 /**
  * Serialization parameters with the fixed fn:serialize map defaults from F&amp;O 3.1.
@@ -72,7 +72,7 @@ public class SerializationParameters implements Serializable {
     }
 
     /** Reapplies language defaults when parsing detects a different language; explicit options are preserved. */
-    public void applyLanguageDefaults(QueryLanguage queryLanguage) {
+    public void applyLanguageDefaults(LanguageVersion queryLanguage) {
         if (this.useLanguageDefaultMethod) {
             this.method = defaultMethod(queryLanguage);
         }
@@ -267,7 +267,7 @@ public class SerializationParameters implements Serializable {
      * Both leave item-separator absent so sequence normalization supplies atomic-value spaces.
      * fn:serialize uses the standard field defaults through the no-argument constructor instead.
      */
-    public static SerializationParameters defaults(QueryLanguage queryLanguage) {
+    public static SerializationParameters defaults(LanguageVersion queryLanguage) {
         SerializationParameters p = new SerializationParameters();
         p.method = defaultMethod(queryLanguage);
         p.version = null;
@@ -308,7 +308,7 @@ public class SerializationParameters implements Serializable {
         };
     }
 
-    private static String defaultMethod(QueryLanguage queryLanguage) {
+    private static String defaultMethod(LanguageVersion queryLanguage) {
         if (queryLanguage != null && queryLanguage.isXQuery()) {
             return "xml";
         }

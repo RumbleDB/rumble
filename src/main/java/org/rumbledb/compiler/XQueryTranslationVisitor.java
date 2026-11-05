@@ -146,7 +146,7 @@ import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
 import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -268,7 +268,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
             String version = processStringLiteral(ctx.vers).trim();
             this.translationContext
                     .moduleContext()
-                    .setQueryLanguage(QueryLanguage.fromDeclaration(QueryLanguage.Standard.XQUERY, version)
+                    .setQueryLanguage(LanguageVersion.fromDeclaration(LanguageVersion.Language.XQUERY, version)
                             .orElseThrow(() -> new JsoniqVersionException(createMetadataFromContext(ctx))));
         }
         if (this.translationContext.isMainModule()) {

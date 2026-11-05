@@ -23,7 +23,7 @@ import java.util.List;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -76,12 +76,12 @@ public final class CompilationPipeline {
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        QueryLanguage.Standard standard = ModuleParser.detectStandard(query, uri, configuration);
+        LanguageVersion.Language language = ModuleParser.detectLanguage(query, uri, configuration);
         MainModule module =
-                ModuleParser.parseMainModule(query, uri, compilationConfiguration, externalBindings, standard);
+                ModuleParser.parseMainModule(query, uri, compilationConfiguration, externalBindings, language);
         CompilationContext context =
                 new CompilationContext(configuration, externalBindings, compilationConfiguration.resourceResolver());
-        List<CompilationPass<MainModule>> passes = mainModulePasses(standard, configuration);
+        List<CompilationPass<MainModule>> passes = mainModulePasses(language, configuration);
         return run(module, context, passes);
     }
 
@@ -119,8 +119,8 @@ public final class CompilationPipeline {
      * XQuery retains its existing omission of sequential/updating classification and composability checks.
      */
     private static List<CompilationPass<MainModule>> mainModulePasses(
-            QueryLanguage.Standard standard, RumbleConfiguration configuration) {
-        boolean isJSONiq = standard == QueryLanguage.Standard.JSONIQ;
+            LanguageVersion.Language language, RumbleConfiguration configuration) {
+        boolean isJSONiq = language == LanguageVersion.Language.JSONIQ;
         List<CompilationPass<MainModule>> passes = new ArrayList<>();
         passes.add(CompilationPasses.pruneModules());
         passes.add(CompilationPasses.resolveDependencies());

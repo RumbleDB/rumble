@@ -23,7 +23,7 @@ import com.google.gson.stream.JsonReader;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.ConsoleOutput;
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.ItemParser;
@@ -48,7 +48,7 @@ public class ParseJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         if (stringItem == null) {
             return null;
         }
-        boolean isJSONiq10 = this.staticContext.getQueryLanguage() == QueryLanguage.JSONIQ_10;
+        boolean isJSONiq10 = this.staticContext.getQueryLanguage() == LanguageVersion.JSONIQ_10;
         JSONParsingOptions options =
                 JSONParsingOptions.resolveOptions(optionsItem, isJSONiq10, context, this.staticContext, getMetadata());
         if (options.isLegacy()) {

@@ -21,7 +21,7 @@ import java.util.List;
 import org.w3c.dom.Document;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.ItemParser;
@@ -48,7 +48,7 @@ public class ParseXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         Document xmlDocument = XmlParsingUtils.parseDocument(
                 arg.getStringValue(), this.staticContext.getStaticURI(), "the argument of fn:parse-xml", getMetadata());
         // XQuery retains parsed whitespace; preserve JSONiq's existing whitespace handling.
-        QueryLanguage queryLanguage = this.staticContext.getQueryLanguage();
+        LanguageVersion queryLanguage = this.staticContext.getQueryLanguage();
         DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
                 xmlDocument,
                 XMLDocumentPosition.generateConstructedTreePath(),

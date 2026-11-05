@@ -19,7 +19,7 @@ import java.io.Serial;
 import java.util.List;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -37,8 +37,10 @@ public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan
     }
 
     /** XQuery 3.1 widened fn:string-join to atomic items; JSONiq and XQuery 1.0 still require strings. */
-    public static boolean acceptsAtomicItems(QueryLanguage queryLanguage) {
-        return queryLanguage != null && queryLanguage.isXQuery() && queryLanguage.isAtLeast(QueryLanguage.Version.V3_1);
+    public static boolean acceptsAtomicItems(LanguageVersion queryLanguage) {
+        return queryLanguage != null
+                && queryLanguage.isXQuery()
+                && queryLanguage.isAtLeast(LanguageVersion.Version.V3_1);
     }
 
     @Override

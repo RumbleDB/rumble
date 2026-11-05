@@ -27,11 +27,11 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.RumbleConfigurationResolver;
-import org.rumbledb.config.model.QueryLanguage.Standard;
-import org.rumbledb.config.model.QueryLanguage.Version;
+import org.rumbledb.config.model.LanguageVersion.Language;
+import org.rumbledb.config.model.LanguageVersion.Version;
 import org.rumbledb.exceptions.CliException;
 
-class QueryLanguageTest {
+class LanguageVersionTest {
 
     @Test
     void versionsAreDeclaredInAscendingOrder() {
@@ -39,41 +39,41 @@ class QueryLanguageTest {
         for (int i = 1; i < versions.size(); i++) {
             assertTrue(versions.get(i - 1).compareTo(versions.get(i)) < 0);
         }
-        assertTrue(QueryLanguage.XQUERY_31.isAtLeast(Version.V3_1));
-        assertTrue(QueryLanguage.JSONIQ_31.isAtLeast(Version.V1_0));
-        assertFalse(QueryLanguage.XQUERY_10.isAtLeast(Version.V3_1));
+        assertTrue(LanguageVersion.XQUERY_31.isAtLeast(Version.V3_1));
+        assertTrue(LanguageVersion.JSONIQ_31.isAtLeast(Version.V1_0));
+        assertFalse(LanguageVersion.XQUERY_10.isAtLeast(Version.V3_1));
     }
 
     @Test
     void everyLanguageRoundTripsThroughItsId() {
-        for (QueryLanguage language : QueryLanguage.values()) {
-            assertEquals(language, QueryLanguage.fromId(language.id()));
+        for (LanguageVersion language : LanguageVersion.values()) {
+            assertEquals(language, LanguageVersion.fromId(language.id()));
         }
-        assertEquals("xquery31", QueryLanguage.XQUERY_31.id());
-        assertEquals("jsoniq10", QueryLanguage.JSONIQ_10.toString());
+        assertEquals("xquery31", LanguageVersion.XQUERY_31.id());
+        assertEquals("jsoniq10", LanguageVersion.JSONIQ_10.toString());
     }
 
     @Test
     void xquery30IsAnAliasOfXquery31() {
-        assertEquals(QueryLanguage.XQUERY_31, QueryLanguage.fromId("xquery30"));
-        assertEquals(Optional.of(QueryLanguage.XQUERY_31), QueryLanguage.fromDeclaration(Standard.XQUERY, "3.0"));
-        assertEquals(Optional.empty(), QueryLanguage.fromDeclaration(Standard.JSONIQ, "3.0"));
+        assertEquals(LanguageVersion.XQUERY_31, LanguageVersion.fromId("xquery30"));
+        assertEquals(Optional.of(LanguageVersion.XQUERY_31), LanguageVersion.fromDeclaration(Language.XQUERY, "3.0"));
+        assertEquals(Optional.empty(), LanguageVersion.fromDeclaration(Language.JSONIQ, "3.0"));
     }
 
     @Test
-    void eachStandardHasADefaultLanguageOfThatStandard() {
-        assertEquals(QueryLanguage.DEFAULT_JSONIQ, QueryLanguage.defaultFor(Standard.JSONIQ));
-        assertEquals(QueryLanguage.DEFAULT_XQUERY, QueryLanguage.defaultFor(Standard.XQUERY));
-        for (Standard standard : Standard.values()) {
-            assertEquals(standard, QueryLanguage.defaultFor(standard).standard());
+    void eachLanguageHasADefaultVersionOfThatLanguage() {
+        assertEquals(LanguageVersion.DEFAULT_JSONIQ, LanguageVersion.defaultFor(Language.JSONIQ));
+        assertEquals(LanguageVersion.DEFAULT_XQUERY, LanguageVersion.defaultFor(Language.XQUERY));
+        for (Language language : Language.values()) {
+            assertEquals(language, LanguageVersion.defaultFor(language).language());
         }
     }
 
     @Test
     void unknownLanguagesAreRejected() {
-        CliException exception = assertThrows(CliException.class, () -> QueryLanguage.fromId("xqeury31"));
+        CliException exception = assertThrows(CliException.class, () -> LanguageVersion.fromId("xqeury31"));
         assertTrue(exception.getMessage().contains("xqeury31"));
-        assertEquals(Optional.empty(), QueryLanguage.fromDeclaration(Standard.XQUERY, "2.0"));
+        assertEquals(Optional.empty(), LanguageVersion.fromDeclaration(Language.XQUERY, "2.0"));
     }
 
     @Test
@@ -81,16 +81,16 @@ class QueryLanguageTest {
         RumbleConfiguration fromPath = RumbleConfiguration.builder()
                 .with("semantics.queryLanguage", "xquery31")
                 .build();
-        assertEquals(QueryLanguage.XQUERY_31, fromPath.semantics().queryLanguage());
+        assertEquals(LanguageVersion.XQUERY_31, fromPath.semantics().queryLanguage());
         assertEquals("xquery31", RumbleConfigurationResolver.get(fromPath, "semantics.queryLanguage"));
 
         assertEquals(
-                QueryLanguage.XQUERY_31,
+                LanguageVersion.XQUERY_31,
                 SemanticsConfig.builder().queryLanguage("xquery31").build().queryLanguage());
         assertEquals(
-                QueryLanguage.XQUERY_31,
+                LanguageVersion.XQUERY_31,
                 SemanticsConfig.builder()
-                        .queryLanguage(QueryLanguage.XQUERY_31)
+                        .queryLanguage(LanguageVersion.XQUERY_31)
                         .build()
                         .queryLanguage());
         assertEquals(
