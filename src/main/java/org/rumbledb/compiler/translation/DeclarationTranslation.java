@@ -30,6 +30,7 @@ import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.utils.AnnotationValidator;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
@@ -108,7 +109,7 @@ public final class DeclarationTranslation {
         if (ctx.sequenceType() != null) {
             seq = processSequenceType.apply(ctx.sequenceType());
         }
-        if ("xquery31".equals(translationContext.moduleContext().getQueryLanguage())) {
+        if (translationContext.moduleContext().getQueryLanguage() == QueryLanguage.XQUERY_31) {
             if (seq == null) {
                 seq = SequenceType.createSequenceType("item");
             } else if (seq.isEmptySequence() || seq.getArity() != SequenceType.Arity.One) {
@@ -155,7 +156,7 @@ public final class DeclarationTranslation {
         List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
         AnnotationValidator.validateFunctionAnnotations(annotations);
         Name name = parseFunctionName.apply(ctx.functionName());
-        boolean xquery = "xquery31".equals(translationContext.moduleContext().getQueryLanguage());
+        boolean xquery = translationContext.moduleContext().getQueryLanguage() == QueryLanguage.XQUERY_31;
         String lexicalName = ctx.functionName().getText();
         if (xquery
                 && translationContext.moduleContext().getDefaultFunctionNamespaceUri() == null

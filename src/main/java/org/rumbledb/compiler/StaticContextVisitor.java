@@ -609,7 +609,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         ItemType itemType = sequenceType.getItemType();
         XmlSchemaCatalog schemaCatalog = staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog();
         boolean xquery = staticContext.getQueryLanguage() != null
-                && staticContext.getQueryLanguage().startsWith("xquery");
+                && staticContext.getQueryLanguage().isXQuery();
         if (xquery
                 && itemType.hasName()
                 && Name.XS_NS.equals(itemType.getName().getNamespace())

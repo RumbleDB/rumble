@@ -162,6 +162,7 @@ import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
 import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
@@ -286,15 +287,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public Module visitModule(JsoniqParser.ModuleContext ctx) {
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             String version = processStringLiteral(ctx.vers).trim();
-            if (version.equals("1.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("jsoniq10");
-            } else if (version.equals("3.1")) {
-                this.translationContext.moduleContext().setQueryLanguage("jsoniq31");
-            } else if (version.equals("4.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("jsoniq40");
-            } else {
-                throw new JsoniqVersionException(createMetadataFromContext(ctx));
-            }
+            this.translationContext
+                    .moduleContext()
+                    .setQueryLanguage(QueryLanguage.fromDeclaration(QueryLanguage.Standard.JSONIQ, version)
+                            .orElseThrow(() -> new JsoniqVersionException(createMetadataFromContext(ctx))));
         }
         if (this.translationContext.isMainModule()) {
             if (ctx.mainModule() != null) {
@@ -1165,10 +1161,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Expression lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr stepExpr) {
-                    if (this.translationContext
-                            .moduleContext()
-                            .getQueryLanguage()
-                            .equals("jsoniq10")) {
+                    if (this.translationContext.moduleContext().getQueryLanguage() == QueryLanguage.JSONIQ_10) {
                         keys.add(new StringLiteralExpression(
                                 stepExpr.getNodeTest().toString(), lhs.getMetadata()));
                     } else {
@@ -1181,7 +1174,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
                 values.add(this.visitExprSingle(currentPair.rhs));
             }
-            if (this.translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
+            if (this.translationContext.moduleContext().getQueryLanguage() == QueryLanguage.JSONIQ_10) {
                 return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
             } else {
                 return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));

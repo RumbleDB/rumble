@@ -24,6 +24,7 @@ import org.apache.spark.api.java.function.Function;
 import lombok.NonNull;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotConvertToQNameException;
@@ -174,8 +175,7 @@ public class FunctionUntypedAtomicCastIterator extends ItemRuntimePlan
         }
 
         private boolean usesQNameCoercionErrorSemantics() {
-            String queryLanguage = this.staticContext.getQueryLanguage();
-            return !queryLanguage.equals("xquery10") && !queryLanguage.equals("jsoniq10");
+            return this.staticContext.getQueryLanguage().isAtLeast(QueryLanguage.Version.V3_1);
         }
     }
 }

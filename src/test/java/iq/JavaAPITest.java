@@ -38,6 +38,7 @@ import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
@@ -306,7 +307,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testJsonCharacterMapReplacementIsNotEscaped() {
-        SerializationParameters params = SerializationParameters.defaults("xquery31");
+        SerializationParameters params = SerializationParameters.defaults(QueryLanguage.XQUERY_31);
         params.setMethod("json");
         Map<String, String> characterMaps = new HashMap<>();
         characterMaps.put("y", "\"");
@@ -319,7 +320,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testJsonCharacterMapsDoNotTriggerDuplicateNameError() {
-        SerializationParameters params = SerializationParameters.defaults("xquery31");
+        SerializationParameters params = SerializationParameters.defaults(QueryLanguage.XQUERY_31);
         params.setMethod("json");
         Map<String, String> characterMaps = new HashMap<>();
         characterMaps.put("w", "k");

@@ -29,6 +29,7 @@ import lombok.NonNull;
 import lombok.Value;
 
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -52,7 +53,7 @@ public class RuntimeStaticContext implements Serializable {
      * Query language associated with this context, which is used for error reporting and to determine the
      * semantics of certain operations.
      */
-    private final String queryLanguage;
+    private final QueryLanguage queryLanguage;
 
     /**
      * Runtime configuration associated with this context, which is used for error reporting and to

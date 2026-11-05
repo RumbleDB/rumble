@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
 import org.rumbledb.runtime.functions.LoadXQueryModuleFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
@@ -305,7 +306,7 @@ public class BuiltinFunctionCatalogue {
         return null;
     }
 
-    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, String queryLanguage) {
+    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, QueryLanguage queryLanguage) {
         Name name = identifier.getName();
         if (name.getLocalName().equals("concat")
                 && identifier.getArity() >= 2
@@ -345,8 +346,8 @@ public class BuiltinFunctionCatalogue {
         return null;
     }
 
-    private static BuiltinFunction forQueryLanguage(BuiltinFunction function, String queryLanguage) {
-        if ("xquery31".equals(queryLanguage) && (function == string_join1 || function == string_join2)) {
+    private static BuiltinFunction forQueryLanguage(BuiltinFunction function, QueryLanguage queryLanguage) {
+        if (queryLanguage == QueryLanguage.XQUERY_31 && (function == string_join1 || function == string_join2)) {
             return createBuiltinFunction(
                     function.getIdentifier().getName(),
                     function.getIdentifier().getArity() == 1
@@ -366,7 +367,7 @@ public class BuiltinFunctionCatalogue {
                 : constructor.asBuiltinFunction();
     }
 
-    public static boolean exists(FunctionIdentifier identifier, String queryLanguage) {
+    public static boolean exists(FunctionIdentifier identifier, QueryLanguage queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
             return true;
         }
@@ -379,7 +380,8 @@ public class BuiltinFunctionCatalogue {
     }
 
     // Compatibility adapter for compiler passes that still query all built-in signatures through this catalogue.
-    private static BuiltinFunction resolveConstructorFunction(FunctionIdentifier identifier, String queryLanguage) {
+    private static BuiltinFunction resolveConstructorFunction(
+            FunctionIdentifier identifier, QueryLanguage queryLanguage) {
         var constructor = ConstructorFunctionResolver.resolveBuiltIn(identifier, queryLanguage);
         return constructor == null ? null : constructor.asBuiltinFunction();
     }

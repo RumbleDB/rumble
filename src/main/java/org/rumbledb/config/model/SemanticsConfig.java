@@ -37,7 +37,7 @@ public class SemanticsConfig implements Serializable {
 
     public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
     public static final boolean DEFAULT_LAX_JSON_NULL_VALIDATION = true;
-    public static final String DEFAULT_QUERY_LANGUAGE = "jsoniq10";
+    public static final QueryLanguage DEFAULT_QUERY_LANGUAGE = QueryLanguage.JSONIQ_10;
     public static final String DEFAULT_XML_VERSION = "1.1";
 
     /** Allows the XQuery Scripting Extension grammar; disable for strict XQuery conformance. */
@@ -45,7 +45,7 @@ public class SemanticsConfig implements Serializable {
 
     boolean datesWithTimeZone;
     boolean laxJSONNullValidation;
-    String queryLanguage;
+    QueryLanguage queryLanguage;
     String xmlVersion;
     String xsdVersion;
     String staticBaseUri;
@@ -55,7 +55,7 @@ public class SemanticsConfig implements Serializable {
             Boolean allowScripting,
             Boolean datesWithTimeZone,
             Boolean laxJSONNullValidation,
-            String queryLanguage,
+            QueryLanguage queryLanguage,
             String xmlVersion,
             String xsdVersion,
             String staticBaseUri) {
@@ -95,6 +95,17 @@ public class SemanticsConfig implements Serializable {
 
     @JsonPOJOBuilder(withPrefix = "")
     public static class SemanticsConfigBuilder {
+        public SemanticsConfigBuilder queryLanguage(QueryLanguage queryLanguage) {
+            this.queryLanguage = queryLanguage;
+            return this;
+        }
+
+        /** Accepts the external name of a query language, such as "xquery31". */
+        public SemanticsConfigBuilder queryLanguage(String queryLanguage) {
+            this.queryLanguage = queryLanguage == null ? null : QueryLanguage.fromId(queryLanguage);
+            return this;
+        }
+
         public SemanticsConfigBuilder xmlVersion(String xmlVersion) {
             this.xmlVersion = normalizeXmlVersion(xmlVersion);
             return this;

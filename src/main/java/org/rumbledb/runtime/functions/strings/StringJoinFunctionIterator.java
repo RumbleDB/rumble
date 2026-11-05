@@ -19,6 +19,7 @@ import java.io.Serial;
 import java.util.List;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -49,7 +50,8 @@ public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan
         StringBuilder stringBuilder = new StringBuilder();
         boolean first = true;
         for (Item item : strings) {
-            if (!item.isString() && !("xquery31".equals(this.staticContext.getQueryLanguage()) && item.isAtomic())) {
+            if (!item.isString()
+                    && !(this.staticContext.getQueryLanguage() == QueryLanguage.XQUERY_31 && item.isAtomic())) {
                 throw new UnexpectedTypeException(
                         "String item expected",
                         this.getChild(0).getRuntimeStaticContext().getMetadata());

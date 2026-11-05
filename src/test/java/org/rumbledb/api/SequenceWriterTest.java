@@ -29,6 +29,8 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.rumbledb.config.model.QueryLanguage;
+
 @Tag("cli-output-formats")
 class SequenceWriterTest {
     @TempDir
@@ -73,14 +75,14 @@ class SequenceWriterTest {
                         .getRuntimeStaticContext()
                         .getConfiguration()
                         .output()
-                        .effectiveOutputFormat("jsoniq10"));
+                        .effectiveOutputFormat(QueryLanguage.JSONIQ_10));
         assertEquals(
                 "serialize",
                 xquery.runQuery("1")
                         .getRuntimeStaticContext()
                         .getConfiguration()
                         .output()
-                        .effectiveOutputFormat("xquery31"));
+                        .effectiveOutputFormat(QueryLanguage.XQUERY_31));
     }
 
     @Test

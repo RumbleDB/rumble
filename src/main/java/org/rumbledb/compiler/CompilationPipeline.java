@@ -23,6 +23,7 @@ import java.util.List;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -75,12 +76,12 @@ public final class CompilationPipeline {
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        ModuleParser.Language language = ModuleParser.detectLanguage(query, uri, configuration);
+        QueryLanguage.Standard standard = ModuleParser.detectStandard(query, uri, configuration);
         MainModule module =
-                ModuleParser.parseMainModule(query, uri, compilationConfiguration, externalBindings, language);
+                ModuleParser.parseMainModule(query, uri, compilationConfiguration, externalBindings, standard);
         CompilationContext context =
                 new CompilationContext(configuration, externalBindings, compilationConfiguration.resourceResolver());
-        List<CompilationPass<MainModule>> passes = mainModulePasses(language, configuration);
+        List<CompilationPass<MainModule>> passes = mainModulePasses(standard, configuration);
         return run(module, context, passes);
     }
 
@@ -118,8 +119,8 @@ public final class CompilationPipeline {
      * XQuery retains its existing omission of sequential/updating classification and composability checks.
      */
     private static List<CompilationPass<MainModule>> mainModulePasses(
-            ModuleParser.Language language, RumbleConfiguration configuration) {
-        boolean isJSONiq = language == ModuleParser.Language.JSONIQ;
+            QueryLanguage.Standard standard, RumbleConfiguration configuration) {
+        boolean isJSONiq = standard == QueryLanguage.Standard.JSONIQ;
         List<CompilationPass<MainModule>> passes = new ArrayList<>();
         passes.add(CompilationPasses.pruneModules());
         passes.add(CompilationPasses.resolveDependencies());

@@ -34,6 +34,7 @@ import org.xml.sax.InputSource;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.parsing.ItemParser;
@@ -108,7 +109,7 @@ public final class ResourceResolver implements Serializable {
      * @throws CannotRetrieveResourceException if the collection is undefined or a resource cannot be read
      */
     public ResourceCollection collection(
-            URI uri, String queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
+            URI uri, QueryLanguage queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         ResourceCollection registered = registeredCollection(uri);
         if (registered != null) {
             return registered;
@@ -218,7 +219,7 @@ public final class ResourceResolver implements Serializable {
      */
     private void loadJsonFile(
             URI uri,
-            String queryLanguage,
+            QueryLanguage queryLanguage,
             RumbleConfiguration configuration,
             List<Item> items,
             ExceptionMetadata metadata) {
@@ -247,7 +248,7 @@ public final class ResourceResolver implements Serializable {
      */
     private void loadJsonLinesFile(
             URI uri,
-            String queryLanguage,
+            QueryLanguage queryLanguage,
             RumbleConfiguration configuration,
             List<Item> items,
             ExceptionMetadata metadata) {
@@ -285,11 +286,11 @@ public final class ResourceResolver implements Serializable {
             String text,
             URI uri,
             String description,
-            String queryLanguage,
+            QueryLanguage queryLanguage,
             RumbleConfiguration configuration,
             List<Item> items,
             ExceptionMetadata metadata) {
-        boolean jsoniq10 = "jsoniq10".equals(queryLanguage);
+        boolean jsoniq10 = queryLanguage == QueryLanguage.JSONIQ_10;
         Item item = JSONParser.parseResource(
                 text,
                 JSONParsingOptions.defaultInstance(jsoniq10),
@@ -328,7 +329,7 @@ public final class ResourceResolver implements Serializable {
      * @return the document node associated with the URI
      */
     public Item loadXMLDocument(
-            URI uri, String queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
+            URI uri, QueryLanguage queryLanguage, RumbleConfiguration configuration, ExceptionMetadata metadata) {
         Item collectionDocument = document(uri);
         if (collectionDocument != null) {
             return collectionDocument;
@@ -343,7 +344,7 @@ public final class ResourceResolver implements Serializable {
                     xmlDocument,
                     uri.toString(),
                     configuration.optimization().optimizeParentPointers(),
-                    queryLanguage != null && queryLanguage.startsWith("xquery"));
+                    queryLanguage != null && queryLanguage.isXQuery());
             documentItem.setConstructionBaseUri(uri);
             documentItem.setDocumentUri(uri);
             return cacheDocument(uri, documentItem);

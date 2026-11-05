@@ -37,6 +37,7 @@ import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarRefContext;
 import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.utils.AnnotationValidator;
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.DuplicateParamNameException;
@@ -271,7 +272,7 @@ public final class PrimaryTranslation {
         }
         List<Expression> memberExpressions = new ArrayList<>();
 
-        if (translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
+        if (translationContext.moduleContext().getQueryLanguage() == QueryLanguage.JSONIQ_10) {
             for (ExprSingleCtx memberCtx : memberCtxs) {
                 memberExpressions.add(visitExprSingle.apply(memberCtx));
             }

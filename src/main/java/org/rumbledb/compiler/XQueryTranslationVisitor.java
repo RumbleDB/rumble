@@ -146,6 +146,7 @@ import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
 import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.model.QueryLanguage;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -265,17 +266,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         }
         if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
             String version = processStringLiteral(ctx.vers).trim();
-            if (version.equals("1.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("xquery10");
-            } else if (version.equals("3.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("xquery31");
-            } else if (version.equals("3.1")) {
-                this.translationContext.moduleContext().setQueryLanguage("xquery31");
-            } else if (version.equals("4.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("xquery40");
-            } else {
-                throw new JsoniqVersionException(createMetadataFromContext(ctx));
-            }
+            this.translationContext
+                    .moduleContext()
+                    .setQueryLanguage(QueryLanguage.fromDeclaration(QueryLanguage.Standard.XQUERY, version)
+                            .orElseThrow(() -> new JsoniqVersionException(createMetadataFromContext(ctx))));
         }
         if (this.translationContext.isMainModule()) {
             if (!ctx.mainModule().isEmpty()) {

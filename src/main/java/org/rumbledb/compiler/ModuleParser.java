@@ -30,6 +30,8 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.QueryLanguage;
+import org.rumbledb.config.model.QueryLanguage.Standard;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.context.UserDefinedFunctionExecutionModes;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -49,13 +51,8 @@ final class ModuleParser {
 
     private ModuleParser() {}
 
-    enum Language {
-        JSONIQ,
-        XQUERY
-    }
-
-    static Language detectLanguage(String query, URI uri, RumbleConfiguration configuration) {
-        return shouldParseAsXQuery(query, uri, configuration) ? Language.XQUERY : Language.JSONIQ;
+    static Standard detectStandard(String query, URI uri, RumbleConfiguration configuration) {
+        return shouldParseAsXQuery(query, uri, configuration) ? Standard.XQUERY : Standard.JSONIQ;
     }
 
     static StaticContext createModuleContext(URI uri, RumbleConfiguration configuration) {
@@ -71,19 +68,19 @@ final class ModuleParser {
             URI uri,
             CompilationConfiguration configuration,
             ExternalBindings bindings,
-            Language language) {
+            Standard standard) {
         StaticContext moduleContext = createModuleContext(uri, configuration.runtimeConfiguration());
-        return (MainModule) parseModule(query, uri, configuration, bindings, language, moduleContext, true);
+        return (MainModule) parseModule(query, uri, configuration, bindings, standard, moduleContext, true);
     }
 
     static LibraryModule parseLibraryModule(
             String query, URI uri, StaticContext importingContext, CompilationConfiguration configuration) {
         RumbleConfiguration runtimeConfiguration = configuration.runtimeConfiguration();
-        Language language = detectLanguage(query, uri, runtimeConfiguration);
+        Standard standard = detectStandard(query, uri, runtimeConfiguration);
         StaticContext moduleContext = new StaticContext(uri, runtimeConfiguration);
         moduleContext.setUserDefinedFunctionsExecutionModes(importingContext.getUserDefinedFunctionsExecutionModes());
         return (LibraryModule)
-                parseModule(query, uri, configuration, ExternalBindings.empty(), language, moduleContext, false);
+                parseModule(query, uri, configuration, ExternalBindings.empty(), standard, moduleContext, false);
     }
 
     private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
@@ -100,7 +97,7 @@ final class ModuleParser {
         if (location.endsWith(".jq") || location.endsWith(".jsoniq")) {
             return false;
         }
-        return configuration.semantics().queryLanguage().startsWith("xquery");
+        return configuration.semantics().queryLanguage().isXQuery();
     }
 
     /**
@@ -112,10 +109,10 @@ final class ModuleParser {
             URI uri,
             CompilationConfiguration configuration,
             ExternalBindings bindings,
-            Language language,
+            Standard standard,
             StaticContext moduleContext,
             boolean isMainModule) {
-        if (language == Language.XQUERY) {
+        if (standard == Standard.XQUERY) {
             moduleContext.setConstructionPreserve(true);
             // XQuery source line endings are normalized before tokenization, including inside literals.
             query = query.replace("\r\n", "\n");
@@ -125,10 +122,10 @@ final class ModuleParser {
             query = query.replace('\r', '\n');
         }
         // File extensions and version declarations can select a language different from the configured default.
-        if (language == Language.XQUERY && !moduleContext.getQueryLanguage().startsWith("xquery")) {
-            moduleContext.setQueryLanguage("xquery31");
+        if (standard == Standard.XQUERY && !moduleContext.getQueryLanguage().isXQuery()) {
+            moduleContext.setQueryLanguage(QueryLanguage.XQUERY_31);
         }
-        Lexer lexer = language == Language.XQUERY
+        Lexer lexer = standard == Standard.XQUERY
                 ? new XQueryLexer(CharStreams.fromString(query))
                 : new JsoniqLexer(CharStreams.fromString(query));
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -138,7 +135,7 @@ final class ModuleParser {
         // Return the parse tree for the module entry rule
         Supplier<? extends ParseTree> parseTreeSupplier;
 
-        if (language == Language.XQUERY) {
+        if (standard == Standard.XQUERY) {
             XQueryParser xqueryParser = new XQueryParser(tokens);
             parser = xqueryParser;
             parseTreeSupplier = () -> xqueryParser.moduleAndThisIsIt().module();
@@ -156,12 +153,12 @@ final class ModuleParser {
             if (!isMainModule) {
                 // A namespace URI may retrieve an HTML page or a main query rather than a library.
                 // Reject those as failed module resolution, preserving syntax errors inside real libraries.
-                if (language == Language.XQUERY && tokens.LA(1) == XQueryParser.KW_XQUERY) {
+                if (standard == Standard.XQUERY && tokens.LA(1) == XQueryParser.KW_XQUERY) {
                     ((XQueryParser) parser).versionDecl();
-                } else if (language == Language.JSONIQ && tokens.LA(1) == JsoniqParser.KW_JSONIQ) {
+                } else if (standard == Standard.JSONIQ && tokens.LA(1) == JsoniqParser.KW_JSONIQ) {
                     ((JsoniqParser) parser).versionDecl();
                 }
-                int moduleToken = language == Language.XQUERY ? XQueryParser.KW_MODULE : JsoniqParser.KW_MODULE;
+                int moduleToken = standard == Standard.XQUERY ? XQueryParser.KW_MODULE : JsoniqParser.KW_MODULE;
                 if (tokens.LA(1) != moduleToken) {
                     throw new NotLibraryModuleException(
                             "The imported resource is not a library module.",
@@ -175,7 +172,7 @@ final class ModuleParser {
             if (isMainModule && moduleParseTree == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
-            if (language == Language.XQUERY
+            if (standard == Standard.XQUERY
                     && !configuration.runtimeConfiguration().semantics().allowScripting()) {
                 new XQuerySyntaxValidator(uri, query).visit(moduleParseTree);
             }

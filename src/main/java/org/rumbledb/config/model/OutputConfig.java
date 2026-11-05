@@ -58,11 +58,11 @@ public class OutputConfig implements Serializable {
     String outputFormat;
 
     /** Resolves the language-dependent default without conflating file format and serialization method. */
-    public String effectiveOutputFormat(String queryLanguage) {
+    public String effectiveOutputFormat(QueryLanguage queryLanguage) {
         if (this.outputFormat != null) {
             return this.outputFormat;
         }
-        return queryLanguage != null && queryLanguage.startsWith("xquery") ? "serialize" : "serialize-each-item";
+        return queryLanguage != null && queryLanguage.isXQuery() ? "serialize" : "serialize-each-item";
     }
 
     /**
