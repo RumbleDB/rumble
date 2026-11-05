@@ -31,10 +31,8 @@ import org.rumbledb.exceptions.CliException;
 public enum QueryLanguage {
     JSONIQ_10(Standard.JSONIQ, Version.V1_0),
     JSONIQ_31(Standard.JSONIQ, Version.V3_1),
-    JSONIQ_40(Standard.JSONIQ, Version.V4_0),
     XQUERY_10(Standard.XQUERY, Version.V1_0),
-    XQUERY_31(Standard.XQUERY, Version.V3_1),
-    XQUERY_40(Standard.XQUERY, Version.V4_0);
+    XQUERY_31(Standard.XQUERY, Version.V3_1);
 
     public enum Standard {
         JSONIQ,
@@ -44,8 +42,7 @@ public enum QueryLanguage {
     /** Declaration order is version order: {@link #isAtLeast(Version)} relies on it. */
     public enum Version {
         V1_0("1.0"),
-        V3_1("3.1"),
-        V4_0("4.0");
+        V3_1("3.1");
 
         private final String label;
 

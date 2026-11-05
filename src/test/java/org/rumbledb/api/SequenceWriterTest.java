@@ -125,7 +125,7 @@ class SequenceWriterTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"jsoniq10", "jsoniq31", "jsoniq40", "xquery10", "xquery30", "xquery31"})
+    @CsvSource({"jsoniq10", "jsoniq31", "xquery10", "xquery30", "xquery31"})
     void textSerializationUsesW3CSpacingInBothLanguagesUnlessASeparatorIsExplicit(String language) {
         Rumble rumble = new Rumble(RumbleConfiguration.builder()
                 .with("semantics.queryLanguage", language)
