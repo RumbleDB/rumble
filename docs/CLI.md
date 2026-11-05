@@ -13,6 +13,8 @@ RumbleDB runs in three modes. You can select the mode passing a verb as the firs
 
 Previous parameters (--shell, --query-path, --server) work in a backward compatible fashion, however we do recommend to start using the new verb-based format.
 
+Delta and Iceberg are opt-in: ordinary queries do not enable their Spark extensions or catalogs. For Delta queries, pass `--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension` and `--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog` to `spark-submit`, before the application JAR. Supply a Delta package compatible with your Spark version. Iceberg queries likewise require explicit compatible extensions and catalog configuration. Settings supplied through Spark configuration are preserved.
+
 |  Shell parameter | Shortcut | HTTP parameter  | example values  | Semantics  |
 |---|---|---|---|---|
 | --shell  | repl | N/A  |  yes, no |  yes runs the interactive shell. No executes a query specified with --query-path |
