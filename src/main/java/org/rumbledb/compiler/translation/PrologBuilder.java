@@ -266,10 +266,7 @@ public final class PrologBuilder {
                     ErrorCode.LibraryContextItemInitializer,
                     declaration.getMetadata());
         }
-        String language = this.translationContext.moduleContext().getQueryLanguage();
-        if (language != null
-                && language.startsWith("xquery")
-                && this.variables.stream().anyMatch(variable -> Name.CONTEXT_ITEM.equals(variable.getVariableName()))) {
+        if (this.variables.stream().anyMatch(variable -> Name.CONTEXT_ITEM.equals(variable.getVariableName()))) {
             throw new SemanticException(
                     "A module cannot contain more than one context item declaration.",
                     ErrorCode.DuplicateContextItemDeclarationErrorCode,
