@@ -39,7 +39,7 @@ class SequenceWriterTest {
     @Test
     void defaultWritersFollowTheQueryLanguageAndExplicitFormatsStillOverrideThem() throws Exception {
         Rumble jsoniq = new Rumble(new RumbleConfiguration());
-        Path each = directory.resolve("jsoniq.txt");
+        Path each = this.directory.resolve("jsoniq.txt");
         jsoniq.runQuery("1, 2, 3")
                 .write()
                 .option("method", "text")
@@ -63,7 +63,7 @@ class SequenceWriterTest {
         Rumble xquery = new Rumble(RumbleConfiguration.builder()
                 .with("semantics.queryLanguage", "xquery31")
                 .build());
-        Path whole = directory.resolve("xquery.xml");
+        Path whole = this.directory.resolve("xquery.xml");
         xquery.runQuery("<a/>, <b/>")
                 .write()
                 .option("omit-xml-declaration", "yes")
@@ -91,7 +91,7 @@ class SequenceWriterTest {
                 .with("output.outputFormat", "serialize-each-item")
                 .with("output.numberOfOutputPartitions", 2)
                 .build());
-        Path output = directory.resolve("encoded-items");
+        Path output = this.directory.resolve("encoded-items");
         rumble.runQuery("\"Grüezi\", \"東京\"")
                 .write()
                 .option("method", "text")
@@ -168,7 +168,7 @@ class SequenceWriterTest {
     @Test
     void serializationOptionsProduceOneStringAndLeaveTheSequenceConfigurationUnchanged() throws Exception {
         SequenceOfItems sequence = new Rumble(new RumbleConfiguration()).runQuery("1, [2, 3], 4");
-        Path output = directory.resolve("sequence.txt");
+        Path output = this.directory.resolve("sequence.txt");
         sequence.write()
                 .format("serialize")
                 .options(Map.of("method", "text", "item-separator", "|"))
@@ -196,7 +196,7 @@ class SequenceWriterTest {
     @Test
     void changingStructuredFormatPreservesWriterPartitioningOptions() throws Exception {
         Rumble rumble = new Rumble(new RumbleConfiguration());
-        Path output = directory.resolve("partitioned");
+        Path output = this.directory.resolve("partitioned");
         rumble.runQuery(
                         "annotate(({\"id\":1, \"state\":\"CA\"}, {\"id\":2, \"state\":\"MA\"}), {\"id\":\"integer\", \"state\":\"string\"})")
                 .write()
