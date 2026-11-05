@@ -79,7 +79,6 @@ import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.context.VarRefContext;
-import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
 import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.context.scripting.ApplyStatementContext;
