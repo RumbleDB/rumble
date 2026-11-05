@@ -971,8 +971,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // intersect the input arity with the enforced one; '?' and '+' only overlap on exactly one
             SequenceType.Arity inputArity = input.getArity();
             SequenceType.Arity resultArity = inputArity.isSubtypeOf(cardinalityArity)
-                ? inputArity
-                : cardinalityArity.isSubtypeOf(inputArity) ? cardinalityArity : SequenceType.Arity.One;
+                    ? inputArity
+                    : cardinalityArity.isSubtypeOf(inputArity) ? cardinalityArity : SequenceType.Arity.One;
             expression.setStaticSequenceType(new SequenceType(input.getItemType(), resultArity));
             return true;
         }
