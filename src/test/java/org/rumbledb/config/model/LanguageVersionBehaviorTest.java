@@ -125,9 +125,20 @@ class LanguageVersionBehaviorTest {
     }
 
     @Test
-    void stringJoinRequiresStringsInXQuery10AndJsoniq() {
+    void stringJoinAcceptsAtomicItemsInJsoniq31() {
+        assertEquals(
+                "1,2", rumble("jsoniq31").runQuery("string-join((1,2),\",\")").serialize());
+        assertEquals(
+                "1,2",
+                rumble("jsoniq10")
+                        .runQuery("jsoniq version \"3.1\"; string-join((1,2),\",\")")
+                        .serialize());
+    }
+
+    @Test
+    void stringJoinRequiresStringsInVersion10OfBothLanguages() {
         assertErrorCode("XPTY0004", "jsoniq10", "xquery version \"1.0\"; string-join((1,2),\",\")");
-        assertErrorCode("XPTY0004", "jsoniq31", "string-join((1,2),\",\")");
+        assertErrorCode("XPTY0004", "jsoniq10", "string-join((1,2),\",\")");
     }
 
     @ParameterizedTest

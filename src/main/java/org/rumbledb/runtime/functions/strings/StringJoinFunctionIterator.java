@@ -36,11 +36,9 @@ public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan
         super(arguments, staticContext);
     }
 
-    /** XQuery 3.1 widened fn:string-join to atomic items; JSONiq and XQuery 1.0 still require strings. */
+    /** Version 3.1 widened fn:string-join to atomic items in both languages; version 1.0 still requires strings. */
     public static boolean acceptsAtomicItems(LanguageVersion queryLanguage) {
-        return queryLanguage != null
-                && queryLanguage.isXQuery()
-                && queryLanguage.isAtLeast(LanguageVersion.Version.V3_1);
+        return queryLanguage != null && queryLanguage.isAtLeast(LanguageVersion.Version.V3_1);
     }
 
     @Override
