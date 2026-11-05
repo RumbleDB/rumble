@@ -47,7 +47,9 @@ class ModuleLanguageDetectionTest {
                 "xquery version \"3.1\" encoding \"UTF-8\"; 1",
                 "  \n\t xquery version \"3.1\"; 1",
                 "(: a comment :) xquery version \"3.1\"; 1",
-                "(: outer (: nested :) comment :)\n(: another :) xquery version \"3.1\"; 1"
+                "(: outer (: nested :) comment :)\n(: another :) xquery version \"3.1\"; 1",
+                "xquery version \"3&#46;1\"; 1",
+                "xquery encoding \"UTF&#45;8\"; 1"
             })
     void xqueryDeclarationsSelectXQuery(String query) {
         assertEquals(Language.XQUERY, detect(query, NO_EXTENSION, "jsoniq10"));

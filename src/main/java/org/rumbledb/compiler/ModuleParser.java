@@ -16,6 +16,7 @@
 package org.rumbledb.compiler;
 
 import java.net.URI;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
@@ -28,6 +29,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.model.LanguageVersion;
@@ -52,7 +54,16 @@ final class ModuleParser {
     private ModuleParser() {}
 
     static Language detectLanguage(String query, URI uri, RumbleConfiguration configuration) {
-        return shouldParseAsXQuery(query, uri, configuration) ? Language.XQUERY : Language.JSONIQ;
+        return declaredLanguage(query).orElseGet(() -> {
+            String location = uri.toString();
+            if (location.endsWith(".xq") || location.endsWith(".xqy") || location.endsWith(".xquery")) {
+                return Language.XQUERY;
+            }
+            if (location.endsWith(".jq") || location.endsWith(".jsoniq")) {
+                return Language.JSONIQ;
+            }
+            return configuration.semantics().queryLanguage().language();
+        });
     }
 
     static StaticContext createModuleContext(URI uri, RumbleConfiguration configuration) {
@@ -83,49 +94,22 @@ final class ModuleParser {
                 parseModule(query, uri, configuration, ExternalBindings.empty(), language, moduleContext, false);
     }
 
-    private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
-        if (startsWithXQueryDeclaration(query)) {
-            return true;
-        }
-        if (startsWithJsoniqDeclaration(query)) {
-            return false;
-        }
-        String location = uri.toString();
-        if (location.endsWith(".xq") || location.endsWith(".xqy") || location.endsWith(".xquery")) {
-            return true;
-        }
-        if (location.endsWith(".jq") || location.endsWith(".jsoniq")) {
-            return false;
-        }
-        return configuration.semantics().queryLanguage().isXQuery();
-    }
-
-    private static boolean startsWithXQueryDeclaration(String query) {
-        Lexer lexer = new XQueryLexer(CharStreams.fromString(query));
-        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
-        return matchesDeclaration(lexer, parser, parser::versionDecl);
-    }
-
-    private static boolean startsWithJsoniqDeclaration(String query) {
+    /**
+     * Runs the versionDecl rule, which both grammars share and which accepts either language keyword, so one grammar
+     * can read the declaration of both languages. The lexer hides whitespace and comments and recognizes strings, so
+     * their text cannot be mistaken for a declaration, and only the first tokens are read. Errors are not reported
+     * here: the parser selected for the module reports them when it reads the whole module.
+     */
+    private static Optional<Language> declaredLanguage(String query) {
         Lexer lexer = new JsoniqLexer(CharStreams.fromString(query));
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
-        return matchesDeclaration(lexer, parser, parser::versionDecl);
-    }
-
-    /**
-     * Runs a grammar's versionDecl rule. The lexer hides whitespace and comments and recognizes strings, so their
-     * text cannot be mistaken for a declaration, and only the first tokens are read. Errors are not reported here:
-     * the parser selected for the module reports them when it reads the whole module.
-     */
-    private static boolean matchesDeclaration(Lexer lexer, Parser parser, Runnable rule) {
         lexer.removeErrorListeners();
         parser.removeErrorListeners();
         parser.setErrorHandler(new BailErrorStrategy());
         try {
-            rule.run();
-            return true;
+            return Optional.of(VersionDeclContext.from(parser.versionDecl()).language());
         } catch (ParseCancellationException e) {
-            return false;
+            return Optional.empty();
         }
     }
 

@@ -25,10 +25,12 @@ public record VersionDeclContext<StringLiteralCtx extends ParserRuleContext>(
         ParserRuleContext context, Language language, StringLiteralCtx version, StringLiteralCtx encoding) {
 
     public static VersionDeclContext<JsoniqParser.StringLiteralContext> from(JsoniqParser.VersionDeclContext ctx) {
-        return new VersionDeclContext<>(ctx, Language.JSONIQ, ctx.version, ctx.encoding);
+        Language language = ctx.language.getType() == JsoniqParser.KW_XQUERY ? Language.XQUERY : Language.JSONIQ;
+        return new VersionDeclContext<>(ctx, language, ctx.version, ctx.encoding);
     }
 
     public static VersionDeclContext<XQueryParser.StringLiteralContext> from(XQueryParser.VersionDeclContext ctx) {
-        return new VersionDeclContext<>(ctx, Language.XQUERY, ctx.version, ctx.encoding);
+        Language language = ctx.language.getType() == XQueryParser.KW_XQUERY ? Language.XQUERY : Language.JSONIQ;
+        return new VersionDeclContext<>(ctx, language, ctx.version, ctx.encoding);
     }
 }

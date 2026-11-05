@@ -28,10 +28,10 @@ parser grammar CommonParser;
 moduleAndThisIsIt
    : module EOF
    ;
-   // Each language grammar defines languageKeyword as its own keyword.
+   // Both keywords are accepted so that either grammar can read the declaration that selects the language.
    
 versionDecl
-   : languageKeyword (KW_VERSION version = stringLiteral (KW_ENCODING encoding = stringLiteral)? | KW_ENCODING encoding = stringLiteral) SEMICOLON
+   : language = (KW_JSONIQ | KW_XQUERY) (KW_VERSION version = stringLiteral (KW_ENCODING encoding = stringLiteral)? | KW_ENCODING encoding = stringLiteral) SEMICOLON
    ;
 
 libraryModule

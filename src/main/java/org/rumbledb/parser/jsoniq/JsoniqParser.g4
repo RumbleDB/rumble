@@ -34,10 +34,6 @@ module
    (libraryModule | main = mainModule)
    ;
 
-languageKeyword
-   : KW_JSONIQ
-   ;
-
 annotatedDecl
    : functionDecl
    | varDecl
@@ -140,6 +136,7 @@ itemType
 
 dialectKeywordOKForFunction
    : KW_JSONIQ
+   | KW_XQUERY
    | KW_NULL
    | KW_TRUE
    | KW_FALSE

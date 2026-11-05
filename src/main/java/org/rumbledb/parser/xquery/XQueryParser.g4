@@ -34,10 +34,6 @@ module
    (libraryModule | (main = mainModule (SEMICOLON versionDecl? mainModule)*))
    ;
 
-languageKeyword
-   : KW_XQUERY
-   ;
-
 annotatedDecl
    : functionDecl
    | varDecl
@@ -107,7 +103,8 @@ itemType
    ;
 
 dialectKeywordOKForFunction
-   : KW_XQUERY
+   : KW_JSONIQ
+   | KW_XQUERY
    ;
 
 stringLiteralQuot
