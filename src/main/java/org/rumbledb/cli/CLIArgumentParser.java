@@ -15,6 +15,7 @@
  */
 package org.rumbledb.cli;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import picocli.CommandLine;
@@ -28,8 +29,23 @@ import org.rumbledb.exceptions.CliException;
         name = "rumbledb",
         description = "RumbleDB command line interface.",
         subcommands = {Run.class, Repl.class},
-        mixinStandardHelpOptions = true)
+        mixinStandardHelpOptions = true,
+        versionProvider = CLIArgumentParser.BannerVersionProvider.class)
 public final class CLIArgumentParser {
+    public static final class BannerVersionProvider implements CommandLine.IVersionProvider {
+        @Override
+        public String[] getVersion() throws java.io.IOException {
+            try (var banner = CLIArgumentParser.class.getResourceAsStream("/assets/banner.txt")) {
+                if (banner == null) {
+                    throw new java.io.IOException("Missing banner resource: /assets/banner.txt");
+                }
+                return new String(banner.readAllBytes(), StandardCharsets.UTF_8)
+                        .lines()
+                        .toArray(String[]::new);
+            }
+        }
+    }
+
     public static CLIInvocation parse(String... args) {
         CommandLine commandLine = new CommandLine(new CLIArgumentParser());
         CommandLine.ParseResult parseResult = commandLine.parseArgs(args);
