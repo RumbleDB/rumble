@@ -546,27 +546,29 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
             if (hasPrivateAnnotation(declaration.getAnnotations())) {
-                argument.markPrivateVariable(declaration.getVariableName());
+                prolog.getDeclarationContext(declaration, argument).markPrivateVariable(declaration.getVariableName());
             }
         }
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-            argument.addFunctionSignature(
+            StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
+            declarationContext.addFunctionSignature(
                     expression.getFunctionIdentifier(),
                     new FunctionSignature(
                             new ArrayList<>(expression.getParams().values()),
                             expression.getReturnType(),
                             expression.isUpdating()));
             if (hasPrivateAnnotation(expression.getAnnotations())) {
-                argument.markPrivateFunction(expression.getFunctionIdentifier());
+                declarationContext.markPrivateFunction(expression.getFunctionIdentifier());
             }
         }
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-            argument.addVariable(
-                    declaration.getVariableName(),
-                    declaration.getActualSequenceType(),
-                    declaration.getMetadata(),
-                    declaration.isAssignable());
+            prolog.getDeclarationContext(declaration, argument)
+                    .addVariable(
+                            declaration.getVariableName(),
+                            declaration.getActualSequenceType(),
+                            declaration.getMetadata(),
+                            declaration.isAssignable());
         }
         StaticContext generatedContext = argument;
         if (prolog.getSourceModuleContexts().isEmpty()) {
@@ -578,18 +580,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             for (LibraryModule imported : prolog.getImportedModules()) {
                 visit(imported, argument);
             }
-            for (Node declaration : prolog.getDeclarations()) {
-                StaticContext sourceContext = prolog.getSourceModuleContexts().getOrDefault(declaration, argument);
-                sourceContext.importModuleContext(argument);
-                sourceContext.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes());
-                visit(declaration, sourceContext);
-                argument.importModuleContext(sourceContext);
-                argument.getInScopeSchemaTypes().importModuleTypes(sourceContext.getInScopeSchemaTypes());
-            }
             // Function signatures and types must be visible throughout a mutually recursive group.
             for (StaticContext sourceContext : prolog.getSourceModuleContexts().values()) {
-                sourceContext.importModuleContext(argument);
-                sourceContext.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes());
+                prolog.shareGroupDeclarations(sourceContext, argument);
+            }
+            for (Node declaration : prolog.getDeclarations()) {
+                StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
+                visit(declaration, declarationContext);
+                prolog.shareGroupDeclarations(declarationContext, argument);
             }
         }
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {

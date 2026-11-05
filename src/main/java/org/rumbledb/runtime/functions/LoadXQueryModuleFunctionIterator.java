@@ -135,22 +135,22 @@ public class LoadXQueryModuleFunctionIterator extends AbstractAtMostOneItemRunti
         Map<Item, Map<Item, List<Item>>> functionExports = new LinkedHashMap<>();
         ItemFactory factory = ItemFactory.getInstance();
         for (var library : module.getProlog().getImportedModules()) {
-            if (!namespace.equals(library.getNamespace())) {
-                continue;
-            }
+            // A library can hold other namespaces' declarations when their modules import each other in a cycle.
             for (var declaration : library.getProlog().getVariableDeclarations()) {
                 Name name = declaration.getVariableName();
-                if (!Name.CONTEXT_ITEM.equals(name) && !hasPrivateAnnotation(declaration.getAnnotations())) {
+                if (namespace.equals(name.getNamespace()) && !hasPrivateAnnotation(declaration.getAnnotations())) {
                     variableExports.put(
                             factory.createQNameItem(name),
                             loaded.getVariableValues().getLocalVariableValue(name, getMetadata()));
                 }
             }
             for (var declaration : library.getProlog().getFunctionDeclarations()) {
-                if (hasPrivateAnnotation(((InlineFunctionExpression) declaration.getExpression()).getAnnotations())) {
+                var id = declaration.getFunctionIdentifier();
+                if (!namespace.equals(id.getName().getNamespace())
+                        || hasPrivateAnnotation(
+                                ((InlineFunctionExpression) declaration.getExpression()).getAnnotations())) {
                     continue;
                 }
-                var id = declaration.getFunctionIdentifier();
                 functionExports
                         .computeIfAbsent(factory.createQNameItem(id.getName()), ignored -> new LinkedHashMap<>())
                         .put(
