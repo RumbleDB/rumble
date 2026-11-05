@@ -238,13 +238,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
-            boolean isMainModule,
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings,
             String code,
             CommonTokenStream xQueryTokenStream) {
         this.translationContext =
-                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, isMainModule, code);
+                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, code);
         this.xQueryTokenStream = xQueryTokenStream;
     }
 

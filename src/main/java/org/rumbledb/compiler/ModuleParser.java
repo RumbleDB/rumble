@@ -24,8 +24,8 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 import org.rumbledb.bindings.ExternalBindings;
@@ -146,18 +146,18 @@ final class ModuleParser {
         ParseTreeVisitor<Node> visitor;
 
         // Return the parse tree for the module entry rule
-        Supplier<? extends ParseTree> parseTreeSupplier;
+        Supplier<? extends ParserRuleContext> parseTreeSupplier;
 
         if (language == Language.XQUERY) {
             XQueryParser xqueryParser = new XQueryParser(tokens);
             parser = xqueryParser;
             parseTreeSupplier = () -> xqueryParser.moduleAndThisIsIt().module();
-            visitor = new XQueryTranslationVisitor(moduleContext, isMainModule, configuration, bindings, query, tokens);
+            visitor = new XQueryTranslationVisitor(moduleContext, configuration, bindings, query, tokens);
         } else {
             JsoniqParser jsoniqParser = new JsoniqParser(tokens);
             parser = jsoniqParser;
             parseTreeSupplier = () -> jsoniqParser.moduleAndThisIsIt().module();
-            visitor = new TranslationVisitor(moduleContext, isMainModule, configuration, bindings, query, tokens);
+            visitor = new TranslationVisitor(moduleContext, configuration, bindings, query, tokens);
         }
 
         parser.setErrorHandler(new BailErrorStrategy());
@@ -181,13 +181,18 @@ final class ModuleParser {
                 tokens.seek(0);
             }
             // TODO Handle module extras
-            ParseTree moduleParseTree = parseTreeSupplier.get();
-            if (isMainModule && moduleParseTree == null) {
-                throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
-            }
+            ParserRuleContext moduleParseTree = parseTreeSupplier.get();
             if (language == Language.XQUERY
                     && !configuration.runtimeConfiguration().semantics().allowScripting()) {
                 new XQuerySyntaxValidator(uri, query).visit(moduleParseTree);
+            }
+            if (isMainModule == isLibraryModule(moduleParseTree)) {
+                throw new ParsingException(
+                        isMainModule
+                                ? "Main module expected, but library module found."
+                                : "Library module expected, but main module found.",
+                        ExceptionMetadata.fromTokens(
+                                uri.toString(), moduleParseTree.getStart(), moduleParseTree.getStop(), query));
             }
             return (Module) visitor.visit(moduleParseTree);
         } catch (ParseCancellationException ex) {
@@ -197,5 +202,11 @@ final class ModuleParser {
             exception.initCause(ex);
             throw exception;
         }
+    }
+
+    private static boolean isLibraryModule(ParserRuleContext moduleParseTree) {
+        return moduleParseTree instanceof XQueryParser.ModuleContext xqueryModule
+                ? xqueryModule.libraryModule() != null
+                : ((JsoniqParser.ModuleContext) moduleParseTree).libraryModule() != null;
     }
 }

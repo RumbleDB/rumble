@@ -271,13 +271,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     public TranslationVisitor(
             StaticContext moduleContext,
-            boolean isMainModule,
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings,
             String code,
             CommonTokenStream jsoniqTokenStream) {
         this.translationContext =
-                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, isMainModule, code);
+                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, code);
         this.jsoniqTokenStream = jsoniqTokenStream;
     }
 

@@ -32,7 +32,6 @@ import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.JsoniqVersionException;
-import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -64,18 +63,9 @@ public final class ModuleTranslation {
         if (ctx.versionDecl() != null) {
             versionDecl(ctx.versionDecl(), translationContext, processStringLiteral);
         }
-        if (translationContext.isMainModule()) {
-            if (ctx.mainModule() != null) {
-                return visitMainModule.apply(ctx.mainModule());
-            }
-            throw new ParsingException(
-                    "Main module expected, but library module found.", translationContext.metadata(ctx.context()));
-        }
-        if (ctx.libraryModule() != null) {
-            return visitLibraryModule.apply(ctx.libraryModule());
-        }
-        throw new ParsingException(
-                "Library module expected, but main module found.", translationContext.metadata(ctx.context()));
+        return ctx.libraryModule() != null
+                ? visitLibraryModule.apply(ctx.libraryModule())
+                : visitMainModule.apply(ctx.mainModule());
     }
 
     private static <StringLiteralCtx extends ParserRuleContext> void versionDecl(
