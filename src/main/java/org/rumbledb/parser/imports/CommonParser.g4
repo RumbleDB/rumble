@@ -28,6 +28,10 @@ parser grammar CommonParser;
 moduleAndThisIsIt
    : module EOF
    ;
+
+module
+   : decl = versionDecl? (libraryModule | mainModule)
+   ;
    // Both keywords are accepted so that either grammar can read the declaration that selects the language.
    
 versionDecl

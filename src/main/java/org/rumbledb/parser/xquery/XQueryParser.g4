@@ -28,12 +28,6 @@ parser grammar XQueryParser;
 import CommonParser;
 
 options { tokenVocab = XQueryLexer; }
-module
-   : decl = versionDecl?
-   // TODO: subsequent optional main modules are currently ignored
-   (libraryModule | (main = mainModule (SEMICOLON versionDecl? mainModule)*))
-   ;
-
 annotatedDecl
    : functionDecl
    | varDecl

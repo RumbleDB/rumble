@@ -24,6 +24,7 @@ import lombok.extern.log4j.Log4j2;
 import org.rumbledb.compiler.ModuleImportLoader;
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.MainModuleContext;
+import org.rumbledb.compiler.context.ModuleContext;
 import org.rumbledb.compiler.context.ProgramContext;
 import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.compiler.utils.URILiteralUtils;
@@ -31,16 +32,18 @@ import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.JsoniqVersionException;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Module;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 /**
- * Translates module-level constructs: MainModule, LibraryModule, and Program.
+ * Translates module-level constructs: Module, MainModule, LibraryModule, and Program.
  */
 @Log4j2
 public final class ModuleTranslation {
@@ -48,7 +51,34 @@ public final class ModuleTranslation {
     private ModuleTranslation() {}
 
     /** Validates a version declaration's encoding and applies its version to the module. */
-    public static <StringLiteralCtx extends ParserRuleContext> void versionDecl(
+    public static <
+                    StringLiteralCtx extends ParserRuleContext,
+                    MainModuleCtx extends ParserRuleContext,
+                    LibraryModuleCtx extends ParserRuleContext>
+            Module module(
+                    ModuleContext<StringLiteralCtx, MainModuleCtx, LibraryModuleCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<StringLiteralCtx, String> processStringLiteral,
+                    Function<MainModuleCtx, MainModule> visitMainModule,
+                    Function<LibraryModuleCtx, LibraryModule> visitLibraryModule) {
+        if (ctx.versionDecl() != null) {
+            versionDecl(ctx.versionDecl(), translationContext, processStringLiteral);
+        }
+        if (translationContext.isMainModule()) {
+            if (ctx.mainModule() != null) {
+                return visitMainModule.apply(ctx.mainModule());
+            }
+            throw new ParsingException(
+                    "Main module expected, but library module found.", translationContext.metadata(ctx.context()));
+        }
+        if (ctx.libraryModule() != null) {
+            return visitLibraryModule.apply(ctx.libraryModule());
+        }
+        throw new ParsingException(
+                "Library module expected, but main module found.", translationContext.metadata(ctx.context()));
+    }
+
+    private static <StringLiteralCtx extends ParserRuleContext> void versionDecl(
             VersionDeclContext<StringLiteralCtx> ctx,
             TranslationContext translationContext,
             Function<StringLiteralCtx, String> processStringLiteral) {

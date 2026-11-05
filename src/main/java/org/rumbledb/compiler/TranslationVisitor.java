@@ -55,6 +55,7 @@ import org.rumbledb.compiler.context.LetVarContext;
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MainModuleContext;
+import org.rumbledb.compiler.context.ModuleContext;
 import org.rumbledb.compiler.context.ModuleImportContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NamedFunctionRefContext;
@@ -79,7 +80,6 @@ import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.context.VarRefContext;
-import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
 import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.context.scripting.ApplyStatementContext;
@@ -286,23 +286,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region module
     @Override
     public Module visitModule(JsoniqParser.ModuleContext ctx) {
-        if (ctx.decl != null) {
-            ModuleTranslation.versionDecl(
-                    VersionDeclContext.from(ctx.decl), this.translationContext, this::processStringLiteral);
-        }
-        if (this.translationContext.isMainModule()) {
-            if (ctx.mainModule() != null) {
-                return this.visitMainModule(ctx.mainModule());
-            }
-            throw new ParsingException(
-                    "Main module expected, but library module found.", createMetadataFromContext(ctx));
-        } else {
-            if (ctx.libraryModule() != null) {
-                return this.visitLibraryModule(ctx.libraryModule());
-            }
-            throw new ParsingException(
-                    "Library module expected, but main module found.", createMetadataFromContext(ctx));
-        }
+        return ModuleTranslation.module(
+                ModuleContext.from(ctx),
+                this.translationContext,
+                this::processStringLiteral,
+                this::visitMainModule,
+                this::visitLibraryModule);
     }
 
     @Override
