@@ -16,8 +16,11 @@
 package org.rumbledb.config.model;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -32,7 +35,8 @@ public enum LanguageVersion {
     JSONIQ_10(Language.JSONIQ, Version.V1_0),
     JSONIQ_31(Language.JSONIQ, Version.V3_1),
     XQUERY_10(Language.XQUERY, Version.V1_0),
-    XQUERY_31(Language.XQUERY, Version.V3_1);
+    /** XQuery 3.0 modules run as XQuery 3.1. */
+    XQUERY_31(Language.XQUERY, Version.V3_1, "3.0");
 
     /** The JSONiq version used when nothing selects one explicitly. */
     public static final LanguageVersion DEFAULT_JSONIQ = JSONIQ_10;
@@ -60,11 +64,20 @@ public enum LanguageVersion {
     private final Language language;
     private final Version version;
     private final String id;
+    /** The version's own label and any aliases, as written in version declarations. */
+    private final Set<String> acceptedVersions;
 
-    LanguageVersion(Language language, Version version) {
+    LanguageVersion(Language language, Version version, String... versionAliases) {
         this.language = language;
         this.version = version;
-        this.id = language.name().toLowerCase(Locale.ROOT) + version.label.replace(".", "");
+        this.id = idOf(language, version.label);
+        Set<String> accepted = new HashSet<>(List.of(versionAliases));
+        accepted.add(version.label);
+        this.acceptedVersions = Set.copyOf(accepted);
+    }
+
+    private static String idOf(Language language, String versionLabel) {
+        return language.name().toLowerCase(Locale.ROOT) + versionLabel.replace(".", "");
     }
 
     /** The version used for a module in the given language when none is selected explicitly. */
@@ -99,17 +112,16 @@ public enum LanguageVersion {
     }
 
     /**
-     * Parses a configuration value such as "xquery31". XQuery 3.0 is accepted as an alias of XQuery 3.1, as in version
-     * declarations.
+     * Parses a configuration value such as "xquery31". Version aliases are accepted, as in version declarations.
      *
      * @throws CliException if the value does not name a supported query language
      */
     @JsonCreator
     public static LanguageVersion fromId(String id) {
         String normalized = id.trim();
-        String resolved = normalized.equals("xquery30") ? XQUERY_31.id : normalized;
         return Arrays.stream(values())
-                .filter(candidate -> candidate.id.equals(resolved))
+                .filter(candidate -> candidate.acceptedVersions.stream()
+                        .anyMatch(version -> idOf(candidate.language, version).equals(normalized)))
                 .findFirst()
                 .orElseThrow(() -> new CliException("Argument --default-language must be one of "
                         + Arrays.stream(values()).map(LanguageVersion::id).collect(Collectors.joining(", "))
@@ -124,9 +136,8 @@ public enum LanguageVersion {
      * @return the language version, or empty if the language has no such supported version
      */
     public static Optional<LanguageVersion> fromDeclaration(Language language, String version) {
-        String resolved = language == Language.XQUERY && version.equals("3.0") ? Version.V3_1.label : version;
         return Arrays.stream(values())
-                .filter(candidate -> candidate.language == language && candidate.version.label.equals(resolved))
+                .filter(candidate -> candidate.language == language && candidate.acceptedVersions.contains(version))
                 .findFirst();
     }
 

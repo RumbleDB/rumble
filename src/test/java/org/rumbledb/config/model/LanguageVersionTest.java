@@ -58,6 +58,8 @@ class LanguageVersionTest {
         assertEquals(LanguageVersion.XQUERY_31, LanguageVersion.fromId("xquery30"));
         assertEquals(Optional.of(LanguageVersion.XQUERY_31), LanguageVersion.fromDeclaration(Language.XQUERY, "3.0"));
         assertEquals(Optional.empty(), LanguageVersion.fromDeclaration(Language.JSONIQ, "3.0"));
+        assertThrows(CliException.class, () -> LanguageVersion.fromId("jsoniq30"));
+        assertEquals("xquery31", LanguageVersion.fromId("xquery30").id());
     }
 
     @Test
