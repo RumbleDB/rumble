@@ -30,6 +30,8 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
+import org.rumbledb.config.model.LanguageVersion.Language;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.context.UserDefinedFunctionExecutionModes;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -48,11 +50,6 @@ import org.rumbledb.parser.xquery.XQueryParser;
 final class ModuleParser {
 
     private ModuleParser() {}
-
-    enum Language {
-        JSONIQ,
-        XQUERY
-    }
 
     static Language detectLanguage(String query, URI uri, RumbleConfiguration configuration) {
         return shouldParseAsXQuery(query, uri, configuration) ? Language.XQUERY : Language.JSONIQ;
@@ -100,7 +97,7 @@ final class ModuleParser {
         if (location.endsWith(".jq") || location.endsWith(".jsoniq")) {
             return false;
         }
-        return configuration.semantics().queryLanguage().startsWith("xquery");
+        return configuration.semantics().queryLanguage().isXQuery();
     }
 
     /**
@@ -125,8 +122,8 @@ final class ModuleParser {
             query = query.replace('\r', '\n');
         }
         // File extensions and version declarations can select a language different from the configured default.
-        if (language == Language.XQUERY && !moduleContext.getQueryLanguage().startsWith("xquery")) {
-            moduleContext.setQueryLanguage("xquery31");
+        if (moduleContext.getQueryLanguage().language() != language) {
+            moduleContext.setQueryLanguage(LanguageVersion.defaultFor(language));
         }
         Lexer lexer = language == Language.XQUERY
                 ? new XQueryLexer(CharStreams.fromString(query))
