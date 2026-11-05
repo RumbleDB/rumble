@@ -89,10 +89,6 @@ public enum LanguageVersion {
         return this.language;
     }
 
-    public Version version() {
-        return this.version;
-    }
-
     /** The name used by the configuration API and the {@code --default-language} option, such as "xquery31". */
     @JsonValue
     public String id() {
