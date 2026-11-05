@@ -61,6 +61,15 @@ class QueryLanguageTest {
     }
 
     @Test
+    void eachStandardHasADefaultLanguageOfThatStandard() {
+        assertEquals(QueryLanguage.DEFAULT_JSONIQ, QueryLanguage.defaultFor(Standard.JSONIQ));
+        assertEquals(QueryLanguage.DEFAULT_XQUERY, QueryLanguage.defaultFor(Standard.XQUERY));
+        for (Standard standard : Standard.values()) {
+            assertEquals(standard, QueryLanguage.defaultFor(standard).standard());
+        }
+    }
+
+    @Test
     void unknownLanguagesAreRejected() {
         CliException exception = assertThrows(CliException.class, () -> QueryLanguage.fromId("xqeury31"));
         assertTrue(exception.getMessage().contains("xqeury31"));

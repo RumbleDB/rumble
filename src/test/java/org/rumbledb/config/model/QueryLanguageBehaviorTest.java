@@ -15,7 +15,14 @@
  */
 package org.rumbledb.config.model;
 
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Map;
+
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -25,6 +32,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.serialization.SerializationParameterUtils;
 
 class QueryLanguageBehaviorTest {
 
@@ -38,6 +46,52 @@ class QueryLanguageBehaviorTest {
         RumbleException exception = assertThrows(
                 RumbleException.class, () -> rumble(language).runQuery(query).serialize());
         assertEquals(expected, exception.getErrorCode().toString());
+    }
+
+    private static URI write(Path directory, String fileName, String query) throws IOException {
+        return Files.writeString(directory.resolve(fileName), query).toUri();
+    }
+
+    @Test
+    void jsoniqFilesUseJsoniqBehaviourUnderAnXQueryDefault(@TempDir Path directory) throws IOException {
+        URI stringJoin = write(directory, "join.jq", "string-join((1,2),\",\")");
+        RumbleException exception = assertThrows(
+                RumbleException.class,
+                () -> rumble("xquery31").runQuery(stringJoin).serialize());
+        assertEquals("XPTY0004", exception.getErrorCode().toString());
+
+        URI plain = write(directory, "plain.jq", "1");
+        assertEquals("1", rumble("xquery31").runQuery(plain).serialize());
+    }
+
+    @Test
+    void jsoniqFilesUseTheDefaultJsoniqVersionUnlessTheyDeclareOne(@TempDir Path directory) throws IOException {
+        URI undeclared = write(directory, "undeclared.jq", "{a : 1}");
+        assertEquals("{ \"a\" : 1 }", rumble("xquery31").runQuery(undeclared).serialize());
+
+        URI declared = write(directory, "declared.jq", "jsoniq version \"3.1\"; {a : 1}");
+        assertThrows(
+                RumbleException.class,
+                () -> rumble("xquery31").runQuery(declared).serialize());
+    }
+
+    @Test
+    void xqueryFilesUseXQueryBehaviourUnderAJsoniqDefault(@TempDir Path directory) throws IOException {
+        URI stringJoin = write(directory, "join.xq", "string-join((1,2),\",\")");
+        assertEquals(
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>1,2",
+                rumble("jsoniq10").runQuery(stringJoin).serialize());
+    }
+
+    @Test
+    void outputOptionsDoNotKeepTheConfiguredLanguageMethodForAJsoniqFile(@TempDir Path directory) throws IOException {
+        URI plain = write(directory, "plain.jq", "1");
+        RumbleConfiguration configuration = RumbleConfiguration.builder()
+                .configureSemantics(semantics -> semantics.queryLanguage(QueryLanguage.XQUERY_31))
+                .configureOutput(output -> output.serializationParameters(
+                        SerializationParameterUtils.buildFromConfig(Map.of("indent", "yes"), QueryLanguage.XQUERY_31)))
+                .build();
+        assertEquals("1", new Rumble(configuration).runQuery(plain).serialize());
     }
 
     @ParameterizedTest

@@ -34,6 +34,12 @@ public enum QueryLanguage {
     XQUERY_10(Standard.XQUERY, Version.V1_0),
     XQUERY_31(Standard.XQUERY, Version.V3_1);
 
+    /** The version of JSONiq used when nothing selects one explicitly. */
+    public static final QueryLanguage DEFAULT_JSONIQ = JSONIQ_10;
+
+    /** The version of XQuery used when nothing selects one explicitly. */
+    public static final QueryLanguage DEFAULT_XQUERY = XQUERY_31;
+
     public enum Standard {
         JSONIQ,
         XQUERY
@@ -59,6 +65,11 @@ public enum QueryLanguage {
         this.standard = standard;
         this.version = version;
         this.id = standard.name().toLowerCase(Locale.ROOT) + version.label.replace(".", "");
+    }
+
+    /** The language used for a module of the given standard when no version is selected explicitly. */
+    public static QueryLanguage defaultFor(Standard standard) {
+        return standard == Standard.XQUERY ? DEFAULT_XQUERY : DEFAULT_JSONIQ;
     }
 
     public Standard standard() {

@@ -122,8 +122,8 @@ final class ModuleParser {
             query = query.replace('\r', '\n');
         }
         // File extensions and version declarations can select a language different from the configured default.
-        if (standard == Standard.XQUERY && !moduleContext.getQueryLanguage().isXQuery()) {
-            moduleContext.setQueryLanguage(QueryLanguage.XQUERY_31);
+        if (moduleContext.getQueryLanguage().standard() != standard) {
+            moduleContext.setQueryLanguage(QueryLanguage.defaultFor(standard));
         }
         Lexer lexer = standard == Standard.XQUERY
                 ? new XQueryLexer(CharStreams.fromString(query))

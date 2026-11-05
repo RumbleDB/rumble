@@ -37,7 +37,7 @@ public class SemanticsConfig implements Serializable {
 
     public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
     public static final boolean DEFAULT_LAX_JSON_NULL_VALIDATION = true;
-    public static final QueryLanguage DEFAULT_QUERY_LANGUAGE = QueryLanguage.JSONIQ_10;
+    public static final QueryLanguage DEFAULT_QUERY_LANGUAGE = QueryLanguage.DEFAULT_JSONIQ;
     public static final String DEFAULT_XML_VERSION = "1.1";
 
     /** Allows the XQuery Scripting Extension grammar; disable for strict XQuery conformance. */
