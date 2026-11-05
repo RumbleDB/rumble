@@ -40,6 +40,23 @@ import org.rumbledb.serialization.SerializationParameters;
 public class CLIArgumentParserTest {
 
     @Test
+    public void versionPrintsBannerForLauncherAndSubcommands() throws Exception {
+        String expected;
+        try (var resource = CLIArgumentParser.class.getResourceAsStream("/assets/banner.txt")) {
+            expected = new String(resource.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        }
+        for (String[] arguments : List.of(
+                new String[] {"--version"}, new String[] {"run", "--version"}, new String[] {"repl", "--version"})) {
+            var output = new java.io.StringWriter();
+            var command = new CommandLine(new CLIArgumentParser());
+            command.setOut(new java.io.PrintWriter(output));
+            Assertions.assertEquals(0, command.execute(arguments));
+            Assertions.assertEquals(
+                    expected.lines().toList(), output.toString().lines().toList());
+        }
+    }
+
+    @Test
     public void runUsesTypedConfigurationDefaults() {
         CLIInvocation invocation = CLIArgumentParser.parse("run", "--query", "1");
         RumbleConfiguration configuration = invocation.configuration();
