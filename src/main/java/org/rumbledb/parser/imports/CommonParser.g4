@@ -28,6 +28,11 @@ parser grammar CommonParser;
 moduleAndThisIsIt
    : module EOF
    ;
+   // Each language grammar defines languageKeyword as its own keyword.
+   
+versionDecl
+   : languageKeyword (KW_VERSION version = stringLiteral (KW_ENCODING encoding = stringLiteral)? | KW_ENCODING encoding = stringLiteral) SEMICOLON
+   ;
 
 libraryModule
    : KW_MODULE KW_NAMESPACE ncName EQUAL uri = uriLiteral SEMICOLON prolog

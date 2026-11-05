@@ -31,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.rumbledb.api.Rumble;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.serialization.SerializationParameterUtils;
 
@@ -139,6 +140,18 @@ class LanguageVersionBehaviorTest {
     void stringJoinRequiresStringsInVersion10OfBothLanguages() {
         assertErrorCode("XPTY0004", "jsoniq10", "xquery version \"1.0\"; string-join((1,2),\",\")");
         assertErrorCode("XPTY0004", "jsoniq10", "string-join((1,2),\",\")");
+    }
+
+    @Test
+    void encodingDeclarationsWorkTheSameInBothLanguages() {
+        assertEquals(
+                "1", rumble("jsoniq10").runQuery("jsoniq encoding \"UTF-8\"; 1").serialize());
+        assertEquals(
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>1",
+                rumble("jsoniq10").runQuery("xquery encoding \"UTF-8\"; 1").serialize());
+        String invalid = ErrorCode.InvalidEncodingNameErrorCode.toString();
+        assertErrorCode(invalid, "jsoniq10", "jsoniq encoding \"!bad\"; 1");
+        assertErrorCode(invalid, "jsoniq10", "xquery encoding \"!bad\"; 1");
     }
 
     @ParameterizedTest

@@ -78,6 +78,7 @@ import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.context.VarRefContext;
+import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
 import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.context.scripting.ApplyStatementContext;
@@ -146,12 +147,9 @@ import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
 import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
-import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.ConditionalExpression;
@@ -255,21 +253,9 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region module
     @Override
     public Module visitModule(XQueryParser.ModuleContext ctx) {
-        if (ctx.encoding != null) {
-            String encoding = processStringLiteral(ctx.encoding);
-            if (!encoding.matches("[A-Za-z][A-Za-z0-9._-]*")) {
-                throw new SemanticException(
-                        "Invalid encoding name: " + encoding,
-                        ErrorCode.InvalidEncodingNameErrorCode,
-                        createMetadataFromContext(ctx.encoding));
-            }
-        }
-        if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
-            String version = processStringLiteral(ctx.vers).trim();
-            this.translationContext
-                    .moduleContext()
-                    .setQueryLanguage(LanguageVersion.fromDeclaration(LanguageVersion.Language.XQUERY, version)
-                            .orElseThrow(() -> new JsoniqVersionException(createMetadataFromContext(ctx))));
+        if (ctx.decl != null) {
+            ModuleTranslation.versionDecl(
+                    VersionDeclContext.from(ctx.decl), this.translationContext, this::processStringLiteral);
         }
         if (this.translationContext.isMainModule()) {
             if (!ctx.mainModule().isEmpty()) {

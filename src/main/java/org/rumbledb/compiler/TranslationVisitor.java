@@ -79,6 +79,7 @@ import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.context.VarRefContext;
+import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
 import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.context.scripting.ApplyStatementContext;
@@ -285,12 +286,9 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region module
     @Override
     public Module visitModule(JsoniqParser.ModuleContext ctx) {
-        if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
-            String version = processStringLiteral(ctx.vers).trim();
-            this.translationContext
-                    .moduleContext()
-                    .setQueryLanguage(LanguageVersion.fromDeclaration(LanguageVersion.Language.JSONIQ, version)
-                            .orElseThrow(() -> new JsoniqVersionException(createMetadataFromContext(ctx))));
+        if (ctx.decl != null) {
+            ModuleTranslation.versionDecl(
+                    VersionDeclContext.from(ctx.decl), this.translationContext, this::processStringLiteral);
         }
         if (this.translationContext.isMainModule()) {
             if (ctx.mainModule() != null) {

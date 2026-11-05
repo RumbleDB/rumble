@@ -84,10 +84,10 @@ final class ModuleParser {
     }
 
     private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
-        if (query.contains("xquery version") || query.contains("xquery encoding")) {
+        if (startsWithXQueryDeclaration(query)) {
             return true;
         }
-        if (query.contains("jsoniq version")) {
+        if (startsWithJsoniqDeclaration(query)) {
             return false;
         }
         String location = uri.toString();
@@ -98,6 +98,35 @@ final class ModuleParser {
             return false;
         }
         return configuration.semantics().queryLanguage().isXQuery();
+    }
+
+    private static boolean startsWithXQueryDeclaration(String query) {
+        Lexer lexer = new XQueryLexer(CharStreams.fromString(query));
+        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
+        return matchesDeclaration(lexer, parser, parser::versionDecl);
+    }
+
+    private static boolean startsWithJsoniqDeclaration(String query) {
+        Lexer lexer = new JsoniqLexer(CharStreams.fromString(query));
+        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        return matchesDeclaration(lexer, parser, parser::versionDecl);
+    }
+
+    /**
+     * Runs a grammar's versionDecl rule. The lexer hides whitespace and comments and recognizes strings, so their
+     * text cannot be mistaken for a declaration, and only the first tokens are read. Errors are not reported here:
+     * the parser selected for the module reports them when it reads the whole module.
+     */
+    private static boolean matchesDeclaration(Lexer lexer, Parser parser, Runnable rule) {
+        lexer.removeErrorListeners();
+        parser.removeErrorListeners();
+        parser.setErrorHandler(new BailErrorStrategy());
+        try {
+            rule.run();
+            return true;
+        } catch (ParseCancellationException e) {
+            return false;
+        }
     }
 
     /**
