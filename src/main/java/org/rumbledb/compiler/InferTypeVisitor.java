@@ -84,6 +84,7 @@ import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.PrologDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
@@ -3077,12 +3078,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
-        for (Node child : prolog.getChildren()) {
-            StaticContext declarationContext = prolog.getDeclarationContext(child, argument);
-            visit(child, declarationContext);
+        prolog.getSchemaImports().forEach(schemaImport -> visit(schemaImport, argument));
+        prolog.getImportedModules().forEach(module -> visit(module, argument));
+        for (PrologDeclaration declaration : prolog.getDeclarations()) {
+            visit(declaration, declaration.getModuleContext());
             // Inferring a variable's type replaces its entry in one context only.
-            if (!prolog.getSourceModuleContexts().isEmpty()) {
-                prolog.shareGroupDeclarations(declarationContext, argument);
+            if (prolog.isModuleGroup()) {
+                prolog.shareGroupDeclarations(declaration.getModuleContext(), argument);
             }
         }
         return argument;

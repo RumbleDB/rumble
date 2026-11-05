@@ -59,6 +59,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.PrologDeclaration;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -546,24 +547,25 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
             if (hasPrivateAnnotation(declaration.getAnnotations())) {
-                prolog.getDeclarationContext(declaration, argument).markPrivateVariable(declaration.getVariableName());
+                declaration.getModuleContext().markPrivateVariable(declaration.getVariableName());
             }
         }
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-            StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
-            declarationContext.addFunctionSignature(
+            StaticContext moduleContext = declaration.getModuleContext();
+            moduleContext.addFunctionSignature(
                     expression.getFunctionIdentifier(),
                     new FunctionSignature(
                             new ArrayList<>(expression.getParams().values()),
                             expression.getReturnType(),
                             expression.isUpdating()));
             if (hasPrivateAnnotation(expression.getAnnotations())) {
-                declarationContext.markPrivateFunction(expression.getFunctionIdentifier());
+                moduleContext.markPrivateFunction(expression.getFunctionIdentifier());
             }
         }
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-            prolog.getDeclarationContext(declaration, argument)
+            declaration
+                    .getModuleContext()
                     .addVariable(
                             declaration.getVariableName(),
                             declaration.getActualSequenceType(),
@@ -571,7 +573,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                             declaration.isAssignable());
         }
         StaticContext generatedContext = argument;
-        if (prolog.getSourceModuleContexts().isEmpty()) {
+        if (!prolog.isModuleGroup()) {
             generatedContext = visitDescendants(prolog, argument);
         } else {
             for (SchemaImport schema : prolog.getSchemaImports()) {
@@ -581,13 +583,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 visit(imported, argument);
             }
             // Function signatures and types must be visible throughout a mutually recursive group.
-            for (StaticContext sourceContext : prolog.getSourceModuleContexts().values()) {
-                prolog.shareGroupDeclarations(sourceContext, argument);
+            for (StaticContext moduleContext : prolog.getModuleContexts()) {
+                prolog.shareGroupDeclarations(moduleContext, argument);
             }
-            for (Node declaration : prolog.getDeclarations()) {
-                StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
-                visit(declaration, declarationContext);
-                prolog.shareGroupDeclarations(declarationContext, argument);
+            for (PrologDeclaration declaration : prolog.getDeclarations()) {
+                visit(declaration, declaration.getModuleContext());
+                prolog.shareGroupDeclarations(declaration.getModuleContext(), argument);
             }
         }
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {

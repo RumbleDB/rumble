@@ -58,7 +58,10 @@ public final class ModuleTranslation {
         Prolog prolog = visitProlog.apply(ctx.prolog());
         Program program = visitProgram.apply(ctx.program());
         if (ExternalVariableTranslation.process(
-                prolog, translationContext.externalBindings(), translationContext.metadata(ctx.context()))) {
+                prolog,
+                translationContext.moduleContext(),
+                translationContext.externalBindings(),
+                translationContext.metadata(ctx.context()))) {
             log.warn("Adding context item declaration.");
         }
 

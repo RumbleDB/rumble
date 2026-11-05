@@ -28,7 +28,7 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 
-public class FunctionDeclaration extends Node {
+public class FunctionDeclaration extends PrologDeclaration {
 
     private final InlineFunctionExpression functionExpression;
 

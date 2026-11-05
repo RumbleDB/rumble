@@ -35,7 +35,7 @@ import org.rumbledb.types.SequenceType;
 
 import static org.rumbledb.compiler.utils.AnnotationValidator.checkAssignable;
 
-public class VariableDeclaration extends Node {
+public class VariableDeclaration extends PrologDeclaration {
     // Default is false for variable declaration.
     private final boolean DEFAULT_ASSIGNABLE = false;
 

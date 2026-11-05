@@ -16,9 +16,7 @@
 package org.rumbledb.expressions.module;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -35,13 +33,14 @@ import org.rumbledb.expressions.Node;
 public class Prolog extends Node {
 
     @Setter
-    private List<Node> declarations;
+    private List<PrologDeclaration> declarations;
 
     private final List<LibraryModule> importedModules;
     private final List<SchemaImport> schemaImports;
 
-    // Cyclic import groups retain each declaration's original module settings.
-    private final Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
+    // Whether this prolog holds the declarations of a cyclic import group.
+    @Setter
+    private boolean moduleGroup;
 
     @Setter
     private String moduleGroupKey;
@@ -52,23 +51,26 @@ public class Prolog extends Node {
             List<TypeDeclaration> typeDeclarations,
             ExceptionMetadata metadata) {
         super(metadata);
-        this.declarations = new ArrayList<Node>(variableDeclarations);
+        this.declarations = new ArrayList<PrologDeclaration>(variableDeclarations);
         this.declarations.addAll(functionDeclarations);
         this.declarations.addAll(typeDeclarations);
         this.importedModules = new ArrayList<>();
         this.schemaImports = new ArrayList<>();
     }
 
-    /** The context a declaration belongs to: its source module's in a group, otherwise the given one. */
-    public StaticContext getDeclarationContext(Node declaration, StaticContext defaultContext) {
-        return this.sourceModuleContexts.getOrDefault(declaration, defaultContext);
+    /** The contexts of the modules these declarations belong to, each once. */
+    public List<StaticContext> getModuleContexts() {
+        return this.declarations.stream()
+                .map(PrologDeclaration::getModuleContext)
+                .distinct()
+                .toList();
     }
 
     /** Publishes one context's public declarations across a group; private ones stay where they are. */
     public void shareGroupDeclarations(StaticContext changedContext, StaticContext groupContext) {
         groupContext.importModuleContext(changedContext);
         groupContext.getInScopeSchemaTypes().importModuleTypes(changedContext.getInScopeSchemaTypes());
-        for (StaticContext sourceContext : this.sourceModuleContexts.values()) {
+        for (StaticContext sourceContext : getModuleContexts()) {
             sourceContext.importModuleContext(groupContext);
             sourceContext.getInScopeSchemaTypes().importModuleTypes(groupContext.getInScopeSchemaTypes());
         }
@@ -124,7 +126,7 @@ public class Prolog extends Node {
         return false;
     }
 
-    public void addDeclaration(Node declaration) {
+    public void addDeclaration(PrologDeclaration declaration) {
         this.declarations.add(declaration);
     }
 

@@ -315,6 +315,8 @@ public final class PrologBuilder {
         this.modules.forEach(result::addImportedModule);
         this.schemas.forEach(result::addSchemaImport);
         this.options.forEach(result::addDeclaration);
+        result.getDeclarations()
+                .forEach(declaration -> declaration.setModuleContext(this.translationContext.moduleContext()));
         return result;
     }
 

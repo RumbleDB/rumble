@@ -21,6 +21,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.bindings.DataFrameBinding;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -34,12 +35,12 @@ public final class ExternalVariableTranslation {
     private ExternalVariableTranslation() {}
 
     /** Returns whether a context-item declaration was synthesized. */
-    public static boolean process(Prolog prolog, ExternalBindings externalBindings, ExceptionMetadata metadata) {
+    public static boolean process(
+            Prolog prolog, StaticContext moduleContext, ExternalBindings externalBindings, ExceptionMetadata metadata) {
         boolean addedContextItem = false;
         if (!prolog.hasContextItemDeclaration()
                 && getExternalVariableType(externalBindings, Name.CONTEXT_ITEM) != null) {
-            prolog.addDeclaration(new VariableDeclaration(
-                    Name.CONTEXT_ITEM, true, SequenceType.createSequenceType("item"), null, null, metadata));
+            addDeclaration(prolog, moduleContext, Name.CONTEXT_ITEM, SequenceType.createSequenceType("item"), metadata);
             addedContextItem = true;
         }
 
@@ -49,11 +50,17 @@ public final class ExternalVariableTranslation {
             }
             SequenceType sequenceType = getExternalVariableType(externalBindings, externalVariable);
             if (sequenceType != null) {
-                prolog.addDeclaration(
-                        new VariableDeclaration(externalVariable, true, sequenceType, null, null, metadata));
+                addDeclaration(prolog, moduleContext, externalVariable, sequenceType, metadata);
             }
         }
         return addedContextItem;
+    }
+
+    private static void addDeclaration(
+            Prolog prolog, StaticContext moduleContext, Name name, SequenceType type, ExceptionMetadata metadata) {
+        VariableDeclaration declaration = new VariableDeclaration(name, true, type, null, null, metadata);
+        declaration.setModuleContext(moduleContext);
+        prolog.addDeclaration(declaration);
     }
 
     private static boolean hasDeclaration(Prolog prolog, Name variableName) {
