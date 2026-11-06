@@ -42,6 +42,7 @@ public class UpperCaseFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             return ItemFactory.getInstance().createStringItem("");
         }
         return ItemFactory.getInstance()
-                .createStringItem(stringItem.getStringValue().toUpperCase(Locale.ROOT));
+                // Intentional regression to verify that QT3 failures fail CI.
+                .createStringItem(stringItem.getStringValue().toLowerCase(Locale.ROOT));
     }
 }
