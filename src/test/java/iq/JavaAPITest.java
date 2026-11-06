@@ -38,6 +38,7 @@ import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
@@ -244,6 +245,58 @@ public class JavaAPITest {
 
     @Test
     @Timeout(1000)
+    public void testGetAsDataFrameFromEmptyRDD() throws Throwable {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        SequenceOfItems iterator =
+                rumble.runQuery("for $i in parallelize(({ \"x\" : 1 }, { \"x\" : 2 })) where $i.x gt 10 return $i");
+
+        Assertions.assertTrue(iterator.availableAsRDD());
+        Dataset<Row> dataFrame = iterator.getAsDataFrame();
+        Assertions.assertEquals(0, dataFrame.count());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testGetAsDataFrameFromMergedDataFrameBindings() throws Throwable {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        Dataset<Row> input = rumble.runQuery("{ \"e\": 1, \"f\": 2, \"g\": 3, \"h\": 4, \"i\": 5, \"Count\": 7 }")
+                .getAsDataFrame();
+        for (boolean matching : new boolean[] {true, false}) {
+            ExternalBindings bindings = ExternalBindings.empty();
+            bindings.bindDataFrame("foo", input);
+            bindings.bindDataFrame("bar", matching ? input : input.limit(0));
+            bindings.bindDataFrame("foobar", input);
+            SequenceOfItems result = rumble.runQuery(
+                    """
+                        declare variable $foo external;
+                        declare variable $bar external;
+                        declare variable $foobar external;
+                        for $c in {remove-keys($foo, ("a", "b", "c"))}
+                        for $d in $bar
+                        where $d.e eq $c.e and $d.f eq $c.f
+                        for $j in $foobar
+                        where $j.e eq $c.e and $j.f eq $c.f and $j.g eq $c.g and $j.h eq $c.h and $j.i eq $c.i
+                        for $k in $foobar
+                        where $k.f eq $c.f
+                        return {|
+                          $c,
+                          { "a": $d.Count, "b": $j.Count, "c": count($k) }
+                        |}
+                        """,
+                    bindings);
+            Dataset<Row> dataFrame = result.getAsDataFrame();
+            Assertions.assertEquals(matching ? 1 : 0, dataFrame.count());
+            if (matching) {
+                Row row = dataFrame.first();
+                Assertions.assertEquals(7, ((Number) row.getAs("a")).intValue());
+                Assertions.assertEquals(7, ((Number) row.getAs("b")).intValue());
+                Assertions.assertEquals(1, ((Number) row.getAs("c")).intValue());
+            }
+        }
+    }
+
+    @Test
+    @Timeout(1000)
     public void testHtmlSerializationRejectsEmptyMap() {
         Rumble rumble = new Rumble(xqueryConfiguration());
         RumbleException exception = Assertions.assertThrows(
@@ -306,7 +359,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testJsonCharacterMapReplacementIsNotEscaped() {
-        SerializationParameters params = SerializationParameters.defaults("xquery31");
+        SerializationParameters params = SerializationParameters.defaults(LanguageVersion.XQUERY_31);
         params.setMethod("json");
         Map<String, String> characterMaps = new HashMap<>();
         characterMaps.put("y", "\"");
@@ -319,7 +372,7 @@ public class JavaAPITest {
     @Test
     @Timeout(1000)
     public void testJsonCharacterMapsDoNotTriggerDuplicateNameError() {
-        SerializationParameters params = SerializationParameters.defaults("xquery31");
+        SerializationParameters params = SerializationParameters.defaults(LanguageVersion.XQUERY_31);
         params.setMethod("json");
         Map<String, String> characterMaps = new HashMap<>();
         characterMaps.put("w", "k");

@@ -38,7 +38,6 @@ public final class TranslationContext {
     private final StaticContext moduleContext;
     private final CompilationConfiguration compilationConfiguration;
     private final RumbleConfiguration configuration;
-    private final boolean mainModule;
     private final String source;
     private final ArrayDeque<Map<String, String>> constructorNamespaceFrames;
     private final TranslationNameResolver nameResolver;
@@ -48,14 +47,12 @@ public final class TranslationContext {
     public TranslationContext(
             StaticContext moduleContext,
             CompilationConfiguration compilationConfiguration,
-            boolean mainModule,
             String source,
             ModuleImportLoader importLoader) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
         this.compilationConfiguration = compilationConfiguration;
         this.configuration = compilationConfiguration.runtimeConfiguration();
-        this.mainModule = mainModule;
         this.source = source;
         this.constructorNamespaceFrames = new ArrayDeque<>();
         this.nameResolver = new TranslationNameResolver(this);
@@ -74,8 +71,9 @@ public final class TranslationContext {
         return this.configuration;
     }
 
-    public boolean isMainModule() {
-        return this.mainModule;
+    /** Only library modules declare a namespace, and they do so before their prolog is translated. */
+    public boolean isLibraryModule() {
+        return this.libraryModuleNamespace != null;
     }
 
     public String libraryModuleNamespace() {

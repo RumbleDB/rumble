@@ -83,7 +83,7 @@ public final class TranslationNameResolver {
 
     /** Private to a library, or a main module's name in a namespace that only a module it does not import has. */
     private boolean isModuleLocal(Name name, boolean isPrivate) {
-        if (!this.context.isMainModule()) {
+        if (this.context.isLibraryModule()) {
             return isPrivate;
         }
         String namespace = name.getNamespace();
@@ -111,8 +111,8 @@ public final class TranslationNameResolver {
             if (namespace != null) {
                 return new Name(namespace, "", localName);
             }
-            String language = this.context.moduleContext().getQueryLanguage();
-            if (role == NameRole.TYPE && language != null && language.startsWith("xquery")) {
+            if (role == NameRole.TYPE
+                    && this.context.moduleContext().getQueryLanguage().isXQuery()) {
                 return Name.createVariableInNoNamespace(localName);
             }
             return role == NameRole.TYPE
