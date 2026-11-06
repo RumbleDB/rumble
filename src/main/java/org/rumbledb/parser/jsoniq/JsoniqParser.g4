@@ -28,12 +28,6 @@ parser grammar JsoniqParser;
 import CommonParser;
 
 options { tokenVocab = JsoniqLexer; }
-module
-   : decl = versionDecl?
-   // TODO: subsequent optional main modules are currently ignored
-   (libraryModule | main = mainModule)
-   ;
-
 annotatedDecl
    : functionDecl
    | varDecl

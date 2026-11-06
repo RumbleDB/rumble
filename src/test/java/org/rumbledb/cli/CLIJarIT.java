@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarFile;
 import java.util.zip.GZIPInputStream;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Nested;
@@ -558,9 +559,8 @@ public class CLIJarIT {
                     "");
             String xml = Files.readString(output);
             assertEquals(1, xml.split("<\\?xml", -1).length - 1, xml);
-            var document = javax.xml.parsers.DocumentBuilderFactory.newInstance()
-                    .newDocumentBuilder()
-                    .parse(output.toFile());
+            var document =
+                    DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(output.toFile());
             assertEquals("answer", document.getDocumentElement().getTagName());
             assertEquals("42", document.getDocumentElement().getTextContent());
             assertSuccess(
@@ -1081,7 +1081,7 @@ public class CLIJarIT {
         Process process = builder.start();
         try {
             try (var stdin = process.getOutputStream()) {
-                stdin.write(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                stdin.write(input.getBytes(StandardCharsets.UTF_8));
             }
             assertTrue(process.waitFor(60, TimeUnit.SECONDS), () -> "CLI timed out: " + command);
             return new Result(
