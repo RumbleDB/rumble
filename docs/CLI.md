@@ -48,3 +48,19 @@ Delta and Iceberg are opt-in: ordinary queries do not enable their Spark extensi
 | --optimize-steps-experimental | N/A | N/A | yes or no| experimentally optimizes steps more by skipping uniqueness and sorting in some cases. correctness is not yet verified (disabled by default)
 | --optimize-parent-pointers | N/A | N/A | yes or no| allows RumbleDB to remove parent pointers from items if no steps requiring parent pointers are detected statically (activated by default)
 | --static-base-uri | N/A | N/A | "../data/"| sets the static base uri for the execution. This option overwrites module location but is overwritten by declaration inside query
+
+### Backticks in Spark field names
+
+Enable `--escape-backticks` to double embedded backticks when generating Spark SQL
+identifiers for object lookups and the input object projection of a `for` clause.
+Use `--no-escape-backticks` to disable it (the default). The corresponding configuration
+property is `runtime.escapeBackticks`, for example:
+
+```java
+RumbleConfiguration.builder()
+    .configureRuntime(runtime -> runtime.escapeBackticks(true))
+    .build();
+```
+
+This quotes SQL identifiers without renaming schema fields or output keys. Dots remain
+part of a field name, and nested lookups quote each path component separately.

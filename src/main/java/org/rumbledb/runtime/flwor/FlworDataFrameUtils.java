@@ -112,7 +112,7 @@ public class FlworDataFrameUtils {
             }
             return false;
         }
-        String escapedName = variable.getLocalName().replace("`", FlworDataFrameUtils.backtickEscape);
+        String escapedName = variable.getLocalName();
         for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
             if (pos == -1) {
@@ -474,14 +474,20 @@ public class FlworDataFrameUtils {
      * @return comma separated variables to be used in spark SQL
      */
     public static String getSQLProjection(List<String> columnNames, boolean trailingComma) {
+        return getSQLProjection(columnNames, trailingComma, false);
+    }
+
+    /**
+     * Prepares a projection of unqualified field names, optionally escaping embedded backticks.
+     * Each name is quoted as a single identifier, including names containing dots.
+     */
+    public static String getSQLProjection(List<String> columnNames, boolean trailingComma, boolean escapeBackticks) {
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
         for (String var : columnNames) {
             queryColumnString.append(comma);
             comma = ",";
-            queryColumnString.append("`");
-            queryColumnString.append(var);
-            queryColumnString.append("`");
+            queryColumnString.append(quoteIdentifier(var, escapeBackticks));
         }
         if (trailingComma) {
             queryColumnString.append(comma);
@@ -511,6 +517,11 @@ public class FlworDataFrameUtils {
             queryColumnString.append(comma);
         }
         return queryColumnString.toString();
+    }
+
+    /** Quotes a single Spark SQL identifier; schema names must remain unmodified. */
+    public static String quoteIdentifier(String name, boolean escapeBackticks) {
+        return "`" + (escapeBackticks ? name.replace("`", "``") : name) + "`";
     }
 
     public static StructField[] recursiveRename(StructType schema, boolean inverse) {

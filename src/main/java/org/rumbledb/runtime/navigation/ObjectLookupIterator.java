@@ -197,8 +197,8 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             leftSchema = newContext.getSchema();
         }
 
-        // get key (escape backtick)
-        String key = lookupKey.replace("`", FlworDataFrameUtils.backtickEscape);
+        // Schema lookup uses the original name; escaping applies only to SQL text.
+        String key = lookupKey;
         String sequenceKey = key + SparkSessionManager.sequenceColumnName;
         if (!(leftSchema instanceof StructType structSchema)) {
             if (this.lookupIterator instanceof StringRuntimeIterator) {
@@ -223,9 +223,13 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             }
             String leftQuery = newContext.getResultingQuery();
             if (leftQuery != null) {
-                newContext.setResultingQuery(leftQuery + ".`" + key + "`");
+                newContext.setResultingQuery(leftQuery
+                        + "."
+                        + FlworDataFrameUtils.quoteIdentifier(
+                                key, getConfiguration().runtime().escapeBackticks()));
             } else {
-                newContext.setResultingQuery("`" + key + "`");
+                newContext.setResultingQuery(FlworDataFrameUtils.quoteIdentifier(
+                        key, getConfiguration().runtime().escapeBackticks()));
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
             newContext.setResultingType(new SequenceType(
@@ -247,9 +251,13 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             }
             String leftQuery = newContext.getResultingQuery();
             if (leftQuery != null) {
-                newContext.setResultingQuery(leftQuery + ".`" + key + "`");
+                newContext.setResultingQuery(leftQuery
+                        + "."
+                        + FlworDataFrameUtils.quoteIdentifier(
+                                key, getConfiguration().runtime().escapeBackticks()));
             } else {
-                newContext.setResultingQuery("`" + key + "`");
+                newContext.setResultingQuery(FlworDataFrameUtils.quoteIdentifier(
+                        key, getConfiguration().runtime().escapeBackticks()));
             }
             ItemType resultType = newContext
                     .getResultingType()
@@ -285,6 +293,8 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
         String key = resolveLookupKey(context);
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+        String sqlKey = FlworDataFrameUtils.quoteIdentifier(
+                key, getConfiguration().runtime().escapeBackticks());
         if (childDataFrame.hasKey(key)) {
             FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet(key);
             ItemType type = BuiltinTypesCatalogue.item;
@@ -297,8 +307,8 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 String sql;
                 if (childDataFrame.getKeys().contains(SparkSessionManager.tableLocationColumnName)) {
                     sql = String.format(
-                            "SELECT `%s`.*, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
-                            key,
+                            "SELECT %s.*, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
+                            sqlKey,
                             SparkSessionManager.rowIdColumnName,
                             SparkSessionManager.mutabilityLevelColumnName,
                             SparkSessionManager.pathInColumnName,
@@ -308,7 +318,7 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                             object);
 
                 } else {
-                    sql = String.format("SELECT `%s`.* FROM %s", key, object);
+                    sql = String.format("SELECT %s.* FROM %s", sqlKey, object);
                 }
                 HomogeneousItemDataFrame result = childDataFrame.evaluateSQL(sql, type);
                 return result;
@@ -317,8 +327,8 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 HomogeneousItemDataFrame result;
                 if (childDataFrame.getKeys().contains(SparkSessionManager.tableLocationColumnName)) {
                     sql = String.format(
-                            "SELECT `%s` AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
-                            key,
+                            "SELECT %s AS `%s`, `%s`, `%s`, CONCAT(`%s`, '.%s') AS `%s`, `%s` FROM %s",
+                            sqlKey,
                             SparkSessionManager.nonObjectJSONiqItemColumnName,
                             SparkSessionManager.rowIdColumnName,
                             SparkSessionManager.mutabilityLevelColumnName,
@@ -332,8 +342,8 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                     result = new HomogeneousItemDataFrame(df, type);
                 } else {
                     sql = String.format(
-                            "SELECT `%s` AS `%s` FROM %s",
-                            key, SparkSessionManager.nonObjectJSONiqItemColumnName, object);
+                            "SELECT %s AS `%s` FROM %s",
+                            sqlKey, SparkSessionManager.nonObjectJSONiqItemColumnName, object);
                     result = childDataFrame.evaluateSQL(sql, type);
                 }
                 return result;
