@@ -16,6 +16,7 @@
 package org.rumbledb.compiler;
 
 import java.net.URI;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
@@ -28,8 +29,11 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
+import org.rumbledb.config.model.LanguageVersion.Language;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.context.UserDefinedFunctionExecutionModes;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -49,13 +53,17 @@ final class ModuleParser {
 
     private ModuleParser() {}
 
-    enum Language {
-        JSONIQ,
-        XQUERY
-    }
-
     static Language detectLanguage(String query, URI uri, RumbleConfiguration configuration) {
-        return shouldParseAsXQuery(query, uri, configuration) ? Language.XQUERY : Language.JSONIQ;
+        return declaredLanguage(query).orElseGet(() -> {
+            String location = uri.toString();
+            if (location.endsWith(".xq") || location.endsWith(".xqy") || location.endsWith(".xquery")) {
+                return Language.XQUERY;
+            }
+            if (location.endsWith(".jq") || location.endsWith(".jsoniq")) {
+                return Language.JSONIQ;
+            }
+            return configuration.semantics().queryLanguage().language();
+        });
     }
 
     static StaticContext createModuleContext(URI uri, RumbleConfiguration configuration) {
@@ -88,21 +96,23 @@ final class ModuleParser {
                 parseModule(query, uri, configuration, ExternalBindings.empty(), language, moduleContext, false);
     }
 
-    private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
-        if (query.contains("xquery version") || query.contains("xquery encoding")) {
-            return true;
+    /**
+     * Runs the versionDecl rule, which both grammars share and which accepts either language keyword, so one grammar
+     * can read the declaration of both languages. The lexer hides whitespace and comments and recognizes strings, so
+     * their text cannot be mistaken for a declaration, and only the first tokens are read. Errors are not reported
+     * here: the parser selected for the module reports them when it reads the whole module.
+     */
+    private static Optional<Language> declaredLanguage(String query) {
+        Lexer lexer = new JsoniqLexer(CharStreams.fromString(query));
+        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        lexer.removeErrorListeners();
+        parser.removeErrorListeners();
+        parser.setErrorHandler(new BailErrorStrategy());
+        try {
+            return Optional.of(VersionDeclContext.from(parser.versionDecl()).language());
+        } catch (ParseCancellationException e) {
+            return Optional.empty();
         }
-        if (query.contains("jsoniq version")) {
-            return false;
-        }
-        String location = uri.toString();
-        if (location.endsWith(".xq") || location.endsWith(".xqy") || location.endsWith(".xquery")) {
-            return true;
-        }
-        if (location.endsWith(".jq") || location.endsWith(".jsoniq")) {
-            return false;
-        }
-        return configuration.semantics().queryLanguage().startsWith("xquery");
     }
 
     /**
@@ -127,8 +137,8 @@ final class ModuleParser {
             query = query.replace('\r', '\n');
         }
         // File extensions and version declarations can select a language different from the configured default.
-        if (language == Language.XQUERY && !moduleContext.getQueryLanguage().startsWith("xquery")) {
-            moduleContext.setQueryLanguage("xquery31");
+        if (moduleContext.getQueryLanguage().language() != language) {
+            moduleContext.setQueryLanguage(LanguageVersion.defaultFor(language));
         }
         Lexer lexer = language == Language.XQUERY
                 ? new XQueryLexer(CharStreams.fromString(query))

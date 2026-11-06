@@ -5,6 +5,7 @@ on:
     branches:
       - master
   pull_request:
+  merge_group:
 
 env:
   JAVA_VERSION: "17"
@@ -26,7 +27,8 @@ jobs:
             const isPullRequest = context.eventName === 'pull_request';
             const branch = isPullRequest
               ? context.payload.pull_request.base.ref
-              : context.ref.replace('refs/heads/', '');
+              // A merge group runs on a temporary gh-readonly-queue ref, not its target branch.
+              : (context.payload.merge_group?.base_ref ?? context.ref).replace('refs/heads/', '');
             const event = isPullRequest && branch !== context.payload.repository.default_branch
               ? 'pull_request'
               : 'push';
@@ -111,6 +113,8 @@ jobs:
   post-results:
     name: Post Results
     needs: [qt3-jsoniq, qt3-xquery]
+    # The PR and the later push to master get the comments, not the temporary merge group commit.
+    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

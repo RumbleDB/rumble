@@ -18,14 +18,13 @@ package org.rumbledb.api;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.model.RumbleMode;
 
 public class RumbleConfigurationTest {
 
     @Test
     public void getReturnsPlainJavaValues() {
-        RumbleConfiguration configuration = configuration(RumbleConfiguration.builder()
+        RumbleConfiguration configuration = configuration(org.rumbledb.config.RumbleConfiguration.builder()
                 .mode(RumbleMode.RUN)
                 .configureRuntime(runtime -> runtime.resultsSizeCap(100))
                 .configureDebug(debug -> debug.showErrorInfo(true))
@@ -38,7 +37,7 @@ public class RumbleConfigurationTest {
 
     @Test
     public void typedGettersConvertValues() {
-        RumbleConfiguration configuration = configuration(RumbleConfiguration.builder()
+        RumbleConfiguration configuration = configuration(org.rumbledb.config.RumbleConfiguration.builder()
                 .mode(RumbleMode.REPL)
                 .configureRuntime(runtime -> runtime.resultsSizeCap(100))
                 .configureDebug(debug -> debug.showErrorInfo(true))
@@ -68,7 +67,7 @@ public class RumbleConfigurationTest {
                 IllegalArgumentException.class, () -> new RumbleConfiguration().get("runtime..resultsSizeCap"));
     }
 
-    private static RumbleConfiguration configuration(RumbleConfiguration internalConfiguration) {
+    private static RumbleConfiguration configuration(org.rumbledb.config.RumbleConfiguration internalConfiguration) {
         return new RumbleConfiguration(internalConfiguration);
     }
 }
