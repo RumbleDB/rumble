@@ -616,6 +616,10 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
             selectString.append(") as ");
             selectString.append(dfColumnSequence);
         }
+        if (selectString.length() == 0) {
+            // Preserve one tuple per group even when no variables are projected.
+            selectString.append(FlworDataFrameUtils.getSQLColumnProjection(Collections.emptyList(), false));
+        }
         log.info("Rumble was able to optimize a group by clause to a native SQL query.");
         return dataFrame
                 .sparkSession()
