@@ -628,7 +628,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
-        visitDescendants(prolog, argument);
+        for (Node child : prolog.getChildren()) {
+            visit(child, prolog.getDeclarationContext(child, argument));
+        }
         prolog.setHighestExecutionMode(ExecutionMode.LOCAL);
         return argument;
     }

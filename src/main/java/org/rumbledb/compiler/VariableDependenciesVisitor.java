@@ -455,7 +455,10 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     private Map<Name, Node> buildNameToNodeMap(Prolog prolog) {
         Map<Name, Node> nameToNodeMap = new TreeMap<>();
         for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
-            if (nameToNodeMap.containsKey(variableDeclaration.getVariableName())) {
+            boolean contextItemInGroup = Name.CONTEXT_ITEM.equals(variableDeclaration.getVariableName())
+                    && !prolog.getSourceModuleContexts().isEmpty();
+            // Each module of a group may declare the one context item the query supplies.
+            if (nameToNodeMap.containsKey(variableDeclaration.getVariableName()) && !contextItemInGroup) {
                 throw new VariableAlreadyExistsException(
                         variableDeclaration.getVariableName(), variableDeclaration.getMetadata());
             }
@@ -465,7 +468,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                         "A variable is not in scope in its own initializer: " + variableDeclaration.getVariableName(),
                         variableDeclaration.getMetadata());
             }
-            nameToNodeMap.put(variableDeclaration.getVariableName(), variableDeclaration);
+            nameToNodeMap.putIfAbsent(variableDeclaration.getVariableName(), variableDeclaration);
         }
         for (FunctionDeclaration functionDeclaration : prolog.getFunctionDeclarations()) {
             visit(functionDeclaration, null);

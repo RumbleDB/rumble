@@ -21,7 +21,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import lombok.extern.log4j.Log4j2;
 
-import org.rumbledb.compiler.ModuleImportLoader;
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.MainModuleContext;
 import org.rumbledb.compiler.context.ProgramContext;
@@ -109,7 +108,6 @@ public final class ModuleTranslation {
         }
         NamespaceBindingUtils.validatePrologNamespaceDeclaration(
                 prefix, namespace, translationContext.metadata(ctx.context()));
-        ModuleImportLoader.registerActiveContext(namespace, translationContext.moduleContext());
         translationContext.setLibraryModuleNamespace(namespace);
         translationContext.bindNamespace(prefix, namespace, translationContext.metadata(ctx.context()));
 
