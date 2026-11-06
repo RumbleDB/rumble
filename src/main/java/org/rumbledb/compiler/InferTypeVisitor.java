@@ -639,7 +639,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             throw new UnknownFunctionCallException(
                     expression.getIdentifier().getName(),
                     expression.getIdentifier().getArity(),
-                    expression.getMetadata());
+                    expression.getMetadata(),
+                    expression.getStaticContext());
         }
         return argument;
     }
@@ -974,7 +975,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 throw new UnknownFunctionCallException(
                         expression.getFunctionIdentifier().getName(),
                         expression.getFunctionIdentifier().getArity(),
-                        expression.getMetadata());
+                        expression.getMetadata(),
+                        expression.getStaticContext());
             }
         }
         // The zero-argument form has an implicit node argument. Check the focus type
@@ -995,7 +997,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         try {
             signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
         } catch (UnknownFunctionCallException e) {
-            throw new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata());
+            throw new UnknownFunctionCallException(
+                    expression.getFunctionIdentifier(), expression.getMetadata(), expression.getStaticContext());
         }
         List<Expression> parameterExpressions = expression.getArguments();
         List<SequenceType> parameterTypes = signature.getParameterTypes();
