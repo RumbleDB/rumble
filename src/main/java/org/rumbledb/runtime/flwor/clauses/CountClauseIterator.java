@@ -148,7 +148,8 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
         Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
 
         String viewName = FlworDataFrameUtils.createTempView(dfWithIndex);
-        dfWithIndex = dfWithIndex.sparkSession()
+        dfWithIndex = dfWithIndex
+                .sparkSession()
                 .sql(String.format("select %s `%s` from %s", selectSQL, variableName, viewName));
         return dfWithIndex;
     }
