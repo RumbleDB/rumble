@@ -1,5 +1,21 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,8 +27,9 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.collections.ListUtils;
+
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -20,18 +37,16 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
-public class ObjectItemType implements ItemType {
+public class ObjectItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    final static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
-            Arrays.asList(
-                ConstrainingFacetTypes.ENUMERATION,
-                ConstrainingFacetTypes.CONSTRAINTS,
-                ConstrainingFacetTypes.CONTENT,
-                ConstrainingFacetTypes.CLOSED
-            )
-    );
+    static final Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(Arrays.asList(
+            ConstrainingFacetTypes.ENUMERATION,
+            ConstrainingFacetTypes.CONSTRAINTS,
+            ConstrainingFacetTypes.CONTENT,
+            ConstrainingFacetTypes.CLOSED));
 
     private Name name;
     private List<String> keys;
@@ -43,9 +58,6 @@ public class ObjectItemType implements ItemType {
     private ItemType baseType;
     private int typeTreeDepth;
 
-    ObjectItemType() {
-    }
-
     ObjectItemType(
             Name name,
             ItemType baseType,
@@ -53,8 +65,7 @@ public class ObjectItemType implements ItemType {
             List<String> keys,
             List<FieldDescriptor> content,
             List<String> constraints,
-            List<Item> enumeration
-    ) {
+            List<Item> enumeration) {
         this.name = name;
         this.baseType = baseType;
         this.keys = keys == null ? new ArrayList<>() : new ArrayList<>(keys);
@@ -89,116 +100,6 @@ public class ObjectItemType implements ItemType {
         for (int i = 0; i < this.keys.size(); i++) {
             this.keyStringToIndex.put(this.keys.get(i), Integer.valueOf(i));
         }
-    }
-
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        // Write the name
-        output.writeBoolean(this.name != null);
-        if (this.name != null) {
-            kryo.writeObject(output, this.name);
-        }
-
-        // Write baseType
-        kryo.writeClassAndObject(output, this.baseType);
-
-        // Write isClosed
-        output.writeBoolean(this.isClosed);
-
-        kryo.writeObjectOrNull(output, this.keys, ArrayList.class);
-        kryo.writeObjectOrNull(output, this.content, ArrayList.class);
-
-        // Write constraints list
-        if (this.constraints != null) {
-            output.writeInt(this.constraints.size());
-            for (String constraint : this.constraints) {
-                output.writeString(constraint);
-            }
-        } else {
-            output.writeInt(-1);
-        }
-
-        // Write enumeration list
-        if (this.enumeration != null) {
-            output.writeInt(this.enumeration.size());
-            for (Item item : this.enumeration) {
-                kryo.writeObject(output, item);
-            }
-        } else {
-            output.writeInt(-1);
-        }
-
-        // Write typeTreeDepth
-        output.writeInt(this.typeTreeDepth);
-    }
-
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        // Read the name
-        boolean hasName = input.readBoolean();
-        if (hasName) {
-            this.name = kryo.readObject(input, Name.class);
-        } else {
-            this.name = null;
-        }
-
-        // Read baseType
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-
-        // Read isClosed
-        this.isClosed = input.readBoolean();
-
-        // Read keys list
-        this.keys = kryo.readObjectOrNull(input, ArrayList.class);
-        if (this.keys == null) {
-            this.keys = new ArrayList<>();
-        }
-
-        // Read content list
-        this.content = kryo.readObjectOrNull(input, ArrayList.class);
-        if (this.content == null) {
-            this.content = new ArrayList<>();
-        }
-
-        rebuildKeyStringIndex();
-
-        // Read constraints list
-        int constraintsSize = input.readInt();
-        if (constraintsSize >= 0) {
-            this.constraints = new ArrayList<>();
-            for (int i = 0; i < constraintsSize; i++) {
-                this.constraints.add(input.readString());
-            }
-        } else {
-            this.constraints = new ArrayList<>();
-        }
-
-        // Read enumeration list
-        int enumSize = input.readInt();
-        if (enumSize >= 0) {
-            this.enumeration = new ArrayList<>();
-            for (int i = 0; i < enumSize; i++) {
-                Item item = kryo.readObject(input, Item.class);
-                this.enumeration.add(item);
-            }
-        } else {
-            this.enumeration = null;
-        }
-
-        // Read typeTreeDepth
-        this.typeTreeDepth = input.readInt();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
-            return false;
-        }
-        if (((ItemType) other).isMapItemType()) {
-            // delegate to the map item type equality check
-            return other.equals(this);
-        }
-        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -246,7 +147,6 @@ public class ObjectItemType implements ItemType {
         return allowedFacets;
     }
 
-
     @Override
     public boolean isSubtypeOf(ItemType superType) {
         if (superType.isUnionType()) {
@@ -264,7 +164,7 @@ public class ObjectItemType implements ItemType {
             // js:object = map(xs:string, item)
             return this.getObjectAsMapType().isSubtypeOf(superType);
         }
-        return ItemType.super.isSubtypeOf(superType);
+        return super.isSubtypeOf(superType);
     }
 
     @Override
@@ -280,14 +180,11 @@ public class ObjectItemType implements ItemType {
             // js:object = map(xs:string, item)
             return this.getObjectAsMapType().findLeastCommonSuperTypeWith(other);
         }
-        return ItemType.super.findLeastCommonSuperTypeWith(other);
+        return super.findLeastCommonSuperTypeWith(other);
     }
 
     private ItemType getObjectAsMapType() {
-        return ItemTypeFactory.mapOf(
-            BuiltinTypesCatalogue.stringItem,
-            SequenceType.createSequenceType("item")
-        );
+        return ItemTypeFactory.mapOf(BuiltinTypesCatalogue.stringItem, SequenceType.createSequenceType("item"));
     }
 
     @Override
@@ -299,8 +196,8 @@ public class ObjectItemType implements ItemType {
     @Override
     public List<String> getConstraintsFacet() {
         return this.isPrimitive()
-            ? this.constraints
-            : ListUtils.union(this.baseType.getConstraintsFacet(), this.constraints);
+                ? this.constraints
+                : ListUtils.union(this.baseType.getConstraintsFacet(), this.constraints);
     }
 
     @Override
@@ -335,13 +232,12 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public ItemType findLeastCommonSuperTypeLax(ItemType other) {
-        if (!(other instanceof ObjectItemType)) {
+        if (!(other instanceof ObjectItemType otherObject)) {
             if (other.isObjectItemType()) {
                 return other.findLeastCommonSuperTypeLax(this);
             }
             return this.findLeastCommonSuperTypeWith(other);
         }
-        ObjectItemType otherObject = (ObjectItemType) other;
         if (!this.isResolved() || !otherObject.isResolved()) {
             return this.findLeastCommonSuperTypeWith(other);
         }
@@ -358,23 +254,19 @@ public class ObjectItemType implements ItemType {
                 keyResults,
                 keyContent,
                 Collections.emptyList(),
-                Collections.emptyList()
-        );
+                Collections.emptyList());
     }
 
     /**
      * Merges the object content of two object item types.
      * The merged content is a union of the two object contents.
      * The way descriptors for single fields are merged is defined by the mergeDescriptors method.
-     * 
+     *
      * @param other the other object item type to merge the content from
      * @return the merged object content
      */
     private Map<String, FieldDescriptor> mergeObjectContent(
-            ObjectItemType other,
-            List<String> keyResults,
-            List<FieldDescriptor> contentResults
-    ) {
+            ObjectItemType other, List<String> keyResults, List<FieldDescriptor> contentResults) {
         Map<String, FieldDescriptor> merged = new LinkedHashMap<>();
         List<String> myKeys = this.getObjectKeysFacet();
         keyResults.clear();
@@ -401,7 +293,7 @@ public class ObjectItemType implements ItemType {
 
     /**
      * Merges two field descriptors according to the field semantics.
-     * 
+     *
      * @param first the first field descriptor to merge
      * @param second the second field descriptor to merge
      * @return the merged field descriptor
@@ -611,7 +503,7 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         if (!this.isClosed) {
             return false;
         }
@@ -663,8 +555,7 @@ public class ObjectItemType implements ItemType {
         if (!this.baseType.equals(BuiltinTypesCatalogue.JSONItem)) {
             throw new InvalidSchemaException(
                     "This type cannot be the base type of an object type: " + this.baseType,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         if (this.content == null) {
             throw new OurBadException("Content cannot be null in primitive object type.");
@@ -676,8 +567,7 @@ public class ObjectItemType implements ItemType {
             if (this.getTypeTreeDepth() >= 3) {
                 throw new InvalidSchemaException(
                         "Any user-defined object type must have an object type as its base type.",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             return;
         }
@@ -689,8 +579,7 @@ public class ObjectItemType implements ItemType {
                 if (this.baseType.getClosedFacet()) {
                     throw new InvalidSchemaException(
                             "If the base type is closed, it is not possible to add new fields.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            ExceptionMetadata.EMPTY_METADATA);
                 } else {
                     continue;
                 }
@@ -698,29 +587,25 @@ public class ObjectItemType implements ItemType {
             if (!fieldDescriptor.getType().isSubtypeOf(superTypeDescriptor.getType())) {
                 throw new InvalidSchemaException(
                         "The type of an object field descriptor (here: "
-                            + fieldDescriptor.getType()
-                            + ") associated with key "
-                            + key
-                            + " must be a subtype of the type declared for this field in its base type (here: "
-                            + superTypeDescriptor.getType()
-                            + ")",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                                + fieldDescriptor.getType()
+                                + ") associated with key "
+                                + key
+                                + " must be a subtype of the type declared for this field in its base type (here: "
+                                + superTypeDescriptor.getType()
+                                + ")",
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             if (!fieldDescriptor.isRequired() && superTypeDescriptor.isRequired()) {
                 throw new InvalidSchemaException(
                         "Since the field "
-                            + key
-                            + " is required in the base type, it must also be required in the derived type.",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                                + key
+                                + " is required in the base type, it must also be required in the derived type.",
+                        ExceptionMetadata.EMPTY_METADATA);
             }
         }
         if (this.baseType.getClosedFacet() && !this.isClosed) {
             throw new InvalidSchemaException(
-                    "If the base type is closed, it is not possible to re-open it.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "If the base type is closed, it is not possible to re-open it.", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 

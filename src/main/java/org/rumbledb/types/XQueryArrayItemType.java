@@ -1,6 +1,25 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import java.io.Serial;
+import java.util.Collections;
+import java.util.Set;
+
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -8,18 +27,15 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Set;
-
 /**
  * XQuery/XPath array item type: array(*) and array(T) per XDM 3.1 / XPath 3.1.
  *
  * The primitive array(*) type is modeled as a subtype of function(*)
  * by using {@link BuiltinTypesCatalogue#anyFunctionItem} as its base type.
  */
-public class XQueryArrayItemType implements ItemType {
+public class XQueryArrayItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name name;
@@ -27,22 +43,12 @@ public class XQueryArrayItemType implements ItemType {
     private SequenceType memberSequenceType;
     private int typeTreeDepth;
 
-    XQueryArrayItemType() {
-        this.name = null;
-        this.baseType = null;
-        this.memberSequenceType = null;
-    }
-
     /**
      * @param name null for anonymous typed arrays
      * @param baseType {@link BuiltinTypesCatalogue#anyFunctionItem} for primitive array(*),
      *        else {@link BuiltinTypesCatalogue#xqueryArrayItem}
      */
-    XQueryArrayItemType(
-            Name name,
-            ItemType baseType,
-            SequenceType memberSequenceType
-    ) {
+    XQueryArrayItemType(Name name, ItemType baseType, SequenceType memberSequenceType) {
         if (baseType == null || memberSequenceType == null) {
             throw new OurBadException("array item type requires base and member sequence types");
         }
@@ -71,33 +77,13 @@ public class XQueryArrayItemType implements ItemType {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
-            return false;
+    protected Object equalityKey() {
+        if (this.name == null
+                && BuiltinTypesCatalogue.xqueryArrayItem.equals(this.baseType)
+                && SequenceType.createSequenceType("item").equals(this.memberSequenceType)) {
+            return namedTypeKey(new Name(Name.JS_NS, "js", "array"));
         }
-        if (((ItemType) other).isXQueryArrayItemType()) {
-            // structural equality check
-            return this.structurallyEqual((XQueryArrayItemType) other);
-        }
-        if (((ItemType) other).isArrayItemType() && other.equals(BuiltinTypesCatalogue.arrayItem)) {
-            // js:array() = array(item)
-            ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(
-                SequenceType.createSequenceType("item")
-            );
-            return this.equals(arrayItemType);
-        }
-        return isEqualTo((ItemType) other);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.name, this.baseType, this.memberSequenceType);
-    }
-
-    boolean structurallyEqual(XQueryArrayItemType o) {
-        return Objects.equals(this.name, o.name)
-            && this.baseType.equals(o.baseType)
-            && this.memberSequenceType.equals(o.memberSequenceType);
+        return structuralTypeKey(XQueryArrayItemType.class, this.name, this.baseType, this.memberSequenceType);
     }
 
     @Override
@@ -114,8 +100,7 @@ public class XQueryArrayItemType implements ItemType {
         }
         if (superType.isArrayItemType()) {
             ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(
-                new SequenceType(superType.getArrayContentFacet(), SequenceType.Arity.One)
-            );
+                    new SequenceType(superType.getArrayContentFacet(), SequenceType.Arity.One));
             // a js:array() with a base type of T and no other restrictions <: xs:array(T)
             return superType.equals(BuiltinTypesCatalogue.arrayItem) && this.isSubtypeOf(arrayItemType);
         }
@@ -132,10 +117,8 @@ public class XQueryArrayItemType implements ItemType {
             }
             FunctionSignature arrayAsFunctionSignature = new FunctionSignature(
                     Collections.singletonList(
-                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-                    ),
-                    this.memberSequenceType
-            );
+                            new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)),
+                    this.memberSequenceType);
             return arrayAsFunctionSignature.isSubtypeOf(superSignature);
         }
         return false;
@@ -156,10 +139,8 @@ public class XQueryArrayItemType implements ItemType {
             }
             FunctionSignature arrayAsFunctionSignature = new FunctionSignature(
                     Collections.singletonList(
-                        new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)
-                    ),
-                    this.memberSequenceType
-            );
+                            new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One)),
+                    this.memberSequenceType);
             if (arrayAsFunctionSignature.isSubtypeOf(otherSignature)) {
                 return other;
             }
@@ -171,26 +152,16 @@ public class XQueryArrayItemType implements ItemType {
         if (other.isArrayItemType()) {
             // an array(T) is a supertype of a js:array() with a base type of T and no other restrictions <: xs:array(T)
             ItemType arrayItemType = ItemTypeFactory.xqueryArrayOf(
-                new SequenceType(other.getArrayContentFacet(), SequenceType.Arity.One)
-            );
+                    new SequenceType(other.getArrayContentFacet(), SequenceType.Arity.One));
             return this.findLeastCommonSuperTypeWith(arrayItemType);
         }
         if (other.isXQueryArrayItemType()) {
-            SequenceType memberSuperType = this.memberSequenceType.leastCommonSupertypeWith(
-                other.getMemberSequenceType()
-            );
-            if (
-                memberSuperType.equals(
-                    SequenceType.createSequenceType("item*")
-                )
-            ) {
+            SequenceType memberSuperType =
+                    this.memberSequenceType.leastCommonSupertypeWith(other.getMemberSequenceType());
+            if (memberSuperType.equals(SequenceType.createSequenceType("item*"))) {
                 return BuiltinTypesCatalogue.xqueryArrayItem;
             }
-            return new XQueryArrayItemType(
-                    null,
-                    BuiltinTypesCatalogue.xqueryArrayItem,
-                    memberSuperType
-            );
+            return new XQueryArrayItemType(null, BuiltinTypesCatalogue.xqueryArrayItem, memberSuperType);
         }
         ItemType current = this;
         ItemType o = other;
@@ -205,22 +176,6 @@ public class XQueryArrayItemType implements ItemType {
             o = o.getBaseType();
         }
         return current;
-    }
-
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeClassAndObject(output, this.baseType);
-        kryo.writeClassAndObject(output, this.memberSequenceType);
-        output.writeInt(this.typeTreeDepth);
-    }
-
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.memberSequenceType = (SequenceType) kryo.readClassAndObject(input);
-        this.typeTreeDepth = input.readInt();
     }
 
     @Override
@@ -257,16 +212,13 @@ public class XQueryArrayItemType implements ItemType {
             if (!this.memberSequenceType.equals(SequenceType.createSequenceType("item*"))) {
                 throw new InvalidSchemaException(
                         "Primitive array(*) must use item* for members, got: " + this.memberSequenceType,
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             return;
         }
         if (!isTypedArray()) {
             throw new InvalidSchemaException(
-                    "Invalid base type for array item type: " + this.baseType,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Invalid base type for array item type: " + this.baseType, ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -275,11 +227,10 @@ public class XQueryArrayItemType implements ItemType {
         if (!this.memberSequenceType.isSubtypeOf(primitive.memberSequenceType)) {
             throw new InvalidSchemaException(
                     "Array member sequence type "
-                        + this.memberSequenceType
-                        + " must be a subtype of "
-                        + primitive.memberSequenceType,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                            + this.memberSequenceType
+                            + " must be a subtype of "
+                            + primitive.memberSequenceType,
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -313,8 +264,7 @@ public class XQueryArrayItemType implements ItemType {
 
     @Override
     public boolean isResolved() {
-        return this.baseType.isResolved()
-            && this.memberSequenceType.isResolved();
+        return this.baseType.isResolved() && this.memberSequenceType.isResolved();
     }
 
     @Override
@@ -339,7 +289,7 @@ public class XQueryArrayItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 
@@ -348,4 +298,3 @@ public class XQueryArrayItemType implements ItemType {
         throw new UnsupportedOperationException("array item type is not mapped to Spark SQL");
     }
 }
-

@@ -1,15 +1,36 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.serialization;
 
+import java.io.Serial;
+import java.io.Serializable;
+
 import org.apache.commons.text.StringEscapeUtils;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.items.xml.NamespaceItem;
 
-public class TysonSerializer implements Serializer, java.io.Serializable {
+public class TysonSerializer implements Serializer, Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private final org.rumbledb.serialization.SerializationParameters params;
+    private final SerializationParameters params;
+    private final NamespaceSerializationContext namespaceContext = new NamespaceSerializationContext();
 
     public TysonSerializer(SerializationParameters params) {
         this.params = params;
@@ -17,13 +38,13 @@ public class TysonSerializer implements Serializer, java.io.Serializable {
 
     @Override
     public String serialize(Item i) {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         serialize(i, sb, "", true);
         return sb.toString();
     }
 
     @Override
-    public void serialize(Item item, StringBuffer sb, String indent, boolean isTopLevel) {
+    public void serialize(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
         if (item.isFunction()) {
             throw new FunctionsNonSerializableException();
         }
@@ -84,7 +105,10 @@ public class TysonSerializer implements Serializer, java.io.Serializable {
                     firstTime = false;
                 }
                 Item value = item.getItemByKey(key);
-                sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
+                sb.append("\"")
+                        .append(StringEscapeUtils.escapeJson(key))
+                        .append("\"")
+                        .append(" : ");
                 if (this.params.getIndent()) {
                     serialize(value, sb, indent + "  ", false);
                 } else {
@@ -100,14 +124,13 @@ public class TysonSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isMap()) {
-            String tysonPrefix =
-                "(\"" + item.getDynamicType().getIdentifierString() + "\") ";
+            String tysonPrefix = "(\"" + item.getDynamicType().getIdentifierString() + "\") ";
             SerializerUtils.serializeMapAsJsonSafeObject(this, this.params, item, sb, indent, tysonPrefix);
             return;
         }
         if (item.isDocumentNode()) {
             for (Item child : item.children()) {
-                StringBuffer childBuffer = new StringBuffer();
+                StringBuilder childBuffer = new StringBuilder();
                 serialize(child, childBuffer, indent, isTopLevel);
                 if (childBuffer.length() > 0 && childBuffer.charAt(childBuffer.length() - 1) == '\n') {
                     childBuffer.setLength(childBuffer.length() - 1);
@@ -117,26 +140,12 @@ public class TysonSerializer implements Serializer, java.io.Serializable {
             return;
         }
         if (item.isElementNode()) {
-            sb.append(indent);
-            sb.append("<");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            for (Item attribute : item.attributes()) {
-                serialize(attribute, sb, indent, isTopLevel);
+            this.namespaceContext.enterElement(item);
+            try {
+                serializeElementNode(item, sb, indent, isTopLevel);
+            } finally {
+                this.namespaceContext.leaveElement();
             }
-            for (Item namespace : item.declaredNamespaceNodes()) {
-                serialize(namespace, sb, indent, isTopLevel);
-            }
-            sb.append(">");
-            sb.append("\n");
-
-            for (Item child : item.children()) {
-                serialize(child, sb, indent + "  ", isTopLevel);
-            }
-            sb.append(indent);
-            sb.append("</");
-            SerializerUtils.appendDmNodeNameLexical(sb, item);
-            sb.append(">");
-            sb.append("\n");
             return;
         }
         if (item.isNamespaceNode()) {
@@ -190,6 +199,27 @@ public class TysonSerializer implements Serializer, java.io.Serializable {
             sb.append("\n");
         }
     }
+
+    private void serializeElementNode(Item item, StringBuilder sb, String indent, boolean isTopLevel) {
+        sb.append(indent);
+        sb.append("<");
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        for (Item attribute : item.attributes()) {
+            serialize(attribute, sb, indent, isTopLevel);
+        }
+        for (Item namespace : this.namespaceContext.declarations(item, (prefix, uri) -> prefix.isEmpty())) {
+            serialize(namespace, sb, indent, isTopLevel);
+        }
+        sb.append(">");
+        sb.append("\n");
+
+        for (Item child : item.children()) {
+            serialize(child, sb, indent + "  ", isTopLevel);
+        }
+        sb.append(indent);
+        sb.append("</");
+        SerializerUtils.appendDmNodeNameLexical(sb, item);
+        sb.append(">");
+        sb.append("\n");
+    }
 }
-
-

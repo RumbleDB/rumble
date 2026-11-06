@@ -1,18 +1,46 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.expressions.control;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Objects;
+
+import lombok.EqualsAndHashCode;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class CatchPattern implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
+    @EqualsAndHashCode.Include
     private final String namespace;
+
+    @EqualsAndHashCode.Include
     private final String localName;
+
+    @EqualsAndHashCode.Include
     private final boolean namespaceWildcard;
+
+    @EqualsAndHashCode.Include
     private final boolean localNameWildcard;
+
     private final String displayText;
 
     private CatchPattern(
@@ -20,8 +48,7 @@ public class CatchPattern implements Serializable {
             String localName,
             boolean namespaceWildcard,
             boolean localNameWildcard,
-            String displayText
-    ) {
+            String displayText) {
         this.namespace = namespace;
         this.localName = localName;
         this.namespaceWildcard = namespaceWildcard;
@@ -66,22 +93,5 @@ public class CatchPattern implements Serializable {
     @Override
     public String toString() {
         return this.displayText;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof CatchPattern)) {
-            return false;
-        }
-        CatchPattern pattern = (CatchPattern) other;
-        return Objects.equals(this.namespace, pattern.namespace)
-            && Objects.equals(this.localName, pattern.localName)
-            && this.namespaceWildcard == pattern.namespaceWildcard
-            && this.localNameWildcard == pattern.localNameWildcard;
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.namespace, this.localName, this.namespaceWildcard, this.localNameWildcard);
     }
 }

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,14 +11,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.typing;
 
 import java.util.Collections;
 import java.util.List;
+
+import lombok.Getter;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -30,17 +27,13 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-
+@Getter
 public class InstanceOfExpression extends Expression {
 
     private Expression mainExpression;
     private SequenceType sequenceType;
 
-    public InstanceOfExpression(
-            Expression mainExpression,
-            SequenceType sequenceType,
-            ExceptionMetadata metadata
-    ) {
+    public InstanceOfExpression(Expression mainExpression, SequenceType sequenceType, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
@@ -54,30 +47,21 @@ public class InstanceOfExpression extends Expression {
         return visitor.visitInstanceOfExpression(this, argument);
     }
 
-    public SequenceType getSequenceType() {
-        return this.sequenceType;
-    }
-
-    public Expression getMainExpression() {
-        return this.mainExpression;
-    }
-
     @Override
     public List<Node> getChildren() {
         return Collections.singletonList(this.mainExpression);
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    @Override
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(
-            " ("
+        buffer.append(" ("
                 + (this.sequenceType.toString())
                 + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
-                + ") "
-        );
+                + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
         buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
@@ -88,7 +72,7 @@ public class InstanceOfExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("(\n");
 
@@ -110,5 +94,4 @@ public class InstanceOfExpression extends Expression {
         indentIt(sb, indent);
         sb.append(")\n");
     }
-
 }

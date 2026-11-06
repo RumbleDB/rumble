@@ -5,6 +5,7 @@ on:
     branches:
       - master
   pull_request:
+  merge_group:
 
 env:
   JAVA_VERSION: "17"
@@ -23,61 +24,52 @@ jobs:
         uses: actions/github-script@v9
         with:
           script: |
-            const workflowId = 'run-qt3.yml';
-            const branch = context.eventName === 'pull_request'
+            const isPullRequest = context.eventName === 'pull_request';
+            const branch = isPullRequest
               ? context.payload.pull_request.base.ref
-              : context.ref.replace('refs/heads/', '');
-            const event = 'push';
+              // A merge group runs on a temporary gh-readonly-queue ref, not its target branch.
+              : (context.payload.merge_group?.base_ref ?? context.ref).replace('refs/heads/', '');
+            const event = isPullRequest && branch !== context.payload.repository.default_branch
+              ? 'pull_request'
+              : 'push';
+            // A push rerun must not compare with a later master run.
+            const createdBefore = isPullRequest ? null : Date.parse((await github.rest.actions.getWorkflowRun({
+              ...context.repo, run_id: context.runId
+            })).data.created_at);
+            core.setOutput('baseline_run_id', '');
 
-            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: workflowId,
-              branch,
-              event,
-              status: 'completed',
-              per_page: 100
-            });
-
-            async function hasBaselineArtifacts(runId) {
-              const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                run_id: runId,
-                per_page: 100
-              });
-              const available = new Set(
-                artifacts
-                  .filter((artifact) => !artifact.expired)
-                  .map((artifact) => artifact.name)
-              );
-              return (
-                available.has('surefire-all-jsoniq') &&
-                available.has('surefire-all-xquery')
-              );
-            }
-
-            let baselineRun = null;
-            for (const run of runs) {
-              if (run.conclusion !== 'success') {
-                continue;
-              }
-              if (run.id === context.runId) {
-                continue;
-              }
-              if (await hasBaselineArtifacts(run.id)) {
-                baselineRun = run;
-                break;
+            // Workflow runs are listed newest first. Fetch pages lazily and stop at
+            // the first usable baseline, without a search filter or fixed page limit.
+            const requiredArtifacts = ['surefire-all-jsoniq', 'surefire-all-xquery'];
+            for await (const { data } of github.paginate.iterator(
+              github.rest.actions.listWorkflowRuns,
+              { ...context.repo, workflow_id: 'run-qt3.yml', per_page: 100 }
+            )) {
+              const candidates = data.filter((run) => run.id !== context.runId
+                && run.head_branch === branch && run.event === event
+                && run.head_repository?.id === context.payload.repository.id
+                && (isPullRequest || Date.parse(run.created_at) < createdBefore));
+              for (const run of candidates) {
+                core.info(`Checking run ${run.id} (${run.created_at}, ${run.head_sha}): ${run.status}/${run.conclusion}.`);
+                if (run.status !== 'completed' || run.conclusion !== 'success') {
+                  continue;
+                }
+                const artifacts = await github.paginate(github.rest.actions.listWorkflowRunArtifacts, {
+                  ...context.repo, run_id: run.id, per_page: 100
+                });
+                const available = new Set(artifacts.filter((artifact) => !artifact.expired)
+                  .map((artifact) => artifact.name));
+                const missing = requiredArtifacts.filter((name) => !available.has(name));
+                if (missing.length) {
+                  core.info(`Skipping run ${run.id}: missing or expired artifacts: ${missing.join(', ')}.`);
+                  continue;
+                }
+                core.info(`Using latest available baseline: ${run.html_url} (${run.head_sha}, ${run.created_at}).`);
+                core.setOutput('baseline_run_id', String(run.id));
+                return;
               }
             }
-
-            const baselineRunId = baselineRun ? String(baselineRun.id) : '';
-            core.info(
-              baselineRunId
-                ? `Using baseline run ${baselineRunId} from branch ${branch}.`
-                : `No successful baseline run with unexpired QT3 artifacts found for branch ${branch}.`
-            );
-            core.setOutput('baseline_run_id', baselineRunId);
+            core.warning(`No successful ${event} baseline with both unexpired artifacts found for ${branch}.`);
 
   build:
     name: Build RumbleDB
@@ -118,9 +110,44 @@ jobs:
       rumble_artifact_name: rumble-build
       baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
 
+  check-xquery-results:
+    name: Require zero XQuery failures and errors
+    needs: [qt3-xquery]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download XQuery reports
+        uses: actions/download-artifact@v8
+        with:
+          name: surefire-all-xquery
+          path: surefire-reports
+
+      - name: Check XQuery results
+        shell: python
+        run: |
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          reports = list(Path('surefire-reports').glob('*.xml'))
+          if not reports:
+              raise SystemExit('No XQuery test reports found')
+          failures = errors = 0
+          for report in reports:
+              root = ET.parse(report).getroot()
+              suites = [root] if root.tag == 'testsuite' else list(root.iter('testsuite'))
+              if not suites:
+                  raise SystemExit(f'No test suites found in {report}')
+              for suite in suites:
+                  failures += int(suite.attrib['failures'])
+                  errors += int(suite.attrib['errors'])
+          print(f'XQuery results: {failures} failed, {errors} errored')
+          if failures != 0 or errors != 0:
+              raise SystemExit('XQuery tests must have zero failures and errors')
+
   post-results:
     name: Post Results
     needs: [qt3-jsoniq, qt3-xquery]
+    # The PR and the later push to master get the comments, not the temporary merge group commit.
+    if: github.event_name != 'merge_group'
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,19 +11,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Matteo Agnoletto (EPMatt)
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.xml;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Expression representing a computed namespace constructor.
@@ -34,6 +31,7 @@ import java.util.List;
  * @see <a href="https://www.w3.org/TR/xquery-31/#id-computed-namespaces">XQuery 3.1, 3.9.3.7: Computed Namespace
  *      Constructors</a>
  */
+@Getter
 public class ComputedNamespaceConstructorExpression extends Expression {
     /** The static prefix (if specified) */
     private final String prefix;
@@ -49,11 +47,7 @@ public class ComputedNamespaceConstructorExpression extends Expression {
      * @param uriExpression The URI expression
      * @param metadata The exception metadata
      */
-    public ComputedNamespaceConstructorExpression(
-            String prefix,
-            Expression uriExpression,
-            ExceptionMetadata metadata
-    ) {
+    public ComputedNamespaceConstructorExpression(String prefix, Expression uriExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.prefix = prefix;
         this.prefixExpression = null;
@@ -68,10 +62,7 @@ public class ComputedNamespaceConstructorExpression extends Expression {
      * @param metadata The exception metadata
      */
     public ComputedNamespaceConstructorExpression(
-            Expression prefixExpression,
-            Expression uriExpression,
-            ExceptionMetadata metadata
-    ) {
+            Expression prefixExpression, Expression uriExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.prefix = null;
         this.prefixExpression = prefixExpression;
@@ -82,18 +73,6 @@ public class ComputedNamespaceConstructorExpression extends Expression {
         return this.prefix != null;
     }
 
-    public String getPrefix() {
-        return this.prefix;
-    }
-
-    public Expression getPrefixExpression() {
-        return this.prefixExpression;
-    }
-
-    public Expression getUriExpression() {
-        return this.uriExpression;
-    }
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitComputedNamespaceConstructor(this, argument);
@@ -101,11 +80,18 @@ public class ComputedNamespaceConstructorExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>();
+        List<Node> result = new ArrayList<>();
+        if (this.prefixExpression != null) {
+            result.add(this.prefixExpression);
+        }
+        if (this.uriExpression != null) {
+            result.add(this.uriExpression);
+        }
+        return result;
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("namespace ");
         if (this.hasStaticPrefix()) {
@@ -120,4 +106,3 @@ public class ComputedNamespaceConstructorExpression extends Expression {
         sb.append(" }\n");
     }
 }
-

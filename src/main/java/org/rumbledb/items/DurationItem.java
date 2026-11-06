@@ -1,5 +1,21 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
@@ -13,41 +29,29 @@ import java.util.regex.Pattern;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+public class DurationItem extends AbstractAtomicItem {
 
-public class DurationItem implements Item {
-
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private Duration durationValue = Duration.ZERO;
     private Period periodValue = Period.ZERO;
-    Pattern durationRegex = Pattern.compile(
-        "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))"
-    );
-
-    @SuppressWarnings("unused")
-    public DurationItem() {
-        super();
-    }
+    private static final Pattern durationRegex = Pattern.compile(
+            "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))");
 
     public DurationItem(Duration value) {
-        super();
         this.durationValue = value;
     }
 
     public DurationItem(Period value) {
-        super();
         this.periodValue = value;
     }
 
     public DurationItem(String value) {
-        if (!this.durationRegex.matcher(value).matches()) {
+        if (!durationRegex.matcher(value).matches()) {
             throw new IllegalArgumentException("Invalid duration: " + value);
         }
         getDurationFromString(value);
@@ -65,19 +69,6 @@ public class DurationItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
     public Duration getDurationValue() {
         if (Objects.isNull(this.durationValue) && Objects.isNull(this.periodValue)) {
             return Duration.ZERO;
@@ -87,11 +78,18 @@ public class DurationItem implements Item {
         LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
         LocalDateTime target = anchor.plus(this.periodValue);
         return Duration.between(anchor, target)
-            .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue);
+                .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue);
     }
 
+    @Override
     public Period getPeriodValue() {
         return this.periodValue;
+    }
+
+    @Override
+    public Duration getDayTimeDurationComponent() {
+        Duration days = Duration.ofDays(Objects.isNull(this.periodValue) ? 0 : this.periodValue.getDays());
+        return days.plus(Objects.isNull(this.durationValue) ? Duration.ZERO : this.durationValue);
     }
 
     @Override
@@ -114,21 +112,6 @@ public class DurationItem implements Item {
         return false;
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.durationValue, this.periodValue);
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.getStringValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        getDurationFromString(input.readString());
-    }
-
     private void getDurationFromString(String durationPeriodString) {
         try {
             if (!durationPeriodString.contains("PT")) {
@@ -144,9 +127,7 @@ public class DurationItem implements Item {
             }
         } catch (DateTimeParseException e) {
             throw new DurationOverflowOrUnderflow(
-                    "Invalid xs:duration: \"" + durationPeriodString + "\"",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    "Invalid xs:duration: \"" + durationPeriodString + "\"", ExceptionMetadata.EMPTY_METADATA);
         } catch (Exception e) {
             throw new IllegalArgumentException("Invalid xs:duration format: " + durationPeriodString, e);
         }
@@ -157,7 +138,7 @@ public class DurationItem implements Item {
         return BuiltinTypesCatalogue.durationItem;
     }
 
-    public static Comparator<Period> periodComparator = (p1, p2) -> {
+    public static final Comparator<Period> periodComparator = (p1, p2) -> {
         LocalDate base = LocalDate.of(2000, 1, 1);
         return base.plus(p1).compareTo(base.plus(p2));
     };
@@ -172,8 +153,8 @@ public class DurationItem implements Item {
         LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
         LocalDateTime target = anchor.plus(this.periodValue);
         return Duration.between(anchor, target)
-            .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue)
-            .toMillis();
+                .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue)
+                .toMillis();
     }
 
     public static String normalizeDuration(Period period, Duration duration) {
@@ -200,21 +181,17 @@ public class DurationItem implements Item {
 
         StringBuilder sb = new StringBuilder();
         sb.append((seconds < 0 || period.isNegative()) ? "-P" : "P");
-        if (period.getYears() != 0)
-            sb.append(Math.abs(period.getYears())).append("Y");
-        if (period.getMonths() != 0)
-            sb.append(Math.abs(period.getMonths())).append("M");
-        if (totalDays != 0)
-            sb.append(Math.abs(totalDays)).append("D");
+        if (period.getYears() != 0) sb.append(Math.abs(period.getYears())).append("Y");
+        if (period.getMonths() != 0) sb.append(Math.abs(period.getMonths())).append("M");
+        if (totalDays != 0) sb.append(Math.abs(totalDays)).append("D");
 
         if (hours != 0 || minutes != 0 || totalSeconds.signum() != 0) {
             sb.append("T");
-            if (hours != 0)
-                sb.append(Math.abs(hours)).append("H");
-            if (minutes != 0)
-                sb.append(Math.abs(minutes)).append("M");
+            if (hours != 0) sb.append(Math.abs(hours)).append("H");
+            if (minutes != 0) sb.append(Math.abs(minutes)).append("M");
             if (totalSeconds.signum() != 0)
-                sb.append(totalSeconds.abs().stripTrailingZeros().toPlainString()).append("S");
+                sb.append(totalSeconds.abs().stripTrailingZeros().toPlainString())
+                        .append("S");
         }
         return sb.toString();
     }
@@ -222,8 +199,9 @@ public class DurationItem implements Item {
     public static Period normalizeMonthsToYears(Period period) {
         Period normalized = period.normalized();
         if (normalized.getMonths() >= 12) {
-            return normalized.minusMonths(normalized.getMonths() - (normalized.getMonths() % 12))
-                .plusYears(normalized.getMonths() / 12);
+            return normalized
+                    .minusMonths(normalized.getMonths() - (normalized.getMonths() % 12))
+                    .plusYears(normalized.getMonths() / 12);
         }
         return normalized;
     }

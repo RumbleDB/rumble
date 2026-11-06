@@ -1,17 +1,33 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items.parsing;
 
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.UserDefinedType;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 
 public class ItemUserDefinedType extends UserDefinedType<Item> {
 
-    DataFrameContext dataFrameContext;
+    private transient DataFrameContext dataFrameContext;
 
-    public void initialize() {
+    private void initialize() {
         this.dataFrameContext = new DataFrameContext();
     }
 
@@ -21,19 +37,18 @@ public class ItemUserDefinedType extends UserDefinedType<Item> {
     }
 
     @Override
-    public byte[] serialize(Item item) {
-        if (dataFrameContext == null) {
+    public synchronized byte[] serialize(Item item) {
+        if (this.dataFrameContext == null) {
             initialize();
         }
         this.dataFrameContext.getOutput().clear();
         this.dataFrameContext.getKryo().writeClassAndObject(this.dataFrameContext.getOutput(), item);
-        byte[] s = this.dataFrameContext.getOutput().toBytes();
-        return s;
+        return this.dataFrameContext.getOutput().toBytes();
     }
 
     @Override
-    public Item deserialize(Object object) {
-        if (dataFrameContext == null) {
+    public synchronized Item deserialize(Object object) {
+        if (this.dataFrameContext == null) {
             initialize();
         }
         if (object instanceof byte[] b) {

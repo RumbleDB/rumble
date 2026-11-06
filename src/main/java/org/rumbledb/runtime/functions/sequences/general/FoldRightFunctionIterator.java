@@ -1,26 +1,104 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.sequences.general;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnimplementedFunctionException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.CommaExpressionIterator;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.functions.FunctionCall;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.types.SequenceType;
 
-import java.util.List;
-
-public class FoldRightFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-    private static final long serialVersionUID = 1L;
-
-    public FoldRightFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
-        super(arguments, staticContext);
-    }
+public class FoldRightFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        throw new UnimplementedFunctionException("fn:fold-right", getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IteratorLocalCursor<>(() -> computeResult(context).iterator(), getMetadata());
+    }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan zeroIterator;
+    private final ItemRuntimePlan functionIterator;
+
+    public FoldRightFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
+        if (arguments.size() != 3) {
+            throw new OurBadException("fn:fold-right must have exactly three arguments.");
+        }
+        this.sequenceIterator = arguments.get(0);
+        this.zeroIterator = arguments.get(1);
+        this.functionIterator = arguments.get(2);
+    }
+
+    private List<Item> computeResult(DynamicContext context) {
+        List<Item> inputItems = this.sequenceIterator.materialize(context);
+        List<Item> accumulator = this.zeroIterator.materialize(context);
+        Item functionItem = this.functionIterator.materialize(context).get(0);
+
+        for (int i = inputItems.size() - 1; i >= 0; i--) {
+            Item inputItem = inputItems.get(i);
+            accumulator = applyFunction(functionItem, Collections.singletonList(inputItem), accumulator, context);
+        }
+
+        return accumulator;
+    }
+
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
+        RuntimeStaticContext localItemStarContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
+        if (items.isEmpty()) {
+            return new CommaExpressionIterator(Collections.emptyList(), localItemStarContext);
+        }
+        if (items.size() == 1) {
+            return new ConstantRuntimeIterator(items.get(0), localItemStarContext);
+        }
+
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(items.size());
+        for (Item item : items) {
+            childIterators.add(new ConstantRuntimeIterator(item, localItemStarContext));
+        }
+        return new CommaExpressionIterator(childIterators, localItemStarContext);
+    }
+
+    private List<Item> applyFunction(
+            Item functionItem, List<Item> currentItemSequence, List<Item> accumulator, DynamicContext context) {
+        List<ItemRuntimePlan> arguments = new ArrayList<>(2);
+        arguments.add(createSequenceIterator(currentItemSequence));
+        arguments.add(createSequenceIterator(accumulator));
+
+        return FunctionCall.of(functionItem, arguments, this.staticContext, context)
+                .materialize();
     }
 }

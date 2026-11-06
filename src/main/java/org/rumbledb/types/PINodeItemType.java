@@ -1,11 +1,29 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
-import org.apache.commons.lang3.StringUtils;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.Name;
-
-import java.util.Objects;
+import java.io.Serial;
 import java.util.Set;
+
+import lombok.Getter;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 /**
  * Class representing processing-instruction() and processing-instruction(N) item types.
@@ -13,11 +31,14 @@ import java.util.Set;
  * Wildcard processing-instruction() is represented with no target-name restriction.
  * processing-instruction(N) is represented with a normalized target-name restriction.
  */
-public class PINodeItemType implements ItemType {
+public class PINodeItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     private Name catalogueName;
+
+    @Getter
     private String normalizedTarget;
 
     public PINodeItemType() {
@@ -30,50 +51,17 @@ public class PINodeItemType implements ItemType {
             throw new IllegalArgumentException("Processing-instruction target cannot be null.");
         }
         this.catalogueName = null;
-        this.normalizedTarget = StringUtils.normalizeSpace(targetName);
+        this.normalizedTarget =
+                NamespaceBindingUtils.normalizePITestTarget(targetName, ExceptionMetadata.EMPTY_METADATA);
     }
 
     private boolean isWildcardPI() {
         return this.normalizedTarget == null;
     }
 
-    public String getNormalizedTarget() {
-        return this.normalizedTarget;
-    }
-
     @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.catalogueName, Name.class);
-        output.writeString(this.normalizedTarget);
-    }
-
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.catalogueName = kryo.readObjectOrNull(input, Name.class);
-        this.normalizedTarget = input.readString();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType) || !((ItemType) other).isNodeItemType()) {
-            return false;
-        }
-        return isEqualTo((ItemType) other);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.catalogueName, this.normalizedTarget);
-    }
-
-    @Override
-    public boolean isEqualTo(ItemType otherType) {
-        if (!(otherType instanceof PINodeItemType)) {
-            return false;
-        }
-        PINodeItemType other = (PINodeItemType) otherType;
-        return Objects.equals(this.catalogueName, other.catalogueName)
-            && Objects.equals(this.normalizedTarget, other.normalizedTarget);
+    protected Object equalityKey() {
+        return structuralTypeKey(PINodeItemType.class, this.catalogueName, this.normalizedTarget);
     }
 
     @Override
@@ -103,17 +91,14 @@ public class PINodeItemType implements ItemType {
                 }
             }
         }
-        if (
-            this.equals(superType)
+        if (this.equals(superType)
                 || superType.equals(BuiltinTypesCatalogue.item)
-                || superType.equals(BuiltinTypesCatalogue.nodeItem)
-        ) {
+                || superType.equals(BuiltinTypesCatalogue.nodeItem)) {
             return true;
         }
-        if (!(superType instanceof PINodeItemType)) {
+        if (!(superType instanceof PINodeItemType other)) {
             return false;
         }
-        PINodeItemType other = (PINodeItemType) superType;
         if (other.isWildcardPI()) {
             return true;
         }
@@ -172,7 +157,7 @@ public class PINodeItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 }

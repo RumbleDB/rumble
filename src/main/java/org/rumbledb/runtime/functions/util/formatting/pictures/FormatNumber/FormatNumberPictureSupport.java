@@ -1,16 +1,30 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber;
 
-import org.rumbledb.context.DecimalFormatDefinition;
-import org.rumbledb.runtime.functions.util.formatting.GroupingPos;
-
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.function.IntPredicate;
 
+import org.rumbledb.context.DecimalFormatDefinition;
+import org.rumbledb.runtime.functions.util.formatting.GroupingPos;
+import org.rumbledb.runtime.functions.util.formatting.NumericFormattingSupport;
+
 public class FormatNumberPictureSupport {
-    private FormatNumberPictureSupport() {
-    }
+    private FormatNumberPictureSupport() {}
 
     static boolean isMandatoryDigit(int cp, DecimalFormatDefinition decimalFormat) {
         int zeroDigit = decimalFormat.getZeroDigit();
@@ -37,24 +51,12 @@ public class FormatNumberPictureSupport {
         return cp == decimalFormat.getPatternSeparator();
     }
 
-    static boolean isPercent(int cp, DecimalFormatDefinition decimalFormat) {
-        return cp == decimalFormat.getPercent();
-    }
-
-    static boolean isPerMille(int cp, DecimalFormatDefinition decimalFormat) {
-        return cp == decimalFormat.getPerMille();
-    }
-
     static boolean isActiveCharacter(int cp, DecimalFormatDefinition decimalFormat) {
         return isDecimalSeparator(cp, decimalFormat)
-            || isGroupingSeparator(cp, decimalFormat)
-            || isOptionalDigit(cp, decimalFormat)
-            || isMandatoryDigit(cp, decimalFormat)
-            || isExponentSeparator(cp, decimalFormat);
-    }
-
-    static boolean isPassiveCharacter(int cp, DecimalFormatDefinition decimalFormat) {
-        return !isActiveCharacter(cp, decimalFormat);
+                || isGroupingSeparator(cp, decimalFormat)
+                || isOptionalDigit(cp, decimalFormat)
+                || isMandatoryDigit(cp, decimalFormat)
+                || isExponentSeparator(cp, decimalFormat);
     }
 
     /**
@@ -82,13 +84,12 @@ public class FormatNumberPictureSupport {
         int prevCp = s.codePointBefore(index);
         int nextCp = s.codePointAt(nextIndex);
 
-        return isActiveCharacter(prevCp, decimalFormat)
-            && isActiveCharacter(nextCp, decimalFormat);
+        return isActiveCharacter(prevCp, decimalFormat) && isActiveCharacter(nextCp, decimalFormat);
     }
 
     static int countActiveDigitSigns(String s, DecimalFormatDefinition decimalFormat) {
         int count = 0;
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
             if (isMandatoryDigit(cp, decimalFormat) || isOptionalDigit(cp, decimalFormat)) {
                 count++;
@@ -100,7 +101,7 @@ public class FormatNumberPictureSupport {
 
     static int countMandatoryDigits(String s, DecimalFormatDefinition decimalFormat) {
         int count = 0;
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
             if (isMandatoryDigit(cp, decimalFormat)) {
                 count++;
@@ -111,7 +112,7 @@ public class FormatNumberPictureSupport {
     }
 
     static int findLeftmostActiveCharIndex(String s, DecimalFormatDefinition decimalFormat) {
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             if (isActiveCharacterAt(s, i, decimalFormat)) {
                 return i;
             }
@@ -123,7 +124,7 @@ public class FormatNumberPictureSupport {
 
     static int findRightmostActiveCharIndex(String s, DecimalFormatDefinition decimalFormat) {
         int last = -1;
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             if (isActiveCharacterAt(s, i, decimalFormat)) {
                 last = i;
             }
@@ -133,12 +134,9 @@ public class FormatNumberPictureSupport {
         return last;
     }
 
-    static int countOccurrences(
-            String s,
-            int targetCodePoint
-    ) {
+    static int countOccurrences(String s, int targetCodePoint) {
         int count = 0;
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
             if (cp == targetCodePoint) {
                 count++;
@@ -150,7 +148,7 @@ public class FormatNumberPictureSupport {
 
     static int findSeparatorIndex(String s, IntPredicate isSeparator) {
         int found = -1;
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
             if (isSeparator.test(cp)) {
                 if (found != -1) {
@@ -167,7 +165,7 @@ public class FormatNumberPictureSupport {
         List<GroupingPos> groupingPositions = new ArrayList<>();
         int digitSignsSeenToRight = 0;
 
-        for (int i = s.length(); i > 0;) {
+        for (int i = s.length(); i > 0; ) {
             int cp = s.codePointBefore(i);
             i -= Character.charCount(cp);
 
@@ -185,7 +183,7 @@ public class FormatNumberPictureSupport {
         List<GroupingPos> groupingPositions = new ArrayList<>();
         int digitSignsSeenToLeft = 0;
 
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
 
             if (isMandatoryDigit(cp, decimalFormat) || isOptionalDigit(cp, decimalFormat)) {
@@ -201,7 +199,7 @@ public class FormatNumberPictureSupport {
     }
 
     static boolean hasAdjacentGroupingAndDecimalSeparator(String s, DecimalFormatDefinition decimalFormat) {
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
             int nextIndex = i + Character.charCount(cp);
 
@@ -223,7 +221,7 @@ public class FormatNumberPictureSupport {
     }
 
     static boolean hasAdjacentGroupingSeparators(String s, DecimalFormatDefinition decimalFormat) {
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
             int nextIndex = i + Character.charCount(cp);
 
@@ -245,7 +243,7 @@ public class FormatNumberPictureSupport {
         }
 
         for (GroupingPos gp : groupingPositions) {
-            if (gp.getDistanceFromRight() <= 0) {
+            if (gp.distanceFromAnchor() <= 0) {
                 return true;
             }
         }
@@ -254,10 +252,7 @@ public class FormatNumberPictureSupport {
     }
 
     static boolean hasGroupingSeparatorAtEndOfFractionalPart(
-            String fractionalPart,
-            List<GroupingPos> groupingPositions,
-            DecimalFormatDefinition decimalFormat
-    ) {
+            String fractionalPart, List<GroupingPos> groupingPositions, DecimalFormatDefinition decimalFormat) {
         if (groupingPositions == null || groupingPositions.isEmpty()) {
             return false;
         }
@@ -265,7 +260,7 @@ public class FormatNumberPictureSupport {
         int totalDigitSigns = countActiveDigitSigns(fractionalPart, decimalFormat);
 
         for (GroupingPos gp : groupingPositions) {
-            if (gp.getDistanceFromRight() >= totalDigitSigns) {
+            if (gp.distanceFromAnchor() >= totalDigitSigns) {
                 return true;
             }
         }
@@ -276,7 +271,7 @@ public class FormatNumberPictureSupport {
     static boolean hasMandatoryDigitFollowedByOptionalDigit(String s, DecimalFormatDefinition decimalFormat) {
         boolean seenMandatoryDigit = false;
 
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
 
             if (isMandatoryDigit(cp, decimalFormat)) {
@@ -294,7 +289,7 @@ public class FormatNumberPictureSupport {
     static boolean hasOptionalDigitFollowedByMandatoryDigit(String s, DecimalFormatDefinition decimalFormat) {
         boolean seenOptionalDigit = false;
 
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
 
             if (isOptionalDigit(cp, decimalFormat)) {
@@ -310,7 +305,7 @@ public class FormatNumberPictureSupport {
     }
 
     static boolean hasPassiveCharacterWithinActiveRegion(String activeRegion, DecimalFormatDefinition decimalFormat) {
-        for (int i = 0; i < activeRegion.length();) {
+        for (int i = 0; i < activeRegion.length(); ) {
             if (!isActiveCharacterAt(activeRegion, i, decimalFormat)) {
                 return true;
             }
@@ -321,17 +316,14 @@ public class FormatNumberPictureSupport {
     }
 
     static Integer findRepeatingIntegerGroupingInterval(
-            String integerPart,
-            List<GroupingPos> groupingPositions,
-            DecimalFormatDefinition decimalFormat
-    ) {
+            String integerPart, List<GroupingPos> groupingPositions, DecimalFormatDefinition decimalFormat) {
         if (groupingPositions == null || groupingPositions.isEmpty()) {
             return null;
         }
 
         List<Integer> positions = new ArrayList<>();
         for (GroupingPos groupingPos : groupingPositions) {
-            positions.add(groupingPos.getDistanceFromRight());
+            positions.add(groupingPos.distanceFromAnchor());
         }
 
         positions.sort(Integer::compareTo);
@@ -375,27 +367,8 @@ public class FormatNumberPictureSupport {
         return groupingSize;
     }
 
-    static String applyDecimalDigitFamily(String s, DecimalFormatDefinition decimalFormat) {
-        int zeroDigit = decimalFormat.getZeroDigit();
-        if (zeroDigit == '0') {
-            return s;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < s.length(); i++) {
-            char ch = s.charAt(i);
-            if (ch >= '0' && ch <= '9') {
-                int mapped = zeroDigit + (ch - '0');
-                sb.appendCodePoint(mapped);
-            } else {
-                sb.append(ch);
-            }
-        }
-        return sb.toString();
-    }
-
     static boolean containsOptionalDigit(String s, DecimalFormatDefinition decimalFormat) {
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
             if (isOptionalDigit(cp, decimalFormat)) {
                 return true;
@@ -409,7 +382,7 @@ public class FormatNumberPictureSupport {
         if (s.isEmpty()) {
             return false;
         }
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
             if (!isMandatoryDigit(cp, decimalFormat)) {
                 return false;
@@ -419,77 +392,14 @@ public class FormatNumberPictureSupport {
         return true;
     }
 
-    static String applyIntegerPartGrouping(
-            String digits,
-            FormatNumberSubPicture picture
-    ) {
-
-        List<GroupingPos> groupingPositions = picture.getIntegerPartGroupingPositions();
-
-        if (groupingPositions == null || groupingPositions.isEmpty()) {
-            return digits;
-        }
-
-        String reversedDigits = new StringBuilder(digits).reverse().toString();
-
-        Integer repeatingInterval = picture.getRepeatingIntegerGroupingInterval();
-
-        String separator = new String(Character.toChars(groupingPositions.get(0).separatorCP));
-
-        if (repeatingInterval != null) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; i < reversedDigits.length(); i++) {
-                if (i > 0 && i % repeatingInterval == 0) {
-                    sb.append(separator);
-                }
-                sb.append(reversedDigits.charAt(i));
-            }
-            return sb.reverse().toString();
-        }
-
-        List<GroupingPos> gps = new ArrayList<>(groupingPositions);
-        gps.sort(Comparator.comparingInt(GroupingPos::getDistanceFromRight));
-
-        StringBuilder sb = new StringBuilder(reversedDigits);
-
-        for (int i = gps.size() - 1; i >= 0; i--) {
-            GroupingPos gp = gps.get(i);
-            int insertPos = gp.distanceFromRight;
-            if (insertPos > 0 && insertPos < sb.length()) {
-                sb.insert(insertPos, separator);
-            }
-        }
-
-        return sb.reverse().toString();
+    static String applyIntegerPartGrouping(String digits, FormatNumberSubPicture picture) {
+        return NumericFormattingSupport.applyGrouping(
+                digits, picture.getIntegerPartGroupingPositions(), picture.getRepeatingIntegerGroupingInterval(), true);
     }
 
-    static String applyFractionalPartGrouping(
-            String digits,
-            FormatNumberSubPicture picture
-    ) {
-        List<GroupingPos> groupingPositions = picture.getFractionalPartGroupingPositions();
-
-        if (groupingPositions == null || groupingPositions.isEmpty()) {
-            return digits;
-        }
-
-        String separator = new String(Character.toChars(groupingPositions.get(0).separatorCP));
-
-        List<GroupingPos> gps = new ArrayList<>(groupingPositions);
-        gps.sort(Comparator.comparingInt(GroupingPos::getDistanceFromRight));
-
-        StringBuilder sb = new StringBuilder(digits);
-
-        for (int i = gps.size() - 1; i >= 0; i--) {
-            GroupingPos gp = gps.get(i);
-            int insertPos = gp.getDistanceFromRight();
-
-            if (insertPos > 0 && insertPos < sb.length()) {
-                sb.insert(insertPos, separator);
-            }
-        }
-
-        return sb.toString();
+    static String applyFractionalPartGrouping(String digits, FormatNumberSubPicture picture) {
+        return NumericFormattingSupport.applyGrouping(
+                digits, picture.getFractionalPartGroupingPositions(), null, false);
     }
 
     static int findDecimalSeparatorIndex(String s, DecimalFormatDefinition decimalFormat) {
@@ -499,7 +409,7 @@ public class FormatNumberPictureSupport {
     static int findExponentSeparatorIndex(String s, DecimalFormatDefinition decimalFormat) {
         int found = -1;
 
-        for (int i = 0; i < s.length();) {
+        for (int i = 0; i < s.length(); ) {
             int cp = s.codePointAt(i);
 
             if (isExponentSeparator(cp, decimalFormat) && isActiveCharacterAt(s, i, decimalFormat)) {

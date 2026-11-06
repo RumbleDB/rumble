@@ -1,0 +1,114 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.config.model;
+
+import java.io.Serializable;
+import java.util.Objects;
+
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.Value;
+import lombok.experimental.Accessors;
+import lombok.extern.jackson.Jacksonized;
+
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+
+import org.rumbledb.exceptions.CliException;
+
+@Value
+@NoArgsConstructor(force = true)
+@Jacksonized
+@Accessors(fluent = true)
+public class SemanticsConfig implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    public static final boolean DEFAULT_DATES_WITH_TIMEZONE = false;
+    public static final boolean DEFAULT_LAX_JSON_NULL_VALIDATION = true;
+    public static final LanguageVersion DEFAULT_QUERY_LANGUAGE = LanguageVersion.DEFAULT_JSONIQ;
+    public static final String DEFAULT_XML_VERSION = "1.1";
+
+    /** Allows the XQuery Scripting Extension grammar; disable for strict XQuery conformance. */
+    boolean allowScripting;
+
+    boolean datesWithTimeZone;
+    boolean laxJSONNullValidation;
+    LanguageVersion queryLanguage;
+    String xmlVersion;
+    String xsdVersion;
+    String staticBaseUri;
+
+    @Builder(toBuilder = true)
+    private SemanticsConfig(
+            Boolean allowScripting,
+            Boolean datesWithTimeZone,
+            Boolean laxJSONNullValidation,
+            LanguageVersion queryLanguage,
+            String xmlVersion,
+            String xsdVersion,
+            String staticBaseUri) {
+        this.allowScripting = Objects.requireNonNullElse(allowScripting, true);
+        this.datesWithTimeZone = Objects.requireNonNullElse(datesWithTimeZone, DEFAULT_DATES_WITH_TIMEZONE);
+        this.laxJSONNullValidation =
+                Objects.requireNonNullElse(laxJSONNullValidation, DEFAULT_LAX_JSON_NULL_VALIDATION);
+        this.queryLanguage = Objects.requireNonNullElse(queryLanguage, DEFAULT_QUERY_LANGUAGE);
+        this.xmlVersion = Objects.requireNonNullElse(xmlVersion, DEFAULT_XML_VERSION);
+        this.xsdVersion = normalizeXsdVersion(xsdVersion);
+        this.staticBaseUri = staticBaseUri;
+    }
+
+    private static String normalizeXsdVersion(String version) {
+        if (version == null) {
+            return "1.1";
+        }
+        String normalized = version.trim();
+        if ("1.0".equals(normalized) || "1.1".equals(normalized)) {
+            return normalized;
+        }
+        throw new CliException("Argument --xsd-version must be 1.0 or 1.1 (was: " + version + ").");
+    }
+
+    private static String normalizeXmlVersion(String xmlVersion) {
+        if (xmlVersion == null) {
+            return DEFAULT_XML_VERSION;
+        }
+
+        String normalized = xmlVersion.trim();
+        if ("1.0".equals(normalized) || "1.1".equals(normalized)) {
+            return normalized;
+        }
+
+        throw new CliException("Argument --xml-version must be \"1.0\" or \"1.1\" (was: " + xmlVersion + ").");
+    }
+
+    @JsonPOJOBuilder(withPrefix = "")
+    public static class SemanticsConfigBuilder {
+        public SemanticsConfigBuilder queryLanguage(LanguageVersion queryLanguage) {
+            this.queryLanguage = queryLanguage;
+            return this;
+        }
+
+        /** Accepts the external name of a query language, such as "xquery31". */
+        public SemanticsConfigBuilder queryLanguage(String queryLanguage) {
+            this.queryLanguage = queryLanguage == null ? null : LanguageVersion.fromId(queryLanguage);
+            return this;
+        }
+
+        public SemanticsConfigBuilder xmlVersion(String xmlVersion) {
+            this.xmlVersion = normalizeXmlVersion(xmlVersion);
+            return this;
+        }
+    }
+}

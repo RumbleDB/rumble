@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,273 +11,222 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.apache.spark.api.java.JavaPairRDD;
+import java.io.Serial;
+import java.math.BigInteger;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
+import lombok.NonNull;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.misc.RangeOperationIterator;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
 
-import sparksoniq.spark.SparkSessionManager;
+public class SubsequenceFunctionIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
 
-import java.util.List;
-
-public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator positionIterator;
-    private RuntimeIterator lengthIterator;
-    private Item nextResult;
-    private int startPosition;
-    private int currentLength;
-    private int length;
-    private final int optimizationThreshold = 10_000_000; // do optimization only if startPosition is above this
-                                                          // threshold
 
-    public SubsequenceFunctionIterator(
-            List<RuntimeIterator> parameters,
-            RuntimeStaticContext staticContext
-    ) {
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan positionIterator;
+    private final ItemRuntimePlan lengthIterator;
+
+    private final RangeOperationIterator rangeOperationIterator;
+
+    public SubsequenceFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
-        this.sequenceIterator = this.children.get(0);
-        this.positionIterator = this.children.get(1);
-        if (this.children.size() == 3) {
-            this.lengthIterator = this.children.get(2);
-        }
+        this.sequenceIterator = this.getChild(0);
+        this.positionIterator = this.getChild(1);
+        this.lengthIterator = this.getChildren().size() == 3 ? this.getChild(2) : null;
+        this.rangeOperationIterator = this.sequenceIterator instanceof RangeOperationIterator range ? range : null;
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
-        setInstanceVariables(context);
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        if (this.rangeOperationIterator != null) {
+            // Generate only the selected values, without walking the skipped prefix.
+            return new IteratorLocalCursor<>(
+                    () -> {
+                        RangeOperationIterator.Bounds bounds = getRangeSliceBounds(context);
+                        return bounds.items();
+                    },
+                    getMetadata());
+        }
+        return new EvaluationCursor(
+                this.sequenceIterator, this.positionIterator, this.lengthIterator, context, getMetadata());
+    }
 
-        if (!childRDD.isEmpty() || this.length == 0) {
-            JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
-            JavaPairRDD<Item, Long> filteredRDD;
-            if (this.length < 0) {
-                filteredRDD = zippedRDD.filter((input) -> input._2() >= this.startPosition - 1);
-            } else {
-                filteredRDD = zippedRDD.filter(
-                    (input) -> input._2() >= this.startPosition - 1 && input._2() < this.startPosition - 1 + this.length
-                );
+    private SubsequenceBounds getBounds(DynamicContext context) {
+        return evaluateBounds(this.positionIterator, this.lengthIterator, context);
+    }
+
+    private static SubsequenceBounds evaluateBounds(
+            ItemRuntimePlan position, ItemRuntimePlan length, DynamicContext context) {
+        double start = position.materializeFirstOrNull(context).getDoubleValue();
+        Double count =
+                length == null ? null : length.materializeFirstOrNull(context).getDoubleValue();
+        return new SubsequenceBounds(start, count);
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        if (this.rangeOperationIterator != null) {
+            return createNativeDataFrame(context).toRDD(getMetadata());
+        }
+        SubsequenceBounds.Slice slice = getBounds(context).slice(BigInteger.valueOf(Long.MAX_VALUE));
+        long offset = slice.offset().longValueExact();
+        long end = slice.end().longValueExact();
+        if (offset == end) {
+            return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
+        }
+        JavaRDD<Item> child = this.sequenceIterator.getRDD(context);
+        if (offset == 0 && end == Long.MAX_VALUE) {
+            return child;
+        }
+        return child.zipWithIndex()
+                .filter(input -> input._2() >= offset && input._2() < end)
+                .map(input -> input._1());
+    }
+
+    @Override
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        if (this.rangeOperationIterator != null) {
+            RangeOperationIterator.Bounds bounds = getRangeSliceBounds(context);
+            return RangeOperationIterator.createInterval(bounds, getRuntimeStaticContext());
+        }
+        SubsequenceBounds.Slice slice = getBounds(context).slice(BigInteger.valueOf(Long.MAX_VALUE));
+        long offset = slice.offset().longValueExact();
+        long end = slice.end().longValueExact();
+        HomogeneousItemDataFrame input = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.sequenceIterator, context);
+        Dataset<Row> rows = input.getDataFrame();
+        if (offset == end) {
+            return new HomogeneousItemDataFrame(rows.limit(0), input.getItemType());
+        }
+        // Spark's limit accepts only int. Apply it before indexing when possible.
+        if (end <= Integer.MAX_VALUE) {
+            rows = rows.limit((int) end);
+        }
+        if (offset == 0 && (end <= Integer.MAX_VALUE || end == Long.MAX_VALUE)) {
+            return new HomogeneousItemDataFrame(rows, input.getItemType());
+        }
+        String index = SparkSessionManager.temporaryColumnName;
+        rows = FlworDataFrameUtils.zipWithIndex(rows, 0L, index);
+        rows = rows.filter(rows.col(index).geq(offset).and(rows.col(index).lt(end)))
+                .drop(index);
+        return new HomogeneousItemDataFrame(rows, input.getItemType());
+    }
+
+    /** Counts a sliced range without constructing or scanning its DataFrame. */
+    public BigInteger getRangeCount(DynamicContext context) {
+        if (this.rangeOperationIterator == null) {
+            return null;
+        }
+        return getRangeSliceBounds(context).size();
+    }
+
+    private RangeOperationIterator.Bounds getRangeSliceBounds(DynamicContext context) {
+        RangeOperationIterator.Bounds range = this.rangeOperationIterator.getBounds(context);
+        SubsequenceBounds.Slice slice = getBounds(context).slice(range.size());
+        if (slice.length().signum() == 0) {
+            return new RangeOperationIterator.Bounds(1, 0);
+        }
+        // The slice describes positions; translate them back to exact integer values.
+        // A small slice can still contain values outside the long range.
+        BigInteger first = range.first().add(slice.offset());
+        return new RangeOperationIterator.Bounds(
+                first, first.add(slice.length()).subtract(BigInteger.ONE));
+    }
+
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
+
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan positionPlan;
+        private final ItemRuntimePlan lengthPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<Item> sequenceCursor;
+        private long currentLength;
+
+        private EvaluationCursor(
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull ItemRuntimePlan positionPlan,
+                ItemRuntimePlan lengthPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.positionPlan = positionPlan;
+            this.lengthPlan = lengthPlan;
+            this.context = context;
+            this.metadata = metadata;
+        }
+
+        @Override
+        protected void openLocal() {
+            SubsequenceBounds.Slice slice = evaluateBounds(this.positionPlan, this.lengthPlan, this.context)
+                    .slice(BigInteger.valueOf(Long.MAX_VALUE));
+            this.currentLength = slice.length().longValueExact();
+            if (this.currentLength == 0) {
+                return;
             }
-            return filteredRDD.map(x -> x._1);
-        }
-        return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
-    }
+            long offset = slice.offset().longValueExact();
 
-    @Override
-    protected boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        if (this.startPosition < this.optimizationThreshold) {
-            return getDataFrameOld(dynamicContext);
-        } else
-            return getDataFrameOffset(dynamicContext);
-    }
-
-    /**
-     * Old implementation of getDataFrame, it is faster for low starting positions
-     */
-    private JSoundDataFrame getDataFrameOld(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
-        setInstanceVariables(dynamicContext);
-
-        List<FlworDataFrameColumn> allColumns = df.getColumns();
-
-        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
-
-        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
-        if (this.length != -1) {
-            df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s LIMIT %s",
-                    input,
-                    Integer.toString(this.startPosition + this.length - 1)
-                ),
-                df.getItemType()
-            );
-        }
-
-        Dataset<Row> ds = FlworDataFrameUtils.zipWithIndex(
-            df.getDataFrame(),
-            1L,
-            SparkSessionManager.temporaryColumnName
-        );
-
-        String inputds = FlworDataFrameUtils.createTempView(ds);
-        ds = ds.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT %s FROM (SELECT * FROM %s WHERE `%s` >= %s)",
-                    selectSQL,
-                    inputds,
-                    SparkSessionManager.temporaryColumnName,
-                    Integer.toString(this.startPosition)
-                )
-            );
-        return new JSoundDataFrame(ds, df.getItemType());
-    }
-
-    /**
-     * New implementation of getDataFrame using offset, it scales much better than the old implementation but is slower
-     * for small values
-     */
-    private JSoundDataFrame getDataFrameOffset(DynamicContext dynamicContext) {
-        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
-        setInstanceVariables(dynamicContext);
-
-        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
-        if (this.length != -1) {
-            df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s LIMIT %s OFFSET %s",
-                    input,
-                    Integer.toString(this.length),
-                    Integer.toString(this.startPosition - 1)
-                ),
-                df.getItemType()
-            );
-        } else {
-            df = df.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s OFFSET %s",
-                    input,
-                    Integer.toString(this.startPosition - 1)
-                ),
-                df.getItemType()
-            );
-        }
-        return new JSoundDataFrame(df.getDataFrame(), df.getItemType());
-    }
-
-    @Override
-    protected void openLocal() {
-        setInstanceVariables(this.currentDynamicContextForLocalExecution);
-        initializeLocal();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        initializeLocal();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "subsequence function", getMetadata());
-    }
-
-    private void initializeLocal() {
-        int currentPosition = 1; // JSONiq indices start from 1
-
-        this.currentLength = this.length;
-        if (this.startPosition <= 0 && this.currentLength != -1) {
-            this.currentLength += this.startPosition - 1;
-        }
-        // if length is 0, just return empty sequence
-        if (this.currentLength == 0) {
-            this.hasNext = false;
-            return;
-        } else {
-            if (this.sequenceIterator.isOpen()) {
-                this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-            } else {
-                this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-            }
-
-            // find the start of the subsequence
-            while (this.sequenceIterator.hasNext()) {
-                if (currentPosition < this.startPosition) {
-                    this.sequenceIterator.next(); // skip item
-                } else {
-                    this.nextResult = this.sequenceIterator.next();
-                    // if length is specified, decrement it
-                    if (this.currentLength != -1) {
-                        this.currentLength--;
-                    }
-                    break;
-                }
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
+            long currentPosition = 0;
+            while (currentPosition < offset && this.sequenceCursor.hasNext()) {
+                this.sequenceCursor.next();
                 currentPosition++;
             }
         }
 
-        // if startPosition overshoots, return empty sequence
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
+        @Override
+        protected boolean hasNextLocal() {
+            return this.currentLength != 0 && this.sequenceCursor != null && this.sequenceCursor.hasNext();
         }
-    }
 
-    private void setInstanceVariables(DynamicContext context) {
-        Item positionItem = this.positionIterator
-            .materializeFirstItemOrNull(context);
-        this.startPosition = (int) Math.round(positionItem.getDoubleValue());
-
-        this.length = -1;
-        if (this.children.size() == 3) {
-            Item lengthItem = this.lengthIterator
-                .materializeFirstItemOrNull(context);
-            this.length = (int) Math.round(lengthItem.getDoubleValue());
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw exhausted();
+            }
+            Item result = this.sequenceCursor.next();
+            this.currentLength--;
+            return result;
         }
-    }
 
-    private void setNextResult() {
-        this.nextResult = null;
-
-        if (this.currentLength != 0) {
-            if (this.sequenceIterator.hasNext()) {
-                if (this.currentLength > 0) { // take length many items -> decrement the value for each item until 0
-                    this.nextResult = this.sequenceIterator.next();
-                    this.currentLength--;
-                } else if (this.currentLength == -1) { // length not specified -> take all items until the end
-                    this.nextResult = this.sequenceIterator.next();
-                } else {
-                    throw new OurBadException(
-                            "Unexpected length value found."
-                    );
-                }
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
             }
         }
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
+        private RuntimeException exhausted() {
+            return new IteratorFlowException(
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "subsequence function", this.metadata);
         }
     }
 }

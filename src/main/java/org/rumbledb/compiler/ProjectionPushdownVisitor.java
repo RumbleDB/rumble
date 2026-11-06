@@ -1,4 +1,22 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.compiler;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -9,9 +27,6 @@ import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.scripting.Program;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class ProjectionPushdownVisitor extends CloneVisitor {
 
@@ -32,8 +47,7 @@ public class ProjectionPushdownVisitor extends CloneVisitor {
         MainModule result = new MainModule(
                 mainModule.getProlog(),
                 (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
-                mainModule.getMetadata()
-        );
+                mainModule.getMetadata());
         result.setStaticContext(mainModule.getStaticContext());
         return result;
     }
@@ -58,33 +72,14 @@ public class ProjectionPushdownVisitor extends CloneVisitor {
 
     @Override
     public Node visitLetClause(LetClause clause, Node argument) {
-        // return new LetClause(
-        // clause.getVariableName(),
-        // clause.getActualSequenceType(),
-        // (Expression) visit(clause.getExpression(), argument),
-        // clause.getMetadata()
-        // );
-
-        // code below from dominik
-        // problem is that it removes the last let clause (returns null for that)
-        if (clause.getReferenced()) {
-            return new LetClause(
-                    clause.getVariableName(),
-                    clause.getActualSequenceType(),
-                    (Expression) visit(clause.getExpression(), argument),
-                    clause.getMetadata()
-            );
-        }
-        return null;
+        return clause.getReferenced() ? super.visitLetClause(clause, argument) : null;
     }
 
     @Override
     public Node visitObjectConstructor(ObjectConstructorExpression expression, Node argument) {
         if (expression.isMergedConstructor()) {
             return new ObjectConstructorExpression(
-                    (Expression) visit(expression.getChildren().get(0), argument),
-                    expression.getMetadata()
-            );
+                    (Expression) visit(expression.getChildren().get(0), argument), expression.getMetadata());
         } else {
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();

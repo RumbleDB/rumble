@@ -1,4 +1,26 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.expressions.scripting.control;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import lombok.Getter;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -7,11 +29,7 @@ import org.rumbledb.expressions.control.CatchPattern;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
 import org.rumbledb.expressions.scripting.statement.Statement;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-
+@Getter
 public class TryCatchStatement extends Statement {
     private final BlockStatement tryStatement;
     private final Map<CatchPattern, BlockStatement> catchStatements;
@@ -19,32 +37,14 @@ public class TryCatchStatement extends Statement {
     public TryCatchStatement(
             BlockStatement tryStatement,
             Map<CatchPattern, BlockStatement> catchStatements,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.tryStatement = tryStatement;
         this.catchStatements = new LinkedHashMap<>(catchStatements);
     }
 
-    public BlockStatement getTryStatement() {
-        return this.tryStatement;
-    }
-
-    public Map<CatchPattern, BlockStatement> getCatchStatements() {
-        return this.catchStatements;
-    }
-
     public List<CatchPattern> getCatchPatterns() {
         return new ArrayList<>(this.catchStatements.keySet());
-    }
-
-    public boolean catchesAll() {
-        for (CatchPattern pattern : this.catchStatements.keySet()) {
-            if (pattern.isCatchAll()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public BlockStatement getCatchAllStatement() {
@@ -74,7 +74,7 @@ public class TryCatchStatement extends Statement {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("try {\n");
         this.tryStatement.serializeToJSONiq(sb, indent + 1);

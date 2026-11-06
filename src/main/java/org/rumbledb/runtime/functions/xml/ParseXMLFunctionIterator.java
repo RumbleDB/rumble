@@ -1,26 +1,62 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.xml;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnimplementedFunctionException;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
+import java.io.Serial;
 import java.util.List;
 
-public class ParseXMLFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+import org.w3c.dom.Document;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.config.model.LanguageVersion;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.XmlParsingUtils;
+import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+public class ParseXMLFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public ParseXMLFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public ParseXMLFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        throw new UnimplementedFunctionException("fn:parse-xml", getMetadata());
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item arg = this.getChild(0).materializeFirstOrNull(context);
+        if (arg == null) {
+            return null;
+        }
+        Document xmlDocument = XmlParsingUtils.parseDocument(
+                arg.getStringValue(), this.staticContext.getStaticURI(), "the argument of fn:parse-xml", getMetadata());
+        // XQuery retains parsed whitespace; preserve JSONiq's existing whitespace handling.
+        LanguageVersion queryLanguage = this.staticContext.getQueryLanguage();
+        DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
+                xmlDocument,
+                XMLDocumentPosition.generateConstructedTreePath(),
+                context.getRumbleConfiguration().optimization().optimizeParentPointers(),
+                queryLanguage != null && queryLanguage.isXQuery());
+        documentItem.setConstructionBaseUri(this.staticContext.getStaticURI());
+        // The parser's system ID supplies a base URI, not a document retrieval URI.
+        documentItem.setDocumentUri(null);
+        return documentItem;
     }
 }

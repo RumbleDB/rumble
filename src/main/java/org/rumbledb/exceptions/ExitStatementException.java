@@ -1,38 +1,59 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.exceptions;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.update.PendingUpdateList;
-
+import java.io.Serial;
 import java.util.List;
 
-import static org.rumbledb.runtime.HybridRuntimeIterator.dataFrameToRDDOfItems;
+import org.apache.spark.api.java.JavaRDD;
+
+import lombok.Getter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.update.PendingUpdateList;
 
 public class ExitStatementException extends RuntimeException {
+    @Serial
     private static final long serialVersionUID = 1L;
+
+    @Getter
     private final PendingUpdateList pendingUpdateList;
+
     private final List<Item> localResult;
+
+    @Getter
     private final JavaRDD<Item> rddResult;
-    private final JSoundDataFrame dataFrameResult;
+
+    @Getter
+    private final HomogeneousItemDataFrame dataFrameResult;
+
     private final ExceptionMetadata exceptionMetadata;
 
     public ExitStatementException(
             PendingUpdateList pendingUpdateList,
             List<Item> localResult,
             JavaRDD<Item> rddResult,
-            JSoundDataFrame dataFrameResult,
-            ExceptionMetadata exceptionMetadata
-    ) {
+            HomogeneousItemDataFrame dataFrameResult,
+            ExceptionMetadata exceptionMetadata) {
         this.pendingUpdateList = pendingUpdateList;
         this.localResult = localResult;
         this.rddResult = rddResult;
         this.dataFrameResult = dataFrameResult;
         this.exceptionMetadata = exceptionMetadata;
-    }
-
-    public PendingUpdateList getPendingUpdateList() {
-        return this.pendingUpdateList;
     }
 
     public List<Item> getLocalResult() {
@@ -41,17 +62,9 @@ public class ExitStatementException extends RuntimeException {
         } else if (hasRDDResult()) {
             return this.rddResult.collect();
         } else if (hasDataFrameResult()) {
-            return dataFrameToRDDOfItems(this.dataFrameResult, this.exceptionMetadata).collect();
+            return this.dataFrameResult.toRDD(this.exceptionMetadata).collect();
         }
         throw new OurBadException("Expected local result but there was nothing to return from the exit statement!");
-    }
-
-    public JavaRDD<Item> getRddResult() {
-        return this.rddResult;
-    }
-
-    public JSoundDataFrame getDataFrameResult() {
-        return this.dataFrameResult;
     }
 
     public boolean hasLocalResult() {

@@ -1,123 +1,101 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.json;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.Serial;
+import java.io.StringReader;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
 import java.util.List;
 
+import com.google.gson.stream.JsonReader;
+
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.cli.ConsoleOutput;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.CannotInferEncodingException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnavailableResourceException;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.parsing.JSONParser;
 import org.rumbledb.items.parsing.JSONParsingOptions;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.runtime.functions.io.TextResourceUtil;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import com.google.gson.stream.JsonReader;
+public class JsonDocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
-public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public JsonDocFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public JsonDocFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        RuntimeIterator pathIterator = this.children.get(0);
-        RuntimeIterator optionsIterator = this.children.size() > 1 ? this.children.get(1) : null;
-
-        Item pathItem = pathIterator.materializeFirstItemOrNull(context);
-        Item optionsItem = optionsIterator != null
-            ? optionsIterator.materializeFirstItemOrNull(context)
-            : null;
-
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item pathItem = this.getChild(0).materializeFirstOrNull(context);
+        Item optionsItem = this.getChildren().size() > 1 ? this.getChild(1).materializeFirstOrNull(context) : null;
         if (pathItem == null) {
             return null;
         }
 
-        boolean isJSONiq10 = this.staticContext.getQueryLanguage().equals("jsoniq10");
+        boolean isJSONiq10 = this.staticContext.getQueryLanguage() == LanguageVersion.JSONIQ_10;
 
-        JSONParsingOptions options = JSONParsingOptions.resolveOptions(
-            optionsItem,
-            isJSONiq10,
-            getMetadata()
-        );
+        JSONParsingOptions options =
+                JSONParsingOptions.resolveOptions(optionsItem, isJSONiq10, context, this.staticContext, getMetadata());
 
-        URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticURI, getMetadata());
+        URI uri = resolveJsonDocURI(pathItem.getStringValue(), this.staticContext.getStaticURI(), getMetadata());
 
-        if (optionsItem == null) {
-            try (
-                InputStream is = FileSystemUtil.getDataInputStream(
-                    uri,
-                    context.getRumbleRuntimeConfiguration(),
-                    getMetadata()
-                )
-            ) {
-                JsonReader object = new JsonReader(new InputStreamReader(is));
-                return ItemParser.getItemFromObject(
-                    object,
+        String jsonText = readJsonResource(context.getResourceResolver().resolveURI(uri), getMetadata());
+
+        if (options.isLegacy()) {
+            ConsoleOutput.warn("Warning: fn:json-doc option 'legacy' skips spec-conformant JSON parsing in favor of "
+                    + "RumbleDB's previous Gson-based parser and may produce unexpected results; "
+                    + "retry without it if the output looks wrong.");
+            return ItemParser.getItemFromObject(
+                    new JsonReader(new StringReader(jsonText)),
                     isJSONiq10,
                     options.getNumberFormat(),
                     getMetadata(),
-                    false
-                );
-            } catch (CannotRetrieveResourceException e) {
-                UnavailableResourceException ex = new UnavailableResourceException(e.getMessage(), getMetadata());
-                ex.initCause(e);
-                throw ex;
-            } catch (UnavailableResourceException e) {
-                throw e;
-            } catch (Exception e) {
-                String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
-
-                return ItemParser.getItemFromJSONString(
-                    jsonText,
-                    options,
-                    getConfiguration().getXmlVersion(),
-                    isJSONiq10,
-                    getMetadata()
-                );
-            }
+                    false);
         }
 
-
-        String jsonText = readJsonResource(uri, context.getRumbleRuntimeConfiguration(), getMetadata());
-
-        return ItemParser.getItemFromJSONString(
-            jsonText,
-            options,
-            getConfiguration().getXmlVersion(),
-            isJSONiq10,
-            getMetadata()
-        );
+        return JSONParser.parseResource(
+                jsonText,
+                options,
+                getConfiguration().semantics().xmlVersion(),
+                isJSONiq10,
+                uri,
+                "JSON document \"" + uri + "\" for fn:json-doc()",
+                getMetadata());
     }
 
     private static URI resolveJsonDocURI(String href, URI staticBaseUri, ExceptionMetadata metadata) {
         try {
-            URI uri = FileSystemUtil.resolveURI(
-                staticBaseUri,
-                href,
-                metadata
-            );
+            URI uri = FileSystemUtil.resolveURI(staticBaseUri, href, metadata);
 
             if (uri.getFragment() != null) {
                 throw new UnavailableResourceException(
-                        "A URI containing a fragment identifier is not valid for fn:json-doc().",
-                        metadata
-                );
+                        "A URI containing a fragment identifier is not valid for fn:json-doc().", metadata);
             }
 
             return uri;
@@ -129,25 +107,18 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             throw ex;
         } catch (Exception e) {
             UnavailableResourceException ex = new UnavailableResourceException(
-                    "The URI supplied to fn:json-doc() is invalid or cannot be resolved.",
-                    metadata
-            );
+                    "The URI supplied to fn:json-doc() is invalid or cannot be resolved.", metadata);
             ex.initCause(e);
             throw ex;
         }
     }
 
-
-
-    private static String readJsonResource(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
-        try (
-            InputStream is = FileSystemUtil.getDataInputStream(
-                uri,
-                conf,
-                metadata
-            )
-        ) {
-            return readAll(is, metadata);
+    private static String readJsonResource(URI uri, ExceptionMetadata metadata) {
+        try {
+            byte[] bytes = TextResourceUtil.fetchBytes(uri, metadata);
+            return decode(bytes, TextResourceUtil.detectEncoding(bytes), metadata);
+        } catch (CannotInferEncodingException e) {
+            throw e;
         } catch (UnavailableResourceException e) {
             throw e;
         } catch (RumbleException e) {
@@ -156,28 +127,22 @@ public class JsonDocFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             throw ex;
         } catch (Exception e) {
             UnavailableResourceException ex = new UnavailableResourceException(
-                    "Unable to read, resolve, or decode the resource supplied to fn:json-doc().",
-                    metadata
-            );
+                    "Unable to read, resolve, or decode the resource supplied to fn:json-doc().", metadata);
             ex.initCause(e);
             throw ex;
         }
     }
 
-    private static String readAll(InputStream is, ExceptionMetadata metadata) {
+    private static String decode(byte[] bytes, Charset charset, ExceptionMetadata metadata) {
         try {
-            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-            byte[] data = new byte[8192];
-            int nRead;
-            while ((nRead = is.read(data, 0, data.length)) != -1) {
-                buffer.write(data, 0, nRead);
-            }
-            return buffer.toString(StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            UnavailableResourceException ex = new UnavailableResourceException(
-                    "Unable to read or decode the resource supplied to fn:json-doc().",
-                    metadata
-            );
+            return TextResourceUtil.decodeStrict(bytes, charset);
+        } catch (CharacterCodingException e) {
+            CannotInferEncodingException ex = new CannotInferEncodingException(
+                    "Unable to infer the encoding of the resource supplied to fn:json-doc(): "
+                            + "the content is not valid "
+                            + charset.name()
+                            + ".",
+                    metadata);
             ex.initCause(e);
             throw ex;
         }

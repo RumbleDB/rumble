@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="([ 1, 2 ], [ ], [ 1 ], [ 1, 2 ], [ 1.2, 2 ], [ 1.2, 2 ], Success, Success)" :)
+(:JIQS: ShouldRun; Output="([ 1, 2 ], [ ], [ 1 ], [ 1, 2 ], [ 1.2, 2 ], [ 1.2, 2 ], [ 1, 2 ], [ 1, 2 ])" :)
 declare type local:x as jsound verbose {
   "kind" : "array",
   "content" : "decimal"

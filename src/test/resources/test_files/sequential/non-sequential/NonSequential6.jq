@@ -7,4 +7,4 @@ variable $entry := {
     }
   };
 variable $result as xs:boolean;
-$result;
+$result

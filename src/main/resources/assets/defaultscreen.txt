@@ -27,14 +27,6 @@ spark-submit rumbledb.jar run -q '1+1'
 You can specify an output path with -o like so:
 spark-submit rumbledb.jar run -q '1+1' -o my-output.txt
 
-**** serve ****
-for running as an HTTP server listening on the specified port (-p) and host (-h).
-
-spark-submit rumbledb.jar serve -p 9090
-
-RumbleDB also supports Apache Livy for use in Jupyter notebooks, which may be
-even more convenient if you are using a cluster.
-
 **** repl ****
 for shell mode.
 

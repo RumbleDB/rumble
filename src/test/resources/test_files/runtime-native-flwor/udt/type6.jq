@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "foo" : 2 }, { "foo" : 3 }, { }, true, true, Success, Success, Success, Success, Success, Success)" :)
+(:JIQS: ShouldRun; Output="({ "foo" : 2 }, { "foo" : 3 }, { }, true, true, Success, Success, { "foo" : 1 }, Success, Success, Success)" :)
 declare type local:x as jsound verbose {
   "kind" : "object",
   "baseType" : "object",

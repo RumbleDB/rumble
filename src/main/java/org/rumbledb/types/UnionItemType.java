@@ -1,30 +1,47 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
-public class UnionItemType implements ItemType {
+public class UnionItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private static Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(
-            Arrays.asList(ConstrainingFacetTypes.CONTENT)
-    );
+    private static final Set<ConstrainingFacetTypes> allowedFacets =
+            new HashSet<>(Arrays.asList(ConstrainingFacetTypes.CONTENT));
 
-    private Name name;
-    private ItemType baseType;
-    private int typeTreeDepth;
-    private List<ItemType> types;
-    private boolean userDefined;
+    private final Name name;
+    private final ItemType baseType;
+    private final int typeTreeDepth;
+    private final List<ItemType> types;
+    private final boolean userDefined;
 
     UnionItemType(Name name, ItemType baseType, List<ItemType> types) {
         this(name, baseType, types, true);
@@ -38,43 +55,12 @@ public class UnionItemType implements ItemType {
         this.userDefined = userDefined;
     }
 
-    UnionItemType(Name name, List<ItemType> types) {
-        this(name, types, true);
-    }
-
     UnionItemType(Name name, List<ItemType> types, boolean userDefined) {
         this.name = name;
         this.baseType = BuiltinTypesCatalogue.item;
         this.typeTreeDepth = 1;
         this.types = types;
         this.userDefined = userDefined;
-    }
-
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeClassAndObject(output, this.name);
-        kryo.writeClassAndObject(output, this.baseType);
-        output.writeInt(this.typeTreeDepth);
-        kryo.writeClassAndObject(output, this.types);
-        output.writeBoolean(this.userDefined);
-
-    }
-
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = (Name) kryo.readClassAndObject(input);
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.typeTreeDepth = input.readInt();
-        this.types = (List<ItemType>) kryo.readClassAndObject(input);
-        this.userDefined = input.readBoolean();
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
-            return false;
-        }
-        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -119,18 +105,14 @@ public class UnionItemType implements ItemType {
 
     @Override
     public boolean isStaticallyCastableAs(ItemType other) {
-        if (other.equals(this)) {
-            return true;
-        }
-        if (other.isNumeric()) {
-            return true;
-        }
-        for (ItemType member : this.types) {
-            if (other.isSubtypeOf(member)) {
-                return true;
-            }
-        }
-        return false;
+        return other.equals(this)
+                || allMemberTypesMatch(member ->
+                        member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem) && member.isStaticallyCastableAs(other));
+    }
+
+    @Override
+    public boolean canBePromotedTo(ItemType other) {
+        return allMemberTypesMatch(member -> member.isSubtypeOf(other) || member.canBePromotedTo(other));
     }
 
     @Override
@@ -151,6 +133,15 @@ public class UnionItemType implements ItemType {
     @Override
     public List<ItemType> getTypes() {
         return this.types;
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (this.equals(superType) || super.isSubtypeOf(superType)) {
+            return true;
+        }
+        // Every possible member must fit the target type; overlap only requires one member to overlap it.
+        return this.types.stream().allMatch(type -> type.isSubtypeOf(superType));
     }
 
     @Override
@@ -224,8 +215,7 @@ public class UnionItemType implements ItemType {
     @Override
     public boolean isResolved() {
         for (ItemType itemType : this.types) {
-            if (!itemType.isResolved())
-                return false;
+            if (!itemType.isResolved()) return false;
         }
         return true;
     }
@@ -249,24 +239,20 @@ public class UnionItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         if (this.types.size() != 2) {
             return false;
         }
         ItemType first = this.types.get(0);
         ItemType second = this.types.get(1);
-        if (
-            first.equals(BuiltinTypesCatalogue.nullItem)
+        if (first.equals(BuiltinTypesCatalogue.nullItem)
                 && second.isAtomicItemType()
-                && second.isCompatibleWithDataFrames(configuration)
-        ) {
+                && second.isCompatibleWithDataFrames(configuration)) {
             return true;
         }
-        if (
-            second.equals(BuiltinTypesCatalogue.nullItem)
+        if (second.equals(BuiltinTypesCatalogue.nullItem)
                 && first.isAtomicItemType()
-                && first.isCompatibleWithDataFrames(configuration)
-        ) {
+                && first.isCompatibleWithDataFrames(configuration)) {
             return true;
         }
         return false;
@@ -274,6 +260,12 @@ public class UnionItemType implements ItemType {
 
     @Override
     public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (this.isSubtypeOf(other)) {
+            return other;
+        }
+        if (other.isSubtypeOf(this)) {
+            return this;
+        }
         ItemType otherBaseType = other.getBaseType();
         List<ItemType> otherTypes;
         if (other.isUnionType()) {
@@ -284,8 +276,14 @@ public class UnionItemType implements ItemType {
         boolean hasNumeric = false;
         boolean hasNonNumeric = false;
         boolean hasNull = false;
-        Set<ItemType> resultTypes = new HashSet<>(this.types);
+        // Keep operand order so that the same join always displays its members in the same order.
+        Set<ItemType> resultTypes = new LinkedHashSet<>(this.types);
         resultTypes.addAll(otherTypes);
+        // The atomic join below widens to an atomic base type, which cannot cover non-atomic members
+        // (for example, the array alternative of an inferred object field). Keep every member instead.
+        if (resultTypes.stream().anyMatch(type -> !type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))) {
+            return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes), false);
+        }
         for (ItemType member : resultTypes) {
             if (member.equals(BuiltinTypesCatalogue.nullItem)) {
                 hasNull = true;
@@ -309,9 +307,9 @@ public class UnionItemType implements ItemType {
             return BuiltinTypesCatalogue.numericItem;
         }
         if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
-            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes));
+            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes), false);
         }
-        return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes));
+        return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes), false);
     }
 
     @Override
@@ -338,5 +336,4 @@ public class UnionItemType implements ItemType {
         }
         return null;
     }
-
 }
