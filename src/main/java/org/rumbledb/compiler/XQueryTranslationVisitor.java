@@ -19,6 +19,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -286,6 +287,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return new PrologVisitor().build(ctx);
     }
 
+    /** Translates one header or declaration of a prolog. Tools that accept incomplete queries can contain failures. */
+    protected void translatePrologEntry(ParseTree entry, Consumer<ParseTree> translation) {
+        translation.accept(entry);
+    }
+
     private class PrologVisitor extends XQueryParserBaseVisitor<Void> {
         private final PrologBuilder builder = new PrologBuilder(XQueryTranslationVisitor.this.translationContext);
 
@@ -294,11 +300,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 return null;
             }
             for (XQueryParser.PrologHeaderContext header : ctx.headers) {
-                visit(header);
+                translatePrologEntry(header, this::visit);
             }
             this.builder.finishHeader(createMetadataFromContext(ctx));
             for (XQueryParser.AnnotatedDeclContext declaration : ctx.declarations) {
-                visit(declaration);
+                translatePrologEntry(declaration, this::visit);
             }
             return this.builder.build(createMetadataFromContext(ctx));
         }
