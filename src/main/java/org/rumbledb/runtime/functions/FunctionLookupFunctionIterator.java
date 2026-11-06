@@ -69,7 +69,20 @@ public class FunctionLookupFunctionIterator extends AbstractAtMostOneItemRuntime
             return null;
         }
 
-        FunctionIdentifier id = new FunctionIdentifier(fnName, arity);
-        return NamedFunctionLookup.lookupOrNull(id, context, this.staticContext);
+        return NamedFunctionLookup.lookupOrNull(identifierInScope(fnName, arity), context, this.staticContext);
+    }
+
+    /** A QName carries no owner, so it finds the module's own function of that name through what the module sees. */
+    private FunctionIdentifier identifierInScope(Name name, int arity) {
+        var visible = this.staticContext.getVisibleFunctionIdentifiers();
+        if (visible != null) {
+            for (FunctionIdentifier identifier : visible) {
+                if (identifier.getArity() == arity
+                        && identifier.getName().withoutOwner().equals(name)) {
+                    return identifier;
+                }
+            }
+        }
+        return new FunctionIdentifier(name, arity);
     }
 }

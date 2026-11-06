@@ -456,7 +456,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     private Map<Name, Node> buildNameToNodeMap(Prolog prolog) {
         Map<Name, Node> nameToNodeMap = new TreeMap<>();
         for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
-            // Each module of the imported library may declare the one context item the query supplies.
+            // Each module may declare the one context item the query supplies.
             if (nameToNodeMap.containsKey(variableDeclaration.getVariableName())
                     && !Name.CONTEXT_ITEM.equals(variableDeclaration.getVariableName())) {
                 throw new VariableAlreadyExistsException(
@@ -501,7 +501,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitProlog(Prolog prolog, Void argument) {
-        prolog.getImportedLibrary().ifPresent(library -> visit(library.getProlog(), null));
         Map<Name, Node> nameToNodeMap = buildNameToNodeMap(prolog);
 
         Graph<Node, DefaultEdge> dependencyGraph = buildDependencyGraph(nameToNodeMap, prolog);

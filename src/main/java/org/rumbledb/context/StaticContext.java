@@ -536,31 +536,17 @@ public class StaticContext {
         return "Q{" + namespace + "}" + localName;
     }
 
-    /** Collects a module's public declarations in the imported library's context, for modules to link against. */
-    public void addPublicDeclarationsOf(StaticContext moduleContext) {
-        for (Name name : moduleContext.inScopeVariables.keySet()) {
-            InScopeVariable variable = moduleContext.inScopeVariables.get(name);
-            if (!moduleContext.privateVariables.contains(name)) {
-                this.inScopeVariables.put(name, variable);
-            }
-        }
-        for (FunctionIdentifier fi : moduleContext.staticallyKnownFunctionSignatures.keySet()) {
-            FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
-            if (!moduleContext.privateFunctions.contains(fi)) {
-                this.staticallyKnownFunctionSignatures.put(fi, signature);
-            }
-        }
-        this.getInScopeSchemaTypes().importModuleTypes(moduleContext.getInScopeSchemaTypes());
-    }
-
     public void addImportedNamespace(String namespace, ExceptionMetadata metadata) {
         this.importedNamespaces.put(namespace, metadata);
     }
 
     /** A module sees what it declares, plus the public declarations of the namespaces it imports (XQuery 4.12). */
-    public void linkImports(StaticContext publicDeclarations) {
-        publicDeclarations.inScopeVariables.forEach((name, variable) -> {
-            if (this.importedNamespaces.containsKey(name.getNamespace())) {
+    public void linkImports(StaticContext module) {
+        if (module == this) {
+            return;
+        }
+        module.inScopeVariables.forEach((name, variable) -> {
+            if (this.importedNamespaces.containsKey(name.getNamespace()) && !module.privateVariables.contains(name)) {
                 InScopeVariable existing = this.inScopeVariables.get(name);
                 if (existing != null && existing != variable) {
                     throw new VariableAlreadyExistsException(name, existing.getMetadata());
@@ -568,12 +554,12 @@ public class StaticContext {
                 this.inScopeVariables.put(name, variable);
             }
         });
-        publicDeclarations.staticallyKnownFunctionSignatures.forEach((id, signature) -> {
-            if (this.importedNamespaces.containsKey(id.getName().getNamespace())) {
+        module.staticallyKnownFunctionSignatures.forEach((id, signature) -> {
+            if (this.importedNamespaces.containsKey(id.getName().getNamespace())
+                    && !module.privateFunctions.contains(id)) {
                 this.staticallyKnownFunctionSignatures.put(id, signature);
             }
         });
-        this.getInScopeSchemaTypes().importModuleTypes(publicDeclarations.getInScopeSchemaTypes());
     }
 
     public void setUserDefinedFunctionsExecutionModes(

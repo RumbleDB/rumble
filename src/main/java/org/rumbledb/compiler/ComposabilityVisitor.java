@@ -15,6 +15,8 @@
  */
 package org.rumbledb.compiler;
 
+import java.util.List;
+
 import org.rumbledb.exceptions.InvalidAssignableVariableComposability;
 import org.rumbledb.exceptions.InvalidComposabilityUpdatingAndSequentialExpression;
 import org.rumbledb.exceptions.InvalidControlStatementComposability;
@@ -54,9 +56,15 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitProlog(Prolog expression, Node argument) {
-        expression.getFunctionDeclarations().forEach(functionDeclaration -> visit(functionDeclaration, null));
-        expression.getVariableDeclarations().forEach(variableDeclaration -> visit(variableDeclaration, null));
-        boolean containsOtherThanNonUpdatingNonSeq = expression.getVariableDeclarations().stream()
+        // Only the main module's own declarations are checked, not those of the modules it imports.
+        expression.getFunctionDeclarations().stream()
+                .filter(declaration -> !expression.isImported(declaration))
+                .forEach(functionDeclaration -> visit(functionDeclaration, null));
+        List<VariableDeclaration> variableDeclarations = expression.getVariableDeclarations().stream()
+                .filter(declaration -> !expression.isImported(declaration))
+                .toList();
+        variableDeclarations.forEach(variableDeclaration -> visit(variableDeclaration, null));
+        boolean containsOtherThanNonUpdatingNonSeq = variableDeclarations.stream()
                 .anyMatch(varDecl -> {
                     if (varDecl.getExpression() != null) {
                         return varDecl.getExpression().isUpdating()

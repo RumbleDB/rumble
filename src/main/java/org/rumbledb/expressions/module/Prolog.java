@@ -17,7 +17,6 @@ package org.rumbledb.expressions.module;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -36,9 +35,10 @@ public class Prolog extends Node {
     @Setter
     private List<PrologDeclaration> declarations;
 
-    // Every module the query imports, flattened into one. A library itself imports nothing.
+    // The declarations are those of every module this one reaches, each knowing its own module's context.
+    @Getter
     @Setter
-    private LibraryModule importedLibrary;
+    private StaticContext moduleContext;
 
     @Getter
     private final List<SchemaImport> schemaImports;
@@ -68,8 +68,8 @@ public class Prolog extends Node {
                 .toList();
     }
 
-    public Optional<LibraryModule> getImportedLibrary() {
-        return Optional.ofNullable(this.importedLibrary);
+    public boolean isImported(PrologDeclaration declaration) {
+        return declaration.getModuleContext() != this.moduleContext;
     }
 
     public void addSchemaImport(SchemaImport schemaImport) {
@@ -106,16 +106,11 @@ public class Prolog extends Node {
                 .collect(Collectors.toList());
     }
 
+    /** Whether this module itself declares the context item. */
     public boolean hasContextItemDeclaration() {
-        for (Node d : this.declarations) {
-            if (!(d instanceof VariableDeclaration vd)) {
-                continue;
-            }
-            if (vd.getVariableName().equals(Name.CONTEXT_ITEM)) {
-                return true;
-            }
-        }
-        return false;
+        return getVariableDeclarations().stream()
+                .anyMatch(declaration -> !isImported(declaration)
+                        && declaration.getVariableName().equals(Name.CONTEXT_ITEM));
     }
 
     public void addDeclaration(PrologDeclaration declaration) {
@@ -126,7 +121,6 @@ public class Prolog extends Node {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.addAll(this.schemaImports);
-        getImportedLibrary().ifPresent(result::add);
         result.addAll(this.declarations);
         return result;
     }
@@ -136,7 +130,6 @@ public class Prolog extends Node {
         for (SchemaImport schemaImport : this.schemaImports) {
             schemaImport.serializeToJSONiq(sb, indent);
         }
-        getImportedLibrary().ifPresent(library -> library.serializeToJSONiq(sb, indent));
         for (Node declaration : this.declarations) {
             declaration.serializeToJSONiq(sb, indent);
         }
@@ -154,8 +147,6 @@ public class Prolog extends Node {
                 return declaration;
             }
         }
-        return prolog.getImportedLibrary()
-                .map(library -> getFunctionDeclarationFromProlog(library.getProlog(), functionIdentifier))
-                .orElse(null);
+        return null;
     }
 }

@@ -142,7 +142,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
         this.visit(libraryModule.getProlog(), libraryModule.getStaticContext());
-        argument.linkImports(libraryModule.getStaticContext());
         return argument;
     }
 
@@ -547,17 +546,20 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                             declaration.getMetadata(),
                             declaration.isAssignable());
         }
-        prolog.getImportedLibrary().ifPresent(library -> visit(library, argument));
         // Every module is declared before any is visited, so import cycles need no special treatment.
-        // Only the flattened library holds declarations of modules other than its own context.
-        List<StaticContext> libraryContexts = prolog.getModuleContexts().stream()
+        List<StaticContext> importedContexts = prolog.getModuleContexts().stream()
                 .filter(context -> context != argument)
                 .toList();
-        libraryContexts.forEach(argument::addPublicDeclarationsOf);
-        // Declared types are visible across the imported library, so they join its context before linking.
+        for (StaticContext context : prolog.getModuleContexts()) {
+            importedContexts.forEach(context::linkImports);
+            context.linkImports(argument);
+        }
+        importedContexts.forEach(argument::linkImports);
+        // Declared types are shared by all modules, so this context collects them before passing them on.
         prolog.getTypeDeclarations().forEach(declaration -> argument.getInScopeSchemaTypes()
                 .addInScopeSchemaType(declaration.getDefinition(), declaration.getMetadata()));
-        libraryContexts.forEach(context -> context.linkImports(argument));
+        importedContexts.forEach(
+                context -> context.getInScopeSchemaTypes().importModuleTypes(argument.getInScopeSchemaTypes()));
         // Dependency ordering put type declarations first, so each resolves in its module before anything uses it.
         for (PrologDeclaration declaration : prolog.getDeclarations()) {
             visit(declaration, declaration.getModuleContext());

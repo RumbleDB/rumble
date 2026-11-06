@@ -393,25 +393,6 @@ public class VariableValues implements Serializable {
         return sb.toString();
     }
 
-    public void importModuleValues(VariableValues moduleValues) {
-        for (Name name : moduleValues.localVariableValues.keySet()) {
-            List<Item> items = moduleValues.localVariableValues.get(name);
-            this.localVariableValues.put(name, items);
-        }
-        for (Name name : moduleValues.localVariableCounts.keySet()) {
-            Item item = moduleValues.localVariableCounts.get(name);
-            this.localVariableCounts.put(name, item);
-        }
-        for (Name name : moduleValues.rddVariableValues.keySet()) {
-            JavaRDD<Item> items = moduleValues.rddVariableValues.get(name);
-            this.rddVariableValues.put(name, items);
-        }
-        for (Name name : moduleValues.dataFrameVariableValues.keySet()) {
-            HomogeneousItemDataFrame items = moduleValues.dataFrameVariableValues.get(name);
-            this.dataFrameVariableValues.put(name, items);
-        }
-    }
-
     private VariableValues findNodeWithVariableDeclaration(Name varName) {
         VariableValues nodeWithVariableDecl = this;
         // Invariant: there is a node among the current node or its parents that contains the variable

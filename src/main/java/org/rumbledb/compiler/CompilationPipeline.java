@@ -82,7 +82,7 @@ public final class CompilationPipeline {
         ModuleImportLoader importLoader = new ModuleImportLoader(compilationConfiguration);
         LibraryModule module =
                 ModuleParser.parseLibraryModule(query, uri, importingContext, compilationConfiguration, importLoader);
-        importLoader.flattenImports(module.getProlog(), module.getStaticContext());
+        importLoader.flattenImports(module.getProlog(), module.getStaticContext(), uri);
         return run(
                 module,
                 new CompilationContext(configuration, ExternalBindings.empty(), new ResourceResolver()),

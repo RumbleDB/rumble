@@ -56,7 +56,6 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -85,7 +84,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     private final ResourceResolver resourceResolver;
     private final ErrorCode externalBindingTypeErrorCode;
     private ExternalBindings externalBindings;
-    private boolean inLibraryModule;
+    private Prolog prolog;
     private List<Item> initialContextItem;
 
     public DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
@@ -181,7 +180,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         }
 
         // Variable is external. Do we have supplied items?
-        List<Item> items = name.equals(Name.CONTEXT_ITEM) && this.inLibraryModule
+        List<Item> items = name.equals(Name.CONTEXT_ITEM) && this.prolog.isImported(variableDeclaration)
                 ? this.initialContextItem
                 : this.getItemsBinding(name);
         if (items != null) {
@@ -352,31 +351,9 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     }
 
     @Override
-    public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
-        DynamicContext newContext =
-                new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
-        newContext.setNamedFunctions(argument.getNamedFunctions());
-        // A library without its own context declaration uses the query's initial focus.
-        if (!module.getProlog().hasContextItemDeclaration() && this.initialContextItem != null) {
-            newContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this.initialContextItem);
-            newContext.getVariableValues().setPosition(1);
-            newContext.getVariableValues().setLast(1);
-        }
-        this.inLibraryModule = true;
-        DynamicContext importedContext;
-        try {
-            importedContext = visitDescendants(module, newContext);
-        } finally {
-            this.inLibraryModule = false;
-        }
-        argument.getVariableValues().importModuleValues(importedContext.getVariableValues());
-        argument.getInScopeSchemaTypes().importModuleTypes(importedContext.getInScopeSchemaTypes());
-        return argument;
-    }
-
-    @Override
     public DynamicContext visitProlog(Prolog prolog, DynamicContext argument) {
-        // Modules of the imported library may each declare the context item.
+        this.prolog = prolog;
+        // Imported modules may each declare the context item.
         prolog.getVariableDeclarations().stream()
                 .map(VariableDeclaration::getVariableName)
                 .distinct()
@@ -387,50 +364,47 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Register deferred globals first, so context initialization can refer to another global
         // in this module and a global initializer depending on itself raises XQDY0054.
         Set<Node> earlyBound = new HashSet<>();
-        if (prolog.hasContextItemDeclaration() || this.inLibraryModule) {
-            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-                Expression initializer = declaration.getExpression();
-                if (this.inLibraryModule
-                        && declaration.external()
-                        && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
-                        && (this.getItemsBinding(declaration.getVariableName()) != null
-                                || (initializer != null
-                                        && initializer.getHighestExecutionMode().isLocal()))) {
-                    initializeVariableDeclaration(declaration, argument);
+        boolean deferOwnGlobals = prolog.hasContextItemDeclaration();
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            boolean imported = prolog.isImported(declaration);
+            if (!deferOwnGlobals && !imported) {
+                continue;
+            }
+            Expression initializer = declaration.getExpression();
+            if (imported
+                    && declaration.external()
+                    && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
+                    && (this.getItemsBinding(declaration.getVariableName()) != null
+                            || (initializer != null
+                                    && initializer.getHighestExecutionMode().isLocal()))) {
+                initializeVariableDeclaration(declaration, argument);
+                earlyBound.add(declaration);
+                continue;
+            }
+            if (!declaration.external()
+                    && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
+                    && !declaration.isAssignable()
+                    && initializer != null
+                    && !initializer.isSequential()) {
+                ItemRuntimePlan plan = new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(initializer);
+                if (plan.getRuntimeStaticContext().getExecutionMode().isLocal()) {
+                    argument.getVariableValues()
+                            .addVariableValue(
+                                    declaration.getVariableName(),
+                                    new GlobalVariableValue(
+                                            plan, argument, declaration.getMetadata(), declaration.getVariableName()));
                     earlyBound.add(declaration);
-                    continue;
-                }
-                if (!declaration.external()
-                        && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
-                        && !declaration.isAssignable()
-                        && initializer != null
-                        && !initializer.isSequential()) {
-                    ItemRuntimePlan plan =
-                            new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(initializer);
-                    if (plan.getRuntimeStaticContext().getExecutionMode().isLocal()) {
-                        argument.getVariableValues()
-                                .addVariableValue(
-                                        declaration.getVariableName(),
-                                        new GlobalVariableValue(
-                                                plan,
-                                                argument,
-                                                declaration.getMetadata(),
-                                                declaration.getVariableName()));
-                        earlyBound.add(declaration);
-                    }
                 }
             }
         }
         VariableDeclaration contextDeclaration = null;
-        if (!this.inLibraryModule) {
-            for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-                if (declaration.getVariableName().equals(Name.CONTEXT_ITEM)) {
-                    contextDeclaration = declaration;
-                    visit(declaration, argument);
-                    this.initialContextItem = argument.getVariableValues()
-                            .getLocalVariableValue(Name.CONTEXT_ITEM, declaration.getMetadata());
-                    break;
-                }
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            if (!prolog.isImported(declaration) && declaration.getVariableName().equals(Name.CONTEXT_ITEM)) {
+                contextDeclaration = declaration;
+                visit(declaration, argument);
+                this.initialContextItem = argument.getVariableValues()
+                        .getLocalVariableValue(Name.CONTEXT_ITEM, declaration.getMetadata());
+                break;
             }
         }
         DynamicContext generatedContext = argument;

@@ -15,6 +15,9 @@
  */
 package org.rumbledb.compiler.translation;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.rumbledb.compiler.URIQualifiedNameParser;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -32,6 +35,10 @@ public final class TranslationNameResolver {
     }
 
     private final TranslationContext context;
+    private final Set<Name> moduleLocalVariables = new HashSet<>();
+    private final Set<Name> moduleLocalFunctions = new HashSet<>();
+    private final Set<Name> sharedFunctions = new HashSet<>();
+    private String owner;
 
     TranslationNameResolver(TranslationContext context) {
         this.context = context;
@@ -51,7 +58,45 @@ public final class TranslationNameResolver {
     }
 
     public Name resolveFunctionName(String lexicalName, ExceptionMetadata metadata) {
-        return this.resolveEQName(lexicalName, NameRole.FUNCTION, metadata);
+        Name name = this.resolveEQName(lexicalName, NameRole.FUNCTION, metadata);
+        return this.moduleLocalFunctions.contains(name) && !this.sharedFunctions.contains(name)
+                ? name.ownedBy(this.owner())
+                : name;
+    }
+
+    /** A variable name in this module's code, which is the module's own if it declares that name as non-public. */
+    public Name variableName(Name name) {
+        return this.moduleLocalVariables.contains(name) ? name.ownedBy(this.owner()) : name;
+    }
+
+    public void declareVariable(Name name, boolean isPrivate) {
+        if (this.isModuleLocal(name.withoutOwner(), isPrivate)) {
+            this.moduleLocalVariables.add(name.withoutOwner());
+        }
+    }
+
+    /** One name covers every arity, so it is only the module's own if all its arities are. */
+    public void declareFunction(Name name, boolean isPrivate) {
+        (this.isModuleLocal(name.withoutOwner(), isPrivate) ? this.moduleLocalFunctions : this.sharedFunctions)
+                .add(name.withoutOwner());
+    }
+
+    /** Private to a library, or a main module's name in a namespace that only a module it does not import has. */
+    private boolean isModuleLocal(Name name, boolean isPrivate) {
+        if (this.context.isLibraryModule()) {
+            return isPrivate;
+        }
+        String namespace = name.getNamespace();
+        return namespace != null
+                && !this.context.moduleContext().getImportedNamespaces().containsKey(namespace)
+                && this.context.importLoader().hasModules(namespace);
+    }
+
+    private String owner() {
+        if (this.owner == null) {
+            this.owner = this.context.importLoader().newModuleOwner();
+        }
+        return this.owner;
     }
 
     private Name resolveUnprefixedName(String localName, NameRole role) {

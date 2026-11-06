@@ -135,9 +135,8 @@ public class LoadXQueryModuleFunctionIterator extends AbstractAtMostOneItemRunti
         Map<Item, List<Item>> variableExports = new LinkedHashMap<>();
         Map<Item, Map<Item, List<Item>>> functionExports = new LinkedHashMap<>();
         ItemFactory factory = ItemFactory.getInstance();
-        // The imported library holds the declarations of every module the requested one reaches.
-        var library = module.getProlog().getImportedLibrary().orElseThrow();
-        for (var declaration : library.getProlog().getVariableDeclarations()) {
+        // The prolog holds the declarations of every module the requested one reaches.
+        for (var declaration : module.getProlog().getVariableDeclarations()) {
             Name name = declaration.getVariableName();
             if (namespace.equals(name.getNamespace()) && !hasPrivateAnnotation(declaration.getAnnotations())) {
                 variableExports.put(
@@ -145,7 +144,7 @@ public class LoadXQueryModuleFunctionIterator extends AbstractAtMostOneItemRunti
                         loaded.getVariableValues().getLocalVariableValue(name, getMetadata()));
             }
         }
-        for (var declaration : library.getProlog().getFunctionDeclarations()) {
+        for (var declaration : module.getProlog().getFunctionDeclarations()) {
             var id = declaration.getFunctionIdentifier();
             if (!namespace.equals(id.getName().getNamespace())
                     || hasPrivateAnnotation(

@@ -160,6 +160,7 @@ import org.rumbledb.compiler.translation.xml.XmlComputedConstructorTranslation;
 import org.rumbledb.compiler.translation.xml.XmlDirectConstructorTranslation;
 import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
 import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
+import org.rumbledb.compiler.utils.AnnotationValidator;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.model.LanguageVersion;
@@ -328,10 +329,39 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 visit(header);
             }
             this.builder.finishHeader(createMetadataFromContext(ctx));
+            // Code may use a global before its declaration, so its names are settled first.
+            ModuleLocalNames moduleLocalNames = new ModuleLocalNames();
+            ctx.declarations.forEach(moduleLocalNames::visit);
             for (JsoniqParser.AnnotatedDeclContext declaration : ctx.declarations) {
                 visit(declaration);
             }
             return this.builder.build(createMetadataFromContext(ctx));
+        }
+
+        private class ModuleLocalNames extends JsoniqParserBaseVisitor<Void> {
+            @Override
+            public Void visitVarDecl(JsoniqParser.VarDeclContext ctx) {
+                TranslationVisitor.this
+                        .translationContext
+                        .names()
+                        .declareVariable(
+                                parseVariableBinding(ctx.varBinding()),
+                                AnnotationValidator.hasPrivateAnnotation(processAnnotations(ctx.annotations())));
+                return null;
+            }
+
+            @Override
+            public Void visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
+                var declaration = FunctionDeclContext.from(ctx);
+                TranslationVisitor.this
+                        .translationContext
+                        .names()
+                        .declareFunction(
+                                parseFunctionName(declaration.functionName()),
+                                AnnotationValidator.hasPrivateAnnotation(
+                                        processAnnotations(declaration.annotations())));
+                return null;
+            }
         }
 
         @Override
@@ -1331,7 +1361,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     }
 
     private Name parseVariableName(JsoniqParser.EqNameContext ctx) {
-        return parseEqName(ctx, NameRole.NO_DEFAULT_NAMESPACE);
+        return this.translationContext.names().variableName(parseEqName(ctx, NameRole.NO_DEFAULT_NAMESPACE));
     }
 
     @Override

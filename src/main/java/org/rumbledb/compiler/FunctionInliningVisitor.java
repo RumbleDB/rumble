@@ -46,9 +46,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
     private boolean isImportedFunction(Prolog prolog, FunctionDeclaration target) {
         // Rebuilding an imported body in the caller's context loses module-local
         // namespaces, collations, decimal formats and other static settings.
-        return prolog.getImportedLibrary()
-                .filter(library -> library.getProlog().getFunctionDeclarations().contains(target))
-                .isPresent();
+        return prolog.isImported(target);
     }
 
     private boolean isVariableReferenced(Node expression, Name name) {
