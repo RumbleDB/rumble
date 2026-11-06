@@ -38,6 +38,7 @@ import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
@@ -211,8 +212,7 @@ public class JavaAPITest {
         JavaRDD<Item> itemRDD = dataFrame
                 .javaRDD()
                 .map(new RowToItemMapper(
-                        org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA,
-                        ItemTypeFactory.createItemType(dataFrame.schema())));
+                        ExceptionMetadata.EMPTY_METADATA, ItemTypeFactory.createItemType(dataFrame.schema())));
         List<Item> items = itemRDD.collect();
 
         Assertions.assertEquals(
@@ -385,7 +385,7 @@ public class JavaAPITest {
                         List.of(
                                 ItemFactory.getInstance().createIntItem(1),
                                 ItemFactory.getInstance().createIntItem(1)),
-                        org.rumbledb.exceptions.ExceptionMetadata.EMPTY_METADATA,
+                        ExceptionMetadata.EMPTY_METADATA,
                         false);
 
         Assertions.assertEquals("{\"k\":1,\"k\":1}", serializer.serialize(map));
