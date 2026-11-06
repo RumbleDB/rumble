@@ -137,6 +137,8 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
+            org.apache.spark.sql.types.UDTRegistration.register(
+                    "org.rumbledb.api.Item", "org.rumbledb.items.parsing.ItemUserDefinedType");
 
             this.session = SparkSession.builder()
                     .config(this.configuration)

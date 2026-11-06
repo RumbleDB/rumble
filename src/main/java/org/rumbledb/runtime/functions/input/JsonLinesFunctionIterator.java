@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 import com.google.gson.stream.JsonReader;
 
@@ -35,12 +37,14 @@ import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.SerializedItemDataFrame;
+import org.rumbledb.runtime.plan.ItemDataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 
-public class JsonLinesFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
+public class JsonLinesFunctionIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, ItemDataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -66,7 +70,7 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan implements LocalR
     }
 
     @Override
-    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+    public Dataset<Row> createNativeItemDataFrame(DynamicContext context) {
         String url = this.getChild(0).materializeFirstOrNull(context).getStringValue();
         URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
 
@@ -110,8 +114,8 @@ public class JsonLinesFunctionIterator extends ItemRuntimePlan implements LocalR
                         SparkSessionManager.getInstance().getJavaSparkContext().textFile(path, partitions);
             }
         }
-        return strings.mapPartitions(new JSONSyntaxToItemMapper(
-                getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting()));
+        return SerializedItemDataFrame.fromRDD(strings.mapPartitions(new JSONSyntaxToItemMapper(
+                getMetadata(), this.getRuntimeStaticContext().isQuerySideEffecting())));
     }
 
     private static final class JsonLinesCursor extends AbstractLocalCursor<Item> {
