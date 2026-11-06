@@ -20,6 +20,6 @@ try {
       { "foo" : [ 23 ] },
       { }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 }

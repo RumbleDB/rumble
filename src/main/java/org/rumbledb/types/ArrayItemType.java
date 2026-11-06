@@ -1,7 +1,25 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
+import java.io.Serial;
+import java.util.*;
+
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -9,21 +27,16 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
-import java.util.*;
+public class ArrayItemType extends AbstractItemType {
 
-public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSerializable {
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    final static Set<FacetTypes> allowedFacets = new HashSet<>(
-            Arrays.asList(
-                FacetTypes.ENUMERATION,
-                FacetTypes.CONTENT,
-
-                FacetTypes.MINLENGTH,
-                FacetTypes.MAXLENGTH
-            )
-    );
+    static final Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(Arrays.asList(
+            ConstrainingFacetTypes.ENUMERATION,
+            ConstrainingFacetTypes.CONTENT,
+            ConstrainingFacetTypes.MINLENGTH,
+            ConstrainingFacetTypes.MAXLENGTH));
 
     private Name name;
     private ItemType baseType;
@@ -33,18 +46,13 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
     private List<Item> enumeration;
     private Integer minLength, maxLength;
 
-    ArrayItemType() {
-        super();
-    }
-
     ArrayItemType(
             Name name,
             ItemType baseType,
             ItemType content,
             Integer minLength,
             Integer maxLength,
-            List<Item> enumeration
-    ) {
+            List<Item> enumeration) {
         this.name = name;
         if (baseType == null) {
             throw new OurBadException("Unexpected error: baseType is null.");
@@ -64,26 +72,34 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
 
     public static ItemType arrayOf(ItemType itemType) {
         return new ArrayItemType(
-                new Name(Name.JS_NS, "js", "array"),
-                BuiltinTypesCatalogue.arrayItem,
-                itemType,
-                null,
-                null,
-                null
-        );
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
-            return false;
-        }
-        return isEqualTo((ItemType) other);
+                new Name(Name.JS_NS, "js", "array"), BuiltinTypesCatalogue.arrayItem, itemType, null, null, null);
     }
 
     @Override
     public boolean isArrayItemType() {
         return true;
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            for (ItemType member : superType.getTypes()) {
+                if (this.isSubtypeOf(member)) {
+                    return true;
+                }
+            }
+        }
+        if (superType.isXQueryArrayItemType()) {
+            // an ArrayItemType (js:array()) with a base type of T <: array(T)
+            return new SequenceType(this.content, SequenceType.Arity.One)
+                    .isSubtypeOf(superType.getMemberSequenceType());
+        }
+        if (superType.isFunctionItemType()) {
+            ItemType xqueryArrayType =
+                    ItemTypeFactory.xqueryArrayOf(new SequenceType(this.content, SequenceType.Arity.One));
+            return xqueryArrayType.isSubtypeOf(superType);
+        }
+        return super.isSubtypeOf(superType);
     }
 
     @Override
@@ -125,7 +141,7 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return allowedFacets;
     }
 
@@ -147,6 +163,38 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
     @Override
     public ItemType getArrayContentFacet() {
         return this.content;
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeLax(ItemType other) {
+        if (!(other instanceof ArrayItemType otherArray)) {
+            if (other.isArrayItemType()) {
+                return other.findLeastCommonSuperTypeLax(this);
+            }
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        if (!this.isResolved() || !otherArray.isResolved()) {
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        if (hasEnumerationFacet() || otherArray.hasEnumerationFacet()) {
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        ItemType mergedContent;
+        if (this.maxLength != null && this.maxLength == 0) {
+            mergedContent = otherArray.content;
+        } else if (otherArray.maxLength != null && otherArray.maxLength == 0) {
+            mergedContent = this.content;
+        } else {
+            mergedContent = this.content.findLeastCommonSuperTypeLax(otherArray.content);
+        }
+        Integer mergedMinLength = mergeMinLengthFacet(this.minLength, otherArray.minLength);
+        Integer mergedMaxLength = mergeMaxLengthFacet(this.maxLength, otherArray.maxLength);
+        if (mergedMinLength != null && mergedMaxLength != null && mergedMinLength > mergedMaxLength) {
+            mergedMinLength = null;
+            mergedMaxLength = null;
+        }
+        return new ArrayItemType(
+                null, BuiltinTypesCatalogue.arrayItem, mergedContent, mergedMinLength, mergedMaxLength, null);
     }
 
     @Override
@@ -178,11 +226,54 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
 
     @Override
     public String toString() {
-        // consider add content and various stuff
-        return ((this.name == null) ? "<anonymous>" : this.name.toString())
-            + "(array of "
-            + this.getArrayContentFacet()
-            + ")";
+        if ((new Name(Name.JS_NS, "js", "array")).equals(this.name)) {
+            // generic object
+            return this.name.toString();
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{ ");
+            if (this.name != null && !this.name.getLocalName().equals("")) {
+                sb.append("\"name\": \"");
+                sb.append(this.name.toString());
+                sb.append("\", ");
+            }
+            sb.append("\"kind\": \"array\", ");
+
+            sb.append("\"baseType\": \"");
+            sb.append(this.baseType.toString());
+            sb.append("\", ");
+
+            sb.append("\"treeDepth\": ");
+            sb.append(this.typeTreeDepth);
+            sb.append(", ");
+
+            if (this.minLength != null) {
+                sb.append("\"minLength\": ");
+                sb.append(this.minLength);
+                sb.append(", ");
+            }
+            if (this.maxLength != null) {
+                sb.append("\"maxLength\": ");
+                sb.append(this.maxLength);
+                sb.append(", ");
+            }
+
+            if (isResolved()) {
+                sb.append("\"content\": ");
+                String type = this.getArrayContentFacet().toString();
+                if (type.startsWith("{")) {
+                    sb.append(type);
+                } else {
+                    sb.append("\"");
+                    sb.append(type);
+                    sb.append("\"");
+                }
+            } else {
+                sb.append(" (content not resolved yet) ");
+            }
+            sb.append(" }");
+            return sb.toString();
+        } // consider add content and various stuff
     }
 
     public void processBaseType() {
@@ -205,8 +296,7 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
         if (!this.baseType.equals(BuiltinTypesCatalogue.JSONItem)) {
             throw new InvalidSchemaException(
                     "This type cannot be the base type of an array type: " + this.baseType,
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         if (this.content == null) {
             throw new OurBadException("Content cannot be null in primitive array type.");
@@ -247,37 +337,33 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
             if (this.getTypeTreeDepth() >= 3) {
                 throw new InvalidSchemaException(
                         "Any user-defined array type must have an array type as its base type.",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
+                        ExceptionMetadata.EMPTY_METADATA);
             }
             return;
         }
         if (!this.content.isSubtypeOf(this.baseType.getArrayContentFacet())) {
             throw new InvalidSchemaException(
                     "The content of an array subtype (here: "
-                        + this.content
-                        + ") must be a subtype of the content of its base type (here: "
-                        + this.baseType.getArrayContentFacet()
-                        + ")",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                            + this.content
+                            + ") must be a subtype of the content of its base type (here: "
+                            + this.baseType.getArrayContentFacet()
+                            + ")",
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         if (this.baseType.getMinLengthFacet() != null && this.getMinLengthFacet() < this.baseType.getMinLengthFacet()) {
             throw new InvalidSchemaException(
                     "The minLength facet of an array subtype must be greater or equal to that of its base type.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         if (this.baseType.getMaxLengthFacet() != null && this.getMaxLengthFacet() > this.baseType.getMaxLengthFacet()) {
             throw new InvalidSchemaException(
                     "The maxLength facet of an array subtype must be lesser or equal to that of its base type.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                    ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return this.content.isCompatibleWithDataFrames(configuration);
     }
 
@@ -290,31 +376,27 @@ public class ArrayItemType implements ItemType, com.esotericsoftware.kryo.KryoSe
         return sb.toString();
     }
 
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeClassAndObject(output, this.baseType);
-        kryo.writeClassAndObject(output, this.content);
-        kryo.writeObjectOrNull(output, this.enumeration, ArrayList.class);
-        output.writeInt(this.minLength != null ? this.minLength : -1);
-        output.writeInt(this.maxLength != null ? this.maxLength : -1);
+    private boolean hasEnumerationFacet() {
+        return this.enumeration != null && !this.enumeration.isEmpty();
     }
 
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.content = (ItemType) kryo.readClassAndObject(input);
-        this.enumeration = kryo.readObjectOrNull(input, ArrayList.class);
-        int min = input.readInt();
-        int max = input.readInt();
-        this.minLength = (min == -1) ? null : min;
-        this.maxLength = (max == -1) ? null : max;
-        if (this.baseType.isResolved()) {
-            processBaseType();
-            if (this.content != null && this.content.isResolved()) {
-                checkSubtypeConsistency();
-            }
+    private Integer mergeMinLengthFacet(Integer first, Integer second) {
+        if (first == null) {
+            return null;
         }
+        if (second == null) {
+            return null;
+        }
+        return Math.min(first, second);
+    }
+
+    private Integer mergeMaxLengthFacet(Integer first, Integer second) {
+        if (first == null) {
+            return null;
+        }
+        if (second == null) {
+            return null;
+        }
+        return Math.max(first, second);
     }
 }

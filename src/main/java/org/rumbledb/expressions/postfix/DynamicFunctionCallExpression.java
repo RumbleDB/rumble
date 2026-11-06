@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,31 +11,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.postfix;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import lombok.Getter;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
+@Getter
 public class DynamicFunctionCallExpression extends Expression {
 
     private Expression mainExpression;
     private List<Expression> arguments;
 
     public DynamicFunctionCallExpression(
-            Expression mainExpression,
-            List<Expression> arguments,
-            ExceptionMetadata metadata
-    ) {
+            Expression mainExpression, List<Expression> arguments, ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Main expression cannot be null in a postfix expression.");
@@ -48,10 +44,6 @@ public class DynamicFunctionCallExpression extends Expression {
         if (this.arguments == null) {
             this.arguments = new ArrayList<>();
         }
-    }
-
-    public List<Expression> getArguments() {
-        return this.arguments;
     }
 
     @Override
@@ -66,30 +58,24 @@ public class DynamicFunctionCallExpression extends Expression {
      * DynamicFunctionCall is always locally evaluated as execution mode cannot be determined at static analysis phase.
      * This behavior is different from all other postfix extensions, hence no override is required.
      */
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDynamicFunctionCallExpression(this, argument);
     }
 
-    public Expression getMainExpression() {
-        return this.mainExpression;
-    }
-
-    public void print(StringBuffer buffer, int indent) {
+    @Override
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + this.expressionClassification);
-        buffer.append(
-            " | "
+        buffer.append(" | "
                 + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
+                        ? "not set"
+                        : this.staticSequenceType
+                                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")));
         buffer.append("\n");
         this.mainExpression.print(buffer, indent + 1);
         for (Expression arg : this.arguments) {
@@ -105,7 +91,7 @@ public class DynamicFunctionCallExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         this.mainExpression.serializeToJSONiq(sb, indent + 1);
 

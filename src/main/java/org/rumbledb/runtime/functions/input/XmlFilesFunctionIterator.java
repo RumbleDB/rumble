@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,102 +11,75 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Marco Schöb
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.input;
+
+import java.io.*;
+import java.net.URI;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+
+import scala.Tuple2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.items.parsing.XmlSyntaxToItemMapper;
-import org.rumbledb.runtime.RDDRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import scala.Tuple2;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
 
-import java.io.*;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+public class XmlFilesFunctionIterator extends ItemRuntimePlan implements RDDRuntimePlan<Item> {
 
-public class XmlFilesFunctionIterator extends RDDRuntimeIterator {
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    RuntimeIterator iterator;
-    BufferedReader reader;
-    Item path;
-    Item nextItem;
 
-    public XmlFilesFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public XmlFilesFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
-        this.iterator = this.children.get(0);
-        this.reader = null;
-        this.nextItem = null;
-        this.path = null;
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
-        url = url.replaceAll(" ", "%20");
-        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        String url = this.getChild(0).materializeFirstOrNull(context).getStringValue();
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
 
         int partitions = 32;
-        if (this.children.size() > 1) {
-            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
+        if (this.getChildren().size() > 1) {
+            partitions = this.getChild(1).materializeFirstOrNull(context).getIntValue();
         }
 
         JavaPairRDD<String, String> strings;
         if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
-            InputStream is = FileSystemUtil.getDataInputStream(
-                uri,
-                context.getRumbleRuntimeConfiguration(),
-                getMetadata()
-            );
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-            List<String> lines = new ArrayList<>();
-            String line = null;
-            try {
-                while ((line = br.readLine()) != null) {
-                    lines.add(line);
-                }
+            StringWriter content = new StringWriter();
+            try (Reader reader = new InputStreamReader(FileSystemUtil.getDataInputStream(uri, getMetadata()))) {
+                reader.transferTo(content);
             } catch (IOException e) {
-                throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
+                CannotRetrieveResourceException exception =
+                        new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
+                exception.initCause(e);
+                throw exception;
             }
-            String fileContent = String.join("", lines);
+            String fileContent = content.toString();
             strings = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .parallelizePairs(
-                    Collections.singletonList(new Tuple2<>(uri.toString(), fileContent)),
-                    partitions
-                );
+                    .getJavaSparkContext()
+                    .parallelizePairs(
+                            Collections.singletonList(
+                                    new Tuple2<>(FileSystemUtil.convertURIToStringForSpark(uri), fileContent)),
+                            partitions);
         } else {
-            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+            if (!FileSystemUtil.exists(uri, getMetadata())) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 
-            String path = uri.toString();
-            if (uri.getScheme().contentEquals("file")) {
-                path = path.replaceAll("%20", " ");
-            }
-            strings = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .wholeTextFiles(
-                    path,
-                    partitions
-                );
+            String path = FileSystemUtil.convertURIToStringForSpark(uri);
+            strings = SparkSessionManager.getInstance().getJavaSparkContext().wholeTextFiles(path, partitions);
         }
-        return strings.mapPartitions(
-            new XmlSyntaxToItemMapper(getMetadata(), context.getRumbleRuntimeConfiguration().optimizeParentPointers())
-        );
+        return strings.mapPartitions(new XmlSyntaxToItemMapper(
+                getMetadata(), context.getRumbleConfiguration().optimization().optimizeParentPointers()));
     }
 }

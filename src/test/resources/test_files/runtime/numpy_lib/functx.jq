@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:1:COLUMN:0:" :)
+(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:2:COLUMN:0:" :)
 module namespace functx = "functx.jq";
 
 declare function functx:distinct-deep($items as item*) as item* {

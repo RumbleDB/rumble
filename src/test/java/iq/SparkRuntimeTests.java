@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,88 +11,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package iq;
 
-import org.json.JSONException;
-import org.junit.Assert;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
-import org.skyscreamer.jsonassert.JSONAssert;
-import org.skyscreamer.jsonassert.JSONCompareMode;
-import utils.ApproximatedDoubleComparator;
+import org.rumbledb.config.RumbleConfiguration;
 
-@RunWith(Parameterized.class)
 public class SparkRuntimeTests extends RuntimeTests {
 
-    public static final File sparkRuntimeTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/test/resources/test_files/runtime-spark"
-    );
+    public static final File sparkRuntimeTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/runtime-spark");
 
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return new RumbleRuntimeConfiguration(
-                new String[] {
-                    "--variable:externalUnparsedString",
-                    "unparsed string",
-                    "--escape-backticks",
-                    "yes",
-                    "--dates-with-timezone",
-                    "yes"
-                }
-        );
-    }
-
-    public SparkRuntimeTests(File testFile) {
-        super(testFile);
-    }
-
-    @Parameterized.Parameters(name = "{index}:{0}")
-    public static Collection<Object[]> testFiles() {
-        List<Object[]> result = new ArrayList<>();
-        _testFiles.clear();
-        readFileList(sparkRuntimeTestsDirectory);
-        _testFiles.forEach(file -> result.add(new Object[] { file }));
-        return result;
+    public RumbleConfiguration getConfiguration() {
+        return RumbleConfiguration.builder()
+                .configureRuntime(runtime -> runtime.resultsSizeCap(200).materializationCap(100000))
+                .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
+                .build();
     }
 
     @Override
-    protected void checkExpectedOutput(
-            String expectedOutput,
-            SequenceOfItems sequence
-    ) {
-        String actualOutput = runIterators(sequence);
-        try {
-            if (expectedOutput.startsWith("(") && expectedOutput.endsWith(")")) {
-                expectedOutput = expectedOutput.substring(1, expectedOutput.length() - 1).replaceAll("\"", "");
-            }
-            if (actualOutput.startsWith("(") && actualOutput.endsWith(")")) {
-                actualOutput = actualOutput.substring(1, actualOutput.length() - 1).replaceAll("\"", "");
-            }
-            JSONAssert.assertEquals(
-                expectedOutput,
-                actualOutput,
-                new ApproximatedDoubleComparator(JSONCompareMode.STRICT, 1e-9)
-            );
-        } catch (JSONException e) {
-            Assert.assertEquals(
-                "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
-                expectedOutput,
-                actualOutput
-            );
-        }
-        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
+    protected File testDirectory() {
+        return sparkRuntimeTestsDirectory;
     }
 }

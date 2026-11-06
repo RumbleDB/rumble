@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,13 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.navigation;
 
-import org.apache.log4j.LogManager;
+import java.io.Serial;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Dataset;
@@ -28,328 +27,299 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
+
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.ItemTypeFactory;
 
-import sparksoniq.spark.SparkSessionManager;
+@Log4j2
+public class ArrayLookupIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, NativeQueryRuntimePlan {
 
-import java.util.Arrays;
-import java.util.Map;
-
-public class ArrayLookupIterator extends HybridRuntimeIterator {
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private int lookup;
-    private Item nextResult;
+
+    private final ItemRuntimePlan iterator;
+    private final ItemRuntimePlan lookupIterator;
 
     public ArrayLookupIterator(
-            RuntimeIterator array,
-            RuntimeIterator iterator,
-            RuntimeStaticContext staticContext
-    ) {
-        super(Arrays.asList(array, iterator), staticContext);
+            ItemRuntimePlan array, ItemRuntimePlan lookupIterator, RuntimeStaticContext staticContext) {
+        super(Arrays.asList(array, lookupIterator), staticContext);
         this.iterator = array;
+        this.lookupIterator = lookupIterator;
     }
 
     @Override
-    public Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        int position = resolveLookupPosition(context);
+        return new FlatMappingLocalCursor<>(
+                this.iterator,
+                context,
+                item -> {
+                    if (!item.isArray() || position <= 0 || position > item.getSize()) {
+                        return List.<Item>of().iterator();
+                    }
+                    if (item.isArrayOfItems()) {
+                        return List.of(item.getItemAt(position - 1)).iterator();
+                    }
+                    return item.getSequenceAt(position - 1).iterator();
+                },
+                getMetadata());
     }
 
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.iterator.close();
-    }
-
-    private void initLookupPosition(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.children.get(1);
-
+    private int resolveLookupPosition(DynamicContext context) {
+        Item lookupExpression;
         try {
-            Item lookupExpression = lookupIterator.materializeExactlyOneItem(context);
-            if (!lookupExpression.isNumeric()) {
-                throw new UnexpectedTypeException(
-                        "Type error; Non numeric array lookup for : "
-                            + lookupExpression.serialize(),
-                        getMetadata()
-                );
-            }
-            this.lookup = lookupExpression.castToIntValue();
+            lookupExpression = this.lookupIterator.materializeExactlyOne(context);
         } catch (NoItemException e) {
             throw new InvalidSelectorException(
-                    "Invalid Lookup Key; Array lookup can't be performed with no key.",
-                    getMetadata()
-            );
+                    "Invalid Lookup Key; Array lookup can't be performed with no key.", getMetadata());
         } catch (MoreThanOneItemException e) {
             throw new InvalidSelectorException(
-                    "Invalid Lookup Key; Array lookup can't be performed with multiple keys.",
-                    getMetadata()
-            );
+                    "Invalid Lookup Key; Array lookup can't be performed with multiple keys.", getMetadata());
         }
-    }
-
-    @Override
-    public void openLocal() {
-        initLookupPosition(this.currentDynamicContextForLocalExecution);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        while (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
-            if (item.isArray()) {
-                if (this.lookup > 0 && this.lookup <= item.getSize()) {
-                    // -1 for Jsoniq convention, arrays start from 1
-                    Item result = item.getItemAt(this.lookup - 1);
-                    this.nextResult = result;
-                    break;
-                }
+        if (!lookupExpression.isNumeric()) {
+            throw new UnexpectedTypeException(
+                    "Type error; Non numeric array lookup for : " + lookupExpression.serialize(), getMetadata());
+        }
+        if (lookupExpression.isInteger()) {
+            // A position outside the int range matches no member; 0 never matches.
+            if (!lookupExpression.isWithinIntRange()) {
+                return 0;
             }
+            int position = lookupExpression.getIntValue();
+            return position > 0 ? position : 0;
         }
-
-        if (this.nextResult == null) {
-            this.hasNext = false;
-        } else {
-            this.hasNext = true;
-        }
+        return lookupExpression.castToIntValue();
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
-        initLookupPosition(dynamicContext);
-        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this.lookup);
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
+        JavaRDD<Item> childRDD = this.getChild(0).getRDD(dynamicContext);
+        int lookup = resolveLookupPosition(dynamicContext);
+        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(lookup);
 
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
     }
 
     @Override
-    public boolean implementsDataFrames() {
-        return true;
-    }
-
-    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext newContext = NativeQueryRuntimePlan.generate(this.iterator, nativeClauseContext);
         if (newContext != NativeClauseContext.NoNativeQuery) {
-            if (SequenceType.Arity.OneOrMore.isSubtypeOf(newContext.getResultingType().getArity())) {
+            if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                    newContext.getResultingType().getArity())) {
                 return NativeClauseContext.NoNativeQuery;
             }
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
-            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
-                .getVariableDependencies();
+            Map<Name, DynamicContext.VariableDependency> keyDependencies =
+                    this.lookupIterator.getVariableDependencies();
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;
-            if (schema instanceof StructType) {
-                structSchema = (StructType) schema;
-                if (
-                    Arrays.stream(structSchema.fieldNames())
-                        .anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))
-                ) {
+            if (schema instanceof StructType structType) {
+                structSchema = structType;
+                if (Arrays.stream(structSchema.fieldNames())
+                        .anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))) {
                     return NativeClauseContext.NoNativeQuery;
                 }
             }
 
-            initLookupPosition(newContext.getContext());
+            int lookup = resolveLookupPosition(newContext.getContext());
 
             ItemType resultType = newContext.getResultingType().getItemType();
             if (!(resultType.isArrayItemType())) {
-                if (getConfiguration().doStaticAnalysis()) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
-                                + " so that the lookup will always result in the empty sequence no matter what. "
-                                + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                                    + " so that the lookup will always result in the empty sequence no matter what. "
+                                    + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
                             ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                            getMetadata()
-                    );
+                            getMetadata());
                 }
-                LogManager.getLogger("ArrayLookupIterator")
-                    .warn(
-                        "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
-                    );
+                log.warn("Array lookup on a DataFrame that does not an array type. Empty sequence returned.");
                 return NativeClauseContext.NoNativeQuery;
             }
 
             schema = newContext.getSchema();
-            if (!(schema instanceof ArrayType)) {
-                if (getConfiguration().doStaticAnalysis()) {
+            if (!(schema instanceof ArrayType arraySchema)) {
+                if (getConfiguration().analysis().enableStaticTyping()) {
                     throw new UnexpectedStaticTypeException(
                             "This is not a sequence of arrays,"
-                                + " so that the lookup will always result in the empty sequence no matter what. "
-                                + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                                    + " so that the lookup will always result in the empty sequence no matter what. "
+                                    + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
                             ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                            getMetadata()
-                    );
+                            getMetadata());
                 }
-                LogManager.getLogger("ArrayLookupIterator")
-                    .warn(
-                        "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
-                    );
+                log.warn("Array lookup on a DataFrame that does not an array type. Empty sequence returned.");
                 return NativeClauseContext.NoNativeQuery;
             }
             newContext.setResultingType(
-                new SequenceType(
-                        resultType.getArrayContentFacet(),
-                        SequenceType.Arity.OneOrZero
-                )
-            );
-            newContext.setSchema(((ArrayType) newContext.getSchema()).elementType());
-            newContext.setResultingQuery("get(" + newContext.getResultingQuery() + " ," + (this.lookup - 1) + ")");
+                    new SequenceType(resultType.getArrayContentFacet(), SequenceType.Arity.OneOrZero));
+            newContext.setSchema(arraySchema.elementType());
+            newContext.setResultingQuery("get(" + newContext.getResultingQuery() + " ," + (lookup - 1) + ")");
         }
         return newContext;
     }
 
-    public JSoundDataFrame getDataFrame(DynamicContext context) {
-        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
-        initLookupPosition(context);
+    @Override
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+        HomogeneousItemDataFrame childDataFrame =
+                ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
+        int lookup = resolveLookupPosition(context);
         String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         boolean isObject = childDataFrame.getItemType().isObjectItemType();
-        boolean hasAtomicJSONiqItem = isObject
-            && childDataFrame.getItemType()
-                .getObjectContentFacet()
-                .containsKey(SparkSessionManager.atomicJSONiqItemColumnName);
+        boolean hasNonObjectJSONiqItem = isObject
+                && childDataFrame
+                        .getItemType()
+                        .getObjectKeysFacet()
+                        .contains(SparkSessionManager.nonObjectJSONiqItemColumnName);
+
+        // Check if metadata columns exist
+        String[] fieldNames = childDataFrame.getDataFrame().schema().fieldNames();
+        boolean hasRowIdColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.rowIdColumnName);
+        boolean hasMutabilityColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.mutabilityLevelColumnName);
+        boolean hasPathInColumn = Arrays.asList(fieldNames).contains(SparkSessionManager.pathInColumnName);
+        boolean hasTableLocationColumn =
+                Arrays.asList(fieldNames).contains(SparkSessionManager.tableLocationColumnName);
+
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
+                // element is an object, preserve metadata columns if they exist
+                if (hasRowIdColumn && hasMutabilityColumn && hasPathInColumn && hasTableLocationColumn) {
+                    return childDataFrame.evaluateSQL(
+                            String.format(
+                                    "SELECT `%s`.*, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
+                                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                    SparkSessionManager.rowIdColumnName,
+                                    SparkSessionManager.mutabilityLevelColumnName,
+                                    SparkSessionManager.pathInColumnName,
+                                    Integer.toString(lookup - 1),
+                                    SparkSessionManager.pathInColumnName,
+                                    SparkSessionManager.tableLocationColumnName,
+                                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                    Integer.toString(lookup - 1),
+                                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                    SparkSessionManager.rowIdColumnName,
+                                    SparkSessionManager.mutabilityLevelColumnName,
+                                    SparkSessionManager.pathInColumnName,
+                                    SparkSessionManager.tableLocationColumnName,
+                                    array,
+                                    SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                    Integer.toString(lookup)),
+                            elementType);
+                }
+                // Otherwise just return the object
                 return childDataFrame.evaluateSQL(
-                    String.format(
-                        "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s)",
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        Integer.toString(this.lookup - 1),
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        array,
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        Integer.toString(this.lookup)
-                    ),
-                    elementType
-                );
+                        String.format(
+                                "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s)",
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                Integer.toString(lookup - 1),
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                array,
+                                SparkSessionManager.nonObjectJSONiqItemColumnName,
+                                Integer.toString(lookup)),
+                        elementType);
             }
             return childDataFrame.evaluateSQL(
-                String.format(
-                    "SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s",
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    Integer.toString(this.lookup - 1),
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    array,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    Integer.toString(this.lookup)
-                ),
-                elementType
-            );
-        } else if (
-            hasAtomicJSONiqItem
-                &&
-                childDataFrame.getItemType()
-                    .getObjectContentFacet()
-                    .get(SparkSessionManager.atomicJSONiqItemColumnName)
+                    String.format(
+                            "SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s",
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            Integer.toString(lookup - 1),
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            array,
+                            SparkSessionManager.nonObjectJSONiqItemColumnName,
+                            Integer.toString(lookup)),
+                    elementType);
+        } else if (hasNonObjectJSONiqItem
+                && childDataFrame
+                        .getItemType()
+                        .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                        .getType()
+                        .isArrayItemType()
+                && childDataFrame
+                        .getItemType()
+                        .getObjectKeysFacet()
+                        .contains(SparkSessionManager.tableLocationColumnName)) {
+            ItemType elementType = childDataFrame
+                    .getItemType()
+                    .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
                     .getType()
-                    .isArrayItemType()
-                && childDataFrame.getItemType()
-                    .getObjectContentFacet()
-                    .containsKey(SparkSessionManager.tableLocationColumnName)
-        ) {
-            ItemType elementType = childDataFrame.getItemType()
-                .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                .getType()
-                .getArrayContentFacet();
+                    .getArrayContentFacet();
             String sql;
-            JSoundDataFrame res;
+            HomogeneousItemDataFrame res;
             if (elementType.isObjectItemType()) {
                 sql = String.format(
-                    "SELECT `%s`.*, `%s`, `%s`, `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.rowIdColumnName,
-                    SparkSessionManager.mutabilityLevelColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.tableLocationColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    this.lookup - 1,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.rowIdColumnName,
-                    SparkSessionManager.mutabilityLevelColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    this.lookup - 1,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.tableLocationColumnName,
-                    array,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    this.lookup
-                );
+                        "SELECT `%s`.*, `%s`, `%s`, `%s`, `%s` FROM (SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s)",
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        Integer.toString(lookup - 1),
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        Integer.toString(lookup - 1),
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        array,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        Integer.toString(lookup));
                 res = childDataFrame.evaluateSQL(sql, elementType);
             } else {
                 sql = String.format(
-                    "SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s",
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    this.lookup - 1,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.rowIdColumnName,
-                    SparkSessionManager.mutabilityLevelColumnName,
-                    SparkSessionManager.pathInColumnName,
-                    this.lookup - 1,
-                    SparkSessionManager.pathInColumnName,
-                    SparkSessionManager.tableLocationColumnName,
-                    array,
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    this.lookup
-                );
+                        "SELECT `%s`[%s] as `%s`, `%s`, `%s`, CONCAT(`%s`, '[%s]') AS `%s`, `%s` FROM %s WHERE size(`%s`) >= %s",
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        lookup - 1,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.rowIdColumnName,
+                        SparkSessionManager.mutabilityLevelColumnName,
+                        SparkSessionManager.pathInColumnName,
+                        lookup - 1,
+                        SparkSessionManager.pathInColumnName,
+                        SparkSessionManager.tableLocationColumnName,
+                        array,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        lookup);
                 Dataset<Row> df = childDataFrame.getDataFrame().sparkSession().sql(sql);
-                ItemType deltaItemType = ItemTypeFactory.createItemType(df.schema());
-                res = new JSoundDataFrame(df, deltaItemType);
+                res = new HomogeneousItemDataFrame(df, elementType);
             }
             return res;
         }
-        if (getConfiguration().doStaticAnalysis()) {
+        if (getConfiguration().analysis().enableStaticTyping()) {
             throw new UnexpectedStaticTypeException(
                     "This is not a sequence of arrays,"
-                        + " so that the lookup will always result in the empty sequence no matter what. "
-                        + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                            + " so that the lookup will always result in the empty sequence no matter what. "
+                            + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
                     ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
-                    getMetadata()
-            );
+                    getMetadata());
         }
-        LogManager.getLogger("ArrayLookupIterator")
-            .warn(
-                "Array lookup on a DataFrame that does not an array type. Empty sequence returned."
-            );
-        return JSoundDataFrame.emptyDataFrame();
+        log.warn("Array lookup on a DataFrame that does not an array type. Empty sequence returned.");
+        return HomogeneousItemDataFrame.emptyDataFrame();
     }
 }

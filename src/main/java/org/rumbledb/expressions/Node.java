@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,45 +11,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions;
-
-import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+
 /**
  * This is the top-level class for nodes in the intermediate representation of a
  * JSONiq query. Nodes include expressions, clauses, function declarations, etc.
  */
+@Getter
 public abstract class Node {
 
+    /**
+     * Access the metadata of the node, i.e., the line and column number.
+     * This is used for displaying informative error messages.
+     */
     private ExceptionMetadata metadata;
 
+    /**
+     * Gets the highest execution mode of this node, which determines
+     * whether evaluation will be done locally, with RDDs or with DataFrames.
+     * This method is used during the static analysis. It is meant to be
+     * overridden by subclasses that support higher execution modes. By
+     * default, the highest execution mode is assumed to be local.
+     */
+    @Setter
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;
 
-    protected Node() {
-    }
+    protected boolean isInSequentialBlock;
 
     protected Node(ExceptionMetadata metadata) {
         this.metadata = metadata;
-    }
-
-    /**
-     * Initializes the highest execution mode of this node, which determines
-     * whether evaluation will be done locally, with RDDs or with DataFrames.
-     *
-     * This method is used during the static analysis.
-     */
-    public void setHighestExecutionMode(ExecutionMode newMode) {
-        this.highestExecutionMode = newMode;
     }
 
     /**
@@ -67,31 +67,15 @@ public abstract class Node {
      *
      * if Node.suppressUnsetExecutionModeAccessedErrors is false, then an error is thrown if an UNSET mode is found.
      * if Node.suppressUnsetExecutionModeAccessedErrors is true, it might silently return UNSET.
-     * 
+     *
      * @param visitorConfig the configuration of the visitor.
      * @return the highest execution mode.
      */
     public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (
-            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.highestExecutionMode == ExecutionMode.UNSET
-        ) {
+        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("An execution mode is accessed without being set.");
         }
-        return this.highestExecutionMode;
-    }
-
-    /**
-     * Gets the highest execution mode of this node, which determines
-     * whether evaluation will be done locally, with RDDs or with DataFrames.
-     *
-     * This method is used during the static analysis. It is meant to be
-     * overridden by subclasses that support higher execution modes. By
-     * default, the highest execution mode is assumed to be local.
-     *
-     * @return the highest execution mode.
-     */
-    public ExecutionMode getHighestExecutionMode() {
         return this.highestExecutionMode;
     }
 
@@ -152,27 +136,22 @@ public abstract class Node {
     }
 
     /**
-     * Access the metadata of the node, i.e., the line and column number.
-     * This is used for displaying informative error messages.
-     *
-     * @return the metadata.
-     */
-    public ExceptionMetadata getMetadata() {
-        return this.metadata;
-    }
-
-    /**
      * Prints the node tree to a string buffer.
      *
      * @param buffer a string buffer to write to
      * @param indent the current level of indentation
      */
-    public void print(StringBuffer buffer, int indent) {
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
+        if (this.isInSequentialBlock) {
+            buffer.append(" | " + "in sequential block");
+        } else {
+            buffer.append(" | " + "not in sequential block");
+        }
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -181,14 +160,14 @@ public abstract class Node {
 
     @Override
     public final String toString() {
-        StringBuffer sb = new StringBuffer();
+        StringBuilder sb = new StringBuilder();
         this.print(sb, 0);
         return sb.toString();
     }
 
-    public abstract void serializeToJSONiq(StringBuffer sb, int indent);
+    public abstract void serializeToJSONiq(StringBuilder sb, int indent);
 
-    protected void indentIt(StringBuffer buffer, int indent) {
+    protected void indentIt(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -196,7 +175,7 @@ public abstract class Node {
 
     /**
      * Tells whether the expression is context dependent.
-     * 
+     *
      * @return true if it is context dependent, false otherwise.
      */
     public boolean isContextDependent() {
@@ -206,5 +185,9 @@ public abstract class Node {
             }
         }
         return false;
+    }
+
+    public void setIsInSequentialBlock(boolean isInSequentialBlock) {
+        this.isInSequentialBlock = isInSequentialBlock;
     }
 }

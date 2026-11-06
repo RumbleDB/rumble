@@ -1,48 +1,205 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.context;
 
+import java.io.Serial;
 import java.io.Serializable;
+import java.net.URI;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import lombok.Builder;
+import lombok.NonNull;
+import lombok.Value;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.serialization.SerializationParameters;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
+@Value
+@Builder(toBuilder = true)
 public class RuntimeStaticContext implements Serializable {
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private RumbleRuntimeConfiguration configuration;
-    private SequenceType staticType;
-    private ExecutionMode executionMode;
-    private ExceptionMetadata metadata;
+    /** Null for contexts built without a compiler static context. */
+    private final Set<FunctionIdentifier> visibleFunctionIdentifiers;
 
-    public RuntimeStaticContext(
-            RumbleRuntimeConfiguration configuration,
-            SequenceType staticType,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
-    ) {
-        this.configuration = configuration;
-        this.staticType = staticType;
-        this.executionMode = executionMode;
-        this.metadata = metadata;
+    private final URI staticURI;
+    private final String staticURIString;
+
+    /**
+     * Query language associated with this context, which is used for error reporting and to determine the
+     * semantics of certain operations.
+     */
+    private final LanguageVersion queryLanguage;
+
+    /**
+     * Runtime configuration associated with this context, which is used for error reporting and to
+     * determine limits such as the materialization cap; the returned configuration is never {@code null}
+     */
+    @NonNull private final RumbleConfiguration configuration;
+
+    private final SequenceType staticType;
+
+    /** Shared module schema environment. Xerces grammars are local-only and are not serialized. */
+    private final transient XmlSchemaCatalog xmlSchemaCatalog;
+
+    /**
+     * Execution mode in which expressions in this context should be evaluated; the returned execution mode
+     * is never {@code null}
+     */
+    @NonNull private final ExecutionMode executionMode;
+
+    /**
+     * Metadata associated with this context, which is used for error reporting.
+     */
+    @NonNull private final ExceptionMetadata metadata;
+
+    @Builder.Default
+    private final Map<String, String> staticallyKnownNamespaces = Collections.emptyMap();
+
+    @Builder.Default
+    private final Map<String, String> constructorNamespaceBindings = Collections.emptyMap();
+
+    @Builder.Default
+    private final Set<String> staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
+
+    private final SerializationParameters serializationParameters;
+
+    @Builder.Default
+    private final String defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
+
+    /**
+     * Default decimal format definition, or {@code null} if no default decimal format is defined in this
+     * context
+     */
+    private final DecimalFormatDefinition defaultDecimalFormat;
+
+    /**
+     * Decimal format definitions defined in this context, or {@code null} if no decimal formats are defined
+     * in this context
+     */
+    private final Map<Name, DecimalFormatDefinition> decimalFormats;
+
+    /**
+     * Whether this context is associated with a query that has side effects. This is used to determine whether
+     * certain optimizations are allowed, such as reordering of expressions or elimination of redundant expressions.
+     */
+    private final boolean isQuerySideEffecting;
+
+    @Builder.Default
+    private final boolean constructionPreserve = false;
+
+    @Builder.Default
+    private final boolean copyNamespacesPreserve = true;
+
+    @Builder.Default
+    private final boolean copyNamespacesInherit = true;
+
+    @Builder.Default
+    private final boolean isUpdating = false;
+
+    @Builder.Default
+    private final boolean isSequential = false;
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("RuntimeStaticContext {\n");
+        sb.append("  query language: ").append(this.queryLanguage).append("\n");
+        sb.append("  configuration: ").append(this.configuration).append("\n");
+        sb.append("  staticType: ").append(this.staticType).append("\n");
+        sb.append("  executionMode: ").append(this.executionMode).append("\n");
+        sb.append("  metadata: ").append(this.metadata).append("\n");
+        sb.append("  staticallyKnownNamespaces: ")
+                .append(this.staticallyKnownNamespaces)
+                .append("\n");
+        sb.append("  staticallyKnownCollations: ")
+                .append(this.staticallyKnownCollations)
+                .append("\n");
+        sb.append("  defaultCollation: ").append(this.defaultCollation).append("\n");
+        sb.append("  copyNamespacesPreserve: ")
+                .append(this.copyNamespacesPreserve)
+                .append("\n");
+        sb.append("  copyNamespacesInherit: ")
+                .append(this.copyNamespacesInherit)
+                .append("\n");
+        sb.append("  decimalFormats: ").append(this.decimalFormats).append("\n");
+        sb.append("  defaultDecimalFormat: ").append(this.defaultDecimalFormat).append("\n");
+        sb.append("  serializationParameters: ")
+                .append(this.serializationParameters)
+                .append("\n");
+        sb.append("  isQuerySideEffecting: ").append(this.isQuerySideEffecting).append("\n");
+        sb.append("  isUpdating: ").append(this.isUpdating).append("\n");
+        sb.append("  isSequential: ").append(this.isSequential).append("\n");
+        sb.append("}");
+        return sb.toString();
     }
 
-    public RuntimeStaticContext(
-            RumbleRuntimeConfiguration configuration,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
-    ) {
-        this.configuration = configuration;
-        this.staticType = null;
-        this.executionMode = executionMode;
-        this.metadata = metadata;
+    /**
+     * Lombok generates the body of this class.
+     * Without this declaration, Javadoc generation will return error because it cannot find symbol
+     */
+    public static class RuntimeStaticContextBuilder {}
+
+    /**
+     * Returns a builder seeded with the settings that originate in a {@link StaticContext}.
+     *
+     * @param staticContext the static context to copy settings from; must not be {@code null}
+     * @return a builder for completing a runtime static context
+     */
+    public static RuntimeStaticContextBuilder fromStaticContext(@NonNull StaticContext staticContext) {
+        return builder()
+                .xmlSchemaCatalog(staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog())
+                .staticURI(staticContext.getStaticBaseURI())
+                .staticURIString(staticContext.getStaticBaseUriString())
+                .queryLanguage(staticContext.getQueryLanguage())
+                .visibleFunctionIdentifiers(staticContext.getVisibleFunctionIdentifiers())
+                .staticallyKnownNamespaces(staticContext.getInScopeNamespaceBindings())
+                // Kryo cannot reconstruct Map.of/Map.copyOf implementations from compiler contexts.
+                .constructorNamespaceBindings(new LinkedHashMap<>(staticContext.getConstructorNamespaceBindings()))
+                .staticallyKnownCollations(new LinkedHashSet<>(staticContext.getStaticallyKnownCollations()))
+                .serializationParameters(staticContext.getSerializationParameters())
+                .defaultCollation(staticContext.getDefaultCollation())
+                .defaultDecimalFormat(staticContext.getDefaultDecimalFormat())
+                .decimalFormats(staticContext.getDecimalFormats())
+                .isQuerySideEffecting(staticContext.isQuerySideEffecting())
+                .constructionPreserve(staticContext.isConstructionPreserve())
+                .copyNamespacesPreserve(staticContext.isCopyNamespacesPreserve())
+                .copyNamespacesInherit(staticContext.isCopyNamespacesInherit());
     }
 
-    public RumbleRuntimeConfiguration getConfiguration() {
-        return this.configuration;
-    }
-
+    /**
+     * Returns the static type of expressions in this context, or {@code null} if no static type is defined for this
+     * context. Note that clauses do not have static types, so calling this method on a context associated with a clause
+     * will throw an exception.
+     *
+     * @return the static type of expressions in this context, or {@code null} if no static type is defined for this
+     *         context; note that clauses do not have static types, so calling this method on a context associated with
+     *         a clause will throw an exception
+     */
     public SequenceType getStaticType() {
         if (this.staticType == null) {
             throw new OurBadException("Clauses do not have static types.");
@@ -50,16 +207,16 @@ public class RuntimeStaticContext implements Serializable {
         return this.staticType;
     }
 
-    public ExecutionMode getExecutionMode() {
-        return this.executionMode;
+    /**
+     * Resolves a namespace prefix using in-scope bindings from this context, falling back to built-in
+     * prefixes (fn, xs, ...). For the default element/type namespace, pass {@code ""}.
+     *
+     * @return the namespace URI, or {@code null} if the prefix is not bound
+     */
+    public String resolvePrefix(String prefix) {
+        if (this.staticallyKnownNamespaces != null && this.staticallyKnownNamespaces.containsKey(prefix)) {
+            return this.staticallyKnownNamespaces.get(prefix);
+        }
+        return StaticContext.getBuiltinNamespaceBinding(prefix);
     }
-
-    public void setExecutionMode(ExecutionMode mode) {
-        this.executionMode = mode;
-    }
-
-    public ExceptionMetadata getMetadata() {
-        return this.metadata;
-    }
-
 }

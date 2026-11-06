@@ -1,0 +1,660 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.xml;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import org.w3c.dom.Node;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.CastException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidAttributeNameException;
+import org.rumbledb.exceptions.InvalidLexicalValueException;
+import org.rumbledb.exceptions.InvalidNodeNameException;
+import org.rumbledb.exceptions.NoNamespaceFoundForPrefixException;
+import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+
+public final class NamespaceBindingUtils {
+
+    /**
+     * Resolves a namespace prefix (including {@code ""} for the default element/type namespace) to a URI,
+     * or {@code null} if unbound.
+     */
+    @FunctionalInterface
+    public interface NamespaceResolver {
+        String resolvePrefix(String prefix);
+    }
+
+    public enum ReservedNamespaceBindingError {
+        XML_PREFIX_WRONG_URI,
+        XMLNS_PREFIX,
+        NON_XML_PREFIX_XML_URI,
+        XMLNS_URI
+    }
+
+    public static final String XML_NAMESPACE_URI = "http://www.w3.org/XML/1998/namespace";
+    public static final String XMLNS_NAMESPACE_URI = "http://www.w3.org/2000/xmlns/";
+
+    private NamespaceBindingUtils() {}
+
+    /** Normalizes and validates the target of a processing-instruction name test. */
+    public static String normalizePITestTarget(String target, ExceptionMetadata metadata) {
+        String normalized = target.replaceAll("[ \t\r\n]+", " ").replaceAll("^ | $", "");
+        if (!isValidNcName(normalized)) {
+            throw new UnexpectedTypeException(
+                    "A processing-instruction name test requires a valid NCName target.", metadata);
+        }
+        return normalized;
+    }
+
+    /**
+     * XML 1.0 / Namespaces in XML — NCName character checks (no colon).
+     */
+    public static boolean isValidNcName(String s) {
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
+        int len = s.length();
+        int i = 0;
+        int cp = s.codePointAt(0);
+        if (!isXmlNameStartChar(cp) || cp == ':') {
+            return false;
+        }
+        i += Character.charCount(cp);
+        while (i < len) {
+            cp = s.codePointAt(i);
+            if (!isXmlNameChar(cp) || cp == ':') {
+                return false;
+            }
+            i += Character.charCount(cp);
+        }
+        return true;
+    }
+
+    /**
+     * XML 1.0 Name character checks (colon permitted).
+     */
+    public static boolean isValidXmlName(String s) {
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
+        int len = s.length();
+        int i = 0;
+        int cp = s.codePointAt(0);
+        if (!isXmlNameStartChar(cp)) {
+            return false;
+        }
+        i += Character.charCount(cp);
+        while (i < len) {
+            cp = s.codePointAt(i);
+            if (!isXmlNameChar(cp)) {
+                return false;
+            }
+            i += Character.charCount(cp);
+        }
+        return true;
+    }
+
+    /**
+     * XML 1.0 Nmtoken character checks (one or more NameChar code points).
+     */
+    public static boolean isValidXmlNmToken(String s) {
+        if (s == null || s.isEmpty()) {
+            return false;
+        }
+        int len = s.length();
+        int i = 0;
+        while (i < len) {
+            int cp = s.codePointAt(i);
+            if (!isXmlNameChar(cp)) {
+                return false;
+            }
+            i += Character.charCount(cp);
+        }
+        return true;
+    }
+
+    private static boolean isXmlNameStartChar(int c) {
+        return c == ':'
+                || c == '_'
+                || isAsciiLetter(c)
+                || (c >= 0xC0 && c <= 0xD6)
+                || (c >= 0xD8 && c <= 0xF6)
+                || (c >= 0xF8 && c <= 0x2FF)
+                || (c >= 0x370 && c <= 0x37D)
+                || (c >= 0x37F && c <= 0x1FFF)
+                || (c >= 0x200C && c <= 0x200D)
+                || (c >= 0x2070 && c <= 0x218F)
+                || (c >= 0x2C00 && c <= 0x2FEF)
+                || (c >= 0x3001 && c <= 0xD7FF)
+                || (c >= 0xF900 && c <= 0xFDCF)
+                || (c >= 0xFDF0 && c <= 0xFFFD)
+                || (c >= 0x10000 && c <= 0xEFFFF);
+    }
+
+    private static boolean isXmlNameChar(int c) {
+        return isXmlNameStartChar(c)
+                || c == '-'
+                || c == '.'
+                || (c >= '0' && c <= '9')
+                || c == 0xB7
+                || (c >= 0x0300 && c <= 0x036F)
+                || (c >= 0x203F && c <= 0x2040);
+    }
+
+    private static boolean isAsciiLetter(int c) {
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+    }
+
+    public static NamespaceResolver builtinNamespaceResolver() {
+        return StaticContext::getBuiltinNamespaceBinding;
+    }
+
+    public static NamespaceResolver namespaceResolver(RuntimeStaticContext runtimeStaticContext) {
+        return runtimeStaticContext != null ? runtimeStaticContext::resolvePrefix : builtinNamespaceResolver();
+    }
+
+    public static NamespaceResolver namespaceResolver(StaticContext staticContext) {
+        if (staticContext == null) {
+            return builtinNamespaceResolver();
+        }
+        Map<String, String> inScope = staticContext.getInScopeNamespaceBindings();
+        return prefix -> {
+            if (inScope.containsKey(prefix)) {
+                return inScope.get(prefix);
+            }
+            return StaticContext.getBuiltinNamespaceBinding(prefix);
+        };
+    }
+
+    /** Resolves prefixes against an element node's in-scope namespaces. */
+    public static NamespaceResolver namespaceResolver(Item element) {
+        if (element == null || !element.isElementNode()) {
+            return builtinNamespaceResolver();
+        }
+        Map<String, String> inScopeNamespaces = new HashMap<>();
+        for (Item namespace : element.namespaceNodes()) {
+            Name namespaceName = namespace.nodeName();
+            String prefix = namespaceName == null ? "" : namespaceName.getLocalName();
+            inScopeNamespaces.put(prefix, namespace.getStringValue());
+        }
+        return inScopeNamespaces::get;
+    }
+
+    /**
+     * Applies XSD whiteSpace facet COLLAPSE (as for xs:QName lexical forms).
+     */
+    public static String collapseQNameLexical(String lexical) {
+        if (lexical == null) {
+            return null;
+        }
+        String replaced = lexical.replaceAll("\\s", " ");
+        return replaced.trim().replaceAll(" +", " ");
+    }
+
+    /**
+     * XQuery 3.1 computed constructors: dynamic error [err:XQDY0096] if the node-name has a forbidden prefix/URI pair.
+     */
+    public static void validateConstructedNodeName(Name name, ExceptionMetadata metadata) {
+        ReservedNamespaceBindingError error = getReservedNamespaceBindingError(name.getPrefix(), name.getNamespace());
+        if (error == null) {
+            return;
+        }
+        switch (error) {
+            case XML_PREFIX_WRONG_URI:
+                throw new InvalidNodeNameException(
+                        "The namespace prefix xml is bound to a namespace URI other than http://www.w3.org/XML/1998/namespace.",
+                        metadata);
+            case XMLNS_PREFIX:
+                throw new InvalidNodeNameException("The namespace prefix of the node-name is xmlns.", metadata);
+            case NON_XML_PREFIX_XML_URI:
+                throw new InvalidNodeNameException(
+                        "The namespace URI is http://www.w3.org/XML/1998/namespace but the prefix is not xml.",
+                        metadata);
+            case XMLNS_URI:
+                throw new InvalidNodeNameException(
+                        "The namespace URI of the node-name is http://www.w3.org/2000/xmlns/.", metadata);
+            default:
+                return;
+        }
+    }
+
+    public static void validateConstructedAttributeName(Name name, ExceptionMetadata metadata) {
+        String prefix = name.getPrefix();
+        String namespace = name.getNamespace();
+        if ((prefix == null || prefix.isEmpty()) && "xmlns".equals(name.getLocalName())) {
+            throw new InvalidAttributeNameException(
+                    "Computed attribute constructor cannot create a namespace declaration attribute named xmlns.",
+                    metadata);
+        }
+        ReservedNamespaceBindingError error = getReservedNamespaceBindingError(prefix, namespace);
+        if (error == null) {
+            return;
+        }
+        switch (error) {
+            case XML_PREFIX_WRONG_URI:
+                throw new InvalidAttributeNameException(
+                        "The namespace prefix xml is bound to a namespace URI other than http://www.w3.org/XML/1998/namespace.",
+                        metadata);
+            case XMLNS_PREFIX:
+                throw new InvalidAttributeNameException(
+                        "Computed attribute constructor cannot create a namespace declaration attribute with the xmlns prefix.",
+                        metadata);
+            case NON_XML_PREFIX_XML_URI:
+                throw new InvalidAttributeNameException(
+                        "The namespace URI is http://www.w3.org/XML/1998/namespace but the prefix is not xml.",
+                        metadata);
+            case XMLNS_URI:
+                throw new InvalidAttributeNameException(
+                        "Computed attribute constructor cannot use the xmlns namespace URI.", metadata);
+            default:
+                return;
+        }
+    }
+
+    /**
+     * XQuery 3.1 computed attribute constructors:
+     * if the attribute QName has a namespace URI but no prefix, an implementation-defined prefix is used.
+     * The XML namespace is special-cased to use the required {@code xml} prefix.
+     */
+    public static Name normalizeComputedAttributeName(Name name) {
+        if (name == null) {
+            return null;
+        }
+        String namespace = name.getNamespace();
+        String prefix = name.getPrefix();
+        if (namespace != null && (prefix == null || prefix.isEmpty())) {
+            if (XML_NAMESPACE_URI.equals(namespace)) {
+                return new Name(namespace, "xml", name.getLocalName());
+            }
+            return new Name(namespace, "ns0", name.getLocalName());
+        }
+        return name;
+    }
+
+    private static final class LexicalQNameSplit {
+        final String prefix;
+        final String local;
+
+        LexicalQNameSplit(String prefix, String local) {
+            this.prefix = prefix;
+            this.local = local;
+        }
+    }
+
+    private static LexicalQNameSplit splitAndValidateLexicalQName(String lexical, ExceptionMetadata metadata) {
+        return splitAndValidateLexicalQName(lexical, metadata, false);
+    }
+
+    private static LexicalQNameSplit splitAndValidateLexicalQName(
+            String lexical, ExceptionMetadata metadata, boolean allowXmlnsPrefix) {
+        if (lexical.isEmpty()) {
+            throw new InvalidLexicalValueException("Invalid xs:QName: empty lexical value.", metadata);
+        }
+        int colon = lexical.indexOf(':');
+        final String prefix;
+        final String local;
+        if (colon < 0) {
+            prefix = null;
+            local = lexical;
+        } else {
+            if (colon == 0 || colon == lexical.length() - 1 || lexical.indexOf(':', colon + 1) >= 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid xs:QName lexical value: \"" + lexical + "\".", metadata);
+            }
+            prefix = lexical.substring(0, colon);
+            local = lexical.substring(colon + 1);
+        }
+        if (!allowXmlnsPrefix && "xmlns".equals(prefix)) {
+            throw new InvalidLexicalValueException("Invalid xs:QName: prefix xmlns is not allowed.", metadata);
+        }
+        if (!isValidNcName(local) || (prefix != null && !isValidNcName(prefix))) {
+            throw new InvalidLexicalValueException(
+                    "Invalid xs:QName lexical value: name is not a valid NCName.", metadata);
+        }
+        return new LexicalQNameSplit(prefix, local);
+    }
+
+    private static Name resolvePrefixedLexicalToName(
+            String prefix, String local, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
+        String uri = namespaceResolver.resolvePrefix(prefix);
+        if (uri == null) {
+            throw new InvalidLexicalValueException(
+                    "Invalid xs:QName: prefix \"" + prefix + "\" is not bound to a namespace URI.", metadata);
+        }
+        if (getReservedNamespaceBindingError(prefix, uri) != null) {
+            throw new InvalidLexicalValueException(
+                    "Invalid xs:QName lexical value: reserved namespace binding for prefix \"" + prefix + "\".",
+                    metadata);
+        }
+        return new Name(uri, prefix, local);
+    }
+
+    /**
+     * Whitespace-collapsed lexical QName to expanded node name.
+     */
+    public static Name parseLexicalQName(
+            String lexical, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        if (split.prefix == null) {
+            return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
+        }
+        return resolvePrefixedLexicalToName(split.prefix, split.local, namespaceResolver, metadata);
+    }
+
+    /** Parses xs:QName casts with their distinct lexical and namespace error codes. */
+    public static Name parseLexicalQNameForCast(
+            String lexical, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
+        LexicalQNameSplit split;
+        try {
+            split = splitAndValidateLexicalQName(lexical, metadata, true);
+        } catch (InvalidLexicalValueException e) {
+            throw new CastException(e.getJSONiqErrorMessage(), metadata);
+        }
+        if (split.prefix == null) {
+            return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
+        }
+        String uri = namespaceResolver.resolvePrefix(split.prefix);
+        if (uri == null) {
+            throw new NoNamespaceFoundForPrefixException(
+                    "No namespace binding for prefix \"" + split.prefix + "\".", metadata);
+        }
+        return new Name(uri, split.prefix, split.local);
+    }
+
+    /** Parses computed element names, including URI-qualified names with an explicit namespace. */
+    public static Name parseLexicalQNameForComputedElement(
+            String lexical, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
+        if (lexical.startsWith("Q{")) {
+            // URI-qualified names have the same meaning for elements and attributes, including Q{}.
+            return parseLexicalQNameForComputedAttribute(lexical, namespaceResolver, metadata);
+        }
+        return parseLexicalQName(lexical, namespaceResolver, metadata);
+    }
+
+    /**
+     * fn:resolve-QName (Functions and Operators 3.1 10.1.1): like {@link #parseLexicalQName}, but raises
+     * err:FONS0004 ({@link NoNamespaceFoundForPrefixException}) rather than err:FOCA0002 when the prefix is
+     * present but unbound.
+     */
+    public static Name parseLexicalQNameForResolveQName(
+            String lexical, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        if (split.prefix == null) {
+            return new Name(namespaceResolver.resolvePrefix(""), null, split.local);
+        }
+        String uri = namespaceResolver.resolvePrefix(split.prefix);
+        if (uri == null) {
+            throw new NoNamespaceFoundForPrefixException(
+                    "No namespace binding for prefix \"" + split.prefix + "\".", metadata);
+        }
+        if (getReservedNamespaceBindingError(split.prefix, uri) != null) {
+            throw new InvalidLexicalValueException(
+                    "Invalid xs:QName lexical value: reserved namespace binding for prefix \"" + split.prefix + "\".",
+                    metadata);
+        }
+        return new Name(uri, split.prefix, split.local);
+    }
+
+    /**
+     * XQuery 3.1 computed attribute constructor: {@code xs:string} / {@code xs:untypedAtomic} name is converted to an
+     * expanded QName. An unprefixed lexical form is a local name in <em>no</em> namespace (not the default element/type
+     * namespace). A prefixed form resolves like {@link #parseLexicalQName}.
+     */
+    public static Name parseLexicalQNameForComputedAttribute(
+            String lexical, NamespaceResolver namespaceResolver, ExceptionMetadata metadata) {
+        if (lexical.startsWith("Q{")) {
+            int closeBrace = lexical.indexOf('}', 2);
+            if (closeBrace < 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (no closing '}') : " + lexical, metadata);
+            }
+            String uriRaw = lexical.substring(2, closeBrace);
+            String local = lexical.substring(closeBrace + 1);
+            // XQuery EQNames use BracedURILiteral, which forbids brace characters inside the URI part.
+            // Dynamic computed attribute names coming from strings must reject malformed forms like Q{{}x or Q{}}x
+            // during QName conversion so the constructor raises XQDY0074 rather than constructing a bad node-name.
+            if (uriRaw.indexOf('{') >= 0 || uriRaw.indexOf('}') >= 0) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (invalid brace in URI part): " + lexical, metadata);
+            }
+            if (local.isEmpty()) {
+                throw new InvalidLexicalValueException(
+                        "Invalid URIQualifiedName (missing local name): " + lexical, metadata);
+            }
+            if (!isValidNcName(local)) {
+                throw new InvalidLexicalValueException("Invalid URIQualifiedName local name: " + lexical, metadata);
+            }
+            String namespace = uriRaw.trim().replaceAll("\\s+", " ");
+            if (namespace.isEmpty()) {
+                return new Name(null, null, local);
+            }
+            return new Name(namespace, null, local);
+        }
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata);
+        if (split.prefix == null) {
+            return new Name(null, null, split.local);
+        }
+        return resolvePrefixedLexicalToName(split.prefix, split.local, namespaceResolver, metadata);
+    }
+
+    /**
+     * XPath and XQuery Functions 3.1 {@code fn:QName}: combines an optional namespace URI with a lexical QName.
+     * Leading and trailing whitespace is stripped from both arguments (Functions and Operators 3.1, section 10 intro).
+     *
+     * @param paramUriOrNull namespace URI, or {@code null} when {@code xs:string?} was the empty sequence
+     * @param lexicalQName non-null lexical QName string (after atomization to {@code xs:string})
+     */
+    public static Name parseFnQName(String paramUriOrNull, String lexicalQName, ExceptionMetadata metadata) {
+        if (lexicalQName == null) {
+            throw new InvalidLexicalValueException("Invalid xs:QName: null lexical value.", metadata);
+        }
+        String uri = paramUriOrNull == null ? "" : paramUriOrNull.trim();
+        String lexical = lexicalQName.trim();
+        if (lexical.isEmpty()) {
+            throw new InvalidLexicalValueException("Invalid xs:QName: empty lexical value.", metadata);
+        }
+        boolean noNamespace = uri.isEmpty();
+        if (noNamespace && lexical.indexOf(':') >= 0) {
+            throw new InvalidLexicalValueException(
+                    "fn:QName: prefixed lexical QName requires a non-empty namespace URI.", metadata);
+        }
+        // fn:QName constructs an atomic value, so reserved node-name prefixes are permitted here.
+        // Computed node constructors validate those names with their own required error codes.
+        LexicalQNameSplit split = splitAndValidateLexicalQName(lexical, metadata, true);
+        String namespace = noNamespace ? null : uri;
+        return new Name(namespace, split.prefix, split.local);
+    }
+
+    public static String[] parseNamespaceDeclarationAttribute(Item attributeItem) {
+        if (!attributeItem.isAttributeNode()) {
+            return null;
+        }
+        Name expanded = attributeItem.nodeName();
+        if (expanded == null) {
+            return null;
+        }
+        if (XMLNS_NAMESPACE_URI.equals(expanded.getNamespace())) {
+            String local = expanded.getLocalName();
+            if ("xmlns".equals(local)) {
+                return new String[] {"", attributeItem.getStringValue()};
+            }
+            return new String[] {local, attributeItem.getStringValue()};
+        }
+        String attributeName = expanded.toString();
+        if ("xmlns".equals(attributeName)) {
+            return new String[] {"", attributeItem.getStringValue()};
+        }
+        if (attributeName.startsWith("xmlns:")) {
+            String prefix = attributeName.substring("xmlns:".length());
+            return new String[] {prefix, attributeItem.getStringValue()};
+        }
+        return null;
+    }
+
+    public static ReservedNamespaceBindingError getReservedNamespaceBindingError(String prefix, String uri) {
+        if ("xml".equals(prefix) && !XML_NAMESPACE_URI.equals(uri)) {
+            return ReservedNamespaceBindingError.XML_PREFIX_WRONG_URI;
+        }
+        if ("xmlns".equals(prefix)) {
+            return ReservedNamespaceBindingError.XMLNS_PREFIX;
+        }
+        if (!"xml".equals(prefix) && XML_NAMESPACE_URI.equals(uri)) {
+            return ReservedNamespaceBindingError.NON_XML_PREFIX_XML_URI;
+        }
+        if (XMLNS_NAMESPACE_URI.equals(uri)) {
+            return ReservedNamespaceBindingError.XMLNS_URI;
+        }
+        return null;
+    }
+
+    public static void validateNamespaceDeclaration(String prefix, String uri, ExceptionMetadata metadata) {
+        // XQuery 3.1, 3.9.1.2 Namespace Declaration Attributes:
+        // "However, note that namespace declaration attributes (see 3.9.1.2 Namespace Declaration Attributes) do not
+        // create attribute nodes."
+        // "[Definition: A namespace declaration attribute is used inside a direct element constructor. Its purpose is
+        // to bind a namespace prefix or to set the default element/type namespace for the constructed element node,
+        // including its attributes.] Syntactically, a namespace declaration attribute has the form of an attribute
+        // with namespace prefix xmlns, or with name xmlns and no namespace prefix."
+        // "If the prefix of the attribute name is xmlns, then the local part of the attribute name is interpreted as a
+        // namespace prefix."
+        // "If the name of the namespace declaration attribute is xmlns with no prefix, then the namespace URI specifies
+        // the default element/type namespace of the constructor expression (overriding any existing default), and is
+        // added (with no prefix) to the in-scope namespaces of the constructed element (overriding any existing
+        // namespace binding with no prefix)."
+        // "It is a static error [err:XQST0070] if a namespace declaration attribute attempts to do any of the
+        // following:"
+        // "Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace."
+        // "Bind the prefix xmlns to any namespace URI."
+        // "Bind a prefix other than xml to the namespace URI http://www.w3.org/XML/1998/namespace."
+        // "Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/."
+        ReservedNamespaceBindingError error = getReservedNamespaceBindingError(prefix, uri);
+        if (error == null) {
+            return;
+        }
+        switch (error) {
+            case XML_PREFIX_WRONG_URI:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Namespace declaration attribute cannot bind the prefix xml to a non-XML namespace URI.",
+                        metadata);
+            case XMLNS_PREFIX:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Namespace declaration attribute cannot bind the prefix xmlns.", metadata);
+            case NON_XML_PREFIX_XML_URI:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Namespace declaration attribute cannot bind a non-xml prefix to the XML namespace URI.",
+                        metadata);
+            case XMLNS_URI:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Namespace declaration attribute cannot bind any prefix to the xmlns namespace URI.", metadata);
+            default:
+                return;
+        }
+    }
+
+    /**
+     * XQuery 3.1, 4.13 Namespace Declaration:
+     * "It is a static error [err:XQST0070] if a namespace declaration specifies a prefix of xml or xmlns, or a
+     * namespace URI of http://www.w3.org/XML/1998/namespace or http://www.w3.org/2000/xmlns/."
+     */
+    public static void validatePrologNamespaceDeclaration(String prefix, String uri, ExceptionMetadata metadata) {
+        if ("xml".equals(prefix) || "xmlns".equals(prefix)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Prolog namespace declaration cannot specify the reserved prefix \"" + prefix + "\".", metadata);
+        }
+        if (XML_NAMESPACE_URI.equals(uri) || XMLNS_NAMESPACE_URI.equals(uri)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Prolog namespace declaration cannot specify the reserved namespace URI \"" + uri + "\".",
+                    metadata);
+        }
+    }
+
+    /**
+     * XQuery 3.1, 4.14 Default Namespace Declaration:
+     * "A static error [err:XQST0070] is raised if a default element namespace declaration or a default function
+     * namespace declaration specifies the namespace URI http://www.w3.org/XML/1998/namespace or
+     * http://www.w3.org/2000/xmlns/."
+     */
+    public static void validateDefaultNamespaceDeclaration(String uri, ExceptionMetadata metadata) {
+        if (XML_NAMESPACE_URI.equals(uri) || XMLNS_NAMESPACE_URI.equals(uri)) {
+            throw new PredefinedPrefixInNamespaceDeclarationException(
+                    "Default namespace declaration cannot specify the reserved namespace URI \"" + uri + "\".",
+                    metadata);
+        }
+    }
+
+    /**
+     * Validates a namespace binding coming from parsed XML rather than from an XQuery namespace declaration
+     * attribute. Unlike {@link #validateNamespaceDeclaration(String, String, ExceptionMetadata)}, this permits prefixed
+     * empty URIs so
+     * that XML 1.1 undeclarations such as {@code xmlns:p=""} can be preserved in the data model.
+     */
+    public static void validateParsedNamespaceBinding(String prefix, String uri) {
+        ReservedNamespaceBindingError error = getReservedNamespaceBindingError(prefix, uri);
+        if (error == null) {
+            return;
+        }
+        switch (error) {
+            case XML_PREFIX_WRONG_URI:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Parsed namespace binding cannot bind the prefix xml to a non-XML namespace URI.");
+            case XMLNS_PREFIX:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Parsed namespace binding cannot bind the prefix xmlns.");
+            case NON_XML_PREFIX_XML_URI:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Parsed namespace binding cannot bind a non-xml prefix to the XML namespace URI.");
+            case XMLNS_URI:
+                throw new PredefinedPrefixInNamespaceDeclarationException(
+                        "Parsed namespace binding cannot bind any prefix to the xmlns namespace URI.");
+            default:
+                return;
+        }
+    }
+
+    /**
+     * Expanded name for an element or attribute DOM node (namespace-aware when the DOM provides it).
+     */
+    public static Name nameFromElementOrAttributeDomNode(Node domNode) {
+        String namespace = domNode.getNamespaceURI();
+        String local = domNode.getLocalName();
+        String prefix = domNode.getPrefix();
+
+        Name name = null;
+        if (local == null) {
+            name = new Name(null, null, domNode.getNodeName());
+        } else if (prefix != null && !prefix.equals("")) {
+            name = new Name(namespace, prefix, local);
+        } else {
+            name = new Name(namespace, null, local);
+        }
+        return name;
+    }
+
+    /**
+     * QName with only a local name and no namespace URI or prefix (XDM processing-instruction target; namespace
+     * prefix property absent).
+     */
+    public static Name nameLocalOnly(String localName) {
+        return new Name(null, null, localName);
+    }
+}

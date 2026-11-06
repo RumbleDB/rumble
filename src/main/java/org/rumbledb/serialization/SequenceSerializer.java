@@ -1,0 +1,132 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.serialization;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
+
+/** W3C sequence normalization shared by fn:serialize, the Java API and CLI serialize output. */
+public final class SequenceSerializer {
+    private SequenceSerializer() {}
+
+    public static String serialize(List<Item> items, SerializationParameters params, ExceptionMetadata metadata) {
+        String method = params.getMethod();
+        // Serialization 3.1 normalizes arrays before joining items, with or without a separator.
+        if ("xml".equalsIgnoreCase(method)
+                || "xhtml".equalsIgnoreCase(method)
+                || "html".equalsIgnoreCase(method)
+                || "text".equalsIgnoreCase(method)) {
+            List<Item> flattenedItems = new ArrayList<>();
+            flattenArrays(items, flattenedItems);
+            items = flattenedItems;
+        }
+        if ("xml".equalsIgnoreCase(method) || "xhtml".equalsIgnoreCase(method)) {
+            validateXmlParameters(items, params, metadata);
+        }
+        SerializationParameters itemParams = SerializationParameters.copy(params);
+        if ("xml".equalsIgnoreCase(method)) {
+            itemParams.setOmitXmlDeclaration(true);
+        }
+        Serializer serializer = Serializers.from(itemParams);
+        String itemSeparator = params.getItemSeparator();
+
+        StringBuilder result = new StringBuilder();
+        if ("json".equalsIgnoreCase(method)) {
+            if (items.isEmpty()) {
+                result.append("null");
+            } else if (items.size() == 1) {
+                result.append(serializer.serialize(items.get(0)));
+            } else {
+                throw new RumbleException(
+                        "JSON serialization requires the top-level sequence to contain at most one item.",
+                        ErrorCode.JsonSerializationSequence,
+                        metadata);
+            }
+        } else {
+            if ("xml".equalsIgnoreCase(method) && !params.getOmitXmlDeclaration() && !items.isEmpty()) {
+                SerializerUtils.appendXmlDeclaration(result, params);
+            }
+            for (int i = 0; i < items.size(); i++) {
+                if (i > 0) {
+                    if (itemSeparator != null) {
+                        result.append(itemSeparator);
+                    } else if ("adaptive".equalsIgnoreCase(method)) {
+                        result.append('\n');
+                    } else if (items.get(i - 1).isAtomic() && items.get(i).isAtomic()) {
+                        // An absent separator inserts a space only between adjacent atomic values.
+                        result.append(' ');
+                    }
+                }
+                result.append(serializer.serialize(items.get(i)));
+            }
+        }
+        return result.toString();
+    }
+
+    private static void validateXmlParameters(
+            List<Item> items, SerializationParameters params, ExceptionMetadata metadata) {
+        boolean standalone = params.getStandalone() != SerializationParameters.Standalone.OMIT;
+        boolean doctype = params.getDoctypeSystem() != null;
+        if (params.getOmitXmlDeclaration()
+                && (standalone || (doctype && !"1.0".equals(SerializerUtils.getEffectiveXmlVersion(params))))) {
+            throw new RumbleException(
+                    "The XML declaration cannot be omitted with these serialization parameters.",
+                    ErrorCode.InvalidXmlDeclarationParameters,
+                    metadata);
+        }
+        if (!standalone && !doctype) return;
+        String separator = params.getItemSeparator();
+        boolean text = separator != null && !separator.isEmpty() && items.size() > 1;
+        boolean previousAtomic = false;
+        List<Item> content = new ArrayList<>();
+        for (Item item : items) {
+            // Separators are inserted before document nodes are replaced by their children.
+            if (item.isAtomic() && (!item.getStringValue().isEmpty() || (separator == null && previousAtomic))) {
+                text = true;
+            }
+            previousAtomic = item.isAtomic();
+            if (item.isDocumentNode()) content.addAll(item.children());
+            else content.add(item);
+        }
+        long elements = content.stream().filter(Item::isElementNode).count();
+        for (Item item : content) {
+            if (item.isTextNode() && !item.getStringValue().isEmpty()) text = true;
+        }
+        if (elements > 1 || text) {
+            throw new RumbleException(
+                    "Standalone and doctype-system require XML document content.",
+                    ErrorCode.XmlDocumentRequiredSerialization,
+                    metadata);
+        }
+    }
+
+    private static void flattenArrays(List<Item> items, List<Item> flattenedItems) {
+        for (Item item : items) {
+            if (item.isArray()) {
+                for (List<Item> member : item.getSequenceMembers()) {
+                    flattenArrays(member, flattenedItems);
+                }
+            } else {
+                flattenedItems.add(item);
+            }
+        }
+    }
+}

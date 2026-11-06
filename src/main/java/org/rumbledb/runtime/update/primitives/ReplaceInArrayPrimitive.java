@@ -1,42 +1,53 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.update.primitives;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-import sparksoniq.spark.SparkSessionManager;
-
 
 public class ReplaceInArrayPrimitive implements UpdatePrimitive {
 
     private Item target;
     private Item selector;
     private Item content;
+    private Collection collection;
 
     public ReplaceInArrayPrimitive(
-            Item targetArray,
-            Item positionInt,
-            Item replacementItem,
-            ExceptionMetadata metadata
-    ) {
+            Item targetArray, Item positionInt, Item replacementItem, ExceptionMetadata metadata) {
         if (positionInt.getIntValue() <= 0 || positionInt.getIntValue() > targetArray.getSize()) {
             throw new CannotResolveUpdateSelectorException(
-                    "Cannot replace item at index out of range of target array",
-                    metadata
-            );
+                    "Cannot replace item at index out of range of target array", metadata);
         }
 
         this.target = targetArray;
         this.selector = positionInt;
         this.content = replacementItem;
+        this.collection = targetArray.getCollection();
     }
 
     @Override
     public void apply() {
-        if (this.target.getTableLocation() == null || this.target.getTableLocation().equals("null")) {
+        if (this.collection == null) {
             this.applyItem();
         } else {
             this.applyDelta();
@@ -49,7 +60,7 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
         if (index >= 0 || index < this.target.getSize()) {
             this.target.removeItemAt(index);
             if (index == this.target.getSize()) {
-                this.target.append(this.content);
+                this.target.appendItem(this.content);
             } else {
                 this.target.putItemAt(this.content, index);
             }
@@ -63,44 +74,33 @@ public class ReplaceInArrayPrimitive implements UpdatePrimitive {
         // ASSUME pathIn CONTAINS ARRAYFIELD NAME
         // PERHAPS CASE OF REPLACING ARRAY WITH 1 ITEM SHOULD CREATE NEW ARRAYCOL WITH CORRECTED TYPE IF TYPE CHANGES
 
-        String pathIn = this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String pathIn =
+                this.target.getPathIn().substring(this.target.getPathIn().indexOf(".") + 1);
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 
         if (startOfArrayIndexing == -1) {
             String selectArrayQuery = "SELECT "
-                + pathIn
-                + " AS `"
-                + SparkSessionManager.atomicJSONiqItemColumnName
-                + "` FROM "
-                + location
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
+                    + pathIn
+                    + " AS `"
+                    + SparkSessionManager.nonObjectJSONiqItemColumnName
+                    + "` FROM "
+                    + location
+                    + " WHERE `"
+                    + SparkSessionManager.rowIdColumnName
+                    + "` == "
+                    + rowID;
 
-            Dataset<Row> arrayDF = SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
+            Dataset<Row> arrayDF =
+                    SparkSessionManager.getInstance().getOrCreateSession().sql(selectArrayQuery);
 
             ItemType arrayType = ItemTypeFactory.createItemType(arrayDF.schema())
-                .getObjectContentFacet()
-                .get(SparkSessionManager.atomicJSONiqItemColumnName)
-                .getType();
+                    .getObjectContentFacet(SparkSessionManager.nonObjectJSONiqItemColumnName)
+                    .getType();
 
-            String setField = pathIn + " = ";
             this.applyItem();
-            setField = setField + this.target.getSparkSQLValue(arrayType);
-
-            String query = "UPDATE "
-                + location
-                + " SET "
-                + setField
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
-
-            SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+            this.applySetFieldInCollection(location, rowID, pathIn, this.target.getSparkSQLValue(arrayType));
         } else {
             this.arrayIndexingApplyDelta();
         }

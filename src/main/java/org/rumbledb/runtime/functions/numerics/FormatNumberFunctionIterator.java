@@ -1,0 +1,132 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.functions.numerics;
+
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.*;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidDecimalFormatName;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.functions.util.formatting.pictures.FormatNumber.NumberPictureFormatter;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+public class FormatNumberFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    public FormatNumberFunctionIterator(List<ItemRuntimePlan> children, RuntimeStaticContext staticContext) {
+        super(children, staticContext);
+    }
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item valueItem = this.getChild(0).materializeFirstOrNull(context);
+        Item pictureItem = this.getChild(1).materializeFirstOrNull(context);
+        Item decimalFormatNameItem =
+                this.getChildren().size() > 2 ? this.getChild(2).materializeFirstOrNull(context) : null;
+        return evaluate(valueItem, pictureItem, decimalFormatNameItem);
+    }
+
+    private Item evaluate(Item valueItem, Item pictureItem, Item decimalFormatNameItem) {
+        if (valueItem == null) {
+            return ItemFactory.getInstance()
+                    .createStringItem(
+                            this.staticContext.getDefaultDecimalFormat().getNanSymbol());
+        }
+
+        DecimalFormatDefinition defaultDecimalFormat = this.staticContext.getDefaultDecimalFormat();
+        Map<Name, DecimalFormatDefinition> decimalFormats = this.staticContext.getDecimalFormats();
+        Map<String, String> namespaces = this.staticContext.getStaticallyKnownNamespaces();
+
+        DecimalFormatDefinition decimalFormat = defaultDecimalFormat;
+        if (decimalFormatNameItem != null) {
+            decimalFormat = resolveDecimalFormat(
+                    decimalFormatNameItem, defaultDecimalFormat, decimalFormats, namespaces, getMetadata());
+        }
+
+        String result =
+                NumberPictureFormatter.format(valueItem, pictureItem.getStringValue(), decimalFormat, getMetadata());
+        return ItemFactory.getInstance().createStringItem(result);
+    }
+
+    private static DecimalFormatDefinition resolveDecimalFormat(
+            Item decimalFormatNameItem,
+            DecimalFormatDefinition defaultDecimalFormat,
+            Map<Name, DecimalFormatDefinition> decimalFormats,
+            Map<String, String> namespaces,
+            ExceptionMetadata metadata) {
+        String lexicalName = decimalFormatNameItem.getStringValue();
+        String trimmedName = lexicalName == null ? "" : lexicalName.trim();
+
+        if (trimmedName.isEmpty()) {
+            return defaultDecimalFormat;
+        }
+
+        Name resolvedName = resolveDecimalFormatName(trimmedName, namespaces, metadata);
+
+        if (!decimalFormats.containsKey(resolvedName)) {
+            throw new InvalidDecimalFormatName("Decimal format not found: " + trimmedName, metadata);
+        }
+
+        return decimalFormats.get(resolvedName);
+    }
+
+    private static Name resolveDecimalFormatName(
+            String text, Map<String, String> staticallyKnownNamespaces, ExceptionMetadata metadata) {
+        if (text.startsWith("Q{")) {
+            int closingBrace = text.indexOf('}');
+            if (closingBrace < 0 || closingBrace == text.length() - 1) {
+                throw new InvalidDecimalFormatName("Invalid URIQualifiedName: " + text, metadata);
+            }
+
+            String namespace = text.substring(2, closingBrace);
+            String localName = text.substring(closingBrace + 1);
+
+            if (localName.isEmpty()) {
+                throw new InvalidDecimalFormatName("Invalid URIQualifiedName, missing local name: " + text, metadata);
+            }
+
+            return new Name(namespace, null, localName);
+        }
+
+        int colon = text.indexOf(':');
+
+        if (colon < 0) {
+            return Name.createVariableInNoNamespace(text);
+        }
+
+        String prefix = text.substring(0, colon);
+        String localName = text.substring(colon + 1);
+
+        if (prefix.isEmpty() || localName.isEmpty()) {
+            throw new InvalidDecimalFormatName("Invalid QName: " + text, metadata);
+        }
+
+        String namespace = staticallyKnownNamespaces.get(prefix);
+        if (namespace == null) {
+            throw new InvalidDecimalFormatName(
+                    "Prefix " + prefix + " could not be resolved against a namespace in scope.", metadata);
+        }
+
+        return new Name(namespace, prefix, localName);
+    }
+}

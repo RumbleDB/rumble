@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(foo, f, )" :)
+(:JIQS: ShouldRun; Output="(foo, f, , )" :)
 string("foo"),
 string("f"),
 string(""),

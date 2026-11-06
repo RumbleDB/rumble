@@ -1,8 +1,28 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Set;
+
 import org.apache.commons.collections.ListUtils;
+
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -11,39 +31,35 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 
-import java.util.List;
-import java.util.Set;
+public class DerivedAtomicItemType extends AbstractItemType {
 
-public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kryo.KryoSerializable {
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private ItemType baseType;
+    private final ItemType baseType;
     private ItemType primitiveType;
     private int typeTreeDepth;
-    private boolean isUserDefined;
-    private Name name;
+    private final boolean isUserDefined;
+    private final Name name;
     private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
     private Integer minLength, length, maxLength, totalDigits, fractionDigits;
-    private List<String> constraints;
+    private final List<String> constraints;
     private List<Item> enumeration;
-    private TimezoneFacet explicitTimezone;
+    private final TimezoneFacet explicitTimezone;
+    private WhitespaceFacet whiteSpace;
+    private List<String> pattern;
 
-    DerivedAtomicItemType() {
-    }
+    private final OrderedFacetValue ordered;
+    private final Boolean bounded;
+    private final CardinalityFacetValue cardinality;
+    private final Boolean numeric;
 
     DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets) {
         this(name, baseType, primitiveType, facets, true);
     }
     // TODO : turn builtin derived atomic types into this class
 
-    DerivedAtomicItemType(
-            Name name,
-            ItemType baseType,
-            ItemType primitiveType,
-            Facets facets,
-            boolean isUserDefined
-    ) {
+    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets, boolean isUserDefined) {
         // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according
         // to baseType
         this.name = name;
@@ -63,105 +79,26 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
         this.fractionDigits = facets.getFractionDigits();
 
         this.explicitTimezone = facets.getExplicitTimezone();
+        this.whiteSpace = facets.getWhiteSpace();
+        this.pattern = facets.getPattern();
 
         this.constraints = facets.getConstraints();
         this.enumeration = facets.getEnumeration();
 
+        this.ordered = facets.getOrdered();
+        this.bounded = facets.getBounded();
+        this.cardinality = facets.getCardinality();
+        this.numeric = facets.getNumeric();
+
         if (this.baseType.isResolved()) {
             processBaseType();
         }
-
     }
 
-    DerivedAtomicItemType(
-            Name name,
-            ItemType baseType,
-            Facets facets,
-            boolean isUserDefined
-    ) {
+    DerivedAtomicItemType(Name name, ItemType baseType, Facets facets, boolean isUserDefined) {
         // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according
         // to baseType
         this(name, baseType, null, facets, isUserDefined);
-    }
-
-    @Override
-    public void write(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Output output) {
-        kryo.writeClassAndObject(output, this.baseType);
-        kryo.writeClassAndObject(output, this.primitiveType);
-        output.writeInt(this.typeTreeDepth);
-        output.writeBoolean(this.isUserDefined);
-        kryo.writeObjectOrNull(output, this.name, Name.class);
-        kryo.writeClassAndObject(output, this.minInclusive);
-        kryo.writeClassAndObject(output, this.maxInclusive);
-        kryo.writeClassAndObject(output, this.minExclusive);
-        kryo.writeClassAndObject(output, this.maxExclusive);
-        kryo.writeObjectOrNull(output, this.minLength, Integer.class);
-        kryo.writeObjectOrNull(output, this.length, Integer.class);
-        kryo.writeObjectOrNull(output, this.maxLength, Integer.class);
-        kryo.writeObjectOrNull(output, this.totalDigits, Integer.class);
-        kryo.writeObjectOrNull(output, this.fractionDigits, Integer.class);
-        if (this.constraints != null) {
-            output.writeInt(this.constraints.size());
-            for (String constraint : this.constraints) {
-                output.writeString(constraint);
-            }
-        } else {
-            output.writeInt(-1);
-        }
-        if (this.enumeration != null) {
-            output.writeInt(this.enumeration.size());
-            for (Item item : this.enumeration) {
-                kryo.writeClassAndObject(output, item);
-            }
-        } else {
-            output.writeInt(-1);
-        }
-        kryo.writeObjectOrNull(output, this.explicitTimezone, TimezoneFacet.class);
-    }
-
-    @Override
-    public void read(com.esotericsoftware.kryo.Kryo kryo, com.esotericsoftware.kryo.io.Input input) {
-        this.baseType = (ItemType) kryo.readClassAndObject(input);
-        this.primitiveType = (ItemType) kryo.readClassAndObject(input);
-        this.typeTreeDepth = input.readInt();
-        this.isUserDefined = input.readBoolean();
-        this.name = kryo.readObjectOrNull(input, Name.class);
-        this.minInclusive = (Item) kryo.readClassAndObject(input);
-        this.maxInclusive = (Item) kryo.readClassAndObject(input);
-        this.minExclusive = (Item) kryo.readClassAndObject(input);
-        this.maxExclusive = (Item) kryo.readClassAndObject(input);
-        this.minLength = kryo.readObjectOrNull(input, Integer.class);
-        this.length = kryo.readObjectOrNull(input, Integer.class);
-        this.maxLength = kryo.readObjectOrNull(input, Integer.class);
-        this.totalDigits = kryo.readObjectOrNull(input, Integer.class);
-        this.fractionDigits = kryo.readObjectOrNull(input, Integer.class);
-        int constraintsSize = input.readInt();
-        if (constraintsSize >= 0) {
-            this.constraints = new java.util.ArrayList<>(constraintsSize);
-            for (int i = 0; i < constraintsSize; i++) {
-                this.constraints.add(input.readString());
-            }
-        } else {
-            this.constraints = null;
-        }
-        int enumerationSize = input.readInt();
-        if (enumerationSize >= 0) {
-            this.enumeration = new java.util.ArrayList<>(enumerationSize);
-            for (int i = 0; i < enumerationSize; i++) {
-                this.enumeration.add((Item) kryo.readClassAndObject(input));
-            }
-        } else {
-            this.enumeration = null;
-        }
-        this.explicitTimezone = kryo.readObjectOrNull(input, TimezoneFacet.class);
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
-            return false;
-        }
-        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -192,15 +129,19 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
     @Override
     public boolean isStaticallyCastableAs(ItemType other) {
         // TODO: what about further restrictions like string without num from int?
-        return this.primitiveType.isStaticallyCastableAs(other.isPrimitive() ? other : other.getPrimitiveType());
+        return AtomicItemType.isCastableBetweenCastingPrimitives(
+                this.getCastingPrimitiveType(), other.getCastingPrimitiveType());
     }
 
     @Override
     public boolean canBePromotedTo(ItemType other) {
+        if (other.equals(BuiltinTypesCatalogue.floatItem)) {
+            return this.isSubtypeOf(BuiltinTypesCatalogue.decimalItem);
+        }
         // TODO : how about restriction types
         if (other.equals(BuiltinTypesCatalogue.stringItem)) {
             return this.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
-                || this.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem);
+                    || this.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem);
         }
         if (other.equals(BuiltinTypesCatalogue.doubleItem)) {
             return this.isNumeric();
@@ -224,21 +165,32 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
     }
 
     @Override
+    public boolean isCastingPrimitive() {
+        return this.equals(BuiltinTypesCatalogue.integerItem)
+                || this.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
+                || this.equals(BuiltinTypesCatalogue.dayTimeDurationItem);
+    }
+
+    @Override
+    public ItemType getCastingPrimitiveType() {
+        return this.isCastingPrimitive() ? this : this.baseType.getCastingPrimitiveType();
+    }
+
+    @Override
     public ItemType getBaseType() {
         return this.baseType;
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return this.primitiveType.getAllowedFacets();
     }
 
     @Override
     public List<Item> getEnumerationFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.ENUMERATION)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the enumeration facet"
-            );
+                    this.toString() + " item type does not support the enumeration facet");
         }
         return this.enumeration == null ? this.baseType.getEnumerationFacet() : this.enumeration;
     }
@@ -246,27 +198,25 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
     @SuppressWarnings("unchecked")
     @Override
     public List<String> getConstraintsFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.CONSTRAINTS)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.CONSTRAINTS)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the constraints facet"
-            );
+                    this.toString() + " item type does not support the constraints facet");
         }
         return ListUtils.union(this.baseType.getConstraintsFacet(), this.constraints);
     }
 
     @Override
     public Integer getMinLengthFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MINLENGTH)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the minimum length facet"
-            );
+                    this.toString() + " item type does not support the minimum length facet");
         }
         return this.minLength == null ? this.baseType.getMinLengthFacet() : this.minLength;
     }
 
     @Override
     public Integer getLengthFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.LENGTH)) {
             throw new UnsupportedOperationException(this.toString() + " item type does not support the length facet");
         }
         return this.length == null ? this.baseType.getLengthFacet() : this.length;
@@ -274,82 +224,107 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
 
     @Override
     public Integer getMaxLengthFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXLENGTH)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the maximum length facet"
-            );
+                    this.toString() + " item type does not support the maximum length facet");
         }
         return this.maxLength == null ? this.baseType.getMaxLengthFacet() : this.maxLength;
     }
 
     @Override
     public Item getMinExclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MINEXCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the minimum exclusive facet"
-            );
+                    this.toString() + " item type does not support the minimum exclusive facet");
         }
         return this.minExclusive == null ? this.baseType.getMinExclusiveFacet() : this.minExclusive;
     }
 
     @Override
     public Item getMinInclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MININCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the minimum inclusive facet"
-            );
+                    this.toString() + " item type does not support the minimum inclusive facet");
         }
         return this.minInclusive == null ? this.baseType.getMinInclusiveFacet() : this.minInclusive;
     }
 
     @Override
     public Item getMaxExclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXEXCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the maximum exclusive facet"
-            );
+                    this.toString() + " item type does not support the maximum exclusive facet");
         }
         return this.maxExclusive == null ? this.baseType.getMaxExclusiveFacet() : this.maxExclusive;
     }
 
     @Override
     public Item getMaxInclusiveFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.MAXINCLUSIVE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the maximum inclusive facet"
-            );
+                    this.toString() + " item type does not support the maximum inclusive facet");
         }
         return this.maxInclusive == null ? this.baseType.getMaxInclusiveFacet() : this.maxInclusive;
     }
 
     @Override
     public Integer getTotalDigitsFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.TOTALDIGITS)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the total digits facet"
-            );
+                    this.toString() + " item type does not support the total digits facet");
         }
         return this.totalDigits == null ? this.baseType.getTotalDigitsFacet() : this.totalDigits;
     }
 
     @Override
     public Integer getFractionDigitsFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.FRACTIONDIGITS)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the fraction digits facet"
-            );
+                    this.toString() + " item type does not support the fraction digits facet");
         }
         return this.fractionDigits == null ? this.baseType.getFractionDigitsFacet() : this.fractionDigits;
     }
 
     @Override
     public TimezoneFacet getExplicitTimezoneFacet() {
-        if (!this.getAllowedFacets().contains(FacetTypes.EXPLICITTIMEZONE)) {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.EXPLICITTIMEZONE)) {
             throw new UnsupportedOperationException(
-                    this.toString() + " item type does not support the explicit timezone facet"
-            );
+                    this.toString() + " item type does not support the explicit timezone facet");
         }
         return this.explicitTimezone == null ? this.baseType.getExplicitTimezoneFacet() : this.explicitTimezone;
+    }
+
+    @Override
+    public WhitespaceFacet getWhitespaceFacet() {
+        return this.whiteSpace == null ? this.baseType.getWhitespaceFacet() : this.whiteSpace;
+    }
+
+    @Override
+    public List<String> getPatternFacet() {
+        if (!this.getAllowedFacets().contains(ConstrainingFacetTypes.PATTERN)) {
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the pattern facet");
+        }
+        return this.pattern == null ? this.baseType.getPatternFacet() : this.pattern;
+    }
+
+    @Override
+    public OrderedFacetValue getOrderedFacet() {
+        return this.ordered == null ? this.baseType.getOrderedFacet() : this.ordered;
+    }
+
+    @Override
+    public Boolean getBoundedFacet() {
+        return this.bounded == null ? this.baseType.getBoundedFacet() : this.bounded;
+    }
+
+    @Override
+    public CardinalityFacetValue getCardinalityFacet() {
+        return this.cardinality == null ? this.baseType.getCardinalityFacet() : this.cardinality;
+    }
+
+    @Override
+    public Boolean getNumericFacet() {
+        return this.numeric == null ? this.baseType.getNumericFacet() : this.numeric;
     }
 
     @Override
@@ -406,7 +381,6 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
             sb.append(this.explicitTimezone.name());
         }
 
-
         if (this.enumeration != null) {
             sb.append("-enum{");
             String comma = "";
@@ -435,12 +409,18 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
 
     @Override
     public String toString() {
-        // TODO : Consider added facets restriction and base type
-        return this.name.toString();
+        // Unlike a node's type annotation, which is only a name, an anonymous atomic type can show its base type.
+        if (this.hasName() && isAnonymousSchemaTypeName(this.name)) {
+            return "<anonymous " + this.baseType + ">";
+        }
+        return getIdentifierString();
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
+        if (this.isSubtypeOf(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            return true;
+        }
         return this.baseType.isCompatibleWithDataFrames(configuration);
     }
 
@@ -466,15 +446,13 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
             this.primitiveType = this.baseType.getPrimitiveType();
 
             if (this.length == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.LENGTH)) {
                     this.length = this.baseType.getLengthFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.LENGTH)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable to " + this.primitiveType,
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "This facet is not applicable to " + this.primitiveType, ExceptionMetadata.EMPTY_METADATA);
                 }
                 if (this.baseType.getLengthFacet() != null && this.length != this.baseType.getLengthFacet()) {
                     throw new InvalidSchemaException("Incompatible length facet.", ExceptionMetadata.EMPTY_METADATA);
@@ -482,194 +460,153 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
             }
 
             if (this.enumeration == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.ENUMERATION)) {
                     this.enumeration = this.baseType.getEnumerationFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.ENUMERATION)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable to " + this.primitiveType,
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "This facet is not applicable to " + this.primitiveType, ExceptionMetadata.EMPTY_METADATA);
                 }
-                if (this.enumeration.hashCode() != this.baseType.getEnumerationFacet().hashCode()) {
+                if (this.enumeration.hashCode()
+                        != this.baseType.getEnumerationFacet().hashCode()) {
                     throw new InvalidSchemaException(
-                            "Enumeration facet is not valid.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "Enumeration facet is not valid.", ExceptionMetadata.EMPTY_METADATA);
                 }
-
             }
             // TODO: Check list enumeration with for loop or by hash
 
             if (this.minLength == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MINLENGTH)) {
                     this.minLength = this.baseType.getMinLengthFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MINLENGTH)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable to " + this.primitiveType,
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "This facet is not applicable to " + this.primitiveType, ExceptionMetadata.EMPTY_METADATA);
                 }
                 if (this.baseType.getMinLengthFacet() != null && this.minLength < this.baseType.getMinLengthFacet()) {
                     throw new InvalidSchemaException("Out of bounds minLength.", ExceptionMetadata.EMPTY_METADATA);
                 }
             }
             if (this.maxLength == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXLENGTH)) {
                     this.maxLength = this.baseType.getMaxLengthFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXLENGTH)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable to " + this.primitiveType,
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "This facet is not applicable to " + this.primitiveType, ExceptionMetadata.EMPTY_METADATA);
                 }
                 if (this.baseType.getMaxLengthFacet() != null && this.maxLength > this.baseType.getMaxLengthFacet()) {
                     throw new InvalidSchemaException("Out of bounds maxLength.", ExceptionMetadata.EMPTY_METADATA);
                 }
             }
             if (this.minInclusive == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MININCLUSIVE)) {
                     this.minInclusive = this.baseType.getMinInclusiveFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MININCLUSIVE)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable to " + this.primitiveType,
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "This facet is not applicable to " + this.primitiveType, ExceptionMetadata.EMPTY_METADATA);
                 }
 
-                if (
-                    this.baseType.getMinInclusiveFacet() != null
+                if (this.baseType.getMinInclusiveFacet() != null
                         && ComparisonIterator.compareItems(
-                            this.minInclusive,
-                            this.baseType.getMinInclusiveFacet(),
-                            ComparisonExpression.ComparisonOperator.GC_LT,
-                            ExceptionMetadata.EMPTY_METADATA
-                        ) < 0
-                ) {
+                                        this.minInclusive,
+                                        this.baseType.getMinInclusiveFacet(),
+                                        ComparisonExpression.ComparisonOperator.GC_LT,
+                                        ExceptionMetadata.EMPTY_METADATA)
+                                < 0) {
                     throw new InvalidSchemaException(
-                            "Out of bounds minInclusive facet.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "Out of bounds minInclusive facet.", ExceptionMetadata.EMPTY_METADATA);
                 }
             }
             if (this.maxInclusive == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXINCLUSIVE)) {
                     this.maxInclusive = this.baseType.getMaxInclusiveFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXINCLUSIVE)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable to " + this.primitiveType,
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "This facet is not applicable to " + this.primitiveType, ExceptionMetadata.EMPTY_METADATA);
                 }
 
-                if (
-                    this.baseType.getMaxInclusiveFacet() != null
+                if (this.baseType.getMaxInclusiveFacet() != null
                         && ComparisonIterator.compareItems(
-                            this.maxInclusive,
-                            this.baseType.getMaxInclusiveFacet(),
-                            ComparisonExpression.ComparisonOperator.GC_LT,
-                            ExceptionMetadata.EMPTY_METADATA
-                        ) > 0
-                ) {
+                                        this.maxInclusive,
+                                        this.baseType.getMaxInclusiveFacet(),
+                                        ComparisonExpression.ComparisonOperator.GC_LT,
+                                        ExceptionMetadata.EMPTY_METADATA)
+                                > 0) {
                     throw new InvalidSchemaException(
-                            "Out of bounds maxInclusive facet.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "Out of bounds maxInclusive facet.", ExceptionMetadata.EMPTY_METADATA);
                 }
-
             }
             if (this.minExclusive == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MINEXCLUSIVE)) {
                     this.minExclusive = this.baseType.getMinExclusiveFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MINEXCLUSIVE)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable to " + this.primitiveType,
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "This facet is not applicable to " + this.primitiveType, ExceptionMetadata.EMPTY_METADATA);
                 }
-                if (
-                    this.baseType.getMinExclusiveFacet() != null
+                if (this.baseType.getMinExclusiveFacet() != null
                         && ComparisonIterator.compareItems(
-                            this.minExclusive,
-                            this.baseType.getMinExclusiveFacet(),
-                            ComparisonExpression.ComparisonOperator.GC_LT,
-                            ExceptionMetadata.EMPTY_METADATA
-                        ) > 0
-                ) {
+                                        this.minExclusive,
+                                        this.baseType.getMinExclusiveFacet(),
+                                        ComparisonExpression.ComparisonOperator.GC_LT,
+                                        ExceptionMetadata.EMPTY_METADATA)
+                                > 0) {
                     throw new InvalidSchemaException(
-                            "Out of bounds minExclusive facet.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "Out of bounds minExclusive facet.", ExceptionMetadata.EMPTY_METADATA);
                 }
             }
             if (this.maxExclusive == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXEXCLUSIVE)) {
                     this.maxExclusive = this.baseType.getMaxExclusiveFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.MAXEXCLUSIVE)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable to " + this.primitiveType,
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "This facet is not applicable to " + this.primitiveType, ExceptionMetadata.EMPTY_METADATA);
                 }
-                if (
-                    this.baseType.getMaxExclusiveFacet() != null
+                if (this.baseType.getMaxExclusiveFacet() != null
                         && ComparisonIterator.compareItems(
-                            this.maxExclusive,
-                            this.baseType.getMaxExclusiveFacet(),
-                            ComparisonExpression.ComparisonOperator.GC_LT,
-                            ExceptionMetadata.EMPTY_METADATA
-                        ) > 0
-                ) {
+                                        this.maxExclusive,
+                                        this.baseType.getMaxExclusiveFacet(),
+                                        ComparisonExpression.ComparisonOperator.GC_LT,
+                                        ExceptionMetadata.EMPTY_METADATA)
+                                > 0) {
                     throw new InvalidSchemaException(
-                            "Out of bounds maxExclusive facet.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "Out of bounds maxExclusive facet.", ExceptionMetadata.EMPTY_METADATA);
                 }
             }
             if (this.totalDigits == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.TOTALDIGITS)) {
                     this.totalDigits = this.baseType.getTotalDigitsFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.TOTALDIGITS)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable to " + this.primitiveType,
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "This facet is not applicable to " + this.primitiveType, ExceptionMetadata.EMPTY_METADATA);
                 }
-                if (
-                    this.baseType.getTotalDigitsFacet() != null
-                        && this.totalDigits > this.baseType.getTotalDigitsFacet()
-                ) {
+                if (this.baseType.getTotalDigitsFacet() != null
+                        && this.totalDigits > this.baseType.getTotalDigitsFacet()) {
                     throw new InvalidSchemaException(
-                            "Out of bounds totalDigits facet.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "Out of bounds totalDigits facet.", ExceptionMetadata.EMPTY_METADATA);
                 }
             }
             if (this.fractionDigits == null) {
-                if (this.baseType.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.FRACTIONDIGITS)) {
                     this.fractionDigits = this.baseType.getFractionDigitsFacet();
                 }
             } else {
-                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.FRACTIONDIGITS)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable to " + this.primitiveType,
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                            "This facet is not applicable to " + this.primitiveType, ExceptionMetadata.EMPTY_METADATA);
                 }
                 /*
                  * if (this.fractionDigits > this.baseType.getFractionDigitsFacet()) {
@@ -681,12 +618,39 @@ public class DerivedAtomicItemType implements ItemType, com.esotericsoftware.kry
                  */
             }
 
+            // WhiteSpace facet
+            if (this.whiteSpace == null) {
+                this.whiteSpace = this.baseType.getWhitespaceFacet();
+            } else {
+                WhitespaceFacet baseWs = this.baseType.getWhitespaceFacet();
+                if (baseWs != null && baseWs.ordinal() > this.whiteSpace.ordinal()) {
+                    throw new InvalidSchemaException(
+                            "The whiteSpace facet cannot be relaxed: base type requires "
+                                    + baseWs
+                                    + " but derived type specifies "
+                                    + this.whiteSpace,
+                            ExceptionMetadata.EMPTY_METADATA);
+                }
+            }
+
+            // Pattern facet
+            if (this.pattern == null) {
+                if (this.baseType.getAllowedFacets().contains(ConstrainingFacetTypes.PATTERN)) {
+                    this.pattern = this.baseType.getPatternFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(ConstrainingFacetTypes.PATTERN)) {
+                    throw new InvalidSchemaException(
+                            "The pattern facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA);
+                }
+            }
+
             return;
         }
         throw new InvalidSchemaException(
                 "The base type of a user-defined atomic type must be an atomic type.",
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override

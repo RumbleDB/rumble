@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,60 +11,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
-
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class IntItem implements Item {
+import org.rumbledb.api.Item;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
+public class IntItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private int value;
 
-    public IntItem() {
-        super();
-    }
-
     public IntItem(int value) {
-        super();
         this.value = value;
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
+    public Item copy(boolean mutable) {
+        return new IntItem(this.value);
+    }
+
+    @Override
+    public long getLongValue() {
+        return this.value;
     }
 
     @Override
     public int getIntValue() {
         return this.value;
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return getIntValue();
     }
 
     @Override
@@ -90,24 +76,39 @@ public class IntItem implements Item {
         return String.valueOf(this.value);
     }
 
+    @Override
     public double castToDoubleValue() {
         return Integer.valueOf(this.value).doubleValue();
     }
 
+    @Override
     public float castToFloatValue() {
         return Integer.valueOf(this.value).floatValue();
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         return BigDecimal.valueOf(this.value);
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return BigInteger.valueOf(this.value);
     }
 
+    @Override
     public int castToIntValue() {
         return this.value;
+    }
+
+    @Override
+    public boolean isWithinIntRange() {
+        return true;
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return true;
     }
 
     @Override
@@ -131,29 +132,16 @@ public class IntItem implements Item {
     }
 
     @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeInt(this.value);
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readInt();
-    }
-
-    public int hashCode() {
-        return getIntValue();
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.intItem;
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, "" + this.value, SequenceType.INT);
+        return new NativeClauseContext(context, "" + this.value, SequenceType.createSequenceType("int"));
     }
 
+    @Override
     public boolean isNumeric() {
         return true;
     }

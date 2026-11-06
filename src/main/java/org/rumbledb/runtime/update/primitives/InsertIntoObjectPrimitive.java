@@ -1,38 +1,52 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.update.primitives;
-
-import org.apache.spark.sql.AnalysisException;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.*;
-import org.rumbledb.items.ItemFactory;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.spark.sql.AnalysisException;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.*;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.spark.SparkSessionManager;
 
 public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
     private Item target;
     private Item content;
-
+    private Collection collection;
 
     public InsertIntoObjectPrimitive(Item targetObject, Item contentObject, ExceptionMetadata metadata) {
-        for (String key : contentObject.getKeys()) {
+        for (String key : contentObject.getStringKeys()) {
             if (targetObject.getItemByKey(key) != null) {
                 throw new DuplicateKeyOnUpdateApplyException(
-                        "cannot insert a key already present in an object",
-                        metadata
-                );
+                        "cannot insert a key already present in an object", metadata);
             }
         }
         this.target = targetObject;
         this.content = contentObject;
+        this.collection = targetObject.getCollection();
     }
 
     @Override
     public void apply() {
-        if (this.target.getTableLocation() == null || this.target.getTableLocation().equals("null")) {
+        if (this.collection == null) {
             this.applyItem();
         } else {
             this.applyDelta();
@@ -42,7 +56,7 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     @Override
     public void applyItem() {
         try {
-            for (String key : this.content.getKeys()) {
+            for (String key : this.content.getStringKeys()) {
                 this.target.putItemByKey(key, this.content.getItemByKey(key));
             }
         } catch (DuplicateObjectKeyException e) {
@@ -57,35 +71,21 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
 
         String tempPathIn = this.target.getPathIn() + ".";
         String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 
         if (startOfArrayIndexing == -1) {
-
             List<String> columnsClauseList = new ArrayList<>();
-            List<String> setClauseList = new ArrayList<>();
-            List<String> keys = this.content.getKeys();
-            List<Item> values = this.content.getValues();
+            List<String> keys = this.content.getStringKeys();
+            List<Item> values = this.content.getItemValues();
             for (int i = 0; i < keys.size(); i++) {
                 columnsClauseList.add(pathIn + keys.get(i) + " " + values.get(i).getSparkSQLType());
-                setClauseList.add(pathIn + keys.get(i) + " = " + values.get(i).getSparkSQLValue());
             }
 
-            String setClauses = String.join(", ", setClauseList);
-
             List<String> insertColumnQueries = columnsClauseList.stream()
-                .map(c -> "ALTER TABLE " + location + " ADD COLUMNS (" + c + ");")
-                .collect(Collectors.toList());
-
-            String setFieldQuery = "UPDATE "
-                + location
-                + " SET "
-                + setClauses
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
+                    .map(c -> "ALTER TABLE " + location + " ADD COLUMNS (" + c + ");")
+                    .collect(Collectors.toList());
 
             SparkSessionManager manager = SparkSessionManager.getInstance();
 
@@ -99,9 +99,13 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
                     }
                 }
             }
-            manager.getOrCreateSession().sql(setFieldQuery);
+            for (int i = 0; i < keys.size(); i++) {
+                this.applySetFieldInCollection(
+                        location, rowID, pathIn + keys.get(i), values.get(i).getSparkSQLValue());
+            }
         } else {
             this.arrayIndexingApplyDelta();
+
             // TODO: Add new column for changed array and do the null trick -- do not forget the nullable etc
         }
     }
@@ -140,20 +144,21 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     public void arrayIndexingUpdateSchemaDelta() {
         String tempPathIn = this.target.getPathIn() + ".";
         String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
 
         String pathInSchema = pathIn.replaceAll("\\[\\d+]", ".element");
 
         List<String> columnsClauseList = new ArrayList<>();
-        List<String> keys = this.content.getKeys();
-        List<Item> values = this.content.getValues();
+        List<String> keys = this.content.getStringKeys();
+        List<Item> values = this.content.getItemValues();
         for (int i = 0; i < keys.size(); i++) {
-            columnsClauseList.add(pathInSchema + keys.get(i) + " " + values.get(i).getSparkSQLType());
+            columnsClauseList.add(
+                    pathInSchema + keys.get(i) + " " + values.get(i).getSparkSQLType());
         }
 
         List<String> insertColumnQueries = columnsClauseList.stream()
-            .map(c -> "ALTER TABLE " + location + " ADD COLUMNS (" + c + ");")
-            .collect(Collectors.toList());
+                .map(c -> "ALTER TABLE " + location + " ADD COLUMNS (" + c + ");")
+                .collect(Collectors.toList());
 
         SparkSessionManager manager = SparkSessionManager.getInstance();
 
@@ -172,11 +177,11 @@ public class InsertIntoObjectPrimitive implements UpdatePrimitive {
     public static Item mergeSources(Item first, Item second, ExceptionMetadata metadata) {
         Item res;
 
-        List<String> keys = new ArrayList<>(first.getKeys());
-        keys.addAll(second.getKeys());
+        List<String> keys = new ArrayList<>(first.getStringKeys());
+        keys.addAll(second.getStringKeys());
 
-        List<Item> values = new ArrayList<>(first.getValues());
-        values.addAll(second.getValues());
+        List<Item> values = new ArrayList<>(first.getItemValues());
+        values.addAll(second.getItemValues());
 
         try {
             res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);

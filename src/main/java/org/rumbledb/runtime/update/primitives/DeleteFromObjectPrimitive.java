@@ -1,38 +1,51 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.update.primitives;
+
+import java.util.*;
+
+import static org.apache.spark.sql.functions.col;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotResolveUpdateSelectorException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.spark.SparkSessionManager;
-
-import java.util.*;
-import java.util.stream.Collectors;
-
-import static org.apache.spark.sql.functions.*;
+import org.rumbledb.spark.SparkSessionManager;
 
 public class DeleteFromObjectPrimitive implements UpdatePrimitive {
-
     private Item target;
     private List<Item> content;
+    private Collection collection;
 
     public DeleteFromObjectPrimitive(Item targetObject, List<Item> namesToRemove, ExceptionMetadata metadata) {
 
         for (Item item : namesToRemove) {
             if (targetObject.getItemByKey(item.getStringValue()) == null) {
                 throw new CannotResolveUpdateSelectorException(
-                        "Cannot delete key that does not exist in target object",
-                        metadata
-                );
+                        "Cannot delete key that does not exist in target object", metadata);
             }
         }
 
         this.target = targetObject;
         this.content = namesToRemove;
+        this.collection = targetObject.getCollection();
     }
 
     @Override
     public void apply() {
-        if (this.target.getTableLocation() == null || this.target.getTableLocation().equals("null")) {
+        if (this.collection == null) {
             this.applyItem();
         } else {
             this.applyDelta();
@@ -41,10 +54,8 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
 
     @Override
     public void applyItem() {
-        for (
-            String str : this.content.stream().map(Item::getStringValue).collect(Collectors.toList())
-        ) {
-            this.target.removeItemByKey(str);
+        for (Item item : this.content) {
+            this.target.removeItemByKey(item.getStringValue());
         }
     }
 
@@ -52,26 +63,24 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
     public void applyDelta() {
         String tempPathIn = this.target.getPathIn() + ".";
         String pathIn = tempPathIn.substring(tempPathIn.indexOf(".") + 1);
-        String location = this.target.getTableLocation();
+        String location = this.collection.getPhysicalName();
         long rowID = this.target.getTopLevelID();
         int startOfArrayIndexing = pathIn.indexOf("[");
 
         if (startOfArrayIndexing == -1) {
-            List<String> setFieldsToNulls = this.content.stream()
-                .map(i -> pathIn + i.getStringValue() + " = NULL")
-                .collect(Collectors.toList());
-            String concatSetNulls = String.join(", ", setFieldsToNulls);
-
-            String query = "UPDATE "
-                + location
-                + " SET "
-                + concatSetNulls
-                + " WHERE `"
-                + SparkSessionManager.rowIdColumnName
-                + "` == "
-                + rowID;
-
-            SparkSessionManager.getInstance().getOrCreateSession().sql(query);
+            for (Item item : this.content) {
+                String key = item.getStringValue();
+                String fullPath = pathIn + key;
+                String type = SparkSessionManager.getInstance()
+                        .getOrCreateSession()
+                        .sql("DESC (SELECT " + fullPath + " FROM " + location + ")")
+                        .filter(col("col_name").equalTo(key))
+                        .select("data_type")
+                        .collectAsList()
+                        .get(0)
+                        .getString(0);
+                this.applySetFieldInCollection(location, rowID, fullPath, "CAST(NULL AS " + type + ")");
+            }
         } else {
             this.arrayIndexingApplyDelta();
         }
@@ -96,5 +105,4 @@ public class DeleteFromObjectPrimitive implements UpdatePrimitive {
     public boolean isDeleteObject() {
         return true;
     }
-
 }
