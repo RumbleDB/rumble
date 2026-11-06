@@ -112,7 +112,7 @@ public class FlworDataFrameUtils {
             }
             return false;
         }
-        String escapedName = variable.getLocalName().replace("`", FlworDataFrameUtils.backtickEscape);
+        String escapedName = variable.getLocalName();
         for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
             if (pos == -1) {
@@ -511,6 +511,11 @@ public class FlworDataFrameUtils {
             queryColumnString.append(comma);
         }
         return queryColumnString.toString();
+    }
+
+    /** Quotes a single Spark SQL identifier; schema names must remain unmodified. */
+    public static String quoteIdentifier(String name, boolean escapeBackticks) {
+        return "`" + (escapeBackticks ? name.replace("`", "``") : name) + "`";
     }
 
     public static StructField[] recursiveRename(StructType schema, boolean inverse) {

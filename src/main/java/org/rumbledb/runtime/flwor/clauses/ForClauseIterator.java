@@ -701,7 +701,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             String assignment = FlworDataFrameUtils.createTempView(rows.getDataFrame());
             if (rows.getItemType().isObjectItemType()) {
                 List<FlworDataFrameColumn> fields = rows.getColumns();
-                String columnNames = FlworDataFrameUtils.getSQLColumnProjection(fields, false);
+                String columnNames = fields.stream().map(field -> FlworDataFrameUtils.quoteIdentifier(field.getColumnName(), iterator.getRuntimeStaticContext().getConfiguration().runtime().escapeBackticks())).collect(java.util.stream.Collectors.joining(","));
                 df = rows.getDataFrame()
                         .sparkSession()
                         .sql(String.format("SELECT struct(%s) AS `%s` FROM %s", columnNames, variableName, assignment));
