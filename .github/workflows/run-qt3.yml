@@ -110,6 +110,39 @@ jobs:
       rumble_artifact_name: rumble-build
       baseline_run_id: ${{ needs.resolve-baseline.outputs.baseline_run_id }}
 
+  check-xquery-results:
+    name: Require zero XQuery failures and errors
+    needs: [qt3-xquery]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download XQuery reports
+        uses: actions/download-artifact@v8
+        with:
+          name: surefire-all-xquery
+          path: surefire-reports
+
+      - name: Check XQuery results
+        shell: python
+        run: |
+          from pathlib import Path
+          import xml.etree.ElementTree as ET
+
+          reports = list(Path('surefire-reports').glob('*.xml'))
+          if not reports:
+              raise SystemExit('No XQuery test reports found')
+          failures = errors = 0
+          for report in reports:
+              root = ET.parse(report).getroot()
+              suites = [root] if root.tag == 'testsuite' else list(root.iter('testsuite'))
+              if not suites:
+                  raise SystemExit(f'No test suites found in {report}')
+              for suite in suites:
+                  failures += int(suite.attrib['failures'])
+                  errors += int(suite.attrib['errors'])
+          print(f'XQuery results: {failures} failed, {errors} errored')
+          if failures != 0 or errors != 0:
+              raise SystemExit('XQuery tests must have zero failures and errors')
+
   post-results:
     name: Post Results
     needs: [qt3-jsoniq, qt3-xquery]
