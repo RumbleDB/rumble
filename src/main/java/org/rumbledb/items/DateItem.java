@@ -1,50 +1,108 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.joda.time.DateTime;
-import org.joda.time.DateTimeZone;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
+import java.io.Serial;
+import java.sql.Date;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.regex.Pattern;
+
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DatetimeOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
-public class DateItem extends AtomicItem {
+public class DateItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private DateTime value;
-    private boolean hasTimeZone = true;
 
-    public DateItem() {
-        super();
-    }
+    private OffsetDateTime value;
+    private boolean hasTimeZone = false;
+    private static final Pattern dayRegex = Pattern.compile(
+            "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
 
-    DateItem(DateTime value, boolean hasTimeZone) {
-        super();
-        this.value = value;
+    DateItem(OffsetDateTime value, boolean hasTimeZone) {
+        this.value = value.toLocalDate().atStartOfDay(value.getOffset()).toOffsetDateTime();
         this.hasTimeZone = hasTimeZone;
     }
 
     DateItem(String dateTimeString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeString, ItemType.dateItem);
-        if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
-            this.hasTimeZone = false;
-            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
-        }
-    }
-
-    public DateTime getValue() {
-        return this.value;
+        getDateFromString(dateTimeString);
     }
 
     @Override
-    public DateTime getDateTimeValue() {
-        return this.value;
+    public Item copy(boolean mutable) {
+        return new DateItem(this.value, this.hasTimeZone);
+    }
+
+    private void getDateFromString(String dateString) {
+        if (!dayRegex.matcher(dateString).matches()) {
+            throw new IllegalArgumentException("Invalid xs:date: \"" + dateString + "\"");
+        }
+        int yearIncrement = 0;
+        int isMinus = 1;
+        try {
+            if (dateString.startsWith("-")) {
+                dateString = dateString.substring(1);
+                isMinus = -1;
+            }
+            String[] yearAndRest = dateString.split("-", 2);
+            String yearOnly = yearAndRest[0];
+            String rest = yearAndRest[1];
+            if (yearOnly.length() > 4) {
+                dateString = "2000-" + rest;
+                yearIncrement = Integer.parseInt(yearOnly) - 2000;
+            }
+            if (dateString.contains("Z") || dateString.contains(":")) {
+                this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_OFFSET_DATE)
+                        .atStartOfDay()
+                        .atOffset(ZoneOffset.of(dateString.substring(10)));
+                this.hasTimeZone = true;
+            } else {
+                this.value = LocalDate.parse(dateString, DateTimeFormatter.ISO_LOCAL_DATE)
+                        .atStartOfDay(ZoneOffset.UTC)
+                        .toOffsetDateTime();
+                this.hasTimeZone = false;
+            }
+            // Those operations need to be in separate lines,
+            // because we change the sign only after we calculate correct year
+            this.value = this.value.plusYears(yearIncrement);
+            this.value = this.value.withYear(this.value.getYear() * isMinus);
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Invalid xs:date: \"" + dateString + "\"");
+        } catch (NumberFormatException e) {
+            throw new DatetimeOverflowOrUnderflow(
+                    "Invalid xs:date: \"" + dateString + "\"", ExceptionMetadata.EMPTY_METADATA);
+        }
+    }
+
+    @Override
+    public String getStringValue() {
+        String stringValue = this.value.format(
+                this.hasTimeZone ? DateTimeFormatter.ISO_OFFSET_DATE : DateTimeFormatter.ISO_LOCAL_DATE);
+        if (this.value.toString().startsWith("+")) {
+            return stringValue.substring(1);
+        }
+        return stringValue;
     }
 
     @Override
@@ -53,8 +111,50 @@ public class DateItem extends AtomicItem {
     }
 
     @Override
+    public boolean getEffectiveBooleanValue() {
+        return false;
+    }
+
+    @Override
     public boolean hasDateTime() {
         return true;
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return BuiltinTypesCatalogue.dateItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "DATE";
+    }
+
+    @Override
+    public int getMonth() {
+        return this.value.getMonth().getValue();
+    }
+
+    @Override
+    public int getYear() {
+        return this.value.getYear();
+    }
+
+    @Override
+    public int getDay() {
+        return this.value.getDayOfMonth();
+    }
+
+    @Override
+    public int getOffset() {
+        ZoneOffset zoneOffset = this.value.getOffset();
+        return zoneOffset.getTotalSeconds() / 60;
     }
 
     @Override
@@ -63,138 +163,17 @@ public class DateItem extends AtomicItem {
     }
 
     @Override
-    public boolean getEffectiveBooleanValue() {
-        return false;
+    public OffsetDateTime getDateTimeValue() {
+        return this.value;
     }
 
     @Override
-    public boolean equals(Object otherObject) {
-        if (!(otherObject instanceof Item)) {
-            return false;
-        }
-        Item otherItem = (Item) otherObject;
-        if (otherItem.isDate()) {
-            return this.getValue().isEqual(otherItem.getDateTimeValue());
-        }
-        return false;
+    public Object getVariantValue() {
+        return Date.valueOf(this.getDateTimeValue().toLocalDate());
     }
 
     @Override
-    public int hashCode() {
-        return this.getValue().hashCode();
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.dateItem)
-            ||
-            itemType.equals(ItemType.dateTimeItem)
-            ||
-            itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.dateItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.dateTimeItem)) {
-            return ItemFactory.getInstance().createDateTimeItem(this.getValue(), this.hasTimeZone);
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.dateItem) || super.isTypeOf(type);
-    }
-
-    @Override
-    public Item add(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
-            return ItemFactory.getInstance()
-                .createDateItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        if (other.isDate()) {
-            return ItemFactory.getInstance()
-                .createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
-        }
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
-            return ItemFactory.getInstance()
-                .createDateItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isDate()) {
-            return this.getValue().compareTo(other.getDateTimeValue());
-        }
-        throw new IteratorFlowException(
-                "Cannot compare item of type "
-                    + this.getDynamicType().toString()
-                    +
-                    " with item of type "
-                    + other.getDynamicType().toString()
-        );
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isDate() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "\""
-                        + this.getDynamicType().toString()
-                        + "\": invalid type: can not compare for equality to type \""
-                        + other.getDynamicType().toString()
-                        + "\"",
-                    metadata
-            );
-        }
-        return super.compareItem(other, comparisonOperator, metadata);
-    }
-
-    @Override
-    public String serialize() {
-        String value = this.getValue().toString();
-        String zone = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : this.getValue().getZone().toString();
-        int dateTimeSeparatorIndex = value.indexOf("T");
-        return value.substring(0, dateTimeSeparatorIndex) + (this.hasTimeZone ? zone : "");
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeLong(this.getDateTimeValue().getMillis(), true);
-        output.writeBoolean(this.hasTimeZone);
-        output.writeString(this.getDateTimeValue().getZone().getID());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        Long millis = input.readLong(true);
-        this.hasTimeZone = input.readBoolean();
-        DateTimeZone zone = DateTimeZone.forID(input.readString());
-        this.value = new DateTime(millis, zone);
-    }
-
-    @Override
-    public ItemType getDynamicType() {
-        return ItemType.dateItem;
+    public long getEpochMillis() {
+        return this.value.toInstant().toEpochMilli();
     }
 }

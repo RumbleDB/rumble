@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,58 +11,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
-
+import java.io.Serial;
 import java.util.List;
 
-public class ContainsFunctionIterator extends LocalFunctionCallIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
+public class ContainsFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public ContainsFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public ContainsFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item substringItem = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            if (substringItem == null || substringItem.getStringValue().isEmpty()) {
-                return ItemFactory.getInstance().createBooleanItem(true);
-            }
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            if (stringItem == null || stringItem.getStringValue().isEmpty()) {
-                return ItemFactory.getInstance().createBooleanItem(false);
-            }
-            boolean result = stringItem.getStringValue()
-                .contains(
-                    substringItem.getStringValue()
-                );
-            return ItemFactory.getInstance().createBooleanItem(result);
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " contains function",
-                    getMetadata()
-            );
-        }
+    public Item evaluateAtMostOne(DynamicContext context) {
+        String collation = CollationSupport.resolveCollationArgument(
+                this.getChildren().size() > 2 ? this.getChild(2) : null,
+                context,
+                getRuntimeStaticContext(),
+                getMetadata());
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
+        Item substringItem = this.getChild(1).materializeFirstOrNull(context);
+        String source = stringItem == null ? "" : stringItem.getStringValue();
+        String target = substringItem == null ? "" : substringItem.getStringValue();
+        boolean result = CollationSupport.contains(source, target, collation, getMetadata());
+        return ItemFactory.getInstance().createBooleanItem(result);
     }
 }

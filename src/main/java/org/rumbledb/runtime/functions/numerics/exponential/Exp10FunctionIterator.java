@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,59 +11,65 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.numerics.exponential;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
-import java.util.List;
+public class Exp10FunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
-public class Exp10FunctionIterator extends LocalFunctionCallIterator {
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
-    public Exp10FunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    private final ItemRuntimePlan argument;
+
+    public Exp10FunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
+        this.argument = arguments.get(0);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item exponent = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            try {
-                return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, exponent.castToDoubleValue()));
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item exponent = this.argument.materializeFirstOrNull(context);
+        if (exponent == null) {
+            return null;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " exp10 function", getMetadata());
+        return evaluate(exponent);
     }
 
+    private static Item evaluate(Item exponent) {
+        return ItemFactory.getInstance().createDoubleItem(Math.pow(10.0, exponent.getDoubleValue()));
+    }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext powerQuery = NativeQueryRuntimePlan.generate(this.argument, nativeClauseContext);
+        if (powerQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                powerQuery.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "POW( " + "10.0" + ", " + powerQuery.getResultingQuery() + " )";
+        return new NativeClauseContext(
+                powerQuery,
+                resultingQuery,
+                new SequenceType(
+                        BuiltinTypesCatalogue.doubleItem,
+                        powerQuery.getResultingType().getArity()));
+    }
 }

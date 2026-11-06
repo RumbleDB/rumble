@@ -1,0 +1,90 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.expressions.module;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Node;
+
+public class LibraryModule extends Module {
+
+    @Setter
+    protected StaticContext staticContext;
+
+    @Getter
+    private final String namespace;
+
+    @Getter
+    private final Prolog prolog;
+
+    public LibraryModule(Prolog prolog, String namespace, ExceptionMetadata metadata) {
+        super(metadata);
+        this.prolog = prolog;
+        this.namespace = namespace;
+    }
+
+    /** Identity of the declaration group shared by repeated imports and namespace aliases. */
+    public String getModuleGroupKey() {
+        String key = this.prolog.getModuleGroupKey();
+        return key == null ? this.namespace : key;
+    }
+
+    @Override
+    public StaticContext getStaticContext() {
+        return this.staticContext;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        if (this.prolog != null) {
+            result.add(this.prolog);
+        }
+        return result;
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitLibraryModule(this, argument);
+    }
+
+    @Override
+    public void print(StringBuilder buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Library module " + this.namespace);
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("module namespace " + this.namespace + ";\n");
+        this.prolog.serializeToJSONiq(sb, indent);
+    }
+}

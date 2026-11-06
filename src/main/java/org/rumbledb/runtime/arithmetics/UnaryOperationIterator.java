@@ -1,0 +1,120 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.arithmetics;
+
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.util.Collections;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
+
+public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
+
+    private final boolean negated;
+    private final ItemRuntimePlan child;
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    public UnaryOperationIterator(ItemRuntimePlan child, boolean negated, RuntimeStaticContext staticContext) {
+        super(Collections.singletonList(child), staticContext);
+        this.child = child;
+        this.negated = negated;
+    }
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Item item;
+        try {
+            item = this.child.materializeAtMostOne(dynamicContext);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Unary expression requires at most one item in its input sequence.", getMetadata());
+        }
+        return applyOperator(item, this.negated, getMetadata());
+    }
+
+    private static Item applyOperator(Item item, boolean negated, ExceptionMetadata metadata) {
+        if (item == null) {
+            return null;
+        }
+        if (item.isUntypedAtomic()) {
+            item = ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+        }
+
+        if (!negated) {
+            if (!item.isNumeric()) {
+                throw new UnexpectedTypeException(
+                        "Unary expression has non numeric args " + item.serialize(), metadata);
+            }
+            return item;
+        }
+        if (item.isInt()) {
+            int value = item.getIntValue();
+            if (value == Integer.MIN_VALUE) {
+                return ItemFactory.getInstance().createLongItem(-(long) value);
+            }
+            return ItemFactory.getInstance().createIntItem(-value);
+        }
+        if (item.isInteger()) {
+            return ItemFactory.getInstance()
+                    .createIntegerItem(item.getIntegerValue().negate().toString());
+        }
+        if (item.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem(-1 * item.getFloatValue());
+        }
+        if (item.isDouble()) {
+            return ItemFactory.getInstance().createDoubleItem(-1 * item.getDoubleValue());
+        }
+        if (item.isDecimal()) {
+            return ItemFactory.getInstance()
+                    .createDecimalItem(item.getDecimalValue().multiply(new BigDecimal(-1)));
+        }
+        throw new UnexpectedTypeException("Unary expression has non numeric args " + item.serialize(), metadata);
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext leftResult = NativeQueryRuntimePlan.generate(this.child, nativeClauseContext);
+        if (leftResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!leftResult.getResultingType().getArity().equals(Arity.One)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String leftQuery = leftResult.getResultingQuery();
+        SequenceType resultType = leftResult.getResultingType();
+        if (this.negated) {
+            String resultingQuery = "( " + " - " + leftQuery + " )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+        } else {
+            String resultingQuery = "( " + leftQuery + " )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, resultType);
+        }
+    }
+}

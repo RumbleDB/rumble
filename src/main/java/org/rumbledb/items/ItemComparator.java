@@ -1,0 +1,98 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.items;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.Comparator;
+
+import lombok.NonNull;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+
+public class ItemComparator implements Comparator<Item>, Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final RumbleException exception;
+    private final String collationUri;
+    private final ExceptionMetadata metadata;
+    // For min(), NaN is returned if it appears in the input sequence. It must thus compare to less
+    // than any other number for this purpose.
+    private final boolean compareMin;
+
+    public ItemComparator(
+            boolean compareMin, RumbleException exception, @NonNull String collationUri, ExceptionMetadata metadata) {
+        this.compareMin = compareMin;
+        this.exception = exception;
+        this.collationUri = collationUri;
+        this.metadata = metadata;
+    }
+
+    /**
+     * Comparator used for sequence aggregate functions and their RDD evaluations
+     * It compares 2 atomic items (non-null)
+     * Non-atomics and nulls throw an exception
+     *
+     * @return -1 if v1 &lt; v2; 0 if v1 == v2; 1 if v1 &gt; v2;
+     */
+    @Override
+    public int compare(Item v1, Item v2) {
+        if (this.compareMin) {
+            if (v2.isNumeric()
+                    && ((v1.isDouble() && Double.isNaN(v1.getDoubleValue()))
+                            || (v1.isFloat() && Float.isNaN(v1.getFloatValue())))) {
+                return -1;
+            }
+            if (v1.isNumeric()
+                    && ((v2.isDouble() && Double.isNaN(v2.getDoubleValue()))
+                            || (v2.isFloat() && Float.isNaN(v2.getFloatValue())))) {
+                return 1;
+            }
+        }
+        if (CollationSupport.isStringCollationType(v1) && CollationSupport.isStringCollationType(v2)) {
+            return CollationSupport.compareStrings(
+                    v1.getStringValue(), v2.getStringValue(), this.collationUri, this.metadata);
+        }
+        try {
+            long comparison = ComparisonIterator.compareItems(
+                    v1, v2, ComparisonExpression.ComparisonOperator.VC_LT, ExceptionMetadata.EMPTY_METADATA);
+            if (comparison == Long.MIN_VALUE) {
+
+                throw new UnexpectedTypeException(
+                        " \""
+                                + ComparisonExpression.ComparisonOperator.VC_LT
+                                + "\": operation not possible with parameters of type \""
+                                + v1.getDynamicType().toString()
+                                + "\" and \""
+                                + v2.getDynamicType().toString()
+                                + "\"",
+                        ExceptionMetadata.EMPTY_METADATA);
+            }
+            return (int) comparison;
+        } catch (RumbleException e) {
+            this.exception.initCause(e);
+            throw this.exception;
+        }
+    }
+}

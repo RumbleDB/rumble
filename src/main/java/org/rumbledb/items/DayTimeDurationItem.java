@@ -1,44 +1,63 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import org.joda.time.Instant;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
+import java.io.Serial;
+import java.text.DecimalFormat;
+import java.time.Duration;
+import java.time.Period;
+import java.time.format.DateTimeParseException;
+import java.util.regex.Pattern;
+
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import java.math.BigDecimal;
 
-public class DayTimeDurationItem extends DurationItem {
+public class DayTimeDurationItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public DayTimeDurationItem() {
-        super();
+    private Duration value;
+    private static final Pattern durationRegex = Pattern.compile(
+            "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))");
+    private static final Pattern dayTimeDurationRegex = Pattern.compile("[^YM]*[DT].*");
+
+    public DayTimeDurationItem(Duration value) {
+        this.value = value;
     }
 
-    public DayTimeDurationItem(Period value) {
-        super();
-        this.value = value.normalizedStandard(PeriodType.dayTime());
-        this.isNegative = this.value.toString().contains("-");
+    public DayTimeDurationItem(String value) {
+        if (!durationRegex.matcher(value).matches()
+                || !dayTimeDurationRegex.matcher(value).matches()) {
+            throw new IllegalArgumentException("Invalid xs:dayTimeDuration: \"" + value + "\"");
+        }
+        try {
+            this.value = Duration.parse(value);
+        } catch (DateTimeParseException e) {
+            throw new DurationOverflowOrUnderflow(
+                    "Invalid xs:dayTimeDuration: \"" + value + "\"", ExceptionMetadata.EMPTY_METADATA);
+        }
     }
 
     @Override
-    public Period getValue() {
-        return this.value;
-    }
-
-    @Override
-    public Period getDurationValue() {
-        return this.value;
-    }
-
-    @Override
-    public boolean isAtomic() {
-        return true;
+    public Item copy(boolean mutable) {
+        return new DayTimeDurationItem(this.value);
     }
 
     @Override
@@ -47,125 +66,120 @@ public class DayTimeDurationItem extends DurationItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.dayTimeDurationItem) || super.isTypeOf(type);
+    public boolean isAtomic() {
+        return true;
     }
 
     @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), ItemType.dayTimeDurationItem).normalizedStandard(
-            PeriodType.dayTime()
-        );
-        this.isNegative = this.value.toString().contains("-");
+    public boolean isDuration() {
+        return true;
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.dayTimeDurationItem)
-            ||
-            itemType.equals(ItemType.yearMonthDurationItem)
-            ||
-            itemType.equals(ItemType.durationItem)
-            ||
-            itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.durationItem)) {
-            return ItemFactory.getInstance().createDurationItem(this.getValue());
-        }
-        if (itemType.equals(ItemType.dayTimeDurationItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.yearMonthDurationItem)) {
-            return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (other.isDuration() && !other.isDayTimeDuration() && !other.isYearMonthDuration()) {
-            return other.compareItem(this, comparisonOperator, metadata);
-        } else if (!other.isDayTimeDuration() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "\""
-                        + this.getDynamicType().toString()
-                        + "\": invalid type: can not compare for equality to type \""
-                        + other.getDynamicType().toString()
-                        + "\"",
-                    metadata
-            );
-        }
-        return super.compareItem(other, comparisonOperator, metadata);
-    }
-
-    @Override
-    public Item add(Item other) {
-        if (other.isDateTime()) {
-            return ItemFactory.getInstance()
-                .createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
-        }
-        if (other.isDate()) {
-            return ItemFactory.getInstance()
-                .createDateItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
-        }
-        if (other.isTime()) {
-            return ItemFactory.getInstance()
-                .createTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
-        }
-        return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().plus(other.getDurationValue()));
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().minus(other.getDurationValue()));
-    }
-
-    @Override
-    public Item multiply(Item other) {
-        BigDecimal otherAsDecimal = other.castToDecimalValue();
-        if (otherAsDecimal.stripTrailingZeros().scale() <= 0) {
-            return ItemFactory.getInstance()
-                .createDayTimeDurationItem(this.getValue().multipliedBy(otherAsDecimal.intValue()));
-        }
-        long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long durationResult = otherAsDecimal.multiply(BigDecimal.valueOf(durationInMillis))
-            .setScale(16, BigDecimal.ROUND_HALF_UP)
-            .longValue();
-        return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
-    }
-
-    @Override
-    public Item divide(Item other) {
-        if (other.isDayTimeDuration()) {
-            Instant now = Instant.now();
-            return ItemFactory.getInstance()
-                .createDecimalItem(
-                    BigDecimal.valueOf(
-                        this.getValue().toDurationFrom(now).getMillis()
-                            /
-                            (double) other.getDurationValue().toDurationFrom(now).getMillis()
-                    )
-                );
-        }
-        BigDecimal otherBd = other.castToDecimalValue();
-        long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long durationResult = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 16, BigDecimal.ROUND_HALF_UP)
-            .longValue();
-        return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+    public boolean getEffectiveBooleanValue() {
+        return false;
     }
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.dayTimeDurationItem;
+        return BuiltinTypesCatalogue.dayTimeDurationItem;
+    }
+
+    @Override
+    public String getStringValue() {
+        return normalizeDuration(this.value);
+    }
+
+    @Override
+    public long getEpochMillis() {
+        return this.value.toMillis();
+    }
+
+    @Override
+    public Duration getDurationValue() {
+        return this.value;
+    }
+
+    @Override
+    public Period getPeriodValue() {
+        return Period.ZERO;
+    }
+
+    @Override
+    public Duration getDayTimeDurationComponent() {
+        return this.value;
+    }
+
+    public static String normalizeDuration(Duration duration) {
+        if (duration.isZero()) {
+            return "PT0S"; // Default value for empty dayTimeDuration
+        }
+        boolean isNegative = duration.isNegative();
+        duration = duration.abs();
+
+        long totalSeconds = duration.getSeconds();
+        int nanos = duration.getNano();
+
+        long days = totalSeconds / 86_400;
+        long hours = (totalSeconds % 86_400) / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        double fractionalSeconds = seconds + nanos / 1_000_000_000.0;
+
+        StringBuilder sb = new StringBuilder();
+        if (isNegative) sb.append("-");
+
+        sb.append("P");
+        if (days > 0) sb.append(days).append("D");
+
+        if (hours > 0 || minutes > 0 || fractionalSeconds > 0 || sb.toString().endsWith("P")) {
+            sb.append("T");
+            if (hours > 0) sb.append(hours).append("H");
+            if (minutes > 0) sb.append(minutes).append("M");
+
+            if (fractionalSeconds > 0) {
+                // Format seconds with optional fraction
+                DecimalFormat df = new DecimalFormat("0.#########"); // up to nanosecond precision
+                sb.append(df.format(fractionalSeconds)).append("S");
+            }
+        }
+
+        return sb.toString();
+    }
+
+    @Override
+    public int getMonth() {
+        return (int) (this.value.getSeconds() / 86400 / 30);
+    }
+
+    @Override
+    public int getDay() {
+        return (int) ((this.value.getSeconds() + this.value.getNano() / 1_000_000_000.0) / 3600 / 24);
+    }
+
+    @Override
+    public int getHour() {
+        return (int) ((this.value.getSeconds() / 3600) % 24);
+    }
+
+    @Override
+    public int getMinute() {
+        return (int) ((this.value.getSeconds() / 60) % 60);
+    }
+
+    @Override
+    public double getSecond() {
+        return (this.value.getSeconds() % 60 + this.value.getNano() / 1_000_000_000.0);
+    }
+
+    @Override
+    public int getNanosecond() {
+        return this.value.getNano();
+    }
+
+    @Override
+    public int getYear() {
+        return (int) (this.value.getSeconds() / 86400 / 30 / 365);
     }
 }

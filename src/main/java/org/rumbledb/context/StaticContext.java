@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,73 +11,240 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.context;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.types.SequenceType;
-
-import sparksoniq.jsoniq.ExecutionMode;
-
+import java.net.URI;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
+import org.rumbledb.exceptions.DuplicateDecimalFormatDeclarationException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.serialization.SerializationParameterUtils;
+import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 public class StaticContext {
 
-    private static class InScopeVariable {
-        private String name;
-        private SequenceType sequenceType;
-        private ExceptionMetadata metadata;
-        private ExecutionMode storageMode;
+    @Getter
+    private Map<Name, InScopeVariable> inScopeVariables;
 
-        public InScopeVariable(
-                String name,
-                SequenceType sequenceType,
-                ExceptionMetadata metadata,
-                ExecutionMode storageMode
-        ) {
-            this.name = name;
-            this.sequenceType = sequenceType;
-            this.metadata = metadata;
-            this.storageMode = storageMode;
-        }
+    private Map<String, String> staticallyKnownNamespaces;
+    private Map<String, String> constructorNamespaceBindings;
 
-        @SuppressWarnings("unused")
-        public String getName() {
-            return this.name;
-        }
+    private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
+    private InScopeSchemaTypes inScopeSchemaTypes;
 
-        public SequenceType getSequenceType() {
-            return this.sequenceType;
-        }
+    private LanguageVersion queryLanguage;
 
-        public ExceptionMetadata getMetadata() {
-            return this.metadata;
+    public void setQueryLanguage(LanguageVersion queryLanguage) {
+        this.queryLanguage = queryLanguage;
+        if (this.serializationParameters != null) {
+            this.serializationParameters.applyLanguageDefaults(queryLanguage);
         }
     }
 
-    private Map<String, InScopeVariable> inScopeVariables;
     private StaticContext parent;
+    private URI staticBaseURI;
+    private String staticBaseUriString;
+    private boolean emptySequenceOrderLeast;
+    private boolean boundarySpacePreserve;
+    // Strip is the implementation-defined default construction mode.
+    private boolean constructionPreserve;
+    private boolean copyNamespacesPreserve;
+    private boolean copyNamespacesInherit;
+    private SerializationParameters serializationParameters;
+    private Set<String> explicitSerializationParameterNames;
+    private boolean isQuerySideEffecting;
+    private Set<String> staticallyKnownCollations;
+    private String defaultCollation;
 
-    public StaticContext() {
+    /**
+     * XQuery {@code declare default function namespace}; when null, unprefixed function names use
+     * {@link Name#JSONIQ_DEFAULT_FUNCTION_NS} (Rumble's usual fn/jn/... resolution path).
+     */
+    private String defaultFunctionNamespaceUri;
+
+    @Setter
+    @Getter
+    private SequenceType contextItemStaticType;
+
+    private Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
+    private final Set<Name> privateVariables = new LinkedHashSet<>();
+    private final Set<FunctionIdentifier> privateFunctions = new LinkedHashSet<>();
+
+    public void markPrivateVariable(Name name) {
+        this.privateVariables.add(name);
+    }
+
+    public void markPrivateFunction(FunctionIdentifier identifier) {
+        this.privateFunctions.add(identifier);
+    }
+
+    public Set<FunctionIdentifier> getVisibleFunctionIdentifiers() {
+        Set<FunctionIdentifier> identifiers =
+                this.parent == null ? new LinkedHashSet<>() : this.parent.getVisibleFunctionIdentifiers();
+        identifiers.addAll(this.staticallyKnownFunctionSignatures.keySet());
+        return identifiers;
+    }
+
+    private static final Map<String, String> defaultBindings;
+
+    private DecimalFormatDefinition defaultDecimalFormat;
+    private boolean defaultDecimalFormatDeclared;
+    private Map<Name, DecimalFormatDefinition> decimalFormats;
+
+    @Setter
+    @Getter
+    private int currentMutabilityLevel;
+
+    static {
+        defaultBindings = new HashMap<>();
+        defaultBindings.put("local", Name.LOCAL_NS);
+        defaultBindings.put("fn", Name.FN_NS);
+        defaultBindings.put("math", Name.MATH_NS);
+        defaultBindings.put("map", Name.MAP_NS);
+        defaultBindings.put("array", Name.ARRAY_NS);
+        defaultBindings.put("xs", Name.XS_NS);
+        defaultBindings.put("xsi", Name.XSI_NS);
+        defaultBindings.put("xml", Name.XML_NS);
+        defaultBindings.put("jn", Name.JN_NS);
+        defaultBindings.put("js", Name.JS_NS);
+        defaultBindings.put("err", Name.ERROR_NS);
+        defaultBindings.put("an", Name.JSONIQ_ANNOTATIONS_NS);
+    }
+
+    private RumbleConfiguration configuration;
+
+    public StaticContext(URI staticBaseURI, RumbleConfiguration configuration) {
         this.parent = null;
+        this.staticBaseURI = staticBaseURI;
+        this.staticBaseUriString = staticBaseURI == null ? null : staticBaseURI.toString();
+        this.queryLanguage = configuration.semantics().queryLanguage();
+        this.configuration = configuration;
         this.inScopeVariables = new HashMap<>();
+        this.userDefinedFunctionExecutionModes = null;
+        this.emptySequenceOrderLeast = true;
+        this.boundarySpacePreserve = false;
+        this.copyNamespacesPreserve = true;
+        this.copyNamespacesInherit = true;
+        this.contextItemStaticType = null;
+        this.staticallyKnownFunctionSignatures = new HashMap<>();
+        this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.currentMutabilityLevel = 0;
+        SerializationParameters configuredSerializationParameters =
+                configuration.output().serializationParameters();
+        this.serializationParameters = configuredSerializationParameters == null
+                ? SerializationParameters.defaults(this.queryLanguage)
+                : SerializationParameters.copy(configuredSerializationParameters);
+        this.defaultDecimalFormat = DecimalFormatDefinition.defaultInstance();
+        this.decimalFormats = new HashMap<>();
+        this.isQuerySideEffecting = false;
+        initializeRootCollations();
     }
 
     public StaticContext(StaticContext parent) {
         this.parent = parent;
+        this.queryLanguage = null;
         this.inScopeVariables = new HashMap<>();
+        this.userDefinedFunctionExecutionModes = null;
+        this.contextItemStaticType = null;
+        this.staticallyKnownFunctionSignatures = new HashMap<>();
+        this.configuration = null;
+        this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = parent.currentMutabilityLevel;
+        this.serializationParameters = null;
+        this.defaultDecimalFormat = null;
+        this.decimalFormats = null;
+        this.isQuerySideEffecting = false;
+        this.staticallyKnownCollations = null;
+        this.defaultCollation = null;
     }
 
-    public StaticContext getParent() {
-        return this.parent;
+    private void initializeRootCollations() {
+        this.staticallyKnownCollations = CollationCatalogue.defaultStaticallyKnownCollations();
+        this.defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
     }
 
-    public boolean isInScope(String varName) {
+    private void ensureRootCollationsInitialized() {
+        if (this.parent != null) {
+            this.parent.ensureRootCollationsInitialized();
+            return;
+        }
+        if (this.staticallyKnownCollations == null) {
+            initializeRootCollations();
+        } else if (this.defaultCollation == null) {
+            this.defaultCollation = CollationCatalogue.CODEPOINT_COLLATION;
+        }
+    }
+
+    public RumbleConfiguration getRumbleConfiguration() {
+        if (this.configuration != null) {
+            return this.configuration;
+        }
+        if (this.parent != null) {
+            return this.parent.getRumbleConfiguration();
+        }
+        throw new OurBadException("Configuration not set.");
+    }
+
+    public LanguageVersion getQueryLanguage() {
+        if (this.queryLanguage != null) {
+            return this.queryLanguage;
+        }
+        if (this.parent != null) {
+            return this.parent.getQueryLanguage();
+        }
+        throw new OurBadException("Query language not set.");
+    }
+
+    public URI getStaticBaseURI() {
+        if (this.staticBaseURI != null) {
+            return this.staticBaseURI;
+        }
+        if (this.parent != null) {
+            return this.parent.getStaticBaseURI();
+        }
+        throw new OurBadException("Static base URI not set.");
+    }
+
+    public String getStaticBaseUriString() {
+        if (this.staticBaseUriString != null) {
+            return this.staticBaseUriString;
+        }
+        if (this.parent != null) {
+            return this.parent.getStaticBaseUriString();
+        }
+        throw new OurBadException("Static base URI not set.");
+    }
+
+    public void setStaticBaseUri(URI staticBaseURI) {
+        this.staticBaseURI = staticBaseURI;
+        this.staticBaseUriString = staticBaseURI == null ? null : staticBaseURI.toString();
+    }
+
+    public void setStaticBaseUri(URI staticBaseURI, String staticBaseUriString) {
+        this.staticBaseURI = staticBaseURI;
+        this.staticBaseUriString = staticBaseUriString;
+    }
+
+    public boolean isInScope(Name varName) {
         boolean found = false;
         if (this.inScopeVariables.containsKey(varName)) {
             return true;
@@ -94,7 +258,7 @@ public class StaticContext {
         return found;
     }
 
-    private InScopeVariable getInScopeVariable(String varName) {
+    private InScopeVariable getInScopeVariable(Name varName) {
         if (this.inScopeVariables.containsKey(varName)) {
             return this.inScopeVariables.get(varName);
         } else {
@@ -105,40 +269,523 @@ public class StaticContext {
                 }
                 ancestor = ancestor.parent;
             }
-            throw new SemanticException("Variable " + varName + " not in scope", null);
+            throw new SemanticException("Variable " + varName + " not in scope", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
-    public SequenceType getVariableSequenceType(String varName) {
+    public FunctionSignature getFunctionSignature(FunctionIdentifier identifier) {
+        if (this.staticallyKnownFunctionSignatures.containsKey(identifier)) {
+            return this.staticallyKnownFunctionSignatures.get(identifier);
+        } else {
+            StaticContext ancestor = this.parent;
+            while (ancestor != null) {
+                if (ancestor.staticallyKnownFunctionSignatures.containsKey(identifier)) {
+                    return ancestor.staticallyKnownFunctionSignatures.get(identifier);
+                }
+                ancestor = ancestor.parent;
+            }
+            throw new UnknownFunctionCallException(
+                    identifier.getName(), identifier.getArity(), ExceptionMetadata.EMPTY_METADATA);
+        }
+    }
+
+    // replace the sequence type of an existing InScopeVariable, throws an error if the variable does not exists
+    public void replaceVariableSequenceType(Name varName, SequenceType newSequenceType) {
+        InScopeVariable variable = getInScopeVariable(varName);
+        this.inScopeVariables.replace(
+                varName,
+                new InScopeVariable(
+                        varName,
+                        newSequenceType,
+                        variable.getMetadata(),
+                        variable.getStorageMode(),
+                        variable.isAssignable()));
+    }
+
+    public SequenceType getVariableSequenceType(Name varName) {
         return getInScopeVariable(varName).getSequenceType();
     }
 
-    public ExceptionMetadata getVariableMetadata(String varName) {
-        return getInScopeVariable(varName).getMetadata();
+    public ExecutionMode getVariableStorageMode(Name varName) {
+        return getInScopeVariable(varName).getStorageMode();
     }
 
-    public ExecutionMode getVariableStorageMode(String varName) {
-        return getInScopeVariable(varName).storageMode;
+    public void setVariableStorageMode(Name varName, ExecutionMode mode) {
+        getInScopeVariable(varName).setStorageMode(mode);
     }
 
-    public void addVariable(
-            String varName,
-            SequenceType type,
-            ExceptionMetadata metadata,
-            ExecutionMode storageMode
-    ) {
-        this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
+    public void addVariable(Name varName, SequenceType type, ExceptionMetadata metadata) {
+        this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET));
     }
 
-    protected Map<String, InScopeVariable> getInScopeVariables() {
-        return this.inScopeVariables;
+    public void addVariable(Name varName, SequenceType type, ExceptionMetadata metadata, boolean isAssignable) {
+        this.inScopeVariables.put(
+                varName, new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET, isAssignable));
+    }
+
+    public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
+        this.staticallyKnownFunctionSignatures.put(identifier, signature);
     }
 
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Static context with variables: ");
-        this.inScopeVariables.keySet().forEach(a -> stringBuilder.append(a));
+        stringBuilder.append("Static context with variables:\n");
+        for (Entry<Name, InScopeVariable> entry : this.inScopeVariables.entrySet()) {
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append(" as " + entry.getValue().getSequenceType());
+            stringBuilder.append(" (namespace " + entry.getKey().getNamespace() + ")");
+            stringBuilder.append(" | " + entry.getValue().getStorageMode());
+            if (entry.getValue().isAssignable()) {
+                stringBuilder.append(" | assignable");
+            } else {
+                stringBuilder.append(" | not assignable");
+            }
+            stringBuilder.append("\n");
+        }
+        stringBuilder.append("Static context with user-defined functions:\n");
+        for (Entry<FunctionIdentifier, FunctionSignature> entry : this.staticallyKnownFunctionSignatures.entrySet()) {
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append(" as " + entry.getValue());
+            stringBuilder.append(" (namespace " + entry.getKey().getName().getNamespace() + ")");
+            stringBuilder.append("\n");
+        }
+        if (this.inScopeSchemaTypes != null) {
+            stringBuilder.append("Static context with user-defined types:\n");
+            for (ItemType itemType : this.inScopeSchemaTypes.getInScopeSchemaTypes()) {
+                stringBuilder.append(itemType.getName());
+                stringBuilder.append(itemType.isResolved() ? " (resolved)" : " (unresolved)");
+                stringBuilder.append("\n");
+            }
+            stringBuilder.append("\n");
+        }
+        if (this.userDefinedFunctionExecutionModes != null) {
+            stringBuilder.append(this.userDefinedFunctionExecutionModes.toString());
+        }
+        if (this.parent != null) {
+            stringBuilder.append("\nParent:");
+            stringBuilder.append(this.parent.toString());
+        }
         return stringBuilder.toString();
+    }
+
+    public boolean hasVariableInScopeOnly(Name variableName) {
+        return this.inScopeVariables.containsKey(variableName);
+    }
+
+    /** Namespace declarations from lexically enclosing direct constructors, excluding prolog bindings. */
+    public Map<String, String> getConstructorNamespaceBindings() {
+        if (this.constructorNamespaceBindings != null) return this.constructorNamespaceBindings;
+        return this.parent == null ? Map.of() : this.parent.getConstructorNamespaceBindings();
+    }
+
+    public void setConstructorNamespaceBindings(Map<String, String> bindings) {
+        this.constructorNamespaceBindings = Map.copyOf(bindings);
+    }
+
+    public boolean bindNamespace(String prefix, String namespace) {
+        if (this.staticallyKnownNamespaces == null) {
+            this.staticallyKnownNamespaces = new HashMap<>();
+        }
+        if (canBindNamespace(prefix)) {
+            this.staticallyKnownNamespaces.put(prefix, namespace);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Explicitly removes a namespace binding in this context, shadowing any inherited or predeclared binding.
+     */
+    public boolean unbindNamespace(String prefix) {
+        if (this.staticallyKnownNamespaces == null) {
+            this.staticallyKnownNamespaces = new HashMap<>();
+        }
+        if (!canBindNamespace(prefix)) {
+            return false;
+        }
+        this.staticallyKnownNamespaces.put(prefix, null);
+        return true;
+    }
+
+    private boolean canBindNamespace(String prefix) {
+        if (!this.staticallyKnownNamespaces.containsKey(prefix)) {
+            return true;
+        }
+        return defaultBindings.containsKey(prefix)
+                && defaultBindings.get(prefix).equals(this.staticallyKnownNamespaces.get(prefix));
+    }
+
+    public String resolveNamespace(String prefix) {
+        if (this.staticallyKnownNamespaces != null && this.staticallyKnownNamespaces.containsKey(prefix)) {
+            return this.staticallyKnownNamespaces.get(prefix);
+        }
+        if (this.parent != null) {
+            return this.parent.resolveNamespace(prefix);
+        }
+        return null;
+    }
+
+    public Map<String, String> getInScopeNamespaceBindings() {
+        Map<String, String> bindings = new HashMap<>();
+        if (this.parent != null) {
+            bindings.putAll(this.parent.getInScopeNamespaceBindings());
+        }
+        if (this.staticallyKnownNamespaces != null) {
+            bindings.putAll(this.staticallyKnownNamespaces);
+        }
+        return bindings;
+    }
+
+    /**
+     * Returns the default serialization parameters stored in the static context.
+     *
+     * Spec references:
+     *
+     * <ul>
+     * <li>XQuery 3.1 Static Context Components (link:
+     * https://www.w3.org/TR/xquery-31/#id-xq-static-context-components)</li>
+     * <li>Serialization 3.1 — Serialization Parameters (link:
+     * https://www.w3.org/TR/xslt-xquery-serialization-31/#serparam)</li>
+     * </ul>
+     */
+    public SerializationParameters getSerializationParameters() {
+        if (this.serializationParameters != null) {
+            return this.serializationParameters;
+        }
+        // Backward compatibility: if absent locally (e.g., contexts deserialized from older versions),
+        // delegate to parent to preserve inheritance instead of creating a shadow copy here.
+        if (this.parent != null) {
+            return this.parent.getSerializationParameters();
+        }
+        // Root context missing the field (e.g., deserialized from an older version): populate defaults once.
+        this.serializationParameters = SerializationParameters.defaults();
+        return this.serializationParameters;
+    }
+
+    public void overrideSerializationParameter(String name, String value, ExceptionMetadata metadata) {
+        // ensure we have a local copy of the serialization parameters
+        if (this.serializationParameters == null) {
+            this.serializationParameters = SerializationParameters.copy(this.getSerializationParameters());
+        }
+        if ("parameter-document".equals(name)) {
+            SerializationParameterUtils.applyParameterDocument(
+                    this.serializationParameters, this, value, getExplicitSerializationParameterNames(), metadata);
+            return;
+        }
+        if ("cdata-section-elements".equals(name) || "suppress-indentation".equals(name)) {
+            value = expandSerializationQNames(value);
+        }
+        getExplicitSerializationParameterNames().add(name);
+        // update the local copy of theserialization parameters with the provided parameter name and value
+        SerializationParameterUtils.applyConfigOption(this.serializationParameters, name, value);
+    }
+
+    private Set<String> getExplicitSerializationParameterNames() {
+        if (this.explicitSerializationParameterNames == null) {
+            this.explicitSerializationParameterNames = new LinkedHashSet<>();
+        }
+        return this.explicitSerializationParameterNames;
+    }
+
+    private String expandSerializationQNames(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return value;
+        }
+        StringBuilder sb = new StringBuilder();
+        String separator = "";
+        for (String token : value.trim().split("[,\\s]+")) {
+            if (token.isEmpty()) {
+                continue;
+            }
+            sb.append(separator).append(expandSerializationQName(token));
+            separator = " ";
+        }
+        return sb.toString();
+    }
+
+    private String expandSerializationQName(String lexicalQName) {
+        if (lexicalQName.startsWith("Q{")) {
+            return lexicalQName;
+        }
+        int colon = lexicalQName.indexOf(':');
+        if (colon < 0) {
+            String namespace = getInScopeNamespaceBindings().get("");
+            if (namespace == null || namespace.isEmpty()) {
+                return lexicalQName;
+            }
+            return "Q{" + namespace + "}" + lexicalQName;
+        }
+        String prefix = lexicalQName.substring(0, colon);
+        String localName = lexicalQName.substring(colon + 1);
+        String namespace = getInScopeNamespaceBindings().get(prefix);
+        if (namespace == null) {
+            return lexicalQName;
+        }
+        return "Q{" + namespace + "}" + localName;
+    }
+
+    public void importModuleContext(StaticContext moduleContext) {
+        for (Name name : moduleContext.inScopeVariables.keySet()) {
+            InScopeVariable variable = moduleContext.inScopeVariables.get(name);
+            if (!moduleContext.privateVariables.contains(name)) {
+                this.inScopeVariables.put(name, variable);
+            }
+        }
+        for (FunctionIdentifier fi : moduleContext.staticallyKnownFunctionSignatures.keySet()) {
+            FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
+            if (!moduleContext.privateFunctions.contains(fi)) {
+                this.staticallyKnownFunctionSignatures.put(fi, signature);
+            }
+        }
+    }
+
+    public void setUserDefinedFunctionsExecutionModes(
+            UserDefinedFunctionExecutionModes staticallyKnownFunctionSignatures) {
+        if (this.parent != null) {
+            throw new OurBadException("Statically known function signatures can only be stored in the module context.");
+        }
+        this.userDefinedFunctionExecutionModes = staticallyKnownFunctionSignatures;
+    }
+
+    public UserDefinedFunctionExecutionModes getUserDefinedFunctionsExecutionModes() {
+        if (this.userDefinedFunctionExecutionModes != null) {
+            return this.userDefinedFunctionExecutionModes;
+        }
+        if (this.parent != null) {
+            return this.parent.getUserDefinedFunctionsExecutionModes();
+        }
+        throw new OurBadException("Statically known function signatures are not set up properly in static context.");
+    }
+
+    public void setEmptySequenceOrderLeast(boolean emptySequenceOrderLeast) {
+        if (this.parent != null) {
+            throw new OurBadException("Empty sequence ordering can only be set in the root static context.");
+        }
+        this.emptySequenceOrderLeast = emptySequenceOrderLeast;
+    }
+
+    public void setBoundarySpacePreserve(boolean boundarySpacePreserve) {
+        if (this.parent != null) {
+            throw new OurBadException("Boundary-space policy can only be set in the root static context.");
+        }
+        this.boundarySpacePreserve = boundarySpacePreserve;
+    }
+
+    public void setConstructionPreserve(boolean preserve) {
+        if (this.parent != null) {
+            throw new OurBadException("Construction mode can only be set in the root static context.");
+        }
+        this.constructionPreserve = preserve;
+    }
+
+    public boolean isConstructionPreserve() {
+        return this.parent == null ? this.constructionPreserve : this.parent.isConstructionPreserve();
+    }
+
+    public void setCopyNamespacesMode(boolean preserve, boolean inherit) {
+        if (this.parent != null) {
+            throw new OurBadException("Copy-namespaces mode can only be set in the root static context.");
+        }
+        this.copyNamespacesPreserve = preserve;
+        this.copyNamespacesInherit = inherit;
+    }
+
+    /**
+     * Default function namespace URI for unprefixed function names (XQuery prolog). Root/module context only.
+     */
+    public void setDefaultFunctionNamespaceUri(String uri) {
+        if (this.parent != null) {
+            throw new OurBadException("Default function namespace can only be set in the root static context.");
+        }
+        this.defaultFunctionNamespaceUri = uri;
+    }
+
+    /**
+     * @return the declared default function namespace URI, or null if not set (use JSONiq default function NS)
+     */
+    public String getDefaultFunctionNamespaceUri() {
+        if (this.parent != null) {
+            return this.parent.getDefaultFunctionNamespaceUri();
+        }
+        return this.defaultFunctionNamespaceUri;
+    }
+
+    public boolean isEmptySequenceOrderLeast() {
+        if (this.parent != null) {
+            return this.parent.isEmptySequenceOrderLeast();
+        }
+        return this.emptySequenceOrderLeast;
+    }
+
+    public boolean isBoundarySpacePreserve() {
+        if (this.parent != null) {
+            return this.parent.isBoundarySpacePreserve();
+        }
+        return this.boundarySpacePreserve;
+    }
+
+    public boolean isCopyNamespacesPreserve() {
+        if (this.parent != null) {
+            return this.parent.isCopyNamespacesPreserve();
+        }
+        return this.copyNamespacesPreserve;
+    }
+
+    public boolean isCopyNamespacesInherit() {
+        if (this.parent != null) {
+            return this.parent.isCopyNamespacesInherit();
+        }
+        return this.copyNamespacesInherit;
+    }
+
+    public boolean isStaticallyKnownCollation(String uri) {
+        return getStaticallyKnownCollations().contains(uri)
+                || CollationCatalogue.isDefaultStaticallyKnownCollation(uri);
+    }
+
+    public Set<String> getStaticallyKnownCollations() {
+        if (this.parent != null) {
+            return this.parent.getStaticallyKnownCollations();
+        }
+        ensureRootCollationsInitialized();
+        return Collections.unmodifiableSet(this.staticallyKnownCollations);
+    }
+
+    public void setDefaultCollation(String uri) {
+        if (this.parent != null) {
+            throw new OurBadException("Default collation can only be set in the root static context.");
+        }
+        ensureRootCollationsInitialized();
+        if (!isStaticallyKnownCollation(uri)) {
+            throw new OurBadException("Default collation must be statically known.");
+        }
+        this.defaultCollation = uri;
+    }
+
+    public String getDefaultCollation() {
+        if (this.parent != null) {
+            return this.parent.getDefaultCollation();
+        }
+        ensureRootCollationsInitialized();
+        return this.defaultCollation;
+    }
+
+    // replace all inScopeVariable in this context and all parents until [stopContext] with name not in [varToExclude]
+    // with same variable with sequence type arity changed from 1 to + and form ? to *
+    // used by groupBy clause
+    public void incrementArities(StaticContext stopContext, Set<Name> varToExclude) {
+        this.inScopeVariables.replaceAll((key, value) -> varToExclude.contains(key)
+                ? value
+                : new InScopeVariable(
+                        value.getName(),
+                        incrementArity(value.getSequenceType()),
+                        value.getMetadata(),
+                        value.getStorageMode()));
+        StaticContext current = this.parent;
+        while (current != null && current != stopContext) {
+            for (Map.Entry<Name, InScopeVariable> entry : current.inScopeVariables.entrySet()) {
+                if (!this.inScopeVariables.containsKey(entry.getKey())) {
+                    this.addVariable(
+                            entry.getKey(),
+                            varToExclude.contains(entry.getKey())
+                                    ? entry.getValue().getSequenceType()
+                                    : incrementArity(entry.getValue().getSequenceType()),
+                            entry.getValue().getMetadata(),
+                            entry.getValue().isAssignable());
+                }
+            }
+            current = current.parent;
+        }
+    }
+
+    private SequenceType incrementArity(SequenceType sequenceType) {
+        return sequenceType == null ? SequenceType.createSequenceType("item*") : sequenceType.incrementArity();
+    }
+
+    public void bindDefaultNamespaces() {
+        for (String prefix : defaultBindings.keySet()) {
+            bindNamespace(prefix, defaultBindings.get(prefix));
+        }
+    }
+
+    /**
+     * Built-in namespace bindings (fn, xs, map, ...) used when resolving QNames without a full static context.
+     */
+    public static String getBuiltinNamespaceBinding(String prefix) {
+        return defaultBindings.get(prefix);
+    }
+
+    public InScopeSchemaTypes getInScopeSchemaTypes() {
+        if (this.inScopeSchemaTypes != null) {
+            return this.inScopeSchemaTypes;
+        }
+        if (this.parent != null) {
+            return this.parent.getInScopeSchemaTypes();
+        }
+        throw new OurBadException("In-scope schema types are not set up properly in static context.");
+    }
+
+    public boolean getIsAssignable(Name name) {
+        return this.getInScopeVariable(name).isAssignable();
+    }
+
+    public void setDefaultDecimalFormat(DecimalFormatDefinition decimalFormat) {
+        setDefaultDecimalFormat(decimalFormat, ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    public void setDefaultDecimalFormat(DecimalFormatDefinition decimalFormat, ExceptionMetadata metadata) {
+        if (this.parent != null) {
+            this.parent.setDefaultDecimalFormat(decimalFormat, metadata);
+            return;
+        }
+        if (this.defaultDecimalFormatDeclared) {
+            throw new DuplicateDecimalFormatDeclarationException("Default decimal format already declared.", metadata);
+        }
+        this.defaultDecimalFormatDeclared = true;
+        this.defaultDecimalFormat = decimalFormat;
+    }
+
+    public void addDecimalFormat(Name name, DecimalFormatDefinition decimalFormat, ExceptionMetadata metadata) {
+        if (this.parent != null) {
+            this.parent.addDecimalFormat(name, decimalFormat, metadata);
+            return;
+        }
+        if (this.decimalFormats.containsKey(name)) {
+            throw new DuplicateDecimalFormatDeclarationException("Decimal format already declared: " + name, metadata);
+        }
+        this.decimalFormats.put(name, decimalFormat);
+    }
+
+    public DecimalFormatDefinition getDefaultDecimalFormat() {
+        if (this.parent != null) {
+            return this.parent.getDefaultDecimalFormat();
+        }
+        return this.defaultDecimalFormat;
+    }
+
+    public Map<Name, DecimalFormatDefinition> getDecimalFormats() {
+        if (this.parent != null) {
+            return this.parent.getDecimalFormats();
+        }
+        if (this.decimalFormats == null) {
+            return Collections.emptyMap();
+        }
+        return Collections.unmodifiableMap(this.decimalFormats);
+    }
+
+    public boolean isQuerySideEffecting() {
+        if (this.parent != null) {
+            return this.parent.isQuerySideEffecting();
+        }
+        return this.isQuerySideEffecting;
+    }
+
+    public void setIsQuerySideEffecting(boolean isQuerySideEffecting) {
+        if (this.parent != null) {
+            this.parent.setIsQuerySideEffecting(isQuerySideEffecting);
+            return;
+        }
+        this.isQuerySideEffecting = isQuerySideEffecting;
     }
 }

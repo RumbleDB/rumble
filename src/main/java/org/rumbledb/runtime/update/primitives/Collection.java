@@ -1,0 +1,129 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.update.primitives;
+
+import java.io.Serial;
+import java.io.Serializable;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.catalyst.analysis.NoSuchTableException;
+
+import lombok.Getter;
+
+@Getter
+public class Collection implements Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+    /**
+     * Storage mode of the collection
+     */
+    private final Mode mode;
+    /**
+     * The logical name of the collection
+     */
+    private String logicalName;
+    /**
+     * The physical name of the collection
+     */
+    private String physicalName;
+
+    /**
+     * Constructor for Collection using logical path.
+     *
+     * @param mode The storage mode of the collection (HIVE, DELTA, etc.)
+     * @param collectionPath The logical path of the collection
+     */
+    public Collection(Mode mode, String collectionPath) {
+        this.mode = mode;
+        switch (mode) {
+            case HIVE:
+                this.logicalName = collectionPath;
+                this.physicalName = collectionPath;
+                break;
+            case DELTA:
+                this.logicalName = collectionPath;
+                this.physicalName = "delta.`" + collectionPath + "`";
+                break;
+            case ICEBERG:
+                this.logicalName = collectionPath;
+                this.physicalName = collectionPath;
+                break;
+            case HUDI:
+                this.logicalName = collectionPath;
+                this.physicalName = collectionPath;
+                break;
+        }
+    }
+
+    /**
+     * Constructor for Collection using physical path.
+     *
+     * @param collectionPath The physical path of the collection
+     */
+    public Collection(String collectionPath) {
+        if (collectionPath.startsWith("delta.`") && collectionPath.endsWith("`")) {
+            // case Delta file
+            this.mode = Mode.DELTA;
+            this.logicalName = collectionPath.substring(7, collectionPath.length() - 1);
+            this.physicalName = collectionPath;
+        } else if (collectionPath.indexOf('.') != collectionPath.lastIndexOf('.')) {
+            // case Iceberg table - we assume Iceberg tables are always qualified with at
+            // least a catalog and a namespace, so they contain at least two dots.
+            this.mode = Mode.ICEBERG;
+            this.logicalName = collectionPath;
+            this.physicalName = collectionPath;
+        } else {
+            // case Hive table
+            this.mode = Mode.HIVE;
+            this.logicalName = collectionPath;
+            this.physicalName = collectionPath;
+        }
+    }
+
+    /**
+     * Inserts the given contents into the collection according to its mode.
+     * This method does not handle ordering of the inserted contents.
+     *
+     * @param contents The dataset to insert into the collection
+     */
+    public void insertUnordered(Dataset<Row> contents) {
+        try {
+            switch (this.mode) {
+                case HIVE:
+                    contents.write().mode("append").insertInto(this.logicalName);
+                    break;
+                case DELTA:
+                    contents.write()
+                            .format("delta")
+                            .mode("append")
+                            .option("mergeSchema", "true")
+                            .save(this.logicalName);
+                    break;
+                case ICEBERG:
+                    contents.writeTo(this.logicalName)
+                            .option("mergeSchema", "true")
+                            .append();
+                    break;
+                default:
+                    throw new UnsupportedOperationException(
+                            "Insert Unordered: Unsupported collection mode: " + this.mode);
+            }
+        } catch (NoSuchTableException e) {
+            throw new RuntimeException("Target collection not found: " + this.logicalName, e);
+        }
+    }
+}

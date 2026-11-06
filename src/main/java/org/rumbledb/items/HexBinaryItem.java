@@ -1,42 +1,55 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.Hex;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.types.ItemType;
-import java.util.Arrays;
+import java.io.Serial;
 import java.util.regex.Pattern;
 
-public class HexBinaryItem extends AtomicItem {
+import org.apache.commons.codec.DecoderException;
+import org.apache.commons.codec.binary.Hex;
 
+import lombok.Getter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+
+public class HexBinaryItem extends AbstractAtomicItem {
+
+    @Serial
     private static final long serialVersionUID = 1L;
+
+    @Getter
     private byte[] value;
+
     private String stringValue;
 
-    private final static String hexDigit = "[\\da-fA-F]";
-    private final static String hexOctet = "(" + hexDigit + hexDigit + ")";
-    private final static String hexBinary = hexOctet + "*";
-    private final static Pattern hexBinaryPattern = Pattern.compile(hexBinary);
-
-    public HexBinaryItem() {
-        super();
-    }
+    private static final String hexDigit = "[\\da-fA-F]";
+    private static final String hexOctet = "(" + hexDigit + hexDigit + ")";
+    private static final String hexBinary = hexOctet + "*";
+    private static final Pattern hexBinaryPattern = Pattern.compile(hexBinary);
 
     HexBinaryItem(String stringValue) {
         this.stringValue = stringValue;
         this.value = parseHexBinaryString(stringValue);
     }
 
-    public byte[] getValue() {
-        return this.value;
+    @Override
+    public Item copy(boolean mutable) {
+        return new HexBinaryItem(this.stringValue);
     }
 
     @Override
@@ -45,8 +58,13 @@ public class HexBinaryItem extends AtomicItem {
     }
 
     @Override
+    public Object getVariantValue() {
+        return getBinaryValue();
+    }
+
+    @Override
     public String getStringValue() {
-        return this.stringValue;
+        return this.stringValue.toUpperCase();
     }
 
     private static boolean checkInvalidHexBinaryFormat(String hexBinaryString) {
@@ -65,13 +83,13 @@ public class HexBinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.hexBinaryItem) || super.isTypeOf(type);
+    public boolean getEffectiveBooleanValue() {
+        return false;
     }
 
     @Override
-    public boolean getEffectiveBooleanValue() {
-        return false;
+    public boolean isBinary() {
+        return true;
     }
 
     @Override
@@ -80,123 +98,12 @@ public class HexBinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.hexBinaryItem)
-            ||
-            itemType.equals(ItemType.base64BinaryItem)
-            ||
-            itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.hexBinaryItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.base64BinaryItem)) {
-            return ItemFactory.getInstance().createBase64BinaryItem(Base64.encodeBase64String(this.value));
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public boolean equals(Object otherObject) {
-        if (!(otherObject instanceof Item)) {
-            return false;
-        }
-        Item otherItem = (Item) otherObject;
-        if (otherItem.isHexBinary()) {
-            return Arrays.equals(this.getBinaryValue(), otherItem.getBinaryValue());
-        }
-        return false;
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isHexBinary()) {
-            return this.serializeValue().compareTo(Arrays.toString(other.getBinaryValue()));
-        }
-        throw new IteratorFlowException(
-                "Cannot compare item of type "
-                    + this.getDynamicType().toString()
-                    +
-                    " with item of type "
-                    + other.getDynamicType().toString()
-        );
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isHexBinary() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "\""
-                        + this.getDynamicType().toString()
-                        + "\": invalid type: can not compare for equality to type \""
-                        + other.getDynamicType().toString()
-                        + "\"",
-                    metadata
-            );
-        }
-        if (other.isNull()) {
-            return super.compareItem(other, comparisonOperator, metadata);
-        }
-        switch (comparisonOperator) {
-            case VC_EQ:
-            case GC_EQ:
-            case VC_NE:
-            case GC_NE:
-                return super.compareItem(other, comparisonOperator, metadata);
-            default:
-                throw new UnexpectedTypeException(
-                        "\""
-                            + this.getDynamicType().toString()
-                            + "\": invalid type: can not compare for equality to type \""
-                            + other.getDynamicType().toString()
-                            + "\"",
-                        metadata
-                );
-        }
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(this.getValue());
-    }
-
-    @Override
-    public String serialize() {
-        return this.getStringValue().toUpperCase();
-    }
-
-    private String serializeValue() {
-        return Arrays.toString(this.getValue());
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeInt(this.getValue().length);
-        output.writeBytes(this.getValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        int bytesLength = input.readInt();
-        this.value = input.readBytes(bytesLength);
-        this.stringValue = Hex.encodeHexString(this.value);
-    }
-
-    @Override
     public ItemType getDynamicType() {
-        return ItemType.hexBinaryItem;
+        return BuiltinTypesCatalogue.hexBinaryItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
     }
 }

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,141 +11,185 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.sequences.general;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
+
+import lombok.NonNull;
+import scala.Tuple2;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.IntegerItem;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
-import java.util.List;
+public class InsertBeforeFunctionIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
-public class InsertBeforeFunctionIterator extends LocalFunctionCallIterator {
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator insertIterator;
-    private Item nextResult;
-    private int insertPosition; // position to start inserting
-    private int currentPosition; // current position
-    private boolean insertingNow; // check if currently iterating over insertIterator
-    private boolean insertingCompleted;
 
-    public InsertBeforeFunctionIterator(
-            List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(parameters, executionMode, iteratorMetadata);
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan positionIterator;
+    private final ItemRuntimePlan insertIterator;
+
+    public InsertBeforeFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
+        super(parameters, staticContext);
+        this.sequenceIterator = this.getChild(0);
+        this.positionIterator = this.getChild(1);
+        this.insertIterator = this.getChild(2);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext()) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "insert-before function", getMetadata());
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new EvaluationCursor(
+                this.sequenceIterator, this.positionIterator, this.insertIterator, context, getMetadata());
     }
-
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.currentPosition = 1; // initialize index as the first item
-        this.insertingNow = false;
-        this.insertingCompleted = false;
-
-        RuntimeIterator positionIterator = this.children.get(1);
-        positionIterator.open(context);
-        if (!positionIterator.hasNext()) {
-            throw new UnexpectedTypeException(
-                    "Invalid args. insert-before can't be performed with empty sequence as the position",
-                    getMetadata()
-            );
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        long position = this.positionIterator.materializeFirstOrNull(context).getLongValue();
+        long insertIndex = position <= 1 ? 0 : position - 1;
+        JavaPairRDD<Item, Long> zippedRDD =
+                this.sequenceIterator.getRDD(context).zipWithIndex();
+        if (this.insertIterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
+            JavaRDD<Item> beforeRDD =
+                    zippedRDD.filter(item -> item._2() < insertIndex).map(item -> item._1());
+            JavaRDD<Item> afterRDD =
+                    zippedRDD.filter(item -> item._2() >= insertIndex).map(item -> item._1());
+            return beforeRDD.union(insertsRDD).union(afterRDD);
         }
-        Item positionItem = positionIterator.next();
-        if (positionItem.isArray()) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. insert-before can't be performed with an array parameter as the position",
-                    getMetadata()
-            );
-        } else if (positionItem.isObject()) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. insert-before can't be performed with an object parameter as the position",
-                    getMetadata()
-            );
-        } else if (!(positionItem.isInteger())) {
-            throw new UnexpectedTypeException(
-                    "Invalid args. Position parameter should be an integer",
-                    getMetadata()
-            );
-        }
-        this.insertPosition = ((IntegerItem) positionItem).getIntegerValue();
-        positionIterator.close();
 
-        this.sequenceIterator = this.children.get(0);
-        this.insertIterator = this.children.get(2);
-
-        this.sequenceIterator.open(context);
-        this.insertIterator.open(context);
-
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
-        // don't check for insertion triggers once insertion is completed
-        if (this.insertingCompleted == false) {
-            if (!this.insertingNow) {
-                if (this.insertPosition <= this.currentPosition) { // start inserting if condition is met
-                    if (this.insertIterator.hasNext()) {
-                        this.insertingNow = true;
-                        this.nextResult = this.insertIterator.next();
-                    } else {
-                        this.insertingNow = false;
-                        this.insertingCompleted = true;
+        List<Item> inserts = this.insertIterator.materialize(context);
+        int numPartitions = zippedRDD.partitions().size();
+        // Keep the prepend sentinel separate from the first element's index.
+        long localInsertIndex = position <= 0 ? -1 : position - 1;
+        return zippedRDD.mapPartitionsWithIndex(
+                (partitionIndex, iterator) -> {
+                    List<Item> list = new ArrayList<>();
+                    long lastIndex = -1;
+                    if (partitionIndex == 0 && localInsertIndex < 0) {
+                        list.addAll(inserts);
                     }
-                }
-            } else { // if inserting
-                if (this.insertIterator.hasNext()) { // return an item from insertIterator at each iteration
-                    this.nextResult = this.insertIterator.next();
-                } else {
-                    this.insertingNow = false;
-                    this.insertingCompleted = true;
-                }
-            }
+                    Tuple2<Item, Long> element;
+                    while (iterator.hasNext()) {
+                        element = iterator.next();
+                        if (element._2() == localInsertIndex) {
+                            list.addAll(inserts);
+                        }
+                        list.add(element._1());
+                        lastIndex = element._2();
+                    }
+                    if (partitionIndex == numPartitions - 1 && localInsertIndex > lastIndex) {
+                        list.addAll(inserts);
+                    }
+                    return list.iterator();
+                },
+                false);
+    }
+
+    private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
+
+        private final ItemRuntimePlan sequencePlan;
+        private final ItemRuntimePlan positionPlan;
+        private final ItemRuntimePlan insertPlan;
+        private final DynamicContext context;
+        private final ExceptionMetadata metadata;
+        private Cursor<Item> sequenceCursor;
+        private Cursor<Item> insertCursor;
+        private long insertPosition;
+        private long currentPosition;
+        private boolean insertionCompleted;
+
+        private EvaluationCursor(
+                @NonNull ItemRuntimePlan sequencePlan,
+                @NonNull ItemRuntimePlan positionPlan,
+                @NonNull ItemRuntimePlan insertPlan,
+                @NonNull DynamicContext context,
+                @NonNull ExceptionMetadata metadata) {
+            super(metadata);
+            this.sequencePlan = sequencePlan;
+            this.positionPlan = positionPlan;
+            this.insertPlan = insertPlan;
+            this.context = context;
+            this.metadata = metadata;
         }
 
-        // if not inserting, take the next element from input sequence
-        if (this.insertingNow == false) {
-            if (this.sequenceIterator.hasNext()) {
-                this.nextResult = this.sequenceIterator.next();
+        @Override
+        protected void openLocal() {
+            Item positionItem = this.positionPlan.materializeFirstOrNull(this.context);
+            this.insertPosition = positionItem.getLongValue();
+            this.currentPosition = 1;
+            this.insertionCompleted = false;
+
+            this.sequenceCursor = this.sequencePlan.getCursor(this.context);
+            this.insertCursor = this.insertPlan.getCursor(this.context);
+        }
+
+        @Override
+        protected boolean hasNextLocal() {
+            if (!this.insertionCompleted && this.insertPosition <= this.currentPosition) {
+                if (this.insertCursor.hasNext()) {
+                    return true;
+                }
+                this.insertionCompleted = true;
+            }
+
+            if (this.sequenceCursor.hasNext()) {
+                return true;
+            }
+
+            if (!this.insertionCompleted && this.insertCursor.hasNext()) {
+                return true;
+            }
+            this.insertionCompleted = true;
+            return false;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (!hasNextLocal()) {
+                throw exhausted();
+            }
+            if (!this.insertionCompleted && this.insertPosition <= this.currentPosition) {
+                return this.insertCursor.next();
+            }
+            if (this.sequenceCursor.hasNext()) {
                 this.currentPosition++;
-            } else if (this.insertIterator.hasNext()) {
-                this.nextResult = this.insertIterator.next();
+                return this.sequenceCursor.next();
+            }
+            return this.insertCursor.next();
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+            if (this.insertCursor != null) {
+                this.insertCursor.close();
+                this.insertCursor = null;
             }
         }
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.sequenceIterator.close();
-            this.insertIterator.close();
-        } else {
-            this.hasNext = true;
+        private RuntimeException exhausted() {
+            return new IteratorFlowException(
+                    IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "insert-before function", this.metadata);
         }
     }
 }

@@ -1,46 +1,45 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.datetime.components;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.functions.TemporalComponentFunctionIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.util.List;
+public class YearFromDateFunctionIterator extends TemporalComponentFunctionIterator {
 
-public class YearFromDateFunctionIterator extends LocalFunctionCallIterator {
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Item dateItem = null;
 
-    public YearFromDateFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public YearFromDateFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext, Component.YEAR);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.dateItem.getDateTimeValue().getYear());
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " year-from-date function",
-                    getMetadata()
-            );
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item dateItem = this.getChild(0).materializeFirstOrNull(context);
+        if (dateItem == null) {
+            return null;
         }
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.dateItem = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.dateItem != null;
+        return ItemFactory.getInstance().createIntItem(dateItem.getYear());
     }
 }

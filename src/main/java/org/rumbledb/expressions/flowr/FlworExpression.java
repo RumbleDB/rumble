@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,62 +11,47 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.flowr;
 
-import org.rumbledb.compiler.VisitorConfig;
+import java.util.Collections;
+import java.util.List;
+
+import lombok.Getter;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import sparksoniq.jsoniq.ExecutionMode;
 
-import java.util.Collections;
-import java.util.List;
-
+@Getter
 public class FlworExpression extends Expression {
 
     private ReturnClause returnClause;
 
-    public FlworExpression(
-            ReturnClause returnClause,
-            ExceptionMetadata metadata
-    ) {
+    public FlworExpression(ReturnClause returnClause, ExceptionMetadata metadata) {
         super(metadata);
         Clause startClause = returnClause.getFirstClause();
-        if (
-            startClause.getClauseType() != FLWOR_CLAUSES.FOR
-                &&
-                startClause.getClauseType() != FLWOR_CLAUSES.LET
-        ) {
-            throw new SemanticException("FLOWR clause must starts with a FOR or a LET\n", this.getMetadata());
+        if (!List.of(FLWOR_CLAUSES.FOR, FLWOR_CLAUSES.LET, FLWOR_CLAUSES.WINDOW)
+                .contains(startClause.getClauseType())) {
+            throw new SemanticException("FLOWR clause must starts with a FOR, LET or WINDOW\n", this.getMetadata());
         }
 
         this.returnClause = returnClause;
     }
 
-    public ReturnClause getReturnClause() {
-        return this.returnClause;
-    }
-
     @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        // overall flwor expression's execution mode is never used and remains unset
-        this.highestExecutionMode = ExecutionMode.UNSET;
-    }
-
-    @Override
-    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
-        // overall flwor expression's execution mode is stored in the return clause
-        return this.returnClause.getHighestExecutionMode(visitorConfig);
-    }
-
     public List<Node> getChildren() {
         return Collections.singletonList(this.returnClause);
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        indentIt(sb, indent);
+        this.returnClause.serializeToJSONiq(sb, 0);
+        sb.append("\n");
     }
 
     @Override
@@ -77,5 +59,3 @@ public class FlworExpression extends Expression {
         return visitor.visitFlowrExpression(this, argument);
     }
 }
-
-

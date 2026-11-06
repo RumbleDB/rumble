@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,122 +11,168 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import sparksoniq.jsoniq.ExecutionMode;
-
-import java.math.BigDecimal;
+import java.io.Serial;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SumFunctionIterator extends LocalFunctionCallIterator {
+import org.apache.spark.api.java.JavaRDD;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
+public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
+
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private Item zeroItem;
 
-    public SumFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public SumFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        this.iterator = this.children.get(0);
-        this.iterator.open(context);
-        if (!this.iterator.hasNext()) {
-            if (this.children.size() > 1) {
-                RuntimeIterator zeroIterator = this.children.get(1);
-                zeroIterator.open(this.currentDynamicContextForLocalExecution);
-                if (!zeroIterator.hasNext()) {
-                    this.hasNext = false;
-                    return;
-                } else {
-                    this.zeroItem = zeroIterator.next();
-                    if (!this.zeroItem.isAtomic()) {
-                        throw new NonAtomicKeyException(
-                                "Invalid args. Zero item has to be of an atomic type",
-                                getMetadata()
-                        );
-                    }
-                }
-            }
-        }
-        this.iterator.close();
-        this.hasNext = true;
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item zeroElement = this.getChildren().size() > 1
+                ? this.getChild(1).materializeFirstOrNull(context)
+                : ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+        return computeSum(zeroElement, this.getChild(0), context, getMetadata());
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
-
-            // if input is empty sequence and zeroItem is given
-            if (results.size() == 0 && this.zeroItem != null) {
-                return this.zeroItem;
-            }
-
-            results.forEach(r -> {
-                if (!r.isNumeric()) {
-                    throw new InvalidArgumentTypeException(
-                            "Sum expression has non numeric args "
-                                +
-                                r.serialize(),
-                            getMetadata()
-                    );
-                }
-            });
-            try {
-                // if input is empty sequence and zeroItem is not given 0 is returned
-                BigDecimal sumResult = new BigDecimal(0);
-                for (Item r : results) {
-                    BigDecimal current = r.castToDecimalValue();
-                    sumResult = sumResult.add(current);
-                }
-                return ItemFactory.getInstance().createDecimalItem(sumResult);
-
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+    public static Item computeSum(
+            Item zeroElement, ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
+        if (iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+            return computeDataFrame(zeroElement, iterator, context, metadata);
+        } else if (iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+            return computeRDD(zeroElement, iterator, context, metadata);
         } else {
-            throw new IteratorFlowException(
-                    FLOW_EXCEPTION_MESSAGE + "SUM function",
-                    getMetadata()
-            );
+            return computeLocalSum(zeroElement, iterator, context, metadata);
         }
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        if (this.children.get(0) instanceof VariableReferenceIterator) {
-            VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
-            Map<String, DynamicContext.VariableDependency> result =
-                new TreeMap<String, DynamicContext.VariableDependency>();
+    private static Item computeLocalSum(
+            Item zeroElement, ItemRuntimePlan plan, DynamicContext context, ExceptionMetadata metadata) {
+        Item result = null;
+        try (Cursor<Item> cursor = plan.getCursor(context)) {
+            while (cursor.hasNext()) {
+                result = addToSum(result, cursor.next(), metadata);
+            }
+        }
+        if (result == null) {
+            result = zeroElement;
+        }
+        return result;
+    }
+
+    static Item addToSum(Item currentSum, Item nextValue, ExceptionMetadata metadata) {
+        if (nextValue.isUntypedAtomic()) {
+            nextValue = ItemFactory.getInstance().createDoubleItem(nextValue.castToDoubleValue());
+        }
+        if (!nextValue.isNumeric() && !nextValue.isDayTimeDuration() && !nextValue.isYearMonthDuration()) {
+            throw new InvalidArgumentTypeException(
+                    "sum() requires numeric values, xs:dayTimeDuration values or xs:yearMonthDuration values; got "
+                            + nextValue.getDynamicType(),
+                    metadata);
+        }
+        // The running sum is always a converted input or an addition result, so it is never untyped.
+        if (currentSum == null) {
+            return nextValue;
+        }
+        Item result = AdditiveOperationIterator.processItem(currentSum, nextValue, false);
+        if (result == null) {
+            throw new InvalidArgumentTypeException(
+                    " \"+\": operation not possible with parameters of type \""
+                            + currentSum.getDynamicType().toString()
+                            + "\" and \""
+                            + nextValue.getDynamicType().toString()
+                            + "\"",
+                    metadata);
+        }
+        return result;
+    }
+
+    private static Item computeRDD(
+            Item zeroElement, ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
+        // Validate and convert each input even when reduce() receives only one item.
+        JavaRDD<Item> rdd = iterator.getRDD(context).map(value -> addToSum(null, value, metadata));
+        if (rdd.isEmpty()) {
+            return zeroElement;
+        }
+        return rdd.reduce((sum, value) -> addToSum(sum, value, metadata));
+    }
+
+    private static Item computeDataFrame(
+            Item zeroElement, ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
+        HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, context);
+        if (df.isEmptySequence()) {
+            return zeroElement;
+        }
+        if (!df.getItemType().isNumeric()) {
+            return computeRDD(zeroElement, iterator, context, metadata);
+        }
+        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+        HomogeneousItemDataFrame summedDF = df.evaluateSQL(
+                String.format(
+                        "SELECT SUM(`%s`) as `%s` FROM %s",
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        SparkSessionManager.nonObjectJSONiqItemColumnName,
+                        input),
+                df.getItemType());
+        return summedDF.getExactlyOneItem();
+    }
+
+    @Override
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        if (this.getChild(0) instanceof VariableReferenceIterator expr) {
+            Map<Name, DynamicContext.VariableDependency> result =
+                    new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);
             return result;
         } else {
             return super.getVariableDependencies();
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childContext = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
+        if (childContext == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!childContext.getResultingType().getItemType().isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(
+                childContext.getResultingType().getArity())) {
+            return new NativeClauseContext(
+                    childContext,
+                    String.format(
+                            "aggregate(%s, decimal(0), (x, y) -> decimal(x + y))", childContext.getResultingQuery()),
+                    SequenceType.createSequenceType("integer"));
+        }
+        // each row contains a single value
+        return childContext;
     }
 }

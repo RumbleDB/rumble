@@ -1,0 +1,91 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.expressions.module;
+
+import java.util.Collections;
+import java.util.List;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+
+public class FunctionDeclaration extends Node {
+
+    private final InlineFunctionExpression functionExpression;
+
+    @Setter
+    @Getter
+    private boolean recursive = false;
+
+    public FunctionDeclaration(InlineFunctionExpression functionExpression, ExceptionMetadata metadata) {
+        super(metadata);
+        this.functionExpression = functionExpression;
+    }
+
+    public Expression getExpression() {
+        return this.functionExpression;
+    }
+
+    public FunctionIdentifier getFunctionIdentifier() {
+        return this.functionExpression.getFunctionIdentifier();
+    }
+
+    public ExceptionMetadata getNameMetadata() {
+        return this.functionExpression.getNameMetadata();
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        return Collections.singletonList(this.functionExpression);
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitFunctionDeclaration(this, argument);
+    }
+
+    /**
+     * Prints the node tree to a string buffer.
+     *
+     * @param buffer a string buffer to write to
+     * @param indent the current level of indentation
+     */
+    @Override
+    public void print(StringBuilder buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("FunctionDeclaration " + this.getFunctionIdentifier());
+        buffer.append(" | " + (this.recursive ? "recursive" : "non-recursive"));
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        indentIt(sb, indent);
+        this.functionExpression.serializeToJSONiq(sb, 0);
+    }
+}

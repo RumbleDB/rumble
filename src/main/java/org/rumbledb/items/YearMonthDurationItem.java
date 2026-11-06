@@ -1,46 +1,60 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
+import java.io.Serial;
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.format.DateTimeParseException;
+import java.util.regex.Pattern;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import org.joda.time.DurationFieldType;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
+public class YearMonthDurationItem extends AbstractAtomicItem {
 
-public class YearMonthDurationItem extends DurationItem {
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Period value;
-    private static final PeriodType yearMonthPeriodType = PeriodType.forFields(
-        new DurationFieldType[] { DurationFieldType.years(), DurationFieldType.months() }
-    );
 
-    public YearMonthDurationItem() {
-        super();
-    }
+    private Period value;
+    private static final Pattern yearMonthDurationRegex = Pattern.compile("-?P[0-9]+(Y([0-9]+M)?|M)");
 
     public YearMonthDurationItem(Period value) {
-        super();
-        this.value = value.normalizedStandard(yearMonthPeriodType);
-        this.isNegative = this.value.toString().contains("-");
+        this.value = Period.of(value.getYears(), value.getMonths(), 0);
+    }
+
+    public YearMonthDurationItem(String value) {
+        if (!yearMonthDurationRegex.matcher(value).matches()) {
+            throw new IllegalArgumentException("Invalid xs:yearMonthDuration: \"" + value + "\"");
+        }
+        try {
+            this.value = normalizeMonthsToYears(Period.parse(value));
+        } catch (DateTimeParseException e) {
+            throw new DurationOverflowOrUnderflow(
+                    "Invalid xs:yearMonthDuration: \"" + value + "\"", ExceptionMetadata.EMPTY_METADATA);
+        }
     }
 
     @Override
-    public Period getValue() {
-        return this.value;
-    }
-
-    @Override
-    public Period getDurationValue() {
-        return this.value;
+    public Item copy(boolean mutable) {
+        return new YearMonthDurationItem(this.value);
     }
 
     @Override
@@ -49,115 +63,103 @@ public class YearMonthDurationItem extends DurationItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.yearMonthDurationItem) || super.isTypeOf(type);
+    public boolean isAtomic() {
+        return true;
     }
 
     @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), ItemType.yearMonthDurationItem).normalizedStandard(
-            yearMonthPeriodType
-        );
-        this.isNegative = this.value.toString().contains("-");
+    public boolean isDuration() {
+        return true;
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.yearMonthDurationItem)
-            ||
-            itemType.equals(ItemType.dayTimeDurationItem)
-            ||
-            itemType.equals(ItemType.durationItem)
-            ||
-            itemType.equals(ItemType.stringItem);
+    public boolean getEffectiveBooleanValue() {
+        return false;
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.durationItem)) {
-            return ItemFactory.getInstance().createDurationItem(this.getValue());
-        }
-        if (itemType.equals(ItemType.yearMonthDurationItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.dayTimeDurationItem)) {
-            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (other.isDuration() && !other.isDayTimeDuration() && !other.isYearMonthDuration()) {
-            return other.compareItem(this, comparisonOperator, metadata);
-        } else if (!other.isYearMonthDuration() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "\""
-                        + this.getDynamicType().toString()
-                        + "\": invalid type: can not compare for equality to type \""
-                        + other.getDynamicType().toString()
-                        + "\"",
-                    metadata
-            );
-        }
-        return super.compareItem(other, comparisonOperator, metadata);
-    }
-
-    @Override
-    public Item add(Item other) {
-        if (other.isDateTime()) {
-            return ItemFactory.getInstance()
-                .createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
-        }
-        if (other.isDate()) {
-            return ItemFactory.getInstance()
-                .createDateItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
-        }
-        return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().plus(other.getDurationValue()));
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().minus(other.getDurationValue()));
-    }
-
-    @Override
-    public Item multiply(Item other) {
-        int months = this.getValue().getYears() * 12 + this.getValue().getMonths();
-        int totalMonths = BigDecimal.valueOf(months)
-            .multiply(other.castToDecimalValue())
-            .setScale(0, BigDecimal.ROUND_HALF_UP)
-            .intValue();
-        return ItemFactory.getInstance()
-            .createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
-    }
-
-    @Override
-    public Item divide(Item other) {
-        int months = this.getValue().getYears() * 12 + this.getValue().getMonths();
-        if (other.isYearMonthDuration()) {
-            int otherMonths = 12 * other.getDurationValue().getYears() + other.getDurationValue().getMonths();
-            return ItemFactory.getInstance()
-                .createDecimalItem(
-                    BigDecimal.valueOf(months).divide(BigDecimal.valueOf(otherMonths), 16, RoundingMode.HALF_UP)
-                );
-        }
-        int totalMonths = BigDecimal.valueOf(months)
-            .divide(other.castToDecimalValue(), 0, BigDecimal.ROUND_HALF_UP)
-            .intValue();
-        return ItemFactory.getInstance()
-            .createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
+    public String getStringValue() {
+        return normalizeDuration(normalizeMonthsToYears(this.value));
     }
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.yearMonthDurationItem;
+        return BuiltinTypesCatalogue.yearMonthDurationItem;
+    }
+
+    @Override
+    public Duration getDurationValue() {
+        LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
+        LocalDateTime target = anchor.plus(this.value);
+        return Duration.between(anchor, target);
+    }
+
+    @Override
+    public Period getPeriodValue() {
+        return this.value;
+    }
+
+    @Override
+    public Duration getDayTimeDurationComponent() {
+        return Duration.ZERO;
+    }
+
+    @Override
+    public long getEpochMillis() {
+        LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
+        LocalDateTime target = anchor.plus(this.value);
+        return Duration.between(anchor, target).toMillis();
+    }
+
+    public static String normalizeDuration(Period period) {
+        if (period.isZero()) {
+            return "P0M"; // Default value for yearMonthDuration
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append((period.isNegative()) ? "-P" : "P");
+        if (period.getYears() != 0) sb.append(Math.abs(period.getYears())).append("Y");
+        if (period.getMonths() != 0) sb.append(Math.abs(period.getMonths())).append("M");
+        if (period.getDays() != 0) sb.append(Math.abs(period.getDays())).append("D");
+        return sb.toString();
+    }
+
+    public static Period normalizeMonthsToYears(Period period) {
+        Period normalized = period.normalized();
+        if (normalized.getMonths() >= 12) {
+            return normalized
+                    .minusMonths(normalized.getMonths() - (normalized.getMonths() % 12))
+                    .plusYears(normalized.getMonths() / 12);
+        }
+        return normalized;
+    }
+
+    @Override
+    public int getYear() {
+        return this.value.getYears();
+    }
+
+    @Override
+    public int getMonth() {
+        return this.value.getMonths();
+    }
+
+    @Override
+    public int getDay() {
+        return this.value.getDays();
+    }
+
+    @Override
+    public int getHour() {
+        return 0;
+    }
+
+    @Override
+    public int getMinute() {
+        return 0;
+    }
+
+    @Override
+    public double getSecond() {
+        return 0;
     }
 }

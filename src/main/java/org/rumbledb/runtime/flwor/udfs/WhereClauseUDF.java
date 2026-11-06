@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,108 +11,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.flwor.udfs;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import org.apache.spark.sql.api.java.UDF2;
-import org.apache.spark.sql.types.StructType;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import scala.collection.mutable.WrappedArray;
-
-import java.io.IOException;
-import java.util.ArrayList;
+import java.io.Serial;
 import java.util.List;
-import java.util.Map;
 
-public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Boolean> {
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
+
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+public class WhereClauseUDF implements UDF1<Row, Boolean> {
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator expression;
 
-    private Map<String, List<String>> columnNamesByType;
+    private final DataFrameContext dataFrameContext;
+    private final ItemRuntimePlan expression;
 
-    private List<List<Item>> deserializedParams;
-    private List<Item> longParams;
-    private DynamicContext context;
-    private DynamicContext parentContext;
-
-    private transient Kryo kryo;
-    private transient Input input;
-
-    public WhereClauseUDF(
-            RuntimeIterator expression,
-            DynamicContext context,
-            StructType inputSchema,
-            Map<String, List<String>> columnNamesByType
-    ) {
+    public WhereClauseUDF(ItemRuntimePlan expression, DynamicContext context, List<FlworDataFrameColumn> columns) {
+        this.dataFrameContext = new DataFrameContext(context, columns);
         this.expression = expression;
-
-        this.deserializedParams = new ArrayList<>();
-        this.longParams = new ArrayList<>();
-        this.parentContext = context;
-        this.context = new DynamicContext(this.parentContext);
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.input = new Input();
-
-        this.columnNamesByType = columnNamesByType;
-
+        if (this.expression.isSparkJobNeeded()) {
+            throw new JobWithinAJobException(
+                    "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                    this.expression.getRuntimeStaticContext().getMetadata());
+        }
     }
-
 
     @Override
-    public Boolean call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        this.deserializedParams.clear();
-        this.context.removeAllVariables();
+    public Boolean call(Row row) {
+        this.dataFrameContext.setFromRow(row);
 
-        FlworDataFrameUtils.deserializeWrappedParameters(
-            wrappedParameters,
-            this.deserializedParams,
-            this.kryo,
-            this.input
-        );
+        DynamicContext dynamicContext = this.dataFrameContext.getContext();
 
-        // Long parameters correspond to pre-computed counts, when a materialization of the
-        // actual sequence was avoided upfront.
-        Object[] longParams = (Object[]) wrappedParametersLong.array();
-        for (Object longParam : longParams) {
-            Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
-            this.longParams.add(count);
-        }
-
-        FlworDataFrameUtils.prepareDynamicContext(
-            this.context,
-            this.columnNamesByType.get("byte[]"),
-            this.columnNamesByType.get("Long"),
-            this.deserializedParams,
-            this.longParams
-        );
-
-        // apply expression in the dynamic context
-        this.expression.open(this.context);
-        boolean result = RuntimeIterator.getEffectiveBooleanValue(this.expression);
-        this.expression.close();
+        boolean result = EffectiveBooleanValue.evaluate(this.expression, dynamicContext);
         return result;
-    }
-
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.input = new Input();
     }
 }

@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun :)
+(1 eq 2) is statically boolean, (1 eq (2 treat as integer?)) is statically boolean?, (1 eq 2.2) is statically boolean, (1 ge 3e4) is statically boolean, (2.2 gt 3e2) is statically boolean, (3.3 le 34) is statically boolean, (12 lt 23) is statically boolean, (13 ne 1.2) is statically boolean, ("ab" eq "we") is statically boolean, ("ad" gt "qw") is statically boolean, (("qw" cast as anyURI) gt "erty") is statically boolean, (true eq false) is statically boolean, (true gt false) is statically boolean

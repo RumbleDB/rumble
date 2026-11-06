@@ -1,58 +1,77 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.datetime;
+
+import java.io.Serial;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.CastException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.util.List;
+public class DateTimeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
-public class DateTimeFunctionIterator extends LocalFunctionCallIterator {
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Item dateTimeStringItem = null;
 
-    public DateTimeFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    private final ItemRuntimePlan dateIterator;
+    private final ItemRuntimePlan timeIterator;
+
+    public DateTimeFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
+        this.dateIterator = arguments.get(0);
+        this.timeIterator = arguments.get(1);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            try {
-                return ItemFactory.getInstance().createDateTimeItem(this.dateTimeStringItem.getStringValue());
-            } catch (UnsupportedOperationException | IllegalArgumentException e) {
-                String message = String.format(
-                    "\"%s\": value of type %s is not castable to type %s",
-                    this.dateTimeStringItem.serialize(),
-                    "string",
-                    "dateTime"
-                );
-                throw new CastException(message, getMetadata());
-            }
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " dateTime function",
-                    getMetadata()
-            );
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item dateItem = this.dateIterator.materializeFirstOrNull(context);
+        Item timeItem = this.timeIterator.materializeFirstOrNull(context);
+        if (dateItem == null || timeItem == null) {
+            return null;
         }
+        return evaluate(dateItem, timeItem, getMetadata());
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.dateTimeStringItem = this.children.get(0)
-            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.dateTimeStringItem != null;
+    private static Item evaluate(Item dateItem, Item timeItem, ExceptionMetadata metadata) {
+        OffsetDateTime dt;
+        OffsetDateTime dateDt = dateItem.getDateTimeValue();
+        OffsetTime timeDt = timeItem.getTimeValue();
+
+        if (dateItem.hasTimeZone() && timeItem.hasTimeZone()) {
+            if (dateDt.getOffset() == timeDt.getOffset()) {
+                dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
+                return ItemFactory.getInstance().createDateTimeItem(dt, true);
+            } else {
+                throw new InconsistentTimezonesException("The two arguments have inconsistent timezones", metadata);
+            }
+        } else if (dateItem.hasTimeZone() && !timeItem.hasTimeZone()) {
+            dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
+            return ItemFactory.getInstance().createDateTimeItem(dt, true);
+        } else if (!dateItem.hasTimeZone() && timeItem.hasTimeZone()) {
+            dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), timeDt.getOffset());
+            return ItemFactory.getInstance().createDateTimeItem(dt, true);
+        }
+        dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
+        return ItemFactory.getInstance().createDateTimeItem(dt, false);
     }
 }

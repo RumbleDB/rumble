@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,62 +11,75 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.input;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.parsing.StringToStringItemMapper;
-import org.rumbledb.runtime.RDDRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.spark.SparkSessionManager;
-
+import java.io.*;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
-public class TextFileFunctionIterator extends RDDRuntimeIterator {
+import org.apache.spark.api.java.JavaRDD;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.items.parsing.StringToStringItemMapper;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
+
+public class TextFileFunctionIterator extends ItemRuntimePlan implements RDDRuntimePlan<Item> {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public TextFileFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public static final int MIN_PARTITIONS = 10;
+
+    public TextFileFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaRDD<String> strings;
-        RuntimeIterator urlIterator = this.children.get(0);
-        urlIterator.open(context);
-        String url = urlIterator.next().getStringValue();
-        urlIterator.close();
-        if (!FileSystemUtil.exists(url, getMetadata())) {
-            throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        ItemRuntimePlan urlIterator = this.getChild(0);
+        Item url = urlIterator.materializeFirstOrNull(context);
+        if (url == null) {
+            return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
+        }
+        URI uri = FileSystemUtil.resolveFileSystemURI(
+                this.staticContext.getStaticURI(), url.getStringValue(), getMetadata());
+        int partitions = MIN_PARTITIONS;
+        if (this.getChildren().size() > 1) {
+            Item partitionsItem = this.getChild(1).materializeFirstOrNull(context);
+            if (partitionsItem != null) {
+                partitions = partitionsItem.getIntValue();
+            }
         }
 
-        if (this.children.size() == 1) {
-            strings = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .textFile(url);
+        JavaRDD<String> strings;
+        if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
+            InputStream is = FileSystemUtil.getDataInputStream(uri, getMetadata());
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            List<String> lines = new ArrayList<>();
+            String line = null;
+            try {
+                while ((line = br.readLine()) != null) {
+                    lines.add(line);
+                }
+            } catch (IOException e) {
+                throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
+            }
+            strings = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(lines, partitions);
         } else {
-            RuntimeIterator partitionsIterator = this.children.get(1);
-            partitionsIterator.open(this.currentDynamicContextForLocalExecution);
+            if (!FileSystemUtil.exists(uri, getMetadata())) {
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+            }
             strings = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .textFile(
-                    url,
-                    partitionsIterator.next().getIntegerValue()
-                );
-            partitionsIterator.close();
+                    .getJavaSparkContext()
+                    .textFile(FileSystemUtil.convertURIToStringForSpark(uri), partitions);
         }
         return strings.mapPartitions(new StringToStringItemMapper());
     }

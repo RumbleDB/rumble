@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,54 +11,48 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.primary;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class ObjectConstructorExpression extends Expression {
 
+    @Getter
     private boolean isMergedConstructor = false;
+
+    @Getter
     private List<Expression> values;
+
+    @Getter
     private List<Expression> keys;
+
+    private List<Boolean> isReferenced;
     private Expression childExpression;
 
-    public ObjectConstructorExpression(
-            List<Expression> keys,
-            List<Expression> values,
-            ExceptionMetadata metadata
-    ) {
+    public ObjectConstructorExpression(List<Expression> keys, List<Expression> values, ExceptionMetadata metadata) {
         super(metadata);
         this.keys = keys;
         this.values = values;
+        this.isReferenced = new ArrayList<>();
+        for (int i = 0; i < keys.size(); i++) {
+            this.isReferenced.add(true);
+        }
     }
 
     public ObjectConstructorExpression(Expression expression, ExceptionMetadata metadata) {
         super(metadata);
         this.childExpression = expression;
         this.isMergedConstructor = true;
-    }
-
-    public List<Expression> getKeys() {
-        return this.keys;
-    }
-
-    public List<Expression> getValues() {
-        return this.values;
-    }
-
-    public boolean isMergedConstructor() {
-        return this.isMergedConstructor;
     }
 
     @Override
@@ -77,8 +68,41 @@ public class ObjectConstructorExpression extends Expression {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        if (this.isMergedConstructor) {
+            indentIt(sb, indent);
+            sb.append("{| ");
+            this.childExpression.serializeToJSONiq(sb, 0);
+            sb.append(" |}\n");
+        } else {
+            indentIt(sb, indent);
+            sb.append("{\n");
+            if (this.keys != null) {
+                for (int i = 0; i < this.keys.size(); i++) {
+                    // TODO ending always with \n might cause issues here
+                    this.keys.get(i).serializeToJSONiq(sb, indent + 1);
+                    sb.append(" : ");
+                    this.values.get(i).serializeToJSONiq(sb, 0);
+                    if (i == this.keys.size() - 1) {
+                        sb.append("\n");
+                    } else {
+                        sb.append(",\n");
+                    }
+                }
+            }
+        }
+    }
+
+    public void setReferenced(int i, boolean isReferenced) {
+        this.isReferenced.set(i, false);
+    }
+
+    public boolean getReferenced(int i) {
+        return this.isReferenced.get(i);
+    }
+
+    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitObjectConstructor(this, argument);
     }
-
 }

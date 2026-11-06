@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,72 +11,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.flwor.udfs;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.apache.spark.sql.api.java.UDF1;
-import org.rumbledb.api.Item;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import scala.collection.mutable.WrappedArray;
-
-import java.io.IOException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupClauseSerializeAggregateResultsUDF implements UDF1<WrappedArray<byte[]>, byte[]> {
+import org.apache.spark.sql.api.java.UDF1;
 
+import scala.collection.immutable.ArraySeq;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+
+public class GroupClauseSerializeAggregateResultsUDF implements UDF1<ArraySeq<byte[]>, byte[]> {
+
+    @Serial
     private static final long serialVersionUID = 1L;
-    private List<Item> nextResult;
-    private List<List<Item>> deserializedParams;
 
-    private transient Kryo kryo;
-    private transient Output output;
-    private transient Input input;
+    private final List<Item> nextResult;
+    private final List<List<Item>> deserializedParams;
+    private final DataFrameContext dataFrameContext;
 
     public GroupClauseSerializeAggregateResultsUDF() {
         this.nextResult = new ArrayList<>();
         this.deserializedParams = new ArrayList<>();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
+        this.dataFrameContext = new DataFrameContext();
     }
 
     @Override
-    public byte[] call(WrappedArray<byte[]> wrappedParameters) {
+    public byte[] call(ArraySeq<byte[]> wrappedParameters) {
         this.nextResult.clear();
         this.deserializedParams.clear();
         FlworDataFrameUtils.deserializeWrappedParameters(
-            wrappedParameters,
-            this.deserializedParams,
-            this.kryo,
-            this.input
-        );
+                wrappedParameters,
+                this.deserializedParams,
+                this.dataFrameContext.getKryo(),
+                this.dataFrameContext.getInput());
 
         for (List<Item> deserializedParam : this.deserializedParams) {
             this.nextResult.addAll(deserializedParam);
         }
-        return FlworDataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
-    }
-
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
-        this.input = new Input();
+        return FlworDataFrameUtils.serializeItemList(
+                this.nextResult, this.dataFrameContext.getKryo(), this.dataFrameContext.getOutput());
     }
 }

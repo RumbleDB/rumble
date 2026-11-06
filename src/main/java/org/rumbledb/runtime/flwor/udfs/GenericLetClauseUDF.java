@@ -1,0 +1,88 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.flwor.udfs;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+public class GenericLetClauseUDF<T> implements UDF1<Row, T> {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final DataFrameContext dataFrameContext;
+    private final ItemRuntimePlan expression;
+    private String classSimpleName;
+
+    private List<Item> nextResult;
+
+    public GenericLetClauseUDF(
+            ItemRuntimePlan expression,
+            DynamicContext context,
+            List<FlworDataFrameColumn> columns,
+            String classSimpleName) {
+        this.dataFrameContext = new DataFrameContext(context, columns);
+        this.expression = expression;
+        if (this.expression.isSparkJobNeeded()) {
+            throw new JobWithinAJobException(
+                    "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                    this.expression.getRuntimeStaticContext().getMetadata());
+        }
+
+        this.nextResult = new ArrayList<>();
+        this.classSimpleName = classSimpleName;
+    }
+
+    @Override
+    public T call(Row row) {
+        this.dataFrameContext.setFromRow(row);
+
+        this.nextResult.clear();
+        this.nextResult.addAll(this.expression.materialize(this.dataFrameContext.getContext()));
+
+        return toDFValue();
+    }
+
+    // TODO: check if there is a better/safer/faster way to do it
+    @SuppressWarnings("unchecked")
+    public T toDFValue() {
+        // Arity and type check are done by the treat expression that is inserted in the let clause
+        // when using the 'as' syntax
+        switch (this.classSimpleName) {
+            case "String":
+                return (T) this.nextResult.get(0).getStringValue();
+            case "Integer":
+                return (T) (Integer) this.nextResult.get(0).getIntValue();
+            case "BigDecimal":
+                return (T) this.nextResult.get(0).getDecimalValue();
+            case "Double":
+                return (T) (Double) this.nextResult.get(0).getDoubleValue();
+            default:
+                throw new OurBadException("Unexpected type in Generic Let UDF");
+        }
+    }
+}

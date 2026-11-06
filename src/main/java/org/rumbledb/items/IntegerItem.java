@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,62 +11,111 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.types.ItemType;
+import java.io.Serial;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
-public class IntegerItem extends AtomicItem {
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
+public class IntegerItem extends AbstractAtomicItem {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private int value;
 
-    public IntegerItem() {
-        super();
-    }
+    private BigInteger value;
 
-    public IntegerItem(int value) {
-        super();
+    public IntegerItem(BigInteger value) {
         this.value = value;
     }
 
-    public int getValue() {
+    @Override
+    public Item copy(boolean mutable) {
+        return new IntegerItem(this.value);
+    }
+
+    @Override
+    public int getIntValue() {
+        if (!isWithinIntRange()) {
+            throw new OurBadException("Integer value is not within the int range.");
+        }
+        return this.value.intValue();
+    }
+
+    @Override
+    public long getLongValue() {
+        if (!isWithinLongRange()) {
+            throw new OurBadException("Integer value is not within the long range.");
+        }
+        return this.value.longValue();
+    }
+
+    @Override
+    public BigInteger getIntegerValue() {
         return this.value;
     }
 
     @Override
-    public int getIntegerValue() {
-        return this.value;
+    public BigDecimal getDecimalValue() {
+        return new BigDecimal(this.value);
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return getDecimalValue();
+    }
+
+    @Override
+    public String getStringValue() {
+        return String.valueOf(this.value);
     }
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return this.getIntegerValue() != 0;
+        return !this.value.equals(BigInteger.ZERO);
     }
 
+    @Override
     public double castToDoubleValue() {
-        return new Integer(getIntegerValue()).doubleValue();
+        return this.value.doubleValue();
     }
 
+    @Override
+    public float castToFloatValue() {
+        return this.value.floatValue();
+    }
+
+    @Override
     public BigDecimal castToDecimalValue() {
-        return BigDecimal.valueOf(getIntegerValue());
+        return new BigDecimal(this.value);
     }
 
-    public int castToIntegerValue() {
-        return getIntegerValue();
+    @Override
+    public BigInteger castToIntegerValue() {
+        return this.value;
+    }
+
+    @Override
+    public int castToIntValue() {
+        return this.value.intValue();
+    }
+
+    @Override
+    public boolean isWithinIntRange() {
+        return this.value.bitLength() <= 31;
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return this.value.bitLength() <= 63;
     }
 
     @Override
@@ -78,172 +124,43 @@ public class IntegerItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.integerItem)
-            || type.equals(ItemType.decimalItem)
-            || super.isTypeOf(type);
-    }
-
-    @Override
-    public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
-            return ItemFactory.getInstance().createBooleanItem(this.getIntegerValue() != 0);
-        }
-        if (itemType.equals(ItemType.doubleItem)) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
-        }
-        if (itemType.equals(ItemType.decimalItem)) {
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
-        }
-        if (itemType.equals(ItemType.integerItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getIntegerValue()));
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return !itemType.equals(ItemType.atomicItem)
-            &&
-            !itemType.equals(ItemType.nullItem);
-    }
-
-    @Override
-    public String serialize() {
-        return String.valueOf(this.getValue());
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeInt(this.getValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = input.readInt();
-    }
-
-    public boolean equals(Object otherItem) {
-        try {
-            return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
-        } catch (IteratorFlowException e) {
-            return false;
-        }
-    }
-
-    public int hashCode() {
-        return getIntegerValue();
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        return other.isNull() ? 1 : Integer.compare(this.getIntegerValue(), other.castToIntegerValue());
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isNumeric() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "Invalid args for numerics comparison "
-                        + this.serialize()
-                        +
-                        ", "
-                        + other.serialize(),
-                    metadata
-            );
-        }
-        return super.compareItem(other, comparisonOperator, metadata);
-    }
-
-
-    @Override
-    public Item add(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + other.getDoubleValue());
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
-        }
-        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() + other.castToIntegerValue());
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - other.getDoubleValue());
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance()
-                .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
-        }
-        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() - other.castToIntegerValue());
-    }
-
-    @Override
-    public Item multiply(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * other.getDoubleValue());
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance()
-                .createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
-        }
-        if (other.isYearMonthDuration()) {
-            return ItemFactory.getInstance()
-                .createYearMonthDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
-        }
-        if (other.isDayTimeDuration()) {
-            return ItemFactory.getInstance()
-                .createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
-        }
-        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() * other.castToIntegerValue());
-    }
-
-    @Override
-    public Item divide(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / other.getDoubleValue());
-        }
-        BigDecimal bdResult = this.castToDecimalValue()
-            .divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
-        if (bdResult.stripTrailingZeros().scale() <= 0) {
-            return ItemFactory.getInstance().createIntegerItem(bdResult.intValueExact());
-        } else {
-            return ItemFactory.getInstance().createDecimalItem(bdResult);
-        }
-    }
-
-    @Override
-    public Item modulo(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % other.getDoubleValue());
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance()
-                .createDecimalItem(this.castToDecimalValue().remainder(other.getDecimalValue()));
-        }
-        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() % other.castToIntegerValue());
-    }
-
-    @Override
-    public Item idivide(Item other) {
-        return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() / other.castToIntegerValue());
+    public boolean isDecimal() {
+        return true;
     }
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.integerItem;
+        return BuiltinTypesCatalogue.integerItem;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return new NativeClauseContext(context, this.value.toString(), SequenceType.createSequenceType("integer"));
+    }
+
+    @Override
+    public boolean isNumeric() {
+        return true;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return String.valueOf(this.value);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "INTEGER";
     }
 }

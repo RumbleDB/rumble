@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,77 +11,76 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.numerics.trigonometric;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
-
+import java.io.Serial;
 import java.util.List;
 
-public class ATan2FunctionIterator extends LocalFunctionCallIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
+public class ATan2FunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public ATan2FunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    private final ItemRuntimePlan yIterator;
+    private final ItemRuntimePlan xIterator;
+
+    public ATan2FunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
+        this.yIterator = arguments.get(0);
+        this.xIterator = arguments.get(1);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item y;
-            RuntimeIterator yIterator = this.children.get(0);
-            yIterator.open(this.currentDynamicContextForLocalExecution);
-            if (yIterator.hasNext()) {
-                y = yIterator.next();
-            } else {
-                throw new UnexpectedTypeException("Type error; y parameter can't be empty sequence ", getMetadata());
-            }
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Item y = this.yIterator.materializeFirstOrNull(dynamicContext);
+        Item x = this.xIterator.materializeFirstOrNull(dynamicContext);
+        return evaluate(y, x);
+    }
 
-            Item x;
-            RuntimeIterator xIterator = this.children.get(1);
-            xIterator.open(this.currentDynamicContextForLocalExecution);
-            if (xIterator.hasNext()) {
-                x = xIterator.next();
-            } else {
-                throw new UnexpectedTypeException("Type error; x parameter can't be empty sequence ", getMetadata());
-            }
-
-            if (y.isNumeric() && x.isNumeric()) {
-                try {
-                    this.hasNext = false;
-                    return ItemFactory.getInstance()
-                        .createDoubleItem(Math.atan2(y.castToDoubleValue(), x.castToDoubleValue()));
-
-                } catch (IteratorFlowException e) {
-                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                }
-            } else {
-                throw new UnexpectedTypeException(
-                        "ATan2 expression has non numeric args "
-                            +
-                            y.serialize()
-                            + ", "
-                            + x.serialize(),
-                        getMetadata()
-                );
-            }
-        } else {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atan2 function", getMetadata());
+    private static Item evaluate(Item yItem, Item xItem) {
+        double y = yItem.getDoubleValue();
+        double x = xItem.getDoubleValue();
+        if (Double.isNaN(x) || Double.isNaN(y)) {
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         }
+        return ItemFactory.getInstance().createDoubleItem(Math.atan2(y, x));
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext yQuery = NativeQueryRuntimePlan.generate(this.yIterator, nativeClauseContext);
+        if (yQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext xQuery =
+                NativeQueryRuntimePlan.generate(this.xIterator, new NativeClauseContext(yQuery, null, null));
+        if (xQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(yQuery.getResultingType().getArity())
+                || SequenceType.Arity.OneOrMore.isSubtypeOf(
+                        xQuery.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        SequenceType.Arity resultingArity = (yQuery.getResultingType().getArity() == SequenceType.Arity.One
+                        && xQuery.getResultingType().getArity() == SequenceType.Arity.One)
+                ? SequenceType.Arity.One
+                : SequenceType.Arity.OneOrZero;
+        String resultingQuery = "ATAN2( " + yQuery.getResultingQuery() + ", " + xQuery.getResultingQuery() + " )";
+        return new NativeClauseContext(
+                xQuery, resultingQuery, new SequenceType(BuiltinTypesCatalogue.doubleItem, resultingArity));
     }
 }

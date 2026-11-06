@@ -23,14 +23,14 @@ public class ObjectDescendantPairsClosure implements FlatMapFunction<Item, Item>
         List<Item> results = new ArrayList<Item>();
 
         if (arg0.isArray()) {
-            for (Item item : arg0.getItems()) {
+            for (Item item : arg0.getItemMembers()) {
                 Iterator<Item> innerResult = this.call(item);
                 while (innerResult.hasNext()) {
                     results.add(innerResult.next());
                 }
             }
         } else if (arg0.isObject()) {
-            List<String> keys = arg0.getKeys();
+            List<String> keys = arg0.getStringKeys();
             for (String key : keys) {
                 Item value = arg0.getItemByKey(key);
 
@@ -38,7 +38,7 @@ public class ObjectDescendantPairsClosure implements FlatMapFunction<Item, Item>
                 List<Item> valueList = Collections.singletonList(value);
 
                 Item result = ItemFactory.getInstance()
-                    .createObjectItem(keyList, valueList, this.metadata);
+                    .createObjectItem(keyList, valueList, this.metadata, true);
                 results.add(result);
 
                 Iterator<Item> innerResult = this.call(value);

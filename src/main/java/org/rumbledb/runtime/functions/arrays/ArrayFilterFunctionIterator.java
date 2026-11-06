@@ -1,0 +1,169 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.functions.arrays;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.CommaExpressionIterator;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.SequenceType;
+
+/**
+ * XPath and XQuery Functions and Operators 3.1 {@code array:filter}:
+ * {@code array:filter($array as array(*), $predicate as function(item()*) as xs:boolean) as array(*)}.
+ */
+public class ArrayFilterFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item arrayItem = null;
+        try {
+            arrayItem = this.arrayIterator.materializeAtMostOne(context);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException("array:filter expects exactly one array argument.", getMetadata());
+        }
+        if (arrayItem == null) {
+            return null;
+        }
+        if (!arrayItem.isArray()) {
+            throw new UnexpectedTypeException("Type error; argument to array:filter must be an array.", getMetadata());
+        }
+
+        List<List<Item>> memberSequences = arrayItem.getSequenceMembers();
+
+        List<Item> predicateItems = this.predicateIterator.materialize(context);
+        if (predicateItems.isEmpty()) {
+            throw new UnexpectedTypeException(
+                    "Type error; second argument to array:filter must be exactly one item.", getMetadata());
+        }
+        if (predicateItems.size() != 1) {
+            throw new UnexpectedTypeException(
+                    "Type error; second argument to array:filter must be exactly one item.", getMetadata());
+        }
+
+        Item predicate = predicateItems.get(0);
+        boolean allSingleton = true;
+        List<List<Item>> kept = new ArrayList<>();
+        for (List<Item> memberSequence : memberSequences) {
+            if (predicateHoldsForCallableItem(predicate, memberSequence, context)) {
+                if (allSingleton && memberSequence.size() != 1) {
+                    allSingleton = false;
+                }
+                kept.add(memberSequence);
+            }
+        }
+
+        if (allSingleton) {
+            List<Item> items = new ArrayList<>();
+            for (List<Item> member : kept) {
+                items.add(member.get(0));
+            }
+            return ItemFactory.getInstance()
+                    .createArrayItem(items, this.getRuntimeStaticContext().isQuerySideEffecting());
+        }
+        return ItemFactory.getInstance()
+                .createSequenceArrayItem(kept, this.getRuntimeStaticContext().isQuerySideEffecting());
+    }
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final ItemRuntimePlan arrayIterator;
+    private final ItemRuntimePlan predicateIterator;
+
+    public ArrayFilterFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
+        if (arguments.size() != 2) {
+            throw new OurBadException("array:filter must have exactly two arguments.");
+        }
+        this.arrayIterator = arguments.get(0);
+        this.predicateIterator = arguments.get(1);
+    }
+
+    private boolean predicateHoldsForCallableItem(Item predicate, List<Item> memberSequence, DynamicContext context) {
+        ItemRuntimePlan memberIterator = createSequenceIterator(memberSequence);
+        RuntimeStaticContext functionItemContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
+        List<ItemRuntimePlan> arguments = new ArrayList<>(1);
+        arguments.add(memberIterator);
+        ItemRuntimePlan functionCall = new DynamicFunctionCallIterator(
+                new ConstantRuntimeIterator(predicate, functionItemContext), arguments, functionItemContext);
+        List<Item> result = functionCall.materialize(context);
+        return booleanValueFromFilterResult(result);
+    }
+
+    private boolean booleanValueFromFilterResult(List<Item> items) {
+        if (items.size() != 1) {
+            throw new UnexpectedTypeException(
+                    "Type error; array:filter predicate must return exactly one xs:boolean value.", getMetadata());
+        }
+        Item value = items.get(0);
+        if (!value.isBoolean()) {
+            throw new UnexpectedTypeException(
+                    "Type error; array:filter predicate must return exactly one xs:boolean value.", getMetadata());
+        }
+        return value.getBooleanValue();
+    }
+
+    private ItemRuntimePlan createSequenceIterator(List<Item> items) {
+        if (items.isEmpty()) {
+            RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+                    .configuration(getConfiguration())
+                    .staticType(SequenceType.createSequenceType("item*"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(getMetadata())
+                    .build();
+            return new CommaExpressionIterator(Collections.emptyList(), staticContext);
+        }
+
+        List<ItemRuntimePlan> childIterators = new ArrayList<>(items.size());
+        for (Item item : items) {
+            RuntimeStaticContext childStaticContext = RuntimeStaticContext.builder()
+                    .configuration(getConfiguration())
+                    .staticType(SequenceType.createSequenceType("item*"))
+                    .executionMode(ExecutionMode.LOCAL)
+                    .metadata(getMetadata())
+                    .build();
+            childIterators.add(new ConstantRuntimeIterator(item, childStaticContext));
+        }
+
+        RuntimeStaticContext staticContext = RuntimeStaticContext.builder()
+                .configuration(getConfiguration())
+                .staticType(SequenceType.createSequenceType("item*"))
+                .executionMode(ExecutionMode.LOCAL)
+                .metadata(getMetadata())
+                .build();
+        return new CommaExpressionIterator(childIterators, staticContext);
+    }
+}

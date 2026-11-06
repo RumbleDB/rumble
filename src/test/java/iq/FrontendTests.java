@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,62 +11,63 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package iq;
 
-
-import iq.base.AnnotationsTestsBase;
-import org.junit.Assert;
-import org.junit.Test;
-import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.types.ItemType;
 import java.io.File;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 
-public class FrontendTests extends AnnotationsTestsBase {
+import iq.base.AnnotationTestExecutor;
+import iq.base.TestConfigurations;
+import iq.base.TestFileDiscovery;
 
-    public static final File grammarTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/main/resources/test_files/parser"
-    );
-    public static final File astTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/main/resources/test_files/ast"
-    );
-    public static final File semanticTestsDirectory = new File(
-            System.getProperty("user.dir")
-                +
-                "/src/main/resources/test_files/semantics"
-    );
-    public static final String[] manualSemanticChecksFiles = new String[] { "TypesCheck.jq" };
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.CompilationPipeline;
+import org.rumbledb.compiler.EffectiveConfigurationVisitor;
+import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+
+public class FrontendTests {
+
+    private static final RumbleConfiguration configuration = TestConfigurations.defaultConfiguration();
+
+    public static final File grammarTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/parser");
+    public static final File astTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/ast");
+    public static final File semanticTestsDirectory =
+            new File(System.getProperty("user.dir") + "/src/test/resources/test_files/semantics");
+    public static final String[] manualSemanticChecksFiles = new String[] {"TypesCheck.jq"};
 
     /**
      * Tests Grammar, uses ANTLR generated visitor
      *
      * @throws Throwable
      */
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
     public void testGrammarAndParser() throws Throwable {
-        initializeTests(grammarTestsDirectory);
-        for (File testFile : this.testFiles) {
-            System.err.println(counter++ + " : " + testFile);
-            // FileReader reader = getReaderForFile(testFile.getAbsolutePath());
-            testAnnotations(testFile.getAbsolutePath());
+        for (File testFile : TestFileDiscovery.jsoniqFiles(grammarTestsDirectory)) {
+            AnnotationTestExecutor.run(testFile, configuration, true);
         }
-
     }
     /**
      * Tests ast, expression tree builder
-     * 
+     *
      * @throws Throwable
      */
     // @Test(timeout = 1000000)
@@ -93,39 +91,114 @@ public class FrontendTests extends AnnotationsTestsBase {
      *
      * @throws Throwable
      */
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
     public void testSematicChecks() throws Throwable {
-        initializeTests(semanticTestsDirectory);
-        for (File testFile : this.testFiles) {
-            System.err.println(counter++ + " : " + testFile);
-            MainModule mainModule = testAnnotations(testFile.getAbsolutePath());
-            if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName()))
-                testVariableTypes(testFile, mainModule);
+        for (File testFile : TestFileDiscovery.jsoniqFiles(semanticTestsDirectory)) {
+            AnnotationTestExecutor.run(testFile, configuration, true);
+            if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
+                URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                        testFile.getAbsolutePath(), ExceptionMetadata.EMPTY_METADATA);
+                MainModule mainModule = CompilationPipeline.compileMainModuleFromLocation(
+                        uri, new CompilationConfiguration(configuration), ExternalBindings.empty());
+
+                testVariableTypes(mainModule);
+            }
         }
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationDisablesParentPointerOptimizationForReverseAxis() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+                .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+                .build();
+        MainModule mainModule = CompilationPipeline.compileMainModuleFromQuery(
+                "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/parent::node()",
+                new CompilationConfiguration(initialConfiguration),
+                ExternalBindings.empty());
+
+        RumbleConfiguration effectiveConfiguration = new EffectiveConfigurationVisitor()
+                .getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
+
+        Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
+        Assertions.assertTrue(initialConfiguration.optimization().optimizeParentPointers());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationKeepsParentPointerOptimizationForForwardChildAxis() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+                .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+                .build();
+        MainModule mainModule = CompilationPipeline.compileMainModuleFromQuery(
+                "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/child::title",
+                new CompilationConfiguration(initialConfiguration),
+                ExternalBindings.empty());
+
+        RumbleConfiguration effectiveConfiguration = new EffectiveConfigurationVisitor()
+                .getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
+
+        Assertions.assertTrue(effectiveConfiguration.optimization().optimizeParentPointers());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationDisablesParentPointerOptimizationForFollowingAxis() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+                .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+                .build();
+        MainModule mainModule = CompilationPipeline.compileMainModuleFromQuery(
+                "jsoniq version \"1.0\"; doc(\"books.xml\")/child::book/following::node()",
+                new CompilationConfiguration(initialConfiguration),
+                ExternalBindings.empty());
+
+        RumbleConfiguration effectiveConfiguration = new EffectiveConfigurationVisitor()
+                .getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
+
+        Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testEffectiveConfigurationDisablesParentPointerOptimizationForNestedFunctionCall() {
+        RumbleConfiguration initialConfiguration = RumbleConfiguration.builder()
+                .configureOptimization(optimization -> optimization.optimizeParentPointers(true))
+                .build();
+        MainModule mainModule = CompilationPipeline.compileMainModuleFromQuery(
+                "jsoniq version \"1.0\"; (1, serialize(1))",
+                new CompilationConfiguration(initialConfiguration),
+                ExternalBindings.empty());
+
+        RumbleConfiguration effectiveConfiguration = new EffectiveConfigurationVisitor()
+                .getEffectiveConfiguration(mainModule, initialConfiguration.toBuilder());
+
+        Assertions.assertFalse(effectiveConfiguration.optimization().optimizeParentPointers());
+        Assertions.assertTrue(initialConfiguration.optimization().optimizeParentPointers());
     }
 
     /*
      * private void testAstGeneration(File testFile, JsoniqExpressionTreeVisitor visitor,
      * JsoniqParser.MainModuleContext context) {
-     * 
+     *
      * //check serialization of ANTLR parse tree vs expression tree serialization
      * Assert.assertTrue("AST Serialization mismatch",
      * AstSerialization.checkSerialization(visitor, context));
-     * 
-     * 
+     *
+     *
      * //MANUAL CHECKS
      * if (testFile.getName().contains("ManualFlowr.")) {
      * try {
      * FlworExpression node = (FlworExpression) visitor.getQueryExpression().getDescendants().get(0);
      * Assert.assertTrue(node.getContentClauses().size() == 4);
      * Assert.assertTrue(node.getStartClause().getClauseType() == FLWOR_CLAUSES.FOR);
-     * 
+     *
      * ForClause startClause = (ForClause) node.getStartClause();
      * Assert.assertTrue(startClause.getForVariables().get(0)
      * .getVariableReference().getVariableName().equals("var"));
      * Assert.assertTrue(startClause.getForVariables().get(0).getIterator()
      * .getDescendantsOfType(d -> d instanceof RangeExpression, true).size() == 1);
-     * 
+     *
      * RangeExpression range = (RangeExpression) startClause.getForVariables().get(0).getIterator()
      * .getDescendantsOfType(d -> d instanceof RangeExpression, true).get(0);
      * UnaryExpression unary = (UnaryExpression) range.
@@ -136,26 +209,26 @@ public class FrontendTests extends AnnotationsTestsBase {
      * getDescendantsOfType(d -> d instanceof UnaryExpression, true).get(1);
      * Assert.assertTrue(((IntegerLiteral) unary.getPostfixExpression()
      * .getPrimaryExpressionNode()).getValue() == 10);
-     * 
+     *
      * Assert.assertTrue(node.getContentClauses().get(0) instanceof LetClause);
      * Assert.assertTrue(node.getContentClauses().get(1) instanceof WhereClause);
      * Assert.assertTrue(node.getContentClauses().get(2) instanceof WhereClause);
      * Assert.assertTrue(node.getContentClauses().get(3) instanceof GroupByClause);
-     * 
+     *
      * VariableReference var = (VariableReference) node.getDescendantsOfType(d -> d instanceof VariableReference,
      * true).get(0);
      * Assert.assertTrue(var.getVariableName().equals("var"));
      * VariableReference j = (VariableReference) node.getDescendantsOfType(d -> d instanceof VariableReference,
      * true).get(1);
      * Assert.assertTrue(j.getVariableName().equals("j"));
-     * 
+     *
      * } catch (Exception ex) {
      * Assert.fail("Unexpected AST expression in file " + testFile.getName());
      * }
-     * 
-     * 
+     *
+     *
      * } else if (testFile.getName().contains("ManualOrExpression.")) {
-     * 
+     *
      * try {
      * OrExpression node = (OrExpression) visitor.getQueryExpression().getDescendants().get(0);
      * Assert.assertTrue(node.getMainExpression().getDescendants().get(0) instanceof NotExpression);
@@ -163,72 +236,50 @@ public class FrontendTests extends AnnotationsTestsBase {
      * .getDescendantsOfType(d -> d instanceof PostFixExpression, true)
      * .stream().filter(p -> ((PostFixExpression) p)
      * .getPrimaryExpressionNode() instanceof ArrayConstructor).findFirst().get();
-     * 
+     *
      * Assert.assertTrue(array != null);
-     * 
+     *
      * PostFixExpression object = (PostFixExpression) node
      * .getDescendantsOfType(d -> d instanceof PostFixExpression, true)
      * .stream().filter(p -> ((PostFixExpression) p)
      * .getPrimaryExpressionNode() instanceof ObjectConstructor).findFirst().get();
      * Assert.assertTrue(object.getPrimaryExpressionNode() != null);
-     * 
+     *
      * } catch (Exception ex) {
      * Assert.fail("Unexpected AST expression in file " + testFile.getName());
      * }
      * }
-     * 
+     *
      * }
      */
 
-    private void testVariableTypes(File testFile, MainModule mainModule) {
+    private void testVariableTypes(MainModule mainModule) {
 
-        List<Node> vars = mainModule
-            .getDescendantsMatching(
-                d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("var")
-            );
-        vars.forEach(
-            var -> Assert.assertTrue(
-                ((VariableReferenceExpression) var).getType().getItemType().equals(ItemType.integerItem)
-            )
-        );
+        List<Node> vars = mainModule.getDescendantsMatching(d -> d instanceof VariableReferenceExpression
+                && ((VariableReferenceExpression) d).getVariableName().equals(Name.createVariableInNoNamespace("var")));
+        vars.forEach(var -> Assertions.assertTrue(
+                ((VariableReferenceExpression) var).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)));
 
-        List<Node> js = mainModule
-            .getDescendantsMatching(
-                d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("j")
-            );
-        js.forEach(
-            j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.item)
-                    ||
-                    ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.stringItem)
-            )
-        );
+        List<Node> js = mainModule.getDescendantsMatching(d -> d instanceof VariableReferenceExpression
+                && ((VariableReferenceExpression) d).getVariableName().equals(Name.createVariableInNoNamespace("j")));
+        js.forEach(j -> Assertions.assertTrue(((VariableReferenceExpression) j)
+                        .getType()
+                        .getItemType()
+                        .equals(BuiltinTypesCatalogue.integerItem)
+                || ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.stringItem)));
 
-        List<Node> internals = mainModule
-            .getDescendantsMatching(
-                d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("internal")
-            );
-        internals.forEach(
-            j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.integerItem)
-            )
-        );
+        List<Node> internals = mainModule.getDescendantsMatching(d -> d instanceof VariableReferenceExpression
+                && ((VariableReferenceExpression) d)
+                        .getVariableName()
+                        .equals(Name.createVariableInNoNamespace("internal")));
+        internals.forEach(j -> Assertions.assertTrue(
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)));
 
-        List<Node> arry = mainModule
-            .getDescendantsMatching(
-                d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("arry")
-            );
-        arry.forEach(
-            j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.arrayItem)
-            )
-        );
-
+        List<Node> arry = mainModule.getDescendantsMatching(d -> d instanceof VariableReferenceExpression
+                && ((VariableReferenceExpression) d)
+                        .getVariableName()
+                        .equals(Name.createVariableInNoNamespace("arry")));
+        arry.forEach(j -> Assertions.assertTrue(
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.arrayItem)));
     }
-
-
 }

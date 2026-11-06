@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,211 +11,182 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.cli;
 
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.compiler.TranslationVisitor;
-import org.rumbledb.compiler.VisitorHelpers;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.ParsingException;
-import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.parser.JsoniqParser;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
-import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
-import java.util.Arrays;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.api.Rumble;
+import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.CliException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.optimizations.Profiler;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.serialization.SequenceSerializer;
+import org.rumbledb.serialization.SerializationParameters;
 
 public class JsoniqQueryExecutor {
-    private RumbleRuntimeConfiguration configuration;
+    private final RumbleConfiguration configuration;
+    private final ExternalBindings externalBindings;
 
-    public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
-        this.configuration = configuration;
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
+    public JsoniqQueryExecutor(RumbleConfiguration configuration) {
+        this(configuration, ExternalBindings.empty());
     }
 
-    private void checkOutputFile(String outputPath) throws IOException {
+    public JsoniqQueryExecutor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
+        this.configuration = configuration;
+        this.externalBindings = externalBindings.snapshot();
+        if (configuration.output().outputPath() == null
+                && configuration.output().outputFormat() != null) {
+            requireSerializationFormatForStdout(configuration.output().outputFormat());
+        }
+    }
+
+    private static void requireSerializationFormatForStdout(String format) {
+        if (!format.equals("serialize") && !format.equals("serialize-each-item")) {
+            throw new CliException("Output format "
+                    + format
+                    + " requires --output-path; use serialize or serialize-each-item for serialized output on screen.");
+        }
+    }
+
+    private void checkOutputFile(URI outputUri) throws IOException {
+        if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
+            if (!this.configuration.output().allowOverwrite()) {
+                throw new CliException(
+                        "Output path " + outputUri + " already exists. Please use --overwrite to overwrite.");
+            } else {
+                FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
+            }
+        }
+    }
+
+    public List<Item> runQuery() throws IOException {
+        String queryFile = this.configuration.input().queryPath();
+        URI queryUri = null;
+        if (queryFile != null) {
+            queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(queryFile, ExceptionMetadata.EMPTY_METADATA);
+        }
+        String outputPath = this.configuration.output().outputPath();
+        URI outputUri = null;
         if (outputPath != null) {
-            if (FileSystemUtil.exists(outputPath, new ExceptionMetadata(0, 0))) {
-                if (!this.configuration.getOverwrite()) {
-                    System.err.println(
-                        "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
-                    );
-                    System.exit(1);
+            outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(outputPath, ExceptionMetadata.EMPTY_METADATA);
+            checkOutputFile(outputUri);
+        }
+
+        String logPath = this.configuration.output().logPath();
+        URI logUri = null;
+        if (logPath != null) {
+            logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(logPath, ExceptionMetadata.EMPTY_METADATA);
+            if (FileSystemUtil.exists(logUri, ExceptionMetadata.EMPTY_METADATA)) {
+                FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
+            }
+        }
+
+        List<Item> outputList = null;
+
+        long startTime = System.currentTimeMillis();
+        Rumble rumble = new Rumble(this.configuration);
+        SequenceOfItems sequence = null;
+        if (this.configuration.input().query() != null) {
+            if (this.configuration.input().queryPath() != null) {
+                throw new CliException(
+                        "It is not possible to specify both a --query and a --query-path. It is either or.");
+            }
+            sequence = rumble.runQuery(this.configuration.input().query(), this.externalBindings);
+        } else {
+            sequence = rumble.runQuery(queryUri, this.externalBindings);
+        }
+
+        if (outputPath != null) {
+            sequence.write().save(outputPath);
+        } else {
+            if ("serialize".equals(outputFormat(sequence))) {
+                ConsoleOutput.out(sequence.serialize());
+            } else {
+                outputList = new ArrayList<>();
+                long materializationCount = sequence.populateList(
+                        outputList, this.configuration.runtime().resultsSizeCap());
+                ConsoleOutput.out(displayItems(sequence, outputList));
+                if (materializationCount != -1) {
+                    issueMaterializationWarning(
+                            materializationCount, this.configuration.runtime().resultsSizeCap());
+                    ConsoleOutput.warn("To write the complete output, use --output-path to select a destination.");
                 }
             }
         }
-    }
 
-    public void runQuery(String queryFile, String outputPath) throws IOException {
-        checkOutputFile(outputPath);
-        ExceptionMetadata metadata = new ExceptionMetadata(0, 0);
-        if (!FileSystemUtil.exists(queryFile, metadata)) {
-            throw new CannotRetrieveResourceException("Query file does not exist.", metadata);
-        }
-        FSDataInputStream in = FileSystemUtil.getDataInputStream(queryFile, metadata);
-        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromStream(in));
-
-        long startTime = System.currentTimeMillis();
-        MainModule mainModule = this.parse(lexer);
-        generateStaticContext(mainModule);
-        if (this.configuration.isPrintIteratorTree()) {
-            System.out.println(mainModule);
-        }
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator result = generateRuntimeIterators(mainModule);
-        if (this.configuration.isPrintIteratorTree()) {
-            StringBuffer sb = new StringBuffer();
-            result.print(sb, 0);
-            System.out.println(sb);
-        }
-
-        if (result.isRDD() && outputPath != null) {
-            JavaRDD<Item> rdd = result.getRDD(dynamicContext);
-            JavaRDD<String> output = rdd.map(o -> o.serialize());
-            output.saveAsTextFile(outputPath);
-        } else {
-            String output = getIteratorOutput(result, dynamicContext);
-            if (outputPath != null) {
-                List<String> lines = Arrays.asList(output);
-                FileSystemUtil.write(outputPath, lines, metadata);
-            } else {
-                System.out.println(output);
-            }
+        if (this.configuration.runtime().shouldApplyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
         }
 
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
-        String logPath = this.configuration.getLogPath();
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
-            FileSystemUtil.write(logPath, Collections.singletonList(time), metadata);
+            time += "\n[ProfilerCount] " + Profiler.get();
+            FileSystemUtil.append(logUri, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
         }
+        return outputList;
     }
 
-    public String runInteractive(String query) throws IOException {
-        // create temp file
-        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromString(query));
-        MainModule mainModule = this.parse(lexer);
-        generateStaticContext(mainModule);
-        if (this.configuration.isPrintIteratorTree()) {
-            System.out.println(mainModule);
-        }
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator runtimeIterator = generateRuntimeIterators(mainModule);
-        // execute locally for simple expressions
-        if (this.configuration.isPrintIteratorTree()) {
-            StringBuffer sb = new StringBuffer();
-            runtimeIterator.print(sb, 0);
-            System.out.println(sb);
-        }
-        if (!runtimeIterator.isRDD()) {
-            String localOutput = this.getIteratorOutput(runtimeIterator, dynamicContext);
-            return localOutput;
-        }
-        String rddOutput = this.getRDDResults(runtimeIterator, dynamicContext);
-        return rddOutput;
-    }
-
-    private MainModule parse(JsoniqLexer lexer) {
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
-        parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor();
-        try {
-            // TODO Handle module extras
-            JsoniqParser.ModuleContext module = parser.module();
-            JsoniqParser.MainModuleContext main = module.main;
-            return (MainModule) visitor.visit(main);
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(
-                    lexer.getText(),
-                    new ExceptionMetadata(
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine()
-                    )
-            );
-            e.initCause(ex);
-            throw e;
-        }
-    }
-
-    private void generateStaticContext(MainModule mainModule) {
-        VisitorHelpers.populateStaticContext(mainModule);
-    }
-
-    private RuntimeIterator generateRuntimeIterators(MainModule mainModule) {
-        return VisitorHelpers.generateRuntimeIterator(mainModule);
-    }
-
-    private String getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
-        iterator.open(dynamicContext);
-        Item result = null;
-        if (iterator.hasNext()) {
-            result = iterator.next();
-        }
-        if (result == null) {
-            return "";
-        }
-        String singleOutput = result.serialize();
-        if (!iterator.hasNext()) {
-            return singleOutput;
+    public static void issueMaterializationWarning(long materializationCount, long resultSizeCap) {
+        if (materializationCount == Long.MAX_VALUE) {
+            ConsoleOutput.warn("Warning! The output sequence contains "
+                    + "too many items and its materialization was capped at "
+                    + resultSizeCap
+                    + " items. This value can be increased with --result-size at startup");
         } else {
-            int itemCount = 1;
-            StringBuilder sb = new StringBuilder();
-            sb.append(result.serialize());
-            sb.append("\n");
-            while (
-                iterator.hasNext()
-                    &&
-                    ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
-                        ||
-                        this.configuration.getResultSizeCap() == 0)
-            ) {
-                sb.append(iterator.next().serialize());
-                sb.append("\n");
-                itemCount++;
-            }
-            if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
-                System.err.println(
-                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
-            }
-            // remove last comma
-            return sb.toString();
+            ConsoleOutput.warn("Warning! The output sequence contains "
+                    + materializationCount
+                    + " items but its materialization was capped at "
+                    + resultSizeCap
+                    + " items. This value can be increased with --result-size at startup");
         }
     }
 
-    private String getRDDResults(RuntimeIterator result, DynamicContext dynamicContext) {
-        JavaRDD<Item> rdd = result.getRDD(dynamicContext);
-        JavaRDD<String> output = rdd.map(o -> o.serialize());
-        List<String> collectedOutput = SparkSessionManager.collectRDDwithLimitWarningOnly(output);
+    private String displayItems(SequenceOfItems sequence, List<Item> items) {
+        String format = outputFormat(sequence);
+        requireSerializationFormatForStdout(format);
+        SerializationParameters params =
+                SerializationParameters.copy(sequence.getRuntimeStaticContext().getSerializationParameters());
+        return items.stream()
+                .map(item -> SequenceSerializer.serialize(
+                        List.of(item),
+                        params,
+                        sequence.getRuntimeStaticContext().getMetadata()))
+                .collect(Collectors.joining("\n"));
+    }
 
-        StringBuilder sb = new StringBuilder();
-        for (String item : collectedOutput) {
-            sb.append(item);
-            sb.append("\n");
+    public record InteractiveResult(String output, long count) {}
+
+    private String outputFormat(SequenceOfItems sequence) {
+        return this.configuration
+                .output()
+                .effectiveOutputFormat(sequence.getRuntimeStaticContext().getQueryLanguage());
+    }
+
+    public InteractiveResult runInteractive(String query) {
+        Rumble rumble = new Rumble(this.configuration);
+        SequenceOfItems sequence = rumble.runQuery(query, this.externalBindings);
+        List<Item> results = new ArrayList<>();
+        boolean serialize = "serialize".equals(outputFormat(sequence));
+        long count = serialize
+                ? -1
+                : sequence.populateList(results, this.configuration.runtime().resultsSizeCap());
+        String output = serialize ? sequence.serialize() : displayItems(sequence, results);
+        if (this.configuration.runtime().shouldApplyUpdates() && sequence.availableAsPUL()) {
+            sequence.applyPUL();
         }
-
-        return sb.toString();
+        return new InteractiveResult(output, count);
     }
 }

@@ -1,0 +1,3 @@
+(:JIQS: ShouldRun :)
+(for $a in ((1,2,3) treat as integer*)
+return $a) is statically integer*

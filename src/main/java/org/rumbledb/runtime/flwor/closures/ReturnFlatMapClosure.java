@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,89 +11,52 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.flwor.closures;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructType;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-
-import java.io.IOException;
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
+import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Row;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator expression;
-    private StructType oldSchema;
-    private DynamicContext parentContext;
-    private DynamicContext context;
 
-    private transient Kryo kryo;
-    private transient Input input;
+    private final DataFrameContext dataFrameContext;
+    private final ItemRuntimePlan expression;
 
-    public ReturnFlatMapClosure(RuntimeIterator expression, DynamicContext context, StructType oldSchema) {
+    List<Item> results;
+
+    public ReturnFlatMapClosure(
+            ItemRuntimePlan expression, DynamicContext context, List<FlworDataFrameColumn> columns) {
+        this.dataFrameContext = new DataFrameContext(context, columns);
         this.expression = expression;
-        this.oldSchema = oldSchema;
-        this.parentContext = context;
-        this.context = new DynamicContext(this.parentContext);
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.input = new Input();
+        if (this.expression.isSparkJobNeeded()) {
+            throw new JobWithinAJobException(
+                    "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                    this.expression.getRuntimeStaticContext().getMetadata());
+        }
+        this.results = new ArrayList<>();
     }
 
     @Override
     public Iterator<Item> call(Row row) {
-        String[] columnNames = this.oldSchema.fieldNames();
-        Map<String, DynamicContext.VariableDependency> dependencies = this.expression.getVariableDependencies();
-        this.context.removeAllVariables();
-        // Create dynamic context with deserialized data but only with dependencies
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String field = columnNames[columnIndex];
-            if (dependencies.containsKey(field)) {
-                List<Item> i = FlworDataFrameUtils.deserializeRowField(row, columnIndex, this.kryo, this.input); // rowColumns.get(columnIndex);
-                if (dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT)) {
-                    this.context.addVariableCount(field, i.get(0));
-                } else {
-                    this.context.addVariableValue(field, i);
-                }
-            }
-        }
-
-        // Apply expression to the context
-        List<Item> results = new ArrayList<>();
-        this.expression.open(this.context);
-        while (this.expression.hasNext()) {
-            results.add(this.expression.next());
-        }
-        this.expression.close();
-
-        return results.iterator();
-    }
-
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.input = new Input();
+        this.dataFrameContext.setFromRow(row);
+        this.results.clear();
+        this.results.addAll(this.expression.materialize(this.dataFrameContext.getContext()));
+        return this.results.iterator();
     }
 }

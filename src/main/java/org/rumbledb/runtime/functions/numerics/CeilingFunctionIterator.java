@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,60 +11,87 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.numerics;
+
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
-import java.util.List;
+public class CeilingFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
-public class CeilingFunctionIterator extends LocalFunctionCallIterator {
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
-    public CeilingFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public CeilingFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance()
-                .createDoubleItem(
-                    Math.ceil(
-                        this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
-                            .castToDoubleValue()
-                    )
-                );
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item value = this.getChild(0).materializeFirstOrNull(context);
+        if (value == null) {
+            return null;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ceiling function", getMetadata());
+        if ((value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
+            return value;
+        }
+        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
+            return value;
+        }
+        if (value.isInt()) {
+            return ItemFactory.getInstance().createIntItem(value.getIntValue());
+        }
+        if (value.isInteger()) {
+            return ItemFactory.getInstance().createIntegerItem(value.getIntegerValue());
+        }
+        if (value.isDecimal()) {
+            BigDecimal bd = value.getDecimalValue().setScale(0, RoundingMode.CEILING);
+            return ItemFactory.getInstance().createDecimalItem(bd);
+        }
+        if (value.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem((float) Math.ceil(value.getFloatValue()));
+        }
+        if (value.isDouble()) {
+            return ItemFactory.getInstance().createDoubleItem(Math.ceil(value.getDoubleValue()));
+        }
+        throw new UnexpectedTypeException("Unexpected value in ceiling(): " + value.getDynamicType(), getMetadata());
     }
 
-
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext value = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
+        if (value == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (SequenceType.Arity.OneOrMore.isSubtypeOf(value.getResultingType().getArity())) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!value.getResultingType().getItemType().equals(BuiltinTypesCatalogue.floatItem)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "( CAST (" + "CEIL( " + value.getResultingQuery() + " ) AS FLOAT)" + " )";
+        return new NativeClauseContext(
+                value,
+                resultingQuery,
+                new SequenceType(
+                        BuiltinTypesCatalogue.floatItem,
+                        value.getResultingType().getArity()));
+    }
 }

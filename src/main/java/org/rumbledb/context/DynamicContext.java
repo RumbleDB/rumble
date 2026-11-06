@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,314 +11,153 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.context;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.parsing.RowToItemMapper;
-import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.SparkSessionManager;
-
+import java.io.Serial;
 import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-public class DynamicContext implements Serializable, KryoSerializable {
+import org.apache.spark.api.java.JavaRDD;
 
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.resources.ResourceResolver;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+public class DynamicContext implements Serializable {
+
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Map<String, List<Item>> localVariableValues;
-    private Map<String, Item> localVariableCounts;
-    private Map<String, JavaRDD<Item>> rddVariableValues;
-    private Map<String, Dataset<Row>> dataFrameVariableValues;
-    private DynamicContext parent;
 
-    public DynamicContext() {
+    private DynamicContext parent;
+    private RumbleConfiguration conf;
+    private ExternalBindings externalBindings;
+    private ResourceResolver resourceResolver;
+
+    @Getter
+    private VariableValues variableValues;
+
+    private NamedFunctions namedFunctions;
+    private InScopeSchemaTypes inScopeSchemaTypes;
+    private OffsetDateTime currentDateTime;
+
+    @Setter
+    @Getter
+    private int currentMutabilityLevel;
+
+    private final GlobalVariables globalVariables;
+    /**
+     * The top-level runtime iterator for constructing the XML Node Tree.
+     * This is used in the context of direct constructors.
+     */
+    @Setter
+    @Getter
+    private ItemRuntimePlan topLevelRuntimeIterator;
+
+    /**
+     * Creates a new, empty module context (without parent).
+     *
+     * @param conf the Rumble configuration.
+     */
+    public DynamicContext(RumbleConfiguration conf) {
+        this(conf, ExternalBindings.empty());
+    }
+
+    public DynamicContext(RumbleConfiguration conf, ExternalBindings externalBindings) {
+        this(conf, externalBindings, new ResourceResolver());
+    }
+
+    public DynamicContext(
+            RumbleConfiguration conf, ExternalBindings externalBindings, ResourceResolver resourceResolver) {
         this.parent = null;
-        this.localVariableCounts = new HashMap<>();
-        this.localVariableValues = new HashMap<>();
-        this.rddVariableValues = new HashMap<>();
-        this.dataFrameVariableValues = new HashMap<>();
+        this.variableValues = new VariableValues(conf);
+        this.conf = conf;
+        this.externalBindings = externalBindings;
+        this.resourceResolver = resourceResolver;
+        this.namedFunctions = new NamedFunctions();
+        this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.currentDateTime = OffsetDateTime.now();
+        this.currentMutabilityLevel = 0;
+        this.globalVariables = new GlobalVariables();
+        this.topLevelRuntimeIterator = null;
     }
 
     public DynamicContext(DynamicContext parent) {
+        if (parent == null) {
+            throw new OurBadException("Dynamic context defined with null parent");
+        }
         this.parent = parent;
-        this.localVariableCounts = new HashMap<>();
-        this.localVariableValues = new HashMap<>();
-        this.rddVariableValues = new HashMap<>();
-        this.dataFrameVariableValues = new HashMap<>();
+        this.variableValues = new VariableValues(this.parent.variableValues);
+        this.conf = null;
+        this.externalBindings = null;
+        this.namedFunctions = null;
+        this.inScopeSchemaTypes = null;
+        this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
+        this.globalVariables = parent.globalVariables;
+        this.topLevelRuntimeIterator = parent.topLevelRuntimeIterator;
     }
 
     public DynamicContext(
             DynamicContext parent,
-            Map<String, List<Item>> localVariableValues,
-            Map<String, JavaRDD<Item>> rddVariableValues,
-            Map<String, Dataset<Row>> dataFrameVariableValues
-    ) {
+            Map<Name, List<Item>> localVariableValues,
+            Map<Name, JavaRDD<Item>> rddVariableValues,
+            Map<Name, HomogeneousItemDataFrame> dataFrameVariableValues) {
+        if (parent == null) {
+            throw new OurBadException("Dynamic context defined with null parent");
+        }
         this.parent = parent;
-        this.localVariableCounts = new HashMap<>();
-        this.localVariableValues = localVariableValues;
-        this.rddVariableValues = rddVariableValues;
-        this.dataFrameVariableValues = dataFrameVariableValues;
-
+        this.variableValues = new VariableValues(
+                this.parent.variableValues,
+                localVariableValues,
+                rddVariableValues,
+                dataFrameVariableValues,
+                parent.globalVariables);
+        this.namedFunctions = null;
+        this.currentMutabilityLevel = parent.getCurrentMutabilityLevel();
+        this.globalVariables = parent.globalVariables;
+        this.topLevelRuntimeIterator = parent.topLevelRuntimeIterator;
     }
 
-    public void setBindingsFromTuple(FlworTuple tuple, ExceptionMetadata metadata) {
-        for (String key : tuple.getLocalKeys()) {
-            this.addVariableValue(key, tuple.getLocalValue(key, metadata));
-        }
-        for (String key : tuple.getRDDKeys()) {
-            this.addVariableValue(key, tuple.getRDDValue(key, metadata));
-        }
-        for (String key : tuple.getDataFrameKeys()) {
-            this.addVariableValue(key, tuple.getDataFrameValue(key, metadata));
-        }
-    }
-
-    public Set<String> getLocalVariableNames() {
-        return this.localVariableValues.keySet();
-    }
-
-    public Set<String> getRDDVariableNames() {
-        return this.rddVariableValues.keySet();
-    }
-
-    public Set<String> getDataFrameVariableNames() {
-        return this.dataFrameVariableValues.keySet();
-    }
-
-    public boolean contains(String varName) {
-        boolean localContains = this.localVariableValues.containsKey(varName)
-            || this.rddVariableValues.containsKey(varName)
-            || this.dataFrameVariableValues.containsKey(varName);
-        if (localContains) {
-            return true;
+    public RumbleConfiguration getRumbleConfiguration() {
+        if (this.conf != null) {
+            return this.conf;
         }
         if (this.parent != null) {
-            return this.parent.contains(varName);
-        }
-        return false;
-    }
-
-    public boolean isRDD(String varName, ExceptionMetadata metadata) {
-        if (!contains(varName)) {
-            throw new OurBadException(
-                    "Runtime error retrieving variable " + varName + " value.",
-                    metadata
-            );
-        }
-        return this.rddVariableValues.containsKey(varName)
-            || this.dataFrameVariableValues.containsKey(varName);
-    }
-
-    public boolean isDataFrame(String varName, ExceptionMetadata metadata) {
-        if (!contains(varName)) {
-            throw new OurBadException(
-                    "Runtime error retrieving variable " + varName + " value.",
-                    metadata
-            );
-        }
-        return this.dataFrameVariableValues.containsKey(varName);
-    }
-
-    public void addVariableValue(String varName, List<Item> value) {
-        this.localVariableValues.put(varName, value);
-    }
-
-    public void addVariableValue(String varName, JavaRDD<Item> value) {
-        this.rddVariableValues.put(varName, value);
-    }
-
-    public void addVariableValue(String varName, Dataset<Row> value) {
-        this.dataFrameVariableValues.put(varName, value);
-    }
-
-    public void addVariableCount(String varName, Item count) {
-        this.localVariableCounts.put(varName, count);
-    }
-
-    public List<Item> getLocalVariableValue(String varName, ExceptionMetadata metadata) {
-        if (this.localVariableValues.containsKey(varName)) {
-            return this.localVariableValues.get(varName);
-        }
-
-        if (this.rddVariableValues.containsKey(varName)) {
-            JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
-            return SparkSessionManager.collectRDDwithLimit(rdd, metadata);
-        }
-
-        if (this.parent != null) {
-            return this.parent.getLocalVariableValue(varName, metadata);
-        }
-
-        if (this.localVariableCounts.containsKey(varName)) {
-            throw new OurBadException(
-                    "Runtime error retrieving variable " + varName + " value: only count available.",
-                    metadata
-            );
-        }
-
-        throw new SparksoniqRuntimeException(
-                "Runtime error retrieving variable " + varName + " value",
-                metadata
-        );
-    }
-
-    public JavaRDD<Item> getRDDVariableValue(String varName, ExceptionMetadata metadata) {
-        if (this.rddVariableValues.containsKey(varName)) {
-            return this.rddVariableValues.get(varName);
-        }
-
-        if (this.dataFrameVariableValues.containsKey(varName)) {
-            Dataset<Row> df = this.dataFrameVariableValues.get(varName);
-            JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(metadata));
-        }
-
-        if (this.parent != null) {
-            return this.parent.getRDDVariableValue(varName, metadata);
-        }
-
-        throw new OurBadException(
-                "Runtime error retrieving variable " + varName + " value",
-                metadata
-        );
-    }
-
-    public Dataset<Row> getDataFrameVariableValue(String varName, ExceptionMetadata metadata) {
-        if (this.dataFrameVariableValues.containsKey(varName)) {
-            return this.dataFrameVariableValues.get(varName);
-        }
-
-        if (this.parent != null) {
-            return this.parent.getDataFrameVariableValue(varName, metadata);
-        }
-
-        throw new OurBadException(
-                "Runtime error retrieving variable " + varName + " value",
-                metadata
-        );
-    }
-
-    public Item getVariableCount(String varName) {
-        if (this.localVariableCounts.containsKey(varName)) {
-            return this.localVariableCounts.get(varName);
-        }
-        if (this.dataFrameVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance()
-                .createIntegerItem((int) this.dataFrameVariableValues.get(varName).count());
-        }
-        if (this.rddVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance().createIntegerItem((int) this.rddVariableValues.get(varName).count());
-        }
-        if (this.localVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance().createIntegerItem(this.localVariableValues.get(varName).size());
-        }
-        if (this.parent != null) {
-            return this.parent.getVariableCount(varName);
-        }
-        throw new OurBadException("Runtime error retrieving variable " + varName + " value");
-    }
-
-    public void removeVariable(String varName) {
-        this.localVariableValues.remove(varName);
-        this.localVariableCounts.remove(varName);
-        this.rddVariableValues.remove(varName);
-        this.dataFrameVariableValues.remove(varName);
-
-    }
-
-    public void removeAllVariables() {
-        this.localVariableValues.clear();
-        this.localVariableCounts.clear();
-        this.rddVariableValues.clear();
-        this.dataFrameVariableValues.clear();
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.parent);
-        kryo.writeObject(output, this.localVariableValues);
-        kryo.writeObject(output, this.rddVariableValues);
-        kryo.writeObject(output, this.dataFrameVariableValues);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.parent = kryo.readObjectOrNull(input, DynamicContext.class);
-        this.localVariableValues = kryo.readObject(input, HashMap.class);
-        this.rddVariableValues = kryo.readObject(input, HashMap.class);
-        this.dataFrameVariableValues = kryo.readObject(input, HashMap.class);
-    }
-
-    public Item getPosition() {
-        if (this.localVariableValues.containsKey("$position")) {
-            return this.localVariableValues.get("$position").get(0);
-        }
-        if (this.parent != null) {
-            return this.parent.getPosition();
+            return this.parent.getRumbleConfiguration();
         }
         return null;
     }
 
-    public void setPosition(long position) {
-        List<Item> list = new ArrayList<>();
-        Item item;
-        if (position < Integer.MAX_VALUE) {
-            item = ItemFactory.getInstance().createIntegerItem((int) position);
-
-        } else {
-            item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
-        }
-        list.add(item);
-        this.localVariableValues.put("$position", list);
+    public ResourceResolver getResourceResolver() {
+        return this.resourceResolver == null ? this.parent.getResourceResolver() : this.resourceResolver;
     }
 
-    public Item getLast() {
-        if (this.localVariableValues.containsKey("$last")) {
-            return this.localVariableValues.get("$last").get(0);
+    public ExternalBindings getExternalBindings() {
+        if (this.externalBindings != null) {
+            return this.externalBindings;
         }
         if (this.parent != null) {
-            return this.parent.getLast();
+            return this.parent.getExternalBindings();
         }
         return null;
-    }
-
-    public void setLast(long last) {
-        List<Item> list = new ArrayList<>();
-        Item item;
-        if (last < Integer.MAX_VALUE) {
-            item = ItemFactory.getInstance().createIntegerItem((int) last);
-        } else {
-            item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(last));
-        }
-        list.add(item);
-        this.localVariableValues.put("$last", list);
     }
 
     public enum VariableDependency {
         FULL,
         COUNT,
         SUM,
-        AVG,
+        AVERAGE,
         MAX,
         MIN
     }
@@ -334,10 +170,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public static void mergeVariableDependencies(
-            Map<String, DynamicContext.VariableDependency> into,
-            Map<String, DynamicContext.VariableDependency> from
-    ) {
-        for (String v : from.keySet()) {
+            Map<Name, DynamicContext.VariableDependency> into, Map<Name, DynamicContext.VariableDependency> from) {
+        for (Name v : from.keySet()) {
             if (into.containsKey(v)) {
                 into.put(v, DynamicContext.mergeSingleVariableDependency(into.get(v), from.get(v)));
             } else {
@@ -346,27 +180,23 @@ public class DynamicContext implements Serializable, KryoSerializable {
         }
     }
 
+    public static Map<Name, DynamicContext.VariableDependency> copyVariableDependencies(
+            Map<Name, DynamicContext.VariableDependency> from) {
+        Map<Name, DynamicContext.VariableDependency> result = new HashMap<>();
+        for (Name v : from.keySet()) {
+            result.put(v, from.get(v));
+        }
+        return result;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("  Local:\n");
-        for (String name : this.localVariableValues.keySet()) {
-            sb.append("    " + name + " (" + this.localVariableValues.get(name).size() + " items)\n");
-            if (this.localVariableValues.get(name).size() == 1) {
-                sb.append("      " + this.localVariableValues.get(name).get(0).serialize() + "\n");
-            }
-        }
-        sb.append("  Counts:\n");
-        for (String name : this.localVariableCounts.keySet()) {
-            sb.append("    " + name + " (" + this.localVariableCounts.get(name) + " items)\n");
-        }
-        sb.append("  RDD:\n");
-        for (String name : this.rddVariableValues.keySet()) {
-            sb.append("    " + name + " (" + this.rddVariableValues.get(name).count() + " items)\n");
-        }
-        sb.append("  Data Frames:\n");
-        for (String name : this.dataFrameVariableValues.keySet()) {
-            sb.append("    " + name + " (" + this.dataFrameVariableValues.get(name).count() + " items)\n");
+        sb.append(this.variableValues.toString());
+        if (this.namedFunctions != null) {
+            sb.append("  Known functions:\n");
+            sb.append(this.namedFunctions + "\n");
         }
         if (this.parent != null) {
             sb.append("Parent context:\n");
@@ -375,5 +205,48 @@ public class DynamicContext implements Serializable, KryoSerializable {
         return sb.toString();
     }
 
-}
+    public void setNamedFunctions(NamedFunctions knownFunctions) {
+        if (this.parent != null) {
+            throw new OurBadException("Known function scan only be stored in the module context.");
+        }
+        this.namedFunctions = knownFunctions;
+    }
 
+    public NamedFunctions getNamedFunctions() {
+        if (this.namedFunctions != null) {
+            return this.namedFunctions;
+        }
+        if (this.parent != null) {
+            return this.parent.getNamedFunctions();
+        }
+        throw new OurBadException("Known functions are not set up properly in dynamic context.");
+    }
+
+    public DynamicContext getModuleContext() {
+        if (this.parent != null) {
+            return this.parent.getModuleContext();
+        }
+        return this;
+    }
+
+    public InScopeSchemaTypes getInScopeSchemaTypes() {
+        if (this.inScopeSchemaTypes != null) {
+            return this.inScopeSchemaTypes;
+        }
+        if (this.parent != null) {
+            return this.parent.getInScopeSchemaTypes();
+        }
+        throw new OurBadException("In-scope schema types are not set up properly in dynamic context.");
+    }
+
+    public OffsetDateTime getCurrentDateTime() {
+        if (this.parent != null) {
+            return this.parent.getCurrentDateTime();
+        }
+        return this.currentDateTime;
+    }
+
+    public void addGlobalVariable(Name globalVariable) {
+        this.globalVariables.addGlobalVariable(globalVariable);
+    }
+}

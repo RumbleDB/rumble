@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,10 +11,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package utils.annotations;
 
 import java.io.BufferedReader;
@@ -25,14 +20,15 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 /**
  * Credit to Andrei Barsan, teammate from ACD ;)
  */
 public class AnnotationProcessor {
+    private static final String TOKEN_SEPARATOR = "\\s*;\\s*";
 
     public static final String OUTPUT_KEY = "Output";
+    public static final String UPDATE_DIM_KEY = "UpdateDim";
     public static final String ERROR_MESSAGE = "ErrorCode";
     public static final String ERROR_METADATA = "ErrorMetadata";
     public static final String SHOULD_PARSE = "ShouldParse";
@@ -44,17 +40,14 @@ public class AnnotationProcessor {
     public static final String MAGIC_COOKIE = "(:JIQS:";
 
     public static String readAnnotationText(Reader reader) throws IOException {
-        BufferedReader bread = new BufferedReader(reader);
-        return String
-            .join(
-                " ",
-                (Iterable<String>) bread.lines()
-                    .map(String::trim)
-                    .filter((line) -> line.startsWith(MAGIC_COOKIE))
-                    .map((line) -> line.substring(MAGIC_COOKIE.length()).trim())::iterator
-            )
-            .replace(":)", "")
-            .trim();
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        return String.join(" ", (Iterable<String>) bufferedReader
+                        .lines()
+                        .map(String::trim)
+                        .filter((line) -> line.startsWith(MAGIC_COOKIE))
+                        .map((line) -> line.substring(MAGIC_COOKIE.length()).trim())::iterator)
+                .replace(":)", "")
+                .trim();
     }
 
     public static TestAnnotation readAnnotation(Reader reader) throws IOException, AnnotationParseException {
@@ -62,35 +55,22 @@ public class AnnotationProcessor {
         if (annotationText.isEmpty()) {
             throw new AnnotationParseException(annotationText, "Found empty annotation.");
         }
-        String[] annotationTokens = annotationText.split("\\s*;\\s*");
+        String[] annotationTokens = annotationText.split(TOKEN_SEPARATOR);
 
-        Optional<Boolean> shouldParse = Optional.empty();
-        Optional<Boolean> shouldCompile = Optional.empty();
-        Optional<Boolean> shouldRun = Optional.empty();
-
+        AnnotationExpectation expectation = null;
         Map<String, String> parameters = new HashMap<>();
         for (String token : annotationTokens) {
-            if (token.equals(SHOULD_PARSE)) {
-                shouldParse = Optional.of(true);
-            } else if (token.equals(SHOULD_NOT_PARSE)) {
-                shouldParse = Optional.of(false);
-            }
-            if (token.equals(SHOULD_COMPILE)) {
-                shouldCompile = Optional.of(true);
-            } else if (token.equals(SHOULD_NOT_COMPILE)) {
-                shouldCompile = Optional.of(false);
-            }
-            if (token.equals(SHOULD_RUN)) {
-                shouldRun = Optional.of(true);
-            } else if (token.equals(SHOULD_CRASH)) {
-                shouldRun = Optional.of(false);
+            AnnotationExpectation tokenExpectation = AnnotationExpectation.fromToken(token);
+            if (tokenExpectation != null) {
+                if (expectation != null) {
+                    throw new AnnotationParseException(annotationText, "Found multiple test expectations.");
+                }
+                expectation = tokenExpectation;
             } else if (token.contains("=")) {
-
                 String[] tokenParts = token.split("=", 2);
                 String key = tokenParts[0].trim();
                 String value = tokenParts[1].trim();
-                // Trim any quotes surrounding the value.
-                if (value.startsWith("\"")) {
+                if (value.length() >= 2 && value.startsWith("\"") && value.endsWith("\"")) {
                     value = value.substring(1, value.length() - 1);
                 }
                 value = value.replaceAll("([^\\\\])\\\\n", "$1\n").replaceAll("\\\\\\\\n", "\\\\n");
@@ -98,212 +78,111 @@ public class AnnotationProcessor {
             }
         }
 
-        if (!shouldParse.isPresent() && !shouldCompile.isPresent() && !shouldRun.isPresent()) {
+        if (expectation == null) {
             throw new AnnotationParseException(
-                    annotationText,
-                    String.format("Missing compilability indicator (e.g. [%s]).", SHOULD_PARSE)
-            );
+                    annotationText, String.format("Missing test expectation (e.g. [%s]).", SHOULD_PARSE));
         }
 
-        if (shouldRun.isPresent()) {
-            if (shouldRun.get())
-                return new RunnableTestAnnotation(parameters.get(OUTPUT_KEY));
-            else
-                return new UnrunnableTestAnnotation(
-                        parameters.get(ERROR_MESSAGE),
-                        parameters.get(ERROR_METADATA)
-                );
-        }
-
-        if (shouldCompile.isPresent()) {
-            if (shouldCompile.get())
-                return new CompilableTestAnnotation();
-            else
-                return new UncompilableTestAnnotation(
-                        parameters.get(ERROR_MESSAGE),
-                        parameters.get(ERROR_METADATA)
-                );
-        }
-
-        if (shouldParse.get())
-            return new ParsableTestAnnotation();
-        else
-            return new UnparsableTestAnnotation(
-                    parameters.get(ERROR_MESSAGE),
-                    parameters.get(ERROR_METADATA)
-            );
+        return new TestAnnotation(
+                expectation, parameters.get(OUTPUT_KEY), parameters.get(ERROR_MESSAGE), parameters.get(ERROR_METADATA));
     }
 
-    public static abstract class TestAnnotation {
-        protected String expectedOutput = "";
-        protected String errorCode = "";
-        protected String errorMetadata = "";
-
-        public TestAnnotation() {
+    public static UpdateDimensions readUpdateDimensions(Reader reader) throws IOException, AnnotationParseException {
+        String annotationText = readAnnotationText(reader);
+        if (annotationText.isEmpty()) {
+            throw new AnnotationParseException(annotationText, "Found empty annotation.");
         }
+        String[] annotationTokens = annotationText.split(TOKEN_SEPARATOR);
+        for (String token : annotationTokens) {
+            if (token.contains(UPDATE_DIM_KEY)) {
 
-        public String getOutput() {
-            return this.expectedOutput;
+                String[] tokenParts = token.split("=", 2);
+                String value = tokenParts[1].trim();
+                return parseUpdateDimensions(annotationText, value);
+            }
         }
-
-        public String getErrorCode() {
-            return this.errorCode;
-        }
-
-        public String getErrorMetadata() {
-            return this.errorMetadata;
-        }
-
-        public abstract boolean shouldParse();
-
-        public abstract boolean shouldCompile();
-
-        public abstract boolean shouldRun();
+        throw new AnnotationParseException(annotationText, "No UpdateDim key found.");
     }
 
-    public static class RunnableTestAnnotation extends TestAnnotation {
-        public RunnableTestAnnotation(String expectedOut) {
-            super();
-            this.expectedOutput = expectedOut;
-            this.errorCode = null;
-            this.errorMetadata = null;
+    private static UpdateDimensions parseUpdateDimensions(String annotationText, String value)
+            throws AnnotationParseException {
+        if (!value.matches("\\[\\d+,\\d+]")) {
+            throw new AnnotationParseException(annotationText, "UpdateDim key does not match regex: \"\\[\\d+,\\d+]\"");
+        }
+        String[] dimensions = value.substring(1, value.length() - 1).split(",");
+        return new UpdateDimensions(Integer.parseInt(dimensions[0]), Integer.parseInt(dimensions[1]));
+    }
+
+    // Declaration order follows the query pipeline and is used for stage comparisons.
+    public enum TestStage {
+        PARSING("parse"),
+        COMPILATION("compile"),
+        RUNTIME("run");
+
+        private final String verb;
+
+        TestStage(String verb) {
+            this.verb = verb;
         }
 
-        public String getOutput() {
-            return this.expectedOutput;
+        public String verb() {
+            return this.verb;
         }
 
-        @Override
-        public boolean shouldParse() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldRun() {
-            return true;
+        private boolean isAfter(TestStage other) {
+            return this.ordinal() > other.ordinal();
         }
     }
 
-    public static class UnrunnableTestAnnotation extends TestAnnotation {
-
-        public UnrunnableTestAnnotation(String errorCode, String errorMetadata) {
-            super();
-            this.errorCode = errorCode;
-            this.errorMetadata = errorMetadata;
-        }
-
-        @Override
-        public boolean shouldParse() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldRun() {
-            return false;
-        }
-
+    public enum ExpectedOutcome {
+        SUCCESS,
+        FAILURE
     }
 
-    public static class UncompilableTestAnnotation extends TestAnnotation {
+    public enum AnnotationExpectation {
+        UNPARSABLE(SHOULD_NOT_PARSE, TestStage.PARSING, ExpectedOutcome.FAILURE),
+        PARSABLE(SHOULD_PARSE, TestStage.PARSING, ExpectedOutcome.SUCCESS),
+        UNCOMPILABLE(SHOULD_NOT_COMPILE, TestStage.COMPILATION, ExpectedOutcome.FAILURE),
+        COMPILABLE(SHOULD_COMPILE, TestStage.COMPILATION, ExpectedOutcome.SUCCESS),
+        UNRUNNABLE(SHOULD_CRASH, TestStage.RUNTIME, ExpectedOutcome.FAILURE),
+        RUNNABLE(SHOULD_RUN, TestStage.RUNTIME, ExpectedOutcome.SUCCESS);
 
-        public UncompilableTestAnnotation(String errorCode, String errorMetadata) {
-            super();
-            this.errorCode = errorCode;
-            this.errorMetadata = errorMetadata;
+        private final String token;
+        private final TestStage stage;
+        private final ExpectedOutcome outcome;
+
+        AnnotationExpectation(String token, TestStage stage, ExpectedOutcome outcome) {
+            this.token = token;
+            this.stage = stage;
+            this.outcome = outcome;
         }
 
-        @Override
-        public boolean shouldParse() {
-            return true;
+        public TestStage stage() {
+            return this.stage;
         }
 
-        @Override
-        public boolean shouldCompile() {
-            return false;
+        public boolean expectsSuccess() {
+            return this.outcome == ExpectedOutcome.SUCCESS;
         }
 
-        @Override
-        public boolean shouldRun() {
-            throw new RuntimeException("Compile annotations runLocal request");
+        public boolean acceptsFailureAt(TestStage failureStage) {
+            // Positive annotations guarantee only their target stage; later failures are out of scope.
+            return expectsSuccess() ? failureStage.isAfter(this.stage) : failureStage == this.stage;
+        }
+
+        private static AnnotationExpectation fromToken(String token) {
+            for (AnnotationExpectation expectation : values()) {
+                if (expectation.token.equals(token)) {
+                    return expectation;
+                }
+            }
+            return null;
         }
     }
 
-    public static class CompilableTestAnnotation extends TestAnnotation {
-        public CompilableTestAnnotation() {
-            super();
-            this.errorCode = null;
-        }
+    public record TestAnnotation(
+            AnnotationExpectation expectation, String output, String errorCode, String errorMetadata) {}
 
-        @Override
-        public boolean shouldParse() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldRun() {
-            throw new RuntimeException("Compile annotations runLocal request");
-        }
-    }
-
-    public static class ParsableTestAnnotation extends TestAnnotation {
-
-        public ParsableTestAnnotation() {
-            super();
-            this.errorCode = null;
-        }
-
-        @Override
-        public boolean shouldParse() {
-            return true;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            throw new RuntimeException("Parsable annotations compilation request");
-        }
-
-        @Override
-        public boolean shouldRun() {
-            throw new RuntimeException("Parsable annotations runLocal request");
-        }
-    }
-
-    public static class UnparsableTestAnnotation extends TestAnnotation {
-        public UnparsableTestAnnotation(String errorCode, String errorMetadata) {
-            super();
-            this.errorCode = errorCode;
-            this.errorMetadata = errorMetadata;
-        }
-
-        @Override
-        public boolean shouldParse() {
-            return false;
-        }
-
-        @Override
-        public boolean shouldCompile() {
-            throw new RuntimeException("Parsable annotations compilation request");
-        }
-
-        @Override
-        public boolean shouldRun() {
-            throw new RuntimeException("Parsable annotations runLocal request");
-        }
-
-    }
+    // Update tests use these coordinates to run files in deterministic dependency order.
+    public record UpdateDimensions(int dimension1, int dimension2) {}
 }

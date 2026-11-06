@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun :)
+(3 * 12.2) is statically decimal, (3 treat as integer? * 12.2) is statically decimal?, (2 * 2) is statically integer, (6 idiv 5) is statically integer, (3.22 idiv 1.3) is statically integer, (3e4 idiv 14.44) is statically integer, (6 div 5) is statically decimal, (10 div 5) is statically decimal, (12 div 3.3) is statically decimal, (2e3 div 13) is statically double, (3 mod 1.2) is statically decimal, (34 mod 11) is statically integer, (3e4 mod 29) is statically double

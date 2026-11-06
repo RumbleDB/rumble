@@ -1,152 +1,333 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.functions.input;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.EnumSet;
+import java.util.List;
+
+import org.apache.hadoop.HadoopIllegalArgumentException;
 import org.apache.hadoop.fs.CreateFlag;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnsupportedFileSystemException;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
+
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.EnumSet;
-import java.util.List;
+import org.rumbledb.exceptions.RumbleException;
 
 public class FileSystemUtil {
-
-    public static URI validateURI(String url, ExceptionMetadata metadata) {
-        if (url.isEmpty()) {
-            throw new CannotRetrieveResourceException(
-                    "No path provided!",
-                    new ExceptionMetadata(0, 0)
-            );
-        }
-        try {
-            return new URI(url);
-        } catch (URISyntaxException e) {
-            throw new CannotRetrieveResourceException("Malformed URL: " + url, metadata);
-        }
+    public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
+        return resolve(base, url, metadata, false);
     }
 
-    public static boolean exists(String url, ExceptionMetadata metadata) {
-        URI locator = validateURI(url, metadata);
-        try {
-            FileContext fileContext = FileContext.getFileContext();
-            Path path = new Path(url);
-            return url.contains("*") || fileContext.util().exists(path);
+    public static URI resolveFileSystemURI(URI base, String url, ExceptionMetadata metadata) {
+        return resolve(base, url, metadata, true);
+    }
 
-        } catch (UnsupportedFileSystemException e) {
-            throw new CannotRetrieveResourceException(
-                    "No file system is configured for scheme " + url + "!",
-                    metadata
-            );
+    private static URI resolve(URI base, String url, ExceptionMetadata metadata, boolean fileSystemPath) {
+        if (!base.isAbsolute()) {
+            throw new OurBadException("The base URI is not absolute!", metadata);
+        }
+        try {
+            URI relativeURI = fileSystemPath ? parseFileSystemURI(url) : parseURI(url);
+            URI resolvedURI = base.resolve(relativeURI);
+            if (url.endsWith("/")) {
+                // preserve trailing slash if any for correct resolution against it as a directory in the future.
+                String resolvedString = resolvedURI.toString();
+                if (!resolvedString.endsWith("/")) {
+                    resolvedString += "/";
+                    resolvedURI = new URI(resolvedString);
+                }
+            }
+            return resolvedURI;
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new CannotRetrieveResourceException(
-                    "Error while accessing the " + locator.getScheme() + " filesystem.",
-                    metadata
-            );
+            RumbleException rumbleException = new CannotRetrieveResourceException(
+                    "Malformed URI: " + url + " Cause: " + e.getMessage(), metadata);
+            rumbleException.initCause(e);
+            throw rumbleException;
         }
     }
 
-    public static boolean delete(String url, ExceptionMetadata metadata) {
-        URI locator = validateURI(url, metadata);
-        if (url.contains("*")) {
-            throw new CannotRetrieveResourceException(
-                    "Path cannot contain *!",
-                    metadata
-            );
+    private static URI parseURI(String value) throws URISyntaxException {
+        String escapedValue = value.replace(" ", "%20");
+        URI uri = new URI(escapedValue);
+        if (!value.equals(escapedValue) && uri.isOpaque()) {
+            throw new URISyntaxException(value, "Spaces are not allowed in opaque URIs");
+        }
+        return uri;
+    }
+
+    private static URI parseFileSystemURI(String value) throws URISyntaxException {
+        // An explicit URI is already percent-encoded. Hadoop Path(String) would encode it again.
+        try {
+            URI uri = parseURI(value);
+            if (uri.isAbsolute() && !uri.isOpaque()) {
+                return uri;
+            }
+        } catch (URISyntaxException e) {
+            // Raw filesystem paths may contain characters that are not valid in a URI.
+        }
+        try {
+            return new Path(value).toUri();
+        } catch (HadoopIllegalArgumentException e) {
+            // Fall back to Java URI parsing for URI references Hadoop Path cannot parse.
+            // For example, urn: is a valid URI reference but not a valid Hadoop Path.
+            return parseURI(value);
+        }
+    }
+
+    /*
+     * Spark methods cannot handle URIs (e.g. with % escaping) so
+     * we need to convert them to paths.
+     */
+    public static String convertURIToStringForSpark(URI uri) {
+        Path path = new Path(uri);
+        return path.toString();
+    }
+
+    public static URI resolveURIAgainstWorkingDirectory(String url, ExceptionMetadata metadata) {
+        // TODO: conf is not used here, maybe we can remove it from the signature of this method and all its callers.
+        try {
+            Path workingDirectory = FileContext.getFileContext().getWorkingDirectory();
+            Path virtualPath = new Path(workingDirectory, "foo");
+            URI virtualURI = virtualPath.toUri();
+            if (url == null || url.isEmpty()) {
+                url = ".";
+            }
+            URI relativeURI = parseFileSystemURI(url);
+            return virtualURI.resolve(relativeURI);
+        } catch (UnsupportedFileSystemException e) {
+            throw new CannotRetrieveResourceException("The default file system is not supported!", metadata);
+        } catch (Exception e) {
+            RumbleException rumbleException = new CannotRetrieveResourceException(
+                    "Malformed URI: " + url + " Cause: " + e.getMessage(), metadata);
+            rumbleException.initCause(e);
+            throw rumbleException;
+        }
+    }
+
+    public static boolean exists(URI locator, ExceptionMetadata metadata) {
+        if (!locator.isAbsolute()) {
+            throw new OurBadException("Unresolved uri passed to exists()");
         }
         try {
             FileContext fileContext = FileContext.getFileContext();
-            Path path = new Path(url);
+            Path path = new Path(locator);
+            return locator.toString().contains("*") || fileContext.util().exists(path);
+
+        } catch (Exception e) {
+            handleException(e, locator, metadata);
+            return false;
+        }
+    }
+
+    public static boolean delete(URI locator, ExceptionMetadata metadata) {
+        checkForAbsoluteAndNoWildcards(locator, metadata);
+        try {
+            FileContext fileContext = FileContext.getFileContext();
+            Path path = new Path(locator);
             if (!fileContext.util().exists(path)) {
-                throw new OurBadException("Cannot delete file that does not exist: " + url);
+                throw new CannotRetrieveResourceException(
+                        "Cannot delete file that does not exist: " + locator, metadata);
             }
             return fileContext.delete(path, true);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new CannotRetrieveResourceException(
-                    "Error while accessing the " + locator.getScheme() + " filesystem.",
-                    metadata
-            );
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new OurBadException(
-                    "An unexpected exception happened while deleting.",
-                    metadata
-            );
+            handleException(e, locator, metadata);
+            return false;
         }
     }
 
-    public static FSDataInputStream getDataInputStream(String url, ExceptionMetadata metadata) {
-        URI locator = validateURI(url, metadata);
-        if (url.contains("*")) {
-            throw new CannotRetrieveResourceException(
-                    "Path cannot contain *!",
-                    metadata
-            );
+    public static InputStream getDataInputStream(URI locator, ExceptionMetadata metadata) {
+        checkForAbsoluteAndNoWildcards(locator, metadata);
+        if (locator.getScheme().equals("http") || locator.getScheme().equals("https")) {
+            return getDataInputStreamHTML(locator, metadata);
         }
         try {
-            locator = new URI(url);
             FileContext fileContext = FileContext.getFileContext();
-            Path path = new Path(url);
+            Path path = new Path(locator);
             if (!fileContext.util().exists(path)) {
-                throw new OurBadException("Cannot read file that does not exist: " + url);
+                throw new CannotRetrieveResourceException("File does not exist: " + locator, metadata);
             }
             return fileContext.open(path);
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new CannotRetrieveResourceException(
-                    "Error while accessing the " + locator.getScheme() + " filesystem.",
-                    metadata
-            );
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new OurBadException(
-                    "An unexpected exception happened while reading the file.",
-                    metadata
-            );
+            handleException(e, locator, metadata);
+            return null;
         }
     }
 
-    public static void write(String url, List<String> content, ExceptionMetadata metadata) {
-        URI locator = validateURI(url, metadata);
-        if (url.contains("*")) {
-            throw new CannotRetrieveResourceException(
-                    "Path cannot contain *!",
-                    metadata
-            );
-        }
+    public static InputStream getDataInputStreamHTML(URI locator, ExceptionMetadata metadata) {
+        CloseableHttpClient httpclient = HttpClients.createDefault();
+        HttpGet httpGet = new HttpGet(locator);
         try {
-            locator = new URI(url);
+            CloseableHttpResponse response = httpclient.execute(httpGet);
+            int statusCode = response.getStatusLine().getStatusCode();
+            if (statusCode == 200) {
+                HttpEntity entity = response.getEntity();
+                return entity.getContent();
+            }
+            throw new CannotRetrieveResourceException(
+                    "Unsuccessful status code: " + statusCode + " while requesting " + locator, metadata);
+        } catch (ClientProtocolException e) {
+            handleException(e, locator, metadata);
+        } catch (IOException e) {
+            handleException(e, locator, metadata);
+        }
+        return null;
+    }
+
+    public static String readContent(URI locator, ExceptionMetadata metadata) {
+        checkForAbsoluteAndNoWildcards(locator, metadata);
+
+        InputStream inputStream = getDataInputStream(locator, metadata);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuilder sb = new StringBuilder();
+        String line;
+        try {
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+                sb.append("\n");
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            handleException(e, locator, metadata);
+            return null;
+        }
+    }
+
+    /** Writes exactly the supplied bytes, without adding separators or a trailing newline. */
+    public static void writeBytes(URI locator, byte[] content, ExceptionMetadata metadata) {
+        checkForAbsoluteAndNoWildcards(locator, metadata);
+        try {
             FileContext fileContext = FileContext.getFileContext();
-            Path path = new Path(url);
-            FSDataOutputStream outputStream = fileContext.create(
-                path,
-                EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE)
-            );
+            Path path = new Path(locator);
+            try (FSDataOutputStream output =
+                    fileContext.create(path, EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE))) {
+                output.write(content);
+            }
+        } catch (Exception e) {
+            handleException(e, locator, metadata);
+        }
+    }
+
+    public static void write(URI locator, List<String> content, ExceptionMetadata metadata) {
+        checkForAbsoluteAndNoWildcards(locator, metadata);
+        try {
+            FileContext fileContext = FileContext.getFileContext();
+            Path path = new Path(locator);
+            FSDataOutputStream outputStream =
+                    fileContext.create(path, EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE));
             for (String s : content) {
-                outputStream.writeBytes(s);
+                outputStream.write(s.getBytes(StandardCharsets.UTF_8));
                 outputStream.writeBytes("\n");
             }
             outputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            throw new CannotRetrieveResourceException(
-                    "Error while accessing the " + locator.getScheme() + " filesystem.",
-                    metadata
-            );
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new OurBadException(
-                    "An unexpected exception happened while writing the file.",
-                    metadata
-            );
+            handleException(e, locator, metadata);
         }
+    }
+
+    public static void append(URI locator, List<String> content, ExceptionMetadata metadata) {
+        checkForAbsoluteAndNoWildcards(locator, metadata);
+
+        try {
+            FileContext fileContext = FileContext.getFileContext();
+            Path path = new Path(locator);
+            FSDataOutputStream outputStream =
+                    fileContext.create(path, EnumSet.of(CreateFlag.CREATE, CreateFlag.APPEND));
+            for (String s : content) {
+                outputStream.write(s.getBytes(StandardCharsets.UTF_8));
+                outputStream.writeBytes("\n");
+            }
+            outputStream.close();
+        } catch (Exception e) {
+            handleException(e, locator, metadata);
+        }
+    }
+
+    public static void checkForAbsoluteAndNoWildcards(URI locator, ExceptionMetadata metadata) {
+        if (!locator.isAbsolute()) {
+            throw new OurBadException("Unresolved uri passed to append()");
+        }
+        if (locator.toString().contains("*")) {
+            throw new CannotRetrieveResourceException("Path cannot contain *!", metadata);
+        }
+    }
+
+    private static void handleException(Throwable e, URI locator, ExceptionMetadata metadata) {
+        if (e instanceof UnsupportedFileSystemException) {
+            RumbleException rumbleException = new CannotRetrieveResourceException(
+                    "No file system is configured for scheme " + locator.getScheme() + "! Cause: " + e.getMessage(),
+                    metadata);
+            rumbleException.initCause(e);
+            throw rumbleException;
+        }
+        if (e instanceof IOException) {
+            RumbleException rumbleException = new CannotRetrieveResourceException(
+                    "I/O error while accessing the "
+                            + locator.getScheme()
+                            + " filesystem. File: "
+                            + locator
+                            + " Cause: "
+                            + e.getMessage(),
+                    metadata);
+            rumbleException.initCause(e);
+            throw rumbleException;
+        }
+        if (e instanceof InvocationTargetException) {
+            Throwable cause = e.getCause();
+            if (cause == null) {
+                throw new OurBadException("Unrecognized invocation target exception: no cause.");
+            }
+
+            handleException(cause, locator, metadata);
+        }
+        if (e instanceof HadoopIllegalArgumentException) {
+            RumbleException rumbleException = new CannotRetrieveResourceException(
+                    "Illegal argument. File: " + locator + " Cause: " + e.getMessage(), metadata);
+            rumbleException.initCause(e);
+            throw rumbleException;
+        }
+        if (e instanceof RumbleException rumbleException) {
+            throw rumbleException;
+        }
+        if (e instanceof RuntimeException) {
+            Throwable cause = e.getCause();
+            if (cause == null) {
+                throw new OurBadException("Unrecognized runtime exception: no cause. Message: " + e.getMessage());
+            }
+            handleException(cause, locator, metadata);
+        }
+        RumbleException rumbleException = new OurBadException("Unrecognized exception. Message: " + e.getMessage());
+        rumbleException.initCause(e);
+        throw rumbleException;
     }
 }

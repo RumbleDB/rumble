@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,43 +11,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.Map;
+
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.SequenceType;
 
-public class FunctionRuntimeIterator extends LocalRuntimeIterator {
+public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private Item item;
+
+    private final Name functionName;
+    private final Map<Name, SequenceType> paramNameToSequenceTypes;
+    final SequenceType returnType;
+    final ItemRuntimePlan bodyIterator;
 
     public FunctionRuntimeIterator(
-            FunctionItem function,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(null, executionMode, iteratorMetadata);
-        this.item = function;
+            Name functionName,
+            Map<Name, SequenceType> paramNameToSequenceTypes,
+            SequenceType returnType,
+            ItemRuntimePlan bodyIterator,
+            RuntimeStaticContext staticContext) {
+        super(List.of(), staticContext);
+        this.functionName = functionName;
+        this.paramNameToSequenceTypes = paramNameToSequenceTypes;
+        this.returnType = returnType;
+        this.bodyIterator = bodyIterator;
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            FunctionItem result = ((FunctionItem) this.item).deepCopy();
-            result.populateClosureFromDynamicContext(this.currentDynamicContextForLocalExecution, getMetadata());
-            return result;
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        FunctionItem function = new FunctionItem(
+                this.functionName,
+                this.paramNameToSequenceTypes,
+                this.returnType,
+                dynamicContext.getModuleContext(),
+                this.bodyIterator,
+                this.staticContext.isUpdating());
+        function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
+        if (this.functionName == null) {
+            // An inline function captures lexical variables, but its focus is absent.
+            for (Name name : List.of(Name.CONTEXT_ITEM, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT)) {
+                function.getLocalVariablesInClosure().remove(name);
+            }
         }
-
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+        return function;
     }
 }
