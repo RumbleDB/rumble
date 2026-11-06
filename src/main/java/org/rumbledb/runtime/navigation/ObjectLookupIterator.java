@@ -223,9 +223,13 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             }
             String leftQuery = newContext.getResultingQuery();
             if (leftQuery != null) {
-                newContext.setResultingQuery(leftQuery + "." + FlworDataFrameUtils.quoteIdentifier(key, getConfiguration().runtime().escapeBackticks()));
+                newContext.setResultingQuery(leftQuery
+                        + "."
+                        + FlworDataFrameUtils.quoteIdentifier(
+                                key, getConfiguration().runtime().escapeBackticks()));
             } else {
-                newContext.setResultingQuery(FlworDataFrameUtils.quoteIdentifier(key, getConfiguration().runtime().escapeBackticks()));
+                newContext.setResultingQuery(FlworDataFrameUtils.quoteIdentifier(
+                        key, getConfiguration().runtime().escapeBackticks()));
             }
             StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
             newContext.setResultingType(new SequenceType(
@@ -247,9 +251,13 @@ public class ObjectLookupIterator extends ItemRuntimePlan
             }
             String leftQuery = newContext.getResultingQuery();
             if (leftQuery != null) {
-                newContext.setResultingQuery(leftQuery + "." + FlworDataFrameUtils.quoteIdentifier(key, getConfiguration().runtime().escapeBackticks()));
+                newContext.setResultingQuery(leftQuery
+                        + "."
+                        + FlworDataFrameUtils.quoteIdentifier(
+                                key, getConfiguration().runtime().escapeBackticks()));
             } else {
-                newContext.setResultingQuery(FlworDataFrameUtils.quoteIdentifier(key, getConfiguration().runtime().escapeBackticks()));
+                newContext.setResultingQuery(FlworDataFrameUtils.quoteIdentifier(
+                        key, getConfiguration().runtime().escapeBackticks()));
             }
             ItemType resultType = newContext
                     .getResultingType()
@@ -285,7 +293,8 @@ public class ObjectLookupIterator extends ItemRuntimePlan
                 ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.getChild(0), context);
         String key = resolveLookupKey(context);
         String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
-        String sqlKey = FlworDataFrameUtils.quoteIdentifier(key, getConfiguration().runtime().escapeBackticks());
+        String sqlKey = FlworDataFrameUtils.quoteIdentifier(
+                key, getConfiguration().runtime().escapeBackticks());
         if (childDataFrame.hasKey(key)) {
             FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet(key);
             ItemType type = BuiltinTypesCatalogue.item;

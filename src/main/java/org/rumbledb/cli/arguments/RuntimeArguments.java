@@ -69,7 +69,9 @@ public final class RuntimeArguments {
             description = "Applies the pending update list returned by the query.")
     private Boolean applyUpdates;
 
-    @Option(names = "--escape-backticks", negatable = true,
+    @Option(
+            names = "--escape-backticks",
+            negatable = true,
             description = "Escapes embedded backticks in Spark SQL identifiers (disabled by default).")
     private Boolean escapeBackticks;
 

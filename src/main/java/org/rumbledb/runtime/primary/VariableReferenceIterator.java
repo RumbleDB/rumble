@@ -117,7 +117,10 @@ public class VariableReferenceIterator extends ItemRuntimePlan
             variableType = variableType.getArrayContentFacet();
         }
         NativeClauseContext newContext = new NativeClauseContext(
-                nativeClauseContext, FlworDataFrameUtils.quoteIdentifier(escapedName, getConfiguration().runtime().escapeBackticks()), new SequenceType(variableType, arity));
+                nativeClauseContext,
+                FlworDataFrameUtils.quoteIdentifier(
+                        escapedName, getConfiguration().runtime().escapeBackticks()),
+                new SequenceType(variableType, arity));
         newContext.setSchema(fieldType);
         return newContext;
     }
