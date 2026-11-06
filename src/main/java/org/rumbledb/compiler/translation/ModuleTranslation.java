@@ -21,6 +21,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.MainModuleContext;
+import org.rumbledb.compiler.context.ModuleContext;
 import org.rumbledb.compiler.context.ProgramContext;
 import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.compiler.utils.URILiteralUtils;
@@ -31,20 +32,39 @@ import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Module;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
 /**
- * Translates module-level constructs: MainModule, LibraryModule, and Program.
+ * Translates module-level constructs: Module, MainModule, LibraryModule, and Program.
  */
 public final class ModuleTranslation {
 
     private ModuleTranslation() {}
 
     /** Validates a version declaration's encoding and applies its version to the module. */
-    public static <StringLiteralCtx extends ParserRuleContext> void versionDecl(
+    public static <
+                    StringLiteralCtx extends ParserRuleContext,
+                    MainModuleCtx extends ParserRuleContext,
+                    LibraryModuleCtx extends ParserRuleContext>
+            Module module(
+                    ModuleContext<StringLiteralCtx, MainModuleCtx, LibraryModuleCtx> ctx,
+                    TranslationContext translationContext,
+                    Function<StringLiteralCtx, String> processStringLiteral,
+                    Function<MainModuleCtx, MainModule> visitMainModule,
+                    Function<LibraryModuleCtx, LibraryModule> visitLibraryModule) {
+        if (ctx.versionDecl() != null) {
+            versionDecl(ctx.versionDecl(), translationContext, processStringLiteral);
+        }
+        return ctx.libraryModule() != null
+                ? visitLibraryModule.apply(ctx.libraryModule())
+                : visitMainModule.apply(ctx.mainModule());
+    }
+
+    private static <StringLiteralCtx extends ParserRuleContext> void versionDecl(
             VersionDeclContext<StringLiteralCtx> ctx,
             TranslationContext translationContext,
             Function<StringLiteralCtx, String> processStringLiteral) {

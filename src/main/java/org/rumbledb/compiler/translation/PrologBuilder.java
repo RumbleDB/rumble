@@ -257,7 +257,7 @@ public final class PrologBuilder {
     }
 
     public void addContextItem(VariableDeclaration declaration) {
-        if (!this.translationContext.isMainModule() && declaration.getExpression() != null) {
+        if (this.translationContext.isLibraryModule() && declaration.getExpression() != null) {
             throw new SemanticException(
                     "A library module context item declaration cannot have an initializer.",
                     ErrorCode.LibraryContextItemInitializer,
@@ -286,7 +286,7 @@ public final class PrologBuilder {
     public void addOption(OptionDeclaration declaration) {
         Name name = declaration.getName();
         if (SerializationParameterUtils.SERIALIZATION_NAMESPACE.equals(name.getNamespace())) {
-            if (!this.translationContext.isMainModule()) {
+            if (this.translationContext.isLibraryModule()) {
                 throw new SemanticException(
                         "Output declarations are only allowed in a main module.",
                         ErrorCode.LibraryModuleOutputDeclarationErrorCode,
@@ -317,7 +317,7 @@ public final class PrologBuilder {
     }
 
     private void validateNamespace(String kind, Name name, ExceptionMetadata metadata) {
-        if (!this.translationContext.isMainModule()
+        if (this.translationContext.isLibraryModule()
                 && (name.getNamespace() == null
                         || !name.getNamespace().equals(this.translationContext.libraryModuleNamespace()))) {
             throw new NamespaceDoesNotMatchModuleException(
