@@ -28,6 +28,11 @@ parser grammar CommonParser;
 moduleAndThisIsIt
    : module EOF
    ;
+   // Both keywords are accepted so that either grammar can read the declaration that selects the language.
+   
+versionDecl
+   : language = (KW_JSONIQ | KW_XQUERY) (KW_VERSION version = stringLiteral (KW_ENCODING encoding = stringLiteral)? | KW_ENCODING encoding = stringLiteral) SEMICOLON
+   ;
 
 libraryModule
    : KW_MODULE KW_NAMESPACE ncName EQUAL uri = uriLiteral SEMICOLON prolog
@@ -886,9 +891,10 @@ keyword
    | keywordNotOKForFunction
    ;
 
-keywordOKForFunction
+commonKeywordOKForFunction
    // These keywords do not conflict with function syntax, including decimal-format properties.
-   : dialectKeywordOKForFunction
+   : KW_JSONIQ
+   | KW_XQUERY
    | DFPropertyName
    | KW_AFTER
    | KW_ALLOWING

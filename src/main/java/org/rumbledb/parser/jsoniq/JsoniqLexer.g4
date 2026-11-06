@@ -13,10 +13,6 @@ RBRACE_VBAR
    : '|}'
    ;
 
-KW_JSONIQ
-   : 'jsoniq'
-   ;
-
 KW_JSOUND
    : 'jsound'
    ;

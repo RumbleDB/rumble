@@ -403,6 +403,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 if (!declaration.external()
                         && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
                         && !declaration.isAssignable()
+                        && initializer != null
                         && !initializer.isSequential()) {
                     ItemRuntimePlan plan =
                             new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(initializer);

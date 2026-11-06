@@ -47,9 +47,7 @@ public class BuiltinPartialApplicationRewriteVisitor extends CloneVisitor {
     private BuiltinFunction resolveFunction(Expression expression, FunctionIdentifier identifier) {
         StaticContext context =
                 expression.getStaticContext() != null ? expression.getStaticContext() : this.moduleContext;
-        return context == null
-                ? BuiltinFunctionCatalogue.getBuiltinFunction(identifier, (String) null)
-                : BuiltinFunctionCatalogue.getBuiltinFunction(identifier, context);
+        return BuiltinFunctionCatalogue.getBuiltinFunction(identifier, context);
     }
 
     @Override

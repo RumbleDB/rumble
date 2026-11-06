@@ -598,8 +598,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // and therefore cannot be resolved through InScopeSchemaTypes.
         ItemType itemType = sequenceType.getItemType();
         XmlSchemaCatalog schemaCatalog = staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog();
-        boolean xquery = staticContext.getQueryLanguage() != null
-                && staticContext.getQueryLanguage().startsWith("xquery");
+        boolean xquery = staticContext.getQueryLanguage().isXQuery();
         if (xquery
                 && itemType.hasName()
                 && Name.XS_NS.equals(itemType.getName().getNamespace())

@@ -29,6 +29,7 @@ import org.rumbledb.bindings.ItemSequenceBinding;
 import org.rumbledb.compiler.CompilationPipeline;
 import org.rumbledb.compiler.DynamicContextVisitor;
 import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -103,7 +104,7 @@ public class LoadXQueryModuleFunctionIterator extends AbstractAtMostOneItemRunti
         }
         query.append("()");
         var configuration = this.staticContext.getConfiguration().toBuilder()
-                .configureSemantics(s -> s.queryLanguage("xquery31"))
+                .configureSemantics(s -> s.queryLanguage(LanguageVersion.XQUERY_31))
                 .build();
         MainModule module;
         try {

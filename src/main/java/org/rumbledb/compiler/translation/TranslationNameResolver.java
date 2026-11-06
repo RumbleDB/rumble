@@ -66,8 +66,8 @@ public final class TranslationNameResolver {
             if (namespace != null) {
                 return new Name(namespace, "", localName);
             }
-            String language = this.context.moduleContext().getQueryLanguage();
-            if (role == NameRole.TYPE && language != null && language.startsWith("xquery")) {
+            if (role == NameRole.TYPE
+                    && this.context.moduleContext().getQueryLanguage().isXQuery()) {
                 return Name.createVariableInNoNamespace(localName);
             }
             return role == NameRole.TYPE
