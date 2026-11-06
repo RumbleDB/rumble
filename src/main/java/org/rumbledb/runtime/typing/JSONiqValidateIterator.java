@@ -139,6 +139,10 @@ public class JSONiqValidateIterator extends ItemRuntimePlan
             DynamicContext context,
             boolean isValidate,
             RuntimeStaticContext staticContext) {
+        if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration()) && itemRDD.isEmpty()) {
+            return new HomogeneousItemDataFrame(
+                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(), itemType);
+        }
         if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
             throw new OurBadException(
                     "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected.");

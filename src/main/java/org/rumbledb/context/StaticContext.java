@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.exceptions.DuplicateDecimalFormatDeclarationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -50,9 +51,9 @@ public class StaticContext {
     private UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private InScopeSchemaTypes inScopeSchemaTypes;
 
-    private String queryLanguage;
+    private LanguageVersion queryLanguage;
 
-    public void setQueryLanguage(String queryLanguage) {
+    public void setQueryLanguage(LanguageVersion queryLanguage) {
         this.queryLanguage = queryLanguage;
         if (this.serializationParameters != null) {
             this.serializationParameters.applyLanguageDefaults(queryLanguage);
@@ -203,7 +204,7 @@ public class StaticContext {
         throw new OurBadException("Configuration not set.");
     }
 
-    public String getQueryLanguage() {
+    public LanguageVersion getQueryLanguage() {
         if (this.queryLanguage != null) {
             return this.queryLanguage;
         }
