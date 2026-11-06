@@ -1,0 +1,3 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:import-regression:scope-schema">
+  <xs:simpleType name="T"><xs:restriction base="xs:integer"/></xs:simpleType>
+</xs:schema>

@@ -18,9 +18,12 @@ package org.rumbledb.compiler.translation;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.bindings.DataFrameBinding;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -29,18 +32,17 @@ import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 /** Adds global declarations implied by external API bindings. */
+@Log4j2
 public final class ExternalVariableTranslation {
 
     private ExternalVariableTranslation() {}
 
-    /** Returns whether a context-item declaration was synthesized. */
-    public static boolean process(Prolog prolog, ExternalBindings externalBindings, ExceptionMetadata metadata) {
-        boolean addedContextItem = false;
+    public static void process(
+            Prolog prolog, StaticContext moduleContext, ExternalBindings externalBindings, ExceptionMetadata metadata) {
         if (!prolog.hasContextItemDeclaration()
                 && getExternalVariableType(externalBindings, Name.CONTEXT_ITEM) != null) {
-            prolog.addDeclaration(new VariableDeclaration(
-                    Name.CONTEXT_ITEM, true, SequenceType.createSequenceType("item"), null, null, metadata));
-            addedContextItem = true;
+            addDeclaration(prolog, moduleContext, Name.CONTEXT_ITEM, SequenceType.createSequenceType("item"), metadata);
+            log.warn("Adding context item declaration.");
         }
 
         for (Name externalVariable : externalBindings.names()) {
@@ -49,18 +51,24 @@ public final class ExternalVariableTranslation {
             }
             SequenceType sequenceType = getExternalVariableType(externalBindings, externalVariable);
             if (sequenceType != null) {
-                prolog.addDeclaration(
-                        new VariableDeclaration(externalVariable, true, sequenceType, null, null, metadata));
+                addDeclaration(prolog, moduleContext, externalVariable, sequenceType, metadata);
             }
         }
-        return addedContextItem;
+    }
+
+    private static void addDeclaration(
+            Prolog prolog, StaticContext moduleContext, Name name, SequenceType type, ExceptionMetadata metadata) {
+        VariableDeclaration declaration = new VariableDeclaration(name, true, type, null, null, metadata);
+        declaration.setModuleContext(moduleContext);
+        prolog.addDeclaration(declaration);
     }
 
     private static boolean hasDeclaration(Prolog prolog, Name variableName) {
         return prolog.getVariableDeclarations().stream()
                         .anyMatch(declaration -> declaration.getVariableName().equals(variableName))
-                || prolog.getImportedModules().stream()
-                        .anyMatch(module -> hasDeclaration(module.getProlog(), variableName));
+                || prolog.getImportedLibrary()
+                        .filter(library -> hasDeclaration(library.getProlog(), variableName))
+                        .isPresent();
     }
 
     private static SequenceType getExternalVariableType(ExternalBindings externalBindings, Name variableName) {

@@ -29,7 +29,6 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.AnnotationsContext;
@@ -272,11 +271,10 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     public TranslationVisitor(
             StaticContext moduleContext,
             CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings,
             String code,
-            CommonTokenStream jsoniqTokenStream) {
-        this.translationContext =
-                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, code);
+            CommonTokenStream jsoniqTokenStream,
+            ModuleImportLoader importLoader) {
+        this.translationContext = new TranslationContext(moduleContext, compilationConfiguration, code, importLoader);
         this.jsoniqTokenStream = jsoniqTokenStream;
     }
 

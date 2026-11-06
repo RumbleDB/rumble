@@ -28,7 +28,6 @@ import org.antlr.v4.runtime.tree.ParseTree;
 
 import lombok.extern.log4j.Log4j2;
 
-import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.context.AdditiveExprContext;
 import org.rumbledb.compiler.context.AndExprContext;
 import org.rumbledb.compiler.context.AnnotationsContext;
@@ -239,11 +238,10 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
             CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings,
             String code,
-            CommonTokenStream xQueryTokenStream) {
-        this.translationContext =
-                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, code);
+            CommonTokenStream xQueryTokenStream,
+            ModuleImportLoader importLoader) {
+        this.translationContext = new TranslationContext(moduleContext, compilationConfiguration, code, importLoader);
         this.xQueryTokenStream = xQueryTokenStream;
     }
 

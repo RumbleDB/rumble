@@ -59,7 +59,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.module.SchemaImport;
+import org.rumbledb.expressions.module.PrologDeclaration;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -106,12 +106,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
-    private final Map<String, StaticContext> importedModuleContexts;
     private final List<SequenceType> contextItemTypes = new ArrayList<>();
-
-    StaticContextVisitor() {
-        this.importedModuleContexts = new HashMap<>();
-    }
 
     @Override
     protected StaticContext defaultAction(Node node, StaticContext argument) {
@@ -139,7 +134,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
-        this.importedModuleContexts.clear();
         this.contextItemTypes.clear();
         StaticContext generatedContext = visitDescendants(mainModule, argument);
         return generatedContext;
@@ -147,24 +141,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        String key = libraryModule.getModuleGroupKey();
-        if (!this.importedModuleContexts.containsKey(key)) {
-            StaticContext moduleContext = libraryModule.getStaticContext();
-            this.visit(libraryModule.getProlog(), moduleContext);
-            this.importedModuleContexts.put(key, moduleContext);
-        }
-        StaticContext importedContext = this.importedModuleContexts.get(key);
-        for (var entry : importedContext.getInScopeVariables().entrySet()) {
-            Name name = entry.getKey();
-            var existing = argument.getInScopeVariables().get(name);
-            // Repeated imports share the cached variable; a distinct declaration is a collision.
-            if (!Name.CONTEXT_ITEM.equals(name) && existing != null && existing != entry.getValue()) {
-                throw new VariableAlreadyExistsException(name, existing.getMetadata());
-            }
-        }
-        argument.importModuleContext(importedContext);
-        argument.getInScopeSchemaTypes()
-                .importModuleTypes(this.importedModuleContexts.get(key).getInScopeSchemaTypes());
+        this.visit(libraryModule.getProlog(), libraryModule.getStaticContext());
+        argument.linkImports(libraryModule.getStaticContext());
         return argument;
     }
 
@@ -517,9 +495,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTypeDeclaration(TypeDeclaration declaration, StaticContext argument) {
-        ItemType type = declaration.getDefinition();
-        // only first pass
-        argument.getInScopeSchemaTypes().addInScopeSchemaType(type, declaration.getMetadata());
+        declaration.getDefinition().resolve(argument, declaration.getMetadata());
         return argument;
     }
 
@@ -546,54 +522,47 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
             if (hasPrivateAnnotation(declaration.getAnnotations())) {
-                prolog.getDeclarationContext(declaration, argument).markPrivateVariable(declaration.getVariableName());
+                declaration.getModuleContext().markPrivateVariable(declaration.getVariableName());
             }
         }
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-            StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
-            declarationContext.addFunctionSignature(
+            StaticContext moduleContext = declaration.getModuleContext();
+            moduleContext.addFunctionSignature(
                     expression.getFunctionIdentifier(),
                     new FunctionSignature(
                             new ArrayList<>(expression.getParams().values()),
                             expression.getReturnType(),
                             expression.isUpdating()));
             if (hasPrivateAnnotation(expression.getAnnotations())) {
-                declarationContext.markPrivateFunction(expression.getFunctionIdentifier());
+                moduleContext.markPrivateFunction(expression.getFunctionIdentifier());
             }
         }
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-            prolog.getDeclarationContext(declaration, argument)
+            declaration
+                    .getModuleContext()
                     .addVariable(
                             declaration.getVariableName(),
                             declaration.getActualSequenceType(),
                             declaration.getMetadata(),
                             declaration.isAssignable());
         }
-        StaticContext generatedContext = argument;
-        if (prolog.getSourceModuleContexts().isEmpty()) {
-            generatedContext = visitDescendants(prolog, argument);
-        } else {
-            for (SchemaImport schema : prolog.getSchemaImports()) {
-                visit(schema, argument);
-            }
-            for (LibraryModule imported : prolog.getImportedModules()) {
-                visit(imported, argument);
-            }
-            // Function signatures and types must be visible throughout a mutually recursive group.
-            for (StaticContext sourceContext : prolog.getSourceModuleContexts().values()) {
-                prolog.shareGroupDeclarations(sourceContext, argument);
-            }
-            for (Node declaration : prolog.getDeclarations()) {
-                StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
-                visit(declaration, declarationContext);
-                prolog.shareGroupDeclarations(declarationContext, argument);
-            }
+        prolog.getImportedLibrary().ifPresent(library -> visit(library, argument));
+        // Every module is declared before any is visited, so import cycles need no special treatment.
+        // Only the flattened library holds declarations of modules other than its own context.
+        List<StaticContext> libraryContexts = prolog.getModuleContexts().stream()
+                .filter(context -> context != argument)
+                .toList();
+        libraryContexts.forEach(argument::addPublicDeclarationsOf);
+        // Declared types are visible across the imported library, so they join its context before linking.
+        prolog.getTypeDeclarations().forEach(declaration -> argument.getInScopeSchemaTypes()
+                .addInScopeSchemaType(declaration.getDefinition(), declaration.getMetadata()));
+        libraryContexts.forEach(context -> context.linkImports(argument));
+        // Dependency ordering put type declarations first, so each resolves in its module before anything uses it.
+        for (PrologDeclaration declaration : prolog.getDeclarations()) {
+            visit(declaration, declaration.getModuleContext());
         }
-        for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
-            itemType.resolve(generatedContext, prolog.getMetadata());
-        }
-        return generatedContext;
+        return argument;
     }
 
     @Override

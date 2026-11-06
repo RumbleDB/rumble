@@ -20,14 +20,12 @@ import java.util.function.Function;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import org.rumbledb.compiler.ModuleImportLoader;
 import org.rumbledb.compiler.context.ModuleImportContext;
 import org.rumbledb.compiler.context.SchemaImportContext;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.PredefinedPrefixInNamespaceDeclarationException;
-import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 
@@ -53,7 +51,8 @@ public final class ImportTranslation {
                 translationContext.metadata(ctx.context()));
     }
 
-    public static <UriLiteralCtx extends ParserRuleContext> LibraryModule moduleImport(
+    /** Returns the imported namespace. Its modules are linked to the prolog once all imports are loaded. */
+    public static <UriLiteralCtx extends ParserRuleContext> String moduleImport(
             ModuleImportContext<UriLiteralCtx> ctx,
             TranslationContext translationContext,
             Function<UriLiteralCtx, String> processURILiteral) {
@@ -79,24 +78,24 @@ public final class ImportTranslation {
                 .map(processURILiteral)
                 .map(URILiteralUtils::normalizeAsAnyURI)
                 .toList();
-        LibraryModule libraryModule = ModuleImportLoader.load(
-                namespace,
-                locationHints,
-                translationContext.moduleContext(),
-                translationContext.compilationConfiguration(),
-                metadata);
+        translationContext.moduleContext().addImportedNamespace(namespace, metadata);
+        // An import without hints is resolved after loading, as a later import may provide the namespace's modules.
+        if (!locationHints.isEmpty()) {
+            translationContext
+                    .importLoader()
+                    .load(namespace, locationHints, translationContext.moduleContext(), metadata);
+        }
         if (ctx.prefix() != null) {
-            boolean sameModuleBinding = libraryModule.getNamespace().equals(translationContext.libraryModuleNamespace())
-                    && libraryModule
-                            .getNamespace()
-                            .equals(translationContext
-                                    .moduleContext()
-                                    .getInScopeNamespaceBindings()
-                                    .get(ctx.prefix()));
-            if (!sameModuleBinding) {
-                translationContext.bindNamespace(ctx.prefix(), libraryModule.getNamespace(), metadata);
+            // A module may import its own namespace under the prefix of its module declaration.
+            boolean ownModulePrefix = namespace.equals(translationContext.libraryModuleNamespace())
+                    && namespace.equals(translationContext
+                            .moduleContext()
+                            .getInScopeNamespaceBindings()
+                            .get(ctx.prefix()));
+            if (!ownModulePrefix) {
+                translationContext.bindNamespace(ctx.prefix(), namespace, metadata);
             }
         }
-        return libraryModule;
+        return namespace;
     }
 }

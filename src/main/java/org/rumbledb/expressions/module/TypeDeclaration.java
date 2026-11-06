@@ -23,7 +23,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.ItemType;
 
-public class TypeDeclaration extends Node {
+public class TypeDeclaration extends PrologDeclaration {
 
     private final ItemType typeDefinition;
 

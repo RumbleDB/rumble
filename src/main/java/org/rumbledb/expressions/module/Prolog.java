@@ -16,9 +16,8 @@
 package org.rumbledb.expressions.module;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -31,20 +30,18 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
 
-@Getter
 public class Prolog extends Node {
 
+    @Getter
     @Setter
-    private List<Node> declarations;
+    private List<PrologDeclaration> declarations;
 
-    private final List<LibraryModule> importedModules;
+    // Every module the query imports, flattened into one. A library itself imports nothing.
+    @Setter
+    private LibraryModule importedLibrary;
+
+    @Getter
     private final List<SchemaImport> schemaImports;
-
-    // Cyclic import groups retain each declaration's original module settings.
-    private final Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
-
-    @Setter
-    private String moduleGroupKey;
 
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
@@ -52,30 +49,27 @@ public class Prolog extends Node {
             List<TypeDeclaration> typeDeclarations,
             ExceptionMetadata metadata) {
         super(metadata);
-        this.declarations = new ArrayList<Node>(variableDeclarations);
+        this.declarations = new ArrayList<PrologDeclaration>(variableDeclarations);
         this.declarations.addAll(functionDeclarations);
         this.declarations.addAll(typeDeclarations);
-        this.importedModules = new ArrayList<>();
         this.schemaImports = new ArrayList<>();
     }
 
-    /** The context a declaration belongs to: its source module's in a group, otherwise the given one. */
-    public StaticContext getDeclarationContext(Node declaration, StaticContext defaultContext) {
-        return this.sourceModuleContexts.getOrDefault(declaration, defaultContext);
+    /** A prolog without declarations, to be filled in or to stand in for an imported module. */
+    public Prolog(ExceptionMetadata metadata) {
+        this(List.of(), List.of(), List.of(), metadata);
     }
 
-    /** Publishes one context's public declarations across a group; private ones stay where they are. */
-    public void shareGroupDeclarations(StaticContext changedContext, StaticContext groupContext) {
-        groupContext.importModuleContext(changedContext);
-        groupContext.getInScopeSchemaTypes().importModuleTypes(changedContext.getInScopeSchemaTypes());
-        for (StaticContext sourceContext : this.sourceModuleContexts.values()) {
-            sourceContext.importModuleContext(groupContext);
-            sourceContext.getInScopeSchemaTypes().importModuleTypes(groupContext.getInScopeSchemaTypes());
-        }
+    /** The contexts of the modules these declarations belong to, each once. */
+    public List<StaticContext> getModuleContexts() {
+        return this.declarations.stream()
+                .map(PrologDeclaration::getModuleContext)
+                .distinct()
+                .toList();
     }
 
-    public void addImportedModule(LibraryModule importedModule) {
-        this.importedModules.add(importedModule);
+    public Optional<LibraryModule> getImportedLibrary() {
+        return Optional.ofNullable(this.importedLibrary);
     }
 
     public void addSchemaImport(SchemaImport schemaImport) {
@@ -124,19 +118,15 @@ public class Prolog extends Node {
         return false;
     }
 
-    public void addDeclaration(Node declaration) {
+    public void addDeclaration(PrologDeclaration declaration) {
         this.declarations.add(declaration);
-    }
-
-    public void clearDeclarations() {
-        this.declarations.clear();
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.addAll(this.schemaImports);
-        result.addAll(this.importedModules);
+        getImportedLibrary().ifPresent(result::add);
         result.addAll(this.declarations);
         return result;
     }
@@ -146,9 +136,7 @@ public class Prolog extends Node {
         for (SchemaImport schemaImport : this.schemaImports) {
             schemaImport.serializeToJSONiq(sb, indent);
         }
-        for (LibraryModule importedModule : this.importedModules) {
-            importedModule.serializeToJSONiq(sb, indent);
-        }
+        getImportedLibrary().ifPresent(library -> library.serializeToJSONiq(sb, indent));
         for (Node declaration : this.declarations) {
             declaration.serializeToJSONiq(sb, indent);
         }
@@ -166,12 +154,8 @@ public class Prolog extends Node {
                 return declaration;
             }
         }
-        for (LibraryModule module : prolog.getImportedModules()) {
-            FunctionDeclaration result = getFunctionDeclarationFromProlog(module.getProlog(), functionIdentifier);
-            if (result != null) {
-                return result;
-            }
-        }
-        return null;
+        return prolog.getImportedLibrary()
+                .map(library -> getFunctionDeclarationFromProlog(library.getProlog(), functionIdentifier))
+                .orElse(null);
     }
 }

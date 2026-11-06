@@ -31,6 +31,7 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.context.VersionDeclContext;
+import org.rumbledb.compiler.translation.ExternalVariableTranslation;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.model.LanguageVersion;
@@ -87,13 +88,19 @@ final class ModuleParser {
                     ExceptionMetadata.fromTokens(uri.toString(), start.getStart(), start.getStop(), query));
         });
         StaticContext moduleContext = createModuleContext(uri, configuration.runtimeConfiguration());
-        return ModuleImportLoader.loadMainModule(
-                () -> (MainModule) parseModule(query, uri, configuration, bindings, language, moduleContext),
-                configuration.runtimeConfiguration());
+        ModuleImportLoader importLoader = new ModuleImportLoader(configuration);
+        MainModule module = (MainModule) parseModule(query, uri, configuration, language, moduleContext, importLoader);
+        importLoader.flattenImports(module.getProlog(), moduleContext);
+        ExternalVariableTranslation.process(module.getProlog(), moduleContext, bindings, module.getMetadata());
+        return module;
     }
 
     static LibraryModule parseLibraryModule(
-            String query, URI uri, StaticContext importingContext, CompilationConfiguration configuration) {
+            String query,
+            URI uri,
+            StaticContext importingContext,
+            CompilationConfiguration configuration,
+            ModuleImportLoader importLoader) {
         // A namespace URI may retrieve an HTML page or a main query rather than a library.
         // Reject those as failed module resolution, preserving syntax errors inside real libraries.
         if (probe(query, JsoniqParser::libraryModuleStart).isEmpty()) {
@@ -105,8 +112,7 @@ final class ModuleParser {
         Language language = detectLanguage(query, uri, runtimeConfiguration);
         StaticContext moduleContext = new StaticContext(uri, runtimeConfiguration);
         moduleContext.setUserDefinedFunctionsExecutionModes(importingContext.getUserDefinedFunctionsExecutionModes());
-        return (LibraryModule)
-                parseModule(query, uri, configuration, ExternalBindings.empty(), language, moduleContext);
+        return (LibraryModule) parseModule(query, uri, configuration, language, moduleContext, importLoader);
     }
 
     private static Optional<Language> declaredLanguage(String query) {
@@ -142,9 +148,9 @@ final class ModuleParser {
             String query,
             URI uri,
             CompilationConfiguration configuration,
-            ExternalBindings bindings,
             Language language,
-            StaticContext moduleContext) {
+            StaticContext moduleContext,
+            ModuleImportLoader importLoader) {
         if (language == Language.XQUERY) {
             moduleContext.setConstructionPreserve(true);
             // XQuery source line endings are normalized before tokenization, including inside literals.
@@ -172,12 +178,12 @@ final class ModuleParser {
             XQueryParser xqueryParser = new XQueryParser(tokens);
             parser = xqueryParser;
             parseTreeSupplier = () -> xqueryParser.moduleAndThisIsIt().module();
-            visitor = new XQueryTranslationVisitor(moduleContext, configuration, bindings, query, tokens);
+            visitor = new XQueryTranslationVisitor(moduleContext, configuration, query, tokens, importLoader);
         } else {
             JsoniqParser jsoniqParser = new JsoniqParser(tokens);
             parser = jsoniqParser;
             parseTreeSupplier = () -> jsoniqParser.moduleAndThisIsIt().module();
-            visitor = new TranslationVisitor(moduleContext, configuration, bindings, query, tokens);
+            visitor = new TranslationVisitor(moduleContext, configuration, query, tokens, importLoader);
         }
 
         parser.setErrorHandler(new BailErrorStrategy());

@@ -27,12 +27,6 @@ import org.rumbledb.expressions.module.Module;
 final class CompilationPasses {
     private CompilationPasses() {}
 
-    /** Removes duplicate imported declarations before dependency ordering. */
-    static <M extends Module> CompilationPass<M> pruneModules() {
-        return analysis("Pruning modules", (module, context) -> new ModulePruningVisitor(context.configuration())
-                .visit(module, null));
-    }
-
     /** Collects declaration dependencies and orders initialization, rejecting illegal cycles. */
     static <M extends Module> CompilationPass<M> resolveDependencies() {
         return analysis(

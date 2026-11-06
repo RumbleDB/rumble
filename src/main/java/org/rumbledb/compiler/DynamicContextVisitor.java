@@ -25,7 +25,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractList;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -86,9 +85,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     private final ResourceResolver resourceResolver;
     private final ErrorCode externalBindingTypeErrorCode;
     private ExternalBindings externalBindings;
-    private int libraryModuleDepth;
+    private boolean inLibraryModule;
     private List<Item> initialContextItem;
-    private Map<String, DynamicContext> importedModuleContexts;
 
     public DynamicContextVisitor(RumbleConfiguration configuration, ExternalBindings externalBindings) {
         this(configuration, externalBindings, new ResourceResolver());
@@ -109,7 +107,6 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         this.configuration = configuration;
         this.resourceResolver = resourceResolver;
         this.externalBindings = externalBindings;
-        this.importedModuleContexts = new HashMap<>();
     }
 
     @Override
@@ -184,7 +181,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         }
 
         // Variable is external. Do we have supplied items?
-        List<Item> items = name.equals(Name.CONTEXT_ITEM) && this.libraryModuleDepth > 0
+        List<Item> items = name.equals(Name.CONTEXT_ITEM) && this.inLibraryModule
                 ? this.initialContextItem
                 : this.getItemsBinding(name);
         if (items != null) {
@@ -356,36 +353,30 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
-        String key = module.getModuleGroupKey();
-        if (!this.importedModuleContexts.containsKey(key)) {
-            DynamicContext newContext =
-                    new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
-            newContext.setNamedFunctions(argument.getNamedFunctions());
-            // A library without its own context declaration uses the query's initial focus.
-            if (!module.getProlog().hasContextItemDeclaration() && this.initialContextItem != null) {
-                newContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this.initialContextItem);
-                newContext.getVariableValues().setPosition(1);
-                newContext.getVariableValues().setLast(1);
-            }
-            DynamicContext importedContext;
-            this.libraryModuleDepth++;
-            try {
-                importedContext = visitDescendants(module, newContext);
-            } finally {
-                this.libraryModuleDepth--;
-            }
-            this.importedModuleContexts.put(key, importedContext);
+        DynamicContext newContext =
+                new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
+        newContext.setNamedFunctions(argument.getNamedFunctions());
+        // A library without its own context declaration uses the query's initial focus.
+        if (!module.getProlog().hasContextItemDeclaration() && this.initialContextItem != null) {
+            newContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, this.initialContextItem);
+            newContext.getVariableValues().setPosition(1);
+            newContext.getVariableValues().setLast(1);
         }
-        argument.getVariableValues()
-                .importModuleValues(this.importedModuleContexts.get(key).getVariableValues());
-        argument.getInScopeSchemaTypes()
-                .importModuleTypes(this.importedModuleContexts.get(key).getInScopeSchemaTypes());
+        this.inLibraryModule = true;
+        DynamicContext importedContext;
+        try {
+            importedContext = visitDescendants(module, newContext);
+        } finally {
+            this.inLibraryModule = false;
+        }
+        argument.getVariableValues().importModuleValues(importedContext.getVariableValues());
+        argument.getInScopeSchemaTypes().importModuleTypes(importedContext.getInScopeSchemaTypes());
         return argument;
     }
 
     @Override
     public DynamicContext visitProlog(Prolog prolog, DynamicContext argument) {
-        // Modules of a group may each declare the context item.
+        // Modules of the imported library may each declare the context item.
         prolog.getVariableDeclarations().stream()
                 .map(VariableDeclaration::getVariableName)
                 .distinct()
@@ -393,13 +384,13 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             visit(declaration, argument);
         }
-        // Register deferred globals before following imports, so circular imports can share
-        // their bindings and context initialization can refer to another global in this module.
+        // Register deferred globals first, so context initialization can refer to another global
+        // in this module and a global initializer depending on itself raises XQDY0054.
         Set<Node> earlyBound = new HashSet<>();
-        if (prolog.hasContextItemDeclaration() || this.libraryModuleDepth > 0) {
+        if (prolog.hasContextItemDeclaration() || this.inLibraryModule) {
             for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
                 Expression initializer = declaration.getExpression();
-                if (this.libraryModuleDepth > 0
+                if (this.inLibraryModule
                         && declaration.external()
                         && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
                         && (this.getItemsBinding(declaration.getVariableName()) != null
@@ -431,7 +422,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             }
         }
         VariableDeclaration contextDeclaration = null;
-        if (this.libraryModuleDepth == 0) {
+        if (!this.inLibraryModule) {
             for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
                 if (declaration.getVariableName().equals(Name.CONTEXT_ITEM)) {
                     contextDeclaration = declaration;

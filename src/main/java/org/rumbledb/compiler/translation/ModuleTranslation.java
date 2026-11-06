@@ -19,8 +19,6 @@ import java.util.function.Function;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 
-import lombok.extern.log4j.Log4j2;
-
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.MainModuleContext;
 import org.rumbledb.compiler.context.ModuleContext;
@@ -43,7 +41,6 @@ import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 /**
  * Translates module-level constructs: Module, MainModule, LibraryModule, and Program.
  */
-@Log4j2
 public final class ModuleTranslation {
 
     private ModuleTranslation() {}
@@ -105,11 +102,6 @@ public final class ModuleTranslation {
             Function<ProgramCtx, Program> visitProgram) {
         Prolog prolog = visitProlog.apply(ctx.prolog());
         Program program = visitProgram.apply(ctx.program());
-        if (ExternalVariableTranslation.process(
-                prolog, translationContext.externalBindings(), translationContext.metadata(ctx.context()))) {
-            log.warn("Adding context item declaration.");
-        }
-
         MainModule module = new MainModule(prolog, program, translationContext.metadata(ctx.context()));
         module.setStaticContext(translationContext.moduleContext());
         return module;

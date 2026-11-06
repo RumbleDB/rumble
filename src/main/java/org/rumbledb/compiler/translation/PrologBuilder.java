@@ -36,7 +36,6 @@ import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.SchemaImport;
@@ -63,7 +62,6 @@ public final class PrologBuilder {
     private boolean defaultElementNamespaceSet;
     private final Set<String> moduleNamespaces = new HashSet<>();
     private final Set<String> schemaNamespaces = new HashSet<>();
-    private final List<LibraryModule> modules = new ArrayList<>();
     private final List<SchemaImport> schemas = new ArrayList<>();
     private final List<VariableDeclaration> variables = new ArrayList<>();
     private final List<FunctionDeclaration> functions = new ArrayList<>();
@@ -198,12 +196,11 @@ public final class PrologBuilder {
         this.defaultCollationSet = true;
     }
 
-    public void importModule(LibraryModule module, ExceptionMetadata metadata) {
-        if (!this.moduleNamespaces.add(module.getNamespace())) {
+    public void importModule(String namespace, ExceptionMetadata metadata) {
+        if (!this.moduleNamespaces.add(namespace)) {
             throw new DuplicateModuleTargetNamespaceException(
-                    "Duplicate module target namespace: " + module.getNamespace(), metadata);
+                    "Duplicate module target namespace: " + namespace, metadata);
         }
-        this.modules.add(module);
     }
 
     public void importSchema(SchemaImport schema, ExceptionMetadata metadata) {
@@ -313,9 +310,9 @@ public final class PrologBuilder {
 
     public Prolog build(ExceptionMetadata metadata) {
         Prolog result = new Prolog(this.variables, this.functions, this.types, metadata);
-        this.modules.forEach(result::addImportedModule);
         this.schemas.forEach(result::addSchemaImport);
         this.options.forEach(result::addDeclaration);
+        result.getDeclarations().forEach(d -> d.setModuleContext(this.translationContext.moduleContext()));
         return result;
     }
 

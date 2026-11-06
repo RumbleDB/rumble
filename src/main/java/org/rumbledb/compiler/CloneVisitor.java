@@ -61,6 +61,7 @@ import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.PrologDeclaration;
 import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -157,27 +158,18 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         List<SchemaImport> schemaImports = expression.getSchemaImports().stream()
                 .map(schemaImport -> (SchemaImport) visit(schemaImport, argument))
                 .collect(Collectors.toList());
-        List<LibraryModule> libraryModules = expression.getImportedModules().stream()
-                .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
-                .collect(Collectors.toList());
-        Map<Node, org.rumbledb.context.StaticContext> sourceModuleContexts = new LinkedHashMap<>();
-        List<Node> declarations = expression.getDeclarations().stream()
-                .map(expr -> {
-                    Node clone = visit(expr, argument);
-                    var sourceContext = expression.getSourceModuleContexts().get(expr);
-                    if (sourceContext != null) {
-                        sourceModuleContexts.put(clone, sourceContext);
-                    }
-                    return clone;
-                })
-                .collect(Collectors.toList());
+        expression
+                .getImportedLibrary()
+                .ifPresent(library -> expression.setImportedLibrary((LibraryModule) visit(library, argument)));
+        List<PrologDeclaration> declarations = new ArrayList<>();
+        for (PrologDeclaration declaration : expression.getDeclarations()) {
+            PrologDeclaration clone = (PrologDeclaration) visit(declaration, argument);
+            clone.setModuleContext(declaration.getModuleContext());
+            declarations.add(clone);
+        }
         expression.setDeclarations(declarations);
-        expression.getSourceModuleContexts().clear();
-        expression.getSourceModuleContexts().putAll(sourceModuleContexts);
         expression.getSchemaImports().clear();
         expression.getSchemaImports().addAll(schemaImports);
-        expression.getImportedModules().clear();
-        expression.getImportedModules().addAll(libraryModules);
         return expression;
     }
 

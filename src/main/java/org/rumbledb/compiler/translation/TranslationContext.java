@@ -24,7 +24,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
-import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.ModuleImportLoader;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
@@ -38,25 +38,25 @@ public final class TranslationContext {
     private final StaticContext moduleContext;
     private final CompilationConfiguration compilationConfiguration;
     private final RumbleConfiguration configuration;
-    private final ExternalBindings externalBindings;
     private final String source;
     private final ArrayDeque<Map<String, String>> constructorNamespaceFrames;
     private final TranslationNameResolver nameResolver;
+    private final ModuleImportLoader importLoader;
     private String libraryModuleNamespace;
 
     public TranslationContext(
             StaticContext moduleContext,
             CompilationConfiguration compilationConfiguration,
-            ExternalBindings externalBindings,
-            String source) {
+            String source,
+            ModuleImportLoader importLoader) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
         this.compilationConfiguration = compilationConfiguration;
         this.configuration = compilationConfiguration.runtimeConfiguration();
-        this.externalBindings = externalBindings;
         this.source = source;
         this.constructorNamespaceFrames = new ArrayDeque<>();
         this.nameResolver = new TranslationNameResolver(this);
+        this.importLoader = importLoader;
     }
 
     public StaticContext moduleContext() {
@@ -71,10 +71,6 @@ public final class TranslationContext {
         return this.configuration;
     }
 
-    public ExternalBindings externalBindings() {
-        return this.externalBindings;
-    }
-
     /** Only library modules declare a namespace, and they do so before their prolog is translated. */
     public boolean isLibraryModule() {
         return this.libraryModuleNamespace != null;
@@ -86,6 +82,10 @@ public final class TranslationContext {
 
     public void setLibraryModuleNamespace(String libraryModuleNamespace) {
         this.libraryModuleNamespace = libraryModuleNamespace;
+    }
+
+    public ModuleImportLoader importLoader() {
+        return this.importLoader;
     }
 
     public TranslationNameResolver names() {

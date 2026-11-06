@@ -56,6 +56,7 @@ import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.PrologDeclaration;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -455,10 +456,9 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     private Map<Name, Node> buildNameToNodeMap(Prolog prolog) {
         Map<Name, Node> nameToNodeMap = new TreeMap<>();
         for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
-            boolean contextItemInGroup = Name.CONTEXT_ITEM.equals(variableDeclaration.getVariableName())
-                    && !prolog.getSourceModuleContexts().isEmpty();
-            // Each module of a group may declare the one context item the query supplies.
-            if (nameToNodeMap.containsKey(variableDeclaration.getVariableName()) && !contextItemInGroup) {
+            // Each module of the imported library may declare the one context item the query supplies.
+            if (nameToNodeMap.containsKey(variableDeclaration.getVariableName())
+                    && !Name.CONTEXT_ITEM.equals(variableDeclaration.getVariableName())) {
                 throw new VariableAlreadyExistsException(
                         variableDeclaration.getVariableName(), variableDeclaration.getMetadata());
             }
@@ -501,6 +501,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitProlog(Prolog prolog, Void argument) {
+        prolog.getImportedLibrary().ifPresent(library -> visit(library.getProlog(), null));
         Map<Name, Node> nameToNodeMap = buildNameToNodeMap(prolog);
 
         Graph<Node, DefaultEdge> dependencyGraph = buildDependencyGraph(nameToNodeMap, prolog);
@@ -508,11 +509,11 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         // A dependency cycle is only an error if evaluation actually traverses it.
         // A named function reference, for example, does not evaluate its body.
 
-        List<Node> resolvedList = new ArrayList<>();
+        List<PrologDeclaration> resolvedList = new ArrayList<>();
         for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
             resolvedList.add(typeDeclaration);
         }
-        for (Node declaration : prolog.getDeclarations()) {
+        for (PrologDeclaration declaration : prolog.getDeclarations()) {
             if (!(declaration instanceof TypeDeclaration)
                     && !(declaration instanceof VariableDeclaration)
                     && !(declaration instanceof FunctionDeclaration)) {
@@ -535,6 +536,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             group.stream()
                     .filter(declaration -> !(declaration instanceof TypeDeclaration))
                     .sorted(Comparator.comparingInt(declarationOrder::get))
+                    .map(PrologDeclaration.class::cast)
                     .forEach(resolvedList::add);
         }
         prolog.setDeclarations(resolvedList);
