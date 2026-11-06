@@ -26,6 +26,7 @@ import java.util.function.Function;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
@@ -330,8 +331,7 @@ public final class XmlDirectConstructorTranslation {
             boolean whitespaceRequired,
             boolean adjacent,
             TranslationContext translationContext) {
-        String gap = left.getInputStream()
-                .getText(org.antlr.v4.runtime.misc.Interval.of(left.getStopIndex() + 1, right.getStartIndex() - 1));
+        String gap = left.getInputStream().getText(Interval.of(left.getStopIndex() + 1, right.getStartIndex() - 1));
         if ((whitespaceRequired && gap.isEmpty())
                 || (adjacent && !gap.isEmpty())
                 || !gap.chars().allMatch(c -> isXmlWhitespace((char) c))) {
