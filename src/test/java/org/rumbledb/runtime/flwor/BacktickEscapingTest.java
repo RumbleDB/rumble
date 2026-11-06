@@ -78,7 +78,7 @@ class BacktickEscapingTest {
 
     @Test
     void disabledEscapingLeavesOrdinaryIdentifiersWorking() throws Exception {
-        Path input = directory.resolve("ordinary.json");
+        Path input = this.directory.resolve("ordinary.json");
         Files.writeString(input, "{\"value\":7}\n");
         for (boolean enabled : new boolean[] {false, true}) {
             Rumble rumble = new Rumble(RumbleConfiguration.builder()
@@ -97,7 +97,7 @@ class BacktickEscapingTest {
 
     @Test
     void disabledEscapingDoesNotRewriteIdentifiers() throws Exception {
-        Path input = directory.resolve("disabled.json");
+        Path input = this.directory.resolve("disabled.json");
         Files.writeString(input, "{\"a`b\":1}\n");
         Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         assertThrows(org.apache.spark.sql.catalyst.parser.ParseException.class, () -> rumble.runQuery(
@@ -107,7 +107,7 @@ class BacktickEscapingTest {
 
     @Test
     void nativeLookupPreservesBackticksAndNestedNames() throws Exception {
-        Path input = directory.resolve("backticks.json");
+        Path input = this.directory.resolve("backticks.json");
         Files.writeString(input, "{\"a`b\":1,\"nested`\":{\"c`.d\":2}}\n" + "{\"a`b\":3,\"nested`\":{\"c`.d\":4}}\n");
         Rumble rumble = new Rumble(RumbleConfiguration.builder()
                 .configureRuntime(runtime -> runtime.escapeBackticks(true))
