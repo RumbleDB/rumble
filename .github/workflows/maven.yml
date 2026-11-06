@@ -12,6 +12,30 @@ on:
       - '**'
   merge_group:
 jobs:
+  all-tests-passed:
+    name: All tests passed
+    needs: [build, cli-tests, tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every component to succeed
+        env:
+          JOB_RESULTS: ${{ toJSON(needs) }}
+        shell: python
+        run: |
+          import json
+          import os
+
+          results = json.loads(os.environ['JOB_RESULTS'])
+          unsuccessful = [
+              f'{name}: {job["result"]}'
+              for name, job in results.items()
+              if job['result'] != 'success'
+          ]
+          if unsuccessful:
+              raise SystemExit('Components did not pass:\n' + '\n'.join(unsuccessful))
+          print('All build, CLI test, and test matrix components passed.')
+
   build:
     runs-on: ubuntu-latest
     steps:
