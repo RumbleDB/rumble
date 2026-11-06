@@ -10,10 +10,10 @@ on:
   pull_request:
     branches:
       - '**'
+  merge_group:
 jobs:
   build:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5

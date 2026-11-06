@@ -23,6 +23,7 @@ import java.util.List;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -75,7 +76,7 @@ public final class CompilationPipeline {
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        ModuleParser.Language language = ModuleParser.detectLanguage(query, uri, configuration);
+        LanguageVersion.Language language = ModuleParser.detectLanguage(query, uri, configuration);
         MainModule module =
                 ModuleParser.parseMainModule(query, uri, compilationConfiguration, externalBindings, language);
         CompilationContext context =
@@ -114,8 +115,8 @@ public final class CompilationPipeline {
      * XQuery retains its existing omission of sequential/updating classification and composability checks.
      */
     private static List<CompilationPass<MainModule>> mainModulePasses(
-            ModuleParser.Language language, RumbleConfiguration configuration) {
-        boolean isJSONiq = language == ModuleParser.Language.JSONIQ;
+            LanguageVersion.Language language, RumbleConfiguration configuration) {
+        boolean isJSONiq = language == LanguageVersion.Language.JSONIQ;
         List<CompilationPass<MainModule>> passes = new ArrayList<>();
         passes.add(CompilationPasses.pruneModules());
         passes.add(CompilationPasses.resolveDependencies());
