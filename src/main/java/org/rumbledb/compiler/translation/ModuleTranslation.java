@@ -21,12 +21,16 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import lombok.extern.log4j.Log4j2;
 
-import org.rumbledb.compiler.ModuleImportLoader;
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.MainModuleContext;
 import org.rumbledb.compiler.context.ProgramContext;
+import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.compiler.utils.URILiteralUtils;
+import org.rumbledb.config.model.LanguageVersion;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.EmptyModuleURIException;
+import org.rumbledb.exceptions.JsoniqVersionException;
+import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
@@ -41,6 +45,29 @@ import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 public final class ModuleTranslation {
 
     private ModuleTranslation() {}
+
+    /** Validates a version declaration's encoding and applies its version to the module. */
+    public static <StringLiteralCtx extends ParserRuleContext> void versionDecl(
+            VersionDeclContext<StringLiteralCtx> ctx,
+            TranslationContext translationContext,
+            Function<StringLiteralCtx, String> processStringLiteral) {
+        if (ctx.encoding() != null) {
+            String encoding = processStringLiteral.apply(ctx.encoding());
+            if (!encoding.matches("[A-Za-z][A-Za-z0-9._-]*")) {
+                throw new SemanticException(
+                        "Invalid encoding name: " + encoding,
+                        ErrorCode.InvalidEncodingNameErrorCode,
+                        translationContext.metadata(ctx.encoding()));
+            }
+        }
+        if (ctx.version() != null) {
+            String version = processStringLiteral.apply(ctx.version()).trim();
+            translationContext
+                    .moduleContext()
+                    .setQueryLanguage(LanguageVersion.fromDeclaration(ctx.language(), version)
+                            .orElseThrow(() -> new JsoniqVersionException(translationContext.metadata(ctx.context()))));
+        }
+    }
 
     public static <StatementsCtx extends ParserRuleContext> Program program(
             ProgramContext<StatementsCtx> ctx,
@@ -81,7 +108,6 @@ public final class ModuleTranslation {
         }
         NamespaceBindingUtils.validatePrologNamespaceDeclaration(
                 prefix, namespace, translationContext.metadata(ctx.context()));
-        ModuleImportLoader.registerActiveContext(namespace, translationContext.moduleContext());
         translationContext.setLibraryModuleNamespace(namespace);
         translationContext.bindNamespace(prefix, namespace, translationContext.metadata(ctx.context()));
 
