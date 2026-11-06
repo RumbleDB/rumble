@@ -87,7 +87,9 @@ final class ModuleParser {
                     ExceptionMetadata.fromTokens(uri.toString(), start.getStart(), start.getStop(), query));
         });
         StaticContext moduleContext = createModuleContext(uri, configuration.runtimeConfiguration());
-        return (MainModule) parseModule(query, uri, configuration, bindings, language, moduleContext);
+        return ModuleImportLoader.loadMainModule(
+                () -> (MainModule) parseModule(query, uri, configuration, bindings, language, moduleContext),
+                configuration.runtimeConfiguration());
     }
 
     static LibraryModule parseLibraryModule(
