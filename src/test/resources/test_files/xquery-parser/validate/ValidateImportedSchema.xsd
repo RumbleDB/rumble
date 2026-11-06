@@ -1,0 +1,19 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:t="urn:validate-test"
+           targetNamespace="urn:validate-test"
+           elementFormDefault="qualified">
+    <xs:simpleType name="Count">
+        <xs:restriction base="xs:integer">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:complexType name="Record">
+        <xs:sequence>
+            <xs:element name="amount" type="t:Count"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <xs:element name="root" type="t:Record"/>
+    <xs:element name="countValue" type="t:Count"/>
+</xs:schema>

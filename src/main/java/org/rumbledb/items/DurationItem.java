@@ -1,101 +1,100 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.joda.time.DurationFieldType;
-import org.joda.time.Instant;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
-import org.joda.time.format.ISOPeriodFormat;
-import org.joda.time.format.PeriodFormatter;
-import org.joda.time.format.PeriodFormatterBuilder;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.ItemType;
-
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
+import java.time.format.DateTimeParseException;
+import java.util.Comparator;
+import java.util.Objects;
 import java.util.regex.Pattern;
 
-public class DurationItem implements Item {
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DurationOverflowOrUnderflow;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
-    private static final String prefix = "(-)?P";
-    private static final String duYearFrag = "(\\d)+Y";
-    private static final String duMonthFrag = "(\\d)+M";
-    private static final String duDayFrag = "(\\d)+D";
-    private static final String duHourFrag = "(\\d)+H";
-    private static final String duMinuteFrag = "(\\d)+M";
-    private static final String duSecondFrag = "(((\\d)+)|(\\.(\\d)+)|((\\d)+\\.(\\d)+))S";
+public class DurationItem extends AbstractAtomicItem {
 
-    private static final String duYearMonthFrag = "((" + duYearFrag + "(" + duMonthFrag + ")?)|" + duMonthFrag + ")";
-    private static final String duTimeFrag = "T(("
-        + duHourFrag
-        + "("
-        + duMinuteFrag
-        + ")?"
-        + "("
-        + duSecondFrag
-        + ")?)|"
-        +
-        "("
-        + duMinuteFrag
-        + "("
-        + duSecondFrag
-        + ")?)|"
-        + duSecondFrag
-        + ")";
-    private static final String duDayTimeFrag = "((" + duDayFrag + "(" + duTimeFrag + ")?)|" + duTimeFrag + ")";
-    private static final String durationLiteral = prefix
-        + "(("
-        + duYearMonthFrag
-        + "("
-        + duDayTimeFrag
-        + ")?)|"
-        + duDayTimeFrag
-        + ")";
-    private static final String yearMonthDurationLiteral = prefix + duYearMonthFrag;
-    private static final String dayTimeDurationLiteral = prefix + duDayTimeFrag;
-    private static final Pattern durationPattern = Pattern.compile(durationLiteral);
-    private static final Pattern yearMonthDurationPattern = Pattern.compile(yearMonthDurationLiteral);
-    private static final Pattern dayTimeDurationPattern = Pattern.compile(dayTimeDurationLiteral);
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    protected Period value;
-    boolean isNegative;
 
-    public DurationItem() {
-        super();
+    private Duration durationValue = Duration.ZERO;
+    private Period periodValue = Period.ZERO;
+    private static final Pattern durationRegex = Pattern.compile(
+            "-?P((([0-9]+Y([0-9]+M)?([0-9]+D)?|([0-9]+M)([0-9]+D)?|([0-9]+D))(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S)))?)|(T(([0-9]+H)([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?|([0-9]+M)([0-9]+(\\.[0-9]+)?S)?|([0-9]+(\\.[0-9]+)?S))))");
+
+    public DurationItem(Duration value) {
+        this.durationValue = value;
     }
 
     public DurationItem(Period value) {
-        super();
-        this.value = value.normalizedStandard(PeriodType.yearMonthDayTime());
-        this.isNegative = this.value.toString().contains("-");
+        this.periodValue = value;
+    }
+
+    public DurationItem(String value) {
+        if (!durationRegex.matcher(value).matches()) {
+            throw new IllegalArgumentException("Invalid duration: " + value);
+        }
+        getDurationFromString(value);
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
+    public Item copy(boolean mutable) {
+        if (!Objects.isNull(this.durationValue)) {
+            return new DurationItem(this.durationValue);
         }
-        return false;
+        if (!Objects.isNull(this.periodValue)) {
+            return new DurationItem(this.periodValue);
+        }
+        throw new IllegalStateException("Invalid DurationItem state");
     }
 
-    public Period getValue() {
-        return this.value;
+    @Override
+    public Duration getDurationValue() {
+        if (Objects.isNull(this.durationValue) && Objects.isNull(this.periodValue)) {
+            return Duration.ZERO;
+        } else if (Objects.isNull(this.periodValue)) {
+            return this.durationValue;
+        }
+        LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
+        LocalDateTime target = anchor.plus(this.periodValue);
+        return Duration.between(anchor, target)
+                .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue);
     }
 
-    public Period getDurationValue() {
-        return this.getValue();
+    @Override
+    public Period getPeriodValue() {
+        return this.periodValue;
+    }
+
+    @Override
+    public Duration getDayTimeDurationComponent() {
+        Duration days = Duration.ofDays(Objects.isNull(this.periodValue) ? 0 : this.periodValue.getDays());
+        return days.plus(Objects.isNull(this.durationValue) ? Duration.ZERO : this.durationValue);
+    }
+
+    @Override
+    public String getStringValue() {
+        return normalizeDuration(normalizeMonthsToYears(this.periodValue), this.durationValue);
     }
 
     @Override
@@ -113,108 +112,132 @@ public class DurationItem implements Item {
         return false;
     }
 
-    @Override
-    public int hashCode() {
-        return Long.hashCode(this.getValue().toDurationFrom(Instant.now()).getMillis());
-    }
-
-    @Override
-    public String serialize() {
-        if (this.isNegative) {
-            return '-' + this.getValue().negated().toString();
+    private void getDurationFromString(String durationPeriodString) {
+        try {
+            if (!durationPeriodString.contains("PT")) {
+                String periodString = durationPeriodString.split("T")[0];
+                this.periodValue = normalizeMonthsToYears(Period.parse(periodString));
+            }
+            if (durationPeriodString.contains("T")) {
+                String durationString = "PT" + durationPeriodString.split("T")[1];
+                if (durationPeriodString.startsWith("-")) {
+                    durationString = "-" + durationString;
+                }
+                this.durationValue = Duration.parse(durationString);
+            }
+        } catch (DateTimeParseException e) {
+            throw new DurationOverflowOrUnderflow(
+                    "Invalid xs:duration: \"" + durationPeriodString + "\"", ExceptionMetadata.EMPTY_METADATA);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid xs:duration format: " + durationPeriodString, e);
         }
-        return this.getValue().toString();
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeString(this.serialize());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), BuiltinTypesCatalogue.durationItem).normalizedStandard(
-            PeriodType.yearMonthDayTime()
-        );
-        this.isNegative = this.value.toString().contains("-");
-    }
-
-    private static PeriodFormatter getPeriodFormatter(ItemType durationType) {
-        if (durationType.equals(BuiltinTypesCatalogue.durationItem)) {
-            return ISOPeriodFormat.standard();
-        }
-        if (durationType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
-            return new PeriodFormatterBuilder().appendLiteral("P")
-                .appendYears()
-                .appendSuffix("Y")
-                .appendMonths()
-                .appendSuffix("M")
-                .toFormatter();
-        }
-
-        if (durationType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
-            return new PeriodFormatterBuilder().appendLiteral("P")
-                .appendDays()
-                .appendSuffix("D")
-                .appendSeparatorIfFieldsAfter("T")
-                .appendHours()
-                .appendSuffix("H")
-                .appendMinutes()
-                .appendSuffix("M")
-                .appendSecondsWithOptionalMillis()
-                .appendSuffix("S")
-                .toFormatter();
-        }
-        throw new IllegalArgumentException();
-    }
-
-    private static PeriodType getPeriodType(ItemType durationType) {
-        if (durationType.equals(BuiltinTypesCatalogue.durationItem)) {
-            return PeriodType.yearMonthDayTime();
-        }
-        if (durationType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
-            return PeriodType.forFields(
-                new DurationFieldType[] { DurationFieldType.years(), DurationFieldType.months() }
-            );
-        }
-        if (durationType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
-            return PeriodType.dayTime();
-        }
-        throw new IllegalArgumentException();
-    }
-
-    private static boolean checkInvalidDurationFormat(String duration, ItemType durationType) {
-        if (durationType.equals(BuiltinTypesCatalogue.durationItem)) {
-            return durationPattern.matcher(duration).matches();
-        }
-        if (durationType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
-            return yearMonthDurationPattern.matcher(duration).matches();
-        }
-        if (durationType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
-            return dayTimeDurationPattern.matcher(duration).matches();
-        }
-        return false;
-    }
-
-    public static Period getDurationFromString(String duration, ItemType durationType)
-            throws UnsupportedOperationException,
-                IllegalArgumentException {
-        if (durationType == null || !checkInvalidDurationFormat(duration, durationType)) {
-            throw new IllegalArgumentException();
-        }
-        boolean isNegative = duration.charAt(0) == '-';
-        if (isNegative) {
-            duration = duration.substring(1);
-        }
-        PeriodFormatter pf = getPeriodFormatter(durationType);
-        Period period = Period.parse(duration, pf);
-        return isNegative
-            ? period.negated().normalizedStandard(getPeriodType(durationType))
-            : period.normalizedStandard(getPeriodType(durationType));
     }
 
     @Override
     public ItemType getDynamicType() {
         return BuiltinTypesCatalogue.durationItem;
+    }
+
+    public static final Comparator<Period> periodComparator = (p1, p2) -> {
+        LocalDate base = LocalDate.of(2000, 1, 1);
+        return base.plus(p1).compareTo(base.plus(p2));
+    };
+
+    @Override
+    public long getEpochMillis() {
+        if (Objects.isNull(this.durationValue) && Objects.isNull(this.periodValue)) {
+            return 0;
+        } else if (Objects.isNull(this.periodValue)) {
+            return this.durationValue.toMillis();
+        }
+        LocalDateTime anchor = LocalDateTime.of(2000, 1, 1, 0, 0);
+        LocalDateTime target = anchor.plus(this.periodValue);
+        return Duration.between(anchor, target)
+                .plus(Objects.isNull(this.durationValue) ? Duration.ofDays(0) : this.durationValue)
+                .toMillis();
+    }
+
+    public static String normalizeDuration(Period period, Duration duration) {
+        if (period.isZero() && duration.isZero()) {
+            return duration.toString();
+        }
+        long seconds = duration.getSeconds();
+        long absSeconds = Math.abs(seconds);
+
+        long daysFromDuration = absSeconds / (24 * 3600);
+        absSeconds %= 24 * 3600;
+        long hours = absSeconds / 3600;
+        absSeconds %= 3600;
+        long minutes = absSeconds / 60;
+        long secs = absSeconds % 60;
+
+        long totalDays = period.getDays() + (seconds >= 0 ? daysFromDuration : -daysFromDuration);
+        BigDecimal totalSeconds;
+        if (seconds >= 0) {
+            totalSeconds = BigDecimal.valueOf(secs).add(BigDecimal.valueOf(duration.getNano(), 9));
+        } else {
+            totalSeconds = BigDecimal.valueOf(secs).subtract(BigDecimal.valueOf(duration.getNano(), 9));
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append((seconds < 0 || period.isNegative()) ? "-P" : "P");
+        if (period.getYears() != 0) sb.append(Math.abs(period.getYears())).append("Y");
+        if (period.getMonths() != 0) sb.append(Math.abs(period.getMonths())).append("M");
+        if (totalDays != 0) sb.append(Math.abs(totalDays)).append("D");
+
+        if (hours != 0 || minutes != 0 || totalSeconds.signum() != 0) {
+            sb.append("T");
+            if (hours != 0) sb.append(Math.abs(hours)).append("H");
+            if (minutes != 0) sb.append(Math.abs(minutes)).append("M");
+            if (totalSeconds.signum() != 0)
+                sb.append(totalSeconds.abs().stripTrailingZeros().toPlainString())
+                        .append("S");
+        }
+        return sb.toString();
+    }
+
+    public static Period normalizeMonthsToYears(Period period) {
+        Period normalized = period.normalized();
+        if (normalized.getMonths() >= 12) {
+            return normalized
+                    .minusMonths(normalized.getMonths() - (normalized.getMonths() % 12))
+                    .plusYears(normalized.getMonths() / 12);
+        }
+        return normalized;
+    }
+
+    @Override
+    public int getYear() {
+        return this.periodValue.getYears();
+    }
+
+    @Override
+    public int getMonth() {
+        return this.periodValue.getMonths();
+    }
+
+    @Override
+    public int getDay() {
+        return this.periodValue.getDays();
+    }
+
+    @Override
+    public int getHour() {
+        return (int) ((this.durationValue.getSeconds() / 3600) % 24);
+    }
+
+    @Override
+    public int getMinute() {
+        return (int) ((this.durationValue.getSeconds() / 60) % 60);
+    }
+
+    @Override
+    public double getSecond() {
+        return (this.durationValue.getSeconds() % 60 + this.durationValue.getNano() / 1_000_000_000.0);
+    }
+
+    @Override
+    public int getNanosecond() {
+        return this.durationValue.getNano();
     }
 }

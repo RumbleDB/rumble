@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,54 +11,58 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.input;
+
+import java.io.Serial;
+import java.net.URI;
+import java.util.List;
 
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+
+import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
 
-import sparksoniq.spark.SparkSessionManager;
+public class ParquetFileFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
-import java.net.URI;
-import java.util.List;
-
-public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public ParquetFileFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public ParquetFileFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        RuntimeIterator urlIterator = this.children.get(0);
-        urlIterator.open(context);
-        String url = urlIterator.next().getStringValue();
-        urlIterator.close();
-        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
-        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext context) {
+
+        String url = this.getChild(0).materializeFirstOrNull(context).getStringValue();
+
+        URI uri = FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), url, getMetadata());
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
+        int partitions = -1;
+        if (this.getChildren().size() > 1) {
+            partitions = this.getChild(1).materializeFirstOrNull(context).getIntValue();
+        }
         try {
-            return SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .read()
-                .parquet(uri.toString());
+            Dataset<Row> dataFrame = SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .read()
+                    .parquet(FileSystemUtil.convertURIToStringForSpark(uri));
+            if (partitions != -1) {
+                dataFrame = dataFrame.repartition(partitions);
+            }
+            return new HomogeneousItemDataFrame(dataFrame);
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());

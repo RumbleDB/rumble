@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:2:COLUMN:5:" :)
+(:JIQS: ShouldRun; Output="8" :)
 sum((2, 3, [1, 2]))
 
 (: non-atomic error :)

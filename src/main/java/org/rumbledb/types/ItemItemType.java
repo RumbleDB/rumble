@@ -1,34 +1,48 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
-import org.rumbledb.context.Name;
-
+import java.io.Serial;
 import java.util.Set;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
 
 /**
  * Class representing the generic 'item' item type
  */
-public class ItemItemType implements ItemType {
+public class ItemItemType extends AbstractItemType {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    static final ItemType item = new ItemItemType(Name.createVariableInDefaultTypeNamespace("item"));
-    private Name name;
+    static final ItemType item = new ItemItemType();
+    private final Name name;
 
     public ItemItemType() {
+        this.name = Name.createVariableInDefaultTypeNamespace("item");
     }
 
-    private ItemItemType(Name name) {
+    public ItemItemType(Name name) {
         this.name = name;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof ItemType)) {
-            return false;
-        }
-        return this.getIdentifierString().equals(((ItemType) o).getIdentifierString());
+    public boolean isTopmostItemType() {
+        return true;
     }
 
     @Override
@@ -62,7 +76,7 @@ public class ItemItemType implements ItemType {
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("item type does not support facets");
     }
 
@@ -72,7 +86,17 @@ public class ItemItemType implements ItemType {
     }
 
     @Override
-    public DataType toDataFrameType() {
-        return DataTypes.BinaryType;
+    public boolean isResolved() {
+        return true;
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
+        return false;
+    }
+
+    @Override
+    public boolean canBeNull() {
+        return true;
     }
 }

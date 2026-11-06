@@ -1,67 +1,105 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
-
+import java.io.Serial;
 import java.util.*;
 
-public class ArrayItemType implements ItemType {
+import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
+import org.rumbledb.exceptions.OurBadException;
 
+public class ArrayItemType extends AbstractItemType {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    final static ArrayItemType anyArrayItem = new ArrayItemType(
-            new Name(Name.JS_NS, "js", "array"),
-            BuiltinTypesCatalogue.JSONItem,
-            null,
-            null,
-            null,
-            null
-    );
+    static final Set<ConstrainingFacetTypes> allowedFacets = new HashSet<>(Arrays.asList(
+            ConstrainingFacetTypes.ENUMERATION,
+            ConstrainingFacetTypes.CONTENT,
+            ConstrainingFacetTypes.MINLENGTH,
+            ConstrainingFacetTypes.MAXLENGTH));
 
-    final static Set<FacetTypes> allowedFacets = new HashSet<>(
-            Arrays.asList(
-                FacetTypes.ENUMERATION,
-                FacetTypes.CONTENT,
-                FacetTypes.MINLENGTH,
-                FacetTypes.MAXLENGTH
-            )
-    );
+    private Name name;
+    private ItemType baseType;
+    private int typeTreeDepth;
 
-    final private Name name;
-    final private ArrayContentDescriptor content;
-    final private List<Item> enumeration;
-    final private ItemType baseType;
-    final private int typeTreeDepth;
-    final private Integer minLength, maxLength;
+    private ItemType content;
+    private List<Item> enumeration;
+    private Integer minLength, maxLength;
 
     ArrayItemType(
             Name name,
             ItemType baseType,
-            ArrayContentDescriptor content,
+            ItemType content,
             Integer minLength,
             Integer maxLength,
-            List<Item> enumeration
-    ) {
+            List<Item> enumeration) {
         this.name = name;
+        if (baseType == null) {
+            throw new OurBadException("Unexpected error: baseType is null.");
+        }
         this.baseType = baseType;
-        this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
         this.content = content;
         this.minLength = minLength;
         this.maxLength = maxLength;
         this.enumeration = enumeration;
+        if (this.baseType.isResolved()) {
+            processBaseType();
+            if (this.content.isResolved()) {
+                checkSubtypeConsistency();
+            }
+        }
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
-            return false;
-        }
-        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
+    public static ItemType arrayOf(ItemType itemType) {
+        return new ArrayItemType(
+                new Name(Name.JS_NS, "js", "array"), BuiltinTypesCatalogue.arrayItem, itemType, null, null, null);
     }
 
     @Override
     public boolean isArrayItemType() {
         return true;
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            for (ItemType member : superType.getTypes()) {
+                if (this.isSubtypeOf(member)) {
+                    return true;
+                }
+            }
+        }
+        if (superType.isXQueryArrayItemType()) {
+            // an ArrayItemType (js:array()) with a base type of T <: array(T)
+            return new SequenceType(this.content, SequenceType.Arity.One)
+                    .isSubtypeOf(superType.getMemberSequenceType());
+        }
+        if (superType.isFunctionItemType()) {
+            ItemType xqueryArrayType =
+                    ItemTypeFactory.xqueryArrayOf(new SequenceType(this.content, SequenceType.Arity.One));
+            return xqueryArrayType.isSubtypeOf(superType);
+        }
+        return super.isSubtypeOf(superType);
     }
 
     @Override
@@ -81,47 +119,82 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return !(this.equals(anyArrayItem));
+        return !(this.equals(BuiltinTypesCatalogue.arrayItem));
     }
 
     @Override
     public boolean isPrimitive() {
-        return this.equals(anyArrayItem);
+        return this.equals(BuiltinTypesCatalogue.arrayItem);
     }
 
     @Override
     public ItemType getPrimitiveType() {
-        return anyArrayItem;
+        return BuiltinTypesCatalogue.arrayItem;
     }
 
     @Override
     public ItemType getBaseType() {
+        if (!isResolved()) {
+            throw new OurBadException("Base type not resolved in array type " + this);
+        }
         return this.baseType;
     }
 
     @Override
-    public Set<FacetTypes> getAllowedFacets() {
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
         return allowedFacets;
     }
 
     @Override
     public List<Item> getEnumerationFacet() {
-        return this.enumeration != null || this.isPrimitive() ? this.enumeration : this.baseType.getEnumerationFacet();
+        return this.enumeration;
     }
 
     @Override
     public Integer getMinLengthFacet() {
-        return this.minLength != null || this.isPrimitive() ? this.minLength : this.baseType.getMinLengthFacet();
+        return this.minLength;
     }
 
     @Override
     public Integer getMaxLengthFacet() {
-        return this.maxLength != null || this.isPrimitive() ? this.maxLength : this.baseType.getMaxLengthFacet();
+        return this.maxLength;
     }
 
     @Override
-    public ArrayContentDescriptor getArrayContentFacet() {
-        return this.content != null || this.isPrimitive() ? this.content : this.baseType.getArrayContentFacet();
+    public ItemType getArrayContentFacet() {
+        return this.content;
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeLax(ItemType other) {
+        if (!(other instanceof ArrayItemType otherArray)) {
+            if (other.isArrayItemType()) {
+                return other.findLeastCommonSuperTypeLax(this);
+            }
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        if (!this.isResolved() || !otherArray.isResolved()) {
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        if (hasEnumerationFacet() || otherArray.hasEnumerationFacet()) {
+            return this.findLeastCommonSuperTypeWith(other);
+        }
+        ItemType mergedContent;
+        if (this.maxLength != null && this.maxLength == 0) {
+            mergedContent = otherArray.content;
+        } else if (otherArray.maxLength != null && otherArray.maxLength == 0) {
+            mergedContent = this.content;
+        } else {
+            mergedContent = this.content.findLeastCommonSuperTypeLax(otherArray.content);
+        }
+        Integer mergedMinLength = mergeMinLengthFacet(this.minLength, otherArray.minLength);
+        Integer mergedMaxLength = mergeMaxLengthFacet(this.maxLength, otherArray.maxLength);
+        if (mergedMinLength != null && mergedMaxLength != null && mergedMinLength > mergedMaxLength) {
+            mergedMinLength = null;
+            mergedMaxLength = null;
+        }
+        return new ArrayItemType(
+                null, BuiltinTypesCatalogue.arrayItem, mergedContent, mergedMinLength, mergedMaxLength, null);
     }
 
     @Override
@@ -135,7 +208,7 @@ public class ArrayItemType implements ItemType {
         sb.append("}");
         if (this.content != null) {
             sb.append("-content{");
-            sb.append(this.content.getType().getIdentifierString());
+            sb.append(this.content.getIdentifierString());
             sb.append("}");
         }
         if (this.enumeration != null) {
@@ -153,8 +226,177 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public String toString() {
-        // consider add content and various stuff
-        return this.name.toString();
+        if ((new Name(Name.JS_NS, "js", "array")).equals(this.name)) {
+            // generic object
+            return this.name.toString();
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{ ");
+            if (this.name != null && !this.name.getLocalName().equals("")) {
+                sb.append("\"name\": \"");
+                sb.append(this.name.toString());
+                sb.append("\", ");
+            }
+            sb.append("\"kind\": \"array\", ");
+
+            sb.append("\"baseType\": \"");
+            sb.append(this.baseType.toString());
+            sb.append("\", ");
+
+            sb.append("\"treeDepth\": ");
+            sb.append(this.typeTreeDepth);
+            sb.append(", ");
+
+            if (this.minLength != null) {
+                sb.append("\"minLength\": ");
+                sb.append(this.minLength);
+                sb.append(", ");
+            }
+            if (this.maxLength != null) {
+                sb.append("\"maxLength\": ");
+                sb.append(this.maxLength);
+                sb.append(", ");
+            }
+
+            if (isResolved()) {
+                sb.append("\"content\": ");
+                String type = this.getArrayContentFacet().toString();
+                if (type.startsWith("{")) {
+                    sb.append(type);
+                } else {
+                    sb.append("\"");
+                    sb.append(type);
+                    sb.append("\"");
+                }
+            } else {
+                sb.append(" (content not resolved yet) ");
+            }
+            sb.append(" }");
+            return sb.toString();
+        } // consider add content and various stuff
     }
 
+    public void processBaseType() {
+        this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
+        if (this.baseType.isArrayItemType()) {
+            if (this.content == null) {
+                this.content = this.baseType.getArrayContentFacet();
+            }
+            if (this.minLength == null) {
+                this.minLength = this.baseType.getMinLengthFacet();
+            }
+            if (this.maxLength == null) {
+                this.maxLength = this.baseType.getMaxLengthFacet();
+            }
+            if (this.enumeration == null) {
+                this.enumeration = this.baseType.getEnumerationFacet();
+            }
+            return;
+        }
+        if (!this.baseType.equals(BuiltinTypesCatalogue.JSONItem)) {
+            throw new InvalidSchemaException(
+                    "This type cannot be the base type of an array type: " + this.baseType,
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
+        if (this.content == null) {
+            throw new OurBadException("Content cannot be null in primitive array type.");
+        }
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
+        if (!this.content.isResolved()) {
+            this.content.resolve(context, metadata);
+            checkSubtypeConsistency();
+        }
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
+        if (!this.content.isResolved()) {
+            this.content.resolve(context, metadata);
+            checkSubtypeConsistency();
+        }
+    }
+
+    @Override
+    public boolean isResolved() {
+        return this.baseType.isResolved() && this.content != null && this.content.isResolved();
+    }
+
+    public void checkSubtypeConsistency() {
+        if (!this.baseType.isArrayItemType()) {
+            if (this.getTypeTreeDepth() >= 3) {
+                throw new InvalidSchemaException(
+                        "Any user-defined array type must have an array type as its base type.",
+                        ExceptionMetadata.EMPTY_METADATA);
+            }
+            return;
+        }
+        if (!this.content.isSubtypeOf(this.baseType.getArrayContentFacet())) {
+            throw new InvalidSchemaException(
+                    "The content of an array subtype (here: "
+                            + this.content
+                            + ") must be a subtype of the content of its base type (here: "
+                            + this.baseType.getArrayContentFacet()
+                            + ")",
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
+        if (this.baseType.getMinLengthFacet() != null && this.getMinLengthFacet() < this.baseType.getMinLengthFacet()) {
+            throw new InvalidSchemaException(
+                    "The minLength facet of an array subtype must be greater or equal to that of its base type.",
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
+        if (this.baseType.getMaxLengthFacet() != null && this.getMaxLengthFacet() > this.baseType.getMaxLengthFacet()) {
+            throw new InvalidSchemaException(
+                    "The maxLength facet of an array subtype must be lesser or equal to that of its base type.",
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
+        return this.content.isCompatibleWithDataFrames(configuration);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("ARRAY<");
+        sb.append(this.getArrayContentFacet().getSparkSQLType());
+        sb.append(">");
+        return sb.toString();
+    }
+
+    private boolean hasEnumerationFacet() {
+        return this.enumeration != null && !this.enumeration.isEmpty();
+    }
+
+    private Integer mergeMinLengthFacet(Integer first, Integer second) {
+        if (first == null) {
+            return null;
+        }
+        if (second == null) {
+            return null;
+        }
+        return Math.min(first, second);
+    }
+
+    private Integer mergeMaxLengthFacet(Integer first, Integer second) {
+        if (first == null) {
+            return null;
+        }
+        if (second == null) {
+            return null;
+        }
+        return Math.max(first, second);
+    }
 }

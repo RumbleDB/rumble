@@ -1,0 +1,68 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.flwor.udfs;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
+
+import scala.collection.Iterator;
+import scala.collection.immutable.ArraySeq;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.OurBadException;
+
+public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<Object>, Object[]> {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final List<Item> nextResult;
+    private final List<List<Item>> deserializedParams;
+
+    public GroupClauseArrayMergeAggregateResultsUDF() {
+        this.nextResult = new ArrayList<>();
+        this.deserializedParams = new ArrayList<>();
+    }
+
+    @Override
+    public Object[] call(ArraySeq<Object> wrappedParameters) {
+        this.nextResult.clear();
+        this.deserializedParams.clear();
+        List<Object> result = new ArrayList<Object>();
+        Iterator<Object> iterator = wrappedParameters.iterator();
+        while (iterator.hasNext()) {
+            Object o = iterator.next();
+            if (o instanceof Row row) {
+                result.add(row);
+            }
+            if (o instanceof ArraySeq) {
+                @SuppressWarnings("unchecked")
+                ArraySeq<Object> arraySeq = (ArraySeq<Object>) o;
+                Iterator<Object> iterator2 = arraySeq.iterator();
+                while (iterator2.hasNext()) result.add(iterator2.next());
+            } else {
+                throw new OurBadException("We cannot process " + o.getClass().getCanonicalName());
+            }
+        }
+        Object[] results = new Object[result.size()];
+        result.toArray(results);
+        return results;
+    }
+}

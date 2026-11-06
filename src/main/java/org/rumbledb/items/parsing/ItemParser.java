@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +11,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.items.parsing;
+
+import java.io.IOException;
+import java.io.StringReader;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.apache.commons.codec.binary.Hex;
 import org.apache.spark.ml.linalg.DenseVector;
@@ -26,53 +38,266 @@ import org.apache.spark.ml.linalg.SparseVector;
 import org.apache.spark.ml.linalg.Vector;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.joda.time.DateTime;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+
+import scala.collection.Iterator;
+import scala.collection.immutable.ArraySeq;
+
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
+
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
+import org.rumbledb.exceptions.InvalidJSONException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.typing.CastIterator;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
+import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import scala.collection.mutable.WrappedArray;
-import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+public class ItemParser {
 
-public class ItemParser implements Serializable {
+    /**
+     * Parses a JSON string to an item.
+     *
+     * @param string the JSON string.
+     * @param metadata exception metadata is an error is thrown.
+     * @return the parsed item.
+     */
+    @Deprecated
+    public static Item getItemFromString(String string, ExceptionMetadata metadata, boolean mutable) {
+        string = "[ " + string + " ]";
+        JsonReader object = new JsonReader(new StringReader(string));
+        Item arrayItem = ItemParser.parseOptionlessJSON(object, metadata, mutable);
+        if (arrayItem.getSize() == 0) {
+            throw new ParsingException("Empty string to parse as JSON!", metadata);
+        }
+        return arrayItem.getItemAt(0);
+    }
 
+    public static Item getItemFromJSONString(
+            String string,
+            JSONParsingOptions options,
+            String xmlVersion,
+            boolean isJSONiq10,
+            ExceptionMetadata metadata) {
+        return JSONParser.parse(string, options, xmlVersion, isJSONiq10, metadata);
+    }
 
-    private static final long serialVersionUID = 1L;
-    private static final DataType vectorType = new VectorUDT();
-    public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
+    /**
+     * @deprecated Use {@link #getItemFromObject(JsonReader, boolean, String, ExceptionMetadata, boolean)}
+     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
+     */
+    @Deprecated
+    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata, boolean mutable) {
+        return getItemFromObject(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
+    }
 
-    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
+    /**
+     * Parses a JSON object from the given reader.
+     *
+     * @param object the JSON reader.
+     * @param metadata exception metadata if an error is thrown.
+     * @return the parsed item.
+     */
+    public static Item getItemFromObject(
+            JsonReader object, boolean isJSONiq10, String numberFormat, ExceptionMetadata metadata, boolean mutable) {
+        try {
+            Item result = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata, mutable);
+            object.peek();
+            return result;
+        } catch (Exception e) {
+            InvalidJSONException ex = new InvalidJSONException("Invalid JSON object!", metadata);
+            ex.initCause(e);
+            throw ex;
+        }
+    }
+
+    /**
+     * @deprecated Use {@link #parseOptionlessJSON(JsonReader, boolean, String, ExceptionMetadata, boolean)}
+     *             instead. This method is kept for backward compatibility and defaults to JSONiq mode.
+     */
+    @Deprecated
+    public static Item parseOptionlessJSON(JsonReader object, ExceptionMetadata metadata, boolean mutable) {
+        return parseOptionlessJSON(object, true, JSONParsingOptions.NUMBER_FORMAT_ADAPTIVE, metadata, mutable);
+    }
+
+    /**
+     * Parses a JSON string, accessible via a reader, to an item.
+     *
+     * @param object the JSON reader.
+     * @param metadata exception metadata is an error is thrown.
+     * @return the parsed item.
+     *
+     */
+    public static Item parseOptionlessJSON(
+            JsonReader object, boolean isJSONiq10, String numberFormat, ExceptionMetadata metadata, boolean mutable) {
         try {
             if (object.peek() == JsonToken.STRING) {
                 return ItemFactory.getInstance().createStringItem(object.nextString());
             }
+
             if (object.peek() == JsonToken.NUMBER) {
                 String number = object.nextString();
+                return getItemFromJSONNumber(number, numberFormat);
+            }
+
+            if (object.peek() == JsonToken.BOOLEAN) {
+                return ItemFactory.getInstance().createBooleanItem(object.nextBoolean());
+            }
+
+            if (object.peek() == JsonToken.BEGIN_ARRAY) {
+                List<Item> values = new ArrayList<>();
+                boolean containsJavaNull = false;
+
+                object.beginArray();
+                while (object.hasNext()) {
+                    Item value = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata, mutable);
+
+                    if (value == null) {
+                        containsJavaNull = true;
+                    }
+
+                    values.add(value);
+                }
+                object.endArray();
+
+                if (!containsJavaNull) {
+                    return ItemFactory.getInstance().createArrayItem(values, mutable);
+                }
+
+                List<List<Item>> sequenceMembers = new ArrayList<>();
+
+                for (Item value : values) {
+                    if (value == null) {
+                        sequenceMembers.add(Collections.emptyList());
+                    } else {
+                        sequenceMembers.add(Collections.singletonList(value));
+                    }
+                }
+
+                return ItemFactory.getInstance().createSequenceArrayItem(sequenceMembers, mutable);
+            }
+
+            if (object.peek() == JsonToken.BEGIN_OBJECT) {
+                List<String> keys = new ArrayList<>();
+                List<Item> values = new ArrayList<>();
+                Set<String> seenKeys = new HashSet<>();
+                boolean containsJavaNull = false;
+
+                object.beginObject();
+                while (object.hasNext()) {
+                    String key = object.nextName();
+
+                    if (seenKeys.contains(key)) {
+                        object.skipValue(); // spec requires default use-first policy
+                        continue;
+                    }
+
+                    Item value = parseOptionlessJSON(object, isJSONiq10, numberFormat, metadata, mutable);
+
+                    if (value == null) {
+                        containsJavaNull = true;
+                    }
+
+                    seenKeys.add(key);
+                    keys.add(key);
+                    values.add(value);
+                }
+                object.endObject();
+
+                if (!containsJavaNull) {
+                    return ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
+                }
+
+                List<Item> mapKeys = new ArrayList<>();
+                List<List<Item>> mapValues = new ArrayList<>();
+
+                for (String key : keys) {
+                    mapKeys.add(ItemFactory.getInstance().createStringItem(key));
+                }
+
+                for (Item value : values) {
+                    if (value == null) {
+                        mapValues.add(Collections.emptyList());
+                    } else {
+                        mapValues.add(Collections.singletonList(value));
+                    }
+                }
+
+                return ItemFactory.getInstance().createMapItem(mapKeys, mapValues, metadata, false);
+            }
+
+            if (object.peek() == JsonToken.NULL) {
+                object.nextNull();
+
+                if (isJSONiq10) {
+                    return ItemFactory.getInstance().createNullItem();
+                }
+
+                return null;
+            }
+
+            throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
+        } catch (Exception e) {
+            RumbleException r = new ParsingException(
+                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-lines(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
+                    metadata);
+            r.initCause(e);
+            throw r;
+        }
+    }
+
+    /**
+     * Returns the appropriate numeric Item for a JSON number.
+     * Since XQuery 4.0 introduces the `number-format` option for `json-doc` and `parse-json`,
+     * the returned Item type depends on the resolved number format.
+     *
+     * @param number the JSON number as a string
+     * @param numberFormat the resolved number-format option from the JSON parsing options
+     * @return a DoubleItem or DecimalItem if explicitly requested; if the format is adaptive,
+     *         the method returns the most appropriate numeric Item based on the input value
+     */
+    static Item getItemFromJSONNumber(String number, String numberFormat) {
+        return JSONLiteralParsingUtils.getItemFromJSONNumber(number, numberFormat);
+    }
+
+    /**
+     * Parses a JSON string, accessible via a reader, to an item.
+     *
+     * @param parser the YAML parser.
+     * @param lookahead the lookahead token.
+     * @param metadata exception metadata is an error is thrown.
+     * @return the parsed item.
+     */
+    public static Item getItemFromYAML(
+            YAMLParser parser, com.fasterxml.jackson.core.JsonToken lookahead, ExceptionMetadata metadata) {
+        try {
+            if (lookahead == null) {
+                // System.err.println("End of file.");
+                return null;
+            }
+            // System.err.println("Lookahead (top level): " + lookahead.toString());
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_STRING)) {
+                return ItemFactory.getInstance().createStringItem(parser.getValueAsString());
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_INT)) {
+                String number = parser.getValueAsString();
                 if (number.contains("E") || number.contains("e")) {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
@@ -81,126 +306,244 @@ public class ItemParser implements Serializable {
                 }
                 return ItemFactory.getInstance().createIntegerItem(number);
             }
-            if (object.peek() == JsonToken.BOOLEAN) {
-                return ItemFactory.getInstance().createBooleanItem(object.nextBoolean());
-            }
-            if (object.peek() == JsonToken.BEGIN_ARRAY) {
-                List<Item> values = new ArrayList<>();
-                object.beginArray();
-                while (object.hasNext()) {
-                    values.add(getItemFromObject(object, metadata));
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_FLOAT)) {
+                String number = parser.getValueAsString();
+                if (number.contains("E") || number.contains("e")) {
+                    return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
-                object.endArray();
-                return ItemFactory.getInstance().createArrayItem(values);
+                if (number.contains(".")) {
+                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                }
+                return ItemFactory.getInstance().createIntegerItem(number);
             }
-            if (object.peek() == JsonToken.BEGIN_OBJECT) {
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_FALSE)) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_TRUE)) {
+                return ItemFactory.getInstance().createBooleanItem(true);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_ARRAY)) {
+                List<Item> values = new ArrayList<>();
+                com.fasterxml.jackson.core.JsonToken nt = parser.nextToken();
+                // System.err.println("Next token (reading array): " + nt.toString());
+                while (!nt.equals(com.fasterxml.jackson.core.JsonToken.END_ARRAY)) {
+                    values.add(getItemFromYAML(parser, nt, metadata));
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading array): " + nt.toString());
+                }
+                // System.err.println("Finished reading array.");
+                return ItemFactory.getInstance().createArrayItem(values, false);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_OBJECT)) {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                object.beginObject();
-                while (object.hasNext()) {
-                    keys.add(object.nextName());
-                    values.add(getItemFromObject(object, metadata));
+                com.fasterxml.jackson.core.JsonToken nt = parser.nextToken();
+                // System.err.println("Next token (reading object): " + lookahead.toString());
+                while (!nt.equals(com.fasterxml.jackson.core.JsonToken.END_OBJECT)) {
+                    if (!nt.equals(com.fasterxml.jackson.core.JsonToken.FIELD_NAME)) {
+                        throw new ParsingException("Expected field name!", metadata);
+                    }
+                    keys.add(parser.getText());
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading object): " + nt.toString());
+                    values.add(getItemFromYAML(parser, nt, metadata));
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading object): " + nt.toString());
                 }
-                object.endObject();
-                return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, metadata);
+                // System.err.println("Finished reading object.");
+                return ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
             }
-            if (object.peek() == JsonToken.NULL) {
-                object.nextNull();
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NULL)) {
                 return ItemFactory.getInstance().createNullItem();
             }
-            throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
-        } catch (Exception e) {
-            RumbleException r = new ParsingException(
-                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
-                    metadata
-            );
+            throw new ParsingException(
+                    "Invalid value found while parsing. YAML is not well-formed! Unexpected " + lookahead.toString(),
+                    metadata);
+        } catch (IOException e) {
+            RumbleException r =
+                    new ParsingException("An error happened while parsing YAML. YAML is not well-formed!", metadata);
             r.initCause(e);
             throw r;
         }
     }
 
-    public static Item getItemFromRow(Row row, ExceptionMetadata metadata) {
+    /**
+     * Check fields columns consistency and return the index of the non-object JSONiq item column if present.
+     *
+     * @param fieldNames the field names of the DataFrame schema.
+     * @return the index of the non-object JSONiq item column if present, -1 otherwise.
+     */
+    public static int findNonObjectColumnIndexAndCheckConsistency(String[] fieldNames) {
+        int result = -1;
+        boolean otherColumnsFound = false;
+        for (int i = 0; i < fieldNames.length; ++i) {
+            if (fieldNames[i].equals(SparkSessionManager.nonObjectJSONiqItemColumnName)) {
+                result = i;
+                break;
+            }
+            if (fieldNames[i].equals(SparkSessionManager.mutabilityLevelColumnName)
+                    || fieldNames[i].equals(SparkSessionManager.rowIdColumnName)
+                    || fieldNames[i].equals(SparkSessionManager.pathInColumnName)
+                    || fieldNames[i].equals(SparkSessionManager.tableLocationColumnName)
+                    || fieldNames[i].equals(SparkSessionManager.rowOrderColumnName)) {
+                continue;
+            }
+            otherColumnsFound = true;
+        }
+
+        if (otherColumnsFound && result != -1) {
+            throw new OurBadException(
+                    "The presence of other columns alongside the non-object JSONiq item column is not supported.");
+        }
+
+        return result;
+    }
+
+    /**
+     * Converts a DataFrame row to an item.
+     *
+     * @param row the DataFrame row.
+     * @param metadata exception metadata is an error is thrown.
+     * @param itemType the type to annotate the output item with (for now, it can be null for no annotation).
+     * @return the converted item.
+     */
+    public static Item getItemFromRow(Row row, ExceptionMetadata metadata, ItemType itemType) {
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
         StructType schema = row.schema();
         StructField[] fields = schema.fields();
         String[] fieldnames = schema.fieldNames();
 
+        // Atomic case
+        int nonObjectColumnIndex = findNonObjectColumnIndexAndCheckConsistency(fieldnames);
+        if (nonObjectColumnIndex != -1) {
+            Item atomicItem = convertValueToItem(
+                    row, nonObjectColumnIndex, null, fields[nonObjectColumnIndex].dataType(), metadata, itemType);
+            int mutabilityLevel = -1;
+            long topLevelID = -1;
+            String pathIn = "null";
+            Collection collection = null;
+            double rowOrder = 0.0;
+            for (int i = 0; i < fields.length; ++i) {
+                String fieldName = fields[i].name();
+                if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
+                    mutabilityLevel = row.getInt(i);
+                    continue;
+                }
+                if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
+                    topLevelID = row.getLong(i);
+                    continue;
+                }
+                if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
+                    pathIn = row.getString(i);
+                    continue;
+                }
+                if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
+                    collection = new Collection(row.getString(i));
+                    continue;
+                }
+                if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
+                    rowOrder = row.getDouble(i);
+                }
+            }
+            atomicItem.setMutabilityLevel(mutabilityLevel);
+            atomicItem.setTopLevelID(topLevelID);
+            atomicItem.setPathIn(pathIn);
+            atomicItem.setCollection(collection);
+            atomicItem.setTopLevelOrder(rowOrder);
+            return atomicItem;
+        }
+
+        // Array case
+        int mutabilityLevel = -1;
+        long topLevelID = -1;
+        String pathIn = "null";
+        Collection collection = null;
+        double rowOrder = 0.0;
+
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
             String fieldName = field.name();
-            Item newItem = convertValueToItem(row, i, null, fieldType, metadata);
-            // NULL values in DataFrames are mapped to absent in JSONiq.
-            if (
-                !newItem.isNull()
+            ItemType fieldItemType = null;
+            boolean requiredField = false;
+
+            if (fieldName.equals(SparkSessionManager.mutabilityLevelColumnName)) {
+                mutabilityLevel = row.getInt(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.rowIdColumnName)) {
+                topLevelID = row.getLong(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.pathInColumnName)) {
+                pathIn = row.getString(i);
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.tableLocationColumnName)) {
+                collection = new Collection(row.getString(i));
+                continue;
+            }
+            if (fieldName.equals(SparkSessionManager.rowOrderColumnName)) {
+                rowOrder = row.getDouble(i);
+                continue;
+            }
+
+            if (itemType != null
+                    && itemType.isObjectItemType()
+                    && (itemType.getObjectKeysFacet().size() != 0 || itemType.getClosedFacet())) {
+                FieldDescriptor descriptor = itemType.getObjectContentFacet(fieldName);
+                if (descriptor != null) {
+                    fieldItemType = descriptor.getType();
+                    requiredField = descriptor.isRequired();
+                    if (fieldItemType == null) {
+                        throw new OurBadException("Type for field "
+                                + fieldName
+                                + " in type "
+                                + itemType.getIdentifierString()
+                                + " is null.");
+                    }
+                }
+            }
+            Item newItem = convertValueToItem(row, i, null, fieldType, metadata, fieldItemType);
+            // SQL NULL represents absence for optional fields, but required constructor fields
+            // must retain their key and store JSON null (e.g., an empty value expression).
+            if (!newItem.isNull()
                     || (!fieldName.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
-                        && fieldType.equals(DataTypes.NullType))
-            ) {
-                keys.add(fieldName);
-                values.add(newItem);
+                            && (requiredField || fieldType.equals(DataTypes.NullType)))) {
+                // don't return array for single sequence item
+                if (fieldName.endsWith(SparkSessionManager.sequenceColumnName)) {
+                    if (newItem.getSize() == 0) {
+                        values.add(null);
+                    } else if (newItem.getSize() == 1) {
+                        values.add(newItem.getItemAt(0));
+                    } else {
+                        values.add(newItem);
+                    }
+                    keys.add(fieldName.substring(0, fieldName.indexOf(SparkSessionManager.sequenceColumnName)));
+                } else {
+                    keys.add(fieldName);
+                    values.add(newItem);
+                }
             }
         }
 
-        if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            return values.get(0);
-        }
-        return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+        Item res = ItemFactory.getInstance().createObjectItem(keys, values, metadata, false);
+        res.setMutabilityLevel(mutabilityLevel);
+        res.setTopLevelID(topLevelID);
+        res.setPathIn(pathIn);
+        res.setCollection(collection);
+        res.setTopLevelOrder(rowOrder);
+        return res;
     }
 
-    public static Item convertValueToItem(
-            Object o,
-            DataType fieldType,
-            ExceptionMetadata metadata
-    ) {
-        return convertValueToItem(null, 0, o, fieldType, metadata);
+    public static Item convertValueToItem(Object o, DataType fieldType, ExceptionMetadata metadata, ItemType itemType) {
+        return convertValueToItem(null, 0, o, fieldType, metadata, itemType);
     }
 
-    public static ItemType convertDataTypeToItemType(DataType dt) {
-        if (dt instanceof StructType) {
-            return BuiltinTypesCatalogue.objectItem;
-        }
-        if (dt instanceof ArrayType) {
-            return BuiltinTypesCatalogue.arrayItem;
-        }
-        if (dt.equals(DataTypes.StringType)) {
-            return BuiltinTypesCatalogue.stringItem;
-        } else if (dt.equals(DataTypes.BooleanType)) {
-            return BuiltinTypesCatalogue.booleanItem;
-        } else if (dt.equals(DataTypes.DoubleType)) {
-            return BuiltinTypesCatalogue.doubleItem;
-        } else if (dt.equals(DataTypes.IntegerType)) {
-            return BuiltinTypesCatalogue.integerItem;
-        } else if (dt.equals(DataTypes.FloatType)) {
-            return BuiltinTypesCatalogue.floatItem;
-        } else if (dt.equals(decimalType)) {
-            return BuiltinTypesCatalogue.decimalItem;
-        } else if (dt.equals(DataTypes.LongType)) {
-            return BuiltinTypesCatalogue.integerItem;
-        } else if (dt.equals(DataTypes.NullType)) {
-            return BuiltinTypesCatalogue.nullItem;
-        } else if (dt.equals(DataTypes.ShortType)) {
-            return BuiltinTypesCatalogue.integerItem;
-        } else if (dt.equals(DataTypes.TimestampType)) {
-            return BuiltinTypesCatalogue.dateTimeItem;
-        } else if (dt.equals(DataTypes.DateType)) {
-            return BuiltinTypesCatalogue.dateItem;
-        } else if (dt.equals(DataTypes.BinaryType)) {
-            return BuiltinTypesCatalogue.hexBinaryItem;
-        } else if (dt instanceof VectorUDT) {
-            return BuiltinTypesCatalogue.arrayItem;
-        }
-        throw new OurBadException("DataFrame type unsupported: " + dt);
-    }
-
+    @SuppressWarnings("unchecked")
     private static Item convertValueToItem(
-            Row row,
-            int i,
-            Object o,
-            DataType fieldType,
-            ExceptionMetadata metadata
-    ) {
+            Row row, int i, Object o, DataType fieldType, ExceptionMetadata metadata, ItemType itemType) {
         if (row != null && row.isNullAt(i)) {
             return ItemFactory.getInstance().createNullItem();
         } else if (fieldType.equals(DataTypes.StringType)) {
@@ -210,7 +553,12 @@ public class ItemParser implements Serializable {
             } else {
                 s = (String) o;
             }
-            return ItemFactory.getInstance().createStringItem(s);
+            Item item = ItemFactory.getInstance().createStringItem(s);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.stringItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
         } else if (fieldType.equals(DataTypes.BooleanType)) {
             boolean b;
             if (row != null) {
@@ -218,7 +566,12 @@ public class ItemParser implements Serializable {
             } else {
                 b = (Boolean) o;
             }
-            return ItemFactory.getInstance().createBooleanItem(b);
+            Item item = ItemFactory.getInstance().createBooleanItem(b);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.booleanItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
         } else if (fieldType.equals(DataTypes.DoubleType)) {
             double value;
             if (row != null) {
@@ -226,7 +579,12 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Double) o;
             }
-            return ItemFactory.getInstance().createDoubleItem(value);
+            Item item = ItemFactory.getInstance().createDoubleItem(value);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.doubleItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
         } else if (fieldType.equals(DataTypes.IntegerType)) {
             int value;
             if (row != null) {
@@ -234,7 +592,12 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Integer) o;
             }
-            return ItemFactory.getInstance().createIntItem(value);
+            Item item = ItemFactory.getInstance().createIntItem(value);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.intItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
         } else if (fieldType.equals(DataTypes.FloatType)) {
             float value;
             if (row != null) {
@@ -242,25 +605,66 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Float) o;
             }
-            return ItemFactory.getInstance().createFloatItem(value);
-        } else if (fieldType.equals(decimalType)) {
+            Item item = ItemFactory.getInstance().createFloatItem(value);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.floatItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
+        } else if (fieldType instanceof DecimalType decimalType && decimalType.scale() == 0) {
             BigDecimal value;
             if (row != null) {
                 value = row.getDecimal(i);
             } else {
                 value = (BigDecimal) o;
             }
-            return ItemFactory.getInstance().createDecimalItem(value);
-        } else if (fieldType.equals(DataTypes.LongType)) {
+            BigInteger integerValue = value.toBigIntegerExact();
+            Item item = ItemFactory.getInstance().createIntegerItem(integerValue);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.integerItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
+        } else if (fieldType instanceof DecimalType) {
             BigDecimal value;
             if (row != null) {
-                value = new BigDecimal(row.getLong(i));
+                value = row.getDecimal(i);
             } else {
-                value = new BigDecimal((Long) o);
+                value = (BigDecimal) o;
             }
-            return ItemFactory.getInstance().createDecimalItem(value);
+            Item item = ItemFactory.getInstance().createDecimalItem(value);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.decimalItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
+        } else if (fieldType.equals(DataTypes.LongType)) {
+            long value;
+            if (row != null) {
+                value = row.getLong(i);
+            } else {
+                value = ((Long) o).longValue();
+            }
+            Item item = ItemFactory.getInstance().createLongItem(value);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.longItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
         } else if (fieldType.equals(DataTypes.NullType)) {
             return ItemFactory.getInstance().createNullItem();
+        } else if (fieldType.equals(DataTypes.ByteType)) {
+            byte value;
+            if (row != null) {
+                value = row.getByte(i);
+            } else {
+                value = (Byte) o;
+            }
+            Item item = ItemFactory.getInstance().createIntItem(value);
+            if (itemType == null || itemType.getName() == null) {
+                return item;
+            }
+            return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         } else if (fieldType.equals(DataTypes.ShortType)) {
             short value;
             if (row != null) {
@@ -268,7 +672,11 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Short) o;
             }
-            return ItemFactory.getInstance().createIntItem(value);
+            Item item = ItemFactory.getInstance().createIntItem(value);
+            if (itemType == null || itemType.getName() == null) {
+                return item;
+            }
+            return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
         } else if (fieldType.equals(DataTypes.TimestampType)) {
             Timestamp value;
             if (row != null) {
@@ -277,8 +685,15 @@ public class ItemParser implements Serializable {
                 value = (Timestamp) o;
             }
             Instant instant = value.toInstant();
-            DateTime dt = new DateTime(instant);
-            return ItemFactory.getInstance().createDateTimeItem(dt, false);
+            OffsetDateTime dt = OffsetDateTime.ofInstant(instant, ZoneId.systemDefault());
+            Item item = ItemFactory.getInstance().createDateTimeItem(dt, false);
+            if (itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)
+                    || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
         } else if (fieldType.equals(DataTypes.DateType)) {
             Date value;
             if (row != null) {
@@ -286,9 +701,14 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Date) o;
             }
-            Instant instant = value.toInstant();
-            DateTime dt = new DateTime(instant);
-            return ItemFactory.getInstance().createDateItem(dt, false);
+            long instant = value.getTime();
+            OffsetDateTime dt = OffsetDateTime.ofInstant(Instant.ofEpochMilli(instant), ZoneId.systemDefault());
+            Item item = ItemFactory.getInstance().createDateItem(dt, false);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
         } else if (fieldType.equals(DataTypes.BinaryType)) {
             byte[] value;
             if (row != null) {
@@ -296,7 +716,14 @@ public class ItemParser implements Serializable {
             } else {
                 value = (byte[]) o;
             }
-            return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value));
+            Item item = ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value));
+            if (itemType == null
+                    || itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)
+                    || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
         } else if (fieldType instanceof StructType) {
             Row value;
             if (row != null) {
@@ -304,25 +731,42 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Row) o;
             }
-            return getItemFromRow(value, metadata);
-        } else if (fieldType instanceof ArrayType) {
-            ArrayType arrayType = (ArrayType) fieldType;
+            Item item = getItemFromRow(value, metadata, itemType);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
+        } else if (fieldType instanceof ArrayType arrayType) {
             DataType dataType = arrayType.elementType();
+            ItemType memberType = null;
+            if (itemType != null && itemType.isArrayItemType() && !itemType.equals(BuiltinTypesCatalogue.item)) {
+                memberType = itemType.getArrayContentFacet();
+            }
             List<Item> members = new ArrayList<>();
             if (row != null) {
                 List<Object> objects = row.getList(i);
                 for (Object object : objects) {
-                    members.add(convertValueToItem(object, dataType, metadata));
+                    members.add(convertValueToItem(object, dataType, metadata, memberType));
                 }
             } else {
-                @SuppressWarnings("unchecked")
-                Object arrayObject = ((WrappedArray<Object>) o).array();
-                for (int index = 0; index < Array.getLength(arrayObject); index++) {
-                    Object value = Array.get(arrayObject, index);
-                    members.add(convertValueToItem(value, dataType, metadata));
+                Iterator<Object> iterator = null;
+                if (o instanceof scala.collection.mutable.ArraySeq<?> arraySeq) {
+                    iterator = ((scala.collection.mutable.ArraySeq<Object>) arraySeq).iterator();
+                } else {
+                    iterator = ((ArraySeq<Object>) o).iterator();
+                }
+                while (iterator.hasNext()) {
+                    Object value = iterator.next();
+                    members.add(convertValueToItem(value, dataType, metadata, memberType));
                 }
             }
-            return ItemFactory.getInstance().createArrayItem(members);
+            Item item = ItemFactory.getInstance().createArrayItem(members, false);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem) || itemType.getName() == null) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
         } else if (fieldType instanceof VectorUDT) {
             Vector vector;
             if (row != null) {
@@ -330,17 +774,22 @@ public class ItemParser implements Serializable {
             } else {
                 vector = (Vector) o;
             }
-            if (vector instanceof DenseVector) {
+            if (vector instanceof DenseVector denseVector) {
                 // a dense vector is mapped to a rumble array
-                DenseVector denseVector = (DenseVector) vector;
                 List<Item> members = new ArrayList<>(vector.size());
                 for (double value : denseVector.values()) {
                     members.add(ItemFactory.getInstance().createDoubleItem(value));
                 }
-                return ItemFactory.getInstance().createArrayItem(members);
-            } else if (vector instanceof SparseVector) {
+                Item item = ItemFactory.getInstance().createArrayItem(members, false);
+                if (itemType == null
+                        || itemType.equals(BuiltinTypesCatalogue.arrayItem)
+                        || itemType.getName() == null) {
+                    return item;
+                } else {
+                    return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+                }
+            } else if (vector instanceof SparseVector sparseVector) {
                 // a sparse vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
-                SparseVector sparseVector = (SparseVector) vector;
                 List<String> objectKeyList = new ArrayList<>();
                 List<Item> objectValueList = new ArrayList<>();
                 int[] vectorIndices = sparseVector.indices();
@@ -349,7 +798,14 @@ public class ItemParser implements Serializable {
                     objectKeyList.add(String.valueOf(vectorIndices[j]));
                     objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
-                return ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata);
+                Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata, false);
+                if (itemType == null
+                        || itemType.equals(BuiltinTypesCatalogue.objectItem)
+                        || itemType.getName() == null) {
+                    return item;
+                } else {
+                    return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+                }
             } else {
                 throw new OurBadException("Unexpected program state reached while converting vectorUDT to rumble item");
             }
@@ -358,296 +814,176 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
-        if (itemType.equals(BuiltinTypesCatalogue.booleanItem)) {
-            return DataTypes.BooleanType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
-            return DataTypes.IntegerType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
-            return DataTypes.DoubleType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.floatItem)) {
-            return DataTypes.FloatType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
-            return decimalType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.stringItem)) {
-            return DataTypes.StringType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.nullItem)) {
-            return DataTypes.NullType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.dateItem)) {
-            return DataTypes.DateType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
-            return DataTypes.TimestampType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
-            return DataTypes.BinaryType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.objectItem)) {
-            return vectorType;
-        }
-        throw new IllegalArgumentException(
-                "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
-        );
+    /**
+     * Parses an XML document to an item.
+     *
+     * @param currentNode The current node
+     * @param path The path of the original file
+     * @return the parsed item
+     */
+    public static Item getItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
+        return getItemFromXML(currentNode, path, removeParentPointers, false);
     }
 
-    public static Name getItemTypeNameFromDataFrameDataType(DataType dataType) {
-        if (DataTypes.BooleanType.equals(dataType)) {
-            return BuiltinTypesCatalogue.booleanItem.getName();
+    /** Converts parsed XML, optionally retaining all whitespace text nodes. */
+    public static Item getItemFromXML(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
+        if (currentNode.getNodeType() == Node.TEXT_NODE || currentNode.getNodeType() == Node.CDATA_SECTION_NODE) {
+            return getTextNodeItem(currentNode, path);
+        } else if (currentNode.getNodeType() == Node.COMMENT_NODE) {
+            return getCommentNodeItem(currentNode, path);
+        } else if (currentNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
+            return getProcessingInstructionNodeItem(currentNode, path);
+        } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
+            return getDocumentItemFromXML(currentNode, path, removeParentPointers, preserveWhitespace);
         }
-        if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
-            return BuiltinTypesCatalogue.integerItem.getName();
-        }
-        if (DataTypes.DoubleType.equals(dataType)) {
-            return BuiltinTypesCatalogue.doubleItem.getName();
-        }
-        if (DataTypes.FloatType.equals(dataType)) {
-            return BuiltinTypesCatalogue.floatItem.getName();
-        }
-        if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
-            return BuiltinTypesCatalogue.decimalItem.getName();
-        }
-        if (DataTypes.StringType.equals(dataType)) {
-            return BuiltinTypesCatalogue.stringItem.getName();
-        }
-        if (DataTypes.NullType.equals(dataType)) {
-            return BuiltinTypesCatalogue.nullItem.getName();
-        }
-        if (DataTypes.DateType.equals(dataType)) {
-            return BuiltinTypesCatalogue.dateItem.getName();
-        }
-        if (DataTypes.TimestampType.equals(dataType)) {
-            return BuiltinTypesCatalogue.dateTimeItem.getName();
-        }
-        if (DataTypes.BinaryType.equals(dataType)) {
-            return BuiltinTypesCatalogue.hexBinaryItem.getName();
-        }
-        if (vectorType.equals(dataType)) {
-            return BuiltinTypesCatalogue.objectItem.getName();
-        }
-        throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
+        return getElementNodeItem(currentNode, path, removeParentPointers, preserveWhitespace);
     }
 
-    public static List<Row> getRowsFromItemsUsingSchema(List<Item> items, StructType schema) {
-        List<Row> rows = new ArrayList<>();
-        for (Item item : items) {
-            Row row = getRowFromItemUsingSchema(item, schema);
-            rows.add(row);
-        }
-        return rows;
+    public static DocumentItem getDocumentItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
+        return getDocumentItemFromXML(currentNode, path, removeParentPointers, false);
     }
 
-    public static Row getRowFromItemUsingSchema(Item item, StructType schema) {
-        Object[] rowColumns = new Object[schema.fields().length];
-        for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
-            StructField field = schema.fields()[fieldIndex];
-            Object rowColumn = getRowColumnFromItemUsingSchemaField(item, field);
-            rowColumns[fieldIndex] = rowColumn;
-        }
-        return RowFactory.create(rowColumns);
+    /** Converts a parsed document, retaining whitespace text when required by the caller's data model. */
+    public static DocumentItem getDocumentItemFromXML(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
+        List<Item> children = getChildren(currentNode, path, removeParentPointers, preserveWhitespace);
+        DocumentItem documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
+        if (!removeParentPointers) addParentToChildrenAndAttributes(documentItem);
+        documentItem.setXmlDocumentPosition(path, 0);
+        return documentItem;
     }
 
-    private static Object getRowColumnFromItemUsingSchemaField(Item item, StructField field) {
-        String fieldName = field.name();
-        DataType fieldDataType = field.dataType();
-        Item columnValueItem = item.getItemByKey(fieldName);
-        if (columnValueItem == null) {
-            throw new MLInvalidDataFrameSchemaException(
-                    "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
-            );
+    private static Item getElementNodeItem(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
+        List<Item> children = getChildren(currentNode, path, removeParentPointers, preserveWhitespace);
+        ParsedDomAttributes parsedAttributes = getAttributesAndNamespaces(currentNode);
+        Item elementItem = ItemFactory.getInstance()
+                .createXmlElementNode(currentNode, children, parsedAttributes.attributes, parsedAttributes.namespaces);
+        if (!removeParentPointers) addParentToChildrenAndAttributes(elementItem);
+        elementItem.setXmlDocumentPosition(path, 0);
+        return elementItem;
+    }
+
+    private static boolean hasWhitespaceText(Node currentNode) {
+        String content = currentNode.getTextContent();
+        content = content.replaceAll("[\\r\\n]+\\s", "");
+        return content.trim().isEmpty();
+    }
+
+    private static List<Item> getChildren(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
+        List<Item> children = new ArrayList<>();
+        boolean expandedEntities = false;
+        NodeList nodeList = currentNode.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+            if (nodeList.item(i).getNodeType() == Node.ENTITY_REFERENCE_NODE) {
+                expandedEntities = true;
+                break;
+            }
         }
-        try {
-            return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType);
-        } catch (MLInvalidDataFrameSchemaException ex) {
-            throw new MLInvalidDataFrameSchemaException(
-                    "Data does not fit to the given schema in field '"
-                        + fieldName
-                        + "'; "
-                        + ex.getJSONiqErrorMessage()
-            );
+        for (int i = 0; i < nodeList.getLength(); ++i) {
+            Node childNode = nodeList.item(i);
+            if (childNode.getNodeType() == Node.ENTITY_REFERENCE_NODE) {
+                children.addAll(getChildren(childNode, path, removeParentPointers, true));
+            } else if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+                children.add(getItemFromXML(childNode, path, removeParentPointers, preserveWhitespace));
+            } else if (childNode.getNodeType() == Node.COMMENT_NODE) {
+                children.add(ItemFactory.getInstance().createXmlCommentNode(childNode));
+            } else if (childNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
+                children.add(ItemFactory.getInstance().createXmlProcessingInstructionNode(childNode));
+            } else if ((childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
+                    && (preserveWhitespace || expandedEntities || !hasWhitespaceText(childNode))) {
+                children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
+            }
+        }
+        if (expandedEntities) {
+            // Entity boundaries are not nodes in XDM and must not split adjacent text.
+            List<Item> merged = new ArrayList<>();
+            StringBuilder text = new StringBuilder();
+            for (Item child : children) {
+                if (child.isTextNode()) {
+                    text.append(child.getStringValue());
+                } else {
+                    if (!text.isEmpty()
+                            && (preserveWhitespace || !text.toString().trim().isEmpty())) {
+                        merged.add(ItemFactory.getInstance().createXmlTextNode(text.toString()));
+                    }
+                    text.setLength(0);
+                    merged.add(child);
+                }
+            }
+            if (!text.isEmpty()
+                    && (preserveWhitespace || !text.toString().trim().isEmpty())) {
+                merged.add(ItemFactory.getInstance().createXmlTextNode(text.toString()));
+            }
+            return merged;
+        }
+        return children;
+    }
+
+    private static ParsedDomAttributes getAttributesAndNamespaces(Node currentNode) {
+        List<Item> attributes = new ArrayList<>();
+        Map<String, String> namespaceBindings = new LinkedHashMap<>();
+        NamedNodeMap attributesMap = currentNode.getAttributes();
+
+        for (int i = 0; i < attributesMap.getLength(); ++i) {
+            Node attribute = attributesMap.item(i);
+            String namespaceUri = attribute.getNamespaceURI();
+            String nodeName = attribute.getNodeName();
+            String localName = attribute.getLocalName();
+
+            boolean isNamespaceDeclaration = NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespaceUri)
+                    || "xmlns".equals(nodeName)
+                    || (nodeName != null && nodeName.startsWith("xmlns:"));
+            if (isNamespaceDeclaration) {
+                String prefix = "";
+                if (!"xmlns".equals(nodeName)) {
+                    if (NamespaceBindingUtils.XMLNS_NAMESPACE_URI.equals(namespaceUri) && localName != null) {
+                        prefix = localName;
+                    } else if (nodeName != null && nodeName.startsWith("xmlns:")) {
+                        prefix = nodeName.substring("xmlns:".length());
+                    }
+                }
+                String uri = attribute.getNodeValue();
+                NamespaceBindingUtils.validateParsedNamespaceBinding(prefix, uri);
+                namespaceBindings.put(prefix, uri);
+                continue;
+            }
+            attributes.add(ItemFactory.getInstance().createXmlAttributeNode(attribute));
+        }
+        return new ParsedDomAttributes(attributes, namespaceBindings);
+    }
+
+    private static class ParsedDomAttributes {
+        final List<Item> attributes;
+        final Map<String, String> namespaces;
+
+        ParsedDomAttributes(List<Item> attributes, Map<String, String> namespaces) {
+            this.attributes = attributes;
+            this.namespaces = namespaces;
         }
     }
 
-    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
-        try {
-            if (dataType instanceof ArrayType) {
-                if (!item.isArray()) {
-                    throw new MLInvalidDataFrameSchemaException("Type mismatch " + dataType);
-                }
-                List<Item> arrayItems = item.getItems();
-                Object[] arrayItemsForRow = new Object[arrayItems.size()];
-                DataType elementType = ((ArrayType) dataType).elementType();
-                for (int i = 0; i < arrayItems.size(); i++) {
-                    Item arrayItem = item.getItemAt(i);
-                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(arrayItem, elementType);
-                }
-                return arrayItemsForRow;
-            }
+    private static void addParentToChildrenAndAttributes(Item nodeItem) {
+        nodeItem.addParentToDescendants();
+    }
 
-            if (dataType instanceof StructType) {
-                if (!item.isObject()) {
-                    throw new MLInvalidDataFrameSchemaException("Type mismatch " + dataType);
-                }
-                return getRowFromItemUsingSchema(item, (StructType) dataType);
-            }
+    private static Item getTextNodeItem(Node currentNode, String path) {
+        Item textItem = ItemFactory.getInstance().createXmlTextNode(currentNode);
+        textItem.setXmlDocumentPosition(path, 0);
+        return textItem;
+    }
 
-            if (dataType.equals(DataTypes.BooleanType)) {
-                if (!item.isBoolean()) {
-                    Item i = CastIterator.castItemToType(
-                        item,
-                        BuiltinTypesCatalogue.booleanItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getBooleanValue();
-                }
-                return item.getBooleanValue();
-            }
-            if (dataType.equals(DataTypes.IntegerType)) {
-                if (!item.isInt()) {
-                    Item i = CastIterator.castItemToType(
-                        item,
-                        BuiltinTypesCatalogue.intItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getIntValue();
-                }
-                return item.getIntValue();
-            }
-            if (dataType.equals(DataTypes.DoubleType)) {
-                if (!item.isDouble()) {
-                    Item i = CastIterator.castItemToType(
-                        item,
-                        BuiltinTypesCatalogue.doubleItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getDoubleValue();
-                }
-                return item.getDoubleValue();
-            }
-            if (dataType.equals(DataTypes.FloatType)) {
-                if (!item.isFloat()) {
-                    Item i = CastIterator.castItemToType(
-                        item,
-                        BuiltinTypesCatalogue.floatItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getFloatValue();
-                }
-                return item.getFloatValue();
-            }
-            if (dataType.equals(decimalType)) {
-                if (!item.isDecimal()) {
-                    Item i = CastIterator.castItemToType(
-                        item,
-                        BuiltinTypesCatalogue.decimalItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getDecimalValue();
-                }
-                return item.getDecimalValue();
-            }
-            if (dataType.equals(DataTypes.StringType)) {
-                if (!item.isString()) {
-                    Item i = CastIterator.castItemToType(
-                        item,
-                        BuiltinTypesCatalogue.stringItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getStringValue();
-                }
-                return item.getStringValue();
-            }
-            if (dataType.equals(DataTypes.NullType)) {
-                if (!item.isNull()) {
-                    Item i = CastIterator.castItemToType(
-                        item,
-                        BuiltinTypesCatalogue.nullItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return null;
-                }
-                return null;
-            }
-            if (dataType.equals(DataTypes.DateType)) {
-                if (!item.isDate()) {
-                    Item i = CastIterator.castItemToType(
-                        item,
-                        BuiltinTypesCatalogue.dateItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return new Date(item.getDateTimeValue().getMillis());
-                }
-                return new Date(item.getDateTimeValue().getMillis());
-            }
-            if (dataType.equals(DataTypes.TimestampType)) {
-                if (!item.isDateTime()) {
-                    Item i = CastIterator.castItemToType(
-                        item,
-                        BuiltinTypesCatalogue.dateTimeItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return new Timestamp(item.getDateTimeValue().getMillis());
-                }
-                return new Timestamp(item.getDateTimeValue().getMillis());
-            }
-        } catch (OurBadException ex) {
-            // OurBadExceptions triggered by invalid use of value getters here are caused by user's schema
-            throw new MLInvalidDataFrameSchemaException(ex.getJSONiqErrorMessage());
-        }
+    private static Item getCommentNodeItem(Node currentNode, String path) {
+        Item commentItem = ItemFactory.getInstance().createXmlCommentNode(currentNode);
+        commentItem.setXmlDocumentPosition(path, 0);
+        return commentItem;
+    }
 
-        throw new OurBadException(
-                "Unhandled item type found while generating rows: '" + dataType + "' ."
-        );
+    private static Item getProcessingInstructionNodeItem(Node currentNode, String path) {
+        Item processingInstructionItem = ItemFactory.getInstance().createXmlProcessingInstructionNode(currentNode);
+        processingInstructionItem.setXmlDocumentPosition(path, 0);
+        return processingInstructionItem;
     }
 }
