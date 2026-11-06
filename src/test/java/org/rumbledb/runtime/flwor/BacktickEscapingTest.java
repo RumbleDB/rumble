@@ -47,6 +47,17 @@ class BacktickEscapingTest {
     }
 
     @Test
+    void projectionSupportsEscapingAndTrailingComma() {
+        java.util.List<String> names = java.util.List.of("a`b", "c.d");
+        assertEquals("`a``b`,`c.d`,", FlworDataFrameUtils.getSQLProjection(names, true, true));
+        assertEquals("`a`b`,`c.d`", FlworDataFrameUtils.getSQLProjection(names, false, false));
+        assertEquals(
+                FlworDataFrameUtils.getSQLProjection(names, false, false),
+                FlworDataFrameUtils.getSQLProjection(names, false));
+        assertEquals("", FlworDataFrameUtils.getSQLProjection(java.util.List.of(), true, true));
+    }
+
+    @Test
     void cliEnablesAndDisablesEscaping() {
         RuntimeArguments enabled = new RuntimeArguments();
         new CommandLine(enabled).parseArgs("--escape-backticks");
