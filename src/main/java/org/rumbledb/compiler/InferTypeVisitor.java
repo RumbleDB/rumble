@@ -44,6 +44,7 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -84,6 +85,7 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Module;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
@@ -198,6 +200,25 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private final LookupTyping lookups;
 
     /**
+     * Infers the types of a module and throws the static type errors found in it, if any. An exception that stops the
+     * typing after an error is thrown after the errors, as it may follow from them.
+     */
+    static void inferTypes(Module module, RumbleConfiguration configuration, ResourceResolver resourceResolver) {
+        InferTypeVisitor visitor = new InferTypeVisitor(configuration, resourceResolver);
+        RumbleException stoppedBy = null;
+        try {
+            visitor.visit(module, module.getStaticContext());
+        } catch (RumbleException exception) {
+            stoppedBy = exception;
+        } catch (RuntimeException exception) {
+            if (!visitor.errors.hasErrors()) {
+                throw exception;
+            }
+        }
+        visitor.errors.throwCollected(stoppedBy);
+    }
+
+    /**
      * Builds a new visitor.
      *
      * @param rumbleRuntimeConfiguration the configuration.
@@ -211,6 +232,30 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         this.builtinFunctions = new BuiltinFunctionTyping(this.errors, rumbleRuntimeConfiguration, resourceResolver);
         this.pathSteps = new PathStepTyping(this.errors);
         this.lookups = new LookupTyping(this.errors);
+    }
+
+    /**
+     * Types the node, and gives the unknown type to an expression with an error so that the checks of its parent
+     * report nothing. The typing of a node with an error, or with an unknown operand, may fail further on the types it
+     * inferred, which only follows from that error.
+     */
+    @Override
+    public StaticContext visit(Node node, StaticContext argument) {
+        StaticContext result = argument;
+        boolean failed;
+        try {
+            result = super.visit(node, argument);
+            failed = this.errors.hasFailed(node);
+        } catch (RuntimeException exception) {
+            if (!this.errors.hasFailed(node) && !StaticTypeErrors.hasUnknownOperand(node)) {
+                throw exception;
+            }
+            failed = true;
+        }
+        if (failed && node instanceof Expression expression) {
+            expression.setStaticSequenceType(StaticTypeErrors.UNKNOWN);
+        }
+        return result;
     }
 
     /** Returns the type inferred for a child of the node, which every visited child has. */
@@ -1830,9 +1875,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region module
 
-    /** An assignable variable without a declared type can later be assigned any value. */
+    /**
+     * An assignable variable without a declared type can later be assigned any value. A variable whose value could not
+     * be typed is unknown, even if it is assignable, so that its uses do not report errors that follow from its value.
+     */
     private static SequenceType inferUndeclaredVariableType(Expression initializer, boolean assignable, Node node) {
-        return initializer == null || assignable ? SequenceType.createSequenceType("item*") : typeOf(initializer, node);
+        if (initializer == null) {
+            return SequenceType.createSequenceType("item*");
+        }
+        SequenceType type = typeOf(initializer, node);
+        return assignable && !StaticTypeErrors.isUnknown(type) ? SequenceType.createSequenceType("item*") : type;
     }
 
     @Override
