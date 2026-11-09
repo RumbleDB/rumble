@@ -19,6 +19,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -54,6 +56,7 @@ import org.rumbledb.compiler.context.LetVarContext;
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MainModuleContext;
+import org.rumbledb.compiler.context.ModuleContext;
 import org.rumbledb.compiler.context.ModuleImportContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NamedFunctionRefContext;
@@ -78,7 +81,6 @@ import org.rumbledb.compiler.context.UnionExprContext;
 import org.rumbledb.compiler.context.ValueExprContext;
 import org.rumbledb.compiler.context.VarDeclContext;
 import org.rumbledb.compiler.context.VarRefContext;
-import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.compiler.context.WhereClauseContext;
 import org.rumbledb.compiler.context.WindowClauseContext;
 import org.rumbledb.compiler.context.scripting.ApplyStatementContext;
@@ -170,6 +172,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
@@ -216,6 +219,8 @@ import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
 import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -238,13 +243,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
-            boolean isMainModule,
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings,
             String code,
             CommonTokenStream xQueryTokenStream) {
         this.translationContext =
-                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, isMainModule, code);
+                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, code);
         this.xQueryTokenStream = xQueryTokenStream;
     }
 
@@ -253,23 +257,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region module
     @Override
     public Module visitModule(XQueryParser.ModuleContext ctx) {
-        if (ctx.decl != null) {
-            ModuleTranslation.versionDecl(
-                    VersionDeclContext.from(ctx.decl), this.translationContext, this::processStringLiteral);
-        }
-        if (this.translationContext.isMainModule()) {
-            if (!ctx.mainModule().isEmpty()) {
-                return this.visitMainModule(ctx.mainModule().get(0));
-            }
-            throw new ParsingException(
-                    "Main module expected, but library module found.", createMetadataFromContext(ctx));
-        } else {
-            if (ctx.libraryModule() != null) {
-                return this.visitLibraryModule(ctx.libraryModule());
-            }
-            throw new ParsingException(
-                    "Library module expected, but main module found.", createMetadataFromContext(ctx));
-        }
+        return ModuleTranslation.module(
+                ModuleContext.from(ctx),
+                this.translationContext,
+                this::processStringLiteral,
+                this::visitMainModule,
+                this::visitLibraryModule);
     }
 
     @Override
@@ -298,6 +291,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
         return new PrologVisitor().build(ctx);
     }
 
+    /** Translates one header or declaration of a prolog. Tools that accept incomplete queries can contain failures. */
+    protected void translatePrologEntry(ParseTree entry, Consumer<ParseTree> translation) {
+        translation.accept(entry);
+    }
+
+    /** Loads the catalog of the schema imports. Tools that accept incomplete queries can leave out those that fail. */
+    protected Optional<XmlSchemaCatalog> loadSchemas(List<SchemaImport> schemaImports) {
+        return XmlSchemaCatalogLoader.load(
+                schemaImports,
+                this.translationContext.moduleContext().getStaticBaseURI(),
+                this.translationContext.compilationConfiguration());
+    }
+
     private class PrologVisitor extends XQueryParserBaseVisitor<Void> {
         private final PrologBuilder builder = new PrologBuilder(XQueryTranslationVisitor.this.translationContext);
 
@@ -306,11 +312,11 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
                 return null;
             }
             for (XQueryParser.PrologHeaderContext header : ctx.headers) {
-                visit(header);
+                translatePrologEntry(header, this::visit);
             }
-            this.builder.finishHeader(createMetadataFromContext(ctx));
+            this.builder.finishHeader(createMetadataFromContext(ctx), XQueryTranslationVisitor.this::loadSchemas);
             for (XQueryParser.AnnotatedDeclContext declaration : ctx.declarations) {
-                visit(declaration);
+                translatePrologEntry(declaration, this::visit);
             }
             return this.builder.build(createMetadataFromContext(ctx));
         }
