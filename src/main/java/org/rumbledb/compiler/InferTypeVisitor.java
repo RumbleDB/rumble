@@ -235,6 +235,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     /**
+     * The static type errors found so far, for tools in this package that type a module with a visitor of their own
+     * rather than through {@link #inferTypes}, and so are not thrown the errors.
+     */
+    List<RumbleException> getStaticTypeErrors() {
+        return this.errors.getErrors();
+    }
+
+    /**
      * Types the node, and gives the unknown type to an expression with an error so that the checks of its parent
      * report nothing. The typing of a node with an error, or with an unknown operand, may fail further on the types it
      * inferred, which only follows from that error.

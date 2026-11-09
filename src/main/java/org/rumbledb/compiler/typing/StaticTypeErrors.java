@@ -119,6 +119,11 @@ public final class StaticTypeErrors {
         this.errors.add(new UnexpectedStaticTypeException(message, code, node.getMetadata(), certain));
     }
 
+    /** The errors reported so far, in the order they were found. */
+    public List<RumbleException> getErrors() {
+        return Collections.unmodifiableList(this.errors);
+    }
+
     /** Whether an error was reported. */
     public boolean hasErrors() {
         return !this.errors.isEmpty();
