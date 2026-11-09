@@ -229,7 +229,8 @@ public class SequenceWriter {
 
     public SequenceWriter partitionBy(String... colNames) {
         if (this.dataFrameWriter != null) {
-            return createNewInstance(this.dataFrameWriter.partitionBy(colNames), null, this.serializationParameters);
+            return createNewInstance(
+                    this.dataFrameWriter.partitionBy(colNames), this.mode, this.serializationParameters);
         } else {
             throw new CliException(
                     "RumbleDB currently does not support repartitioning when the output is not internally a DataFrame.");
@@ -239,7 +240,9 @@ public class SequenceWriter {
     public SequenceWriter bucketBy(int numBuckets, String colName, String... colNames) {
         if (this.dataFrameWriter != null) {
             return createNewInstance(
-                    this.dataFrameWriter.bucketBy(numBuckets, colName, colNames), null, this.serializationParameters);
+                    this.dataFrameWriter.bucketBy(numBuckets, colName, colNames),
+                    this.mode,
+                    this.serializationParameters);
         } else {
             throw new CliException(
                     "RumbleDB currently does not support bucketBy when the output is not internally a DataFrame.");
@@ -249,7 +252,7 @@ public class SequenceWriter {
     public SequenceWriter sortBy(String colName, String... colNames) {
         if (this.dataFrameWriter != null) {
             return createNewInstance(
-                    this.dataFrameWriter.sortBy(colName, colNames), null, this.serializationParameters);
+                    this.dataFrameWriter.sortBy(colName, colNames), this.mode, this.serializationParameters);
         } else {
             throw new CliException(
                     "RumbleDB currently does not support sortBy when the output is not internally a DataFrame.");
