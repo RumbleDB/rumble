@@ -28,17 +28,6 @@ parser grammar JsoniqParser;
 import CommonParser;
 
 options { tokenVocab = JsoniqLexer; }
-module
-   // replaced with the versionDecl production to match the JSONiq grammar
-   : (KW_JSONIQ KW_VERSION vers = stringLiteral (KW_ENCODING encoding = stringLiteral)? SEMICOLON)?
-   // TODO: subsequent optional main modules are currently ignored
-   (libraryModule | main = mainModule)
-   ;
-
-versionDecl
-   : KW_JSONIQ KW_VERSION version = stringLiteral (KW_ENCODING encoding = stringLiteral)? SEMICOLON
-   ;
-
 annotatedDecl
    : functionDecl
    | varDecl
@@ -139,8 +128,8 @@ itemType
    | parenthesizedItemTest
    ;
 
-dialectKeywordOKForFunction
-   : KW_JSONIQ
+keywordOKForFunction
+   : commonKeywordOKForFunction
    | KW_NULL
    | KW_TRUE
    | KW_FALSE

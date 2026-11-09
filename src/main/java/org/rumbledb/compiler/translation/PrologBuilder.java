@@ -19,7 +19,9 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.context.Name;
@@ -44,7 +46,7 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.serialization.SerializationParameterUtils;
-import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 /**
  * Handles shared prolog translation state and validation for both Jsoniq and XQuery frontends.
@@ -242,16 +244,17 @@ public final class PrologBuilder {
         this.translationContext.bindNamespace(prefix, namespace, schema.getMetadata());
     }
 
-    /** Complete header processing by loading schemas before any declaration is translated. */
-    public void finishHeader(ExceptionMetadata metadata) {
-        XmlSchemaCatalogLoader.load(
-                        this.schemas,
-                        this.translationContext.moduleContext().getStaticBaseURI(),
-                        this.translationContext.compilationConfiguration())
-                .ifPresent(catalog -> this.translationContext
-                        .moduleContext()
-                        .getInScopeSchemaTypes()
-                        .importSchema(catalog, metadata));
+    /**
+     * Complete header processing by loading schemas before any declaration is translated.
+     *
+     * @param loader loads the catalog of the schema imports
+     */
+    public void finishHeader(
+            ExceptionMetadata metadata, Function<List<SchemaImport>, Optional<XmlSchemaCatalog>> loader) {
+        loader.apply(this.schemas).ifPresent(catalog -> this.translationContext
+                .moduleContext()
+                .getInScopeSchemaTypes()
+                .importSchema(catalog, metadata));
     }
 
     public void addVariable(VariableDeclaration declaration) {
@@ -260,16 +263,13 @@ public final class PrologBuilder {
     }
 
     public void addContextItem(VariableDeclaration declaration) {
-        if (!this.translationContext.isMainModule() && declaration.getExpression() != null) {
+        if (this.translationContext.isLibraryModule() && declaration.getExpression() != null) {
             throw new SemanticException(
                     "A library module context item declaration cannot have an initializer.",
                     ErrorCode.LibraryContextItemInitializer,
                     declaration.getMetadata());
         }
-        String language = this.translationContext.moduleContext().getQueryLanguage();
-        if (language != null
-                && language.startsWith("xquery")
-                && this.variables.stream().anyMatch(variable -> Name.CONTEXT_ITEM.equals(variable.getVariableName()))) {
+        if (this.variables.stream().anyMatch(variable -> Name.CONTEXT_ITEM.equals(variable.getVariableName()))) {
             throw new SemanticException(
                     "A module cannot contain more than one context item declaration.",
                     ErrorCode.DuplicateContextItemDeclarationErrorCode,
@@ -291,7 +291,7 @@ public final class PrologBuilder {
     public void addOption(OptionDeclaration declaration) {
         Name name = declaration.getName();
         if (SerializationParameterUtils.SERIALIZATION_NAMESPACE.equals(name.getNamespace())) {
-            if (!this.translationContext.isMainModule()) {
+            if (this.translationContext.isLibraryModule()) {
                 throw new SemanticException(
                         "Output declarations are only allowed in a main module.",
                         ErrorCode.LibraryModuleOutputDeclarationErrorCode,
@@ -322,7 +322,7 @@ public final class PrologBuilder {
     }
 
     private void validateNamespace(String kind, Name name, ExceptionMetadata metadata) {
-        if (!this.translationContext.isMainModule()
+        if (this.translationContext.isLibraryModule()
                 && (name.getNamespace() == null
                         || !name.getNamespace().equals(this.translationContext.libraryModuleNamespace()))) {
             throw new NamespaceDoesNotMatchModuleException(

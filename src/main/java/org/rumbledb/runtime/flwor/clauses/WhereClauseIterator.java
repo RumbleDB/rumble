@@ -309,10 +309,12 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
             }
             this.child.setInputAndOutputTupleVariableDependencies(temporaryInputProjection);
             FlworDataFrame rightTuples = (FlworDataFrame) this.child.getDataFrame(context);
-            this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
-
             Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
+
+            // Lift the depth limit before restoring the projection: while it is set, the cut-off clause
+            // propagates an empty projection to the left subtree, which would then be reused by later evaluations.
             this.setEvaluationDepthLimit(-1);
+            this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
 
             FlworDataFrame result = JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
                     context,
@@ -328,7 +330,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
                     getStaticContext());
             return result;
         } catch (Exception e) {
-            log.warn("Join failed. Falling back to regular execution (nevertheless, please let us know!).");
+            log.warn("Join failed. Falling back to regular execution (nevertheless, please let us know!).", e);
 
             this.setEvaluationDepthLimit(-1);
             this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);

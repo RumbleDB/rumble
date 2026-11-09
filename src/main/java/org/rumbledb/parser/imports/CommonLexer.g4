@@ -693,6 +693,14 @@ KW_VERSION
    : 'version'
    ;
 
+KW_JSONIQ
+   : 'jsoniq'
+   ;
+
+KW_XQUERY
+   : 'xquery'
+   ;
+
 KW_WHEN
    : 'when'
    ;
