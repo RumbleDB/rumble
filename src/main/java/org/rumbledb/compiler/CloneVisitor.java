@@ -86,7 +86,9 @@ import org.rumbledb.expressions.primary.StringConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.block.BlockExpression;
 import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
 import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
 import org.rumbledb.expressions.scripting.control.SwitchStatement;
 import org.rumbledb.expressions.scripting.control.TryCatchStatement;
@@ -94,6 +96,8 @@ import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
 import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
 import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.loops.BreakStatement;
+import org.rumbledb.expressions.scripting.loops.ContinueStatement;
 import org.rumbledb.expressions.scripting.loops.ExitStatement;
 import org.rumbledb.expressions.scripting.loops.FlowrStatement;
 import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
@@ -1466,6 +1470,36 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         result.setSequential(statement.isSequential());
         return result;
     }
+
+    @Override
+    public Node visitBlockExpr(BlockExpression expression, Node argument) {
+        return copied(
+                expression,
+                new BlockExpression(
+                        (StatementsAndExpr) visit(expression.getStatementsAndExpr(), argument),
+                        expression.getMetadata()));
+    }
+
+    @Override
+    public Node visitConditionalStatement(ConditionalStatement statement, Node argument) {
+        return copied(
+                statement,
+                new ConditionalStatement(
+                        (Expression) visit(statement.getCondition(), argument),
+                        (Statement) visit(statement.getBranch(), argument),
+                        (Statement) visit(statement.getElseBranch(), argument),
+                        statement.getMetadata()));
+    }
+
+    @Override
+    public Node visitBreakStatement(BreakStatement statement, Node argument) {
+        return copied(statement, new BreakStatement(statement.getMetadata()));
+    }
+
+    @Override
+    public Node visitContinueStatement(ContinueStatement statement, Node argument) {
+        return copied(statement, new ContinueStatement(statement.getMetadata()));
+    }
     // end region scripting
 
     // region update and collection expressions
@@ -1628,6 +1662,13 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     /** Gives a copy the static type, static context and sequential flag of its source. */
     private static <T extends Expression> T copied(Expression source, T copy) {
+        copy.setStaticSequenceType(source.getStaticSequenceType());
+        copy.setStaticContext(source.getStaticContext());
+        copy.setSequential(source.isSequential());
+        return copy;
+    }
+
+    private static <T extends Statement> T copied(Statement source, T copy) {
         copy.setStaticSequenceType(source.getStaticSequenceType());
         copy.setStaticContext(source.getStaticContext());
         copy.setSequential(source.isSequential());
