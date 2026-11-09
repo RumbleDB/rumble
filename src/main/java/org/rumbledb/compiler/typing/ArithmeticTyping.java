@@ -64,8 +64,7 @@ public final class ArithmeticTyping {
             String operator,
             BiFunction<ItemType, ItemType, ItemType> operation,
             Node node) {
-        this.errors.rejectInferredEmpty(leftType, node);
-        this.errors.rejectInferredEmpty(rightType, node);
+        this.errors.rejectEmptyOperands(leftType, rightType, node);
 
         SequenceType.Arity inferredArity = AtomizedOperands.resolveArities(leftType, rightType);
         if (inferredArity == null) {
@@ -81,8 +80,13 @@ public final class ArithmeticTyping {
         if (inferredType == null) {
             boolean mayPass = mayArithmeticOperationSucceed(leftType.getItemType(), rightType.getItemType(), operation);
             if (inferredArity == SequenceType.Arity.OneOrZero && !mayPass) {
-                // No pair of operands succeeds, so the only result is the empty sequence (XPST0005)
-                this.errors.reportInferredEmpty(node);
+                this.errors.reportInferredEmpty(
+                        node,
+                        "it fails for every pair of operands, of types "
+                                + leftType
+                                + " and "
+                                + rightType
+                                + ", unless one is empty");
             } else {
                 this.errors.report(
                         "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
@@ -275,7 +279,7 @@ public final class ArithmeticTyping {
     public SequenceType inferUnaryType(SequenceType childInferredType, Node node) {
 
         // if the child is the empty sequence just infer the empty sequence
-        this.errors.rejectInferredEmpty(childInferredType, node);
+        this.errors.rejectInferredEmpty(childInferredType, node, "its operand does");
 
         SequenceType.Arity resultArity = AtomizedOperands.atomizedSingletonArity(childInferredType);
         if (resultArity == null) {
@@ -292,7 +296,11 @@ public final class ArithmeticTyping {
         if (childItemType == null) {
             boolean mayPass = mayUnaryOperationSucceed(childInferredType.getItemType());
             if (childInferredType.getArity() == SequenceType.Arity.OneOrZero && !mayPass) {
-                this.errors.reportInferredEmpty(node);
+                this.errors.reportInferredEmpty(
+                        node,
+                        "it fails for every value of its operand, of type "
+                                + childInferredType
+                                + ", unless it is empty");
             } else {
                 this.errors.report(
                         "It is not possible to have a unary expression with the following type: " + childInferredType,

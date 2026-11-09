@@ -176,21 +176,38 @@ public final class StaticTypeErrors {
                 .anyMatch(child -> child instanceof Expression operand && isUnknown(operand.getStaticSequenceType()));
     }
 
-    /** Static typing only allows a comma expression to be inferred as the empty sequence. */
-    public void rejectInferredEmpty(SequenceType type, Node node) {
+    /**
+     * Reports the node if the type, of its result or of an operand, is the empty sequence. The reason says why the node
+     * always returns the empty sequence, as in "its left operand does".
+     */
+    public void rejectInferredEmpty(SequenceType type, Node node, String reason) {
         if (type.isEmptySequence()) {
-            reportInferredEmpty(node);
+            reportInferredEmpty(node, reason);
         }
     }
 
-    public void reportInferredEmpty(Node node) {
+    /** Reports the node if one of its two operands is the empty sequence, which makes its result empty too. */
+    public void rejectEmptyOperands(SequenceType left, SequenceType right, Node node) {
+        if (left.isEmptySequence()) {
+            reportInferredEmpty(node, right.isEmptySequence() ? "both its operands do" : "its left operand does");
+        } else if (right.isEmptySequence()) {
+            reportInferredEmpty(node, "its right operand does");
+        }
+    }
+
+    /**
+     * Reports an expression that always returns the empty sequence (XPST0005), which static typing only allows for (),
+     * for a reason such as "its left operand does".
+     */
+    public void reportInferredEmpty(Node node, String reason) {
         reportInferredEmpty(
-                "The inferred type of a "
-                        + node.getClass().getSimpleName()
-                        + " is the empty sequence, which static typing only allows for a comma expression",
+                "This expression always returns the empty sequence, because "
+                        + reason
+                        + ". Static typing only allows this for ().",
                 node);
     }
 
+    /** Reports a node that makes its expression always return the empty sequence, which the message explains. */
     public void reportInferredEmpty(String message, Node node) {
         report(message, ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression, node);
     }

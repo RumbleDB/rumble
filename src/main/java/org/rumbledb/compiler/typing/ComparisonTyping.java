@@ -44,9 +44,7 @@ public final class ComparisonTyping {
         // for value comparison arities * and + are not allowed, also if one return the empty sequence for sure throw
         // XPST0005 error
         if (operator.isValueComparison()) {
-            if (leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()) {
-                this.errors.reportInferredEmpty(node);
-            }
+            this.errors.rejectEmptyOperands(leftInferredType, rightInferredType, node);
             returnArity = AtomizedOperands.resolveArities(leftInferredType, rightInferredType);
             if (returnArity == null) {
                 this.errors.report(
@@ -176,8 +174,7 @@ public final class ComparisonTyping {
         SequenceCardinality cardinality;
         if (leftType.isEmptySequence() || rightType.isEmptySequence()) {
             // The strict Static Typing Feature rejects known-empty expressions other than () and data(()).
-            this.errors.reportInferredEmpty(
-                    "The node comparison is statically inferred to return an empty sequence", node);
+            this.errors.rejectEmptyOperands(leftType, rightType, node);
             cardinality = SequenceCardinality.EMPTY;
         } else if (leftType.getCardinality().allowsZero()
                 || rightType.getCardinality().allowsZero()) {

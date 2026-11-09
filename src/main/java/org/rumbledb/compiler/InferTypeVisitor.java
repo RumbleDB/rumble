@@ -341,7 +341,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             expression.setActualType(variableType);
         }
-        this.errors.rejectInferredEmpty(variableType, expression);
+        this.errors.rejectInferredEmpty(
+                variableType, expression, "$" + expression.getVariableName() + " is always empty");
         expression.setStaticSequenceType(variableType);
         return argument;
     }
@@ -1199,7 +1200,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 ? elseType
                 : thenType.leastCommonSupertypeWith(elseType);
 
-        this.errors.rejectInferredEmpty(resultingType, node);
+        this.errors.rejectInferredEmpty(resultingType, node, "every branch that it may take does");
         return resultingType;
     }
 
@@ -1277,7 +1278,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     // the least common supertype of the types a try/catch or typeswitch may return
     private SequenceType inferBranchesType(List<SequenceType> branchTypes, Node node) {
         SequenceType inferredType = StaticTypeErrors.requireInferredType(leastCommonSupertype(branchTypes), node);
-        this.errors.rejectInferredEmpty(inferredType, node);
+        this.errors.rejectInferredEmpty(inferredType, node, "every branch does");
         return inferredType;
     }
 
@@ -1332,9 +1333,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType leftType = typeOf((Expression) children.get(0), expression);
         SequenceType rightType = typeOf((Expression) children.get(1), expression);
 
-        if (leftType.isEmptySequence() || rightType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(expression);
-        }
+        this.errors.rejectEmptyOperands(leftType, rightType, expression);
 
         SequenceType intOpt = new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.OneOrZero);
         if (!leftType.isSubtypeOf(intOpt) || !rightType.isSubtypeOf(intOpt)) {
@@ -1449,7 +1448,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFilterExpression(FilterExpression expression, StaticContext argument) {
         visit(expression.getMainExpression(), argument);
         SequenceType mainType = typeOf(expression.getMainExpression(), expression);
-        this.errors.rejectInferredEmpty(mainType, expression);
+        this.errors.rejectInferredEmpty(mainType, expression, "the sequence that it filters does");
 
         Expression predicateExpression = expression.getPredicateExpression();
         // set context item static type
@@ -1458,12 +1457,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // unset context item static type
         predicateExpression.getStaticContext().setContextItemStaticType(null);
         SequenceType predicateType = typeOf(predicateExpression, expression);
-        this.errors.rejectInferredEmpty(predicateType, expression);
-        // always false so the return type is for sure ()
+        // An empty or null predicate is always false, so the filter selects nothing.
         if (predicateType.isSubtypeOf(SequenceType.createSequenceType("null?"))) {
-            this.errors.reportInferredEmpty(
-                    "Inferred type for FilterExpression is empty sequence (with active static typing feature, only allowed for CommaExpression)",
-                    expression);
+            this.errors.reportInferredEmpty(expression, "its predicate is always false");
         }
         if (!predicateType.hasEffectiveBooleanValue()) {
             this.errors.report(
@@ -1624,7 +1620,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         visit(leftExpression, argument);
         SequenceType leftType = typeOf(leftExpression, expression);
-        this.errors.rejectInferredEmpty(leftType, expression);
+        this.errors.rejectInferredEmpty(leftType, expression, "its left operand does");
 
         // set context item static type
         rightExpression.getStaticContext().setContextItemStaticType(new SequenceType(leftType.getItemType()));
@@ -1632,7 +1628,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         rightExpression.getStaticContext().setContextItemStaticType(null);
 
         SequenceType rightType = typeOf(rightExpression, expression);
-        this.errors.rejectInferredEmpty(rightType, expression);
+        this.errors.rejectInferredEmpty(rightType, expression, "its right operand does");
 
         // The right expression is evaluated once per item of the left expression.
         SequenceCardinality resultingCardinality = rightType.getCardinality().repeated(leftType.getCardinality());
@@ -1687,7 +1683,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceCardinality forCardinality =
                 visitFlworClauses(expression.getReturnClause().getFirstClause());
         SequenceType returnType = typeOf(expression.getReturnClause().getReturnExpr(), expression);
-        this.errors.rejectInferredEmpty(returnType, expression);
+        this.errors.rejectInferredEmpty(returnType, expression, "its return expression does");
         returnType = new SequenceType(
                 returnType.getItemType(), returnType.getCardinality().repeated(forCardinality));
         expression.setStaticSequenceType(returnType);
@@ -1704,8 +1700,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             if (!expression.isAllowEmpty()) {
                 // for sure we will not have any tuple to process and return the empty sequence
                 this.errors.reportInferredEmpty(
-                        "In for clause Inferred type is empty sequence, empty is not allowed, so the result returned is for sure () and this is not a CommaExpression",
+                        "This for clause iterates over the empty sequence, so its FLWOR expression always returns the"
+                                + " empty sequence. Static typing only allows this for ().",
                         expression);
+                // The variable is never bound, so its uses would only repeat the error.
+                if (this.errors.hasFailed(expression)) {
+                    inferredType = StaticTypeErrors.UNKNOWN;
+                }
             }
         } else {
             // we take the single arity version of the inferred type or optional arity if we allow empty and the
@@ -1810,7 +1811,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (whereType.isEmptySequence() || whereType.isSubtypeOf(SequenceType.createSequenceType("null?"))) {
             this.errors.reportInferredEmpty(
-                    "where clause always return false, so return expression inferred type is empty sequence and this is not a CommaExpression",
+                    "This where clause is always false, so its FLWOR expression always returns the empty sequence."
+                            + " Static typing only allows this for ().",
                     expression);
         }
         return argument;
@@ -2257,7 +2259,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
         visitFlworClauses(statement.getReturnStatementClause().getFirstClause());
         SequenceType returnType = typeOf(statement.getReturnStatementClause().getReturnStatement(), statement);
-        this.errors.rejectInferredEmpty(returnType, statement);
+        this.errors.rejectInferredEmpty(returnType, statement, "its return statement does");
         statement.setStaticSequenceType(SequenceType.createSequenceType("()"));
         return argument;
     }

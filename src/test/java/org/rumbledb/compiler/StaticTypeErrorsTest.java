@@ -83,10 +83,19 @@ class StaticTypeErrorsTest {
             strings = {
                 "for $x in (1 + \"a\") group by $k := $x return $k",
                 "[1 + \"a\"]?1 + 1",
-                "declare function local:f() as xs:integer { 1 + \"a\" }; local:f() + 1"
+                "declare function local:f() as xs:integer { 1 + \"a\" }; local:f() + 1",
+                "for $x in () return $x + 1"
             })
-    void reportsAnErrorOnceThroughGroupingVariablesArraysAndInlinedFunctions(String query) {
+    void reportsAnErrorOnceThroughVariablesArraysAndInlinedFunctions(String query) {
         Assertions.assertEquals(1, errors(query).size());
+    }
+
+    @Test
+    void explainsWhyAnExpressionIsAlwaysEmpty() {
+        Assertions.assertEquals(
+                "This expression always returns the empty sequence, because its right operand does."
+                        + " Static typing only allows this for ().",
+                errors("1 + ()").get(0).getJSONiqErrorMessage());
     }
 
     @Test
