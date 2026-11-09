@@ -822,28 +822,41 @@ public class ItemParser {
      * @return the parsed item
      */
     public static Item getItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
-        if (currentNode.getNodeType() == Node.TEXT_NODE && !hasWhitespaceText(currentNode)) {
+        return getItemFromXML(currentNode, path, removeParentPointers, false);
+    }
+
+    /** Converts parsed XML, optionally retaining all whitespace text nodes. */
+    public static Item getItemFromXML(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
+        if (currentNode.getNodeType() == Node.TEXT_NODE || currentNode.getNodeType() == Node.CDATA_SECTION_NODE) {
             return getTextNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.COMMENT_NODE) {
             return getCommentNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
             return getProcessingInstructionNodeItem(currentNode, path);
         } else if (currentNode.getNodeType() == Node.DOCUMENT_NODE) {
-            return getDocumentItemFromXML(currentNode, path, removeParentPointers);
+            return getDocumentItemFromXML(currentNode, path, removeParentPointers, preserveWhitespace);
         }
-        return getElementNodeItem(currentNode, path, removeParentPointers);
+        return getElementNodeItem(currentNode, path, removeParentPointers, preserveWhitespace);
     }
 
     public static DocumentItem getDocumentItemFromXML(Node currentNode, String path, boolean removeParentPointers) {
-        List<Item> children = getChildren(currentNode, path, removeParentPointers);
+        return getDocumentItemFromXML(currentNode, path, removeParentPointers, false);
+    }
+
+    /** Converts a parsed document, retaining whitespace text when required by the caller's data model. */
+    public static DocumentItem getDocumentItemFromXML(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
+        List<Item> children = getChildren(currentNode, path, removeParentPointers, preserveWhitespace);
         DocumentItem documentItem = ItemFactory.getInstance().createXmlDocumentNode(currentNode, children);
         if (!removeParentPointers) addParentToChildrenAndAttributes(documentItem);
         documentItem.setXmlDocumentPosition(path, 0);
         return documentItem;
     }
 
-    private static Item getElementNodeItem(Node currentNode, String path, boolean removeParentPointers) {
-        List<Item> children = getChildren(currentNode, path, removeParentPointers);
+    private static Item getElementNodeItem(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
+        List<Item> children = getChildren(currentNode, path, removeParentPointers, preserveWhitespace);
         ParsedDomAttributes parsedAttributes = getAttributesAndNamespaces(currentNode);
         Item elementItem = ItemFactory.getInstance()
                 .createXmlElementNode(currentNode, children, parsedAttributes.attributes, parsedAttributes.namespaces);
@@ -858,21 +871,53 @@ public class ItemParser {
         return content.trim().isEmpty();
     }
 
-    private static List<Item> getChildren(Node currentNode, String path, boolean removeParentPointers) {
+    private static List<Item> getChildren(
+            Node currentNode, String path, boolean removeParentPointers, boolean preserveWhitespace) {
         List<Item> children = new ArrayList<>();
+        boolean expandedEntities = false;
         NodeList nodeList = currentNode.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); ++i) {
+            if (nodeList.item(i).getNodeType() == Node.ENTITY_REFERENCE_NODE) {
+                expandedEntities = true;
+                break;
+            }
+        }
+        for (int i = 0; i < nodeList.getLength(); ++i) {
             Node childNode = nodeList.item(i);
-            if (childNode.getNodeType() == Node.ELEMENT_NODE) {
-                children.add(getItemFromXML(childNode, path, removeParentPointers));
+            if (childNode.getNodeType() == Node.ENTITY_REFERENCE_NODE) {
+                children.addAll(getChildren(childNode, path, removeParentPointers, true));
+            } else if (childNode.getNodeType() == Node.ELEMENT_NODE) {
+                children.add(getItemFromXML(childNode, path, removeParentPointers, preserveWhitespace));
             } else if (childNode.getNodeType() == Node.COMMENT_NODE) {
                 children.add(ItemFactory.getInstance().createXmlCommentNode(childNode));
             } else if (childNode.getNodeType() == Node.PROCESSING_INSTRUCTION_NODE) {
                 children.add(ItemFactory.getInstance().createXmlProcessingInstructionNode(childNode));
             } else if ((childNode.getNodeType() == Node.TEXT_NODE || childNode.getNodeType() == Node.CDATA_SECTION_NODE)
-                    && !hasWhitespaceText(childNode)) {
+                    && (preserveWhitespace || expandedEntities || !hasWhitespaceText(childNode))) {
                 children.add(ItemFactory.getInstance().createXmlTextNode(childNode));
             }
+        }
+        if (expandedEntities) {
+            // Entity boundaries are not nodes in XDM and must not split adjacent text.
+            List<Item> merged = new ArrayList<>();
+            StringBuilder text = new StringBuilder();
+            for (Item child : children) {
+                if (child.isTextNode()) {
+                    text.append(child.getStringValue());
+                } else {
+                    if (!text.isEmpty()
+                            && (preserveWhitespace || !text.toString().trim().isEmpty())) {
+                        merged.add(ItemFactory.getInstance().createXmlTextNode(text.toString()));
+                    }
+                    text.setLength(0);
+                    merged.add(child);
+                }
+            }
+            if (!text.isEmpty()
+                    && (preserveWhitespace || !text.toString().trim().isEmpty())) {
+                merged.add(ItemFactory.getInstance().createXmlTextNode(text.toString()));
+            }
+            return merged;
         }
         return children;
     }

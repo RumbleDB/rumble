@@ -18,9 +18,11 @@ package org.rumbledb.api;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -28,6 +30,9 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import org.rumbledb.config.model.LanguageVersion;
+
+@Tag("cli-output-formats")
 class SequenceWriterTest {
     @TempDir
     Path directory;
@@ -35,7 +40,7 @@ class SequenceWriterTest {
     @Test
     void defaultWritersFollowTheQueryLanguageAndExplicitFormatsStillOverrideThem() throws Exception {
         Rumble jsoniq = new Rumble(new RumbleConfiguration());
-        Path each = directory.resolve("jsoniq.txt");
+        Path each = this.directory.resolve("jsoniq.txt");
         jsoniq.runQuery("1, 2, 3")
                 .write()
                 .option("method", "text")
@@ -59,7 +64,7 @@ class SequenceWriterTest {
         Rumble xquery = new Rumble(RumbleConfiguration.builder()
                 .with("semantics.queryLanguage", "xquery31")
                 .build());
-        Path whole = directory.resolve("xquery.xml");
+        Path whole = this.directory.resolve("xquery.xml");
         xquery.runQuery("<a/>, <b/>")
                 .write()
                 .option("omit-xml-declaration", "yes")
@@ -71,14 +76,14 @@ class SequenceWriterTest {
                         .getRuntimeStaticContext()
                         .getConfiguration()
                         .output()
-                        .effectiveOutputFormat("jsoniq10"));
+                        .effectiveOutputFormat(LanguageVersion.JSONIQ_10));
         assertEquals(
                 "serialize",
                 xquery.runQuery("1")
                         .getRuntimeStaticContext()
                         .getConfiguration()
                         .output()
-                        .effectiveOutputFormat("xquery31"));
+                        .effectiveOutputFormat(LanguageVersion.XQUERY_31));
     }
 
     @Test
@@ -87,7 +92,7 @@ class SequenceWriterTest {
                 .with("output.outputFormat", "serialize-each-item")
                 .with("output.numberOfOutputPartitions", 2)
                 .build());
-        Path output = directory.resolve("encoded-items");
+        Path output = this.directory.resolve("encoded-items");
         rumble.runQuery("\"Grüezi\", \"東京\"")
                 .write()
                 .option("method", "text")
@@ -97,7 +102,7 @@ class SequenceWriterTest {
             List<Path> parts = files.filter(p -> p.getFileName().toString().startsWith("part-"))
                     .toList();
             assertEquals(2, parts.size());
-            java.util.ArrayList<String> values = new java.util.ArrayList<>();
+            ArrayList<String> values = new ArrayList<>();
             for (Path part : parts) {
                 values.addAll(Files.readAllLines(part, StandardCharsets.UTF_16));
             }
@@ -121,7 +126,7 @@ class SequenceWriterTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"jsoniq10", "jsoniq31", "jsoniq40", "xquery10", "xquery30", "xquery31"})
+    @CsvSource({"jsoniq10", "jsoniq31", "xquery10", "xquery30", "xquery31"})
     void textSerializationUsesW3CSpacingInBothLanguagesUnlessASeparatorIsExplicit(String language) {
         Rumble rumble = new Rumble(RumbleConfiguration.builder()
                 .with("semantics.queryLanguage", language)
@@ -164,7 +169,7 @@ class SequenceWriterTest {
     @Test
     void serializationOptionsProduceOneStringAndLeaveTheSequenceConfigurationUnchanged() throws Exception {
         SequenceOfItems sequence = new Rumble(new RumbleConfiguration()).runQuery("1, [2, 3], 4");
-        Path output = directory.resolve("sequence.txt");
+        Path output = this.directory.resolve("sequence.txt");
         sequence.write()
                 .format("serialize")
                 .options(Map.of("method", "text", "item-separator", "|"))
@@ -192,7 +197,7 @@ class SequenceWriterTest {
     @Test
     void changingStructuredFormatPreservesWriterPartitioningOptions() throws Exception {
         Rumble rumble = new Rumble(new RumbleConfiguration());
-        Path output = directory.resolve("partitioned");
+        Path output = this.directory.resolve("partitioned");
         rumble.runQuery(
                         "annotate(({\"id\":1, \"state\":\"CA\"}, {\"id\":2, \"state\":\"MA\"}), {\"id\":\"integer\", \"state\":\"string\"})")
                 .write()

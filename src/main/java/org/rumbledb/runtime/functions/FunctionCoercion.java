@@ -36,16 +36,6 @@ public final class FunctionCoercion {
 
     private FunctionCoercion() {}
 
-    public static boolean canBeFunctionCoercedTo(SequenceType sourceType, SequenceType targetType) {
-        if (sourceType.isEmptySequence()) {
-            return false;
-        }
-        if (!sourceType.isAritySubtypeOf(targetType.getArity())) {
-            return false;
-        }
-        return canItemTypeBeFunctionCoercedTo(sourceType.getItemType(), targetType.getItemType());
-    }
-
     public static boolean canItemTypeBeFunctionCoercedTo(ItemType sourceItemType, ItemType targetItemType) {
         if (sourceItemType.isUnionType()) {
             return sourceItemType.allMemberTypesMatch(member -> canItemTypeBeFunctionCoercedTo(member, targetItemType));

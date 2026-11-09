@@ -23,11 +23,13 @@ import java.util.List;
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
+import org.rumbledb.resources.ResourceResolver;
 
 import static org.rumbledb.compiler.CompilationDiagnostics.debugPrintHeader;
 import static org.rumbledb.compiler.CompilationDiagnostics.debugPrintTree;
@@ -43,7 +45,11 @@ public final class CompilationPipeline {
             throws IOException {
         ModuleSourceLoader.ModuleSource source =
                 ModuleSourceLoader.readModuleSource(location, configuration, ExceptionMetadata.EMPTY_METADATA);
-        return compileMainModule(source.query(), source.systemId(), configuration, externalBindings);
+        return compileMainModule(
+                source.query(),
+                ModuleSourceLoader.mainModuleLocation(source.systemId(), configuration.runtimeConfiguration()),
+                configuration,
+                externalBindings);
     }
 
     /** Compiles query text using the configured static base URI. */
@@ -70,25 +76,22 @@ public final class CompilationPipeline {
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings) {
         RumbleConfiguration configuration = compilationConfiguration.runtimeConfiguration();
-        ModuleParser.Language language = ModuleParser.detectLanguage(query, uri, configuration);
+        LanguageVersion.Language language = ModuleParser.detectLanguage(query, uri, configuration);
         MainModule module =
                 ModuleParser.parseMainModule(query, uri, compilationConfiguration, externalBindings, language);
-        CompilationContext context = new CompilationContext(configuration, externalBindings);
+        CompilationContext context =
+                new CompilationContext(configuration, externalBindings, compilationConfiguration.resourceResolver());
         List<CompilationPass<MainModule>> passes = mainModulePasses(language, configuration);
         return run(module, context, passes);
     }
 
     /**
-     * Imported modules have their declarations ordered now. Context population and type inference
-     * happen later through the importing main module, using the shared function execution-mode registry.
+     * Translate imported modules without running analysis on an incomplete import graph.
+     * The import loader orders declarations after collapsing cyclic groups.
      */
     static LibraryModule prepareLibraryModule(
             String query, URI uri, StaticContext importingContext, CompilationConfiguration configuration) {
-        LibraryModule module = ModuleParser.parseLibraryModule(query, uri, importingContext, configuration);
-        return run(
-                module,
-                new CompilationContext(configuration.runtimeConfiguration(), ExternalBindings.empty()),
-                List.of(CompilationPasses.resolveDependencies()));
+        return ModuleParser.parseLibraryModule(query, uri, importingContext, configuration);
     }
 
     /** Standalone library analysis for language-server callers; deliberately does not run the main-module pipeline. */
@@ -98,8 +101,11 @@ public final class CompilationPipeline {
                 prepareLibraryModule(query, uri, importingContext, new CompilationConfiguration(configuration));
         return run(
                 module,
-                new CompilationContext(configuration, ExternalBindings.empty()),
-                List.of(CompilationPasses.populateStaticContext(), CompilationPasses.inferTypes()));
+                new CompilationContext(configuration, ExternalBindings.empty(), new ResourceResolver()),
+                List.of(
+                        CompilationPasses.resolveDependencies(),
+                        CompilationPasses.populateStaticContext(),
+                        CompilationPasses.inferTypes()));
     }
 
     /**
@@ -109,8 +115,8 @@ public final class CompilationPipeline {
      * XQuery retains its existing omission of sequential/updating classification and composability checks.
      */
     private static List<CompilationPass<MainModule>> mainModulePasses(
-            ModuleParser.Language language, RumbleConfiguration configuration) {
-        boolean isJSONiq = language == ModuleParser.Language.JSONIQ;
+            LanguageVersion.Language language, RumbleConfiguration configuration) {
+        boolean isJSONiq = language == LanguageVersion.Language.JSONIQ;
         List<CompilationPass<MainModule>> passes = new ArrayList<>();
         passes.add(CompilationPasses.pruneModules());
         passes.add(CompilationPasses.resolveDependencies());

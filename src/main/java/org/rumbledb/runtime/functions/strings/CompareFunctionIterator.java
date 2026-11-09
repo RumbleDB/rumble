@@ -38,9 +38,11 @@ public class CompareFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
-        String collation = this.getChildren().size() == 3
-                ? this.getChild(2).materializeFirstOrNull(context).getStringValue()
-                : getRuntimeStaticContext().getDefaultCollation();
+        String collation = CollationSupport.resolveCollationArgument(
+                this.getChildren().size() > 2 ? this.getChild(2) : null,
+                context,
+                getRuntimeStaticContext(),
+                getMetadata());
         Item firstStringItem = this.getChild(0).materializeFirstOrNull(context);
         Item secondStringItem = this.getChild(1).materializeFirstOrNull(context);
         if (firstStringItem == null || secondStringItem == null) {

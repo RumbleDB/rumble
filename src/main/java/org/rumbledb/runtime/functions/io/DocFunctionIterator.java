@@ -15,22 +15,17 @@
  */
 package org.rumbledb.runtime.functions.io;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.Serial;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
-
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.items.parsing.XmlParsingUtils;
-import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -50,28 +45,24 @@ public class DocFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item path = this.getChild(0).materializeFirstOrNull(context);
-        return path == null ? null : loadDocument(path, context);
+        return path == null ? null : loadXMLDocument(path, context);
     }
 
-    private Item loadDocument(Item path, DynamicContext context) {
-        URI uri = FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
-        try (InputStream xmlFileStream = FileSystemUtil.getDataInputStream(uri, getMetadata())) {
-            Document xmlDocument = XmlParsingUtils.parseResource(
-                    new InputSource(xmlFileStream),
-                    uri.toString(),
-                    "XML document \"" + uri + "\" for fn:doc()",
-                    getMetadata());
-            DocumentItem documentItem = ItemParser.getDocumentItemFromXML(
-                    xmlDocument,
-                    uri.toString(),
-                    context.getRumbleConfiguration().optimization().optimizeParentPointers());
-            documentItem.setConstructionBaseUri(uri);
-            return documentItem;
-        } catch (IOException e) {
-            CannotRetrieveResourceException ex = new CannotRetrieveResourceException(
-                    "Unable to read the resource supplied to fn:doc().", getMetadata());
-            ex.initCause(e);
-            throw ex;
+    private Item loadXMLDocument(Item path, DynamicContext context) {
+        URI uri;
+        try {
+            uri = FileSystemUtil.resolveURI(this.staticContext.getStaticURI(), path.getStringValue(), getMetadata());
+        } catch (CannotRetrieveResourceException exception) {
+            if (exception.getCause() instanceof URISyntaxException) {
+                throw new RumbleException(
+                        "Invalid URI supplied to fn:doc(): " + path.getStringValue(),
+                        ErrorCode.InvalidDocumentURIErrorCode,
+                        getMetadata());
+            }
+            throw exception;
         }
+        return context.getResourceResolver()
+                .loadXMLDocument(
+                        uri, this.staticContext.getQueryLanguage(), context.getRumbleConfiguration(), getMetadata());
     }
 }

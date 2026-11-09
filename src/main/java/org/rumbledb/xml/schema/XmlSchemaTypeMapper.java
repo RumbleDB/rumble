@@ -17,6 +17,7 @@ package org.rumbledb.xml.schema;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSObjectList;
 import org.apache.xerces.xs.XSSimpleTypeDefinition;
 import org.apache.xerces.xs.XSTypeDefinition;
@@ -40,12 +42,11 @@ import org.rumbledb.types.ItemTypeFactory;
  */
 final class XmlSchemaTypeMapper {
 
-    private static final String ANONYMOUS_TYPE_NAMESPACE = "http://rumbledb.org/anonymous-schema-types";
-
     private final XercesBuiltinAtomicTypeMapper builtinTypeMapper;
     private final Map<XSTypeDefinition, Optional<ItemType>> mappedTypes;
     private final Map<XSTypeDefinition, XmlSchemaTypeAnnotation> mappedAnnotations;
     private final Map<XSTypeDefinition, Name> anonymousTypeNames;
+    private final Map<Name, XSTypeDefinition> anonymousTypes;
     private final Set<XSTypeDefinition> typesBeingMapped;
     private final Map<String, String> namespacePrefixes;
 
@@ -55,6 +56,7 @@ final class XmlSchemaTypeMapper {
         this.mappedTypes = new IdentityHashMap<>();
         this.mappedAnnotations = new IdentityHashMap<>();
         this.anonymousTypeNames = new IdentityHashMap<>();
+        this.anonymousTypes = new HashMap<>();
         this.typesBeingMapped = Collections.newSetFromMap(new IdentityHashMap<>());
     }
 
@@ -205,7 +207,16 @@ final class XmlSchemaTypeMapper {
         // Every schema type must be derived from xs:anyType
         addIfAbsent(hierarchy, xsName("anyType"));
 
-        return new XmlSchemaTypeAnnotation(name, hierarchy);
+        XmlSchemaTypeAnnotation.ContentKind contentKind = XmlSchemaTypeAnnotation.ContentKind.SIMPLE;
+        if (schemaType instanceof XSComplexTypeDefinition complexType) {
+            contentKind = switch (complexType.getContentType()) {
+                case XSComplexTypeDefinition.CONTENTTYPE_SIMPLE -> XmlSchemaTypeAnnotation.ContentKind.SIMPLE;
+                case XSComplexTypeDefinition.CONTENTTYPE_ELEMENT -> XmlSchemaTypeAnnotation.ContentKind.ELEMENT_ONLY;
+                case XSComplexTypeDefinition.CONTENTTYPE_MIXED -> XmlSchemaTypeAnnotation.ContentKind.MIXED;
+                case XSComplexTypeDefinition.CONTENTTYPE_EMPTY -> XmlSchemaTypeAnnotation.ContentKind.EMPTY;
+                default -> throw new OurBadException("Xerces returned an unknown complex-content type.");};
+        }
+        return new XmlSchemaTypeAnnotation(name, hierarchy, contentKind);
     }
 
     /**
@@ -244,11 +255,18 @@ final class XmlSchemaTypeMapper {
      */
     Name nameOf(XSTypeDefinition schemaType) {
         if (schemaType.getAnonymous() || schemaType.getName() == null) {
-            return this.anonymousTypeNames.computeIfAbsent(
-                    schemaType, type -> new Name(ANONYMOUS_TYPE_NAMESPACE, null, "anonymousType-" + UUID.randomUUID()));
+            return this.anonymousTypeNames.computeIfAbsent(schemaType, type -> {
+                Name name = new Name(Name.ANONYMOUS_SCHEMA_TYPE_NS, null, "anonymousType-" + UUID.randomUUID());
+                this.anonymousTypes.put(name, type);
+                return name;
+            });
         }
-        String namespace = schemaType.getNamespace();
-        return new Name(namespace, prefixOf(namespace), schemaType.getName());
+        return declarationName(schemaType.getNamespace(), schemaType.getName());
+    }
+
+    /** Names a schema component with the query's prefix for its namespace. */
+    Name declarationName(String namespace, String localName) {
+        return new Name(namespace, prefixOf(namespace), localName);
     }
 
     /** The prefix the query's schema imports bind to the namespace, or null if there is none. */
@@ -261,6 +279,11 @@ final class XmlSchemaTypeMapper {
             return null;
         }
         return this.namespacePrefixes.get(namespace);
+    }
+
+    /** Finds the anonymous definition that {@link #nameOf(XSTypeDefinition)} named. */
+    Optional<XSTypeDefinition> anonymousType(Name name) {
+        return Optional.ofNullable(this.anonymousTypes.get(name));
     }
 
     private static void insertBefore(List<Name> names, Name name, Name successor) {

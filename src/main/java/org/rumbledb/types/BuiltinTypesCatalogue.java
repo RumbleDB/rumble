@@ -77,7 +77,7 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.COUNTABLY_INFINITE,
             true,
             // XSD 1.1 §4.3.5 decimal lexical representation
-            java.util.Collections.singletonList("[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)"));
+            Collections.singletonList("[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)"));
     public static final ItemType doubleItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "double"),
             new HashSet<>(Arrays.asList(
@@ -94,8 +94,7 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.FINITE,
             true,
             // XSD 1.1 §4.3.6 double lexical representation
-            java.util.Arrays.asList(
-                    "[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?", "INF", "\\+INF", "-INF", "NaN"));
+            Arrays.asList("[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?", "INF", "\\+INF", "-INF", "NaN"));
     public static final ItemType floatItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "float"),
             new HashSet<>(Arrays.asList(
@@ -112,8 +111,7 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.FINITE,
             true,
             // Same lexical space as xs:double
-            java.util.Arrays.asList(
-                    "[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?", "INF", "\\+INF", "-INF", "NaN"));
+            Arrays.asList("[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?", "INF", "\\+INF", "-INF", "NaN"));
 
     // xs:numeric is a union type for xs:double, xs:float, xs:decimal (XSD 1.1 §2.4.1)
     public static final ItemType numericItem = new UnionItemType(
@@ -133,7 +131,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.FINITE,
             false,
-            java.util.Arrays.asList("true", "false", "0", "1"));
+            Arrays.asList("true", "false", "0", "1"));
     public static final ItemType nullItem =
             new AtomicItemType(new Name(Name.JS_NS, "js", "null"), Collections.emptySet());
     public static final ItemType durationItem = new AtomicItemType(
@@ -152,7 +150,7 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
             // Simplified duration lexical pattern
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                     "[-+]?P(?!$)([0-9]+Y)?([0-9]+M)?([0-9]+D)?(T([0-9]+H)?([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?)?"));
     public static final ItemType yearMonthDurationItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration"),
@@ -182,7 +180,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                     "-?[0-9]{4,}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})?"));
     public static final ItemType dateTimeStampItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTimeStamp"),
@@ -206,7 +204,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList("-?[0-9]{4,}-[0-9]{2}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
+            Collections.singletonList("-?[0-9]{4,}-[0-9]{2}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
     public static final ItemType timeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "time"),
             new HashSet<>(Arrays.asList(
@@ -223,7 +221,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList("[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})?"));
+            Collections.singletonList("[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})?"));
     public static final ItemType gDayItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gDay"),
             new HashSet<>(Arrays.asList(
@@ -240,7 +238,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList("---[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
+            Collections.singletonList("---[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
     public static final ItemType gMonthItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gMonth"),
             new HashSet<>(Arrays.asList(
@@ -257,7 +255,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList("--[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
+            Collections.singletonList("--[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
     public static final ItemType gYearItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gYear"),
             new HashSet<>(Arrays.asList(
@@ -274,7 +272,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList("-?[0-9]{4,}(Z|[+-][0-9]{2}:[0-9]{2})?"));
+            Collections.singletonList("-?[0-9]{4,}(Z|[+-][0-9]{2}:[0-9]{2})?"));
     public static final ItemType gMonthDayItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gMonthDay"),
             new HashSet<>(Arrays.asList(
@@ -291,7 +289,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList("--[0-9]{2}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
+            Collections.singletonList("--[0-9]{2}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
     public static final ItemType gYearMonthItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gYearMonth"),
             new HashSet<>(Arrays.asList(
@@ -308,7 +306,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList("-?[0-9]{4,}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
+            Collections.singletonList("-?[0-9]{4,}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
     public static final ItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary"),
             new HashSet<>(Arrays.asList(
@@ -323,7 +321,7 @@ public class BuiltinTypesCatalogue {
             false,
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
-            java.util.Collections.singletonList("[0-9a-fA-F]*"));
+            Collections.singletonList("[0-9a-fA-F]*"));
     public static final ItemType anyURIItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "anyURI"),
             new HashSet<>(Arrays.asList(
@@ -354,7 +352,7 @@ public class BuiltinTypesCatalogue {
             CardinalityFacetValue.COUNTABLY_INFINITE,
             false,
             // Simplified base64 lexical pattern
-            java.util.Collections.singletonList(
+            Collections.singletonList(
                     "((([A-Za-z0-9+/] ?){4})*(([A-Za-z0-9+/] ?){3}[A-Za-z0-9+/]|([A-Za-z0-9+/] ?){2}[AEIMQUYcgkosw048] ?=|[A-Za-z0-9+/] ?[AQgw] ?= ?=))?"));
 
     public static final ItemType QNameItem = new AtomicItemType(
@@ -658,6 +656,10 @@ public class BuiltinTypesCatalogue {
             IDItem,
             IDREFItem,
             ENTITYItem);
+
+    public static List<ItemType> getBuiltinItemTypes() {
+        return Collections.unmodifiableList(builtInItemTypes);
+    }
 
     public static ItemType getItemTypeByName(Name name) {
         for (ItemType builtInItemType : builtInItemTypes) {

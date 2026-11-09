@@ -28,8 +28,8 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
 /**
- * Converts an argument to a parameter type with the function conversion rules of a function call.
- * Function inlining uses it so that an inlined call converts its arguments exactly like the call it replaces.
+ * Applies function conversion rules to an argument or return value.
+ * Function inlining uses it to preserve the conversions performed by the call it replaces.
  */
 @Getter
 public class FunctionArgumentConversionExpression extends Expression {
@@ -37,13 +37,24 @@ public class FunctionArgumentConversionExpression extends Expression {
     private final Expression argument;
     private final SequenceType parameterType;
     private final Name functionName;
+    private final boolean returnValue;
 
     public FunctionArgumentConversionExpression(
             Expression argument, SequenceType parameterType, Name functionName, ExceptionMetadata metadata) {
+        this(argument, parameterType, functionName, false, metadata);
+    }
+
+    public FunctionArgumentConversionExpression(
+            Expression argument,
+            SequenceType parameterType,
+            Name functionName,
+            boolean returnValue,
+            ExceptionMetadata metadata) {
         super(metadata);
         this.argument = argument;
         this.parameterType = parameterType;
         this.functionName = functionName;
+        this.returnValue = returnValue;
     }
 
     @Override
@@ -58,7 +69,7 @@ public class FunctionArgumentConversionExpression extends Expression {
 
     @Override
     public void serializeToJSONiq(StringBuilder sb, int indent) {
-        // Function conversion has no query syntax; it applies to the argument of the inlined call.
+        // Function conversion has no query syntax; serialize the value being converted.
         this.argument.serializeToJSONiq(sb, indent);
     }
 }

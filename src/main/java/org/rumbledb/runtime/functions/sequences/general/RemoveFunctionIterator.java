@@ -41,7 +41,6 @@ public class RemoveFunctionIterator extends ItemRuntimePlan implements LocalRunt
 
     private final ItemRuntimePlan sequenceIterator;
     private final ItemRuntimePlan positionIterator;
-    private int removePosition; // position to remove the item
 
     public RemoveFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
         super(parameters, staticContext);
@@ -56,17 +55,14 @@ public class RemoveFunctionIterator extends ItemRuntimePlan implements LocalRunt
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext context) {
-        init(context);
+        long removePosition =
+                this.positionIterator.materializeFirstOrNull(context).getLongValue();
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
 
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
-        JavaPairRDD<Item, Long> filteredRDD = zippedRDD.filter((item) -> item._2() != this.removePosition - 1);
+        JavaPairRDD<Item, Long> filteredRDD =
+                zippedRDD.filter((item) -> removePosition <= 0 || item._2() != removePosition - 1);
         return filteredRDD.map((item) -> item._1);
-    }
-
-    private void init(DynamicContext context) {
-        Item positionItem = this.positionIterator.materializeFirstOrNull(context);
-        this.removePosition = positionItem.getIntValue();
     }
 
     private static final class EvaluationCursor extends AbstractLocalCursor<Item> {
@@ -76,8 +72,8 @@ public class RemoveFunctionIterator extends ItemRuntimePlan implements LocalRunt
         private final DynamicContext context;
         private final ExceptionMetadata metadata;
         private Cursor<Item> sequenceCursor;
-        private int removePosition;
-        private int currentPosition;
+        private long removePosition;
+        private long currentPosition;
 
         private EvaluationCursor(
                 @NonNull ItemRuntimePlan sequencePlan,
@@ -94,7 +90,7 @@ public class RemoveFunctionIterator extends ItemRuntimePlan implements LocalRunt
         @Override
         protected void openLocal() {
             Item positionItem = this.positionPlan.materializeFirstOrNull(this.context);
-            this.removePosition = positionItem.getIntValue();
+            this.removePosition = positionItem.getLongValue();
             this.currentPosition = 1;
             this.sequenceCursor = this.sequencePlan.getCursor(this.context);
         }

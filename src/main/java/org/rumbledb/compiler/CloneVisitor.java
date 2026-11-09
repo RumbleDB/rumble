@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
@@ -160,10 +161,20 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         List<LibraryModule> libraryModules = expression.getImportedModules().stream()
                 .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
                 .collect(Collectors.toList());
+        Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
         List<Node> declarations = expression.getDeclarations().stream()
-                .map(expr -> visit(expr, argument))
+                .map(expr -> {
+                    Node clone = visit(expr, argument);
+                    var sourceContext = expression.getSourceModuleContexts().get(expr);
+                    if (sourceContext != null) {
+                        sourceModuleContexts.put(clone, sourceContext);
+                    }
+                    return clone;
+                })
                 .collect(Collectors.toList());
         expression.setDeclarations(declarations);
+        expression.getSourceModuleContexts().clear();
+        expression.getSourceModuleContexts().putAll(sourceModuleContexts);
         expression.getSchemaImports().clear();
         expression.getSchemaImports().addAll(schemaImports);
         expression.getImportedModules().clear();
@@ -557,6 +568,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
         DirElemConstructorExpression result = new DirElemConstructorExpression(
                 expression.getNodeName(), content, attributes, namespaceDeclarations, expression.getMetadata());
+        result.setDirectlyNested(expression.isDirectlyNested());
         result.setStaticContext(expression.getStaticContext());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setSequential(expression.isSequential());
@@ -800,6 +812,8 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
         result.setSequential(expression.isSequential());
+        result.setHasExitStatement(expression.hasExitStatement());
+        result.setHasTailCalls(expression.hasTailCalls());
         return result;
     }
 
@@ -1059,6 +1073,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 (Expression) visit(expression.getArgument(), argument),
                 expression.getParameterType(),
                 expression.getFunctionName(),
+                expression.isReturnValue(),
                 expression.getMetadata());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());

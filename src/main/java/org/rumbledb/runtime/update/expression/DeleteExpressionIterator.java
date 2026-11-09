@@ -89,7 +89,7 @@ public class DeleteExpressionIterator extends UpdatingExpressionIterator {
                     Collections.singletonList(lookup),
                     this.getRuntimeStaticContext().getMetadata());
         } else if (main.isArray()) {
-            if (!lookup.isInt()) {
+            if (!lookup.isWithinIntRange()) {
                 throw new CannotCastUpdateSelectorException(
                         "Delete expression selection cannot be cast to Int type",
                         this.getRuntimeStaticContext().getMetadata());

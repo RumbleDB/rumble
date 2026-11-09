@@ -179,6 +179,7 @@ import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpressio
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
+import org.rumbledb.runtime.functions.FunctionBodyIterator;
 import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
@@ -950,6 +951,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                         .map(arg -> (AttributeNodeRuntimeIterator) this.visit(arg, argument))
                         .collect(Collectors.toList()),
                 expression.getNamespaceDeclarations(),
+                expression.isDirectlyNested(),
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
@@ -1188,7 +1190,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         SequenceType returnType = expression.getReturnType();
-        ItemRuntimePlan bodyIterator = this.visit(expression.getBody(), argument);
+        ItemRuntimePlan bodyIterator = new FunctionBodyIterator(
+                this.visit(expression.getBody(), argument), expression.hasExitStatement(), expression.hasTailCalls());
         ItemRuntimePlan runtimeIterator = new FunctionRuntimeIterator(
                 expression.getName(),
                 paramNameToSequenceTypes,
@@ -1227,6 +1230,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(
                     identifier,
                     arguments,
+                    expression.getStaticContext().getFunctionSignature(identifier),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     expression.isTailCallOptimization());
         }
@@ -1551,7 +1555,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         return FunctionCallArgumentConversion.wrapArgument(
                 this.visit(expression.getArgument(), argument),
                 expression.getParameterType(),
-                "Invalid argument for " + expression.getFunctionName() + " function. ",
+                (expression.isReturnValue() ? "Invalid return type for " : "Invalid argument for ")
+                        + expression.getFunctionName()
+                        + " function. ",
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
@@ -1904,6 +1910,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         Expression leftExpression = (Expression) slashExpr.getChildren().get(0);
         Expression rightExpression = (Expression) slashExpr.getChildren().get(1);
         ItemRuntimePlan left = this.visit(leftExpression, argument);
+        if (left instanceof SlashExprIterator slash) slash.requireNodeResult();
         if (!isStaticallyGuaranteedNodeSequence(leftExpression)) {
             left = new TreatIterator(
                     left,

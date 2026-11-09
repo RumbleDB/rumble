@@ -22,7 +22,6 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
@@ -33,6 +32,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionCall;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.SequenceType;
 
@@ -173,8 +173,7 @@ public class ArrayForEachPairFunctionIterator extends AbstractAtMostOneItemRunti
         arguments.add(firstArg);
         arguments.add(secondArg);
 
-        ItemRuntimePlan functionCall = NamedFunctions.buildFunctionItemCallIterator(
-                functionItem, this.staticContext, ExecutionMode.LOCAL, arguments, false);
-        return functionCall.materialize(context);
+        return FunctionCall.of(functionItem, arguments, this.staticContext, context)
+                .materialize();
     }
 }

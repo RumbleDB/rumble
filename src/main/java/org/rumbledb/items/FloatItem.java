@@ -19,7 +19,7 @@ import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import org.apache.commons.lang3.StringUtils;
+import com.fasterxml.jackson.core.io.NumberOutput;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -76,29 +76,19 @@ public class FloatItem extends AbstractAtomicItem {
         if (Float.compare(this.value, 0f) == 0) {
             return "0";
         }
-        double abs = Math.abs(this.value);
-        // Convert to decimal between 10E-7 to 10E6 we clean the output (remove .0 or trailing zero at the end of the
-        // string)
-        if (abs >= 0.00000001 && abs < 1000000) {
-            String c = new BigDecimal(Float.toString(this.value)).toString();
-            if (c.charAt(c.length() - 1) == '0') {
-                c = StringUtils.chop(c);
-                if (c.charAt(c.length() - 1) == '.') {
-                    c = StringUtils.chop(c);
-                }
-            }
-            return c;
+        // Use the shortest decimal that round-trips to this float. JDK 17's Float.toString
+        // can emit excess digits, and multiplying a float to adjust its exponent changes its value.
+        BigDecimal decimal = new BigDecimal(NumberOutput.toString(this.value, true)).stripTrailingZeros();
+        float abs = Math.abs(this.value);
+        if (abs >= 0.000001f && abs < 1000000f) {
+            return decimal.toPlainString();
         }
-        // Java float uses mantissa only from 10E7, we force it from 10E6 to match standards by multiplying by an order
-        // of magnitude
-        // and manually decreasing the exponent with a string builder
-        if (abs >= 1000000 && abs < 100000000) {
-            String str = Float.toString(this.value * 10);
-            char reducedChar = (char) ((int) str.charAt(str.length() - 1) - 1);
-            StringBuilder sb = new StringBuilder(str.substring(0, str.length() - 1)).append(reducedChar);
-            return sb.toString();
+        int exponent = decimal.precision() - decimal.scale() - 1;
+        String mantissa = decimal.scaleByPowerOfTen(-exponent).toPlainString();
+        if (mantissa.indexOf('.') < 0) {
+            mantissa += ".0";
         }
-        return Float.toString(this.value);
+        return mantissa + "E" + exponent;
     }
 
     @Override

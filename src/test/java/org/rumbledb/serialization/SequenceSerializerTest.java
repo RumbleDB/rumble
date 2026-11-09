@@ -17,6 +17,7 @@ package org.rumbledb.serialization;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -26,6 +27,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 
+@Tag("cli-output-formats")
 class SequenceSerializerTest {
     private static final ItemFactory ITEMS = ItemFactory.getInstance();
 

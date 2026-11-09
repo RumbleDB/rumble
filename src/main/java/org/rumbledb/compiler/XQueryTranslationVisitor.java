@@ -23,6 +23,7 @@ import java.util.List;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.tree.ParseTree;
 
 import lombok.extern.log4j.Log4j2;
@@ -53,6 +54,7 @@ import org.rumbledb.compiler.context.LetVarContext;
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MainModuleContext;
+import org.rumbledb.compiler.context.ModuleContext;
 import org.rumbledb.compiler.context.ModuleImportContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NamedFunctionRefContext;
@@ -159,6 +161,7 @@ import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.WhereClause;
@@ -223,18 +226,24 @@ import org.rumbledb.types.SequenceType;
 @Log4j2
 public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
+    /**
+     * Token types that can begin a relativePathExpr (e.g. "*", "<", any name or keyword), read from the generated
+     * parser's ATN so the set follows the grammar. Used by {@link #checkLeadingLoneSlash}.
+     */
+    private static final IntervalSet RELATIVE_PATH_START_TOKENS =
+            XQueryParser._ATN.nextTokens(XQueryParser._ATN.ruleToStartState[XQueryParser.RULE_relativePathExpr]);
+
     private final CommonTokenStream xQueryTokenStream;
     private final TranslationContext translationContext;
 
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
-            boolean isMainModule,
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings,
             String code,
             CommonTokenStream xQueryTokenStream) {
         this.translationContext =
-                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, isMainModule, code);
+                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, code);
         this.xQueryTokenStream = xQueryTokenStream;
     }
 
@@ -243,33 +252,12 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     // region module
     @Override
     public Module visitModule(XQueryParser.ModuleContext ctx) {
-        if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
-            String version = processStringLiteral(ctx.vers).trim();
-            if (version.equals("1.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("xquery10");
-            } else if (version.equals("3.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("xquery31");
-            } else if (version.equals("3.1")) {
-                this.translationContext.moduleContext().setQueryLanguage("xquery31");
-            } else if (version.equals("4.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("xquery40");
-            } else {
-                throw new JsoniqVersionException(createMetadataFromContext(ctx));
-            }
-        }
-        if (this.translationContext.isMainModule()) {
-            if (ctx.mainModule() != null) {
-                return this.visitMainModule(ctx.mainModule().get(0));
-            }
-            throw new ParsingException(
-                    "Main module expected, but library module found.", createMetadataFromContext(ctx));
-        } else {
-            if (ctx.libraryModule() != null) {
-                return this.visitLibraryModule(ctx.libraryModule());
-            }
-            throw new ParsingException(
-                    "Library module expected, but main module found.", createMetadataFromContext(ctx));
-        }
+        return ModuleTranslation.module(
+                ModuleContext.from(ctx),
+                this.translationContext,
+                this::processStringLiteral,
+                this::visitMainModule,
+                this::visitLibraryModule);
     }
 
     @Override
@@ -490,14 +478,7 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     /** Adapts the XQuery QName grammar to the shared role-aware resolver. */
     public Name parseName(XQueryParser.QnameContext ctx, NameRole role) {
-        return this.translationContext
-                .names()
-                .resolveQName(
-                        ctx.FullQName() == null ? null : ctx.FullQName().getText(),
-                        ctx.ns == null ? null : ctx.ns.getText(),
-                        ctx.local_name == null ? null : ctx.local_name.getText(),
-                        role,
-                        createMetadataFromContext(ctx));
+        return this.translationContext.names().resolveEQName(ctx.getText(), role, createMetadataFromContext(ctx));
     }
 
     // endregion
@@ -609,13 +590,37 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public GroupByClause visitGroupByClause(XQueryParser.GroupByClauseContext ctx) {
-        return FlworTranslation.groupByClause(
+        GroupByClause clause = FlworTranslation.groupByClause(
                 GroupByClauseContext.from(ctx),
                 this.translationContext,
                 this::parseVariableBinding,
                 this::processSequenceType,
                 this::visitExprSingle,
                 this::resolveCollationUri);
+        // Grouping bindings are preceding let bindings: later bindings may shadow earlier ones.
+        Clause previous = null;
+        List<GroupByVariableDeclaration> variables = new ArrayList<>();
+        for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
+            if (variable.getExpression() != null) {
+                LetClause binding = new LetClause(
+                        variable.getVariableName(),
+                        null,
+                        variable.getExpression(),
+                        variable.getVariableMetadata(),
+                        variable.getVariableMetadata());
+                if (previous != null) previous.chainWith(binding);
+                previous = binding;
+            }
+            variables.add(new GroupByVariableDeclaration(
+                    variable.getVariableName(),
+                    variable.getActualSequenceType(),
+                    null,
+                    variable.getCollationURI(),
+                    variable.getVariableMetadata()));
+        }
+        GroupByClause normalized = new GroupByClause(variables, clause.getMetadata());
+        if (previous != null) previous.chainWith(normalized);
+        return normalized;
     }
 
     @Override
@@ -1064,10 +1069,17 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
     }
 
     public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
+        if (ctx.item.eqName() == null) {
+            throw new ParsingException(
+                    "A cast or castable target must be a simple type name.", createMetadataFromContext(ctx));
+        }
         return TypeTranslation.singleType(SingleTypeContext.from(ctx), this::processItemType);
     }
 
     public ItemType processItemType(XQueryParser.ItemTypeContext itemTypeContext) {
+        if (itemTypeContext.kindTest() != null && itemTypeContext.kindTest().anyKindTest() != null) {
+            checkAnyKindTest(itemTypeContext.kindTest().anyKindTest());
+        }
         return TypeTranslation.itemType(
                 ItemTypeContext.from(itemTypeContext),
                 this.translationContext,
@@ -1331,7 +1343,27 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
     @Override
     public Expression visitPathExpr(XQueryParser.PathExprContext ctx) {
+        if (ctx.SLASH() != null && ctx.singleslash == null) {
+            checkLeadingLoneSlash(ctx);
+        }
         return XmlPathTranslation.pathExpr(PathExprContext.from(ctx), this.translationContext, this::visitStepExpr);
+    }
+
+    /**
+     * Enforces xgc: leading-lone-slash, which the grammar cannot express: ANTLR would otherwise read
+     * {@code / * 5} as {@code (/) * 5} instead of rejecting it.
+     */
+    private void checkLeadingLoneSlash(XQueryParser.PathExprContext ctx) {
+        int index = ctx.getStop().getTokenIndex() + 1;
+        Token next = this.xQueryTokenStream.get(index);
+        while (next.getChannel() != Token.DEFAULT_CHANNEL) {
+            next = this.xQueryTokenStream.get(++index);
+        }
+        if (RELATIVE_PATH_START_TOKENS.contains(next.getType())) {
+            throw new ParsingException(
+                    "A leading lone slash cannot be followed by a token that starts a relative path.",
+                    createMetadataFromContext(ctx));
+        }
     }
 
     @Override
@@ -1454,11 +1486,19 @@ public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
         @Override
         public NodeTest visitAnyKindTest(XQueryParser.AnyKindTestContext ctx) {
+            checkAnyKindTest(ctx);
             return XmlNodeTestTranslation.anyKindTest();
         }
     }
 
     // end region
+
+    private void checkAnyKindTest(XQueryParser.AnyKindTestContext ctx) {
+        if (ctx.STAR() != null) {
+            throw new ParsingException(
+                    "The XQuery node() test does not accept a wildcard.", createMetadataFromContext(ctx));
+        }
+    }
 
     private String processURILiteral(UriLiteralContext ctx) {
         // According to XQuery 3.1 spec, URI literals (which are string literals) must expand

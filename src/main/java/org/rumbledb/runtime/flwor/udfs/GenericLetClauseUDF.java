@@ -76,8 +76,7 @@ public class GenericLetClauseUDF<T> implements UDF1<Row, T> {
             case "String":
                 return (T) this.nextResult.get(0).getStringValue();
             case "Integer":
-                // TODO: watch out for big integers
-                return (T) (Integer) this.nextResult.get(0).getIntegerValue().intValue();
+                return (T) (Integer) this.nextResult.get(0).getIntValue();
             case "BigDecimal":
                 return (T) this.nextResult.get(0).getDecimalValue();
             case "Double":

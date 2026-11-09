@@ -39,8 +39,8 @@ return (
         and ($nilled instance of element(*, t:Record?))
         and not($nilled instance of element(*, xs:string?)),
 
-    (: Default annotation: xs:untyped derives from xs:anyType. :)
-    (<plain/> instance of element(plain, xs:untyped))
+    (: Default annotation: newly constructed elements have xs:anyType. :)
+    not(<plain/> instance of element(plain, xs:untyped))
         and (<plain/> instance of element(*, xs:anyType?))
         and not(<plain/> instance of element(*, xs:string))
 )

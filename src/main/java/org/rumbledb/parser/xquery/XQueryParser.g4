@@ -26,24 +26,8 @@
 parser grammar XQueryParser;
 
 import CommonParser;
-@ header
-{
-// Java header
-package org.rumbledb.parser.xquery;
-}
 
 options { tokenVocab = XQueryLexer; }
-module
-   : // replaced with the versionDecl production to match the JSONiq grammar
-   (KW_XQUERY KW_VERSION vers = stringLiteral (KW_ENCODING encoding = stringLiteral)? SEMICOLON)?
-   // TODO: subsequent optional main modules are currently ignored
-   (libraryModule | (main = mainModule (SEMICOLON versionDecl? mainModule)*))
-   ;
-
-versionDecl
-   : KW_XQUERY KW_VERSION version = stringLiteral (KW_ENCODING encoding = stringLiteral)? SEMICOLON
-   ;
-
 annotatedDecl
    : functionDecl
    | varDecl
@@ -112,8 +96,8 @@ itemType
    | parenthesizedItemTest
    ;
 
-dialectKeywordOKForFunction
-   : KW_XQUERY
+keywordOKForFunction
+   : commonKeywordOKForFunction
    ;
 
 stringLiteralQuot

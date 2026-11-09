@@ -20,10 +20,14 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.xerces.impl.dv.InvalidDatatypeValueException;
+import org.apache.xerces.impl.dv.SchemaDVFactory;
+import org.apache.xerces.impl.validation.ValidationState;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -118,16 +122,39 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
 
     public static Item castItemToType(
             Item item, ItemType targetType, ExceptionMetadata metadata, RuntimeStaticContext staticContext) {
-        return castItemToType(item, targetType, metadata, NamespaceBindingUtils.namespaceResolver(staticContext));
+        return castItemToType(
+                item,
+                targetType,
+                metadata,
+                NamespaceBindingUtils.namespaceResolver(staticContext),
+                staticContext == null
+                        ? "1.1"
+                        : staticContext.getConfiguration().semantics().xsdVersion());
     }
 
     public static Item castItemToType(
             Item item, ItemType targetType, ExceptionMetadata metadata, StaticContext staticContext) {
-        return castItemToType(item, targetType, metadata, NamespaceBindingUtils.namespaceResolver(staticContext));
+        return castItemToType(
+                item,
+                targetType,
+                metadata,
+                NamespaceBindingUtils.namespaceResolver(staticContext),
+                staticContext == null
+                        ? "1.1"
+                        : staticContext.getRumbleConfiguration().semantics().xsdVersion());
     }
 
     public static Item castItemToType(
             Item item, ItemType targetType, ExceptionMetadata metadata, NamespaceResolver namespaceResolver) {
+        return castItemToType(item, targetType, metadata, namespaceResolver, "1.1");
+    }
+
+    private static Item castItemToType(
+            Item item,
+            ItemType targetType,
+            ExceptionMetadata metadata,
+            NamespaceResolver namespaceResolver,
+            String xsdVersion) {
         Item converted = null;
         // first we try to atomize if item is not atomic
         if (!item.isAtomic()) {
@@ -149,7 +176,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         // F&O 3.1 §19.3.5: union targets use dedicated member-iteration logic;
         // must be checked before isStaticallyCastableAs which lacks union-target support.
         if (targetType.isUnionType()) {
-            return castToUnionType(item, targetType, metadata, namespaceResolver);
+            return castToUnionType(item, targetType, metadata, namespaceResolver, xsdVersion);
         }
 
         // xs:error has an empty value space, so every cast to it must fail dynamically.
@@ -162,6 +189,25 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                     "\"%s\": a value of type %s is not castable to type %s",
                     item.serialize(), item.getDynamicType(), targetType);
             throw new UnexpectedTypeException(message, metadata);
+        }
+
+        // Apply only the version-specific lexical restrictions. In particular, let the existing
+        // date parser report representational overflow as FODT0001 rather than Xerces FORG0001.
+        if ("1.0".equals(xsdVersion) && (item.isString() || item.isUntypedAtomic())) {
+            String name = targetType.getCastingPrimitiveType().getName().getLocalName();
+            if (Set.of("date", "dateTime", "gYear", "gYearMonth").contains(name)
+                    && item.getStringValue().trim().matches("-?0{4,}(?:$|[-+ZT].*)")) {
+                return null;
+            }
+            if (Set.of("anyURI", "float", "double").contains(name)) {
+                try {
+                    SchemaDVFactory.getInstance()
+                            .getBuiltInType(name)
+                            .validate(item.getStringValue(), new ValidationState(), null);
+                } catch (InvalidDatatypeValueException e) {
+                    return null;
+                }
+            }
         }
 
         try {
@@ -262,6 +308,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         } catch (DatetimeOverflowOrUnderflow
                 | DurationOverflowOrUnderflow
                 | InvalidLexicalValueException
+                | NoNamespaceFoundForPrefixException
                 | CastException e) {
             throw e;
         } catch (Exception e) {
@@ -293,7 +340,11 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
      * @return the cast result, or {@code null} if no member type accepts the value
      */
     private static Item castToUnionType(
-            Item item, ItemType targetType, ExceptionMetadata metadata, NamespaceResolver namespaceResolver) {
+            Item item,
+            ItemType targetType,
+            ExceptionMetadata metadata,
+            NamespaceResolver namespaceResolver,
+            String xsdVersion) {
         List<ItemType> memberTypes = targetType.getTypes();
 
         // §19.3.5 Rule 1: source is xs:string or xs:untypedAtomic
@@ -303,7 +354,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                     continue;
                 }
                 try {
-                    Item result = castItemToType(item, memberType, metadata, namespaceResolver);
+                    Item result = castItemToType(item, memberType, metadata, namespaceResolver, xsdVersion);
                     if (result != null) {
                         return result;
                     }
@@ -328,7 +379,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                 continue;
             }
             try {
-                Item result = castItemToType(item, memberType, metadata, namespaceResolver);
+                Item result = castItemToType(item, memberType, metadata, namespaceResolver, xsdVersion);
                 if (result != null) {
                     return result;
                 }
@@ -376,7 +427,9 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         }
         if (targetType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
             Item convertedValue = null;
-            if (item.isString() || item.isUntypedAtomic()) {
+            if (item.isBoolean()) {
+                convertedValue = ItemFactory.getInstance().createBooleanItem(item.getBooleanValue());
+            } else if (item.isString() || item.isUntypedAtomic()) {
                 String lexical = item.getStringValue().trim();
                 if ("true".equals(lexical) || "1".equals(lexical)) {
                     convertedValue = ItemFactory.getInstance().createBooleanItem(true);
@@ -570,7 +623,8 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
                 convertedValue = ItemFactory.getInstance()
                         .createDayTimeDurationItem(item.getStringValue().trim());
             } else if (item.isDuration() || item.isYearMonthDuration()) {
-                convertedValue = ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
+                convertedValue =
+                        ItemFactory.getInstance().createDayTimeDurationItem(item.getDayTimeDurationComponent());
             }
             return finalizeAtomicBranchValue(convertedValue, targetType, BuiltinTypesCatalogue.dayTimeDurationItem);
         }
@@ -656,7 +710,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
             }
             if (item.isString() || item.isUntypedAtomic()) {
                 String lexical = NamespaceBindingUtils.collapseQNameLexical(item.getStringValue());
-                Name expanded = NamespaceBindingUtils.parseLexicalQName(lexical, namespaceResolver, metadata);
+                Name expanded = NamespaceBindingUtils.parseLexicalQNameForCast(lexical, namespaceResolver, metadata);
                 Item q = ItemFactory.getInstance().createQNameItem(expanded);
                 return finalizeAtomicBranchValue(q, targetType, BuiltinTypesCatalogue.QNameItem);
             }

@@ -57,24 +57,17 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
         return new DistinctLocalCursor(
-                this.sequenceIterator,
-                this.getChildren().size() == 2 ? this.getChild(1) : null,
-                context,
-                getMetadata());
+                this.sequenceIterator, getCollationPlan(), context, getRuntimeStaticContext(), getMetadata());
     }
 
-    private String resolveCollation(DynamicContext context) {
-        String explicitCollation = this.getChildren().size() == 2
-                ? this.getChild(1).materializeFirstOrNull(context).getStringValue()
-                : null;
-        String collation = CollationSupport.resolveCollation(explicitCollation, getRuntimeStaticContext());
-        CollationSupport.checkCollationSupported(collation, getMetadata());
-        return collation;
+    private ItemRuntimePlan getCollationPlan() {
+        return this.getChildren().size() > 1 ? this.getChild(1) : null;
     }
 
     @Override
     public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
-        String collation = resolveCollation(dynamicContext);
+        String collation = CollationSupport.resolveCollationArgument(
+                getCollationPlan(), dynamicContext, getRuntimeStaticContext(), getMetadata());
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
         return childRDD.map(item -> new AtomicValueComparisonKey(
                         item, collation, this.getRuntimeStaticContext().getMetadata()))
@@ -109,6 +102,7 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
         private final ItemRuntimePlan sequencePlan;
         private final ItemRuntimePlan collationPlan;
         private final DynamicContext context;
+        private final RuntimeStaticContext staticContext;
         private final ExceptionMetadata metadata;
         private final List<Item> seen = new ArrayList<>();
         private Cursor<Item> sequenceCursor;
@@ -119,22 +113,20 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
                 ItemRuntimePlan sequencePlan,
                 ItemRuntimePlan collationPlan,
                 DynamicContext context,
+                RuntimeStaticContext staticContext,
                 ExceptionMetadata metadata) {
             super(metadata);
             this.sequencePlan = sequencePlan;
             this.collationPlan = collationPlan;
             this.context = context;
+            this.staticContext = staticContext;
             this.metadata = metadata;
         }
 
         @Override
         protected void openLocal() {
-            String explicitCollation = this.collationPlan == null
-                    ? null
-                    : this.collationPlan.materializeFirstOrNull(this.context).getStringValue();
-            this.activeCollation =
-                    CollationSupport.resolveCollation(explicitCollation, this.sequencePlan.getRuntimeStaticContext());
-            CollationSupport.checkCollationSupported(this.activeCollation, this.metadata);
+            this.activeCollation = CollationSupport.resolveCollationArgument(
+                    this.collationPlan, this.context, this.staticContext, this.metadata);
             this.sequenceCursor = this.sequencePlan.getCursor(this.context);
             advance();
         }

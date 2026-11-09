@@ -17,6 +17,7 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
@@ -25,11 +26,14 @@ import org.rumbledb.context.ConstructorFunctionResolver;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorVariables;
+import org.rumbledb.exceptions.CastableException;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
+import org.rumbledb.exceptions.UndefinedTypeException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -55,6 +59,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -92,6 +97,8 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
+import static org.rumbledb.compiler.utils.AnnotationValidator.hasPrivateAnnotation;
+
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
  */
@@ -100,6 +107,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     private static final String SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
     private final Map<String, StaticContext> importedModuleContexts;
+    private final List<SequenceType> contextItemTypes = new ArrayList<>();
 
     StaticContextVisitor() {
         this.importedModuleContexts = new HashMap<>();
@@ -132,22 +140,31 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
         this.importedModuleContexts.clear();
+        this.contextItemTypes.clear();
         StaticContext generatedContext = visitDescendants(mainModule, argument);
         return generatedContext;
     }
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
+        String key = libraryModule.getModuleGroupKey();
+        if (!this.importedModuleContexts.containsKey(key)) {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
-            this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
+            this.importedModuleContexts.put(key, moduleContext);
         }
-        argument.importModuleContext(this.importedModuleContexts.get(libraryModule.getNamespace()));
+        StaticContext importedContext = this.importedModuleContexts.get(key);
+        for (var entry : importedContext.getInScopeVariables().entrySet()) {
+            Name name = entry.getKey();
+            var existing = argument.getInScopeVariables().get(name);
+            // Repeated imports share the cached variable; a distinct declaration is a collision.
+            if (!Name.CONTEXT_ITEM.equals(name) && existing != null && existing != entry.getValue()) {
+                throw new VariableAlreadyExistsException(name, existing.getMetadata());
+            }
+        }
+        argument.importModuleContext(importedContext);
         argument.getInScopeSchemaTypes()
-                .importModuleTypes(this.importedModuleContexts
-                        .get(libraryModule.getNamespace())
-                        .getInScopeSchemaTypes());
+                .importModuleTypes(this.importedModuleContexts.get(key).getInScopeSchemaTypes());
         return argument;
     }
 
@@ -205,9 +222,17 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
+        if (expression.getActualReturnType() != null) {
+            expression.getActualReturnType().resolve(argument, expression.getMetadata());
+        }
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
         for (Entry<Name, SequenceType> entry : expression.getParams().entrySet()) {
+            entry.getValue()
+                    .resolve(
+                            argument,
+                            Objects.requireNonNullElse(
+                                    expression.getParameterMetadata().get(entry.getKey()), expression.getMetadata()));
             functionDeclarationContext.addVariable(
                     entry.getKey(),
                     entry.getValue(),
@@ -410,6 +435,27 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration variableDeclaration, StaticContext argument) {
+        if (variableDeclaration.getActualSequenceType() != null) {
+            variableDeclaration.getActualSequenceType().resolve(argument, variableDeclaration.getMetadata());
+            if (Name.CONTEXT_ITEM.equals(variableDeclaration.getVariableName())) {
+                SequenceType type = variableDeclaration.getActualSequenceType();
+                // Atomic type families cannot intersect unless one contains a member of the other.
+                // Structured function/array tests can overlap without either being a subtype.
+                for (SequenceType other : this.contextItemTypes) {
+                    if (type.getItemType().allMemberTypesMatch(ItemType::isAtomicItemType)
+                            && other.getItemType().allMemberTypesMatch(ItemType::isAtomicItemType)
+                            && !type.hasOverlapWith(other)) {
+                        throw new UnexpectedTypeException(
+                                "The context item declarations in different modules require disjoint types: "
+                                        + type
+                                        + " and "
+                                        + other,
+                                variableDeclaration.getMetadata());
+                    }
+                }
+                this.contextItemTypes.add(type);
+            }
+        }
         if (variableDeclaration.getExpression() != null) {
             this.visit(variableDeclaration.getExpression(), argument);
         }
@@ -498,7 +544,52 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
-        StaticContext generatedContext = visitDescendants(prolog, argument);
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            if (hasPrivateAnnotation(declaration.getAnnotations())) {
+                prolog.getDeclarationContext(declaration, argument).markPrivateVariable(declaration.getVariableName());
+            }
+        }
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
+            InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
+            StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
+            declarationContext.addFunctionSignature(
+                    expression.getFunctionIdentifier(),
+                    new FunctionSignature(
+                            new ArrayList<>(expression.getParams().values()),
+                            expression.getReturnType(),
+                            expression.isUpdating()));
+            if (hasPrivateAnnotation(expression.getAnnotations())) {
+                declarationContext.markPrivateFunction(expression.getFunctionIdentifier());
+            }
+        }
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            prolog.getDeclarationContext(declaration, argument)
+                    .addVariable(
+                            declaration.getVariableName(),
+                            declaration.getActualSequenceType(),
+                            declaration.getMetadata(),
+                            declaration.isAssignable());
+        }
+        StaticContext generatedContext = argument;
+        if (prolog.getSourceModuleContexts().isEmpty()) {
+            generatedContext = visitDescendants(prolog, argument);
+        } else {
+            for (SchemaImport schema : prolog.getSchemaImports()) {
+                visit(schema, argument);
+            }
+            for (LibraryModule imported : prolog.getImportedModules()) {
+                visit(imported, argument);
+            }
+            // Function signatures and types must be visible throughout a mutually recursive group.
+            for (StaticContext sourceContext : prolog.getSourceModuleContexts().values()) {
+                prolog.shareGroupDeclarations(sourceContext, argument);
+            }
+            for (Node declaration : prolog.getDeclarations()) {
+                StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
+                visit(declaration, declarationContext);
+                prolog.shareGroupDeclarations(declarationContext, argument);
+            }
+        }
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(generatedContext, prolog.getMetadata());
         }
@@ -538,6 +629,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // and therefore cannot be resolved through InScopeSchemaTypes.
         ItemType itemType = sequenceType.getItemType();
         XmlSchemaCatalog schemaCatalog = staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog();
+        boolean xquery = staticContext.getQueryLanguage().isXQuery();
+        if (xquery
+                && itemType.hasName()
+                && Name.XS_NS.equals(itemType.getName().getNamespace())
+                && List.of("anySimpleType", "anyAtomicType", "NOTATION")
+                        .contains(itemType.getName().getLocalName())) {
+            throw new CastableException(
+                    "The type " + itemType.getName() + " cannot be used as a cast target.", metadata);
+        }
         if (itemType.hasName() && !BuiltinTypesCatalogue.typeExists(itemType.getName())) {
             if (schemaCatalog.isSchemaCastTarget(itemType.getName())) {
                 return;
@@ -550,7 +650,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         metadata);
             }
         }
-        sequenceType.resolve(staticContext, metadata);
+        try {
+            sequenceType.resolve(staticContext, metadata);
+        } catch (UndefinedTypeException exception) {
+            if (!xquery) {
+                throw exception;
+            }
+            throw new UnknownCastTypeException(exception.getMessage(), metadata);
+        }
     }
 
     @Override
@@ -578,8 +685,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
+        Map<String, String> constructorBindings = new HashMap<>(argument.getConstructorNamespaceBindings());
+        for (NamespaceDeclaration declaration : expression.getNamespaceDeclarations()) {
+            constructorBindings.put(declaration.getPrefix(), declaration.getUri());
+        }
+        if (contentContext == argument) contentContext = new StaticContext(argument);
+        contentContext.setConstructorNamespaceBindings(constructorBindings);
+        expression.setStaticContext(contentContext);
         for (Expression attribute : expression.getAttributes()) {
-            this.visit(attribute, argument);
+            this.visit(attribute, contentContext);
         }
         for (Expression child : expression.getContent()) {
             this.visit(child, contentContext);

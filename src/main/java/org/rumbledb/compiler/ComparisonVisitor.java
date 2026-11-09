@@ -40,6 +40,7 @@ import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -146,8 +147,12 @@ public class ComparisonVisitor extends CloneVisitor {
             rightReference.setStaticSequenceType(
                     new SequenceType(rightChild.getStaticSequenceType().getItemType(), SequenceType.Arity.One));
             rightReference.setStaticContext(rightContext);
+            // Normalize each atomic pair after iteration, so casts retain the query's
+            // namespace context without accepting a sequence as their operand.
+            Expression[] normalizedPair = normalizeUntypedForGeneralComparison(
+                    leftReference, rightReference, rightContext, expression.getMetadata());
             Expression valueComparison = new ComparisonExpression(
-                    leftReference, rightReference, expression.getComparisonOperator(), expression.getMetadata());
+                    normalizedPair[0], normalizedPair[1], expression.getComparisonOperator(), expression.getMetadata());
             valueComparison.setStaticContext(rightContext);
             valueComparison.setStaticSequenceType(
                     new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
@@ -179,10 +184,7 @@ public class ComparisonVisitor extends CloneVisitor {
         }
         // otherwise, use ([left op right, false][[1]])
         ComparisonExpression comparisonExpression = new ComparisonExpression(
-                (Expression) visit(expression.getChildren().get(0), argument),
-                (Expression) visit(expression.getChildren().get(1), argument),
-                expression.getComparisonOperator(),
-                expression.getMetadata());
+                leftChild, rightChild, expression.getComparisonOperator(), expression.getMetadata());
         comparisonExpression.setStaticSequenceType(expression.getStaticSequenceType());
         comparisonExpression.setStaticContext(expression.getStaticContext());
         BooleanLiteralExpression booleanExpression = new BooleanLiteralExpression(false, expression.getMetadata());
@@ -205,6 +207,20 @@ public class ComparisonVisitor extends CloneVisitor {
                 new FilterExpression(commaExpression, integerLiteralExpression, expression.getMetadata());
         result.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
         result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitSlashExpr(SlashExpr expression, Node argument) {
+        // CloneVisitor leaves path expressions unchanged. Comparisons inside their
+        // predicates still need the same atomization and pairwise rewrite as top-level comparisons.
+        SlashExpr result = new SlashExpr(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
         return result;
     }
 
@@ -243,7 +259,12 @@ public class ComparisonVisitor extends CloneVisitor {
             Expression left, Expression right, StaticContext context, ExceptionMetadata metadata) {
         SequenceType leftType = left.getStaticSequenceType();
         SequenceType rightType = right.getStaticSequenceType();
-        if (leftType == null || rightType == null) {
+        // Casts operate on at most one value. Keep sequence cardinalities intact so the
+        // general-comparison rewrite can compare individual pairs, casting at runtime.
+        if (leftType == null
+                || rightType == null
+                || !leftType.getArity().isSubtypeOf(SequenceType.Arity.OneOrZero)
+                || !rightType.getArity().isSubtypeOf(SequenceType.Arity.OneOrZero)) {
             return new Expression[] {left, right};
         }
         ItemType leftItemType = leftType.getItemType();

@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.UUID;
 
 import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.flowr.Clause;
@@ -36,7 +35,6 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.SequenceType;
 
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
@@ -44,14 +42,15 @@ import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromP
 public class FunctionInliningVisitor extends CloneVisitor {
 
     private Prolog prolog;
-    private boolean constructionPreserve;
 
-    private boolean hasDifferentConstructionMode(Prolog prolog, FunctionDeclaration target) {
+    private boolean isImportedFunction(Prolog prolog, FunctionDeclaration target) {
         for (var module : prolog.getImportedModules()) {
             if (module.getProlog().getFunctionDeclarations().contains(target)) {
-                return module.getStaticContext().isConstructionPreserve() != this.constructionPreserve;
+                // Rebuilding an imported body in the caller's context loses module-local
+                // namespaces, collations, decimal formats and other static settings.
+                return true;
             }
-            if (hasDifferentConstructionMode(module.getProlog(), target)) {
+            if (isImportedFunction(module.getProlog(), target)) {
                 return true;
             }
         }
@@ -97,9 +96,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
         this.prolog = mainModule.getProlog();
-        if (mainModule.getStaticContext() != null) {
-            this.constructionPreserve = mainModule.getStaticContext().isConstructionPreserve();
-        }
         MainModule result = new MainModule(
                 mainModule.getProlog(),
                 (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
@@ -115,6 +111,17 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 argument, parameterType, call.getFunctionIdentifier().getName(), argument.getMetadata());
     }
 
+    // Return value errors are reported at the function body, as when the function is called without inlining.
+    private static FunctionArgumentConversionExpression convertReturnValue(
+            Expression value, SequenceType returnType, FunctionCallExpression call, InlineFunctionExpression function) {
+        return new FunctionArgumentConversionExpression(
+                value,
+                returnType,
+                call.getFunctionIdentifier().getName(),
+                true,
+                function.getBody().getMetadata());
+    }
+
     // Inlining is disabled for functions that:
     // 1. Are sequential.
     // 2. Contain an exit statement.
@@ -124,8 +131,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 getFunctionDeclarationFromProlog(this.prolog, expression.getFunctionIdentifier());
         if (expression.isPartialApplication()
                 || targetFunction == null
-                // Rebuilding an inlined body in the caller's context would change its constructor semantics.
-                || hasDifferentConstructionMode(this.prolog, targetFunction)
+                // Imported function bodies must retain their module's static settings.
+                || isImportedFunction(this.prolog, targetFunction)
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
                 || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {
@@ -143,18 +150,20 @@ public class FunctionInliningVisitor extends CloneVisitor {
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
         if (expression.getArguments().isEmpty() || allArgumentsMatch(expression, paramNames)) {
             if (inlineFunction.getReturnType() != null) {
-                TreatExpression result = new TreatExpression(
-                        body,
-                        inlineFunction.getReturnType(),
-                        ErrorCode.UnexpectedTypeErrorCode,
-                        expression.getMetadata());
+                FunctionArgumentConversionExpression result =
+                        convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
             return body;
         }
         body.setStaticSequenceType(inlineFunction.getReturnType());
-        ReturnClause returnClause = new ReturnClause(body, expression.getMetadata());
+        // The return value is converted inside the FLWOR expression, which binds the arguments and is evaluated once,
+        // so that conversion errors are reported at the body, not at the call.
+        Expression returnValue = inlineFunction.getReturnType() == null
+                ? body
+                : convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
+        ReturnClause returnClause = new ReturnClause(returnValue, expression.getMetadata());
         Clause expressionClauses = null;
         Clause assignmentClauses = null;
         for (int i = 0; i < expression.getArguments().size(); i++) {
@@ -197,11 +206,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
         }
         if (expressionClauses == null) {
             if (inlineFunction.getReturnType() != null) {
-                TreatExpression result = new TreatExpression(
-                        body,
-                        inlineFunction.getReturnType(),
-                        ErrorCode.UnexpectedTypeErrorCode,
-                        expression.getMetadata());
+                FunctionArgumentConversionExpression result =
+                        convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
                 result.setSequential(inlineFunction.isSequential());
                 return result;
             }
@@ -213,14 +219,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
         } else {
             expressionClauses.getLastClause().chainWith(returnClause);
         }
-        FlworExpression result = new FlworExpression(returnClause, expression.getMetadata());
-        if (inlineFunction.getReturnType() != null) {
-            return new TreatExpression(
-                    result,
-                    inlineFunction.getReturnType(),
-                    ErrorCode.UnexpectedTypeErrorCode,
-                    expression.getMetadata());
-        }
-        return result;
+        return new FlworExpression(returnClause, expression.getMetadata());
     }
 }

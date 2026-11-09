@@ -123,7 +123,7 @@ public enum SequenceCardinality {
         };
     }
 
-    private static SequenceCardinality fromPossibilities(boolean zero, boolean one, boolean many) {
+    public static SequenceCardinality fromPossibilities(boolean zero, boolean one, boolean many) {
         return fromMask((zero ? 1 : 0) | (one ? 2 : 0) | (many ? 4 : 0));
     }
 

@@ -17,7 +17,6 @@ package org.rumbledb.runtime.arithmetics;
 
 import java.io.Serial;
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Collections;
 
 import org.rumbledb.api.Item;
@@ -76,11 +75,15 @@ public class UnaryOperationIterator extends AbstractAtMostOneItemRuntimePlan imp
             return item;
         }
         if (item.isInt()) {
-            return ItemFactory.getInstance().createIntItem(-1 * item.getIntValue());
+            int value = item.getIntValue();
+            if (value == Integer.MIN_VALUE) {
+                return ItemFactory.getInstance().createLongItem(-(long) value);
+            }
+            return ItemFactory.getInstance().createIntItem(-value);
         }
         if (item.isInteger()) {
             return ItemFactory.getInstance()
-                    .createIntegerItem(BigInteger.valueOf(-1).multiply(item.getIntegerValue()));
+                    .createIntegerItem(item.getIntegerValue().negate().toString());
         }
         if (item.isFloat()) {
             return ItemFactory.getInstance().createFloatItem(-1 * item.getFloatValue());

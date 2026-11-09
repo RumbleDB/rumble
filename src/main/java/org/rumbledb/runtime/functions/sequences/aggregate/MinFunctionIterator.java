@@ -29,6 +29,7 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -49,15 +50,22 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
+        String collation = CollationSupport.resolveCollationArgument(
+                this.getChildren().size() > 1 ? this.getChild(1) : null,
+                context,
+                getRuntimeStaticContext(),
+                getMetadata());
         if (!this.iterator.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            return ExtremumEvaluation.min(this.iterator, getCollationPlan(), context, getMetadata());
+            return ExtremumEvaluation.min(this.iterator, collation, context, getMetadata());
         }
-        ExtremumEvaluation.validateCollation(getCollationPlan(), context, getMetadata());
 
         if (this.iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             HomogeneousItemDataFrame df = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.iterator, context);
             if (df.isEmptySequence()) {
                 return null;
+            }
+            if (ExtremumEvaluation.needsCollationComparison(df.getItemType(), collation)) {
+                return ExtremumEvaluation.minRDD(df.toRDD(getMetadata()), collation, getMetadata());
             }
             String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             HomogeneousItemDataFrame minDF = df.evaluateSQL(
@@ -70,11 +78,7 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
             return minDF.getExactlyOneItem();
         }
 
-        return ExtremumEvaluation.minRDD(this.iterator.getRDD(context), getMetadata());
-    }
-
-    private ItemRuntimePlan getCollationPlan() {
-        return this.getChildren().size() > 1 ? this.getChild(1) : null;
+        return ExtremumEvaluation.minRDD(this.iterator.getRDD(context), collation, getMetadata());
     }
 
     @Override

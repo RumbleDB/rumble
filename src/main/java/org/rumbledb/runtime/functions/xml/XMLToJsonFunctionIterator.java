@@ -35,8 +35,6 @@ import org.rumbledb.items.parsing.JSONLiteralParsingUtils;
 import org.rumbledb.items.parsing.JSONParsingOptions;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.serialization.SerializationParameters;
-import org.rumbledb.serialization.Serializers;
 
 public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
@@ -46,7 +44,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private static final Pattern JSON_NUMBER_PATTERN =
             Pattern.compile("-?(?:0|[1-9][0-9]*)(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
     private static final Pattern PERMISSIVE_NUMBER_PATTERN =
-            Pattern.compile("[+-]?[0-9]+(?:\\.[0-9]+)?(?:[eE][+-]?[0-9]+)?");
+            Pattern.compile("[+-]?(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)(?:[eE][+-]?[0-9]+)?");
 
     public XMLToJsonFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
@@ -61,7 +59,10 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
         boolean indent = resolveIndentOption(context);
         Item value = parseInputItem(input);
-        return ItemFactory.getInstance().createStringItem(serializeAsJson(value, indent));
+        Item root = input.isDocumentNode() ? extractDocumentElement(input) : input;
+        StringBuilder json = new StringBuilder();
+        appendJson(root, value, indent, 0, json);
+        return ItemFactory.getInstance().createStringItem(json.toString());
     }
 
     private Item materializeInput(DynamicContext context) {
@@ -124,7 +125,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private Item extractDocumentElement(Item document) {
         Item root = null;
         for (Item child : document.children()) {
-            if (child.isCommentNode()) {
+            if (child.isCommentNode() || child.isProcessingInstructionNode()) {
                 continue;
             }
             if (child.isTextNode()) {
@@ -212,7 +213,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
         for (Item child : element.children()) {
-            if (child.isCommentNode()) {
+            if (child.isCommentNode() || child.isProcessingInstructionNode()) {
                 continue;
             }
             if (child.isTextNode()) {
@@ -238,7 +239,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private Item parseArray(Item element) {
         List<Item> members = new ArrayList<>();
         for (Item child : element.children()) {
-            if (child.isCommentNode()) {
+            if (child.isCommentNode() || child.isProcessingInstructionNode()) {
                 continue;
             }
             if (child.isTextNode()) {
@@ -304,10 +305,10 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     private boolean parseBooleanValue(Item element) {
         String stringValue = collectScalarTextContent(element).trim();
-        if (stringValue.equals("true")) {
+        if (stringValue.equals("true") || stringValue.equals("1")) {
             return true;
         }
-        if (stringValue.equals("false")) {
+        if (stringValue.equals("false") || stringValue.equals("0")) {
             return false;
         }
         throw invalidRepresentation("Invalid lexical representation for a JSON boolean.");
@@ -315,7 +316,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     private void ensureOnlyScalarChildren(Item element) {
         for (Item child : element.children()) {
-            if (child.isCommentNode()) {
+            if (child.isCommentNode() || child.isProcessingInstructionNode()) {
                 continue;
             }
             if (child.isTextNode()) {
@@ -331,7 +332,7 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
     private String collectScalarTextContent(Item element) {
         StringBuilder result = new StringBuilder();
         for (Item child : element.children()) {
-            if (child.isCommentNode()) {
+            if (child.isCommentNode() || child.isProcessingInstructionNode()) {
                 continue;
             }
             if (child.isTextNode()) {
@@ -409,42 +410,81 @@ public class XMLToJsonFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         return decoded.toString();
     }
 
-    private String serializeAsJson(Item value, boolean indent) {
-        SerializationParameters params = SerializationParameters.defaults();
-        params.setMethod("json");
-        params.setEncoding("UTF-8");
-        params.setIndent(indent);
-        params.setItemSeparator("\n");
-        String serialized = Serializers.from(params).serialize(value);
-        return indent ? serialized : compactJson(serialized);
+    /** Emit from the validated XML so explicit JSON escape spellings are retained. */
+    private void appendJson(Item element, Item value, boolean indent, int depth, StringBuilder result) {
+        String kind = element.nodeName().getLocalName();
+        if (kind.equals("string")) {
+            appendJsonString(
+                    collectScalarTextContent(element),
+                    isBooleanLikeAttributeTrue(getAttributeValue(element, "escaped")),
+                    result);
+            return;
+        }
+        if (!kind.equals("map") && !kind.equals("array")) {
+            result.append(value.isNull() ? "null" : value.getStringValue());
+            return;
+        }
+        boolean object = kind.equals("map");
+        result.append(object ? '{' : '[');
+        int index = 0;
+        for (Item child : element.children()) {
+            if (!child.isElementNode()) continue;
+            if (index > 0) result.append(',');
+            if (indent) result.append('\n').append("  ".repeat(depth + 1));
+            Item childValue;
+            if (object) {
+                appendJsonString(
+                        getAttributeValue(child, "key"),
+                        isBooleanLikeAttributeTrue(getAttributeValue(child, "escaped-key")),
+                        result);
+                result.append(indent ? ": " : ":");
+                childValue = value.getItemByKey(extractRequiredKey(child));
+            } else {
+                childValue = value.getItemMembers().get(index);
+            }
+            appendJson(child, childValue, indent, depth + 1, result);
+            index++;
+        }
+        if (indent) result.append('\n').append("  ".repeat(depth));
+        result.append(object ? '}' : ']');
     }
 
-    private String compactJson(String serialized) {
-        StringBuilder result = new StringBuilder(serialized.length());
-        boolean inString = false;
-        boolean escaping = false;
-        for (int i = 0; i < serialized.length(); i++) {
-            char current = serialized.charAt(i);
-            if (inString) {
-                result.append(current);
-                if (escaping) {
-                    escaping = false;
-                } else if (current == '\\') {
-                    escaping = true;
-                } else if (current == '"') {
-                    inString = false;
+    private void appendJsonString(String content, boolean escaped, StringBuilder result) {
+        result.append('"');
+        for (int index = 0; index < content.length(); ) {
+            char character = content.charAt(index);
+            if (escaped && character == '\\') {
+                try {
+                    int end = JSONLiteralParsingUtils.decodeEscapeSequence(content, index)
+                            .getNextIndex();
+                    result.append(content, index, end);
+                    index = end;
+                    continue;
+                } catch (IllegalArgumentException exception) {
+                    throw invalidEscape(exception.getMessage());
                 }
-                continue;
             }
-            if (Character.isWhitespace(current)) {
-                continue;
+            switch (character) {
+                case '\\' -> result.append("\\\\");
+                case '"' -> result.append("\\\"");
+                case '\b' -> result.append("\\b");
+                case '\f' -> result.append("\\f");
+                case '\n' -> result.append("\\n");
+                case '\r' -> result.append("\\r");
+                case '\t' -> result.append("\\t");
+                    // W3C bug 29665 requires solidus escaping even without escaped="true".
+                case '/' -> result.append("\\/");
+                default -> {
+                    if (character < 32 || (character >= 127 && character <= 159)) {
+                        result.append(String.format(Locale.ROOT, "\\u%04X", (int) character));
+                    } else {
+                        result.append(character);
+                    }
+                }
             }
-            result.append(current);
-            if (current == '"') {
-                inString = true;
-            }
+            index++;
         }
-        return result.toString();
+        result.append('"');
     }
 
     private RumbleException invalidRepresentation(String message) {

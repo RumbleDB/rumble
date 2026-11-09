@@ -16,10 +16,22 @@
 package org.rumbledb.items;
 
 import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import scala.Tuple2;
+import scala.collection.immutable.HashMap;
+import scala.collection.immutable.HashMap$;
+import scala.collection.mutable.ReusableBuilder;
+import scala.jdk.javaapi.CollectionConverters;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
@@ -32,17 +44,29 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-public class MapItem extends AbstractMapItem {
+/**
+ * A map backed by Scala's immutable hash array mapped trie (CHAMP). {@link #with} and {@link #without}
+ * return new maps that share all unchanged trie nodes with this one, so building a map one entry at a
+ * time costs O(log n) per entry. The in-place updates of mutable maps replace the trie.
+ */
+public class MapItem extends AbstractMapItem implements KryoSerializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private List<List<Item>> values;
-    private List<Item> keys;
-    private Map<Item, Integer> keyToIndex;
-    private boolean allKeysString;
-    private boolean allValuesSingletons;
-    private boolean recomputeObjectShapeCache;
+    /**
+     * The trie keeps the first key object it was given for an entry, so the entry stores the key of the
+     * latest put, as op:same-key keys such as 1 and 1.0 have different types.
+     */
+    private record Entry(Item key, List<Item> value) implements Serializable {
+        boolean isObjectField() {
+            return this.key.isString() && this.value.size() == 1;
+        }
+    }
+
+    private HashMap<Item, Entry> entries;
+    // Number of entries without a string key and a singleton value, so that isObject() is O(1).
+    private int nonObjectEntries;
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -51,11 +75,7 @@ public class MapItem extends AbstractMapItem {
     private Collection collection;
 
     public MapItem() {
-        this.values = new ArrayList<>();
-        this.keys = new ArrayList<>();
-        this.keyToIndex = new HashMap<>();
-        this.allKeysString = true;
-        this.allValuesSingletons = true;
+        this.entries = HashMap$.MODULE$.empty();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
         this.pathIn = "null";
@@ -64,28 +84,96 @@ public class MapItem extends AbstractMapItem {
         this.topLevelOrder = 0.0;
     }
 
+    /**
+     * Builds the trie with Scala's builder, which updates its nodes in place until result(), instead of
+     * copying a path of the trie for every entry.
+     */
     public MapItem(List<Item> keys, List<List<Item>> valueSequences, ExceptionMetadata metadata) {
         this();
+        ReusableBuilder<Tuple2<Item, Entry>, HashMap<Item, Entry>> builder = HashMap$.MODULE$.newBuilder();
         for (int i = 0; i < keys.size(); i++) {
-            // assume atomicity of keys is checked by the caller, or at the typesystem level
-            validateDuplicateKey(keys.get(i), metadata);
-            internalPutSequenceByKey(keys.get(i), valueSequences.get(i), metadata);
+            Item key = keys.get(i);
+            checkKey(key, metadata);
+            Entry entry = new Entry(key, valueSequences.get(i));
+            builder.addOne(new Tuple2<>(key, entry));
+            // The builder has no lookup, but a key that is already there does not grow it.
+            if (builder.knownSize() == i) {
+                throw new DuplicateObjectKeyException(key.serialize(), metadata);
+            }
+            this.nonObjectEntries += nonObjectCount(entry);
+        }
+        this.entries = builder.result();
+    }
+
+    /**
+     * Returns the map as a MapItem, copying the entries only if it has another representation.
+     */
+    static MapItem from(Item map) {
+        if (map instanceof MapItem mapItem) {
+            return mapItem;
+        }
+        return new MapItem(map.getItemKeys(), map.getSequenceValues(), ExceptionMetadata.EMPTY_METADATA);
+    }
+
+    /**
+     * Returns a new immutable map with the entry added, or replacing the entry with the same key.
+     */
+    MapItem with(Item key, List<Item> valueSequence) {
+        MapItem result = new MapItem();
+        result.entries = this.entries;
+        result.nonObjectEntries = this.nonObjectEntries;
+        result.internalPut(key, valueSequence);
+        return result;
+    }
+
+    /**
+     * Returns a new immutable map without the entries with these keys.
+     */
+    MapItem without(List<Item> keys) {
+        MapItem result = new MapItem();
+        result.entries = this.entries;
+        result.nonObjectEntries = this.nonObjectEntries;
+        for (Item key : keys) {
+            result.internalRemove(key);
+        }
+        return result;
+    }
+
+    private Iterable<Entry> entries() {
+        return () -> CollectionConverters.asJava(this.entries.valuesIterator());
+    }
+
+    private Entry getEntry(Item key) {
+        return this.entries.getOrElse(key, () -> null);
+    }
+
+    private static void checkKey(Item key, ExceptionMetadata metadata) {
+        if (key == null || !key.isAtomic()) {
+            throw new OurBadException("Map keys must be atomic items.", metadata);
         }
     }
 
-    public MapItem(Map<Item, List<Item>> keyValuePairs, ExceptionMetadata metadata) {
-        this();
-        // thin constructor
-        // assume atomicity of keys is checked by the caller, or at the typesystem level
-        this.values = new ArrayList<>();
-        this.keys = new ArrayList<>();
-        this.keyToIndex = new HashMap<>();
-        for (Map.Entry<Item, List<Item>> entry : keyValuePairs.entrySet()) {
-            Item key = entry.getKey();
-            List<Item> valueSequence = entry.getValue();
-            validateDuplicateKey(key, metadata);
-            internalPutSequenceByKey(key, valueSequence, metadata);
+    private void putNewEntry(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
+        checkKey(key, metadata);
+        if (this.entries.contains(key)) {
+            throw new DuplicateObjectKeyException(key.serialize(), metadata);
         }
+        internalPut(key, valueSequence);
+    }
+
+    private void internalPut(Item key, List<Item> valueSequence) {
+        Entry entry = new Entry(key, valueSequence);
+        this.nonObjectEntries += nonObjectCount(entry) - nonObjectCount(getEntry(key));
+        this.entries = this.entries.updated(key, entry);
+    }
+
+    private void internalRemove(Item key) {
+        this.nonObjectEntries -= nonObjectCount(getEntry(key));
+        this.entries = this.entries.removed(key);
+    }
+
+    private static int nonObjectCount(Entry entry) {
+        return entry == null || entry.isObjectField() ? 0 : 1;
     }
 
     @Override
@@ -100,58 +188,13 @@ public class MapItem extends AbstractMapItem {
             result.setMutabilityLevel(0);
             return result;
         }
-        return new MapItem(
-                this.keys.stream().map(item -> item.copy(mutable)).toList(),
-                this.values.stream()
-                        .map(item -> item.stream()
-                                .map(subitem -> subitem.copy(mutable))
-                                .toList())
-                        .toList(),
-                ExceptionMetadata.EMPTY_METADATA);
-    }
-
-    private void rebuildKeyStringIndex() {
-        if (this.keyToIndex == null) {
-            this.keyToIndex = new HashMap<>();
-        } else {
-            this.keyToIndex.clear();
+        MapItem result = new MapItem();
+        for (Entry entry : entries()) {
+            result.internalPut(
+                    entry.key().copy(false),
+                    entry.value().stream().map(item -> item.copy(false)).toList());
         }
-        for (int i = 0; i < this.keys.size(); i++) {
-            this.keyToIndex.put(this.keys.get(i), i);
-        }
-    }
-
-    private void validateAtomicKey(Item key, ExceptionMetadata metadata) {
-        if (key == null || !key.isAtomic()) {
-            throw new OurBadException("Map keys must be atomic items.", metadata);
-        }
-    }
-
-    private void validateDuplicateKey(Item key, ExceptionMetadata metadata) {
-        if (this.keyToIndex.containsKey(key)) {
-            throw new DuplicateObjectKeyException(key.serialize(), metadata);
-        }
-    }
-
-    private void internalPutSequenceByKey(Item key, List<Item> valueSequence, ExceptionMetadata metadata) {
-        if (this.keyToIndex == null) {
-            rebuildKeyStringIndex();
-        }
-        if (this.keyToIndex.containsKey(key)) {
-            int index = this.keyToIndex.get(key);
-            this.keys.set(index, key);
-            this.values.set(index, valueSequence);
-        } else {
-            this.values.add(valueSequence);
-            this.keys.add(key);
-            this.keyToIndex.put(key, this.values.size() - 1);
-        }
-        if (this.allKeysString && !key.isString()) {
-            this.allKeysString = false;
-        }
-        if (this.allValuesSingletons && valueSequence.size() != 1) {
-            this.allValuesSingletons = false;
-        }
+        return result;
     }
 
     // region maps
@@ -163,76 +206,64 @@ public class MapItem extends AbstractMapItem {
 
     @Override
     public boolean isObject() {
-        if (this.recomputeObjectShapeCache) {
-            this.allKeysString = true;
-            this.allValuesSingletons = true;
-            for (Item k : this.keys) {
-                if (!k.isString()) {
-                    this.allKeysString = false;
-                    break;
-                }
-            }
-            for (List<Item> valueSequence : this.values) {
-                if (valueSequence.size() != 1) {
-                    this.allValuesSingletons = false;
-                    break;
-                }
-            }
-            this.recomputeObjectShapeCache = false;
-        }
-        return this.allValuesSingletons && this.allKeysString;
+        return this.nonObjectEntries == 0;
     }
 
     @Override
     public List<String> getStringKeys() {
-        List<String> result = new ArrayList<>(this.keys.size());
-        for (Item key : this.keys) {
-            if (!key.isString()) {
+        List<String> result = new ArrayList<>(getSize());
+        for (Entry entry : entries()) {
+            if (!entry.key().isString()) {
                 throw new OurBadException("Map contains non-string keys.");
             }
-            result.add(key.getStringValue());
+            result.add(entry.key().getStringValue());
         }
         return result;
     }
 
     @Override
     public List<Item> getItemKeys() {
-        int n = this.keys.size();
-        List<Item> result = new ArrayList<>(n);
-        result.addAll(this.keys);
+        List<Item> result = new ArrayList<>(getSize());
+        for (Entry entry : entries()) {
+            result.add(entry.key());
+        }
         return result;
     }
 
     @Override
     public int getSize() {
-        return this.keys.size();
+        return this.entries.size();
     }
 
     @Override
-    public boolean hasKey(String key) throws UnsupportedOperationException {
+    public boolean hasKey(String key) {
         return hasKey(ItemFactory.getInstance().createStringItem(key));
     }
 
     @Override
-    public boolean hasKey(Item key) throws UnsupportedOperationException {
-        return this.keyToIndex.containsKey(key);
+    public boolean hasKey(Item key) {
+        return this.entries.contains(key);
     }
 
     @Override
     public List<Item> getItemValues() {
-        List<Item> result = new ArrayList<>(this.values.size());
-        for (List<Item> valueSequence : this.values) {
-            if (valueSequence.size() != 1) {
+        List<Item> result = new ArrayList<>(getSize());
+        for (Entry entry : entries()) {
+            if (entry.value().size() != 1) {
                 throw new OurBadException("Map contains non-singleton values.");
             }
-            result.add(valueSequence.get(0));
+            result.add(entry.value().get(0));
         }
         return result;
     }
 
     @Override
     public List<List<Item>> getSequenceValues() {
-        return new ArrayList<>(this.values);
+        List<List<Item>> result = new ArrayList<>(getSize());
+        for (Entry entry : entries()) {
+            result.add(entry.value());
+        }
+        return result;
     }
 
     @Override
@@ -242,14 +273,10 @@ public class MapItem extends AbstractMapItem {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (this.keyToIndex == null) {
-            rebuildKeyStringIndex();
-        }
-        if (!this.keyToIndex.containsKey(key)) {
+        List<Item> valueSequence = getSequenceByKey(key);
+        if (valueSequence == null) {
             return null;
         }
-        Integer index = this.keyToIndex.get(key);
-        List<Item> valueSequence = this.values.get(index);
         if (valueSequence.size() != 1) {
             throw new OurBadException("Map contains non-singleton values.");
         }
@@ -263,25 +290,18 @@ public class MapItem extends AbstractMapItem {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (this.keyToIndex == null) {
-            rebuildKeyStringIndex();
-        }
-        if (!this.keyToIndex.containsKey(key)) {
-            return null;
-        }
-        Integer index = this.keyToIndex.get(key);
-        List<Item> valueSequence = this.values.get(index);
-        return valueSequence;
+        Entry entry = getEntry(key);
+        return entry == null ? null : entry.value();
     }
 
     @Override
     public void putItemByKey(String key, Item value) {
-        putSequenceByKey(ItemFactory.getInstance().createStringItem(key), java.util.Collections.singletonList(value));
+        putSequenceByKey(ItemFactory.getInstance().createStringItem(key), Collections.singletonList(value));
     }
 
     @Override
     public void putItemByKey(Item key, Item value) {
-        putSequenceByKey(key, java.util.Collections.singletonList(value));
+        putSequenceByKey(key, Collections.singletonList(value));
     }
 
     @Override
@@ -291,9 +311,7 @@ public class MapItem extends AbstractMapItem {
 
     @Override
     public void putSequenceByKey(Item key, List<Item> valueSequence) {
-        validateAtomicKey(key, ExceptionMetadata.EMPTY_METADATA);
-        validateDuplicateKey(key, ExceptionMetadata.EMPTY_METADATA);
-        internalPutSequenceByKey(key, valueSequence, ExceptionMetadata.EMPTY_METADATA);
+        putNewEntry(key, valueSequence, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -303,17 +321,7 @@ public class MapItem extends AbstractMapItem {
 
     @Override
     public void removeItemByKey(Item key) {
-        if (this.keyToIndex == null) {
-            rebuildKeyStringIndex();
-        }
-        Integer idx = this.keyToIndex.remove(key);
-        if (idx == null) {
-            return;
-        }
-        int index = idx;
-        this.values.remove(index);
-        this.keys.remove(index);
-        rebuildKeyStringIndex();
+        internalRemove(key);
     }
 
     // endregion maps
@@ -336,8 +344,8 @@ public class MapItem extends AbstractMapItem {
     @Override
     public void setMutabilityLevel(int mutabilityLevel) {
         this.mutabilityLevel = mutabilityLevel;
-        for (List<Item> sequence : this.values) {
-            for (Item item : sequence) {
+        for (Entry entry : entries()) {
+            for (Item item : entry.value()) {
                 item.setMutabilityLevel(mutabilityLevel);
             }
         }
@@ -351,8 +359,8 @@ public class MapItem extends AbstractMapItem {
     @Override
     public void setTopLevelID(long topLevelID) {
         this.topLevelID = topLevelID;
-        for (List<Item> sequence : this.values) {
-            for (Item item : sequence) {
+        for (Entry entry : entries()) {
+            for (Item item : entry.value()) {
                 item.setTopLevelID(topLevelID);
             }
         }
@@ -366,8 +374,8 @@ public class MapItem extends AbstractMapItem {
     @Override
     public void setTopLevelOrder(double topLevelOrder) {
         this.topLevelOrder = topLevelOrder;
-        for (List<Item> sequence : this.values) {
-            for (Item item : sequence) {
+        for (Entry entry : entries()) {
+            for (Item item : entry.value()) {
                 item.setTopLevelOrder(topLevelOrder);
             }
         }
@@ -381,11 +389,9 @@ public class MapItem extends AbstractMapItem {
     @Override
     public void setPathIn(String pathIn) {
         this.pathIn = pathIn;
-        for (Item key : this.keys) {
-            int index = this.keyToIndex.get(key);
-            String keyFragment = key.serialize();
-            List<Item> sequence = this.values.get(index);
-            for (Item item : sequence) {
+        for (Entry entry : entries()) {
+            String keyFragment = entry.key().serialize();
+            for (Item item : entry.value()) {
                 item.setPathIn(pathIn + "." + keyFragment);
             }
         }
@@ -399,8 +405,8 @@ public class MapItem extends AbstractMapItem {
     @Override
     public void setTableLocation(String location) {
         this.location = location;
-        for (List<Item> sequence : this.values) {
-            for (Item item : sequence) {
+        for (Entry entry : entries()) {
+            for (Item item : entry.value()) {
                 item.setTableLocation(location);
             }
         }
@@ -485,7 +491,7 @@ public class MapItem extends AbstractMapItem {
 
     @Override
     public Object getVariantValue() {
-        Map<String, Object> resultMap = new HashMap<>();
+        Map<String, Object> resultMap = new java.util.HashMap<>();
         List<String> keysAsStrings = getStringKeys();
         List<Item> values = getItemValues();
         for (int i = 0; i < keysAsStrings.size(); i++) {
@@ -502,10 +508,53 @@ public class MapItem extends AbstractMapItem {
     @Override
     public void setCollection(Collection collection) {
         this.collection = collection;
-        for (List<Item> sequence : this.values) {
-            for (Item item : sequence) {
+        for (Entry entry : entries()) {
+            for (Item item : entry.value()) {
                 item.setCollection(collection);
             }
         }
+    }
+
+    /**
+     * Kryo writes the entries rather than the trie nodes, which are internal to Scala.
+     */
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeInt(getSize(), true);
+        for (Entry entry : entries()) {
+            kryo.writeClassAndObject(output, entry.key());
+            output.writeInt(entry.value().size(), true);
+            for (Item item : entry.value()) {
+                kryo.writeClassAndObject(output, item);
+            }
+        }
+        output.writeInt(this.mutabilityLevel);
+        output.writeLong(this.topLevelID);
+        output.writeString(this.pathIn);
+        output.writeString(this.location);
+        output.writeDouble(this.topLevelOrder);
+        kryo.writeClassAndObject(output, this.collection);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.entries = HashMap$.MODULE$.empty();
+        this.nonObjectEntries = 0;
+        int size = input.readInt(true);
+        for (int i = 0; i < size; i++) {
+            Item key = (Item) kryo.readClassAndObject(input);
+            int valueCount = input.readInt(true);
+            List<Item> valueSequence = new ArrayList<>(valueCount);
+            for (int j = 0; j < valueCount; j++) {
+                valueSequence.add((Item) kryo.readClassAndObject(input));
+            }
+            internalPut(key, valueSequence);
+        }
+        this.mutabilityLevel = input.readInt();
+        this.topLevelID = input.readLong();
+        this.pathIn = input.readString();
+        this.location = input.readString();
+        this.topLevelOrder = input.readDouble();
+        this.collection = (Collection) kryo.readClassAndObject(input);
     }
 }

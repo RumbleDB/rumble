@@ -30,6 +30,13 @@ public final class SemanticsArguments {
     private String xmlVersion;
 
     @Option(
+            names = "--xsd-version",
+            paramLabel = "version",
+            description =
+                    "Selects XSD 1.0 or 1.1 datatype and regex semantics (default: 1.1). Schema validation uses Xerces XSD 1.0 in both modes.")
+    private String xsdVersion;
+
+    @Option(
             names = "--dates-with-timezone",
             negatable = true,
             description = "Activates timezone support for the type xs:date (deactivated by default).")
@@ -56,6 +63,7 @@ public final class SemanticsArguments {
         OptionConversion.applyBooleanIfPresent(this.laxJSONNullValidation, builder::laxJSONNullValidation);
         OptionConversion.applyIfPresent(this.defaultLanguage, builder::queryLanguage);
         OptionConversion.applyIfPresent(this.xmlVersion, builder::xmlVersion);
+        OptionConversion.applyIfPresent(this.xsdVersion, builder::xsdVersion);
         OptionConversion.applyIfPresent(this.staticBaseUri, builder::staticBaseUri);
 
         return builder.build();

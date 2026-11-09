@@ -24,9 +24,11 @@ import org.apache.spark.api.java.function.Function;
 import lombok.NonNull;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotConvertToQNameException;
+import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
@@ -121,7 +123,8 @@ public class FunctionUntypedAtomicCastIterator extends ItemRuntimePlan
 
             Item converted = CastIterator.castItemToType(item, this.targetType, this.metadata, this.staticContext);
             if (converted == null) {
-                throw unexpectedType(item);
+                throw new CastException(
+                        "The untyped atomic value cannot be cast to " + this.targetType + ".", this.metadata);
             }
             return converted;
         }
@@ -172,8 +175,7 @@ public class FunctionUntypedAtomicCastIterator extends ItemRuntimePlan
         }
 
         private boolean usesQNameCoercionErrorSemantics() {
-            String queryLanguage = this.staticContext.getQueryLanguage();
-            return !queryLanguage.equals("xquery10") && !queryLanguage.equals("jsoniq10");
+            return this.staticContext.getQueryLanguage().isAtLeast(LanguageVersion.Version.V3_1);
         }
     }
 }

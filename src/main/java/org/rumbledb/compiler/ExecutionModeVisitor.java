@@ -629,7 +629,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
-        visitDescendants(prolog, argument);
+        for (Node child : prolog.getChildren()) {
+            visit(child, prolog.getDeclarationContext(child, argument));
+        }
         prolog.setHighestExecutionMode(ExecutionMode.LOCAL);
         return argument;
     }
@@ -940,7 +942,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitDynamicFunctionCallExpression(
             DynamicFunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        if (expression.getArguments().size() == 0) {
+        if (expression.getArguments().isEmpty() || expression.getArguments().contains(null)) {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
             return argument;
         }

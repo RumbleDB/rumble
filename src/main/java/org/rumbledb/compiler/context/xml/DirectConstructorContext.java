@@ -34,7 +34,9 @@ public record DirectConstructorContext<
         ParserRuleContext context) {
 
     public static DirectConstructorContext<
-                    JsoniqParser.QnameContext, JsoniqParser.ExprContext, JsoniqParser.DirElemContentContext>
+                    JsoniqParser.DirectConstructorQNameContext,
+                    JsoniqParser.ExprContext,
+                    JsoniqParser.DirElemContentContext>
             from(JsoniqParser.DirectConstructorContext c) {
         return new DirectConstructorContext<>(
                 c.COMMENT(),

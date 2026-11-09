@@ -16,7 +16,9 @@
 package org.rumbledb.expressions.module;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import lombok.Getter;
@@ -24,6 +26,7 @@ import lombok.Setter;
 
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
@@ -37,6 +40,12 @@ public class Prolog extends Node {
     private final List<LibraryModule> importedModules;
     private final List<SchemaImport> schemaImports;
 
+    // Cyclic import groups retain each declaration's original module settings.
+    private final Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
+
+    @Setter
+    private String moduleGroupKey;
+
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
             List<FunctionDeclaration> functionDeclarations,
@@ -48,6 +57,21 @@ public class Prolog extends Node {
         this.declarations.addAll(typeDeclarations);
         this.importedModules = new ArrayList<>();
         this.schemaImports = new ArrayList<>();
+    }
+
+    /** The context a declaration belongs to: its source module's in a group, otherwise the given one. */
+    public StaticContext getDeclarationContext(Node declaration, StaticContext defaultContext) {
+        return this.sourceModuleContexts.getOrDefault(declaration, defaultContext);
+    }
+
+    /** Publishes one context's public declarations across a group; private ones stay where they are. */
+    public void shareGroupDeclarations(StaticContext changedContext, StaticContext groupContext) {
+        groupContext.importModuleContext(changedContext);
+        groupContext.getInScopeSchemaTypes().importModuleTypes(changedContext.getInScopeSchemaTypes());
+        for (StaticContext sourceContext : this.sourceModuleContexts.values()) {
+            sourceContext.importModuleContext(groupContext);
+            sourceContext.getInScopeSchemaTypes().importModuleTypes(groupContext.getInScopeSchemaTypes());
+        }
     }
 
     public void addImportedModule(LibraryModule importedModule) {

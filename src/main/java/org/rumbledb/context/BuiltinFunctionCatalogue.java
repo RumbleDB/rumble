@@ -21,9 +21,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
+import org.rumbledb.runtime.functions.LoadXQueryModuleFunctionIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.QNameFunctionIterator;
+import org.rumbledb.runtime.functions.TransformFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayAppendFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFilterFunctionIterator;
@@ -260,6 +263,7 @@ import org.rumbledb.spark.ml.AnnotateFunctionIterator;
 import org.rumbledb.spark.ml.BinaryClassificationMetricsFunctionIterator;
 import org.rumbledb.spark.ml.GetEstimatorFunctionIterator;
 import org.rumbledb.spark.ml.GetTransformerFunctionIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -302,9 +306,23 @@ public class BuiltinFunctionCatalogue {
         return null;
     }
 
-    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, String queryLanguage) {
+    public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, LanguageVersion queryLanguage) {
+        Name name = identifier.getName();
+        if (name.getLocalName().equals("concat")
+                && identifier.getArity() >= 2
+                && (Name.FN_NS.equals(name.getNamespace())
+                        || Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(name.getNamespace()))) {
+            return new BuiltinFunction(
+                    new FunctionIdentifier(new Name(Name.FN_NS, name.getPrefix(), "concat"), identifier.getArity()),
+                    new FunctionSignature(
+                            Collections.nCopies(
+                                    identifier.getArity(), SequenceType.createSequenceType("anyAtomicType?")),
+                            SequenceType.createSequenceType("string")),
+                    ConcatFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+        }
         if (builtinFunctions.containsKey(identifier)) {
-            return builtinFunctions.get(identifier);
+            return forQueryLanguage(builtinFunctions.get(identifier), queryLanguage);
         }
         BuiltinFunction constructorFunction = resolveConstructorFunction(identifier, queryLanguage);
         if (constructorFunction != null) {
@@ -323,9 +341,24 @@ public class BuiltinFunctionCatalogue {
                         ConcatFunctionIterator.class,
                         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
             }
-            return builtinFunctions.get(resolved);
+            return forQueryLanguage(builtinFunctions.get(resolved), queryLanguage);
         }
         return null;
+    }
+
+    private static BuiltinFunction forQueryLanguage(BuiltinFunction function, LanguageVersion queryLanguage) {
+        if (StringJoinFunctionIterator.acceptsAtomicItems(queryLanguage)
+                && (function == string_join1 || function == string_join2)) {
+            return createBuiltinFunction(
+                    function.getIdentifier().getName(),
+                    function.getIdentifier().getArity() == 1
+                            ? List.of("anyAtomicType*")
+                            : List.of("anyAtomicType*", "string"),
+                    "string",
+                    StringJoinFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+        }
+        return function;
     }
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, StaticContext staticContext) {
@@ -335,7 +368,7 @@ public class BuiltinFunctionCatalogue {
                 : constructor.asBuiltinFunction();
     }
 
-    public static boolean exists(FunctionIdentifier identifier, String queryLanguage) {
+    public static boolean exists(FunctionIdentifier identifier, LanguageVersion queryLanguage) {
         if (builtinFunctions.containsKey(identifier)) {
             return true;
         }
@@ -348,7 +381,8 @@ public class BuiltinFunctionCatalogue {
     }
 
     // Compatibility adapter for compiler passes that still query all built-in signatures through this catalogue.
-    private static BuiltinFunction resolveConstructorFunction(FunctionIdentifier identifier, String queryLanguage) {
+    private static BuiltinFunction resolveConstructorFunction(
+            FunctionIdentifier identifier, LanguageVersion queryLanguage) {
         var constructor = ConstructorFunctionResolver.resolveBuiltIn(identifier, queryLanguage);
         return constructor == null ? null : constructor.asBuiltinFunction();
     }
@@ -499,7 +533,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction doc = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "doc"),
             List.of("string?"),
-            "item*",
+            "document-node()?",
             DocFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
     /**
@@ -523,15 +557,15 @@ public class BuiltinFunctionCatalogue {
 
     static final BuiltinFunction root_with_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "root"),
-            List.of("item"),
-            "item",
+            List.of("node()?"),
+            "node()?",
             GetRootFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction root_without_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "root"),
             List.of(),
-            "item",
+            "node()",
             GetRootFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
@@ -611,6 +645,28 @@ public class BuiltinFunctionCatalogue {
             QNameFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
+    // Optional dynamic execution facilities remain discoverable while disabled.
+    static final BuiltinFunction load_xquery_module1 = createBuiltinFunction(
+            new Name(Name.FN_NS, "fn", "load-xquery-module"),
+            List.of("string"),
+            "map",
+            LoadXQueryModuleFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+
+    static final BuiltinFunction load_xquery_module2 = createBuiltinFunction(
+            new Name(Name.FN_NS, "fn", "load-xquery-module"),
+            List.of("string", "map"),
+            "map",
+            LoadXQueryModuleFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+
+    static final BuiltinFunction transform = createBuiltinFunction(
+            new Name(Name.FN_NS, "fn", "transform"),
+            List.of("map"),
+            "map",
+            TransformFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+
     /**
      * fn:function-lookup (Functions and Operators 3.1)
      *
@@ -678,9 +734,9 @@ public class BuiltinFunctionCatalogue {
      * fn:in-scope-prefixes($element as element()) as xs:string*
      * Returns the prefixes of the in-scope namespaces for $element.
      */
-    static final BuiltinFunction in_scope_prefixes = createBuiltinFunction(
+    static final BuiltinFunction in_scope_prefixes = createBuiltinFunctionWithSequenceTypes(
             new Name(Name.FN_NS, "fn", "in-scope-prefixes"),
-            List.of("item"),
+            List.of(new SequenceType(BuiltinTypesCatalogue.elementNode)),
             "string*",
             InScopePrefixesFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
@@ -3106,14 +3162,14 @@ public class BuiltinFunctionCatalogue {
             List.of(),
             "item*",
             CollectionFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME);
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction collection1 = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "collection"),
             List.of("string?"),
             "item*",
             CollectionFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME);
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction doc_available = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "doc-available"),
@@ -3167,14 +3223,14 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction parse_xml = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "parse-xml"),
             List.of("string?"),
-            "item?",
+            "document-node()?",
             ParseXMLFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction parse_xml_fragment = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "parse-xml-fragment"),
             List.of("string?"),
-            "item?",
+            "document-node()?",
             ParseXMLFragmentFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
@@ -3535,6 +3591,9 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(node_name_with_arg.getIdentifier(), node_name_with_arg);
         builtinFunctions.put(qname.getIdentifier(), qname);
         builtinFunctions.put(function_lookup.getIdentifier(), function_lookup);
+        builtinFunctions.put(load_xquery_module1.getIdentifier(), load_xquery_module1);
+        builtinFunctions.put(load_xquery_module2.getIdentifier(), load_xquery_module2);
+        builtinFunctions.put(transform.getIdentifier(), transform);
 
         builtinFunctions.put(collation_key1.getIdentifier(), collation_key1);
         builtinFunctions.put(collation_key2.getIdentifier(), collation_key2);

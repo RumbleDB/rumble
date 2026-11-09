@@ -40,15 +40,8 @@ public class EmptyFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
 
     @Override
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
-        if (this.getChild(0).getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-            List<Item> i = this.getChild(0).getRDD(dynamicContext).take(1);
-            return ItemFactory.getInstance().createBooleanItem(i.isEmpty());
-        }
-        Item first = this.getChild(0).materializeFirstOrNull(dynamicContext);
-        if (first == null) {
-            return ItemFactory.getInstance().createBooleanItem(true);
-        }
-        return ItemFactory.getInstance().createBooleanItem(false);
+        return ItemFactory.getInstance()
+                .createBooleanItem(this.getChild(0).materializeFirstOrNull(dynamicContext) == null);
     }
 
     @Override

@@ -10,10 +10,34 @@ on:
   pull_request:
     branches:
       - '**'
+  merge_group:
 jobs:
+  all-tests-passed:
+    name: All tests passed
+    needs: [build, cli-tests, tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every component to succeed
+        env:
+          JOB_RESULTS: ${{ toJSON(needs) }}
+        shell: python
+        run: |
+          import json
+          import os
+
+          results = json.loads(os.environ['JOB_RESULTS'])
+          unsuccessful = [
+              f'{name}: {job["result"]}'
+              for name, job in results.items()
+              if job['result'] != 'success'
+          ]
+          if unsuccessful:
+              raise SystemExit('Components did not pass:\n' + '\n'.join(unsuccessful))
+          print('All build, CLI test, and test matrix components passed.')
+
   build:
     runs-on: ubuntu-latest
-    continue-on-error: true
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5
@@ -52,8 +76,17 @@ jobs:
           path: target/*.jar
 
   cli-tests:
+    name: CLI tests (${{ matrix.suite }})
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - suite: output-formats
+            test_filter: -Dgroups=cli-output-formats
+          - suite: commands-and-runtime
+            test_filter: -DexcludedGroups=cli-output-formats
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-java@v5
@@ -62,11 +95,11 @@ jobs:
           distribution: temurin
           cache: maven
       - name: Test assembled CLI
-        run: mvn --batch-mode -Pcli-tests test
+        run: mvn --batch-mode -Pcli-tests '${{ matrix.test_filter }}' test
       - uses: actions/upload-artifact@v6
         if: always()
         with:
-          name: CLI-test-reports
+          name: CLI-test-reports-${{ matrix.suite }}
           path: target/surefire-reports/
 
   tests:
@@ -93,6 +126,7 @@ jobs:
           "SparkRuntimeTestsNativeDeactivated",
           "SparkRuntimeTestsDataFramesDeactivated",
           "SparkRuntimeTestsParallelismDeactivated",
+          "SparkRuntimeTestsNoInlining",
           "Bugs",
           "NativeFLWORRuntimeTests",
           "NativeFLWORRuntimeTestsNativeDeactivated",

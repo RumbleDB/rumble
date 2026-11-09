@@ -21,14 +21,12 @@ import java.util.List;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
-import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.ConstructorFunctionResolver.ResolvedConstructor;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.functions.BuiltinNamedFunctionReferenceMarkerIterator;
 import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
@@ -72,8 +70,7 @@ public final class FunctionItemFactory {
     public static FunctionItem createBuiltinNamedReference(
             FunctionIdentifier identifier,
             DynamicContext moduleContext,
-            RumbleConfiguration conf,
-            ExceptionMetadata metadata,
+            RuntimeStaticContext staticContext,
             BuiltinFunction builtinFunction) {
         List<Name> paramNames = new ArrayList<>();
         int arity = builtinFunction.getSignature().getParameterTypes().size();
@@ -81,14 +78,12 @@ public final class FunctionItemFactory {
             paramNames.add(Name.createVariableInNoNamespace("$p" + i));
         }
         SequenceType returnType = builtinFunction.getSignature().getReturnType();
-        RuntimeStaticContext markerContext = RuntimeStaticContext.builder()
-                .configuration(conf)
+        RuntimeStaticContext bodyContext = staticContext.toBuilder()
                 .staticType(returnType)
                 .executionMode(ExecutionMode.LOCAL)
-                .metadata(metadata)
                 .build();
-        ItemRuntimePlan markerBody = new BuiltinNamedFunctionReferenceMarkerIterator(markerContext);
-        return new FunctionItem(
-                identifier, paramNames, builtinFunction.getSignature(), moduleContext, markerBody, true);
+        // Invocation supplies the parameter execution modes; retain only the reference context here.
+        ItemRuntimePlan body = new BuiltinNamedFunctionReferenceMarkerIterator(identifier, paramNames, bodyContext);
+        return new FunctionItem(identifier, paramNames, builtinFunction.getSignature(), moduleContext, body, true);
     }
 }

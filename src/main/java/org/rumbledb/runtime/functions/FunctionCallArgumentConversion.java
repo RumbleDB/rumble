@@ -22,6 +22,7 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -30,12 +31,13 @@ import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
 import org.rumbledb.runtime.typing.TypePromotionIterator;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
 /**
- * Shared argument arity checks and type-promotion wrapping for dynamic calls on
+ * Shared argument arity checks and function conversion wrapping for arguments and return values of calls on
  * {@link org.rumbledb.items.FunctionItem}s.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -56,19 +58,21 @@ public final class FunctionCallArgumentConversion {
     }
 
     public static void wrapAccordingToSignature(
-            Item functionItem, List<ItemRuntimePlan> functionArguments, RuntimeStaticContext callerStaticContext) {
-        if (functionItem.getSignature().getParameterTypes() == null) {
+            Name functionName,
+            FunctionSignature signature,
+            List<ItemRuntimePlan> functionArguments,
+            RuntimeStaticContext callerStaticContext) {
+        if (signature.getParameterTypes() == null) {
             return;
         }
-        String exceptionMessage =
-                "Invalid argument for " + functionItem.getIdentifier().getName() + " function. ";
+        String exceptionMessage = "Invalid argument for " + functionName + " function. ";
         for (int i = 0; i < functionArguments.size(); i++) {
             if (functionArguments.get(i) != null) {
                 functionArguments.set(
                         i,
                         wrapArgument(
                                 functionArguments.get(i),
-                                functionItem.getSignature().getParameterTypes().get(i),
+                                signature.getParameterTypes().get(i),
                                 exceptionMessage,
                                 callerStaticContext));
             }
@@ -76,8 +80,9 @@ public final class FunctionCallArgumentConversion {
     }
 
     /**
-     * Applies the function conversion rules for a parameter of the given type: atomization, casting of untyped
-     * values, type promotion, and the final type check. Returns the argument unchanged when it already matches.
+     * Applies the function conversion rules for an argument or return value of the given type: atomization,
+     * casting of untyped values, type promotion, and the final type check. Returns the value unchanged when it
+     * already matches.
      */
     public static ItemRuntimePlan wrapArgument(
             ItemRuntimePlan argument,

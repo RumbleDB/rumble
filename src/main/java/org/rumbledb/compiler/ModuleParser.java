@@ -16,6 +16,8 @@
 package org.rumbledb.compiler;
 
 import java.net.URI;
+import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
@@ -28,11 +30,15 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.context.VersionDeclContext;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
+import org.rumbledb.config.model.LanguageVersion.Language;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.context.UserDefinedFunctionExecutionModes;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.NotLibraryModuleException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -48,13 +54,17 @@ final class ModuleParser {
 
     private ModuleParser() {}
 
-    enum Language {
-        JSONIQ,
-        XQUERY
-    }
-
     static Language detectLanguage(String query, URI uri, RumbleConfiguration configuration) {
-        return shouldParseAsXQuery(query, uri, configuration) ? Language.XQUERY : Language.JSONIQ;
+        return declaredLanguage(query).orElseGet(() -> {
+            String location = uri.toString();
+            if (location.endsWith(".xq") || location.endsWith(".xqy") || location.endsWith(".xquery")) {
+                return Language.XQUERY;
+            }
+            if (location.endsWith(".jq") || location.endsWith(".jsoniq")) {
+                return Language.JSONIQ;
+            }
+            return configuration.semantics().queryLanguage().language();
+        });
     }
 
     static StaticContext createModuleContext(URI uri, RumbleConfiguration configuration) {
@@ -71,35 +81,57 @@ final class ModuleParser {
             CompilationConfiguration configuration,
             ExternalBindings bindings,
             Language language) {
+        probe(query, JsoniqParser::libraryModuleStart).ifPresent(start -> {
+            throw new ParsingException(
+                    "Main module expected, but library module found.",
+                    ExceptionMetadata.fromTokens(uri.toString(), start.getStart(), start.getStop(), query));
+        });
         StaticContext moduleContext = createModuleContext(uri, configuration.runtimeConfiguration());
-        return (MainModule) parseModule(query, uri, configuration, bindings, language, moduleContext, true);
+        return ModuleImportLoader.loadMainModule(
+                () -> (MainModule) parseModule(query, uri, configuration, bindings, language, moduleContext),
+                configuration.runtimeConfiguration());
     }
 
     static LibraryModule parseLibraryModule(
             String query, URI uri, StaticContext importingContext, CompilationConfiguration configuration) {
+        // A namespace URI may retrieve an HTML page or a main query rather than a library.
+        // Reject those as failed module resolution, preserving syntax errors inside real libraries.
+        if (probe(query, JsoniqParser::libraryModuleStart).isEmpty()) {
+            throw new NotLibraryModuleException(
+                    "The imported resource is not a library module.",
+                    ExceptionMetadata.fromPoint(uri.toString(), 1, 0, query));
+        }
         RumbleConfiguration runtimeConfiguration = configuration.runtimeConfiguration();
         Language language = detectLanguage(query, uri, runtimeConfiguration);
         StaticContext moduleContext = new StaticContext(uri, runtimeConfiguration);
         moduleContext.setUserDefinedFunctionsExecutionModes(importingContext.getUserDefinedFunctionsExecutionModes());
         return (LibraryModule)
-                parseModule(query, uri, configuration, ExternalBindings.empty(), language, moduleContext, false);
+                parseModule(query, uri, configuration, ExternalBindings.empty(), language, moduleContext);
     }
 
-    private static boolean shouldParseAsXQuery(String query, URI uri, RumbleConfiguration configuration) {
-        if (query.contains("xquery version")) {
-            return true;
+    private static Optional<Language> declaredLanguage(String query) {
+        return probe(
+                query, parser -> VersionDeclContext.from(parser.versionDecl()).language());
+    }
+
+    /**
+     * Runs a rule shared by both grammars on the start of the source, before a parser is selected for the module. The
+     * rules accept either language keyword, so one grammar can read the start of both languages. The lexer hides
+     * whitespace and comments and recognizes strings, so their text cannot be mistaken for a declaration, and only the
+     * first tokens are read. Errors are not reported here: the parser selected for the module reports them when it
+     * reads the whole module.
+     */
+    private static <T> Optional<T> probe(String query, Function<JsoniqParser, T> rule) {
+        Lexer lexer = new JsoniqLexer(CharStreams.fromString(query));
+        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        lexer.removeErrorListeners();
+        parser.removeErrorListeners();
+        parser.setErrorHandler(new BailErrorStrategy());
+        try {
+            return Optional.of(rule.apply(parser));
+        } catch (ParseCancellationException e) {
+            return Optional.empty();
         }
-        if (query.contains("jsoniq version")) {
-            return false;
-        }
-        String location = uri.toString();
-        if (location.endsWith(".xq") || location.endsWith(".xqy") || location.endsWith(".xquery")) {
-            return true;
-        }
-        if (location.endsWith(".jq") || location.endsWith(".jsoniq")) {
-            return false;
-        }
-        return configuration.semantics().queryLanguage().startsWith("xquery");
     }
 
     /**
@@ -112,11 +144,19 @@ final class ModuleParser {
             CompilationConfiguration configuration,
             ExternalBindings bindings,
             Language language,
-            StaticContext moduleContext,
-            boolean isMainModule) {
+            StaticContext moduleContext) {
+        if (language == Language.XQUERY) {
+            moduleContext.setConstructionPreserve(true);
+            // XQuery source line endings are normalized before tokenization, including inside literals.
+            query = query.replace("\r\n", "\n");
+            if ("1.1".equals(configuration.runtimeConfiguration().semantics().xmlVersion())) {
+                query = query.replace("\r\u0085", "\n").replace('\u0085', '\n').replace('\u2028', '\n');
+            }
+            query = query.replace('\r', '\n');
+        }
         // File extensions and version declarations can select a language different from the configured default.
-        if (language == Language.XQUERY && !moduleContext.getQueryLanguage().startsWith("xquery")) {
-            moduleContext.setQueryLanguage("xquery31");
+        if (moduleContext.getQueryLanguage().language() != language) {
+            moduleContext.setQueryLanguage(LanguageVersion.defaultFor(language));
         }
         Lexer lexer = language == Language.XQUERY
                 ? new XQueryLexer(CharStreams.fromString(query))
@@ -131,14 +171,13 @@ final class ModuleParser {
         if (language == Language.XQUERY) {
             XQueryParser xqueryParser = new XQueryParser(tokens);
             parser = xqueryParser;
-            parseTreeSupplier =
-                    isMainModule ? () -> xqueryParser.moduleAndThisIsIt().module() : xqueryParser::module;
-            visitor = new XQueryTranslationVisitor(moduleContext, isMainModule, configuration, bindings, query, tokens);
+            parseTreeSupplier = () -> xqueryParser.moduleAndThisIsIt().module();
+            visitor = new XQueryTranslationVisitor(moduleContext, configuration, bindings, query, tokens);
         } else {
             JsoniqParser jsoniqParser = new JsoniqParser(tokens);
             parser = jsoniqParser;
             parseTreeSupplier = () -> jsoniqParser.moduleAndThisIsIt().module();
-            visitor = new TranslationVisitor(moduleContext, isMainModule, configuration, bindings, query, tokens);
+            visitor = new TranslationVisitor(moduleContext, configuration, bindings, query, tokens);
         }
 
         parser.setErrorHandler(new BailErrorStrategy());
@@ -146,8 +185,9 @@ final class ModuleParser {
         try {
             // TODO Handle module extras
             ParseTree moduleParseTree = parseTreeSupplier.get();
-            if (isMainModule && moduleParseTree == null) {
-                throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
+            if (language == Language.XQUERY
+                    && !configuration.runtimeConfiguration().semantics().allowScripting()) {
+                new XQuerySyntaxValidator(uri, query).visit(moduleParseTree);
             }
             return (Module) visitor.visit(moduleParseTree);
         } catch (ParseCancellationException ex) {

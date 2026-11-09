@@ -22,6 +22,7 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
@@ -65,12 +66,12 @@ public final class EffectiveBooleanValue {
             result = evaluateNumeric(item, position, staticContext);
         } else if (item.isNull()) {
             result = false;
-        } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
+        } else if (item.isUntypedAtomic() || item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
             result = !item.getStringValue().isEmpty();
         } else if (item.isNode()) {
             return true;
         } else {
-            if (staticContext.getQueryLanguage().equals("jsoniq10") && (item.isObject() || item.isArray())) {
+            if (staticContext.getQueryLanguage() == LanguageVersion.JSONIQ_10 && (item.isObject() || item.isArray())) {
                 return true;
             }
             if (item.isObject() || item.isArray()) {

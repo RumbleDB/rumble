@@ -693,6 +693,14 @@ KW_VERSION
    : 'version'
    ;
 
+KW_JSONIQ
+   : 'jsoniq'
+   ;
+
+KW_XQUERY
+   : 'xquery'
+   ;
+
 KW_WHEN
    : 'when'
    ;
@@ -936,8 +944,8 @@ ENTER_STRING
    ;
 
 EXIT_INTERPOLATION
-   :
-   { !_modeStack.isEmpty() && _modeStack.peek() == STRING_MODE }? RBRACE GRAVE -> popMode
+   : RBRACE GRAVE
+   { !_modeStack.isEmpty() && _modeStack.peek() == STRING_MODE }? -> popMode
    ;
 
 ContentChar

@@ -86,7 +86,10 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
                 throw new UnexpectedStaticTypeException(
                         "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic");
             }
-            String nameString = atomizedNameItem.getStringValue();
+            String nameString = atomizedNameItem
+                    .getStringValue()
+                    .replaceAll("[ \t\r\n]+", " ")
+                    .replaceAll("^ | $", "");
             if (!isValidNCName(nameString)) {
                 throw new InvalidProcessingInstructionTargetCastException(
                         "Processing instruction target cannot be cast to xs:NCName.", getMetadata());
@@ -116,10 +119,9 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
         String content = String.join(" ", stringValues);
         content = removeLeadingWhitespace(content);
         Item processingInstructionItem = ItemFactory.getInstance().createXmlProcessingInstructionNode(target, content);
-        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
-            String documentPath = XMLDocumentPosition.generateConstructedTreePath();
-            processingInstructionItem.setXmlDocumentPosition(documentPath, 0);
-        }
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        processingInstructionItem.setXmlDocumentPosition(documentPath, 0);
         return processingInstructionItem;
     }
 

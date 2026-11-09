@@ -17,6 +17,7 @@ package org.rumbledb.runtime.functions.strings;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.Locale;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -41,6 +42,6 @@ public class UpperCaseFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             return ItemFactory.getInstance().createStringItem("");
         }
         return ItemFactory.getInstance()
-                .createStringItem(stringItem.getStringValue().toUpperCase());
+                .createStringItem(stringItem.getStringValue().toUpperCase(Locale.ROOT));
     }
 }

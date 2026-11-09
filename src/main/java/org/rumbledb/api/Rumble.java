@@ -59,7 +59,6 @@ public class Rumble {
      */
     public Rumble(CompilationConfiguration compilationConfiguration) {
         this.compilationConfiguration = compilationConfiguration;
-        SparkSessionManager.getInstance().getOrCreateSession();
     }
 
     /**
@@ -199,8 +198,11 @@ public class Rumble {
         var effectiveConfiguration = new EffectiveConfigurationVisitor()
                 .getEffectiveConfiguration(
                         mainModule, this.compilationConfiguration.runtimeConfiguration().toBuilder());
-        DynamicContext dynamicContext =
-                new DynamicContextVisitor(effectiveConfiguration, bindings).visit(mainModule, null);
+        DynamicContext dynamicContext = new DynamicContextVisitor(
+                        effectiveConfiguration,
+                        bindings,
+                        this.compilationConfiguration.resourceResolver().forQuery())
+                .visit(mainModule, null);
         ItemRuntimePlan plan = new RuntimeIteratorVisitor(effectiveConfiguration).generateRuntimePlan(mainModule);
 
         return new SequenceOfItems(plan, dynamicContext, effectiveConfiguration);

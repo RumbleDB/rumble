@@ -77,8 +77,7 @@ public class GenericForClauseUDF<T> implements UDF1<Row, List<T>> {
             case "String":
                 return (T) item.getStringValue();
             case "Integer":
-                // TODO: watch out for big integers
-                return (T) (Integer) item.getIntegerValue().intValue();
+                return (T) (Integer) item.getIntValue();
             case "BigDecimal":
                 return (T) item.getDecimalValue();
             case "Double":

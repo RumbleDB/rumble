@@ -538,6 +538,10 @@
                             </includes>
                             <libDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/imports</libDirectory>
                             <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/jsoniq</outputDirectory>
+                            <arguments>
+                                <argument>-package</argument>
+                                <argument>org.rumbledb.parser.jsoniq</argument>
+                            </arguments>
                             <listener>false</listener>
                             <visitor>true</visitor>
                         </configuration>
@@ -554,6 +558,10 @@
                             </includes>
                             <libDirectory>${project.basedir}/src/main/java/org/rumbledb/parser/imports</libDirectory>
                             <outputDirectory>${project.build.directory}/generated-sources/antlr4/org/rumbledb/parser/xquery</outputDirectory>
+                            <arguments>
+                                <argument>-package</argument>
+                                <argument>org.rumbledb.parser.xquery</argument>
+                            </arguments>
                             <listener>false</listener>
                             <visitor>true</visitor>
                         </configuration>

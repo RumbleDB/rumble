@@ -18,11 +18,16 @@ package org.rumbledb.cli.commands;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
+import org.rumbledb.cli.CLIArgumentParser;
 import org.rumbledb.cli.CLIInvocation;
 import org.rumbledb.cli.arguments.OutputArguments;
 import org.rumbledb.config.model.RumbleMode;
 
-@Command(name = "repl", description = "Runs the interactive shell.", mixinStandardHelpOptions = true)
+@Command(
+        name = "repl",
+        description = "Runs the interactive shell.",
+        mixinStandardHelpOptions = true,
+        versionProvider = CLIArgumentParser.BannerVersionProvider.class)
 public final class Repl extends BaseCommand {
     @Mixin
     OutputArguments output;

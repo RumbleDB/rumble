@@ -55,6 +55,7 @@ import org.rumbledb.compiler.context.LetVarContext;
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MainModuleContext;
+import org.rumbledb.compiler.context.ModuleContext;
 import org.rumbledb.compiler.context.ModuleImportContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NamedFunctionRefContext;
@@ -162,6 +163,7 @@ import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
 import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
@@ -269,13 +271,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     public TranslationVisitor(
             StaticContext moduleContext,
-            boolean isMainModule,
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings,
             String code,
             CommonTokenStream jsoniqTokenStream) {
         this.translationContext =
-                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, isMainModule, code);
+                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, code);
         this.jsoniqTokenStream = jsoniqTokenStream;
     }
 
@@ -284,31 +285,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region module
     @Override
     public Module visitModule(JsoniqParser.ModuleContext ctx) {
-        if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
-            String version = processStringLiteral(ctx.vers).trim();
-            if (version.equals("1.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("jsoniq10");
-            } else if (version.equals("3.1")) {
-                this.translationContext.moduleContext().setQueryLanguage("jsoniq31");
-            } else if (version.equals("4.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("jsoniq40");
-            } else {
-                throw new JsoniqVersionException(createMetadataFromContext(ctx));
-            }
-        }
-        if (this.translationContext.isMainModule()) {
-            if (ctx.mainModule() != null) {
-                return this.visitMainModule(ctx.mainModule());
-            }
-            throw new ParsingException(
-                    "Main module expected, but library module found.", createMetadataFromContext(ctx));
-        } else {
-            if (ctx.libraryModule() != null) {
-                return this.visitLibraryModule(ctx.libraryModule());
-            }
-            throw new ParsingException(
-                    "Library module expected, but main module found.", createMetadataFromContext(ctx));
-        }
+        return ModuleTranslation.module(
+                ModuleContext.from(ctx),
+                this.translationContext,
+                this::processStringLiteral,
+                this::visitMainModule,
+                this::visitLibraryModule);
     }
 
     @Override
@@ -545,14 +527,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     /** Adapts the JSONiq QName grammar to the shared role-aware resolver. */
     public Name parseName(JsoniqParser.QnameContext ctx, NameRole role) {
-        return this.translationContext
-                .names()
-                .resolveQName(
-                        ctx.FullQName() == null ? null : ctx.FullQName().getText(),
-                        ctx.ns == null ? null : ctx.ns.getText(),
-                        ctx.local_name == null ? null : ctx.local_name.getText(),
-                        role,
-                        createMetadataFromContext(ctx));
+        return this.translationContext.names().resolveEQName(ctx.getText(), role, createMetadataFromContext(ctx));
+    }
+
+    /** Resolves a direct-constructor name, validated by {@link #validateDirectConstructorName}. */
+    private Name parseName(JsoniqParser.DirectConstructorQNameContext ctx, NameRole role) {
+        return this.translationContext.names().resolveEQName(ctx.getText(), role, createMetadataFromContext(ctx));
     }
 
     private TypeDeclaration processTypeDecl(JsoniqParser.TypeDeclContext ctx) {
@@ -1167,10 +1147,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Expression lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr stepExpr) {
-                    if (this.translationContext
-                            .moduleContext()
-                            .getQueryLanguage()
-                            .equals("jsoniq10")) {
+                    if (this.translationContext.moduleContext().getQueryLanguage() == LanguageVersion.JSONIQ_10) {
                         keys.add(new StringLiteralExpression(
                                 stepExpr.getNodeTest().toString(), lhs.getMetadata()));
                     } else {
@@ -1183,7 +1160,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
                 values.add(this.visitExprSingle(currentPair.rhs));
             }
-            if (this.translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
+            if (this.translationContext.moduleContext().getQueryLanguage() == LanguageVersion.JSONIQ_10) {
                 return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
             } else {
                 return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));
@@ -1205,6 +1182,13 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     @Override
     public Expression visitDirectConstructor(JsoniqParser.DirectConstructorContext ctx) {
+        if (ctx.open_tag_name != null) {
+            validateDirectConstructorName(ctx.open_tag_name);
+            ctx.attributes.attribute_qname.forEach(this::validateDirectConstructorName);
+            if (ctx.open_close != null) {
+                validateDirectConstructorName(ctx.open_close.close_tag_name);
+            }
+        }
         return XmlDirectConstructorTranslation.directConstructor(
                 DirectConstructorContext.from(ctx),
                 this.jsoniqTokenStream,
@@ -1212,6 +1196,21 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 this::parseName,
                 this::visitDirElemContent,
                 this::visitExpr);
+    }
+
+    /**
+     * A direct-constructor name is assembled from adjacent tokens, which contribute name characters, dots, colons,
+     * "-" and "+" (from an exponent). Check that the result is a QName.
+     */
+    private void validateDirectConstructorName(JsoniqParser.DirectConstructorQNameContext ctx) {
+        String name = ctx.getText();
+        String localName = name.substring(name.indexOf(':') + 1);
+        if (name.indexOf('+') >= 0
+                || localName.indexOf(':') >= 0
+                || localName.isEmpty()
+                || ".-0123456789".indexOf(localName.charAt(0)) >= 0) {
+            throw new ParsingException("Invalid name in a direct constructor: " + name, createMetadataFromContext(ctx));
+        }
     }
 
     @Override

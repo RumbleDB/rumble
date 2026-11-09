@@ -26,24 +26,8 @@
 parser grammar JsoniqParser;
 
 import CommonParser;
-@ header
-{
-// Java header
-package org.rumbledb.parser.jsoniq;
-}
 
 options { tokenVocab = JsoniqLexer; }
-module
-   // replaced with the versionDecl production to match the JSONiq grammar
-   : (KW_JSONIQ KW_VERSION vers = stringLiteral (KW_ENCODING encoding = stringLiteral)? SEMICOLON)?
-   // TODO: subsequent optional main modules are currently ignored
-   (libraryModule | main = mainModule)
-   ;
-
-versionDecl
-   : KW_JSONIQ KW_VERSION version = stringLiteral (KW_ENCODING encoding = stringLiteral)? SEMICOLON
-   ;
-
 annotatedDecl
    : functionDecl
    | varDecl
@@ -144,8 +128,8 @@ itemType
    | parenthesizedItemTest
    ;
 
-dialectKeywordOKForFunction
-   : KW_JSONIQ
+keywordOKForFunction
+   : commonKeywordOKForFunction
    | KW_NULL
    | KW_TRUE
    | KW_FALSE
@@ -162,5 +146,30 @@ stringLiteralQuot
 
 stringLiteralApos
    : Apos (escapedJsoniqStringCharacter | ~ (Apos | BACKSLASH))* Apos
+   ;
+
+directConstructor
+   : LANGLE open_tag_name = directConstructorQName attributes = dirAttributeList (open_close = dirElemConstructorOpenClose | single_tag = dirElemConstructorSingleTag)
+   | COMMENT
+   | PI
+   ;
+
+dirElemConstructorOpenClose
+   : endOpen = RANGLE dirElemContent* startClose = LANGLE slashClose = SLASH close_tag_name = directConstructorQName RANGLE
+   ;
+
+dirAttributeList
+   : (attribute_qname += directConstructorQName EQUAL attribute_value += dirAttributeValue)*
+   ;
+
+directConstructorQName
+/*
+ * JSONiq lexes "." outside names (for object lookups), so a dotted name spans several tokens.
+ * The predicate stops the name at whitespace or a comment, which the parser cannot otherwise see;
+ * TranslationVisitor rejects assembled names that are not QNames.
+ */
+   
+   : (FullQName | ncName) (
+   {_input.LT(-1).getStopIndex() + 1 == _input.LT(1).getStartIndex()}? (DOT | DDOT | DecimalLiteral | DoubleLiteral | IntegerLiteral | FullQName | ncName | COLON | MINUS))*
    ;
 

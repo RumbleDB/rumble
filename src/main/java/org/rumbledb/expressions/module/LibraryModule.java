@@ -43,6 +43,12 @@ public class LibraryModule extends Module {
         this.namespace = namespace;
     }
 
+    /** Identity of the declaration group shared by repeated imports and namespace aliases. */
+    public String getModuleGroupKey() {
+        String key = this.prolog.getModuleGroupKey();
+        return key == null ? this.namespace : key;
+    }
+
     @Override
     public StaticContext getStaticContext() {
         return this.staticContext;
