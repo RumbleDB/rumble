@@ -33,10 +33,10 @@ public final class TypeAtomization {
     }
 
     /**
-     * Whether atomization changes a member, i.e. it is a node or an array. The error type is both a node and atomic,
-     * and atomizes to itself.
+     * Whether any member is a node or an array, which atomization replaces with other values: a node's typed value, an
+     * array's atomized members. The error type is both a node and atomic, and atomizes to itself.
      */
-    public static boolean changesWhenAtomized(ItemType type) {
+    public static boolean containsNodeOrArray(ItemType type) {
         return type.getMemberTypes().stream()
                 .anyMatch(member -> (member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem) || isArray(member))
                         && !member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem));
@@ -47,7 +47,7 @@ public final class TypeAtomization {
      * the members of an array of any items. Checks on such values are left to runtime.
      */
     public static boolean hasUnknownTypedValue(ItemType type) {
-        return changesWhenAtomized(type) && atomizedItemType(type).equals(BuiltinTypesCatalogue.atomicItem);
+        return containsNodeOrArray(type) && atomizedItemType(type).equals(BuiltinTypesCatalogue.atomicItem);
     }
 
     /**
