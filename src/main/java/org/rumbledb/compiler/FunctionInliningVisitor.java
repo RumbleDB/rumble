@@ -35,6 +35,7 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.types.SequenceType;
 
 import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromProlog;
@@ -42,6 +43,8 @@ import static org.rumbledb.expressions.module.Prolog.getFunctionDeclarationFromP
 public class FunctionInliningVisitor extends CloneVisitor {
 
     private Prolog prolog;
+
+    private boolean inPath;
 
     private boolean isImportedFunction(Prolog prolog, FunctionDeclaration target) {
         for (var module : prolog.getImportedModules()) {
@@ -104,6 +107,17 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return result;
     }
 
+    // Calls in a path expression are not inlined: an inlined body would read the context item of the step,
+    // while a function body has no context item.
+    @Override
+    public Node visitSlashExpr(SlashExpr expression, Node argument) {
+        boolean wasInPath = this.inPath;
+        this.inPath = true;
+        Node result = super.visitSlashExpr(expression, argument);
+        this.inPath = wasInPath;
+        return result;
+    }
+
     // An inlined call converts its arguments exactly like the function call it replaces.
     private static Expression convertArgument(
             Expression argument, SequenceType parameterType, FunctionCallExpression call) {
@@ -125,11 +139,13 @@ public class FunctionInliningVisitor extends CloneVisitor {
     // Inlining is disabled for functions that:
     // 1. Are sequential.
     // 2. Contain an exit statement.
+    // Calls in a path expression are not inlined either.
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
         FunctionDeclaration targetFunction =
                 getFunctionDeclarationFromProlog(this.prolog, expression.getFunctionIdentifier());
-        if (expression.isPartialApplication()
+        if (this.inPath
+                || expression.isPartialApplication()
                 || targetFunction == null
                 // Imported function bodies must retain their module's static settings.
                 || isImportedFunction(this.prolog, targetFunction)
