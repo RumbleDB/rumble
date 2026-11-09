@@ -24,6 +24,7 @@ import java.util.Set;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.StaticTypeErrorsException;
@@ -120,7 +121,7 @@ public final class StaticTypeErrors {
     }
 
     /** Explicit static assertions apply even when optional static typing is disabled. */
-    public void reportAssertion(RumbleException error, Node node) {
+    public void reportAssertion(IsStaticallyUnexpectedTypeException error, Node node) {
         if (!this.nodesWithErrors.add(node)) {
             return;
         }

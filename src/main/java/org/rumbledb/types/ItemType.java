@@ -653,15 +653,21 @@ public interface ItemType extends Serializable {
      */
     default boolean mayOverlapWith(ItemType other) {
         return getMemberTypes().stream().anyMatch(member -> other.getMemberTypes().stream()
-                .anyMatch(target -> member.isSubtypeOf(target) || target.isSubtypeOf(member)
-                        || (member.isMapItemType() && target.isMapItemType())
-                        || (member.isObjectItemType() && target.isObjectItemType())
-                        || (member.isArrayItemType() && target.isArrayItemType())
-                        || (member.isXQueryArrayItemType() && target.isXQueryArrayItemType())
-                        || (member.isFunctionItemType() && target.isFunctionItemType())
-                        || (member.isNodeItemType() && target.isNodeItemType())
-                        || (member.isAtomicItemType() && target.isAtomicItemType()
-                                && member.getCastingPrimitiveType().equals(target.getCastingPrimitiveType()))));
+                .anyMatch(target -> membersMayOverlap(member, target)));
+    }
+
+    private static boolean membersMayOverlap(ItemType member, ItemType target) {
+        return member.isSubtypeOf(target)
+                || target.isSubtypeOf(member)
+                || (member.isMapItemType() && target.isMapItemType())
+                || (member.isObjectItemType() && target.isObjectItemType())
+                || (member.isArrayItemType() && target.isArrayItemType())
+                || (member.isXQueryArrayItemType() && target.isXQueryArrayItemType())
+                || (member.isFunctionItemType() && target.isFunctionItemType())
+                || (member.isNodeItemType() && target.isNodeItemType())
+                || (member.isAtomicItemType()
+                        && target.isAtomicItemType()
+                        && member.getCastingPrimitiveType().equals(target.getCastingPrimitiveType()));
     }
 
     /**

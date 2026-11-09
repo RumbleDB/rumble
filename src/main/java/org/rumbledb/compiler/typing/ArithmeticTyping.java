@@ -86,17 +86,29 @@ public final class ArithmeticTyping {
                 this.errors.report(
                         "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
                         node,
-                        leftType.getItemType().getMemberTypes().stream().anyMatch(left ->
-                                rightType.getItemType().getMemberTypes().stream().anyMatch(right ->
-                                        inferMemberOperationType(left, right, operation) != null
-                                                || (!TypeAtomization.isNeverAtomizable(left)
-                                                        && !TypeAtomization.isNeverAtomizable(right)
-                                                        && (TypeAtomization.mayAtomizeToAnyType(left)
-                                                                || TypeAtomization.mayAtomizeToAnyType(right))))));
+                        mayArithmeticOperationSucceed(leftType.getItemType(), rightType.getItemType(), operation));
             }
             inferredType = BuiltinTypesCatalogue.atomicItem;
         }
         return new SequenceType(inferredType, inferredArity);
+    }
+
+    /** A possible error needs only one successful pair, whereas inference requires every pair to succeed. */
+    private boolean mayArithmeticOperationSucceed(
+            ItemType leftType, ItemType rightType, BiFunction<ItemType, ItemType, ItemType> operation) {
+        for (ItemType left : leftType.getMemberTypes()) {
+            for (ItemType right : rightType.getMemberTypes()) {
+                if (inferMemberOperationType(left, right, operation) != null) {
+                    return true;
+                }
+                if (!TypeAtomization.isNeverAtomizable(left)
+                        && !TypeAtomization.isNeverAtomizable(right)
+                        && (TypeAtomization.mayAtomizeToAnyType(left) || TypeAtomization.mayAtomizeToAnyType(right))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // Evaluate each possible operand pair. A null result means an unsupported pair.
@@ -276,8 +288,9 @@ public final class ArithmeticTyping {
                 this.errors.report(
                         "It is not possible to have a unary expression with the following type: " + childInferredType,
                         node,
-                        childInferredType.getItemType().getMemberTypes().stream().anyMatch(member ->
-                                inferUnaryItemType(member) != null || TypeAtomization.mayAtomizeToAnyType(member)));
+                        childInferredType.getItemType().getMemberTypes().stream()
+                                .anyMatch(member -> inferUnaryItemType(member) != null
+                                        || TypeAtomization.mayAtomizeToAnyType(member)));
             }
             childItemType = BuiltinTypesCatalogue.numericItem;
         }
