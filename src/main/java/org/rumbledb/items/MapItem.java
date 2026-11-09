@@ -22,11 +22,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import scala.Tuple2;
+import scala.collection.JavaConverters;
 import scala.collection.immutable.HashMap;
 import scala.collection.immutable.HashMap$;
-import scala.collection.mutable.ReusableBuilder;
-import scala.jdk.javaapi.CollectionConverters;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -85,24 +83,20 @@ public class MapItem extends AbstractMapItem implements KryoSerializable {
     }
 
     /**
-     * Builds the trie with Scala's builder, which updates its nodes in place until result(), instead of
-     * copying a path of the trie for every entry.
+     * Builds the persistent trie while rejecting duplicate keys.
      */
     public MapItem(List<Item> keys, List<List<Item>> valueSequences, ExceptionMetadata metadata) {
         this();
-        ReusableBuilder<Tuple2<Item, Entry>, HashMap<Item, Entry>> builder = HashMap$.MODULE$.newBuilder();
         for (int i = 0; i < keys.size(); i++) {
             Item key = keys.get(i);
             checkKey(key, metadata);
             Entry entry = new Entry(key, valueSequences.get(i));
-            builder.addOne(new Tuple2<>(key, entry));
-            // The builder has no lookup, but a key that is already there does not grow it.
-            if (builder.knownSize() == i) {
+            if (this.entries.contains(key)) {
                 throw new DuplicateObjectKeyException(key.serialize(), metadata);
             }
+            this.entries = this.entries.updated(key, entry);
             this.nonObjectEntries += nonObjectCount(entry);
         }
-        this.entries = builder.result();
     }
 
     /**
@@ -140,7 +134,8 @@ public class MapItem extends AbstractMapItem implements KryoSerializable {
     }
 
     private Iterable<Entry> entries() {
-        return () -> CollectionConverters.asJava(this.entries.valuesIterator());
+        return () -> JavaConverters.asJavaIteratorConverter(this.entries.valuesIterator())
+                .asJava();
     }
 
     private Entry getEntry(Item key) {
@@ -169,7 +164,7 @@ public class MapItem extends AbstractMapItem implements KryoSerializable {
 
     private void internalRemove(Item key) {
         this.nonObjectEntries -= nonObjectCount(getEntry(key));
-        this.entries = this.entries.removed(key);
+        this.entries = this.entries.$minus(key);
     }
 
     private static int nonObjectCount(Entry entry) {

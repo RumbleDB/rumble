@@ -28,7 +28,6 @@ import org.apache.spark.SparkConf;
 import org.junit.jupiter.api.Assertions;
 
 import lombok.extern.log4j.Log4j2;
-import scala.Function0;
 import scala.util.Properties;
 
 import org.rumbledb.api.Item;
@@ -45,12 +44,7 @@ public class UpdatesForRumbleBenchmark {
 
     private static final String APP_NAME = "Rumble application";
     public static final String javaVersion = System.getProperty("java.version");
-    public static final String scalaVersion = Properties.scalaPropOrElse("version.number", new Function0<String>() {
-        @Override
-        public String apply() {
-            return "unknown";
-        }
-    });
+    public static final String scalaVersion = Properties.scalaPropOrElse("version.number", "unknown");
 
     public List<FileTuple> benchmarkFiles;
 

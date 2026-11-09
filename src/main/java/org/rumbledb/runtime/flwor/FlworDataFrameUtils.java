@@ -37,7 +37,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
 import scala.collection.Iterator;
-import scala.collection.immutable.ArraySeq;
+import scala.collection.mutable.WrappedArray;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
@@ -674,7 +674,7 @@ public class FlworDataFrameUtils {
     }
 
     public static void deserializeWrappedParameters(
-            ArraySeq<byte[]> wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
+            WrappedArray<byte[]> wrappedParameters, List<List<Item>> deserializedParams, Kryo kryo, Input input) {
         Iterator<byte[]> iterator = wrappedParameters.iterator();
         while (iterator.hasNext()) {
             byte[] bytes = iterator.next();
