@@ -28,7 +28,6 @@ import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.apache.spark.sql.types.VariantType;
 
 import lombok.Getter;
 
@@ -62,14 +61,6 @@ public class HomogeneousItemDataFrame implements RuntimeDataFrame<Item>, Seriali
             int i = schema.fieldIndex(SparkSessionManager.nonObjectJSONiqItemColumnName);
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
-            if (type instanceof VariantType) {
-                if (!this.itemType.equals(BuiltinTypesCatalogue.item)) {
-                    this.dataFrame.printSchema();
-                    throw new OurBadException("Inconsistency in internal representation: "
-                            + this.itemType
-                            + " is not the topmost item type.");
-                }
-            }
             if (type instanceof ArrayType) {
                 if (this.itemType.equals(BuiltinTypesCatalogue.item)
                         || this.itemType.equals(BuiltinTypesCatalogue.JSONItem)
@@ -87,15 +78,6 @@ public class HomogeneousItemDataFrame implements RuntimeDataFrame<Item>, Seriali
                 this.dataFrame.printSchema();
                 throw new OurBadException(
                         "Inconsistency in internal representation: " + this.itemType + " is an object type.");
-            }
-            if (type instanceof VariantType) {
-                if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.item)) {
-                    this.dataFrame.printSchema();
-                    throw new OurBadException("Inconsistency in internal representation: "
-                            + this.itemType
-                            + " is not the topmost item type.");
-                }
-                return;
             }
             if (this.itemType.equals(BuiltinTypesCatalogue.item)
                     || this.itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
@@ -233,9 +215,6 @@ public class HomogeneousItemDataFrame implements RuntimeDataFrame<Item>, Seriali
     }
 
     private static boolean containsVariantTypeInSchema(DataType dataType) {
-        if (dataType instanceof VariantType) {
-            return true;
-        }
         if (dataType instanceof ArrayType arrayType) {
             return containsVariantTypeInSchema(arrayType.elementType());
         }

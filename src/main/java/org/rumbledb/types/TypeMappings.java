@@ -193,9 +193,6 @@ public class TypeMappings {
         if (DataTypes.BinaryType.equals(dataType)) {
             return BuiltinTypesCatalogue.hexBinaryItem;
         }
-        if (DataTypes.VariantType.equals(dataType)) {
-            return BuiltinTypesCatalogue.item;
-        }
         if (vectorType.equals(dataType)) {
             return BuiltinTypesCatalogue.objectItem;
         }

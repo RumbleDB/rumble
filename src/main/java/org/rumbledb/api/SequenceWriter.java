@@ -61,7 +61,7 @@ import org.rumbledb.spark.SparkSessionManager;
  * There are two mutually exclusive internal modes:
  *
  * <ul>
- * <li>DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.
+ * <li>DataFrame mode: {@code dataFrameWriter != null} and a tracked save mode.
  * In this case, the sequence can be represented as a Spark {@link Dataset} /
  * {@link DataFrameWriter} and is written using Spark's native writers (json/csv/parquet/...).</li>
  * <li>RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.
@@ -91,7 +91,7 @@ public class SequenceWriter {
      *
      * Invariants:
      * <ul>
-     * <li>Either DataFrame mode: {@code dataFrameWriter != null} and {@code mode == null}.</li>
+     * <li>Either DataFrame mode: {@code dataFrameWriter != null} and a tracked save mode.</li>
      * <li>Or RDD mode: {@code dataFrameWriter == null} and {@code mode != null}.</li>
      * <li>{@code serializationParameters} is never {@code null}.</li>
      * <li>{@code serializationParameters.getMethod()} is never {@code null}; serialization uses a predefined
@@ -111,12 +111,8 @@ public class SequenceWriter {
         this.outputFormat = outputFormat;
         this.dataFrameWriter = dataFrameWriter;
         this.mode = mode;
-        if (dataFrameWriter == null && mode == null) {
-            throw new OurBadException("Internal error: it is not possible for both the writer and the mode to be null");
-        }
-        if (dataFrameWriter != null && mode != null) {
-            throw new OurBadException(
-                    "Internal error: it is not possible for both the writer and the mode to be non null");
+        if (mode == null) {
+            throw new OurBadException("Internal error: the save mode must not be null");
         }
         if (serializationParameters == null) {
             throw new OurBadException("Internal error: serializationParameters must not be null");
@@ -136,7 +132,7 @@ public class SequenceWriter {
                 .output()
                 .effectiveOutputFormat(sequence.getRuntimeStaticContext().getQueryLanguage());
         this.dataFrameWriter = createDataFrameWriter(this.outputFormat);
-        this.mode = this.dataFrameWriter == null ? SaveMode.ErrorIfExists : null;
+        this.mode = SaveMode.ErrorIfExists;
     }
 
     private DataFrameWriter<Row> createDataFrameWriter(String format) {
@@ -165,7 +161,7 @@ public class SequenceWriter {
         if (this.dataFrameWriter != null) {
             return createNewInstance(
                     this.dataFrameWriter.mode(saveMode),
-                    null,
+                    parseSaveMode(saveMode),
                     SerializationParameters.copy(this.serializationParameters));
         } else {
             SaveMode mode = parseSaveMode(saveMode);
@@ -177,7 +173,7 @@ public class SequenceWriter {
         if (this.dataFrameWriter != null) {
             return createNewInstance(
                     this.dataFrameWriter.mode(saveMode),
-                    null,
+                    saveMode,
                     SerializationParameters.copy(this.serializationParameters));
         } else {
             return createNewInstance(null, saveMode, this.serializationParameters);
@@ -189,11 +185,11 @@ public class SequenceWriter {
         DataFrameWriter<Row> writer = this.dataFrameWriter != null && !isSerializationFormat(source)
                 ? this.dataFrameWriter.format(source)
                 : createDataFrameWriter(source);
-        SaveMode saveMode = this.dataFrameWriter == null ? this.mode : this.dataFrameWriter.curmode();
+        SaveMode saveMode = this.mode;
         return new SequenceWriter(
                 this.sequence,
                 writer == null ? null : writer.mode(saveMode),
-                writer == null ? saveMode : null,
+                saveMode,
                 SerializationParameters.copy(this.serializationParameters),
                 this.configuration,
                 source);
