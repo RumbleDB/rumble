@@ -79,14 +79,15 @@ public final class ArithmeticTyping {
         AtomizedOperands.checkAtomizableOperands(this.errors, operator, leftType, rightType, node);
         ItemType inferredType = inferBinaryOperationType(leftType.getItemType(), rightType.getItemType(), operation);
         if (inferredType == null) {
-            if (inferredArity == SequenceType.Arity.OneOrZero) {
-                // Only possible resulting type is empty sequence so throw error XPST0005
+            boolean mayPass = mayArithmeticOperationSucceed(leftType.getItemType(), rightType.getItemType(), operation);
+            if (inferredArity == SequenceType.Arity.OneOrZero && !mayPass) {
+                // No pair of operands succeeds, so the only result is the empty sequence (XPST0005)
                 this.errors.reportInferredEmpty(node);
             } else {
                 this.errors.report(
                         "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
                         node,
-                        mayArithmeticOperationSucceed(leftType.getItemType(), rightType.getItemType(), operation));
+                        mayPass);
             }
             inferredType = BuiltinTypesCatalogue.atomicItem;
         }
@@ -109,6 +110,13 @@ public final class ArithmeticTyping {
             }
         }
         return false;
+    }
+
+    /** Whether the unary operation succeeds for some member of the operand type, as for a binary operation. */
+    private boolean mayUnaryOperationSucceed(ItemType type) {
+        return type.getMemberTypes().stream()
+                .anyMatch(member -> inferUnaryItemType(member) != null
+                        || (!TypeAtomization.isNeverAtomizable(member) && TypeAtomization.mayAtomizeToAnyType(member)));
     }
 
     // Evaluate each possible operand pair. A null result means an unsupported pair.
@@ -282,15 +290,14 @@ public final class ArithmeticTyping {
         // error
         ItemType childItemType = inferUnaryItemType(childInferredType.getItemType());
         if (childItemType == null) {
-            if (childInferredType.getArity() == SequenceType.Arity.OneOrZero) {
+            boolean mayPass = mayUnaryOperationSucceed(childInferredType.getItemType());
+            if (childInferredType.getArity() == SequenceType.Arity.OneOrZero && !mayPass) {
                 this.errors.reportInferredEmpty(node);
             } else {
                 this.errors.report(
                         "It is not possible to have a unary expression with the following type: " + childInferredType,
                         node,
-                        childInferredType.getItemType().getMemberTypes().stream()
-                                .anyMatch(member -> inferUnaryItemType(member) != null
-                                        || TypeAtomization.mayAtomizeToAnyType(member)));
+                        mayPass);
             }
             childItemType = BuiltinTypesCatalogue.numericItem;
         }

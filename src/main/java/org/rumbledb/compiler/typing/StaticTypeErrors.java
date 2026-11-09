@@ -17,13 +17,16 @@ package org.rumbledb.compiler.typing;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
@@ -44,7 +47,7 @@ import org.rumbledb.types.SequenceType;
  * error is not reported because an operand failed, gets the {@link #isUnknown unknown} type, and checks of an operand
  * with that type report nothing: they would only repeat the error that the operand already had. A variable bound to
  * such an expression has the unknown type too, so its uses report nothing either, but a variable with a declared type
- * keeps it. Each node has at most one error.
+ * keeps it. Each node, with its copies, has at most one error.
  *
  * <p>
  * An error is certain when every value of the checked expression fails, and possible when only some do: an item*
@@ -63,7 +66,11 @@ public final class StaticTypeErrors {
 
     private final List<RumbleException> errors = new ArrayList<>();
 
-    private final Set<Node> nodesWithErrors = Collections.newSetFromMap(new IdentityHashMap<>());
+    /**
+     * The index in {@link #errors} of the error at each {@link #site}. A later certain error replaces a possible one in
+     * place, so that errors stay in the order they were found.
+     */
+    private final Map<Object, Integer> errorIndices = new HashMap<>();
 
     /** The nodes with a certain error, or with an error that is not reported, which are typed as unknown. */
     private final Set<Node> failedNodes = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -106,7 +113,7 @@ public final class StaticTypeErrors {
     }
 
     private void record(String message, ErrorCode code, Node node, boolean certain) {
-        if (!this.configuration.analysis().enableStaticTyping() || !this.nodesWithErrors.add(node)) {
+        if (!this.configuration.analysis().enableStaticTyping()) {
             return;
         }
         // An error of a node with an unknown operand only repeats the operand's, so the node is unknown too.
@@ -117,18 +124,35 @@ public final class StaticTypeErrors {
         if (certain) {
             this.failedNodes.add(node);
         }
-        this.errors.add(new UnexpectedStaticTypeException(message, code, node.getMetadata(), certain));
+        Integer previousIndex = this.errorIndices.get(site(node));
+        UnexpectedStaticTypeException error =
+                new UnexpectedStaticTypeException(message, code, node.getMetadata(), certain);
+        if (previousIndex == null) {
+            this.errorIndices.put(site(node), this.errors.size());
+            this.errors.add(error);
+        } else if (certain
+                && this.errors.get(previousIndex) instanceof UnexpectedStaticTypeException previous
+                && !previous.isCertain()) {
+            this.errors.set(previousIndex, error);
+        }
     }
 
     /** Explicit static assertions apply even when optional static typing is disabled. */
     public void reportAssertion(IsStaticallyUnexpectedTypeException error, Node node) {
-        if (!this.nodesWithErrors.add(node)) {
-            return;
-        }
         this.failedNodes.add(node);
-        if (!hasUnknownOperand(node)) {
+        if (!hasUnknownOperand(node) && !this.errorIndices.containsKey(site(node))) {
+            this.errorIndices.put(site(node), this.errors.size());
             this.errors.add(error);
         }
+    }
+
+    /**
+     * Where an error of the node is shown: its source range, so that the copies of an inlined function body, which
+     * are typed at each call, report an error of the body once. A node without a source range is its own site.
+     */
+    private static Object site(Node node) {
+        ExceptionMetadata metadata = node.getMetadata();
+        return metadata == null || metadata == ExceptionMetadata.EMPTY_METADATA ? node : metadata.toString();
     }
 
     /** The errors reported so far, in the order they were found. */

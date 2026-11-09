@@ -15,6 +15,8 @@
  */
 package org.rumbledb.compiler.typing;
 
+import java.util.stream.Stream;
+
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -117,10 +119,18 @@ public final class CastTyping {
         if (TypeAtomization.isAtomizable(operandType.getItemType())
                 && !castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.errorItem)
                 && !isCastOperandTypeCompatible(operandType.getItemType(), castedSequenceType.getItemType())) {
+            // The empty sequence passes a cast as T?.
+            boolean mayPass = (operandType.getCardinality().allowsZero()
+                            && castedSequenceType.getCardinality().allowsZero())
+                    || castableMembers(operandType.getItemType(), castedSequenceType.getItemType())
+                            .anyMatch(castable -> castable);
             this.errors.report(
-                    "It is never possible to cast a " + operandType + " as " + castedSequenceType,
+                    mayPass
+                            ? "The inferred type " + operandType + " is not guaranteed to cast as " + castedSequenceType
+                            : "It is never possible to cast a " + operandType + " as " + castedSequenceType,
                     ErrorCode.UnexpectedTypeErrorCode,
-                    node);
+                    node,
+                    mayPass);
         }
         if (TypeAtomization.inferType(operandType).getCardinality() == SequenceCardinality.ONE) {
             castedSequenceType = new SequenceType(castedSequenceType.getItemType(), SequenceType.Arity.One);
@@ -156,10 +166,20 @@ public final class CastTyping {
         }
     }
 
-    private boolean isCastOperandTypeCompatible(ItemType source, ItemType target) {
-        // A node is cast through its typed value: an unknown one is checked at runtime, a known one statically.
-        return source.allMemberTypesMatch(member -> TypeAtomization.hasUnknownAtomizedType(member)
-                || TypeAtomization.atomizedItemType(member)
-                        .allMemberTypesMatch(atomized -> atomized.isStaticallyCastableAs(target)));
+    private static boolean isCastOperandTypeCompatible(ItemType source, ItemType target) {
+        return castableMembers(source, target).allMatch(castable -> castable);
+    }
+
+    /**
+     * Whether each member of the source type, once atomized, is statically castable to the target. A node is cast
+     * through its typed value: an unknown one is checked at runtime, so it counts as castable, and a known one
+     * statically.
+     */
+    private static Stream<Boolean> castableMembers(ItemType source, ItemType target) {
+        return source.getMemberTypes().stream()
+                .flatMap(member -> TypeAtomization.hasUnknownAtomizedType(member)
+                        ? Stream.of(true)
+                        : TypeAtomization.atomizedItemType(member).getMemberTypes().stream()
+                                .map(atomized -> atomized.isStaticallyCastableAs(target)));
     }
 }

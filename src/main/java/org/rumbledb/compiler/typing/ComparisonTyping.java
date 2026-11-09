@@ -79,12 +79,24 @@ public final class ComparisonTyping {
                                 + " "
                                 + rightItemType,
                         node,
-                        TypeAtomization.mayAtomizeToAnyType(leftItemType)
-                                || TypeAtomization.mayAtomizeToAnyType(rightItemType));
+                        // An empty operand passes: the comparison is then false or empty.
+                        leftInferredType.getCardinality().allowsZero()
+                                || rightInferredType.getCardinality().allowsZero()
+                                || mayCompare(leftItemType, rightItemType, operator));
             }
         }
 
         return new SequenceType(BuiltinTypesCatalogue.booleanItem, returnArity);
+    }
+
+    /** Whether some pair of member types may be compared, whereas static typing requires every pair to be. */
+    private static boolean mayCompare(ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
+        return left.getMemberTypes().stream().anyMatch(leftMember -> right.getMemberTypes().stream()
+                .anyMatch(rightMember -> !TypeAtomization.isNeverAtomizable(leftMember)
+                        && !TypeAtomization.isNeverAtomizable(rightMember)
+                        && (TypeAtomization.mayAtomizeToAnyType(leftMember)
+                                || TypeAtomization.mayAtomizeToAnyType(rightMember)
+                                || areAtomizedComparisonTypesCompatible(leftMember, rightMember, operator))));
     }
 
     // Static typing is pessimistic (XQuery 3.1, 2.2.3.1): every pair of member types must be comparable.

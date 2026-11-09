@@ -350,7 +350,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitArrayConstructor(ArrayConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         if (expression.isFixedSlotsArrayConstructor()) {
-            expression.setStaticSequenceType(new SequenceType(inferFixedSlotsArrayType(expression)));
+            // An array of item* members is typed array(*), which would lose that a member is unknown, so that a
+            // lookup of it would report the member's error again.
+            boolean unknownMember = expression.getMemberExpressions().stream()
+                    .anyMatch(member -> StaticTypeErrors.isUnknown(member.getStaticSequenceType()));
+            expression.setStaticSequenceType(
+                    unknownMember ? StaticTypeErrors.UNKNOWN : new SequenceType(inferFixedSlotsArrayType(expression)));
             return argument;
         }
         Expression contentExpr = expression.getExpression();
@@ -1378,13 +1383,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region postfix
 
+    /**
+     * Sets the type of a lookup, whose items are unknown when its input or key is: the inferred type would no longer
+     * show it.
+     */
+    private static void setLookupType(Expression lookup, SequenceType type) {
+        lookup.setStaticSequenceType(StaticTypeErrors.hasUnknownOperand(lookup) ? StaticTypeErrors.UNKNOWN : type);
+    }
+
     @Override
     public StaticContext visitArrayLookupExpression(ArrayLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setStaticSequenceType(this.lookups.inferArrayLookupType(
-                typeOf(expression.getMainExpression(), expression),
-                typeOf(expression.getLookupExpression(), expression),
-                expression));
+        setLookupType(
+                expression,
+                this.lookups.inferArrayLookupType(
+                        typeOf(expression.getMainExpression(), expression),
+                        typeOf(expression.getLookupExpression(), expression),
+                        expression));
         return argument;
     }
 
@@ -1393,11 +1408,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
         String key =
                 expression.getLookupExpression() instanceof StringLiteralExpression literal ? literal.getValue() : null;
-        expression.setStaticSequenceType(this.lookups.inferObjectLookupType(
-                typeOf(expression.getMainExpression(), expression),
-                typeOf(expression.getLookupExpression(), expression),
-                key,
-                expression));
+        setLookupType(
+                expression,
+                this.lookups.inferObjectLookupType(
+                        typeOf(expression.getMainExpression(), expression),
+                        typeOf(expression.getLookupExpression(), expression),
+                        key,
+                        expression));
         return argument;
     }
 
@@ -1405,10 +1422,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitPostfixLookupExpression(PostfixLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         Expression key = expression.getLookupExpression();
-        expression.setStaticSequenceType(this.lookups.inferPostfixLookupType(
-                typeOf(expression.getMainExpression(), expression),
-                key == null ? null : typeOf(key, expression),
-                expression));
+        setLookupType(
+                expression,
+                this.lookups.inferPostfixLookupType(
+                        typeOf(expression.getMainExpression(), expression),
+                        key == null ? null : typeOf(key, expression),
+                        expression));
         return argument;
     }
 
@@ -1420,7 +1439,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitArrayUnboxingExpression(ArrayUnboxingExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setStaticSequenceType(
+        setLookupType(
+                expression,
                 this.lookups.inferArrayUnboxingType(typeOf(expression.getMainExpression(), expression), expression));
         return argument;
     }
@@ -1584,9 +1604,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (!checkArguments(formalParameterTypes, actualParameterTypes)) {
             boolean mayPass = true;
             for (int argumentIndex = 0; argumentIndex < actualParameterTypes.size(); argumentIndex++) {
-                mayPass &= actualParameterTypes
-                        .get(argumentIndex)
-                        .mayMatchOrBePromotedTo(formalParameterTypes.get(argumentIndex));
+                mayPass &=
+                        mayConvertTo(actualParameterTypes.get(argumentIndex), formalParameterTypes.get(argumentIndex));
             }
             this.errors.report(
                     "the arguments of a dynamic function call do not match the signature of " + type,
@@ -1824,13 +1843,21 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             visit(keyExpression, keyExpression.getStaticContext());
             keyType = typeOf(keyExpression, clause);
         }
-        SequenceType atomizedKeyType = checkSingleAtomizedKey(
-                keyType, "group by variable $" + variableName + " must match atomic? instead found ", clause);
+        SequenceType declaredType = groupByVar.getActualSequenceType();
+        // A key that failed was reported where it was typed. A variable in scope is not an operand of the clause, so
+        // its checks would not be suppressed as those of a key expression are.
+        boolean unknownKey = StaticTypeErrors.isUnknown(keyType);
+        if (unknownKey && declaredType == null) {
+            return keyType;
+        }
+        SequenceType atomizedKeyType = unknownKey
+                ? null
+                : checkSingleAtomizedKey(
+                        keyType, "group by variable $" + variableName + " must match atomic? instead found ", clause);
         if (atomizedKeyType == null) {
             // without static typing, the runtime atomizes the key or fails
             atomizedKeyType = SequenceType.createSequenceType("anyAtomicType?");
         }
-        SequenceType declaredType = groupByVar.getActualSequenceType();
         if (declaredType == null) {
             return atomizedKeyType;
         }
@@ -1847,7 +1874,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType checkedKeyType = unknownCount
                 ? new SequenceType(atomizedKeyType.getItemType(), declaredType.getArity())
                 : atomizedKeyType;
-        if (!TypeAtomization.hasUnknownAtomizedType(keyType.getItemType())
+        if (!unknownKey
+                && !TypeAtomization.hasUnknownAtomizedType(keyType.getItemType())
                 && !checkedKeyType.isSubtypeOf(declaredType)) {
             this.errors.report(
                     "group by variable $"

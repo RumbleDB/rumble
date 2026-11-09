@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -439,12 +440,22 @@ public final class BuiltinFunctionTyping {
                             + inputType,
                     ErrorCode.InvalidArgumentType,
                     expression,
-                    inputType.getCardinality().allowsZero()
-                            || TypeAtomization.mayAtomizeToAnyType(inputType.getItemType()));
+                    mayAggregate(inputType, BuiltinFunctionTyping::isStrictAggregateItemType));
         }
 
         return new SequenceType(
                 inputItemType, TypeAtomization.inferType(inputType).getCardinality());
+    }
+
+    /**
+     * Whether an aggregate may succeed: the input may be empty, or some of its member types may be accepted, once
+     * normalized, or only be known at runtime.
+     */
+    private boolean mayAggregate(SequenceType inputType, Predicate<ItemType> acceptsNormalized) {
+        return inputType.getCardinality().allowsZero()
+                || inputType.getItemType().getMemberTypes().stream()
+                        .anyMatch(member -> TypeAtomization.mayAtomizeToAnyType(member)
+                                || acceptsNormalized.test(normalizeAggregateItemType(member)));
     }
 
     private static boolean isStrictAggregateItemType(ItemType type) {
@@ -535,8 +546,7 @@ public final class BuiltinFunctionTyping {
                             + inputType,
                     ErrorCode.InvalidArgumentType,
                     expression,
-                    inputType.getCardinality().allowsZero()
-                            || TypeAtomization.mayAtomizeToAnyType(inputType.getItemType()));
+                    mayAggregate(inputType, ComparisonTyping::hasMutuallyComparableItems));
         }
 
         return new SequenceType(

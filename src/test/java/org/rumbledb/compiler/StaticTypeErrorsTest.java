@@ -22,10 +22,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.StaticTypeErrorsException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
@@ -74,6 +76,26 @@ class StaticTypeErrorsTest {
         // The variable is one item of the sequence, which keeps it unknown.
         List<RumbleException> errors = errors("for $i in (1 + \"a\")\nreturn $i * 2");
         Assertions.assertEquals(List.of(1), lines(errors));
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "for $x in (1 + \"a\") group by $k := $x return $k",
+                "[1 + \"a\"]?1 + 1",
+                "declare function local:f() as xs:integer { 1 + \"a\" }; local:f() + 1"
+            })
+    void reportsAnErrorOnceThroughGroupingVariablesArraysAndInlinedFunctions(String query) {
+        Assertions.assertEquals(1, errors(query).size());
+    }
+
+    @Test
+    void describesAnInferredUnionByItsMembers() {
+        Assertions.assertEquals(
+                "The following types operation is not possible: (xs:integer | xs:string) + xs:boolean",
+                errors("declare function local:f($x as xs:boolean) { (if ($x) then 1 else \"a\") + $x }; 1")
+                        .get(0)
+                        .getJSONiqErrorMessage());
     }
 
     @Test
@@ -173,7 +195,7 @@ class StaticTypeErrorsTest {
     void preservesIndependentAssertionsAndContinuesWithLaterSiblings() {
         List<RumbleException> errors = errors("(1 + \"a\",\n 1 is statically string,\n 2 + \"b\")");
         Assertions.assertEquals(List.of(1, 2, 3), lines(errors));
-        Assertions.assertInstanceOf(org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException.class, errors.get(1));
+        Assertions.assertInstanceOf(IsStaticallyUnexpectedTypeException.class, errors.get(1));
     }
 
     @Test
@@ -187,27 +209,65 @@ class StaticTypeErrorsTest {
             value = {
                 "(if ($x) then 1 else \"a\") + 1 | false",
                 "-(if ($x) then 1 else \"a\") | false",
-                "(if ($x) then \"a\" else true()) + 1 | true"
+                "(if ($x) then \"a\" else true()) + 1 | true",
+                "(if ($x) then 1 else \"a\") eq 1 | false",
+                "sum(if ($x) then 1 else \"a\") | false",
+                "min(if ($x) then 1 else \"a\") | false",
+                "sum(if ($x) then \"a\" else \"b\") | true",
+                "(if ($x) then 1 else xs:date(\"2000-01-01\")) cast as integer | false",
+                "(if ($x) then xs:date(\"2000-01-01\") else xs:time(\"12:00:00\")) cast as integer | true"
             })
-    void classifiesArithmeticUnionAlternatives(String body, boolean certain) {
+    void anErrorIsPossibleWhenSomeAlternativePasses(String body, boolean certain) {
         Assertions.assertEquals(
                 List.of(certain), certainties(errors("declare function local:f($x as boolean) { " + body + " }; 1")));
     }
 
-    @Test
-    void unrelatedMapRestrictionsCanShareTheEmptyMap() {
+    @ParameterizedTest
+    @CsvSource(
+            delimiter = '|',
+            value = {
+                "map(xs:string, xs:integer) | map(xs:integer, xs:string) | false",
+                "array(xs:integer) | array(xs:string) | false",
+                "element(*, xs:untyped) | element(a) | false",
+                "element(a) | element(b) | true",
+                "element(a) | attribute(a) | true",
+                "document-node(element(a)) | document-node(element(b)) | true"
+            })
+    void aMismatchIsPossibleWhenTheTypesMayShareAnItem(String type, String returnType, boolean certain) {
         Assertions.assertEquals(
-                List.of(false),
-                certainties(errors("declare function local:f($x as map(xs:string, xs:integer)) "
-                        + "as map(xs:integer, xs:string) { $x }; 1")));
+                List.of(certain),
+                certainties(errors("declare function local:f($x as " + type + ") as " + returnType + " { $x }; 1")));
     }
 
     @Test
-    void unrelatedArrayRestrictionsCanShareTheEmptyArray() {
+    void anEmptyOptionalOperandCanPassAComparison() {
         Assertions.assertEquals(
-                List.of(false),
-                certainties(errors(
-                        "declare function local:f($x as array(xs:integer)) " + "as array(xs:string) { $x }; 1")));
+                List.of(false), certainties(errors("declare function local:f($x as xs:string?) { $x eq 1 }; 1")));
+    }
+
+    @Test
+    void dynamicAndNamedCallsUseTheSameFunctionConversionForCertainty() {
+        List<RumbleException> errors = errors("declare function local:g($y as xs:integer) { $y };\n"
+                + "declare function local:f($x as xs:untypedAtomic?) {\n"
+                + "  (local:g($x),\n (function($y as xs:integer) { $y })($x))\n}; 1");
+        Assertions.assertEquals(List.of(false, false), certainties(errors));
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+            delimiter = '|',
+            value = {"xs:integer+ | $x + \"a\"", "xs:integer+ | $x eq \"a\"", "xs:date+ | $x cast as xs:integer"})
+    void aLaterCertainFailureReplacesAnEarlierPossibleFailure(String type, String body) {
+        List<RumbleException> errors = errors("declare function local:f($x as " + type + ") { " + body + " }; 1");
+        Assertions.assertEquals(List.of(true), certainties(errors));
+    }
+
+    @Test
+    void aStrengthenedFailureSuppressesCascadingErrorsAndKeepsDiagnosticOrder() {
+        List<RumbleException> errors =
+                errors("declare function local:f($x as xs:integer+) {\n" + "  (($x + \"a\") * 2,\n 3 + \"b\")\n}; 1");
+        Assertions.assertEquals(List.of(2, 3), lines(errors));
+        Assertions.assertEquals(List.of(true, true), certainties(errors));
     }
 
     private static List<RumbleException> errors(String query) {
