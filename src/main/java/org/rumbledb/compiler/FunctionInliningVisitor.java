@@ -170,11 +170,12 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 ? body
                 : convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
         ReturnClause returnClause = new ReturnClause(returnValue, expression.getMetadata());
-        // The arguments are bound in let clauses, followed by the assignments of the temporary variables used on name
-        // collisions, then the return clause. Each list holds the clauses of later arguments first.
+        // The arguments are bound from last to first, so an argument is evaluated after the parameters of the later
+        // ones are bound. A parameter that an earlier argument reads is therefore bound through a temporary variable,
+        // and assigned once every argument is bound, just before the return clause.
         List<Clause> clauses = new ArrayList<>();
         List<Clause> assignmentClauses = new ArrayList<>();
-        for (int i = 0; i < expression.getArguments().size(); i++) {
+        for (int i = expression.getArguments().size() - 1; i >= 0; i--) {
             Name paramName = paramNames.get(i);
             SequenceType paramType = inlineFunction.getParams().get(paramName);
             Expression argumentExpression =
@@ -184,14 +185,13 @@ public class FunctionInliningVisitor extends CloneVisitor {
             if (isVariableReferenced(expression.getArguments(), paramName, i)) {
                 Name columnName = Name.createVariableInNoNamespace(
                         String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
-                clauses.add(0, new LetClause(columnName, null, argumentExpression, expression.getMetadata()));
+                clauses.add(new LetClause(columnName, null, argumentExpression, expression.getMetadata()));
                 Expression assignmentExpression = convertArgument(
                         new VariableReferenceExpression(columnName, expression.getMetadata()), paramType, expression);
-                assignmentClauses.add(
-                        0, new LetClause(paramName, null, assignmentExpression, expression.getMetadata()));
+                assignmentClauses.add(new LetClause(paramName, null, assignmentExpression, expression.getMetadata()));
             } else {
                 Expression assignmentExpression = convertArgument(argumentExpression, paramType, expression);
-                clauses.add(0, new LetClause(paramName, null, assignmentExpression, expression.getMetadata()));
+                clauses.add(new LetClause(paramName, null, assignmentExpression, expression.getMetadata()));
             }
         }
         clauses.addAll(assignmentClauses);
