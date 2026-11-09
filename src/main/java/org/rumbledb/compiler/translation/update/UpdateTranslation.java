@@ -30,6 +30,7 @@ import org.rumbledb.compiler.context.update.RenameExprContext;
 import org.rumbledb.compiler.context.update.ReplaceExprContext;
 import org.rumbledb.compiler.context.update.TransformExprContext;
 import org.rumbledb.compiler.translation.TranslationContext;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
@@ -62,7 +63,7 @@ public final class UpdateTranslation {
             for (PairConstructorContext<ExprSingleCtx> currentPair : ctx.pairConstructor()) {
                 Expression lhs = visitExprSingle.apply(currentPair.lhs());
                 if (lhs instanceof StepExpr stepExpr) {
-                    if ("jsoniq10".equals(translationContext.moduleContext().getQueryLanguage())) {
+                    if (translationContext.moduleContext().getQueryLanguage() == LanguageVersion.JSONIQ_10) {
                         keys.add(new StringLiteralExpression(
                                 stepExpr.getNodeTest().toString(), lhs.getMetadata()));
                     } else {

@@ -19,6 +19,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -55,6 +57,7 @@ import org.rumbledb.compiler.context.LetVarContext;
 import org.rumbledb.compiler.context.LibraryModuleContext;
 import org.rumbledb.compiler.context.LiteralExprContext;
 import org.rumbledb.compiler.context.MainModuleContext;
+import org.rumbledb.compiler.context.ModuleContext;
 import org.rumbledb.compiler.context.ModuleImportContext;
 import org.rumbledb.compiler.context.MultiplicativeExprContext;
 import org.rumbledb.compiler.context.NamedFunctionRefContext;
@@ -162,6 +165,7 @@ import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
 import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
@@ -185,6 +189,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
@@ -254,6 +259,8 @@ import org.rumbledb.parser.jsoniq.JsoniqParserBaseVisitor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -269,13 +276,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
 
     public TranslationVisitor(
             StaticContext moduleContext,
-            boolean isMainModule,
             CompilationConfiguration compilationConfiguration,
             ExternalBindings externalBindings,
             String code,
             CommonTokenStream jsoniqTokenStream) {
         this.translationContext =
-                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, isMainModule, code);
+                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, code);
         this.jsoniqTokenStream = jsoniqTokenStream;
     }
 
@@ -284,31 +290,12 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
     // region module
     @Override
     public Module visitModule(JsoniqParser.ModuleContext ctx) {
-        if (!(ctx.vers == null) && !ctx.vers.isEmpty()) {
-            String version = processStringLiteral(ctx.vers).trim();
-            if (version.equals("1.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("jsoniq10");
-            } else if (version.equals("3.1")) {
-                this.translationContext.moduleContext().setQueryLanguage("jsoniq31");
-            } else if (version.equals("4.0")) {
-                this.translationContext.moduleContext().setQueryLanguage("jsoniq40");
-            } else {
-                throw new JsoniqVersionException(createMetadataFromContext(ctx));
-            }
-        }
-        if (this.translationContext.isMainModule()) {
-            if (ctx.mainModule() != null) {
-                return this.visitMainModule(ctx.mainModule());
-            }
-            throw new ParsingException(
-                    "Main module expected, but library module found.", createMetadataFromContext(ctx));
-        } else {
-            if (ctx.libraryModule() != null) {
-                return this.visitLibraryModule(ctx.libraryModule());
-            }
-            throw new ParsingException(
-                    "Library module expected, but main module found.", createMetadataFromContext(ctx));
-        }
+        return ModuleTranslation.module(
+                ModuleContext.from(ctx),
+                this.translationContext,
+                this::processStringLiteral,
+                this::visitMainModule,
+                this::visitLibraryModule);
     }
 
     @Override
@@ -337,6 +324,19 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return new PrologVisitor().build(ctx);
     }
 
+    /** Translates one header or declaration of a prolog. Tools that accept incomplete queries can contain failures. */
+    protected void translatePrologEntry(ParseTree entry, Consumer<ParseTree> translation) {
+        translation.accept(entry);
+    }
+
+    /** Loads the catalog of the schema imports. Tools that accept incomplete queries can leave out those that fail. */
+    protected Optional<XmlSchemaCatalog> loadSchemas(List<SchemaImport> schemaImports) {
+        return XmlSchemaCatalogLoader.load(
+                schemaImports,
+                this.translationContext.moduleContext().getStaticBaseURI(),
+                this.translationContext.compilationConfiguration());
+    }
+
     private class PrologVisitor extends JsoniqParserBaseVisitor<Void> {
         private final PrologBuilder builder = new PrologBuilder(TranslationVisitor.this.translationContext);
 
@@ -345,11 +345,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 return null;
             }
             for (JsoniqParser.PrologHeaderContext header : ctx.headers) {
-                visit(header);
+                translatePrologEntry(header, this::visit);
             }
-            this.builder.finishHeader(createMetadataFromContext(ctx));
+            this.builder.finishHeader(createMetadataFromContext(ctx), TranslationVisitor.this::loadSchemas);
             for (JsoniqParser.AnnotatedDeclContext declaration : ctx.declarations) {
-                visit(declaration);
+                translatePrologEntry(declaration, this::visit);
             }
             return this.builder.build(createMetadataFromContext(ctx));
         }
@@ -1165,10 +1165,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
                 Expression lhs = this.visitExprSingle(currentPair.lhs);
                 if (lhs instanceof StepExpr stepExpr) {
-                    if (this.translationContext
-                            .moduleContext()
-                            .getQueryLanguage()
-                            .equals("jsoniq10")) {
+                    if (this.translationContext.moduleContext().getQueryLanguage() == LanguageVersion.JSONIQ_10) {
                         keys.add(new StringLiteralExpression(
                                 stepExpr.getNodeTest().toString(), lhs.getMetadata()));
                     } else {
@@ -1181,7 +1178,7 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 }
                 values.add(this.visitExprSingle(currentPair.rhs));
             }
-            if (this.translationContext.moduleContext().getQueryLanguage().equals("jsoniq10")) {
+            if (this.translationContext.moduleContext().getQueryLanguage() == LanguageVersion.JSONIQ_10) {
                 return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
             } else {
                 return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));
