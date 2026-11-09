@@ -238,23 +238,33 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     /**
-     * The error for operands that may not be atomizable: FOTY0013, the error of atomization, when one of them can never
-     * be atomized, such as an object, and XPTY0004 when it only may not be.
+     * The error for an operand that may not be atomizable: FOTY0013, the error of atomization, when it can never be
+     * atomized, such as an object, and XPTY0004 when it only may not be.
      */
-    private static ErrorCode nonAtomizableErrorCode(ItemType... types) {
-        return Arrays.stream(types).anyMatch(TypeAtomization::isNeverAtomizable)
+    private static ErrorCode nonAtomizableErrorCode(ItemType type) {
+        return TypeAtomization.isNeverAtomizable(type)
                 ? ErrorCode.FunctionAtomizationErrorCode
                 : ErrorCode.UnexpectedTypeErrorCode;
     }
 
-    private void checkAtomizableOperands(SequenceType left, SequenceType right, Expression expression) {
+    /** Checks that the operands of an operator that atomizes them, e.g. "Comparison operands", can be atomized. */
+    private void checkAtomizableOperands(
+            String operands, SequenceType left, SequenceType right, Expression expression) {
+        ItemType reported = null;
         for (SequenceType operand : List.of(left, right)) {
-            if (!operand.isEmptySequence() && !TypeAtomization.isAtomizable(operand.getItemType())) {
-                throwStaticTypeException(
-                        "An arithmetic operand must be atomizable, found " + operand,
-                        nonAtomizableErrorCode(operand.getItemType()),
-                        expression.getMetadata());
+            ItemType type = operand.isEmptySequence() ? null : operand.getItemType();
+            // an operand that can never be atomized is reported first, since atomizing it always fails
+            if (type != null
+                    && !TypeAtomization.isAtomizable(type)
+                    && (reported == null || TypeAtomization.isNeverAtomizable(type))) {
+                reported = type;
             }
+        }
+        if (reported != null) {
+            throwStaticTypeException(
+                    operands + " must be atomizable, found " + reported,
+                    nonAtomizableErrorCode(reported),
+                    expression.getMetadata());
         }
     }
 
@@ -1517,7 +1527,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             inferredArity = SequenceType.Arity.OneOrZero;
         }
 
-        checkAtomizableOperands(leftInferredType, rightInferredType, expression);
+        checkAtomizableOperands("Arithmetic operands", leftInferredType, rightInferredType, expression);
         ItemType leftItemType = leftInferredType.getItemType();
         ItemType rightItemType = rightInferredType.getItemType();
 
@@ -1755,7 +1765,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             inferredArity = SequenceType.Arity.OneOrZero;
         }
 
-        checkAtomizableOperands(leftInferredType, rightInferredType, expression);
+        checkAtomizableOperands("Arithmetic operands", leftInferredType, rightInferredType, expression);
         ItemType leftItemType = leftInferredType.getItemType();
         ItemType rightItemType = rightInferredType.getItemType();
 
@@ -1949,6 +1959,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
+        checkAtomizableOperands("Comparison operands", leftInferredType, rightInferredType, expression);
+
         // if any of the element is the empty sequence, we set its sequence type to the other, if both are we do not
         // need additional checks
         boolean isLeftEmpty = leftInferredType.isEmptySequence();
@@ -1957,19 +1969,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
             ItemType leftItemType = isLeftEmpty ? rightInferredType.getItemType() : leftInferredType.getItemType();
             ItemType rightItemType = isRightEmpty ? leftInferredType.getItemType() : rightInferredType.getItemType();
-
-            if (!TypeAtomization.isAtomizable(leftItemType) || !TypeAtomization.isAtomizable(rightItemType)) {
-                throwStaticTypeException(
-                        "It is not possible to compare items that cannot be atomized, such as objects, maps or"
-                                + " functions: "
-                                + leftItemType
-                                + " "
-                                + operator
-                                + " "
-                                + rightItemType,
-                        nonAtomizableErrorCode(leftItemType, rightItemType),
-                        expression.getMetadata());
-            }
 
             if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator)) {
                 throwStaticTypeException(
@@ -2341,9 +2340,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     "A child expression of a ConcatExpression has no inferred type", expression.getMetadata());
         }
 
-        if ((!leftType.isEmptySequence() && !TypeAtomization.isAtomizable(leftType.getItemType()))
-                || (!rightType.isEmptySequence() && !TypeAtomization.isAtomizable(rightType.getItemType()))
-                || resolveArities(leftType, rightType) == null) {
+        checkAtomizableOperands("Concatenation operands", leftType, rightType, expression);
+        if (resolveArities(leftType, rightType) == null) {
             throwStaticTypeException(
                     "operands of the concat expression must match type atomic? instead found: "
                             + leftType
