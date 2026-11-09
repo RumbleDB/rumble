@@ -25,11 +25,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
@@ -119,11 +119,11 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
     private static Item applyComparison(
             Item left, Item right, ComparisonOperator operator, String activeCollation, ExceptionMetadata metadata) {
         if (left.isArray() || right.isArray()) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", metadata);
+            throw new CannotAtomizeException("Invalid args. Comparison can't be performed on array type", metadata);
         } else if (left.isObject() || right.isObject()) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", metadata);
+            throw new CannotAtomizeException("Invalid args. Comparison can't be performed on object type", metadata);
         } else if (left.isFunction() || right.isFunction()) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on function type", metadata);
+            throw new CannotAtomizeException("Invalid args. Comparison can't be performed on function type", metadata);
         }
 
         if (operator.isValueComparison()) {
