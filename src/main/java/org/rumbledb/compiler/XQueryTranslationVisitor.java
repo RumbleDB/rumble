@@ -1,1039 +1,847 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.compiler;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.misc.IntervalSet;
 import org.antlr.v4.runtime.tree.ParseTree;
-import org.antlr.v4.runtime.tree.TerminalNode;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.FunctionIdentifier;
+
+import lombok.extern.log4j.Log4j2;
+
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.context.AdditiveExprContext;
+import org.rumbledb.compiler.context.AndExprContext;
+import org.rumbledb.compiler.context.AnnotationsContext;
+import org.rumbledb.compiler.context.ArrayConstructorContext;
+import org.rumbledb.compiler.context.ArrowExprContext;
+import org.rumbledb.compiler.context.CommaExprContext;
+import org.rumbledb.compiler.context.ComparisonExprContext;
+import org.rumbledb.compiler.context.ContextItemDeclContext;
+import org.rumbledb.compiler.context.CountClauseContext;
+import org.rumbledb.compiler.context.EnclosedExprContext;
+import org.rumbledb.compiler.context.ExtensionExprContext;
+import org.rumbledb.compiler.context.FlworExprContext;
+import org.rumbledb.compiler.context.ForClauseContext;
+import org.rumbledb.compiler.context.ForVarContext;
+import org.rumbledb.compiler.context.FunctionCallContext;
+import org.rumbledb.compiler.context.FunctionDeclContext;
+import org.rumbledb.compiler.context.GroupByClauseContext;
+import org.rumbledb.compiler.context.IfExprContext;
+import org.rumbledb.compiler.context.InlineFunctionExprContext;
+import org.rumbledb.compiler.context.IntersectExceptExprContext;
+import org.rumbledb.compiler.context.LetClauseContext;
+import org.rumbledb.compiler.context.LetVarContext;
+import org.rumbledb.compiler.context.LibraryModuleContext;
+import org.rumbledb.compiler.context.LiteralExprContext;
+import org.rumbledb.compiler.context.MainModuleContext;
+import org.rumbledb.compiler.context.ModuleContext;
+import org.rumbledb.compiler.context.ModuleImportContext;
+import org.rumbledb.compiler.context.MultiplicativeExprContext;
+import org.rumbledb.compiler.context.NamedFunctionRefContext;
+import org.rumbledb.compiler.context.OptionDeclContext;
+import org.rumbledb.compiler.context.OrExprContext;
+import org.rumbledb.compiler.context.OrderByClauseContext;
+import org.rumbledb.compiler.context.ParenthesizedExprContext;
+import org.rumbledb.compiler.context.ProgramContext;
+import org.rumbledb.compiler.context.QuantifiedExprContext;
+import org.rumbledb.compiler.context.RangeExprContext;
+import org.rumbledb.compiler.context.SchemaImportContext;
+import org.rumbledb.compiler.context.SimpleMapExprContext;
+import org.rumbledb.compiler.context.SingleTypeCheckExprContext;
+import org.rumbledb.compiler.context.StringConcatExprContext;
+import org.rumbledb.compiler.context.StringConstructorContext;
+import org.rumbledb.compiler.context.SwitchExprContext;
+import org.rumbledb.compiler.context.TryCatchExprContext;
+import org.rumbledb.compiler.context.TypeCheckExprContext;
+import org.rumbledb.compiler.context.TypeswitchExprContext;
+import org.rumbledb.compiler.context.UnaryExprContext;
+import org.rumbledb.compiler.context.UnionExprContext;
+import org.rumbledb.compiler.context.ValueExprContext;
+import org.rumbledb.compiler.context.VarDeclContext;
+import org.rumbledb.compiler.context.VarRefContext;
+import org.rumbledb.compiler.context.WhereClauseContext;
+import org.rumbledb.compiler.context.WindowClauseContext;
+import org.rumbledb.compiler.context.scripting.ApplyStatementContext;
+import org.rumbledb.compiler.context.scripting.AssignStatementContext;
+import org.rumbledb.compiler.context.scripting.BlockExprContext;
+import org.rumbledb.compiler.context.scripting.BlockStatementContext;
+import org.rumbledb.compiler.context.scripting.ExitStatementContext;
+import org.rumbledb.compiler.context.scripting.FlworStatementContext;
+import org.rumbledb.compiler.context.scripting.IfStatementContext;
+import org.rumbledb.compiler.context.scripting.StatementsAndExprContext;
+import org.rumbledb.compiler.context.scripting.StatementsAndOptionalExprContext;
+import org.rumbledb.compiler.context.scripting.StatementsContext;
+import org.rumbledb.compiler.context.scripting.SwitchStatementContext;
+import org.rumbledb.compiler.context.scripting.TryCatchStatementContext;
+import org.rumbledb.compiler.context.scripting.TypeSwitchStatementContext;
+import org.rumbledb.compiler.context.scripting.VarDeclStatementContext;
+import org.rumbledb.compiler.context.scripting.WhileStatementContext;
+import org.rumbledb.compiler.context.type.ItemTypeContext;
+import org.rumbledb.compiler.context.type.SequenceTypeContext;
+import org.rumbledb.compiler.context.type.SingleTypeContext;
+import org.rumbledb.compiler.context.xml.AttributeTestContext;
+import org.rumbledb.compiler.context.xml.CommonContentContext;
+import org.rumbledb.compiler.context.xml.CompAttrConstructorContext;
+import org.rumbledb.compiler.context.xml.CompCommentConstructorContext;
+import org.rumbledb.compiler.context.xml.CompDocConstructorContext;
+import org.rumbledb.compiler.context.xml.CompElemConstructorContext;
+import org.rumbledb.compiler.context.xml.CompNamespaceConstructorContext;
+import org.rumbledb.compiler.context.xml.CompPIConstructorContext;
+import org.rumbledb.compiler.context.xml.CompTextConstructorContext;
+import org.rumbledb.compiler.context.xml.DirElemContentContext;
+import org.rumbledb.compiler.context.xml.DirectConstructorContext;
+import org.rumbledb.compiler.context.xml.DocumentTestContext;
+import org.rumbledb.compiler.context.xml.ElementTestContext;
+import org.rumbledb.compiler.context.xml.EnclosedContentExprContext;
+import org.rumbledb.compiler.context.xml.NameTestContext;
+import org.rumbledb.compiler.context.xml.PathExprContext;
+import org.rumbledb.compiler.context.xml.PiTestContext;
+import org.rumbledb.compiler.context.xml.SchemaAttributeTestContext;
+import org.rumbledb.compiler.context.xml.SchemaElementTestContext;
+import org.rumbledb.compiler.context.xml.StepExprContext;
+import org.rumbledb.compiler.translation.AnnotationTranslation;
+import org.rumbledb.compiler.translation.ArithmeticTranslation;
+import org.rumbledb.compiler.translation.ComparisonTranslation;
+import org.rumbledb.compiler.translation.ControlTranslation;
+import org.rumbledb.compiler.translation.DeclarationTranslation;
+import org.rumbledb.compiler.translation.FlworTranslation;
+import org.rumbledb.compiler.translation.ImportTranslation;
+import org.rumbledb.compiler.translation.LogicTranslation;
+import org.rumbledb.compiler.translation.ModuleTranslation;
+import org.rumbledb.compiler.translation.PostfixTranslation;
+import org.rumbledb.compiler.translation.PrimaryTranslation;
+import org.rumbledb.compiler.translation.PrologBuilder;
+import org.rumbledb.compiler.translation.QuantifiedTranslation;
+import org.rumbledb.compiler.translation.SequenceTranslation;
+import org.rumbledb.compiler.translation.TranslationContext;
+import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
+import org.rumbledb.compiler.translation.TypeTranslation;
+import org.rumbledb.compiler.translation.scripting.BlockStatementTranslation;
+import org.rumbledb.compiler.translation.scripting.ControlStatementTranslation;
+import org.rumbledb.compiler.translation.scripting.DeclarationStatementTranslation;
+import org.rumbledb.compiler.translation.scripting.LoopStatementTranslation;
+import org.rumbledb.compiler.translation.scripting.MutationStatementTranslation;
+import org.rumbledb.compiler.translation.xml.XmlComputedConstructorTranslation;
+import org.rumbledb.compiler.translation.xml.XmlDirectConstructorTranslation;
+import org.rumbledb.compiler.translation.xml.XmlNodeTestTranslation;
+import org.rumbledb.compiler.translation.xml.XmlPathTranslation;
+import org.rumbledb.compiler.utils.URILiteralUtils;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
-import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.arithmetic.AdditiveExpression;
-import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
-import org.rumbledb.expressions.arithmetic.UnaryExpression;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.expressions.control.*;
-import org.rumbledb.expressions.flowr.*;
-import org.rumbledb.expressions.logic.AndExpression;
-import org.rumbledb.expressions.logic.NotExpression;
-import org.rumbledb.expressions.logic.OrExpression;
-import org.rumbledb.expressions.miscellaneous.RangeExpression;
-import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
-import org.rumbledb.expressions.module.*;
-import org.rumbledb.expressions.postfix.*;
-import org.rumbledb.expressions.primary.*;
-import org.rumbledb.expressions.typing.CastExpression;
-import org.rumbledb.expressions.typing.CastableExpression;
-import org.rumbledb.expressions.typing.InstanceOfExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.parser.XQueryParser;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
+import org.rumbledb.expressions.control.TypeSwitchExpression;
+import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
+import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.ForClause;
+import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
+import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
+import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Module;
+import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
+import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
+import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
+import org.rumbledb.expressions.scripting.block.BlockExpression;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.ConditionalStatement;
+import org.rumbledb.expressions.scripting.control.SwitchStatement;
+import org.rumbledb.expressions.scripting.control.TryCatchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.loops.BreakStatement;
+import org.rumbledb.expressions.scripting.loops.ContinueStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.WhileStatement;
+import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
+import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.expressions.typing.ValidateExpression;
+import org.rumbledb.expressions.typing.ValidateExpression.ValidationMode;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.expressions.xml.node_test.NodeTest;
+import org.rumbledb.parser.xquery.XQueryParser;
+import org.rumbledb.parser.xquery.XQueryParser.UriLiteralContext;
+import org.rumbledb.parser.xquery.XQueryParserBaseVisitor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
-import java.io.IOException;
-import java.math.BigDecimal;
-import java.net.URI;
-import java.util.*;
+/**
+ * Translation is the phase in which the Abstract Syntax Tree is transformed
+ * into an Expression Tree, which is a JSONiq intermediate representation.
+ *
+ * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
+ */
+@Log4j2
+public class XQueryTranslationVisitor extends XQueryParserBaseVisitor<Node> {
 
-import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+    /**
+     * Token types that can begin a relativePathExpr (e.g. "*", "<", any name or keyword), read from the generated
+     * parser's ATN so the set follows the grammar. Used by {@link #checkLeadingLoneSlash}.
+     */
+    private static final IntervalSet RELATIVE_PATH_START_TOKENS =
+            XQueryParser._ATN.nextTokens(XQueryParser._ATN.ruleToStartState[XQueryParser.RULE_relativePathExpr]);
 
-public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBaseVisitor<Node> {
-    private StaticContext moduleContext;
-    private RumbleRuntimeConfiguration configuration;
-    private boolean isMainModule;
+    private final CommonTokenStream xQueryTokenStream;
+    private final TranslationContext translationContext;
 
     public XQueryTranslationVisitor(
             StaticContext moduleContext,
-            boolean isMainModule,
-            RumbleRuntimeConfiguration configuration
-    ) {
-        this.moduleContext = moduleContext;
-        this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
-        this.configuration = configuration;
-        this.isMainModule = isMainModule;
+            CompilationConfiguration compilationConfiguration,
+            ExternalBindings externalBindings,
+            String code,
+            CommonTokenStream xQueryTokenStream) {
+        this.translationContext =
+                new TranslationContext(moduleContext, compilationConfiguration, externalBindings, code);
+        this.xQueryTokenStream = xQueryTokenStream;
     }
 
     // endregion expr
 
     // region module
     @Override
-    public Node visitModule(XQueryParser.ModuleContext ctx) {
-        XQueryParser.VersionDeclContext ver = ctx.versionDecl();
-        if (!(ver == null) && !ver.version.isEmpty()) {
-            String version = ver.version.getText().trim();
-            if (!(version.equals("3.1") || version.equals("3.0") || version.equals("1.0"))) {
-                throw new JsoniqVersionException(createMetadataFromContext(ctx));
-            }
-        }
-        if (this.isMainModule) {
-            if (ctx.mainModule() != null) {
-                return this.visitMainModule(ctx.mainModule());
-            }
-            throw new ParsingException(
-                    "Main module expected, but library module found.",
-                    createMetadataFromContext(ctx)
-            );
-        } else {
-            if (ctx.libraryModule() != null) {
-                return this.visitLibraryModule(ctx.libraryModule());
-            }
-            throw new ParsingException(
-                    "Library module expected, but main module found.",
-                    createMetadataFromContext(ctx)
-            );
-        }
-    }
-
-    private ExceptionMetadata createMetadataFromContext(ParserRuleContext ctx) {
-        return generateMetadata(ctx.getStart());
-    }
-
-    public ExceptionMetadata generateMetadata(Token token) {
-        return new ExceptionMetadata(
-                this.moduleContext.getStaticBaseURI().toString(),
-                token.getLine(),
-                token.getCharPositionInLine()
-        );
+    public Module visitModule(XQueryParser.ModuleContext ctx) {
+        return ModuleTranslation.module(
+                ModuleContext.from(ctx),
+                this.translationContext,
+                this::processStringLiteral,
+                this::visitMainModule,
+                this::visitLibraryModule);
     }
 
     @Override
-    public Node visitMainModule(XQueryParser.MainModuleContext ctx) {
-        Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-        Expression commaExpression = (Expression) this.visitExpr(ctx.queryBody().expr()); // Had to access query body
-        MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
-        module.setStaticContext(this.moduleContext);
-        return module;
+    public MainModule visitMainModule(XQueryParser.MainModuleContext ctx) {
+        return ModuleTranslation.mainModule(
+                MainModuleContext.from(ctx), this.translationContext, this::visitProlog, this::visitProgram);
     }
 
-    // region Library
+    // region program
+    @Override
+    public Program visitProgram(XQueryParser.ProgramContext ctx) {
+        return ModuleTranslation.program(
+                ProgramContext.from(ctx), this.translationContext, this::visitStatementsAndOptionalExpr);
+    }
+
+    // end region
 
     @Override
-    public Node visitLibraryModule(XQueryParser.LibraryModuleContext ctx) {
-        String prefix = ctx.moduleDecl().ncName().getText();
-        String namespace = processURILiteral(ctx.moduleDecl().uriLiteral());
-        if (namespace.equals("")) {
-            throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
-        }
-        URI resolvedURI = FileSystemUtil.resolveURI(
-            this.moduleContext.getStaticBaseURI(),
-            namespace,
-            generateMetadata(ctx.getStop())
-        );
-        bindNamespace(
-            prefix,
-            resolvedURI.toString(),
-            generateMetadata(ctx.getStop())
-        );
-
-        Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-        LibraryModule module = new LibraryModule(prolog, resolvedURI.toString(), createMetadataFromContext(ctx));
-        module.setStaticContext(this.moduleContext);
-        return module;
-    }
-
-    public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
-        boolean success = this.moduleContext.bindNamespace(
-            prefix,
-            namespace
-        );
-        if (!success) {
-            throw new NamespacePrefixBoundTwiceException(
-                    "Prefix " + prefix + " is bound twice.",
-                    metadata
-            );
-        }
-    }
-
-
-    @Override
-    public Node visitProlog(XQueryParser.PrologContext ctx) {
-        // bind namespaces
-        for (XQueryParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
-            this.processNamespaceDecl(namespace);
-        }
-        if (!ctx.defaultNamespaceDecl().isEmpty()) {
-            throw new XMLUnsupportedException(
-                    "defaultNamespaceDeclContext not supported YET",
-                    createMetadataFromContext(ctx)
-            );
-        }
-        if (!ctx.schemaImport().isEmpty()) {
-            throw new XMLUnsupportedException("schemaImport not supported", createMetadataFromContext(ctx));
-        }
-        List<XQueryParser.SetterContext> setters = ctx.setter();
-        boolean emptyOrderSet = false;
-        boolean defaultCollationSet = false;
-        for (XQueryParser.SetterContext setterContext : setters) {
-            if (setterContext.emptyOrderDecl() != null) {
-                if (emptyOrderSet) {
-                    throw new MoreThanOneEmptyOrderDeclarationException(
-                            "The empty order was already set.",
-                            createMetadataFromContext(setterContext.emptyOrderDecl())
-                    );
-                }
-                processEmptySequenceOrder(setterContext.emptyOrderDecl());
-                emptyOrderSet = true;
-                continue;
-            }
-            if (setterContext.defaultCollationDecl() != null) {
-                if (defaultCollationSet) {
-                    throw new DefaultCollationException(
-                            "The default collation was already set.",
-                            createMetadataFromContext(setterContext.defaultCollationDecl())
-                    );
-                }
-                processDefaultCollation(setterContext.defaultCollationDecl());
-                defaultCollationSet = true;
-                continue;
-            }
-            if (setterContext.copyNamespacesDecl() != null) {
-                throw new XMLUnsupportedException("copyNamespacesDecl not supported", createMetadataFromContext(ctx));
-            }
-            if (setterContext.constructionDecl() != null) {
-                throw new XMLUnsupportedException("constructionDecl not supported", createMetadataFromContext(ctx));
-            }
-            if (setterContext.boundarySpaceDecl() != null) {
-                throw new XMLUnsupportedException("boundarySpaceDecl not supported", createMetadataFromContext(ctx));
-            }
-            if (setterContext.decimalFormatDecl() != null) {
-                // TODO outside of the scope for thesis
-                throw new XMLUnsupportedException(
-                        "decimalFormatDecl not supported YET",
-                        createMetadataFromContext(ctx)
-                );
-            }
-            if (setterContext.baseURIDecl() != null) {
-                // TODO outside of the scope for thesis
-                throw new XMLUnsupportedException("baseURIDecl not supported YET", createMetadataFromContext(ctx));
-            }
-            throw new UnsupportedFeatureException(
-                    "Setters are not supported yet, except for empty sequence ordering and default collations.",
-                    createMetadataFromContext(setterContext)
-            );
-        }
-        List<LibraryModule> libraryModules = new ArrayList<>();
-        Set<String> namespaces = new HashSet<>();
-        for (XQueryParser.ModuleImportContext namespace : ctx.moduleImport()) {
-            LibraryModule libraryModule = this.processModuleImport(namespace);
-            libraryModules.add(libraryModule);
-            if (namespaces.contains(libraryModule.getNamespace())) {
-                throw new DuplicateModuleTargetNamespaceException(
-                        "Duplicate module target namespace: " + libraryModule.getNamespace(),
-                        createMetadataFromContext(namespace)
-                );
-            }
-            namespaces.add(libraryModule.getNamespace());
-        }
-
-        // parse variables and function
-        List<VariableDeclaration> globalVariables = new ArrayList<>();
-        List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
-        for (XQueryParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
-            if (annotatedDeclaration.varDecl() != null) {
-                VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
-                    annotatedDeclaration.varDecl()
-                );
-                if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
-                    String variableNamespace = variableDeclaration.getVariableName().getNamespace();
-                    if (variableNamespace == null || !variableNamespace.equals(moduleNamespace)) {
-                        throw new NamespaceDoesNotMatchModuleException(
-                                "Variable "
-                                    + variableDeclaration.getVariableName().getLocalName()
-                                    + ": namespace "
-                                    + variableNamespace
-                                    + " must match module namespace "
-                                    + moduleNamespace,
-                                generateMetadata(annotatedDeclaration.getStop())
-                        );
-                    }
-                }
-                globalVariables.add(variableDeclaration);
-            } else if (annotatedDeclaration.functionDecl() != null) {
-                InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
-                    annotatedDeclaration.functionDecl()
-                );
-                if (!this.isMainModule) {
-                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
-                    String functionNamespace = inlineFunctionExpression.getName().getNamespace();
-                    if (functionNamespace == null || !functionNamespace.equals(moduleNamespace)) {
-                        throw new NamespaceDoesNotMatchModuleException(
-                                "Function "
-                                    + inlineFunctionExpression.getName().getLocalName()
-                                    + ": namespace "
-                                    + functionNamespace
-                                    + " must match module namespace "
-                                    + moduleNamespace,
-                                generateMetadata(annotatedDeclaration.getStop())
-                        );
-                    }
-                }
-                functionDeclarations.add(
-                    new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
-                );
-            } else if (annotatedDeclaration.contextItemDecl() != null) {
-                // TODO outside of the scope for thesis
-                throw new XMLUnsupportedException("contextItemDecl not supported YET", createMetadataFromContext(ctx));
-            } else if (annotatedDeclaration.optionDecl() != null) {
-                throw new XMLUnsupportedException("optionDecl not supported", createMetadataFromContext(ctx));
-            }
-        }
-
-        for (XQueryParser.ModuleImportContext module : ctx.moduleImport()) {
-            this.visitModuleImport(module);
-        }
-
-        Prolog prolog = new Prolog(globalVariables, functionDeclarations, createMetadataFromContext(ctx));
-        for (LibraryModule libraryModule : libraryModules) {
-            prolog.addImportedModule(libraryModule);
-        }
-        return prolog;
+    public LibraryModule visitLibraryModule(XQueryParser.LibraryModuleContext ctx) {
+        return ModuleTranslation.libraryModule(
+                LibraryModuleContext.from(ctx), this.translationContext, this::processURILiteral, this::visitProlog);
     }
 
     @Override
-    public Node visitVarDecl(XQueryParser.VarDeclContext ctx) {
-        SequenceType seq;
-        boolean external = false;
+    public Prolog visitProlog(XQueryParser.PrologContext ctx) {
+        return new PrologVisitor().build(ctx);
+    }
 
-        if (ctx.annotations() != null) {
-            processAnnotations(ctx.annotations());
-        }
+    /** Translates one header or declaration of a prolog. Tools that accept incomplete queries can contain failures. */
+    protected void translatePrologEntry(ParseTree entry, Consumer<ParseTree> translation) {
+        translation.accept(entry);
+    }
 
-        Name var = ((VariableReferenceExpression) this.visitVarName(ctx.varName())).getVariableName();
-        if (ctx.typeDeclaration() != null) {
-            seq = this.processSequenceType(ctx.typeDeclaration().sequenceType());
-        } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
-        }
+    /** Loads the catalog of the schema imports. Tools that accept incomplete queries can leave out those that fail. */
+    protected Optional<XmlSchemaCatalog> loadSchemas(List<SchemaImport> schemaImports) {
+        return XmlSchemaCatalogLoader.load(
+                schemaImports,
+                this.translationContext.moduleContext().getStaticBaseURI(),
+                this.translationContext.compilationConfiguration());
+    }
 
-        XQueryParser.ExprSingleContext exprSingle = null;
+    private class PrologVisitor extends XQueryParserBaseVisitor<Void> {
+        private final PrologBuilder builder = new PrologBuilder(XQueryTranslationVisitor.this.translationContext);
 
-        if (ctx.varDefaultValue() != null) {
-            external = true;
-            exprSingle = ctx.varDefaultValue().exprSingle();
-        }
-
-        Expression expr = null;
-        if (ctx.varValue() != null) {
-            exprSingle = ctx.varValue().exprSingle();
-        }
-        if (exprSingle != null) {
-            expr = (Expression) this.visitExprSingle(exprSingle);
-            if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
+        Prolog build(XQueryParser.PrologContext ctx) {
+            if (ctx == null) {
+                return null;
             }
-        }
-
-        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
-    }
-
-    private void processAnnotations(XQueryParser.AnnotationsContext annotations) {
-        if (annotations.annotation().size() > 1) {
-            // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException(
-                    "multipleAnnotations not supported YET",
-                    createMetadataFromContext(annotations)
-            );
-        }
-
-        XQueryParser.AnnotationContext annotationContext = annotations.annotation().get(0);
-        XQueryParser.QNameContext newCtx = annotationContext.qName();
-
-        String localName;
-        if (newCtx.ncName() != null) {
-            if (newCtx.ncName().local_name != null) {
-                localName = newCtx.ncName().local_name.getText();
-            } else {
-                localName = newCtx.ncName().local_namekw.getText();
+            for (XQueryParser.PrologHeaderContext header : ctx.headers) {
+                translatePrologEntry(header, this::visit);
             }
-            if (!localName.equals("public")) {
-                // TODO outside of the scope for thesis
-                throw new XMLUnsupportedException("private not supported YET", createMetadataFromContext(annotations));
+            this.builder.finishHeader(createMetadataFromContext(ctx), XQueryTranslationVisitor.this::loadSchemas);
+            for (XQueryParser.AnnotatedDeclContext declaration : ctx.declarations) {
+                translatePrologEntry(declaration, this::visit);
             }
-        } else {
-            // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException("prefix not supported YET", createMetadataFromContext(annotations));
+            return this.builder.build(createMetadataFromContext(ctx));
+        }
+
+        @Override
+        public Void visitNamespaceDecl(XQueryParser.NamespaceDeclContext ctx) {
+            this.builder.bindNamespace(
+                    ctx.ncName().getText(), processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitDefaultNamespaceDecl(XQueryParser.DefaultNamespaceDeclContext ctx) {
+            boolean isFunction = ctx.type.getType() == XQueryParser.KW_FUNCTION;
+            this.builder.applyDefaultNamespace(
+                    isFunction, processStringLiteral(ctx.stringLiteral()), createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitModuleImport(XQueryParser.ModuleImportContext ctx) {
+            this.builder.importModule(
+                    ImportTranslation.moduleImport(
+                            ModuleImportContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processURILiteral),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitSchemaImport(XQueryParser.SchemaImportContext ctx) {
+            this.builder.importSchema(
+                    ImportTranslation.schemaImport(
+                            SchemaImportContext.from(ctx),
+                            XQueryTranslationVisitor.this.translationContext,
+                            XQueryTranslationVisitor.this::processURILiteral),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitConstructionDecl(XQueryParser.ConstructionDeclContext ctx) {
+            boolean value = ctx.type.getType() == XQueryParser.KW_PRESERVE;
+            this.builder.applyConstruction(value, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitBoundarySpaceDecl(XQueryParser.BoundarySpaceDeclContext ctx) {
+            boolean value = ctx.type.getType() == XQueryParser.KW_PRESERVE;
+            this.builder.applyBoundarySpace(value, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitEmptyOrderDecl(XQueryParser.EmptyOrderDeclContext ctx) {
+            boolean value = ctx.emptySequenceOrder.getText().equals("least");
+            this.builder.applyEmptyOrder(value, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitCopyNamespacesDecl(XQueryParser.CopyNamespacesDeclContext ctx) {
+            boolean preserve = ctx.preserveMode().KW_PRESERVE() != null;
+            boolean inherit = ctx.inheritMode().KW_INHERIT() != null;
+            this.builder.applyCopyNamespaces(preserve, inherit, createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitBaseURIDecl(XQueryParser.BaseURIDeclContext ctx) {
+            this.builder.applyBaseUri(processURILiteral(ctx.uriLiteral()), createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitDefaultCollationDecl(XQueryParser.DefaultCollationDeclContext ctx) {
+            this.builder.applyDefaultCollation(
+                    processURILiteral(ctx.uriLiteral()),
+                    createMetadataFromContext(ctx.uriLiteral()),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitDecimalFormatDecl(XQueryParser.DecimalFormatDeclContext ctx) {
+            Name name = ctx.eqName() == null ? null : parseEqName(ctx.eqName(), NameRole.NO_DEFAULT_NAMESPACE);
+            this.builder.applyDecimalFormat(
+                    ctx.KW_DEFAULT() != null,
+                    name,
+                    ctx.DFPropertyName().stream().map(ParseTree::getText).toList(),
+                    ctx.stringLiteral().stream()
+                            .map(XQueryTranslationVisitor.this::processStringLiteral)
+                            .toList(),
+                    createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitOrderingModeDecl(XQueryParser.OrderingModeDeclContext ctx) {
+            this.builder.applyOrderingMode(createMetadataFromContext(ctx));
+            return null;
+        }
+
+        @Override
+        public Void visitVarDecl(XQueryParser.VarDeclContext ctx) {
+            this.builder.addVariable(DeclarationTranslation.varDecl(
+                    VarDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processAnnotations,
+                    XQueryTranslationVisitor.this::parseVariableBinding,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::visitExprSingle));
+            return null;
+        }
+
+        @Override
+        public Void visitContextItemDecl(XQueryParser.ContextItemDeclContext ctx) {
+            this.builder.addContextItem(DeclarationTranslation.contextItemDecl(
+                    ContextItemDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::visitExprSingle));
+            return null;
+        }
+
+        @Override
+        public Void visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
+            this.builder.addFunction(DeclarationTranslation.functionDecl(
+                    FunctionDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::processAnnotations,
+                    XQueryTranslationVisitor.this::parseFunctionName,
+                    XQueryTranslationVisitor.this::parseVariableBinding,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::processSequenceType,
+                    XQueryTranslationVisitor.this::visitStatementsAndOptionalExpr));
+            return null;
+        }
+
+        @Override
+        public Void visitOptionDecl(XQueryParser.OptionDeclContext ctx) {
+            this.builder.addOption(DeclarationTranslation.optionDecl(
+                    OptionDeclContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName,
+                    XQueryTranslationVisitor.this::processStringLiteral));
+            return null;
         }
     }
 
-    @Override
-    public Node visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
-        Name name = parseName(ctx.eqName(), true, false);
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = MOST_GENERAL_SEQUENCE_TYPE;
-        Name paramName;
-        SequenceType paramType;
-
-        if (ctx.annotations() != null) {
-            processAnnotations(ctx.annotations());
-        }
-
-        if (ctx.functionParams() != null) {
-            for (XQueryParser.FunctionParamContext param : ctx.functionParams().functionParam()) {
-                paramName = parseName(param.qName(), false, false);
-                paramType = MOST_GENERAL_SEQUENCE_TYPE;
-                if (fnParams.containsKey(paramName)) {
-                    throw new DuplicateParamNameException(
-                            name,
-                            paramName,
-                            createMetadataFromContext(param)
-                    );
-                }
-                if (param.typeDeclaration() != null) {
-                    paramType = this.processSequenceType(param.typeDeclaration().sequenceType());
-                } else {
-                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
-                }
-                fnParams.put(paramName, paramType);
-            }
-        }
-
-        if (ctx.functionReturn() != null) {
-            fnReturnType = this.processSequenceType(ctx.functionReturn().sequenceType());
-        } else {
-            fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
-        }
-
-        Expression bodyExpression = null;
-        if (ctx.functionBody() != null) {
-            bodyExpression = (Expression) this.visitExpr(ctx.functionBody().enclosedExpression().expr());
-        } else {
-            bodyExpression = new CommaExpression(createMetadataFromContext(ctx));
-        }
-
-        return new InlineFunctionExpression(
-                name,
-                fnParams,
-                fnReturnType,
-                bodyExpression,
-                createMetadataFromContext(ctx)
-        );
+    private String processStringLiteral(XQueryParser.StringLiteralContext ctx) {
+        String source = this.xQueryTokenStream.getText(ctx.getSourceInterval());
+        ExceptionMetadata metadata = createMetadataFromContext(ctx);
+        String xmlVersion = this.translationContext.configuration().semantics().xmlVersion();
+        return StringLiteralUtils.parseXQuery(source, xmlVersion, metadata);
     }
 
-    public void processNamespaceDecl(XQueryParser.NamespaceDeclContext ctx) {
-        bindNamespace(
-            ctx.ncName().getText(),
-            processURILiteral(ctx.uriLiteral()),
-            generateMetadata(ctx.getStop())
-        );
+    public Name parseFunctionName(XQueryParser.FunctionNameContext ctx) {
+        return this.translationContext.names().resolveFunctionName(ctx.getText(), createMetadataFromContext(ctx));
     }
 
-    private void processEmptySequenceOrder(XQueryParser.EmptyOrderDeclContext ctx) {
-        if (ctx.type.getText().equals("least")) {
-            this.moduleContext.setEmptySequenceOrderLeast(true);
+    /**
+     * Parse an EQName. Delegates to {@link #parseName} for the {@code qname} branch; URI-qualified names use
+     * {@link URIQualifiedNameParser}.
+     */
+    public Name parseEqName(XQueryParser.EqNameContext ctx, NameRole role) {
+        if (ctx.qname() != null) {
+            return parseName(ctx.qname(), role);
         }
-        if (ctx.type.getText().equals("greatest")) {
-            this.moduleContext.setEmptySequenceOrderLeast(false);
-        }
+        return URIQualifiedNameParser.parse(
+                ctx.URIQualifiedName().getText(),
+                this.translationContext.configuration().semantics().xmlVersion(),
+                createMetadataFromContext(ctx));
     }
 
-    private void processDefaultCollation(XQueryParser.DefaultCollationDeclContext ctx) {
-        String uri = processURILiteral(ctx.uriLiteral());
-        if (!uri.equals(Name.DEFAULT_COLLATION_NS)) {
-            throw new DefaultCollationException(
-                    "Unknown collation: " + uri,
-                    createMetadataFromContext(ctx.uriLiteral())
-            );
-        }
-    }
-
-    public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
-        String namespace = processURILiteral(ctx.nsURI);
-        URI resolvedURI = FileSystemUtil.resolveURI(
-            this.moduleContext.getStaticBaseURI(),
-            namespace,
-            generateMetadata(ctx.getStop())
-        );
-        LibraryModule libraryModule = null;
-        try {
-            libraryModule = VisitorHelpers.parseLibraryModuleFromLocation(
-                resolvedURI,
-                this.configuration,
-                this.moduleContext,
-                generateMetadata(ctx.getStop())
-            );
-            if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {
-                throw new ModuleNotFoundException(
-                        "A module with namespace "
-                            + resolvedURI.toString()
-                            + " was not found. The namespace of the module at this location was: "
-                            + libraryModule.getNamespace(),
-                        generateMetadata(ctx.getStop())
-                );
-            }
-        } catch (IOException e) {
-            RumbleException exception = new ModuleNotFoundException(
-                    "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),
-                    generateMetadata(ctx.getStop())
-            );
-            exception.initCause(e);
-            throw exception;
-        } catch (CannotRetrieveResourceException e) {
-            RumbleException exception = new ModuleNotFoundException(
-                    "Module not found: " + namespace + " Cause: " + e.getMessage(),
-                    generateMetadata(ctx.getStop())
-            );
-            exception.initCause(e);
-            throw exception;
-        }
-        if (ctx.ncName() != null) {
-            bindNamespace(
-                ctx.ncName().getText(),
-                resolvedURI.toString(),
-                generateMetadata(ctx.getStop())
-            );
-        }
-        return libraryModule;
+    /** Adapts the XQuery QName grammar to the shared role-aware resolver. */
+    public Name parseName(XQueryParser.QnameContext ctx, NameRole role) {
+        return this.translationContext.names().resolveEQName(ctx.getText(), role, createMetadataFromContext(ctx));
     }
 
     // endregion
 
     // region expr
     @Override
-    public Node visitExpr(XQueryParser.ExprContext ctx) {
-        List<Expression> expressions = new ArrayList<>();
-        for (XQueryParser.ExprSingleContext expr : ctx.exprSingle()) {
-            expressions.add((Expression) this.visitExprSingle(expr));
-
-        }
-        if (expressions.size() == 1) {
-            return expressions.get(0);
-        }
-        return new CommaExpression(expressions, createMetadataFromContext(ctx));
+    public Expression visitExpr(XQueryParser.ExprContext ctx) {
+        return SequenceTranslation.expr(CommaExprContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
-    public Node visitExprSingle(XQueryParser.ExprSingleContext ctx) {
-        ParseTree content = ctx.children.get(0);
-        if (content instanceof XQueryParser.OrExprContext) {
-            return this.visitOrExpr((XQueryParser.OrExprContext) content);
-        }
-        if (content instanceof XQueryParser.FlworExprContext) {
-            return this.visitFlworExpr((XQueryParser.FlworExprContext) content);
-        }
-        if (content instanceof XQueryParser.IfExprContext) {
-            return this.visitIfExpr((XQueryParser.IfExprContext) content);
-        }
-        if (content instanceof XQueryParser.QuantifiedExprContext) {
-            return this.visitQuantifiedExpr((XQueryParser.QuantifiedExprContext) content);
-        }
-        if (content instanceof XQueryParser.SwitchExprContext) {
-            return this.visitSwitchExpr((XQueryParser.SwitchExprContext) content);
-        }
-        if (content instanceof XQueryParser.TypeswitchExprContext) {
-            return this.visitTypeswitchExpr((XQueryParser.TypeswitchExprContext) content);
-        }
-        if (content instanceof XQueryParser.TryCatchExprContext) {
-            return this.visitTryCatchExpr((XQueryParser.TryCatchExprContext) content);
-        }
-        if (content instanceof XQueryParser.ExistUpdateExprContext) {
-            // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException(
-                    "ExistUpdateExprContext not supported YET",
-                    createMetadataFromContext(ctx)
-            );
-        }
-        throw new OurBadException("Unrecognized ExprSingle.");
+    public Expression visitExprSingle(XQueryParser.ExprSingleContext ctx) {
+        return (Expression) visit(ctx.getChild(0));
     }
     // endregion
 
-    // region Or
+    // begin region ExprSimple
     @Override
-    public Node visitOrExpr(XQueryParser.OrExprContext ctx) {
-        Expression result = (Expression) this.visitAndExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (XQueryParser.AndExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitAndExpr(child);
-            result = new OrExpression(result, rightExpression, createMetadataFromContext(ctx));
-        }
-        return result;
+    public Expression visitExprSimple(XQueryParser.ExprSimpleContext ctx) {
+        return (Expression) visit(ctx.getChild(0));
     }
+    // endregion
 
+    // region EnclosedExpression
     @Override
-    public Node visitAndExpr(XQueryParser.AndExprContext ctx) {
-        Expression result = (Expression) this.visitComparisonExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (XQueryParser.ComparisonExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitComparisonExpr(child);
-            result = new AndExpression(result, rightExpression, createMetadataFromContext(ctx));
-        }
-        return result;
+    public Expression visitEnclosedExpression(XQueryParser.EnclosedExpressionContext ctx) {
+        return SequenceTranslation.enclosedExpr(
+                EnclosedExprContext.from(ctx), this.translationContext, this::visitExpr);
+    }
+    // endregion
+
+    // region Flowr
+    @Override
+    public FlworExpression visitFlworExpr(XQueryParser.FlworExprContext ctx) {
+        return FlworTranslation.flworExpr(
+                FlworExprContext.from(ctx),
+                this.translationContext,
+                child -> this.visit(child) instanceof Clause clause ? clause : null,
+                this::visitExprSingle);
     }
 
     @Override
-    public Node visitComparisonExpr(XQueryParser.ComparisonExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitStringConcatExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.StringConcatExprContext child = ctx.rhs.get(0);
-        Expression childExpression = (Expression) this.visitStringConcatExpr(child);
-        String op = "";
-        // is, <<, >>
-        if (ctx.nodeComp() != null)
-            throw new XMLUnsupportedException("nodeComp not supported", createMetadataFromContext(ctx));
-        // eq, ne, ge, gt, le, lt
-        if (ctx.valueComp() != null)
-            op = ctx.valueComp().getText();
-        // ==, !=, >=, >, <=, <
-        if (ctx.generalComp() != null)
-            op = ctx.generalComp().getText();
-        return new ComparisonExpression(
-                mainExpression,
-                childExpression,
-                ComparisonExpression.ComparisonOperator.fromSymbol(op),
-                createMetadataFromContext(ctx)
-        );
+    public ForClause visitForClause(XQueryParser.ForClauseContext ctx) {
+        return FlworTranslation.forClause(
+                ForClauseContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
-    public Node visitStringConcatExpr(XQueryParser.StringConcatExprContext ctx) {
-        Expression result = (Expression) this.visitRangeExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (XQueryParser.RangeExprContext child : ctx.rhs) {
-            Expression rightExpression = (Expression) this.visitRangeExpr(child);
-            result = new StringConcatExpression(result, rightExpression, createMetadataFromContext(ctx));
-        }
-        return result;
+    public ForClause visitForVar(XQueryParser.ForVarContext ctx) {
+        return FlworTranslation.forVar(
+                ForVarContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
-    public Node visitRangeExpr(XQueryParser.RangeExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitAdditiveExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.AdditiveExprContext child = ctx.rhs.get(0);
-        Expression childExpression = (Expression) this.visitAdditiveExpr(child);
-        return new RangeExpression(
-                mainExpression,
-                childExpression,
-                createMetadataFromContext(ctx)
-        );
+    public LetClause visitLetClause(XQueryParser.LetClauseContext ctx) {
+        return FlworTranslation.letClause(
+                LetClauseContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
-    public Node visitAdditiveExpr(XQueryParser.AdditiveExprContext ctx) {
-        Expression result = (Expression) this.visitMultiplicativeExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (int i = 0; i < ctx.rhs.size(); ++i) {
-            XQueryParser.MultiplicativeExprContext child = ctx.rhs.get(i);
-            Expression rightExpression = (Expression) this.visitMultiplicativeExpr(child);
-            result = new AdditiveExpression(
-                    result,
-                    rightExpression,
-                    ctx.op.get(i).getText().equals("-"),
-                    createMetadataFromContext(ctx)
-            );
-        }
-        return result;
-    }
-
-
-    @Override
-    public Node visitMultiplicativeExpr(XQueryParser.MultiplicativeExprContext ctx) {
-        Expression result = (Expression) this.visitUnionExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        for (int i = 0; i < ctx.rhs.size(); ++i) {
-            XQueryParser.UnionExprContext child = ctx.rhs.get(i);
-            Expression rightExpression = (Expression) this.visitUnionExpr(child);
-            result = new MultiplicativeExpression(
-                    result,
-                    rightExpression,
-                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(ctx.op.get(i).getText()),
-                    createMetadataFromContext(ctx)
-            );
-        }
-        return result;
+    public LetClause visitLetVar(XQueryParser.LetVarContext ctx) {
+        return FlworTranslation.letVar(
+                LetVarContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
-    public Node visitUnionExpr(XQueryParser.UnionExprContext ctx) {
-        Expression result = (Expression) this.visitIntersectExceptExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
+    public WindowClause visitWindowClause(XQueryParser.WindowClauseContext ctx) {
+        if (ctx.tumblingWindowClause() != null) {
+            return this.visitTumblingWindowClause(ctx.tumblingWindowClause());
         }
-        throw new XMLUnsupportedException("UnionExprContext not supported", createMetadataFromContext(ctx));
+        return this.visitSlidingWindowClause(ctx.slidingWindowClause());
     }
 
     @Override
-    public Node visitIntersectExceptExpr(XQueryParser.IntersectExceptExprContext ctx) {
-        Expression result = (Expression) this.visitInstanceOfExpr(ctx.main_expr);
-        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-            return result;
-        }
-        throw new XMLUnsupportedException("IntersectExceptExprContext not supported", createMetadataFromContext(ctx));
+    public WindowClause visitTumblingWindowClause(XQueryParser.TumblingWindowClauseContext ctx) {
+        return FlworTranslation.windowClause(
+                WindowClauseContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
-    public Node visitInstanceOfExpr(XQueryParser.InstanceOfExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
-        if (ctx.seq == null || ctx.seq.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.SequenceTypeContext child = ctx.seq;
-        SequenceType sequenceType = this.processSequenceType(child);
-        return new InstanceOfExpression(
-                mainExpression,
-                sequenceType,
-                createMetadataFromContext(ctx)
-        );
-    }
-
-    public SequenceType processSequenceType(XQueryParser.SequenceTypeContext ctx) {
-        if (ctx.item == null) {
-            return SequenceType.EMPTY_SEQUENCE;
-        }
-        ItemType itemType = processItemType(ctx.item);
-
-        if (ctx.question.size() > 0) {
-            return new SequenceType(
-                    itemType,
-                    SequenceType.Arity.OneOrZero
-            );
-        }
-        if (ctx.star.size() > 0) {
-            return new SequenceType(
-                    itemType,
-                    SequenceType.Arity.ZeroOrMore
-            );
-        }
-        if (ctx.plus.size() > 0) {
-            return new SequenceType(
-                    itemType,
-                    SequenceType.Arity.OneOrMore
-            );
-        }
-        return new SequenceType(itemType);
-    }
-
-    private ItemType processItemType(XQueryParser.ItemTypeContext ctx) {
-        ParseTree child = ctx.children.get(0);
-        if (child instanceof XQueryParser.KindTestContext) {
-            throw new XMLUnsupportedException("KindTestContext not supported", createMetadataFromContext(ctx));
-        } else if (child instanceof XQueryParser.FunctionTestContext) {
-            // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException("FunctionTestContext not supported YET", createMetadataFromContext(ctx));
-        } else if (child instanceof XQueryParser.MapTestContext) {
-            XQueryParser.MapTestContext mapTestContext = (XQueryParser.MapTestContext) child;
-            if (mapTestContext.typedMapTest() != null)
-                throw new XMLUnsupportedException("typedMapTest not supported", createMetadataFromContext(ctx));
-            else
-                return AtomicItemType.objectItem;
-        } else if (child instanceof XQueryParser.ArrayTestContext) {
-            XQueryParser.ArrayTestContext arrayTestContext = (XQueryParser.ArrayTestContext) child;
-            if (arrayTestContext.typedArrayTest() != null)
-                throw new XMLUnsupportedException("typedArrayTest not supported", createMetadataFromContext(ctx));
-            else
-                return AtomicItemType.arrayItem;
-        } else if (child instanceof XQueryParser.AtomicOrUnionTypeContext) {
-            return AtomicItemType.getItemTypeByName(parseName(ctx.atomicOrUnionType().eqName().qName(), false, true));
-        } else if (child instanceof XQueryParser.ParenthesizedItemTestContext) {
-            return processItemType(((XQueryParser.ParenthesizedItemTestContext) child).itemType());
-        } else {
-            // It has to be (KW_ITEM LPAREN RPAREN)
-            return AtomicItemType.item;
-        }
+    public WindowClause visitSlidingWindowClause(XQueryParser.SlidingWindowClauseContext ctx) {
+        return FlworTranslation.windowClause(
+                WindowClauseContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
     }
 
     @Override
-    public Node visitTreatExpr(XQueryParser.TreatExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitCastableExpr(ctx.main_expr);
-        if (ctx.seq == null || ctx.seq.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.SequenceTypeContext child = ctx.seq;
-        SequenceType sequenceType = this.processSequenceType(child);
-        return new TreatExpression(
-                mainExpression,
-                sequenceType,
-                ErrorCode.DynamicTypeTreatErrorCode,
-                createMetadataFromContext(ctx)
-        );
-    }
-
-    @Override
-    public Node visitCastableExpr(XQueryParser.CastableExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitCastExpr(ctx.main_expr);
-        if (ctx.single == null || ctx.single.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.SingleTypeContext child = ctx.single;
-        SequenceType sequenceType = this.processSingleType(child);
-        return new CastableExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
-    }
-
-    public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
-        if (ctx.item == null) {
-            return SequenceType.EMPTY_SEQUENCE;
-        }
-
-        ItemType itemType = AtomicItemType.getItemTypeByName(
-            parseName(ctx.item.typeName().eqName().qName(), false, true)
-        );
-        if (ctx.question.size() > 0) {
-            return new SequenceType(
-                    itemType,
-                    SequenceType.Arity.OneOrZero
-            );
-        }
-        return new SequenceType(itemType);
-    }
-
-    @Override
-    public Node visitCastExpr(XQueryParser.CastExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitArrowExpr(ctx.main_expr);
-        if (ctx.single == null || ctx.single.isEmpty()) {
-            return mainExpression;
-        }
-        XQueryParser.SingleTypeContext child = ctx.single;
-        SequenceType sequenceType = this.processSingleType(child);
-        return new CastExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
-    }
-
-    @Override
-    public Node visitArrowExpr(XQueryParser.ArrowExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
-
-        for (int i = 0; i < ctx.function_call_expr.size(); ++i) {
-            XQueryParser.ComplexArrowContext functionCallContext = ctx.function_call_expr.get(i);
-            if (functionCallContext.arrowFunctionSpecifier().parenthesizedExpr() != null) {
-                throw new XMLUnsupportedException("parenthesizedExpr not supported", createMetadataFromContext(ctx));
+    public GroupByClause visitGroupByClause(XQueryParser.GroupByClauseContext ctx) {
+        GroupByClause clause = FlworTranslation.groupByClause(
+                GroupByClauseContext.from(ctx),
+                this.translationContext,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle,
+                this::resolveCollationUri);
+        // Grouping bindings are preceding let bindings: later bindings may shadow earlier ones.
+        Clause previous = null;
+        List<GroupByVariableDeclaration> variables = new ArrayList<>();
+        for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
+            if (variable.getExpression() != null) {
+                LetClause binding = new LetClause(
+                        variable.getVariableName(),
+                        null,
+                        variable.getExpression(),
+                        variable.getVariableMetadata(),
+                        variable.getVariableMetadata());
+                if (previous != null) previous.chainWith(binding);
+                previous = binding;
             }
-            List<Expression> children = new ArrayList<Expression>();
-            children.add(mainExpression);
-            children.addAll(getArgumentsFromArgumentListContext(functionCallContext.argumentList()));
-            Name name;
-            if (functionCallContext.arrowFunctionSpecifier().eqName() != null)
-                name = parseName(functionCallContext.arrowFunctionSpecifier().eqName(), true, false);
-            else
-                name = parseName(functionCallContext.arrowFunctionSpecifier().varRef().eqName(), true, false);
-            mainExpression = processFunctionCall(name, functionCallContext, children);
+            variables.add(new GroupByVariableDeclaration(
+                    variable.getVariableName(),
+                    variable.getActualSequenceType(),
+                    null,
+                    variable.getCollationURI(),
+                    variable.getVariableMetadata()));
         }
-        return mainExpression;
-
-    }
-
-    private List<Expression> getArgumentsFromArgumentListContext(XQueryParser.ArgumentListContext ctx) {
-        List<Expression> arguments = new ArrayList<>();
-        if (ctx.args != null) {
-            for (XQueryParser.ArgumentContext arg : ctx.args) {
-                Expression currentArg = (Expression) this.visitArgument(arg);
-                arguments.add(currentArg);
-            }
-        }
-        return arguments;
-    }
-
-    private Expression processFunctionCall(Name name, ParserRuleContext ctx, List<Expression> children) {
-        if (
-            AtomicItemType.typeExists(name)
-                && children.size() == 1
-        ) {
-            return new CastExpression(
-                    children.get(0),
-                    SequenceType.createSequenceType(name.getLocalName() + "?"),
-                    createMetadataFromContext(ctx)
-            );
-        }
-        if (
-            AtomicItemType.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
-                && children.size() == 1
-                && name.getNamespace() != null
-                && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
-                && !name.getLocalName().equals("boolean")
-        ) {
-            return new CastExpression(
-                    children.get(0),
-                    SequenceType.createSequenceType(name.getLocalName() + "?"),
-                    createMetadataFromContext(ctx)
-            );
-        }
-        return new FunctionCallExpression(
-                name,
-                children,
-                createMetadataFromContext(ctx)
-        );
-    }
-
-    private Name parseName(XQueryParser.EqNameContext ctx, boolean isFunction, boolean isType) {
-        if (ctx.qName() == null)
-            throw new XMLUnsupportedException("URIQualifiedName not supported", createMetadataFromContext(ctx));
-        XQueryParser.QNameContext newCtx = ctx.qName();
-        return parseName(newCtx, isFunction, isType);
-    }
-
-    private Name parseName(XQueryParser.QNameContext newCtx, boolean isFunction, boolean isType) {
-        String localName = null;
-        String prefix = null;
-        Name name = null;
-        if (newCtx.ncName() != null) {
-            if (newCtx.ncName().local_name != null) {
-                localName = newCtx.ncName().local_name.getText();
-            } else {
-                localName = newCtx.ncName().local_namekw.getText();
-            }
-        } else {
-            // We know that it will have single : as parser would throw an error earlier
-            String fullText = newCtx.FullQName().getText();
-            prefix = fullText.split(":")[0];
-            localName = fullText.split(":")[1];
-        }
-        if (prefix == null) {
-            if (isFunction) {
-                name = Name.createVariableInDefaultXQueryFunctionNamespace(localName);
-            } else if (isType) {
-                name = Name.createVariableInDefaultXQueryTypeNamespace(localName);
-            } else {
-                name = Name.createVariableInNoNamespace(localName);
-            }
-        } else {
-            name = Name.createVariableResolvingPrefix(prefix, localName, this.moduleContext);
-        }
-        if (name != null) {
-            return name;
-        }
-        throw new PrefixCannotBeExpandedException(
-                "Cannot expand prefix " + prefix,
-                generateMetadata(newCtx.getStop())
-        );
+        GroupByClause normalized = new GroupByClause(variables, clause.getMetadata());
+        if (previous != null) previous.chainWith(normalized);
+        return normalized;
     }
 
     @Override
-    public Node visitUnaryExpr(XQueryParser.UnaryExprContext ctx) {
-        if (ctx.main_expr.simpleMapExpr() == null)
-            throw new XMLUnsupportedException(
-                    "validateExpr and extensionExpr not supported",
-                    createMetadataFromContext(ctx)
-            );
-        Expression mainExpression = (Expression) this.visitSimpleMapExpr(ctx.main_expr.simpleMapExpr());
-        if (ctx.op == null || ctx.op.isEmpty()) {
-            return mainExpression;
-        }
-        boolean negated = false;
-        for (Token t : ctx.op) {
-            if (t.getText().contentEquals("-")) {
-                negated = !negated;
-            }
-        }
-        return new UnaryExpression(
-                mainExpression,
-                negated,
-                createMetadataFromContext(ctx)
-        );
+    public OrderByClause visitOrderByClause(XQueryParser.OrderByClauseContext ctx) {
+        return FlworTranslation.orderByClause(
+                OrderByClauseContext.from(ctx),
+                this.translationContext,
+                this::visitExprSingle,
+                this::resolveCollationUri);
     }
 
     @Override
-    public Node visitSimpleMapExpr(XQueryParser.SimpleMapExprContext ctx) {
-        Expression result = (Expression) this.visitPathExpr(ctx.main_expr);
-        if (ctx.map_expr == null || ctx.map_expr.isEmpty()) {
-            return result;
-        }
-        for (int i = 0; i < ctx.map_expr.size(); ++i) {
-            XQueryParser.PathExprContext child = ctx.map_expr.get(i);
-            Expression rightExpression = (Expression) this.visitPathExpr(child);
-            result = new SimpleMapExpression(
-                    result,
-                    rightExpression,
-                    createMetadataFromContext(ctx)
-            );
-        }
-        return result;
+    public WhereClause visitWhereClause(XQueryParser.WhereClauseContext ctx) {
+        return FlworTranslation.whereClause(
+                WhereClauseContext.from(ctx), this.translationContext, this::visitExprSingle);
     }
 
     @Override
-    public Node visitPathExpr(XQueryParser.PathExprContext ctx) {
-        if (ctx.singleslash != null || ctx.doubleslash != null)
-            throw new XMLUnsupportedException("Path expressions are not supported", createMetadataFromContext(ctx));
-        return this.visitRelativePathExpr(ctx.relative);
+    public CountClause visitCountClause(XQueryParser.CountClauseContext ctx) {
+        return FlworTranslation.countClause(
+                CountClauseContext.from(ctx), this.translationContext, this::parseVariableBinding);
+    }
+    // endregion
+
+    // region operational
+    @Override
+    public Expression visitOrExpr(XQueryParser.OrExprContext ctx) {
+        return LogicTranslation.orExpr(OrExprContext.from(ctx), this.translationContext, this::visitAndExpr);
     }
 
     @Override
-    public Node visitRelativePathExpr(XQueryParser.RelativePathExprContext ctx) {
-        if (ctx.stepExpr().size() != 1) {
-            throw new XMLUnsupportedException("Path expressions are not supported", createMetadataFromContext(ctx));
+    public Expression visitAndExpr(XQueryParser.AndExprContext ctx) {
+        return LogicTranslation.andExpr(AndExprContext.from(ctx), this.translationContext, this::visitComparisonExpr);
+    }
+
+    @Override
+    public Expression visitComparisonExpr(XQueryParser.ComparisonExprContext ctx) {
+        return ComparisonTranslation.comparisonExpr(
+                ComparisonExprContext.from(ctx), this.translationContext, this::visitStringConcatExpr);
+    }
+
+    @Override
+    public Expression visitStringConcatExpr(XQueryParser.StringConcatExprContext ctx) {
+        return SequenceTranslation.stringConcatExpr(
+                StringConcatExprContext.from(ctx), this.translationContext, this::visitRangeExpr);
+    }
+
+    @Override
+    public Expression visitRangeExpr(XQueryParser.RangeExprContext ctx) {
+        return SequenceTranslation.rangeExpr(
+                RangeExprContext.from(ctx), this.translationContext, this::visitAdditiveExpr);
+    }
+
+    @Override
+    public Expression visitAdditiveExpr(XQueryParser.AdditiveExprContext ctx) {
+        return ArithmeticTranslation.additiveExpr(
+                AdditiveExprContext.from(ctx), this.translationContext, this::visitMultiplicativeExpr);
+    }
+
+    @Override
+    public Expression visitMultiplicativeExpr(XQueryParser.MultiplicativeExprContext ctx) {
+        return ArithmeticTranslation.multiplicativeExpr(
+                MultiplicativeExprContext.from(ctx),
+                this.translationContext,
+                this.xQueryTokenStream,
+                this::visitUnionExpr);
+    }
+
+    @Override
+    public Expression visitUnionExpr(XQueryParser.UnionExprContext ctx) {
+        return SequenceTranslation.unionExpr(
+                UnionExprContext.from(ctx), this.translationContext, this::visitIntersectExceptExpr);
+    }
+
+    @Override
+    public Expression visitIntersectExceptExpr(XQueryParser.IntersectExceptExprContext ctx) {
+        return SequenceTranslation.intersectExceptExpr(
+                IntersectExceptExprContext.from(ctx), this.translationContext, this::visitInstanceOfExpr);
+    }
+
+    @Override
+    public Expression visitSimpleMapExpr(XQueryParser.SimpleMapExprContext ctx) {
+        return PostfixTranslation.simpleMapExpr(
+                SimpleMapExprContext.from(ctx), this.translationContext, this::visitPathExpr, this::visitPathExpr);
+    }
+
+    @Override
+    public Expression visitInstanceOfExpr(XQueryParser.InstanceOfExprContext ctx) {
+        return TypeTranslation.instanceOfExpr(
+                TypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitIsStaticallyExpr,
+                this::processSequenceType);
+    }
+
+    @Override
+    public Expression visitIsStaticallyExpr(XQueryParser.IsStaticallyExprContext ctx) {
+        return TypeTranslation.isStaticallyExpr(
+                TypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitTreatExpr,
+                this::processSequenceType);
+    }
+
+    @Override
+    public Expression visitTreatExpr(XQueryParser.TreatExprContext ctx) {
+        return TypeTranslation.treatExpr(
+                TypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitCastableExpr,
+                this::processSequenceType);
+    }
+
+    @Override
+    public Expression visitCastableExpr(XQueryParser.CastableExprContext ctx) {
+        return TypeTranslation.castableExpr(
+                SingleTypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitCastExpr,
+                this::processSingleType);
+    }
+
+    @Override
+    public Expression visitCastExpr(XQueryParser.CastExprContext ctx) {
+        return TypeTranslation.castExpr(
+                SingleTypeCheckExprContext.from(ctx),
+                this.translationContext,
+                this::visitArrowExpr,
+                this::processSingleType);
+    }
+
+    @Override
+    public Expression visitArrowExpr(XQueryParser.ArrowExprContext ctx) {
+        return PostfixTranslation.arrowExpr(
+                ArrowExprContext.from(ctx),
+                this.translationContext,
+                this::visitUnaryExpr,
+                this::parseEqName,
+                this::visitVarRef,
+                this::visitParenthesizedExpr,
+                this::getArgumentsFromArgumentListContext);
+    }
+
+    @Override
+    public Expression visitUnaryExpr(XQueryParser.UnaryExprContext ctx) {
+        return ArithmeticTranslation.unaryExpr(
+                UnaryExprContext.from(ctx), this.translationContext, this::visitValueExpr);
+    }
+
+    @Override
+    public Expression visitValueExpr(XQueryParser.ValueExprContext ctx) {
+        return PrimaryTranslation.valueExpr(
+                ValueExprContext.from(ctx),
+                this.translationContext,
+                this::visitSimpleMapExpr,
+                this::visitValidateExpr,
+                this::visitExtensionExpr);
+    }
+
+    @Override
+    public Expression visitExtensionExpr(XQueryParser.ExtensionExprContext ctx) {
+        return PrimaryTranslation.extensionExpr(
+                ExtensionExprContext.from(ctx), this.translationContext, this::visitExpr);
+    }
+
+    @Override
+    public Expression visitValidateExpr(XQueryParser.ValidateExprContext ctx) {
+        Expression mainExpression = this.visitExpr(ctx.expr());
+        ValidationMode validationMode = ValidationMode.STRICT;
+        Name typeName = null;
+        if (ctx.validationMode() != null && ctx.validationMode().KW_LAX() != null) {
+            validationMode = ValidationMode.LAX;
+        } else if (ctx.KW_TYPE() != null) {
+            validationMode = ValidationMode.TYPE;
+            typeName = parseEqName(ctx.typeName().eqName(), NameRole.TYPE);
         }
-        return this.visitStepExpr(ctx.stepExpr().get(0));
+        return new ValidateExpression(mainExpression, validationMode, typeName, createMetadataFromContext(ctx));
     }
+    // endregion
 
+    // region postfix
     @Override
-    public Node visitStepExpr(XQueryParser.StepExprContext ctx) {
-        if (ctx.axisStep() != null) {
-            throw new XMLUnsupportedException("Path expressions are not supported", createMetadataFromContext(ctx));
-        }
-        return this.visitPostfixExpr(ctx.postfixExpr());
-    }
-
-    @Override
-    public Node visitPostfixExpr(XQueryParser.PostfixExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
+    public Expression visitPostfixExpr(XQueryParser.PostfixExprContext ctx) {
+        Expression mainExpression = this.visitPrimaryExpr(ctx.main_expr);
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
-            if (child instanceof XQueryParser.PredicateContext) {
-                Expression expr = (Expression) this.visitPredicate((XQueryParser.PredicateContext) child);
-                mainExpression = new PredicateExpression(
+            if (child instanceof XQueryParser.PredicateContext predicateContext) {
+                Expression expr = this.visitPredicate(predicateContext);
+                mainExpression = new FilterExpression(
                         mainExpression,
                         expr,
-                        createMetadataFromContext(ctx)
-                );
-            } else if (child instanceof XQueryParser.ArgumentListContext) {
-                List<Expression> arguments = getArgumentsFromArgumentListContext(
-                    (XQueryParser.ArgumentListContext) child
-                );
+                        createMetadataFromRange(ctx.main_expr.getStart(), predicateContext.getStop()));
+            } else if (child instanceof XQueryParser.LookupContext lookupContext) {
+                Expression expr = this.visitLookup(lookupContext);
+                mainExpression = new PostfixLookupExpression(
+                        mainExpression,
+                        expr,
+                        createMetadataFromRange(ctx.main_expr.getStart(), lookupContext.getStop()));
+            } else if (child instanceof XQueryParser.ArgumentListContext argumentListContext) {
+                List<Expression> arguments = getArgumentsFromArgumentListContext(argumentListContext);
                 mainExpression = new DynamicFunctionCallExpression(
                         mainExpression,
                         arguments,
-                        createMetadataFromContext(ctx)
-                );
-            } else if (child instanceof XQueryParser.LookupContext) {
-                // Treat it as objectLookup in JSONiq
-
-                XQueryParser.KeySpecifierContext key = ((XQueryParser.LookupContext) child).keySpecifier();
-                if (key.ncName() != null) {
-                    Expression expr = new StringLiteralExpression(
-                            key.ncName().getText(),
-                            createMetadataFromContext(ctx)
-                    );
-                    mainExpression = new ObjectLookupExpression(
-                            mainExpression,
-                            expr,
-                            createMetadataFromContext(ctx)
-                    );
-                    mainExpression = new ArrayUnboxingExpression(mainExpression, createMetadataFromContext(ctx));
-                } else if (key.IntegerLiteral() != null) {
-                    Expression expr = new IntegerLiteralExpression(
-                            key.IntegerLiteral().getText(),
-                            createMetadataFromContext(ctx)
-                    );
-                    mainExpression = new ArrayLookupExpression(
-                            mainExpression,
-                            expr,
-                            createMetadataFromContext(ctx)
-                    );
-                    mainExpression = new ArrayUnboxingExpression(mainExpression, createMetadataFromContext(ctx));
-                } else {
-                    // TODO not in scope of thesis
-                    throw new XMLUnsupportedException(
-                            "ParenthesizedExpr and STAR object lookup not supported yet",
-                            createMetadataFromContext(ctx)
-                    );
-                }
+                        createMetadataFromRange(ctx.main_expr.getStart(), argumentListContext.getStop()));
             } else {
                 throw new OurBadException("Unrecognized postfix expression found.");
             }
@@ -1042,723 +850,692 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     }
 
     @Override
-    public Node visitPrimaryExpr(XQueryParser.PrimaryExprContext ctx) {
-        ParseTree child = ctx.children.get(0);
-        // In JSONiq we had stringLiteral separated from LITERAL that could then be NumericLiteral | BooleanLiteral
-        if (child instanceof XQueryParser.LiteralContext) {
-            if (((XQueryParser.LiteralContext) child).numericLiteral() != null)
-                return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
-            else {
-                XQueryParser.StringLiteralContext nestedChild = ((XQueryParser.LiteralContext) child).stringLiteral();
-                return new StringLiteralExpression(
-                        nestedChild.getText().substring(1, nestedChild.getText().length() - 1),
-                        createMetadataFromContext(ctx)
-                );
-            }
-        }
-        if (child instanceof XQueryParser.VarRefContext) {
-            return this.visitVarRef((XQueryParser.VarRefContext) child);
-        }
-        if (child instanceof XQueryParser.ParenthesizedExprContext) {
-            return this.visitParenthesizedExpr((XQueryParser.ParenthesizedExprContext) child);
-        }
-        if (child instanceof XQueryParser.ContextItemExprContext) {
-            return this.visitContextItemExpr((XQueryParser.ContextItemExprContext) child);
-        }
-        if (child instanceof XQueryParser.FunctionCallContext) {
-            return this.visitFunctionCall((XQueryParser.FunctionCallContext) child);
-        }
-        if (child instanceof XQueryParser.OrderedExprContext) {
-            // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException("OrderedExprContext not supported YET", createMetadataFromContext(ctx));
-        }
-        if (child instanceof XQueryParser.UnorderedExprContext) {
-            // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException("UnorderedExprContext not supported YET", createMetadataFromContext(ctx));
-        }
-        if (child instanceof XQueryParser.NodeConstructorContext) {
-            throw new XMLUnsupportedException("NodeConstructorContext not supported", createMetadataFromContext(ctx));
-        }
-        if (child instanceof XQueryParser.FunctionItemExprContext) {
-            return this.visitFunctionItemExpr((XQueryParser.FunctionItemExprContext) child);
-        }
-        if (child instanceof XQueryParser.MapConstructorContext) {
-            return this.visitMapConstructor((XQueryParser.MapConstructorContext) child);
-        }
-        if (child instanceof XQueryParser.ArrayConstructorContext) {
-            return this.visitArrayConstructor((XQueryParser.ArrayConstructorContext) child);
-        }
-        if (child instanceof XQueryParser.StringConstructorContext) {
-            // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException(
-                    "StringConstructorContext not supported YET",
-                    createMetadataFromContext(ctx)
-            );
-        }
-        if (child instanceof XQueryParser.UnaryLookupContext) {
-            return this.visitUnaryLookup((XQueryParser.UnaryLookupContext) child);
-        }
-        if (child instanceof TerminalNode) {
-            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
-        }
-        throw new UnsupportedFeatureException(
-                "Primary expression not yet implemented",
-                createMetadataFromContext(ctx)
-        );
+    public Expression visitPredicate(XQueryParser.PredicateContext ctx) {
+        return this.visitExpr(ctx.expr());
     }
 
     @Override
-    public Node visitVarRef(XQueryParser.VarRefContext ctx) {
-        Name name = parseName(ctx.eqName(), false, false);
-        return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
+    public Expression visitLookup(XQueryParser.LookupContext ctx) {
+        return this.visitKeySpecifier(ctx.keySpecifier());
     }
 
     @Override
-    public Node visitVarName(XQueryParser.VarNameContext ctx) {
-        Name name = parseName(ctx.eqName(), false, false);
-        return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
+    public UnaryLookupExpression visitUnaryLookup(XQueryParser.UnaryLookupContext ctx) {
+        return new UnaryLookupExpression(this.visitKeySpecifier(ctx.keySpecifier()), createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitMapConstructor(XQueryParser.MapConstructorContext ctx) {
+    public Expression visitKeySpecifier(XQueryParser.KeySpecifierContext ctx) {
+        if (ctx.lt != null) {
+            return new StringLiteralExpression(processStringLiteral(ctx.lt), createMetadataFromContext(ctx));
+        }
+        if (ctx.in != null) {
+            return new IntegerLiteralExpression(ctx.in.getText(), createMetadataFromContext(ctx));
+        }
+        if (ctx.nc != null) {
+            return new StringLiteralExpression(ctx.nc.getText(), createMetadataFromContext(ctx));
+        }
+        if (ctx.pe != null) {
+            return this.visitParenthesizedExpr(ctx.pe);
+        }
+        if (ctx.wc != null) {
+            // wildcard isn't an expression, return null and let lookupiterator handle it
+            return null;
+        }
+        if (ctx.vr != null) {
+            return this.visitVarRef(ctx.vr);
+        }
+
+        throw new OurBadException("Unrecognized lookup.");
+    }
+
+    // endregion
+
+    // region primary
+    @Override
+    public Expression visitPrimaryExpr(XQueryParser.PrimaryExprContext ctx) {
+        return (Expression) visit(ctx.getChild(0));
+    }
+
+    /**
+     * RumbleDB always preserves ordering during evaluation, so ordered and unordered expressions
+     * can simply evaluate their enclosed expression directly.
+     */
+    @Override
+    public Expression visitOrderedExpr(XQueryParser.OrderedExprContext ctx) {
+        return visitEnclosedExpression(ctx.enclosedExpression());
+    }
+
+    @Override
+    public Expression visitUnorderedExpr(XQueryParser.UnorderedExprContext ctx) {
+        return visitEnclosedExpression(ctx.enclosedExpression());
+    }
+
+    @Override
+    public Expression visitStringConstructor(XQueryParser.StringConstructorContext ctx) {
+        return PrimaryTranslation.stringConstructor(
+                StringConstructorContext.from(ctx), this.translationContext, this::visitExpr);
+    }
+
+    @Override
+    public Expression visitLiteral(XQueryParser.LiteralContext ctx) {
+        return PrimaryTranslation.literal(
+                LiteralExprContext.from(ctx), this.translationContext, this::processStringLiteral);
+    }
+
+    @Override
+    public Expression visitObjectConstructor(XQueryParser.ObjectConstructorContext ctx) {
         List<Expression> keys = new ArrayList<>();
         List<Expression> values = new ArrayList<>();
-        for (XQueryParser.MapConstructorEntryContext currentPair : ctx.mapConstructorEntry()) {
-            keys.add((Expression) this.visitExprSingle(currentPair.mapKey));
-            // Wrapping value inside array
-            values.add(
-                new ArrayConstructorExpression(
-                        (Expression) this.visitExprSingle(currentPair.mapValue),
-                        createMetadataFromContext(ctx)
-                )
-            );
+        for (XQueryParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
+            Expression lhs = this.visitExprSingle(currentPair.lhs);
+            keys.add(lhs);
+            values.add(this.visitExprSingle(currentPair.rhs));
         }
-        return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+        return new MapConstructorExpression(keys, values, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Node visitArrayConstructor(XQueryParser.ArrayConstructorContext ctx) {
-        if (ctx.squareArrayConstructor() != null) {
-            if (ctx.squareArrayConstructor().expr() == null) {
-                return new ArrayConstructorExpression(createMetadataFromContext(ctx));
-            }
-
-            List<Expression> expressions = new ArrayList<>();
-            for (XQueryParser.ExprSingleContext expr : ctx.squareArrayConstructor().expr().exprSingle()) {
-                expressions.add((Expression) this.visitExprSingle(expr));
-            }
-
-            List<Expression> arrayConstructorExpressions = new ArrayList<>();
-            for (Expression expression : expressions) {
-                arrayConstructorExpressions.add(
-                    new ArrayConstructorExpression(expression, createMetadataFromContext(ctx))
-                );
-            }
-
-            Expression content = new CommaExpression(arrayConstructorExpressions, createMetadataFromContext(ctx));
-            return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
-        } else {
-            if (ctx.curlyArrayConstructor().enclosedExpression().expr() == null) {
-                return new ArrayConstructorExpression(createMetadataFromContext(ctx));
-            }
-            Expression content = (Expression) this.visitExpr(ctx.curlyArrayConstructor().enclosedExpression().expr());
-            Expression rightExpression = new ArrayConstructorExpression(
-                    new ContextItemExpression(createMetadataFromContext(ctx)),
-                    createMetadataFromContext(ctx)
-            );
-
-            Expression secondContent = new SimpleMapExpression(
-                    content,
-                    rightExpression,
-                    createMetadataFromContext(ctx)
-            );
-            return new ArrayConstructorExpression(secondContent, createMetadataFromContext(ctx));
+    public Expression visitNodeConstructor(XQueryParser.NodeConstructorContext ctx) {
+        if (ctx.directConstructor() != null) {
+            return visitDirectConstructor(ctx.directConstructor());
         }
+        return visitComputedConstructor(ctx.computedConstructor());
     }
 
     @Override
-    public Node visitUnaryLookup(XQueryParser.UnaryLookupContext ctx) {
-        // TODO maybe wrap as method, redundant from LookupContext in prefix
-        Expression mainExpression = null;
-        XQueryParser.KeySpecifierContext key = ctx.keySpecifier();
-        if (key.ncName() != null) {
-            Expression expr = new StringLiteralExpression(key.ncName().getText(), createMetadataFromContext(ctx));
-            mainExpression = new ObjectLookupExpression(
-                    new ContextItemExpression(createMetadataFromContext(ctx)),
-                    expr,
-                    createMetadataFromContext(ctx)
-            );
-        } else if (key.IntegerLiteral() != null) {
-            Expression expr = new IntegerLiteralExpression(
-                    key.IntegerLiteral().getText(),
-                    createMetadataFromContext(ctx)
-            );
-            mainExpression = new ArrayLookupExpression(
-                    new ContextItemExpression(createMetadataFromContext(ctx)),
-                    expr,
-                    createMetadataFromContext(ctx)
-            );
-        } else {
-            // TODO not in scope of thesis
-            throw new XMLUnsupportedException(
-                    "ParenthesizedExpr and STAR object lookup not supported yet",
-                    createMetadataFromContext(ctx)
-            );
-        }
-        return mainExpression;
+    public Expression visitDirectConstructor(XQueryParser.DirectConstructorContext ctx) {
+        return XmlDirectConstructorTranslation.directConstructor(
+                DirectConstructorContext.from(ctx),
+                this.xQueryTokenStream,
+                this.translationContext,
+                this::parseName,
+                this::visitDirElemContent,
+                this::visitExpr);
     }
 
     @Override
-    public Node visitParenthesizedExpr(XQueryParser.ParenthesizedExprContext ctx) {
-        if (ctx.expr() == null) {
-            return new CommaExpression(createMetadataFromContext(ctx));
-        }
-        return this.visitExpr(ctx.expr());
-    }
-
-    private static Expression getLiteralExpressionFromToken(String token, ExceptionMetadata metadataFromContext) {
-        // TODO We'll just have to add the functions true(), false() and null()
-        if (token.contains("E") || token.contains("e")) {
-            return new DoubleLiteralExpression(Double.parseDouble(token), metadataFromContext);
-        }
-        if (token.contains(".")) {
-            return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
-        }
-        return new IntegerLiteralExpression(token, metadataFromContext);
+    public Expression visitDirElemContent(XQueryParser.DirElemContentContext ctx) {
+        return XmlDirectConstructorTranslation.dirElemContent(
+                DirElemContentContext.from(ctx),
+                this.xQueryTokenStream,
+                this.translationContext,
+                this::visitDirectConstructor,
+                this::visitCommonContent);
     }
 
     @Override
-    public Node visitContextItemExpr(XQueryParser.ContextItemExprContext ctx) {
-        return new ContextItemExpression(createMetadataFromContext(ctx));
+    public Expression visitCommonContent(XQueryParser.CommonContentContext ctx) {
+        return XmlDirectConstructorTranslation.commonContent(
+                CommonContentContext.from(ctx), this.translationContext, this::visitExpr);
     }
 
     @Override
-    public Node visitFunctionCall(XQueryParser.FunctionCallContext ctx) {
-        Name name = parseName(ctx.fn_name, true, false);
-        return processFunctionCall(name, ctx, getArgumentsFromArgumentListContext(ctx.argumentList()));
+    public Expression visitComputedConstructor(XQueryParser.ComputedConstructorContext ctx) {
+        return (Expression) visit(ctx.getChild(0));
     }
 
     @Override
-    public Node visitFunctionItemExpr(XQueryParser.FunctionItemExprContext ctx) {
-        ParseTree child = ctx.children.get(0);
-        if (child instanceof XQueryParser.NamedFunctionRefContext) {
-            return this.visitNamedFunctionRef((XQueryParser.NamedFunctionRefContext) child);
-        }
-        if (child instanceof XQueryParser.InlineFunctionRefContext) {
-            return this.visitInlineFunctionRef((XQueryParser.InlineFunctionRefContext) child);
-        }
-        throw new UnsupportedFeatureException(
-                "Function item expression not yet implemented",
-                createMetadataFromContext(ctx)
-        );
+    public DocumentNodeConstructorExpression visitCompDocConstructor(XQueryParser.CompDocConstructorContext ctx) {
+        return XmlComputedConstructorTranslation.compDocConstructor(
+                CompDocConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
-    public Node visitNamedFunctionRef(XQueryParser.NamedFunctionRefContext ctx) {
-        Name name = parseName(ctx.fn_name, true, false);
-        int arity = 0;
-        try {
-            arity = Integer.parseInt(ctx.arity.getText());
-        } catch (NumberFormatException e) {
-            throw new RumbleException(
-                    "Parser error: In a named function reference, arity must be an integer."
-            );
-        }
-        return new NamedFunctionReferenceExpression(
-                new FunctionIdentifier(name, arity),
-                createMetadataFromContext(ctx)
-        );
+    public TextNodeConstructorExpression visitCompTextConstructor(XQueryParser.CompTextConstructorContext ctx) {
+        return XmlComputedConstructorTranslation.compTextConstructor(
+                CompTextConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
-    public Node visitInlineFunctionRef(XQueryParser.InlineFunctionRefContext ctx) {
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
-        Name paramName;
-        SequenceType paramType;
-        if (ctx.functionParams() != null) {
-            for (XQueryParser.FunctionParamContext param : ctx.functionParams().functionParam()) {
-                // TODO here we have qname instead eqName
-                paramName = parseName(param.name, false, false);
-                paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
-                if (fnParams.containsKey(paramName)) {
-                    throw new DuplicateParamNameException(
-                            Name.createVariableInDefaultFunctionNamespace("inline-function`"),
-                            paramName,
-                            createMetadataFromContext(param)
-                    );
-                }
-                if (param.type.sequenceType() != null) {
-                    paramType = this.processSequenceType(param.type.sequenceType());
-                } else {
-                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
-                }
-                fnParams.put(paramName, paramType);
-            }
-        }
-
-        if (ctx.return_type != null) {
-            fnReturnType = this.processSequenceType(ctx.return_type);
-        }
-
-        Expression expr = null;
-        if (ctx.functionBody().enclosedExpression().expr() != null) {
-            expr = (Expression) this.visitExpr(ctx.functionBody().enclosedExpression().expr());
-        } else {
-            expr = new CommaExpression(createMetadataFromContext(ctx));
-        }
-
-        return new InlineFunctionExpression(
-                null,
-                fnParams,
-                fnReturnType,
-                expr,
-                createMetadataFromContext(ctx)
-        );
+    public CommentNodeConstructorExpression visitCompCommentConstructor(
+            XQueryParser.CompCommentConstructorContext ctx) {
+        return XmlComputedConstructorTranslation.compCommentConstructor(
+                CompCommentConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
     }
 
     @Override
-    public Node visitPredicate(XQueryParser.PredicateContext ctx) {
-        return this.visitExpr(ctx.expr());
-    }
-    // endregion
-
-    // region Flowr
-    @Override
-    public Node visitFlworExpr(XQueryParser.FlworExprContext ctx) {
-        Clause clause;
-        // check the start clause, for or let
-        XQueryParser.InitialClauseContext initialClause = ctx.initialClause();
-        if (initialClause.letClause() != null) {
-            clause = (Clause) this.visitLetClause(initialClause.letClause());
-        } else if (initialClause.forClause() != null) {
-            clause = (Clause) this.visitForClause(initialClause.forClause());
-        } else {
-            // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException("windowClause not supported YET", createMetadataFromContext(ctx));
-        }
-
-        Clause previousFLWORClause = clause.getLastClause();
-
-        for (ParseTree child : ctx.intermediateClause()) {
-            if (child instanceof XQueryParser.ForClauseContext) {
-                clause = (Clause) this.visitForClause((XQueryParser.ForClauseContext) child);
-            } else if (child instanceof XQueryParser.LetClauseContext) {
-                clause = (Clause) this.visitLetClause((XQueryParser.LetClauseContext) child);
-            } else if (child instanceof XQueryParser.WhereClauseContext) {
-                clause = (Clause) this.visitWhereClause((XQueryParser.WhereClauseContext) child);
-            } else if (child instanceof XQueryParser.GroupByClauseContext) {
-                clause = (Clause) this.visitGroupByClause((XQueryParser.GroupByClauseContext) child);
-            } else if (child instanceof XQueryParser.OrderByClauseContext) {
-                clause = (Clause) this.visitOrderByClause((XQueryParser.OrderByClauseContext) child);
-            } else if (child instanceof XQueryParser.CountClauseContext) {
-                clause = (Clause) this.visitCountClause((XQueryParser.CountClauseContext) child);
-            } else {
-                throw new UnsupportedFeatureException(
-                        "FLOWR clause not implemented yet",
-                        createMetadataFromContext(ctx)
-                );
-            }
-
-            previousFLWORClause.chainWith(clause.getFirstClause());
-            previousFLWORClause = clause.getLastClause();
-        }
-
-        Expression returnExpr = (Expression) this.visitExprSingle(ctx.returnClause().exprSingle());
-        ReturnClause returnClause = new ReturnClause(
-                returnExpr,
-                generateMetadata(ctx.getStop())
-        );
-        previousFLWORClause.chainWith(returnClause);
-
-        return new FlworExpression(
-                returnClause,
-                createMetadataFromContext(ctx)
-        );
+    public ComputedPIConstructorExpression visitCompPIConstructor(XQueryParser.CompPIConstructorContext ctx) {
+        return XmlComputedConstructorTranslation.compPIConstructor(
+                CompPIConstructorContext.from(ctx),
+                this.translationContext,
+                this::visitExpr,
+                this::visitEnclosedExpression);
     }
 
     @Override
-    public Node visitForClause(XQueryParser.ForClauseContext ctx) {
-        ForClause clause = null;
-        for (XQueryParser.ForBindingContext var : ctx.vars) {
-            ForClause newClause = (ForClause) this.visitForBinding(var);
-            if (clause != null) {
-                clause.chainWith(newClause);
-            }
-            clause = newClause;
-        }
-
-        return clause;
+    public ComputedAttributeConstructorExpression visitCompAttrConstructor(
+            XQueryParser.CompAttrConstructorContext ctx) {
+        return XmlComputedConstructorTranslation.compAttrConstructor(
+                CompAttrConstructorContext.from(ctx),
+                this.translationContext,
+                this::parseEqName,
+                this::visitExpr,
+                this::visitEnclosedExpression);
     }
 
     @Override
-    public Node visitForBinding(XQueryParser.ForBindingContext ctx) {
-        // var_ref in JSONiq is complex and has $ and var_name while XQuery has var_name straight away
-        SequenceType seq = null;
-        boolean emptyFlag;
-        Name var = ((VariableReferenceExpression) this.visitVarName(ctx.name)).getVariableName();
-        if (ctx.seq != null) {
-            seq = this.processSequenceType(ctx.seq.sequenceType());
-        } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+    public ComputedElementConstructorExpression visitCompElemConstructor(XQueryParser.CompElemConstructorContext ctx) {
+        return XmlComputedConstructorTranslation.compElemConstructor(
+                CompElemConstructorContext.from(ctx),
+                this.translationContext,
+                this::parseEqName,
+                this::visitExpr,
+                this::visitEnclosedContentExpr);
+    }
+
+    @Override
+    public ComputedNamespaceConstructorExpression visitCompNamespaceConstructor(
+            XQueryParser.CompNamespaceConstructorContext ctx) {
+        return XmlComputedConstructorTranslation.compNamespaceConstructor(
+                CompNamespaceConstructorContext.from(ctx), this.translationContext, this::visitEnclosedExpression);
+    }
+
+    @Override
+    public Expression visitEnclosedContentExpr(XQueryParser.EnclosedContentExprContext ctx) {
+        return XmlComputedConstructorTranslation.enclosedContentExpr(
+                EnclosedContentExprContext.from(ctx), this::visitEnclosedExpression);
+    }
+
+    @Override
+    public ArrayConstructorExpression visitArrayConstructor(XQueryParser.ArrayConstructorContext ctx) {
+        return (ArrayConstructorExpression) visit(ctx.getChild(0));
+    }
+
+    @Override
+    public ArrayConstructorExpression visitSquareArrayConstructor(XQueryParser.SquareArrayConstructorContext ctx) {
+        return PrimaryTranslation.squareArrayConstructor(
+                ArrayConstructorContext.Square.from(ctx), this.translationContext, this::visitExprSingle);
+    }
+
+    @Override
+    public ArrayConstructorExpression visitCurlyArrayConstructor(XQueryParser.CurlyArrayConstructorContext ctx) {
+        return PrimaryTranslation.curlyArrayConstructor(
+                ArrayConstructorContext.Curly.from(ctx), this.translationContext, this::visitEnclosedExpression);
+    }
+
+    @Override
+    public Expression visitParenthesizedExpr(XQueryParser.ParenthesizedExprContext ctx) {
+        return PrimaryTranslation.parenthesizedExpr(
+                ParenthesizedExprContext.from(ctx), this.translationContext, this::visitExpr);
+    }
+
+    @Override
+    public VariableReferenceExpression visitVarRef(XQueryParser.VarRefContext ctx) {
+        return PrimaryTranslation.varRef(VarRefContext.from(ctx), this.translationContext, this::parseEqName);
+    }
+
+    private Name parseVariableReference(XQueryParser.VarRefContext ctx) {
+        return parseVariableName(ctx.eqName());
+    }
+
+    private Name parseVariableBinding(XQueryParser.VarBindingContext ctx) {
+        return parseVariableName(ctx.eqName());
+    }
+
+    private Name parseVariableName(XQueryParser.EqNameContext ctx) {
+        return parseEqName(ctx, NameRole.NO_DEFAULT_NAMESPACE);
+    }
+
+    @Override
+    public ContextItemExpression visitContextItemExpr(XQueryParser.ContextItemExprContext ctx) {
+        return PrimaryTranslation.contextItemExpr(ctx, this.translationContext);
+    }
+
+    public SequenceType processSequenceType(XQueryParser.SequenceTypeContext ctx) {
+        return TypeTranslation.sequenceType(SequenceTypeContext.from(ctx), this::processItemType);
+    }
+
+    public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
+        if (ctx.item.eqName() == null) {
+            throw new ParsingException(
+                    "A cast or castable target must be a simple type name.", createMetadataFromContext(ctx));
         }
-        emptyFlag = (ctx.flag != null);
-        Name atVar = null;
-        if (ctx.at != null) {
-            atVar = ((VariableReferenceExpression) this.visitVarName(ctx.at.pvar)).getVariableName();
-            if (atVar.equals(var)) {
-                throw new PositionalVariableNameSameAsForVariableException(
-                        "Positional variable " + var + " cannot have the same name as the main for variable.",
-                        createMetadataFromContext(ctx.at)
-                );
+        return TypeTranslation.singleType(SingleTypeContext.from(ctx), this::processItemType);
+    }
+
+    public ItemType processItemType(XQueryParser.ItemTypeContext itemTypeContext) {
+        if (itemTypeContext.kindTest() != null && itemTypeContext.kindTest().anyKindTest() != null) {
+            checkAnyKindTest(itemTypeContext.kindTest().anyKindTest());
+        }
+        return TypeTranslation.itemType(
+                ItemTypeContext.from(itemTypeContext),
+                this.translationContext,
+                this::parseEqName,
+                this::processAnnotations,
+                this::processStringLiteral,
+                this::processSequenceType,
+                this::processItemType);
+    }
+
+    @Override
+    public FunctionCallExpression visitFunctionCall(XQueryParser.FunctionCallContext ctx) {
+        return PrimaryTranslation.functionCall(
+                FunctionCallContext.from(ctx), this.translationContext, this::parseFunctionName, this::visitArgument);
+    }
+
+    private List<Expression> getArgumentsFromArgumentListContext(XQueryParser.ArgumentListContext ctx) {
+        List<Expression> arguments = new ArrayList<>();
+        if (ctx.args != null) {
+            for (XQueryParser.ArgumentContext arg : ctx.args) {
+                Expression currentArg = this.visitArgument(arg);
+                arguments.add(currentArg);
             }
         }
-        Expression expr = (Expression) this.visitExprSingle(ctx.ex);
-        // If the sequenceType is specified, we have to "extend" its arity to *
-        // because TreatIterator is wrapping the whole assignment expression,
-        // meaning there is not one TreatIterator for each variable we loop over.
-        SequenceType expressionType = new SequenceType(
-                seq.getItemType(),
-                SequenceType.Arity.ZeroOrMore
-        );
-        if (!expressionType.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
-            expr = new TreatExpression(expr, expressionType, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-        }
-
-
-        return new ForClause(var, emptyFlag, seq, atVar, expr, createMetadataFromContext(ctx));
+        return arguments;
     }
 
     @Override
-    public Node visitLetClause(XQueryParser.LetClauseContext ctx) {
-        LetClause clause = null;
-        for (XQueryParser.LetBindingContext var : ctx.vars) {
-            LetClause newClause = (LetClause) this.visitLetBinding(var);
-            if (clause != null) {
-                clause.chainWith(newClause);
-            }
-            clause = newClause;
-        }
-
-        return clause;
-    }
-
-    @Override
-    public Node visitLetBinding(XQueryParser.LetBindingContext ctx) {
-        SequenceType seq = null;
-        Name var = ((VariableReferenceExpression) this.visitVarName(ctx.varName())).getVariableName();
-        if (ctx.typeDeclaration() != null) {
-            seq = this.processSequenceType(ctx.typeDeclaration().sequenceType());
-        } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
-        }
-
-        Expression expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-        if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
-            expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-        }
-
-        return new LetClause(var, seq, expr, createMetadataFromContext(ctx));
-    }
-
-    @Override
-    public Node visitWhereClause(XQueryParser.WhereClauseContext ctx) {
-        Expression expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-        return new WhereClause(expr, createMetadataFromContext(ctx));
-    }
-
-    @Override
-    public Node visitGroupByClause(XQueryParser.GroupByClauseContext ctx) {
-        List<GroupByVariableDeclaration> vars = new ArrayList<>();
-        GroupByVariableDeclaration child;
-
-        for (XQueryParser.GroupingSpecContext var : ctx.groupingSpecList().vars) {
-            child = this.processGroupByVar(var);
-            vars.add(child);
-        }
-        return new GroupByClause(vars, createMetadataFromContext(ctx));
-    }
-
-    public GroupByVariableDeclaration processGroupByVar(XQueryParser.GroupingSpecContext ctx) {
-        if (ctx.uriLiteral() != null) {
-            String collation = processURILiteral(ctx.uriLiteral());
-            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
-                throw new DefaultCollationException(
-                        "Unknown collation: " + collation,
-                        createMetadataFromContext(ctx.uriLiteral())
-                );
-            }
-        }
-        SequenceType seq = null;
-        Expression expr = null;
-        Name var = ((VariableReferenceExpression) this.visitVarName(ctx.name)).getVariableName();
-
-        if (ctx.typeDeclaration() != null) {
-            seq = this.processSequenceType(ctx.typeDeclaration().sequenceType());
-        } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
-        }
-
+    public Expression visitArgument(XQueryParser.ArgumentContext ctx) {
         if (ctx.exprSingle() != null) {
-            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-            if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
-            }
-
+            return this.visitExprSingle(ctx.exprSingle());
         }
-
-
-        return new GroupByVariableDeclaration(var, seq, expr);
-    }
-
-    private String processURILiteral(XQueryParser.UriLiteralContext ctx) {
-        return ctx.getText().substring(1, ctx.getText().length() - 1);
+        return null;
     }
 
     @Override
-    public Node visitOrderByClause(XQueryParser.OrderByClauseContext ctx) {
-        boolean stable = false;
-        List<OrderByClauseSortingKey> exprs = new ArrayList<>();
-        OrderByClauseSortingKey child;
-        for (XQueryParser.OrderSpecContext var : ctx.specs) {
-            child = this.processOrderByExpr(var);
-            exprs.add(child);
-        }
-        if (ctx.KW_STABLE() != null && !ctx.KW_STABLE().getText().isEmpty()) {
-            stable = true;
-        }
-        return new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
-    }
-
-    public OrderByClauseSortingKey processOrderByExpr(XQueryParser.OrderSpecContext ctx) {
-        if (ctx.uriLiteral() != null) {
-            String collation = processURILiteral(ctx.uriLiteral());
-            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
-                throw new DefaultCollationException(
-                        "Unknown collation: " + collation,
-                        createMetadataFromContext(ctx.uriLiteral())
-                );
-            }
-        }
-        boolean ascending = true;
-        if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
-            ascending = false;
-        }
-        String uri = null;
-        if (ctx.uriLiteral() != null) {
-            uri = ctx.uriLiteral().getText();
-        }
-        OrderByClauseSortingKey.EMPTY_ORDER empty_order = OrderByClauseSortingKey.EMPTY_ORDER.NONE;
-        if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
-            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.GREATEST;
-        }
-        if (ctx.ls != null && !ctx.ls.getText().isEmpty()) {
-            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.LEAST;
-        }
-        Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
-        return new OrderByClauseSortingKey(
-                expression,
-                ascending,
-                uri,
-                empty_order
-        );
+    public Expression visitFunctionItemExpr(XQueryParser.FunctionItemExprContext ctx) {
+        return (Expression) visit(ctx.getChild(0));
     }
 
     @Override
-    public Node visitCountClause(XQueryParser.CountClauseContext ctx) {
-        VariableReferenceExpression child = (VariableReferenceExpression) this.visitVarName(ctx.varName());
-        return new CountClause(child, createMetadataFromContext(ctx));
+    public NamedFunctionReferenceExpression visitNamedFunctionRef(XQueryParser.NamedFunctionRefContext ctx) {
+        return PrimaryTranslation.namedFunctionRef(
+                NamedFunctionRefContext.from(ctx), this.translationContext, this::parseFunctionName);
+    }
+
+    @Override
+    public InlineFunctionExpression visitInlineFunctionExpr(XQueryParser.InlineFunctionExprContext ctx) {
+        return PrimaryTranslation.inlineFunctionExpr(
+                InlineFunctionExprContext.from(ctx),
+                this.translationContext,
+                this::processAnnotations,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitStatementsAndOptionalExpr);
+    }
+    // endregion
+
+    // region control
+    @Override
+    public ConditionalExpression visitIfExpr(XQueryParser.IfExprContext ctx) {
+        return ControlTranslation.ifExpr(
+                IfExprContext.from(ctx), this.translationContext, this::visitExpr, this::visitExprSingle);
+    }
+
+    @Override
+    public SwitchExpression visitSwitchExpr(XQueryParser.SwitchExprContext ctx) {
+        return ControlTranslation.switchExpr(
+                SwitchExprContext.from(ctx), this.translationContext, this::visitExpr, this::visitExprSingle);
+    }
+    // endregion
+
+    // region quantified
+    @Override
+    public TypeSwitchExpression visitTypeswitchExpr(XQueryParser.TypeswitchExprContext ctx) {
+        return ControlTranslation.typeswitchExpr(
+                TypeswitchExprContext.from(ctx),
+                this.translationContext,
+                this::visitExpr,
+                this::visitExprSingle,
+                this::parseVariableBinding,
+                this::processSequenceType);
+    }
+
+    @Override
+    public FunctionCallExpression visitQuantifiedExpr(XQueryParser.QuantifiedExprContext ctx) {
+        return QuantifiedTranslation.quantifiedExpr(
+                QuantifiedExprContext.from(ctx),
+                this.translationContext,
+                this::visitExprSingle,
+                this::parseVariableBinding,
+                this::processSequenceType);
+    }
+
+    @Override
+    public TryCatchExpression visitTryCatchExpr(XQueryParser.TryCatchExprContext ctx) {
+        return ControlTranslation.tryCatchExpr(
+                TryCatchExprContext.from(ctx), this.translationContext, this::visitExpr, this::parseEqName);
     }
 
     // endregion
 
-    // region If
-    @Override
-    public Node visitIfExpr(XQueryParser.IfExprContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.test_condition);
-        Expression branch = (Expression) this.visitExprSingle(ctx.branch);
-        Expression else_branch = (Expression) this.visitExprSingle(ctx.else_branch);
-        return new ConditionalExpression(
-                condition,
-                branch,
-                else_branch,
-                createMetadataFromContext(ctx)
-        );
+    private ExceptionMetadata createMetadataFromContext(ParserRuleContext context) {
+        return this.translationContext.metadata(context);
     }
 
-    // endregion
+    private ExceptionMetadata createMetadataFromRange(Token start, Token end) {
+        return this.translationContext.metadata(start, end);
+    }
 
-    // region Quantified
+    // region scripting
+    @Override
+    public StatementsAndOptionalExpr visitStatements(XQueryParser.StatementsContext ctx) {
+        return BlockStatementTranslation.statements(
+                StatementsContext.from(ctx), this.translationContext, this::visitStatement);
+    }
 
     @Override
-    public Node visitQuantifiedExpr(XQueryParser.QuantifiedExprContext ctx) {
-        Clause clause = null;
-        Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
-        boolean isUniversal = false;
-        if (ctx.ev == null) {
-            isUniversal = false;
-        } else {
-            isUniversal = true;
-        }
-        for (XQueryParser.QuantifiedVarContext currentVariable : ctx.vars) {
-            Expression varExpression;
-            SequenceType sequenceType = null;
-            Name variableName = ((VariableReferenceExpression) this.visitVarName(
-                currentVariable.varName()
-            )).getVariableName();
-            if (currentVariable.typeDeclaration() != null) {
-                sequenceType = this.processSequenceType(currentVariable.typeDeclaration().sequenceType());
-            } else {
-                sequenceType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
-            }
+    public StatementsAndExpr visitStatementsAndExpr(XQueryParser.StatementsAndExprContext ctx) {
+        return BlockStatementTranslation.statementsAndExpr(
+                StatementsAndExprContext.from(ctx), this.translationContext, this::visitStatement, this::visitExpr);
+    }
 
-            varExpression = (Expression) this.visitExprSingle(currentVariable.exprSingle());
-            Clause newClause = new ForClause(
-                    variableName,
-                    false,
-                    sequenceType,
-                    null,
-                    varExpression,
-                    createMetadataFromContext(currentVariable)
-            );
-            if (clause != null) {
-                clause.chainWith(newClause);
-            }
-            clause = newClause;
+    @Override
+    public StatementsAndOptionalExpr visitStatementsAndOptionalExpr(XQueryParser.StatementsAndOptionalExprContext ctx) {
+        return BlockStatementTranslation.statementsAndOptionalExpr(
+                StatementsAndOptionalExprContext.from(ctx),
+                this.translationContext,
+                this::visitStatement,
+                this::visitExpr);
+    }
+
+    @Override
+    public Statement visitStatement(XQueryParser.StatementContext ctx) {
+        return (Statement) visit(ctx.getChild(0));
+    }
+
+    // mutation
+    @Override
+    public ApplyStatement visitApplyStatement(XQueryParser.ApplyStatementContext ctx) {
+        return MutationStatementTranslation.applyStatement(
+                ApplyStatementContext.from(ctx), this.translationContext, this::visitExprSimple);
+    }
+
+    @Override
+    public AssignStatement visitAssignStatement(XQueryParser.AssignStatementContext ctx) {
+        return MutationStatementTranslation.assignStatement(
+                AssignStatementContext.from(ctx),
+                this.translationContext,
+                this::parseVariableReference,
+                this::visitExprSingle);
+    }
+    // end mutation
+
+    // block
+    @Override
+    public BlockStatement visitBlockStatement(XQueryParser.BlockStatementContext ctx) {
+        return BlockStatementTranslation.blockStatement(
+                BlockStatementContext.from(ctx), this.translationContext, this::visitStatement);
+    }
+
+    @Override
+    public BlockExpression visitBlockExpr(XQueryParser.BlockExprContext ctx) {
+        return BlockStatementTranslation.blockExpr(
+                BlockExprContext.from(ctx), this.translationContext, this::visitStatementsAndExpr);
+    }
+    // end block
+
+    // loops
+    @Override
+    public BreakStatement visitBreakStatement(XQueryParser.BreakStatementContext ctx) {
+        return LoopStatementTranslation.breakStatement(ctx, this.translationContext);
+    }
+
+    @Override
+    public ContinueStatement visitContinueStatement(XQueryParser.ContinueStatementContext ctx) {
+        return LoopStatementTranslation.continueStatement(ctx, this.translationContext);
+    }
+
+    @Override
+    public ExitStatement visitExitStatement(XQueryParser.ExitStatementContext ctx) {
+        return LoopStatementTranslation.exitStatement(
+                ExitStatementContext.from(ctx), this.translationContext, this::visitExprSingle);
+    }
+
+    @Override
+    public FlowrStatement visitFlworStatement(XQueryParser.FlworStatementContext ctx) {
+        return LoopStatementTranslation.flworStatement(
+                FlworStatementContext.from(ctx),
+                this.translationContext,
+                this::visitForClause,
+                this::visitLetClause,
+                child -> (Clause) this.visit(child),
+                this::visitStatement);
+    }
+
+    @Override
+    public WhileStatement visitWhileStatement(XQueryParser.WhileStatementContext ctx) {
+        return LoopStatementTranslation.whileStatement(
+                WhileStatementContext.from(ctx), this.translationContext, this::visitExpr, this::visitStatement);
+    }
+
+    // end loops
+
+    // control
+
+    @Override
+    public ConditionalStatement visitIfStatement(XQueryParser.IfStatementContext ctx) {
+        return ControlStatementTranslation.ifStatement(
+                IfStatementContext.from(ctx), this.translationContext, this::visitExpr, this::visitStatement);
+    }
+
+    @Override
+    public SwitchStatement visitSwitchStatement(XQueryParser.SwitchStatementContext ctx) {
+        return ControlStatementTranslation.switchStatement(
+                SwitchStatementContext.from(ctx),
+                this.translationContext,
+                this::visitExpr,
+                this::visitExprSingle,
+                this::visitStatement);
+    }
+
+    @Override
+    public TryCatchStatement visitTryCatchStatement(XQueryParser.TryCatchStatementContext ctx) {
+        return ControlStatementTranslation.tryCatchStatement(
+                TryCatchStatementContext.from(ctx),
+                this.translationContext,
+                this::visitBlockStatement,
+                this::parseEqName);
+    }
+
+    @Override
+    public TypeSwitchStatement visitTypeSwitchStatement(XQueryParser.TypeSwitchStatementContext ctx) {
+        return ControlStatementTranslation.typeSwitchStatement(
+                TypeSwitchStatementContext.from(ctx),
+                this.translationContext,
+                this::visitExpr,
+                this::visitStatement,
+                this::parseVariableBinding,
+                this::processSequenceType);
+    }
+
+    // end control
+
+    // declaration
+
+    @Override
+    public Statement visitVarDeclStatement(XQueryParser.VarDeclStatementContext ctx) {
+        return DeclarationStatementTranslation.varDeclStatement(
+                VarDeclStatementContext.from(ctx),
+                this.translationContext,
+                this::processAnnotations,
+                this::parseVariableBinding,
+                this::processSequenceType,
+                this::visitExprSingle);
+    }
+
+    // end declaration
+
+    // start xml
+
+    @Override
+    public Expression visitPathExpr(XQueryParser.PathExprContext ctx) {
+        if (ctx.SLASH() != null && ctx.singleslash == null) {
+            checkLeadingLoneSlash(ctx);
         }
-        WhereClause whereClause = null;
-        if (!isUniversal) {
-            whereClause = new WhereClause(expression, createMetadataFromContext(ctx.exprSingle()));
-        } else {
-            whereClause = new WhereClause(
-                    new NotExpression(expression, createMetadataFromContext(ctx.exprSingle())),
-                    createMetadataFromContext(ctx.exprSingle())
-            );
+        return XmlPathTranslation.pathExpr(PathExprContext.from(ctx), this.translationContext, this::visitStepExpr);
+    }
+
+    /**
+     * Enforces xgc: leading-lone-slash, which the grammar cannot express: ANTLR would otherwise read
+     * {@code / * 5} as {@code (/) * 5} instead of rejecting it.
+     */
+    private void checkLeadingLoneSlash(XQueryParser.PathExprContext ctx) {
+        int index = ctx.getStop().getTokenIndex() + 1;
+        Token next = this.xQueryTokenStream.get(index);
+        while (next.getChannel() != Token.DEFAULT_CHANNEL) {
+            next = this.xQueryTokenStream.get(++index);
         }
-        clause.chainWith(whereClause);
-        ReturnClause returnClause = new ReturnClause(
-                new NullLiteralExpression(generateMetadata(ctx.start)),
-                generateMetadata(ctx.start)
-        );
-        whereClause.chainWith(returnClause);
-        Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
-        if (!isUniversal) {
-            return new FunctionCallExpression(
-                    Name.createVariableInDefaultFunctionNamespace("exists"),
-                    Collections.singletonList(flworExpression),
-                    createMetadataFromContext(ctx)
-            );
-        } else {
-            return new FunctionCallExpression(
-                    Name.createVariableInDefaultFunctionNamespace("empty"),
-                    Collections.singletonList(flworExpression),
-                    createMetadataFromContext(ctx)
-            );
+        if (RELATIVE_PATH_START_TOKENS.contains(next.getType())) {
+            throw new ParsingException(
+                    "A leading lone slash cannot be followed by a token that starts a relative path.",
+                    createMetadataFromContext(ctx));
         }
     }
 
-    // endregion
-
-    // region Switch
-
     @Override
-    public Node visitSwitchExpr(XQueryParser.SwitchExprContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.cond);
-        List<SwitchCase> cases = new ArrayList<>();
-        for (XQueryParser.SwitchCaseClauseContext expr : ctx.cases) {
-            List<Expression> conditionExpressions = new ArrayList<>();
-            for (int i = 0; i < expr.cond.size(); ++i) {
-                conditionExpressions.add((Expression) this.visitExprSingle(expr.cond.get(i).exprSingle()));
-            }
-            SwitchCase c = new SwitchCase(conditionExpressions, (Expression) this.visitExprSingle(expr.ret));
-            cases.add(c);
-        }
-        Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
-        return new SwitchExpression(condition, cases, defaultCase, createMetadataFromContext(ctx));
+    public Expression visitStepExpr(XQueryParser.StepExprContext ctx) {
+        return XmlPathTranslation.stepExpr(
+                StepExprContext.from(ctx),
+                this.translationContext,
+                this::visitPostfixExpr,
+                this::getNodeTest,
+                this::visitPredicate);
     }
 
-    // endregion
-
-    // region TypeSwitch
-
-    @Override
-    public Node visitTypeswitchExpr(XQueryParser.TypeswitchExprContext ctx) {
-        Expression condition = (Expression) this.visitExpr(ctx.cond);
-        List<TypeswitchCase> cases = new ArrayList<>();
-        for (XQueryParser.CaseClauseContext expr : ctx.cses) {
-            List<SequenceType> union = new ArrayList<>();
-            Name variableName = null;
-            if (expr.var_ref != null) {
-                variableName = ((VariableReferenceExpression) this.visitVarName(
-                    expr.var_ref
-                )).getVariableName();
-            }
-            if (expr.union != null && !expr.union.isEmpty()) {
-                for (XQueryParser.SequenceTypeContext sequenceType : expr.union.seq) {
-                    union.add(this.processSequenceType(sequenceType));
-                }
-            }
-            Expression expression = (Expression) this.visitExprSingle(expr.ret);
-            cases.add(
-                new TypeswitchCase(
-                        variableName,
-                        union,
-                        expression
-                )
-            );
-        }
-        Name defaultVariableName = null;
-        if (ctx.var_ref != null) {
-            defaultVariableName = ((VariableReferenceExpression) this.visitVarName(
-                ctx.var_ref
-            )).getVariableName();
-        }
-        Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
-        return new TypeSwitchExpression(
-                condition,
-                cases,
-                new TypeswitchCase(defaultVariableName, defaultCase),
-                createMetadataFromContext(ctx)
-        );
-    }
-    // endregion
-
-    // region TryCatch
-
-    @Override
-    public Node visitTryCatchExpr(XQueryParser.TryCatchExprContext ctx) {
-        Expression tryExpression = (Expression) this.visitExpr(
-            ctx.tryClause()
-                .enclosedTryTargetExpression()
-                .enclosedExpression()
-                .expr()
-        );
-        Map<String, Expression> catchExpressions = new HashMap<>();
-        Expression catchAllExpression = null;
-        for (XQueryParser.CatchClauseContext catchCtx : ctx.catches) {
-            Expression catchExpression = (Expression) this.visitExpr(catchCtx.enclosedExpression().expr());
-            boolean doesCatchAll = false;
-            for (XQueryParser.NameTestContext qnameCtx : catchCtx.catchErrorList().errors) {
-                if (qnameCtx.wildcard() != null) {
-                    doesCatchAll = true;
-                } else {
-                    Name name = parseName(qnameCtx.eqName(), false, false);
-                    if (!catchExpressions.containsKey(name.getLocalName())) {
-                        catchExpressions.put(name.getLocalName(), catchExpression);
-                    }
-                }
-            }
-            if (doesCatchAll && catchAllExpression == null) {
-                catchAllExpression = catchExpression;
-            }
-        }
-        return new TryCatchExpression(
-                tryExpression,
-                catchExpressions,
-                catchAllExpression,
-                createMetadataFromContext(ctx)
-        );
+    /**
+     * @param unprefixedUsesDefaultElementNamespace when true, unprefixed QNames in a {@link NameTest} use the
+     *        in-scope default element namespace (child/descendant axes, etc.); when false (e.g. {@code attribute::}),
+     *        unprefixed names have no namespace.
+     */
+    private NodeTest getNodeTest(
+            XQueryParser.NodeTestContext nodeTestContext, boolean unprefixedUsesDefaultElementNamespace) {
+        return new NodeTestVisitor(unprefixedUsesDefaultElementNamespace).visit(nodeTestContext);
     }
 
-    // endregion
+    private class NodeTestVisitor extends XQueryParserBaseVisitor<NodeTest> {
+        private final boolean unprefixedUsesDefaultElementNamespace;
+
+        NodeTestVisitor(boolean unprefixedUsesDefaultElementNamespace) {
+            this.unprefixedUsesDefaultElementNamespace = unprefixedUsesDefaultElementNamespace;
+        }
+
+        @Override
+        public NodeTest visitNodeTest(XQueryParser.NodeTestContext ctx) {
+            if (ctx.nameTest() != null) {
+                return visitNameTest(ctx.nameTest());
+            }
+            if (ctx.kindTest() != null) {
+                return visitKindTest(ctx.kindTest());
+            }
+            throw new ParsingException("Invalid node test", createMetadataFromContext(ctx));
+        }
+
+        @Override
+        public NodeTest visitNameTest(XQueryParser.NameTestContext ctx) {
+            return XmlNodeTestTranslation.nameTest(
+                    NameTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    this.unprefixedUsesDefaultElementNamespace,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitKindTest(XQueryParser.KindTestContext ctx) {
+            NodeTest result = visit(ctx.getChild(0));
+            if (result == null) {
+                throw new UnsupportedFeatureException(
+                        "Unsupported kind test: " + ctx.getText(), createMetadataFromContext(ctx));
+            }
+            return result;
+        }
+
+        @Override
+        public NodeTest visitDocumentTest(XQueryParser.DocumentTestContext ctx) {
+            return XmlNodeTestTranslation.documentTest(
+                    DocumentTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitElementTest(XQueryParser.ElementTestContext ctx) {
+            return XmlNodeTestTranslation.elementTest(
+                    ElementTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitAttributeTest(XQueryParser.AttributeTestContext ctx) {
+            return XmlNodeTestTranslation.attributeTest(
+                    AttributeTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitSchemaElementTest(XQueryParser.SchemaElementTestContext ctx) {
+            return XmlNodeTestTranslation.schemaElementTest(
+                    SchemaElementTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitSchemaAttributeTest(XQueryParser.SchemaAttributeTestContext ctx) {
+            return XmlNodeTestTranslation.schemaAttributeTest(
+                    SchemaAttributeTestContext.from(ctx),
+                    XQueryTranslationVisitor.this.translationContext,
+                    XQueryTranslationVisitor.this::parseEqName);
+        }
+
+        @Override
+        public NodeTest visitPiTest(XQueryParser.PiTestContext ctx) {
+            return XmlNodeTestTranslation.piTest(
+                    PiTestContext.from(ctx), XQueryTranslationVisitor.this::processStringLiteral);
+        }
+
+        @Override
+        public NodeTest visitCommentTest(XQueryParser.CommentTestContext ctx) {
+            return XmlNodeTestTranslation.commentTest();
+        }
+
+        @Override
+        public NodeTest visitTextTest(XQueryParser.TextTestContext ctx) {
+            return XmlNodeTestTranslation.textTest();
+        }
+
+        @Override
+        public NodeTest visitNamespaceNodeTest(XQueryParser.NamespaceNodeTestContext ctx) {
+            return XmlNodeTestTranslation.namespaceNodeTest();
+        }
+
+        @Override
+        public NodeTest visitAnyKindTest(XQueryParser.AnyKindTestContext ctx) {
+            checkAnyKindTest(ctx);
+            return XmlNodeTestTranslation.anyKindTest();
+        }
+    }
+
+    // end region
+
+    private void checkAnyKindTest(XQueryParser.AnyKindTestContext ctx) {
+        if (ctx.STAR() != null) {
+            throw new ParsingException(
+                    "The XQuery node() test does not accept a wildcard.", createMetadataFromContext(ctx));
+        }
+    }
+
+    private String processURILiteral(UriLiteralContext ctx) {
+        // According to XQuery 3.1 spec, URI literals (which are string literals) must expand
+        // predefined entity references and character references
+        return processStringLiteral(ctx.stringLiteral());
+    }
+
+    private String resolveCollationUri(UriLiteralContext ctx) {
+        String uriString = processURILiteral(ctx);
+        URI uri = URILiteralUtils.resolve(
+                this.translationContext.moduleContext().getStaticBaseURI(), uriString, createMetadataFromContext(ctx));
+        return uri.toString();
+    }
+
+    private List<Annotation> processAnnotations(XQueryParser.AnnotationsContext annotations) {
+        if (annotations == null) {
+            return Collections.emptyList();
+        }
+        return AnnotationTranslation.processAnnotations(
+                AnnotationsContext.from(annotations), this.translationContext, this::parseEqName, this::visitLiteral);
+    }
 }

@@ -1,0 +1,79 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.expressions.xml;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
+
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+
+/**
+ * Expression representing an attribute node in a direct element constructor.
+ *
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-attributes">XQuery 3.1, 3.9.1.1: Attributes</a>
+ */
+public class AttributeNodeExpression extends Expression {
+    /**
+     * Resolved expanded name of the attribute (compile-time).
+     */
+    private final Name attributeName;
+    /**
+     * The value of the attribute node.
+     *
+     * The value is a list of expressions. This is because an attribute node can be
+     * constructed from multiple expressions and literals, which are materialized at runtime.
+     */
+    @Getter
+    private final List<Expression> value;
+
+    public AttributeNodeExpression(Name attributeName, List<Expression> value, ExceptionMetadata metadata) {
+        super(metadata);
+        this.attributeName = attributeName;
+        this.value = value;
+    }
+
+    public Name getNodeName() {
+        return this.attributeName;
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        result.addAll(this.value);
+        return result;
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitAttributeNode(this, argument);
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(this.attributeName);
+        sb.append("=");
+        for (Expression child : this.value) {
+            child.serializeToJSONiq(sb, indent);
+        }
+    }
+}

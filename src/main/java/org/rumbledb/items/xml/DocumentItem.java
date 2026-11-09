@@ -1,0 +1,330 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.items.xml;
+
+import java.io.Serial;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+
+import lombok.Setter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+
+public class DocumentItem extends AbstractNodeItem {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private String stringValue;
+    private List<Item> children;
+    private XMLDocumentPosition documentPos;
+    private Item documentElement;
+
+    @Setter
+    private URI constructionBaseUri;
+
+    @Setter
+    private URI documentUri;
+
+    public DocumentItem(Node documentNode, List<Item> children) {
+        this.children = children;
+        if (documentNode instanceof Document document && document.getDocumentURI() != null) {
+            URI uri = URI.create(document.getDocumentURI());
+            if (uri.isAbsolute()) {
+                this.documentUri = uri;
+            }
+        }
+        // org.w3c.dom.Document#getTextContent() returns null. Derive the XDM
+        // string value from the converted child nodes instead.
+        this.stringValue = computeStringValue(children);
+        this.documentElement = getDocumentElement();
+    }
+
+    /**
+     * Constructor for creating a document node with children items.
+     * Used by document node constructors when no actual DOM node is available.
+     *
+     * @param children the child nodes of the document
+     */
+    public DocumentItem(List<Item> children) {
+        this.children = children;
+        this.stringValue = computeStringValue(children);
+        this.documentElement = getDocumentElement();
+    }
+
+    private static String computeStringValue(List<Item> items) {
+        StringBuilder result = new StringBuilder();
+        appendStringValue(items, result);
+        return result.toString();
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        List<Item> copiedChildren = new ArrayList<>();
+        for (Item child : this.children) {
+            copiedChildren.add(child.copy(mutable));
+        }
+        DocumentItem copy = new DocumentItem(copiedChildren);
+        copy.constructionBaseUri = this.constructionBaseUri;
+        return copy;
+    }
+
+    /**
+     * Recursively computes the string value by concatenating text node descendants in document order.
+     */
+    private static void appendStringValue(List<Item> items, StringBuilder result) {
+        for (Item item : items) {
+            if (item.isTextNode()) {
+                result.append(item.getStringValue());
+            } else if (item.isElementNode() && item.children() != null) {
+                appendStringValue(item.children(), result);
+            }
+        }
+    }
+
+    private Item getDocumentElement() {
+        List<Item> children = this.children();
+        List<Item> elements = new ArrayList<>();
+        for (Item child : children) {
+            if (child.isElementNode()) {
+                elements.add(child);
+            }
+        }
+        if (elements.size() == 1) {
+            return elements.get(0);
+        }
+        return null;
+    }
+
+    @Override
+    public int setXmlDocumentPosition(String path, int current) {
+        this.documentPos = new XMLDocumentPosition(path, current);
+        current++;
+        for (Item child : this.children) current = child.setXmlDocumentPosition(path, current);
+        return current;
+    }
+
+    @Override
+    public XMLDocumentPosition getXmlDocumentPosition() {
+        return this.documentPos;
+    }
+
+    @Override
+    public void addParentToDescendants() {
+        this.children.forEach(child -> {
+            child.setParent(this);
+            child.addParentToDescendants();
+        });
+    }
+
+    @Override
+    public List<Item> children() {
+        return this.children;
+    }
+
+    @Override
+    public Item parent() {
+        return null;
+    }
+
+    @Override
+    public String getStringValue() {
+        return this.stringValue;
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        if (this.documentElement == null) {
+            return ItemTypeFactory.documentNodeItemType();
+        }
+        return ItemTypeFactory.documentNodeItemType(this.documentElement.getDynamicType());
+    }
+
+    @Override
+    public boolean isNode() {
+        return true;
+    }
+
+    @Override
+    public boolean isDocumentNode() {
+        return true;
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — node-kind.
+     *
+     * "For a Document Node, dm:node-kind returns the string \"document\"."
+     */
+    @Override
+    public String nodeKind() {
+        return "document";
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — node-name.
+     *
+     * "For a Document Node, dm:node-name returns the empty sequence."
+     */
+    @Override
+    public Name nodeName() {
+        return null;
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — attributes.
+     *
+     * "For a Document Node, dm:attributes returns the empty sequence."
+     */
+    @Override
+    public List<Item> attributes() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — base-uri.
+     *
+     * "For a Document Node, dm:base-uri returns the base URI of the document node, if it has
+     * one; otherwise it returns the empty sequence."
+     *
+     */
+    @Override
+    public List<Item> baseUri() {
+        return this.constructionBaseUri == null || !this.constructionBaseUri.isAbsolute()
+                ? Collections.emptyList()
+                : List.of(ItemFactory.getInstance().createAnyURIItem(this.constructionBaseUri.toString()));
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — document-uri.
+     *
+     * "For a Document Node, dm:document-uri returns the document-uri property of the document
+     * node, if it has one; otherwise it returns the empty sequence."
+     *
+     * Resource documents retain their retrieval URI; constructed documents have no document URI.
+     */
+    @Override
+    public List<Item> documentUri() {
+        return this.documentUri == null
+                ? Collections.emptyList()
+                : List.of(ItemFactory.getInstance().createAnyURIItem(this.documentUri.toString()));
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — is-id.
+     *
+     * For a Document Node, dm:is-id returns false.
+     */
+    @Override
+    public boolean isId() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — is-idrefs.
+     *
+     * For a Document Node, dm:is-idrefs returns false.
+     */
+    @Override
+    public boolean isIdrefs() {
+        return false;
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — nilled.
+     *
+     * For a Document Node, dm:nilled returns the empty sequence.
+     */
+    @Override
+    public List<Item> nilled() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — type-name.
+     *
+     * For a Document Node, dm:type-name returns the empty sequence.
+     */
+    @Override
+    public List<Item> typeName() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — typed-value.
+     *
+     * For a Document Node, dm:typed-value returns the typed value of the document node as a
+     * sequence of zero or more atomic values.
+     *
+     * This implementation delegates to atomizedValue().
+     */
+    @Override
+    public List<Item> typedValue() {
+        return this.atomizedValue();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — unparsed-entity-public-id.
+     *
+     * For a Document Node, dm:unparsed-entity-public-id returns the public identifier of an
+     * unparsed entity with a given name in the document, or the empty sequence if there is
+     * no such entity or if it has no public identifier.
+     *
+     * RumbleDB does not currently support unparsed entities, so this implementation always
+     * returns the empty sequence.
+     */
+    @Override
+    public List<Item> unparsedEntityPublicId(String name) {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.1 Document Node Accessors — unparsed-entity-system-id.
+     *
+     * For a Document Node, dm:unparsed-entity-system-id returns the system identifier of an
+     * unparsed entity with a given name in the document, or the empty sequence if there is
+     * no such entity or if it has no system identifier.
+     *
+     * RumbleDB does not currently support unparsed entities, so this implementation always
+     * returns the empty sequence.
+     */
+    @Override
+    public List<Item> unparsedEntitySystemId(String name) {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<Item> atomizedValue() {
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
+    }
+
+    @Override
+    public List<Item> namespaceNodes() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<Item> declaredNamespaceNodes() {
+        return Collections.emptyList();
+    }
+}

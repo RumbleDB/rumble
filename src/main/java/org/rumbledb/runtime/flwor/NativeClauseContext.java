@@ -1,0 +1,260 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.flwor;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructType;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.SequenceType;
+
+/**
+ * This class describes the context of a native clause and is used when processing FLWOR expressions without UDF
+ */
+public class NativeClauseContext {
+    public static final NativeClauseContext NoNativeQuery = new NativeClauseContext();
+
+    private NativeClauseContext parent;
+
+    @Setter
+    @Getter
+    private FLWOR_CLAUSES clauseType;
+
+    @Setter
+    @Getter
+    private DataType schema;
+
+    @Getter
+    private DynamicContext context;
+
+    @Setter
+    @Getter
+    private String resultingQuery;
+
+    @Getter
+    private List<String> lateralViewPart; // used in array unboxing to generate the correct lateral view
+
+    @Setter
+    @Getter
+    private SequenceType resultingType;
+
+    private List<String> conditionalColumns; // used in where clauses
+
+    @Setter
+    @Getter
+    private String view;
+
+    private int monotonicallyIncreasingId;
+
+    @Setter
+    @Getter
+    private boolean isExplodedView; // if the view is exploded, then the result is a sequence; otherwise it's atomic
+
+    private List<Name> positionalVariableNames;
+
+    @Getter
+    private Map<String, Boolean> sortingColumns;
+
+    private Map<Name, Name> variables;
+
+    @Getter
+    private String rowIdField;
+
+    @Setter
+    @Getter
+    private boolean grouped;
+
+    private NativeClauseContext() {}
+
+    public NativeClauseContext(FLWOR_CLAUSES clauseType, StructType schema, DynamicContext context) {
+        this.clauseType = clauseType;
+        this.schema = schema;
+        this.context = context;
+        this.resultingQuery = "";
+        this.lateralViewPart = new ArrayList<>();
+        this.resultingType = null;
+        this.parent = null;
+        this.conditionalColumns = new ArrayList<>();
+        this.monotonicallyIncreasingId = 0;
+        this.isExplodedView = false;
+        this.positionalVariableNames = new ArrayList<>();
+        this.sortingColumns = new HashMap<>();
+        this.variables = new HashMap<>();
+        this.rowIdField = null;
+        this.grouped = false;
+    }
+
+    public NativeClauseContext(NativeClauseContext sibling) {
+        this.clauseType = sibling.clauseType;
+        this.schema = sibling.schema;
+        this.context = sibling.context;
+        this.resultingQuery = sibling.resultingQuery;
+        this.lateralViewPart = sibling.lateralViewPart;
+        this.resultingType = sibling.resultingType;
+        this.parent = sibling.parent;
+        this.conditionalColumns = sibling.conditionalColumns;
+        this.monotonicallyIncreasingId = sibling.monotonicallyIncreasingId;
+        this.isExplodedView = sibling.isExplodedView;
+        this.positionalVariableNames = sibling.positionalVariableNames;
+        this.sortingColumns = sibling.sortingColumns;
+        this.variables = sibling.variables;
+        this.rowIdField = sibling.rowIdField;
+        this.grouped = sibling.grouped;
+    }
+
+    public NativeClauseContext(NativeClauseContext sibling, String newResultingQuery, SequenceType resultingType) {
+        this.clauseType = sibling.clauseType;
+        this.schema = sibling.schema;
+        this.context = sibling.context;
+        this.resultingQuery = newResultingQuery;
+        this.lateralViewPart = sibling.lateralViewPart;
+        this.resultingType = resultingType;
+        this.view = sibling.view;
+        this.conditionalColumns = sibling.conditionalColumns;
+        this.monotonicallyIncreasingId = sibling.monotonicallyIncreasingId;
+        this.parent = sibling.parent;
+        this.isExplodedView = sibling.isExplodedView;
+        this.positionalVariableNames = sibling.positionalVariableNames;
+        this.sortingColumns = sibling.sortingColumns;
+        this.variables = sibling.variables;
+        this.rowIdField = sibling.rowIdField;
+        this.grouped = sibling.grouped;
+    }
+
+    public NativeClauseContext createChild() {
+        StructType schema = new StructType(((StructType) this.schema).fields());
+        NativeClauseContext result = new NativeClauseContext(FLWOR_CLAUSES.RETURN, schema, this.context);
+        result.conditionalColumns = new ArrayList<>();
+        result.parent = this;
+        result.view = this.view;
+        result.positionalVariableNames = new ArrayList<>();
+        result.variables = new HashMap<>();
+        return result;
+    }
+
+    public void addConditionalColumn(String name) {
+        this.conditionalColumns.add(name);
+    }
+
+    public List<String> getConditionalColumns() {
+        List<String> result = new ArrayList<>(this.conditionalColumns);
+        if (this.parent != null) {
+            result.addAll(this.parent.getConditionalColumns());
+        }
+        return result;
+    }
+
+    private int getAndIncrementMonotonicallyIncreasingId() {
+        if (this.parent != null) {
+            return this.parent.getAndIncrementMonotonicallyIncreasingId();
+        }
+        return this.monotonicallyIncreasingId++;
+    }
+
+    public Name addVariable() {
+        Name variable = Name.createVariableInNoNamespace(
+                SparkSessionManager.sparkSqlVariableName + "-" + this.getAndIncrementMonotonicallyIncreasingId());
+        this.variables.put(variable, variable);
+        return variable;
+    }
+
+    public Name addVariable(Name name) {
+        Name variable = Name.createVariableInNoNamespace(
+                SparkSessionManager.sparkSqlVariableName + "-" + this.getAndIncrementMonotonicallyIncreasingId());
+        this.variables.put(name, variable);
+        return variable;
+    }
+
+    public Name getVariable(Name name) {
+        if (this.variables.containsKey(name)) {
+            return this.variables.get(name);
+        }
+        if (this.parent != null) {
+            return this.parent.getVariable(name);
+        }
+        return name;
+    }
+
+    public void addPositionalVariableName(Name name) {
+        this.positionalVariableNames.add(name);
+    }
+
+    public Name getPositionalVariableName() {
+        if (this.positionalVariableNames.isEmpty()) {
+            return null;
+        }
+        return this.positionalVariableNames.get(this.positionalVariableNames.size() - 1);
+    }
+
+    public void addSortingColumn(String name, boolean descending) {
+        this.sortingColumns.put(name, descending);
+    }
+
+    public void setRowId(String rowIdField) {
+        this.rowIdField = rowIdField;
+    }
+
+    public void clearConditionalColumns() {
+        this.conditionalColumns.clear();
+    }
+
+    public void clearSortingColumns() {
+        this.sortingColumns.clear();
+    }
+
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Native clause context.\n");
+        sb.append("======================\n");
+        sb.append("Query: " + this.resultingQuery + "\n");
+        sb.append("Clause type: " + this.clauseType + "\n");
+        if (this.schema != null) {
+            sb.append("Schema: " + this.schema.toString() + "\n");
+        } else {
+            sb.append("No schema.\n");
+        }
+        if (this.context != null) {
+            sb.append("Context: " + this.context.toString() + "\n");
+        } else {
+            sb.append("No context.\n");
+        }
+        if (this.resultingType != null) {
+            sb.append("Resulting type: " + this.resultingType + "\n");
+        } else {
+            sb.append("No resulting type.\n");
+        }
+        if (this.lateralViewPart != null) {
+            sb.append("Lateral views:\n");
+            for (String s : this.lateralViewPart) {
+                sb.append(s + "\n");
+            }
+        } else {
+            sb.append("No lateral views.\n");
+        }
+        return sb.toString();
+    }
+}

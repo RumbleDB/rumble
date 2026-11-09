@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, true, false, false, false, false, false, false, false, false, false, false, false, false)" :)
 anyURI("mailto:rumble") castable as string,
 anyURI("mailto:rumble") castable as anyURI,
 "mailto:rumble" castable as anyURI,

@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "foo" : 0123456789ABCDEF }, { "foo" : "4234.243 correct" }, { "foo" : AaBb }, { "foo" : false }, { "foo" : true })" :)
+(:JIQS: ShouldRun; Output="({ "foo" : "0123456789ABCDEF" }, { "foo" : "4234.243 correct" }, { "foo" : "AaBb" }, { "foo" : false }, { "foo" : true })" :)
 typeswitch(hexBinary("0123456789abcdef"))
 case $a as base64Binary? return parallelize(for $i in 1 to 1000 return {"foo": "no"})[500]
 case $b as boolean+ | double return parallelize(for $i in 1 to 1000 return {"foo": ($b cast as string) || "no"})[500] 

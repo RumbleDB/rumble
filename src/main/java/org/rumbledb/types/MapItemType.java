@@ -1,0 +1,331 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.types;
+
+import java.io.Serial;
+import java.util.Collections;
+import java.util.Set;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
+import org.rumbledb.exceptions.OurBadException;
+
+/**
+ * XQuery/XPath map item type: map(*) and map(K, V) per XDM 3.1 / XPath 3.1.
+ * map(*) is a subtype of function(*) (see base type chain).
+ */
+public class MapItemType extends AbstractItemType {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private Name name;
+    private ItemType baseType;
+    private ItemType keyType;
+    private SequenceType valueSequenceType;
+    private int typeTreeDepth;
+
+    /**
+     * @param name null for anonymous typed maps
+     * @param baseType {@link BuiltinTypesCatalogue#anyFunctionItem} for primitive map(*), else
+     *        {@link BuiltinTypesCatalogue#mapItem}
+     */
+    MapItemType(Name name, ItemType baseType, ItemType keyType, SequenceType valueSequenceType) {
+        if (baseType == null || keyType == null || valueSequenceType == null) {
+            throw new OurBadException("map item type requires base, key, and value sequence types");
+        }
+        this.name = name;
+        this.baseType = baseType;
+        this.keyType = keyType;
+        this.valueSequenceType = valueSequenceType;
+        if (this.baseType.isResolved()) {
+            processBaseType();
+            if (isTypedMap() && this.keyType.isResolved() && this.valueSequenceType.isResolved()) {
+                checkSubtypeConsistency();
+            }
+        }
+    }
+
+    private boolean isTypedMap() {
+        return this.baseType.equals(BuiltinTypesCatalogue.mapItem);
+    }
+
+    private boolean isPrimitiveMap() {
+        return this.baseType.equals(BuiltinTypesCatalogue.anyFunctionItem);
+    }
+
+    @Override
+    public boolean isMapItemType() {
+        return true;
+    }
+
+    @Override
+    protected Object equalityKey() {
+        if (this.name == null
+                && BuiltinTypesCatalogue.mapItem.equals(this.baseType)
+                && BuiltinTypesCatalogue.stringItem.equals(this.keyType)
+                && SequenceType.createSequenceType("item").equals(this.valueSequenceType)) {
+            return namedTypeKey(new Name(Name.JS_NS, "js", "object"));
+        }
+        return structuralTypeKey(MapItemType.class, this.name, this.baseType, this.keyType, this.valueSequenceType);
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            for (ItemType member : superType.getTypes()) {
+                if (this.isSubtypeOf(member)) {
+                    return true;
+                }
+            }
+        }
+        if (equals(superType) || superType.equals(BuiltinTypesCatalogue.item)) {
+            return true;
+        }
+        if (superType.isObjectItemType()) {
+            // js:object = map(xs:string, item)
+            ItemType objectAsMap =
+                    ItemTypeFactory.mapOf(BuiltinTypesCatalogue.stringItem, SequenceType.createSequenceType("item"));
+            // an object type (js:object) WITHOUT a JSound schema attached is a subtype of a map(*)
+            return superType.equals(BuiltinTypesCatalogue.objectItem) && this.isSubtypeOf(objectAsMap);
+        }
+        if (superType instanceof MapItemType sup) {
+            return this.keyType.isSubtypeOf(sup.keyType) && this.valueSequenceType.isSubtypeOf(sup.valueSequenceType);
+        }
+        if (superType.isFunctionItemType()) {
+            if (superType.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
+                return true;
+            }
+            FunctionSignature superSignature = superType.getSignature();
+            if (superSignature == null) {
+                return false;
+            }
+            FunctionSignature mapAsFunctionSignature = new FunctionSignature(
+                    Collections.singletonList(
+                            new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One)),
+                    this.valueSequenceType.isEmptySequence()
+                            ? this.valueSequenceType
+                            : new SequenceType(
+                                    this.valueSequenceType.getItemType(),
+                                    this.valueSequenceType.getArity() == SequenceType.Arity.One
+                                                    || this.valueSequenceType.getArity() == SequenceType.Arity.OneOrZero
+                                            ? SequenceType.Arity.OneOrZero
+                                            : SequenceType.Arity.ZeroOrMore));
+            return mapAsFunctionSignature.isSubtypeOf(superSignature);
+        }
+        return false;
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (equals(other)) {
+            return this;
+        }
+        if (other.isObjectItemType()) {
+            // js:object = map(xs:string, item)
+            ItemType objectAsMap =
+                    ItemTypeFactory.mapOf(BuiltinTypesCatalogue.stringItem, SequenceType.createSequenceType("item"));
+            return this.findLeastCommonSuperTypeWith(objectAsMap);
+        }
+        if (other.isFunctionItemType()) {
+            if (other.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
+                return BuiltinTypesCatalogue.anyFunctionItem;
+            }
+            FunctionSignature otherSignature = other.getSignature();
+            if (otherSignature == null) {
+                return BuiltinTypesCatalogue.anyFunctionItem;
+            }
+            FunctionSignature mapAsFunctionSignature = new FunctionSignature(
+                    Collections.singletonList(
+                            new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One)),
+                    this.valueSequenceType);
+            if (mapAsFunctionSignature.isSubtypeOf(otherSignature)) {
+                return other;
+            }
+            if (otherSignature.isSubtypeOf(mapAsFunctionSignature)) {
+                return ItemTypeFactory.createFunctionItemType(mapAsFunctionSignature);
+            }
+            return BuiltinTypesCatalogue.anyFunctionItem;
+        }
+        if (other instanceof MapItemType otherMap) {
+            ItemType keySuperType = this.keyType.findLeastCommonSuperTypeWith(otherMap.keyType);
+            SequenceType valueSuperType = this.valueSequenceType.leastCommonSupertypeWith(otherMap.valueSequenceType);
+            if (keySuperType.equals(BuiltinTypesCatalogue.atomicItem)
+                    && valueSuperType.equals(SequenceType.createSequenceType("item*"))) {
+                return BuiltinTypesCatalogue.mapItem;
+            }
+            return ItemTypeFactory.mapOf(keySuperType, valueSuperType);
+        }
+        ItemType current = this;
+        ItemType o = other;
+        while (o.getTypeTreeDepth() > current.getTypeTreeDepth()) {
+            o = o.getBaseType();
+        }
+        while (o.getTypeTreeDepth() < current.getTypeTreeDepth()) {
+            current = current.getBaseType();
+        }
+        while (!current.equals(o)) {
+            current = current.getBaseType();
+            o = o.getBaseType();
+        }
+        return current;
+    }
+
+    @Override
+    public boolean hasName() {
+        return this.name != null;
+    }
+
+    @Override
+    public Name getName() {
+        if (this.name == null) {
+            throw new UnsupportedOperationException("anonymous map item type has no QName");
+        }
+        return this.name;
+    }
+
+    @Override
+    public int getTypeTreeDepth() {
+        return this.typeTreeDepth;
+    }
+
+    @Override
+    public ItemType getBaseType() {
+        return this.baseType;
+    }
+
+    @Override
+    public ItemType getMapKeyItemType() {
+        return this.keyType;
+    }
+
+    @Override
+    public SequenceType getMapValueSequenceType() {
+        return this.valueSequenceType;
+    }
+
+    void processBaseType() {
+        this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
+        if (isPrimitiveMap()) {
+            if (!this.keyType.equals(BuiltinTypesCatalogue.atomicItem)) {
+                throw new InvalidSchemaException(
+                        "Primitive map(*) must use xs:anyAtomicType for keys, got: " + this.keyType,
+                        ExceptionMetadata.EMPTY_METADATA);
+            }
+            if (!this.valueSequenceType.equals(SequenceType.createSequenceType("item*"))) {
+                throw new InvalidSchemaException(
+                        "Primitive map(*) must use item* for values, got: " + this.valueSequenceType,
+                        ExceptionMetadata.EMPTY_METADATA);
+            }
+            return;
+        }
+        if (!isTypedMap()) {
+            throw new InvalidSchemaException(
+                    "Invalid base type for map item type: " + this.baseType, ExceptionMetadata.EMPTY_METADATA);
+        }
+    }
+
+    private void checkSubtypeConsistency() {
+        MapItemType primitive = (MapItemType) BuiltinTypesCatalogue.mapItem;
+        if (!this.keyType.isSubtypeOf(primitive.keyType)) {
+            throw new InvalidSchemaException(
+                    "Map key type " + this.keyType + " must be a subtype of " + primitive.keyType,
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
+        if (!this.valueSequenceType.isSubtypeOf(primitive.valueSequenceType)) {
+            throw new InvalidSchemaException(
+                    "Map value sequence type "
+                            + this.valueSequenceType
+                            + " must be a subtype of "
+                            + primitive.valueSequenceType,
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
+        if (!this.keyType.isResolved()) {
+            this.keyType.resolve(context, metadata);
+        }
+        if (!this.valueSequenceType.isResolved()) {
+            this.valueSequenceType.resolve(context, metadata);
+        }
+        if (isTypedMap()) {
+            checkSubtypeConsistency();
+        }
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
+        if (!this.keyType.isResolved()) {
+            this.keyType.resolve(context, metadata);
+        }
+        if (!this.valueSequenceType.isResolved()) {
+            this.valueSequenceType.resolve(context, metadata);
+        }
+        if (isTypedMap()) {
+            checkSubtypeConsistency();
+        }
+    }
+
+    @Override
+    public boolean isResolved() {
+        return this.baseType.isResolved() && this.keyType.isResolved() && this.valueSequenceType.isResolved();
+    }
+
+    @Override
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
+        return Collections.emptySet();
+    }
+
+    @Override
+    public String getIdentifierString() {
+        if (hasName()) {
+            return getName().toString();
+        }
+        return "map(" + this.keyType + ", " + this.valueSequenceType + ")";
+    }
+
+    @Override
+    public String toString() {
+        if (isPrimitiveMap() && hasName()) {
+            return "map(*)";
+        }
+        return "map(" + this.keyType + ", " + this.valueSequenceType + ")";
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
+        return false;
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        throw new UnsupportedOperationException("map item type is not mapped to Spark SQL");
+    }
+}

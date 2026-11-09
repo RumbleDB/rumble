@@ -1,0 +1,118 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.types;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+import org.rumbledb.api.Item;
+
+public class ArrayItemTypeTest {
+
+    /**
+     * Ensures that lax array merging reuses the object-type lax logic for element content,
+     * so arrays of objects retain the union of their nested fields with proper required/unique semantics.
+     */
+    @Test
+    public void laxMergeCombinesNestedObjectContent() {
+        ObjectItemType leftObject = createObjectType(
+                true,
+                field("a", BuiltinTypesCatalogue.intItem, true, false),
+                field("common", BuiltinTypesCatalogue.intItem, true, false));
+        ObjectItemType rightObject = createObjectType(
+                true,
+                field("b", BuiltinTypesCatalogue.stringItem, false, true),
+                field("common", BuiltinTypesCatalogue.stringItem, false, true));
+        ArrayItemType left = createArrayType(leftObject, null, null);
+        ArrayItemType right = createArrayType(rightObject, null, null);
+
+        ItemType mergedType = left.findLeastCommonSuperTypeLax(right);
+        Assertions.assertTrue(mergedType instanceof ArrayItemType);
+        ArrayItemType mergedArray = (ArrayItemType) mergedType;
+        Assertions.assertTrue(mergedArray.getArrayContentFacet() instanceof ObjectItemType);
+        ObjectItemType mergedContent = (ObjectItemType) mergedArray.getArrayContentFacet();
+        Assertions.assertEquals(3, mergedContent.getObjectContentFacet().size());
+        Assertions.assertTrue(mergedContent.getObjectKeysFacet().contains("a"));
+        Assertions.assertTrue(mergedContent.getObjectKeysFacet().contains("b"));
+        FieldDescriptor common = mergedContent.getObjectContentFacet("common");
+        Assertions.assertNotNull(common);
+        Assertions.assertFalse(common.isRequired(), "Common field should become optional if an operand is optional.");
+        Assertions.assertTrue(common.isUnique(), "Common field should be unique if any operand is unique.");
+    }
+
+    /**
+     * Verifies that lax merging propagates min/max length facets conservatively and drops them when incompatible.
+     */
+    @Test
+    public void laxMergeRespectsLengthFacets() {
+        ArrayItemType left = createArrayType(BuiltinTypesCatalogue.intItem, 1, 5);
+        ArrayItemType right = createArrayType(BuiltinTypesCatalogue.intItem, 2, 4);
+        ArrayItemType merged = (ArrayItemType) left.findLeastCommonSuperTypeLax(right);
+        Assertions.assertEquals(Integer.valueOf(1), merged.getMinLengthFacet());
+        Assertions.assertEquals(Integer.valueOf(5), merged.getMaxLengthFacet());
+
+        ArrayItemType conflictingLeft = createArrayType(BuiltinTypesCatalogue.intItem, 5, 6);
+        ArrayItemType conflictingRight = createArrayType(BuiltinTypesCatalogue.intItem, 1, 2);
+        ArrayItemType conflictingMerged = (ArrayItemType) conflictingLeft.findLeastCommonSuperTypeLax(conflictingRight);
+        Assertions.assertEquals(Integer.valueOf(1), conflictingMerged.getMinLengthFacet());
+        Assertions.assertEquals(Integer.valueOf(6), conflictingMerged.getMaxLengthFacet());
+    }
+
+    /**
+     * Ensures that lax merging falls back to the strict common supertype when the other operand is not an array.
+     */
+    @Test
+    public void laxMergeFallsBackForNonArrayTypes() {
+        ArrayItemType left = createArrayType(BuiltinTypesCatalogue.intItem, null, null);
+        ItemType strict = left.findLeastCommonSuperTypeWith(BuiltinTypesCatalogue.objectItem);
+        ItemType lax = left.findLeastCommonSuperTypeLax(BuiltinTypesCatalogue.objectItem);
+        Assertions.assertEquals(strict, lax);
+    }
+
+    private ArrayItemType createArrayType(ItemType content, Integer minLength, Integer maxLength) {
+        return new ArrayItemType(null, BuiltinTypesCatalogue.arrayItem, content, minLength, maxLength, null);
+    }
+
+    private ObjectItemType createObjectType(boolean closed, FieldDescriptor... descriptors) {
+        List<String> keys = new ArrayList<>();
+        List<FieldDescriptor> content = new ArrayList<>();
+        for (FieldDescriptor descriptor : descriptors) {
+            keys.add(descriptor.getName());
+            content.add(descriptor);
+        }
+        return new ObjectItemType(
+                null,
+                BuiltinTypesCatalogue.objectItem,
+                closed,
+                keys,
+                content,
+                Collections.<String>emptyList(),
+                Collections.<Item>emptyList());
+    }
+
+    private FieldDescriptor field(String name, ItemType type, boolean required, boolean unique) {
+        FieldDescriptor descriptor = new FieldDescriptor();
+        descriptor.setName(name);
+        descriptor.setType(type);
+        descriptor.setRequired(required);
+        descriptor.setUnique(unique);
+        return descriptor;
+    }
+}

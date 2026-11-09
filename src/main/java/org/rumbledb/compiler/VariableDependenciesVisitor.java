@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,36 +11,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.compiler;
-
-import org.jgrapht.graph.DefaultEdge;
-import org.jgrapht.graph.DirectedAcyclicGraph;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
-import java.util.Map;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.jgrapht.Graph;
+import org.jgrapht.alg.connectivity.KosarajuStrongConnectivityInspector;
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.traverse.TopologicalOrderIterator;
+
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
+import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
@@ -54,47 +53,59 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.PredicateExpression;
+import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
+import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.loops.WhileStatement;
+import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
+import org.rumbledb.expressions.update.CopyDeclaration;
+import org.rumbledb.expressions.update.TransformExpression;
 
 /**
  * This visitor resolves dependencies between variable and function declarations.
- * 
+ *
  * If a variable $x depends on a variable $y, then $y must be evaluated before $x.
- * 
+ *
  * Example:
- * 
+ *
  * declare variable $y := 1;
  * declare variable $x := $y;
- * 
+ *
  * If a variable $x depends on a function f, then f's closure must be built before $x is evaluated.
- * 
+ *
  * declare function f() { 1 };
  * declare variable $x := f();
- * 
- * If a function f depends on a variable $x, then $x must be evaluated before f's closure is built.
+ *
+ * A function f can refer to a global $x without evaluating it when its closure is built.
  *
  * declare variable $x := 1;
  * declare function f() { $x };
- * 
- * Note that a function cannot depend on a function, as mutually recursive calls are allowed.
- * 
- * Once all dependencies have been determined, the visitor builds a DAG, builds a topological ordering
- * thereof, and re-sorts declarations in the prolog for further processing by other visitors.
- * 
+ *
+ * Functions may depend on each other, including through mutually recursive calls.
+ *
+ * The visitor groups recursive functions and topologically orders the resulting DAG to re-sort
+ * declarations in the prolog for further processing by other visitors.
+ *
  */
 public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
-    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    @SuppressWarnings("unused")
+    private final RumbleConfiguration configuration;
 
     /**
      * Input variable dependencies are lists of variables and functions that an expression depends on.
@@ -107,13 +118,13 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     /**
      * Builds a new visitor.
-     * 
-     * @param rumbleRuntimeConfiguration the configuration. This is used for trigerring or not debug output.
+     *
+     * @param coniguration the configuration. This is used for trigerring or not debug output.
      */
-    VariableDependenciesVisitor(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
+    VariableDependenciesVisitor(RumbleConfiguration coniguration) {
         this.outputVariableDependenciesForClauses = new HashMap<>();
         this.inputVariableDependencies = new HashMap<>();
-        this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
+        this.configuration = coniguration;
     }
 
     private void addInputVariableDependencies(Node node, Set<Name> variables) {
@@ -207,8 +218,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return this.inputVariableDependencies.get(node);
     }
 
-
-
     @Override
     protected Void defaultAction(Node node, Void argument) {
         for (Node child : node.getChildren()) {
@@ -224,41 +233,89 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
+    private void visitPreviousClause(Clause clause) {
+        Clause previous = clause.getPreviousClause();
+        if (previous != null) {
+            visit(previous, null);
+            addOutputVariableDependencies(clause, getOutputVariableDependencies(previous));
+        }
+    }
+
+    private void inheritPreviousClauseDependencies(Clause clause) {
+        Clause previous = clause.getPreviousClause();
+        if (previous != null) {
+            // Only this clause's references are shadowed by preceding bindings.
+            // Earlier free references must survive even if a later binding has the same name.
+            removeInputVariableDependencies(clause, getOutputVariableDependencies(previous));
+            addInputVariableDependencies(clause, getInputVariableDependencies(previous));
+        }
+    }
+
     @Override
     public Void visitForClause(ForClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
         addOutputVariableDependency(expression, expression.getVariableName());
+        if (expression.getPositionalVariableName() != null) {
+            addOutputVariableDependency(expression, expression.getPositionalVariableName());
+        }
 
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getExpression()));
 
-        removeInputVariableDependencies(
-            expression,
-            getOutputVariableDependencies(expression.getPreviousClause())
-        );
+        inheritPreviousClauseDependencies(expression);
+        return null;
+    }
+
+    @Override
+    public Void visitWindowClause(WindowClause expression, Void argument) {
+        visitPreviousClause(expression);
+        addOutputVariableDependency(expression, expression.getWindowVariable());
+        expression
+                .getStartCondition()
+                .variables()
+                .names()
+                .forEach(name -> addOutputVariableDependency(expression, name));
+        if (expression.getEndCondition() != null) {
+            expression
+                    .getEndCondition()
+                    .variables()
+                    .names()
+                    .forEach(name -> addOutputVariableDependency(expression, name));
+        }
+        visit(expression.getExpression(), null);
+        addInputVariableDependencies(expression, getInputVariableDependencies(expression.getExpression()));
+        visit(expression.getStartCondition().expression(), null);
+        Set<Name> startDependencies = new TreeSet<>(
+                getInputVariableDependencies(expression.getStartCondition().expression()));
+        startDependencies.removeAll(expression.getStartCondition().variables().names());
+        addInputVariableDependencies(expression, startDependencies);
+        if (expression.getEndCondition() != null) {
+            visit(expression.getEndCondition().expression(), null);
+            Set<Name> endDependencies = new TreeSet<>(
+                    getInputVariableDependencies(expression.getEndCondition().expression()));
+            endDependencies.removeAll(expression.getStartCondition().variables().names());
+            endDependencies.removeAll(expression.getEndCondition().variables().names());
+            addInputVariableDependencies(expression, endDependencies);
+        }
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
     @Override
     public Void visitLetClause(LetClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
         addOutputVariableDependency(expression, expression.getVariableName());
 
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getExpression()));
 
-        removeInputVariableDependencies(
-            expression,
-            getOutputVariableDependencies(expression.getPreviousClause())
-        );
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
+    @Override
     public Void visitGroupByClause(GroupByClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
 
         for (GroupByVariableDeclaration var : expression.getGroupVariables()) {
             if (var.getExpression() != null) {
@@ -270,74 +327,59 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             }
         }
 
-        removeInputVariableDependencies(
-            expression,
-            getOutputVariableDependencies(expression.getPreviousClause())
-        );
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
+    @Override
     public Void visitOrderByClause(OrderByClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
 
-        visit(expression.getPreviousClause(), null);
         for (OrderByClauseSortingKey var : expression.getSortingKeys()) {
             visit(var.getExpression(), null);
             addInputVariableDependencies(expression, getInputVariableDependencies(var.getExpression()));
         }
 
-        removeInputVariableDependencies(
-            expression,
-            getOutputVariableDependencies(expression.getPreviousClause())
-        );
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
+    @Override
     public Void visitWhereClause(WhereClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
 
         visit(expression.getWhereExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getWhereExpression()));
 
-        removeInputVariableDependencies(
-            expression,
-            getOutputVariableDependencies(expression.getPreviousClause())
-        );
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
+    @Override
     public Void visitCountClause(CountClause expression, Void argument) {
-        visit(expression.getPreviousClause(), null);
-        addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
+        visitPreviousClause(expression);
+        addOutputVariableDependency(expression, expression.getCountVariableName());
 
-        removeInputVariableDependencies(
-            expression,
-            getOutputVariableDependencies(expression.getPreviousClause())
-        );
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
+    @Override
     public Void visitReturnClause(ReturnClause expression, Void argument) {
+        visitPreviousClause(expression);
         visit(expression.getReturnExpr(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getReturnExpr()));
 
-        removeInputVariableDependencies(
-            expression,
-            getOutputVariableDependencies(expression.getPreviousClause())
-        );
+        inheritPreviousClauseDependencies(expression);
         return null;
     }
 
-    public Void visitPredicateExpression(PredicateExpression expression, Void argument) {
+    @Override
+    public Void visitFilterExpression(FilterExpression expression, Void argument) {
         visit(expression.getMainExpression(), null);
         visit(expression.getPredicateExpression(), null);
 
-        addInputVariableDependencies(
-            expression,
-            getInputVariableDependencies(expression.getPredicateExpression())
-        );
+        addInputVariableDependencies(expression, getInputVariableDependencies(expression.getPredicateExpression()));
         removeInputVariableDependency(expression, Name.CONTEXT_ITEM);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getMainExpression()));
         return null;
@@ -386,9 +428,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     @Override
     public Void visitFunctionCall(FunctionCallExpression expression, Void argument) {
         addInputVariableDependency(
-            expression,
-            expression.getFunctionIdentifier().getNameWithArity()
-        );
+                expression, expression.getFunctionIdentifier().getNameWithArity());
         for (Expression e : expression.getArguments()) {
             if (e != null) {
                 visit(e, null);
@@ -415,82 +455,44 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     private Map<Name, Node> buildNameToNodeMap(Prolog prolog) {
         Map<Name, Node> nameToNodeMap = new TreeMap<>();
         for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
-            if (nameToNodeMap.containsKey(variableDeclaration.getVariableName())) {
+            boolean contextItemInGroup = Name.CONTEXT_ITEM.equals(variableDeclaration.getVariableName())
+                    && !prolog.getSourceModuleContexts().isEmpty();
+            // Each module of a group may declare the one context item the query supplies.
+            if (nameToNodeMap.containsKey(variableDeclaration.getVariableName()) && !contextItemInGroup) {
                 throw new VariableAlreadyExistsException(
-                        variableDeclaration.getVariableName(),
-                        variableDeclaration.getMetadata()
-                );
+                        variableDeclaration.getVariableName(), variableDeclaration.getMetadata());
             }
             visit(variableDeclaration, null);
-            nameToNodeMap.put(variableDeclaration.getVariableName(), variableDeclaration);
-            if (this.rumbleRuntimeConfiguration.isPrintIteratorTree()) {
-                System.err.print(variableDeclaration.getVariableName());
-                System.err.println(
-                    String.join(
-                        ", ",
-                        getInputVariableDependencies(variableDeclaration).stream()
-                            .map(x -> x.toString())
-                            .collect(Collectors.toList())
-                    )
-                );
+            if (getInputVariableDependencies(variableDeclaration).contains(variableDeclaration.getVariableName())) {
+                throw new UndeclaredVariableException(
+                        "A variable is not in scope in its own initializer: " + variableDeclaration.getVariableName(),
+                        variableDeclaration.getMetadata());
             }
+            nameToNodeMap.putIfAbsent(variableDeclaration.getVariableName(), variableDeclaration);
         }
         for (FunctionDeclaration functionDeclaration : prolog.getFunctionDeclarations()) {
             visit(functionDeclaration, null);
             nameToNodeMap.put(functionDeclaration.getFunctionIdentifier().getNameWithArity(), functionDeclaration);
-            if (this.rumbleRuntimeConfiguration.isPrintIteratorTree()) {
-                System.err.print(functionDeclaration.getFunctionIdentifier().toString());
-                System.err.println(
-                    String.join(
-                        ", ",
-                        getInputVariableDependencies(functionDeclaration).stream()
-                            .map(x -> x.toString())
-                            .collect(Collectors.toList())
-                    )
-                );
-            }
+        }
+        for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
+            visit(typeDeclaration, null);
+            nameToNodeMap.put(typeDeclaration.getDefinition().getName(), typeDeclaration);
         }
         return nameToNodeMap;
     }
 
-    private DirectedAcyclicGraph<Node, DefaultEdge> buildDependencyGraph(
-            Map<Name, Node> nameToNodeMap,
-            Prolog prolog
-    ) {
-        DirectedAcyclicGraph<Node, DefaultEdge> dependencyGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
-        for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
-            Set<Name> names = getInputVariableDependencies(variableDeclaration);
-            dependencyGraph.addVertex(variableDeclaration);
-            for (Name name : names) {
-                Node declaration = nameToNodeMap.get(name);
-                if (declaration != null) {
-                    dependencyGraph.addVertex(declaration);
-                    try {
-                        dependencyGraph.addEdge(declaration, variableDeclaration);
-                    } catch (IllegalArgumentException e) {
-                        throw new CycleInVariableDeclarationsException(
-                                "There is a cycle in the dependencies in the variable and function declarations. It is thus impossible to build the dynamic context.",
-                                variableDeclaration.getMetadata()
-                        );
-                    }
-                }
+    private Graph<Node, DefaultEdge> buildDependencyGraph(Map<Name, Node> nameToNodeMap, Prolog prolog) {
+        Graph<Node, DefaultEdge> dependencyGraph = new DefaultDirectedGraph<>(DefaultEdge.class);
+        for (Node declaration : prolog.getDeclarations()) {
+            if (!(declaration instanceof VariableDeclaration) && !(declaration instanceof FunctionDeclaration)) {
+                continue;
             }
-        }
-        for (FunctionDeclaration functionDeclaration : prolog.getFunctionDeclarations()) {
-            Set<Name> names = getInputVariableDependencies(functionDeclaration);
-            dependencyGraph.addVertex(functionDeclaration);
-            for (Name name : names) {
-                Node declaration = nameToNodeMap.get(name);
-                if (declaration != null) {
-                    dependencyGraph.addVertex(declaration);
-                    try {
-                        dependencyGraph.addEdge(declaration, functionDeclaration);
-                    } catch (IllegalArgumentException e) {
-                        throw new CycleInVariableDeclarationsException(
-                                "There is a cycle in the dependencies in the variable and function declarations. It is thus impossible to build the dynamic context.",
-                                functionDeclaration.getMetadata()
-                        );
-                    }
+            dependencyGraph.addVertex(declaration);
+            for (Name name : getInputVariableDependencies(declaration)) {
+                Node dependency = nameToNodeMap.get(name);
+                if (dependency != null) {
+                    dependencyGraph.addVertex(dependency);
+                    dependencyGraph.addEdge(dependency, declaration);
                 }
             }
         }
@@ -500,12 +502,40 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     @Override
     public Void visitProlog(Prolog prolog, Void argument) {
         Map<Name, Node> nameToNodeMap = buildNameToNodeMap(prolog);
-        DirectedAcyclicGraph<Node, DefaultEdge> dependencyGraph = buildDependencyGraph(nameToNodeMap, prolog);
+
+        Graph<Node, DefaultEdge> dependencyGraph = buildDependencyGraph(nameToNodeMap, prolog);
+        var components = new KosarajuStrongConnectivityInspector<>(dependencyGraph);
+        // A dependency cycle is only an error if evaluation actually traverses it.
+        // A named function reference, for example, does not evaluate its body.
+
         List<Node> resolvedList = new ArrayList<>();
-        Iterator<Node> iterator = dependencyGraph.iterator();
+        for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
+            resolvedList.add(typeDeclaration);
+        }
+        for (Node declaration : prolog.getDeclarations()) {
+            if (!(declaration instanceof TypeDeclaration)
+                    && !(declaration instanceof VariableDeclaration)
+                    && !(declaration instanceof FunctionDeclaration)) {
+                resolvedList.add(declaration);
+            }
+        }
+        Map<Node, Integer> declarationOrder = new HashMap<>();
+        for (int i = 0; i < prolog.getDeclarations().size(); i++) {
+            declarationOrder.put(prolog.getDeclarations().get(i), i);
+        }
+        // Keep independent groups in declaration order as well.
+        Iterator<Graph<Node, DefaultEdge>> iterator = new TopologicalOrderIterator<>(
+                components.getCondensation(), Comparator.comparingInt(group -> group.vertexSet().stream()
+                        .mapToInt(declarationOrder::get)
+                        .min()
+                        .orElseThrow()));
         while (iterator.hasNext()) {
-            Node nextDeclaration = iterator.next();
-            resolvedList.add(nextDeclaration);
+            Set<Node> group = iterator.next().vertexSet();
+            // Register the entire recursive group before evaluating any dependent declaration.
+            group.stream()
+                    .filter(declaration -> !(declaration instanceof TypeDeclaration))
+                    .sorted(Comparator.comparingInt(declarationOrder::get))
+                    .forEach(resolvedList::add);
         }
         prolog.setDeclarations(resolvedList);
         return null;
@@ -524,7 +554,81 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     @Override
     public Void visitFunctionDeclaration(FunctionDeclaration expression, Void argument) {
         visit(expression.getExpression(), null);
-        addInputVariableDependencies(expression, getInputVariableDependencies(expression));
+        addInputVariableDependencies(expression, getInputVariableDependencies(expression.getExpression()));
+        return null;
+    }
+
+    @Override
+    public Void visitTransformExpression(TransformExpression expression, Void argument) {
+        for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
+            visit(copyDecl.getSourceExpression(), null);
+            addInputVariableDependencies(expression, getInputVariableDependencies(copyDecl.getSourceExpression()));
+        }
+        visit(expression.getModifyExpression(), null);
+        visit(expression.getReturnExpression(), null);
+
+        return null;
+    }
+
+    @Override
+    public Void visitApplyStatement(ApplyStatement statement, Void argument) {
+        visit(statement.getApplyExpression(), null);
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getApplyExpression()));
+        return null;
+    }
+
+    @Override
+    public Void visitAssignStatement(AssignStatement statement, Void argument) {
+        visit(statement.getAssignExpression(), null);
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getAssignExpression()));
+        return null;
+    }
+
+    @Override
+    public Void visitExitStatement(ExitStatement statement, Void argument) {
+        visit(statement.getExitExpression(), null);
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getExitExpression()));
+        return null;
+    }
+
+    @Override
+    public Void visitReturnStatementClause(ReturnStatementClause clause, Void argument) {
+        visit(clause.getReturnStatement(), null);
+        addInputVariableDependencies(clause, getInputVariableDependencies(clause.getReturnStatement()));
+
+        removeInputVariableDependencies(clause, getOutputVariableDependencies(clause.getPreviousClause()));
+        return null;
+    }
+
+    @Override
+    public Void visitTypeSwitchStatement(TypeSwitchStatement statement, Void argument) {
+        visit(statement.getTestCondition(), null);
+        for (TypeSwitchStatementCase tswc : statement.getCases()) {
+            visit(tswc.getReturnStatement(), null);
+            addInputVariableDependencies(statement, getOutputVariableDependencies(tswc.getReturnStatement()));
+            if (tswc.getVariableName() != null) {
+                removeInputVariableDependency(statement, tswc.getVariableName());
+            }
+        }
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getTestCondition()));
+        return null;
+    }
+
+    @Override
+    public Void visitWhileStatement(WhileStatement statement, Void argument) {
+        visit(statement.getTestCondition(), null);
+        visit(statement.getStatement(), null);
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getStatement()));
+        addInputVariableDependencies(statement, getInputVariableDependencies(statement.getTestCondition()));
+        return null;
+    }
+
+    @Override
+    public Void visitVariableDeclStatement(VariableDeclStatement statement, Void argument) {
+        if (statement.getVariableExpression() != null) {
+            visit(statement.getVariableExpression(), null);
+            addInputVariableDependencies(statement, getInputVariableDependencies(statement.getVariableExpression()));
+        }
         return null;
     }
 }

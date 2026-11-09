@@ -1,0 +1,377 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.xml;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.function.BiFunction;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.AttributeOrNamespaceAfterNonAttributeException;
+import org.rumbledb.exceptions.DuplicateAttributeException;
+import org.rumbledb.exceptions.InvalidElementNameExpressionException;
+import org.rumbledb.exceptions.InvalidLexicalValueException;
+import org.rumbledb.exceptions.UnexpectedStaticTypeException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+/**
+ * Runtime iterator for computed element constructors.
+ *
+ * @see org.rumbledb.expressions.xml.ComputedElementConstructorExpression
+ */
+public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final Name staticElementName;
+    private final DataFunctionIterator nameIterator;
+    private final ItemRuntimePlan contentIterator;
+
+    /**
+     * Constructor for static element name: element elementName { content }
+     *
+     * @param staticElementName The static element name (expanded)
+     * @param contentIterator The content iterator
+     * @param staticContext The runtime static context
+     */
+    public ComputedElementConstructorRuntimeIterator(
+            Name staticElementName, ItemRuntimePlan contentIterator, RuntimeStaticContext staticContext) {
+        super(Collections.singletonList(contentIterator), staticContext);
+        this.staticElementName = staticElementName;
+        this.nameIterator = null;
+        this.contentIterator = contentIterator;
+    }
+
+    /**
+     * Constructor for dynamic element name: element { nameExpression } { content }
+     *
+     * @param nameIterator The dynamic element name iterator (wrapped in AtomizationIterator)
+     * @param contentIterator The content iterator
+     * @param staticContext The runtime static context
+     */
+    public ComputedElementConstructorRuntimeIterator(
+            DataFunctionIterator nameIterator, ItemRuntimePlan contentIterator, RuntimeStaticContext staticContext) {
+        super(List.of(nameIterator, contentIterator), staticContext);
+        this.staticElementName = null;
+        this.nameIterator = nameIterator;
+        this.contentIterator = contentIterator;
+    }
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        BiFunction<ItemRuntimePlan, DynamicContext, List<Item>> materialize =
+                (iterator, childContext) -> iterator.materialize(childContext);
+        // Check if this is the top-level runtime iterator for XML tree building
+        DynamicContext contextToUse;
+        if (dynamicContext.getTopLevelRuntimeIterator() == null) {
+            // This is the top-level runtime iterator - create a new context and set this iterator as top-level
+            contextToUse = new DynamicContext(dynamicContext);
+            contextToUse.setTopLevelRuntimeIterator(this);
+        } else {
+            // A top-level iterator is already set - use the provided context
+            contextToUse = dynamicContext;
+        }
+        // Determine the element name (expanded QName), then validate [err:XQDY0096] before content processing.
+        // https://www.w3.org/TR/xquery-31/#id-computedElements
+        Item elementName;
+        if (this.staticElementName != null) {
+            elementName = ItemFactory.getInstance().createQNameItem(this.staticElementName);
+        } else {
+            // Dynamic element name - evaluate the name expression
+            // 1. Atomization is applied to the value of the name expression. If the result of atomization is not a
+            // single atomic value of type xs:QName, xs:string, or xs:untypedAtomic, a type error is raised
+            // [err:XPTY0004].
+            List<Item> atomizedNameItems = materialize.apply(this.nameIterator, contextToUse);
+            if (atomizedNameItems.size() != 1) {
+                throw new UnexpectedStaticTypeException(
+                        "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata());
+            }
+            Item atomizedNameItem = atomizedNameItems.get(0);
+            if (!atomizedNameItem.isAtomic()) {
+                throw new UnexpectedStaticTypeException(
+                        "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata());
+            }
+            if (atomizedNameItem.isQName()) {
+                // 2. If the atomized value of the name expression is of type xs:QName, that expanded QName is used as
+                // the
+                // node-name property of the constructed element, retaining the prefix part of the QName.
+                elementName = atomizedNameItem;
+            } else if (atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic()) {
+                // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic, that value
+                // is
+                // converted to an expanded QName. If the string value contains a namespace prefix, that prefix is
+                // resolved
+                // to a namespace URI using the statically known namespaces. If the string value contains no namespace
+                // prefix, it is treated as a local name in the default element/type namespace. The resulting expanded
+                // QName
+                // is used as the node-name property of the constructed element, retaining the prefix part of the QName.
+                // If
+                // conversion of the atomized name expression to an expanded QName is not successful, a dynamic error is
+                // raised [err:XQDY0074].
+                String collapsed = NamespaceBindingUtils.collapseQNameLexical(atomizedNameItem.getStringValue());
+                try {
+                    elementName = ItemFactory.getInstance()
+                            .createQNameItem(NamespaceBindingUtils.parseLexicalQNameForComputedElement(
+                                    collapsed,
+                                    NamespaceBindingUtils.namespaceResolver(this.staticContext),
+                                    getMetadata()));
+                } catch (InvalidLexicalValueException e) {
+                    throw new InvalidElementNameExpressionException(e.getMessage(), getMetadata());
+                }
+            } else {
+                throw new UnexpectedStaticTypeException(
+                        "Computed element constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata());
+            }
+        }
+        // A dynamic error is raised [err:XQDY0096] if the node-name of the constructed element node has any of the
+        // following properties:
+        // - Its namespace prefix is xmlns.
+        // - Its namespace URI is http://www.w3.org/2000/xmlns/.
+        // - Its namespace prefix is xml and its namespace URI is not http://www.w3.org/XML/1998/namespace.
+        // - Its namespace prefix is other than xml and its namespace URI is http://www.w3.org/XML/1998/namespace.
+        NamespaceBindingUtils.validateConstructedNodeName(elementName.getQNameValue(), getMetadata());
+        // Process content expression according to XQuery 3.1 specification
+        ProcessedContent processedContent = processContentExpression(
+                this.contentIterator == null ? List.of() : materialize.apply(this.contentIterator, contextToUse));
+        // Create and return the element item
+        ElementItem elementItem = ItemFactory.getInstance()
+                .createXmlElementNode(
+                        elementName.getQNameValue(), processedContent.children, processedContent.attributes);
+        elementItem.setConstructionBaseUri(this.staticContext.getStaticURI());
+        NodeConstructionUtils.initializeNamespaces(elementItem, this.staticContext);
+        // Only add namespaces explicitly declared on this element
+        NamespaceFixupUtils.addConstructorNamespaces(elementItem, processedContent.namespaces, getMetadata());
+        // Set the parent of the child nodes to the element node
+        elementItem.addParentToDescendants();
+        NamespaceFixupUtils.applyNamespaceFixup(elementItem);
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        elementItem.setXmlDocumentPosition(documentPath, 0);
+        NodeConstructionUtils.initializeElement(elementItem, this.staticContext);
+        return elementItem;
+    }
+
+    /**
+     * Processes the content expression according to the XQuery 3.1 specification.
+     *
+     * Processing of the computed element constructor proceeds as follows:
+     * 4. The properties of the newly constructed element node are determined as described in the specification.
+     */
+    private ProcessedContent processContentExpression(List<Item> rawContentSequence) {
+        // 1. If the content sequence contains a document node, the document node is replaced in the content
+        // sequence by its children.
+        List<Item> expandedContentSequence =
+                expandDocumentNodes(XmlConstructorContentUtils.normalizeContent(rawContentSequence, getMetadata()));
+
+        // 3. If the content sequence contains an attribute node or a namespace node following a node that is not an
+        // attribute node or a namespace node, a type error is raised [err:XQTY0024].
+        validateAttributeOrdering(expandedContentSequence);
+
+        // Separate attributes and namespace nodes from other content
+        List<Item> attributes = new ArrayList<>();
+        List<Item> namespaces = new ArrayList<>();
+        List<Item> nonAttributeContent = new ArrayList<>();
+
+        for (Item item : expandedContentSequence) {
+            if (item.isAttributeNode()) {
+                attributes.add(NodeConstructionUtils.copyNode(item, this.staticContext));
+            } else if (item.isNamespaceNode()) {
+                namespaces.add(item.copy(true));
+            } else if (item.isNode()) {
+                nonAttributeContent.add(NodeConstructionUtils.copyNode(item, this.staticContext));
+            } else {
+                // Non-node items are converted to text nodes
+                String textContent = item.getStringValue();
+                if (!textContent.isEmpty()) {
+                    nonAttributeContent.add(ItemFactory.getInstance().createXmlTextNode(textContent));
+                }
+            }
+        }
+
+        // 2. Adjacent text nodes in the content sequence are merged into a single text node by concatenating their
+        // contents, with no intervening blanks. After concatenation, any text node whose content is a zero-length
+        // string
+        // is deleted from the content sequence.
+        List<Item> mergedChildren = mergeAdjacentTextNodes(nonAttributeContent);
+
+        // XQuery 3.1, 3.9.1.2 Namespace Declaration Attributes:
+        // "However, note that namespace declaration attributes (see 3.9.1.2 Namespace Declaration Attributes) do not
+        // create attribute nodes."
+        // "It is a static error [err:XQST0070] if a namespace declaration attribute attempts to do any of the
+        // following:"
+        // "Bind the prefix xml to some namespace URI other than http://www.w3.org/XML/1998/namespace."
+        // "Bind the prefix xmlns to any namespace URI."
+        // "Bind a prefix other than xml to the namespace URI http://www.w3.org/XML/1998/namespace."
+        // "Bind a prefix to the namespace URI http://www.w3.org/2000/xmlns/."
+        List<Item> filteredAttributes = new ArrayList<>();
+        for (Item attribute : attributes) {
+            String[] namespaceBinding = NamespaceBindingUtils.parseNamespaceDeclarationAttribute(attribute);
+            if (namespaceBinding != null) {
+                String prefix = namespaceBinding[0];
+                String uri = namespaceBinding[1];
+                NamespaceBindingUtils.validateNamespaceDeclaration(prefix, uri, this.getMetadata());
+                namespaces.add(ItemFactory.getInstance().createXmlNamespaceNode(prefix, uri));
+            } else {
+                filteredAttributes.add(attribute);
+            }
+        }
+
+        // Validate that no duplicate attribute names exist
+        // If two or more attributes have the same node-name, a dynamic error is raised [err:XQDY0025].
+        validateNoDuplicateAttributes(filteredAttributes);
+
+        // TODO: Set parent property of each attribute and child node to the newly constructed element node
+        // TODO: Handle xml:space attribute validation [err:XQDY0092]
+        // TODO: Handle xml:base attribute for base-uri setting
+        // TODO: Set other properties (nilled, string-value, typed-value, type-name, is-id, is-idrefs) when we have a
+        // stable XML type system
+
+        return new ProcessedContent(mergedChildren, filteredAttributes, namespaces);
+    }
+
+    /**
+     * 1: Replace document nodes with their children.
+     */
+    private List<Item> expandDocumentNodes(List<Item> contentSequence) {
+        List<Item> expandedSequence = new ArrayList<>();
+
+        for (Item item : contentSequence) {
+            if (item.isDocumentNode()) {
+                // Replace document node with its children
+                for (Item child : item.children()) {
+                    expandedSequence.add(child);
+                }
+            } else {
+                expandedSequence.add(item);
+            }
+        }
+
+        return expandedSequence;
+    }
+
+    /**
+     * 3: Validate that attribute nodes and namespace nodes only appear before non-attribute/non-namespace nodes.
+     */
+    private void validateAttributeOrdering(List<Item> contentSequence) {
+        boolean hasSeenNonAttributeNode = false;
+
+        for (Item item : contentSequence) {
+            if (item.isAttributeNode() || item.isNamespaceNode()) {
+                if (hasSeenNonAttributeNode) {
+                    throw new AttributeOrNamespaceAfterNonAttributeException(
+                            "Attribute or namespace nodes must appear before all other nodes in element content");
+                }
+            } else if (item.isNode()) {
+                hasSeenNonAttributeNode = true;
+            } else {
+                // Non-node items (which become text nodes) count as non-attribute nodes
+                hasSeenNonAttributeNode = true;
+            }
+        }
+    }
+
+    /**
+     * 2: Merge adjacent text nodes and remove empty text nodes.
+     */
+    private List<Item> mergeAdjacentTextNodes(List<Item> contentSequence) {
+        List<Item> mergedSequence = new ArrayList<>();
+        StringBuilder textAccumulator = null;
+
+        for (Item item : contentSequence) {
+            if (item.isTextNode()) {
+                String textContent = item.getTextValue();
+
+                if (textAccumulator == null) {
+                    textAccumulator = new StringBuilder();
+                }
+                textAccumulator.append(textContent);
+            } else {
+                // Non-text node encountered
+                if (textAccumulator != null) {
+                    // Finalize any accumulated text content
+                    String accumulatedText = textAccumulator.toString();
+                    if (!accumulatedText.isEmpty()) {
+                        mergedSequence.add(ItemFactory.getInstance().createXmlTextNode(accumulatedText));
+                    }
+                    textAccumulator = null;
+                }
+
+                mergedSequence.add(item);
+            }
+        }
+
+        // Handle any remaining accumulated text at the end
+        if (textAccumulator != null) {
+            String accumulatedText = textAccumulator.toString();
+            if (!accumulatedText.isEmpty()) {
+                mergedSequence.add(ItemFactory.getInstance().createXmlTextNode(accumulatedText));
+            }
+        }
+
+        return mergedSequence;
+    }
+
+    /**
+     * Validate that no two attributes have the same node-name.
+     * If two or more attributes have the same node-name, a dynamic error is raised [err:XQDY0025].
+     */
+    private void validateNoDuplicateAttributes(List<Item> attributes) {
+        Set<Name> attributeNames = new HashSet<>();
+
+        for (Item attribute : attributes) {
+            if (attribute.isAttributeNode()) {
+                Name expanded = attribute.nodeName();
+                if (expanded != null) {
+                    if (attributeNames.contains(expanded)) {
+                        throw new DuplicateAttributeException(expanded.toString());
+                    }
+                    attributeNames.add(expanded);
+                }
+            }
+        }
+    }
+
+    /**
+     * Helper class to hold processed content with separated attributes, namespaces, and children.
+     */
+    private static class ProcessedContent {
+        final List<Item> children;
+        final List<Item> attributes;
+        final List<Item> namespaces;
+
+        ProcessedContent(List<Item> children, List<Item> attributes, List<Item> namespaces) {
+            this.children = children;
+            this.attributes = attributes;
+            this.namespaces = namespaces;
+        }
+    }
+}

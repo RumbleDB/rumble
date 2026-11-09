@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, false, true, false, false, false, false)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, false, false, false, false)" :)
 time("13:20:00") = time("13:20:00.000Z"),
 time("13:20:30.5555") != time("13:20:30.555"),
 time("13:20:00-05:00") >= time("13:20:00+02:00"),

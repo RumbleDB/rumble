@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,91 +11,74 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidRegexPatternException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MatchesEmptyStringException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.exceptions.InvalidReplacementStringException;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
+import java.io.Serial;
 import java.util.List;
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import java.util.regex.PatternSyntaxException;
+import java.util.regex.Pattern;
 
-public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidReplacementStringException;
+import org.rumbledb.exceptions.MatchesEmptyStringException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
+public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public ReplaceFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public ReplaceFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item stringItem = this.getChild(0).materializeFirstOrNull(context);
+        Item patternStringItem = this.getChild(1).materializeFirstOrNull(context);
 
-            Item patternStringItem = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            String pattern = patternStringItem.getStringValue();
-
-            Pattern p;
-            try {
-                p = Pattern.compile(pattern);
-            } catch (PatternSyntaxException e) {
-                throw new InvalidRegexPatternException(
-                        e.getDescription(),
-                        getMetadata()
-                );
+        if (patternStringItem == null) {
+            return null;
+        }
+        String pattern = patternStringItem.getStringValue();
+        String flags = null;
+        if (this.getChildren().size() == 4) {
+            Item flagsItem = this.getChild(3).materializeFirstOrNull(context);
+            if (flagsItem != null) {
+                flags = flagsItem.getStringValue();
             }
-            if ("".matches(pattern)) {
-                throw new MatchesEmptyStringException(
-                        "'" + pattern + "' matches empty string",
-                        getMetadata()
-                );
-            }
+        }
+        RegexPatternUtils.CompiledRegex compiledRegex = RegexPatternUtils.compileRegex(
+                pattern, flags, getMetadata(), getConfiguration().semantics().xsdVersion());
+        if (RegexPatternUtils.matchesEmptyString(compiledRegex.getPattern())) {
+            throw new MatchesEmptyStringException(
+                    "'" + compiledRegex.getEffectivePattern() + "' matches empty string", getMetadata());
+        }
 
-            Item replacementStringItem = this.children.get(2)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            String replacement = replacementStringItem.getStringValue();
-            if (!(checkReplacementStringForValidity(replacement))) {
-                throw new InvalidReplacementStringException(
-                        "'" + replacement + "' contains a disallowed sequence of characters",
-                        getMetadata()
-                );
-            }
+        Item replacementStringItem = this.getChild(2).materializeFirstOrNull(context);
+        String replacement = replacementStringItem.getStringValue();
+        if (compiledRegex.isQuote()) {
+            replacement = Matcher.quoteReplacement(replacement);
+        } else if (!(checkReplacementStringForValidity(replacement))) {
+            throw new InvalidReplacementStringException(
+                    "'" + replacement + "' contains a disallowed sequence of characters", getMetadata());
+        }
 
-            String input;
-            if (stringItem == null) {
-                input = "";
-            } else {
-                input = stringItem.getStringValue();
-            }
+        String input;
+        if (stringItem == null) {
+            input = "";
+        } else {
+            input = stringItem.getStringValue();
+        }
 
-            Matcher m = p.matcher(input);
-            return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " replace function",
-                    getMetadata()
-            );
+        Matcher m = compiledRegex.getPattern().matcher(input);
+        return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
     }
 
     private static boolean checkReplacementStringForValidity(String repl) {
@@ -107,12 +87,16 @@ public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
 
         while (i < repl.length()) {
             if (repl.charAt(i) == '\\') { // '\' must be followed by another '\' or '$'
+                if (i + 1 >= repl.length()) {
+                    return false;
+                }
                 if ((!(repl.charAt(i + 1) == '\\')) && (!(repl.charAt(i + 1) == '$'))) {
                     return false;
                 }
                 i += 2;
             } else if (repl.charAt(i) == '$') { // '$' must always be followed by a digit
-                if ((i + 1 >= repl.length()) || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
+                if ((i + 1 >= repl.length())
+                        || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
                     return false;
                 }
                 i += 2;

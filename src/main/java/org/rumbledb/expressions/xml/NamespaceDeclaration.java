@@ -1,0 +1,59 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.expressions.xml;
+
+import java.io.Serial;
+import java.io.Serializable;
+
+import lombok.Getter;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+
+/**
+ * Namespace declaration in a direct element constructor start tag.
+ *
+ * This is intentionally not an attribute node expression: namespace declarations
+ * contribute namespace nodes and static namespace bindings, but do not construct
+ * attribute nodes.
+ */
+@Getter
+public class NamespaceDeclaration implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final String prefix;
+    private final String uri;
+    private final ExceptionMetadata metadata;
+
+    public NamespaceDeclaration(String prefix, String uri, ExceptionMetadata metadata) {
+        this.prefix = prefix;
+        this.uri = uri;
+        this.metadata = metadata;
+    }
+
+    public void serializeToJSONiq(StringBuilder sb) {
+        if (this.prefix == null || this.prefix.isEmpty()) {
+            sb.append("xmlns=\"");
+        } else {
+            sb.append("xmlns:");
+            sb.append(this.prefix);
+            sb.append("=\"");
+        }
+        sb.append(this.uri);
+        sb.append("\"");
+    }
+}
