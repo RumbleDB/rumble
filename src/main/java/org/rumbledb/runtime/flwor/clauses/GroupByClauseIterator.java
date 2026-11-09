@@ -135,8 +135,9 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                             try {
                                 atomized = key.atomizedValue();
                             } catch (CannotAtomizeException e) {
-                                throw new UnexpectedTypeException(
-                                        "Group by variable must atomize to a supported atomic value.", getMetadata());
+                                throw new CannotAtomizeException(
+                                        "Group by variable must atomize to atomic values: " + e.getJSONiqErrorMessage(),
+                                        getMetadata());
                             }
                             if (atomized.size() > 1) {
                                 throw new UnexpectedTypeException(
@@ -166,8 +167,9 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                             try {
                                 atomized.addAll(item.atomizedValue());
                             } catch (CannotAtomizeException e) {
-                                throw new UnexpectedTypeException(
-                                        "Group by variable must atomize to a supported atomic value.", getMetadata());
+                                throw new CannotAtomizeException(
+                                        "Group by variable must atomize to atomic values: " + e.getJSONiqErrorMessage(),
+                                        getMetadata());
                             }
                         }
                         if (atomized.size() > 1) {
