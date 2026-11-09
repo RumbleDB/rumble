@@ -1,0 +1,307 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.items.xml;
+
+import java.io.Serial;
+import java.util.Collections;
+import java.util.List;
+
+import org.w3c.dom.Attr;
+import org.w3c.dom.Node;
+
+import lombok.NonNull;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.TypedValueUnavailableException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.xml.NamespaceBindingUtils;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+
+public class AttributeItem extends AbstractNodeItem {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private Name dmNodeName;
+    private String stringValue;
+    private Item parent;
+    private XMLDocumentPosition documentPos;
+    private XmlSchemaTypeAnnotation typeAnnotation;
+    private NodeTypedValue nodeTypedValue;
+    private boolean id;
+    private boolean idRefs;
+
+    public AttributeItem(Node attributeNode) {
+        this(NamespaceBindingUtils.nameFromElementOrAttributeDomNode(attributeNode), attributeNode.getNodeValue());
+        if (attributeNode instanceof Attr attribute) {
+            this.id |= attribute.isId();
+            String typeName = attribute.getSchemaTypeInfo().getTypeName();
+            this.idRefs = "IDREF".equals(typeName) || "IDREFS".equals(typeName);
+        }
+    }
+
+    public AttributeItem(Name dmNodeName, String stringValue) {
+        this.dmNodeName = dmNodeName;
+        boolean xmlId = Name.XML_NS.equals(dmNodeName.getNamespace()) && "id".equals(dmNodeName.getLocalName());
+        this.stringValue = xmlId ? normalizeXmlId(stringValue) : stringValue;
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
+        this.id = xmlId;
+    }
+
+    /** Applies ID whitespace normalization for parsed, direct, and computed xml:id attributes alike. */
+    private static String normalizeXmlId(String value) {
+        StringBuilder normalized = new StringBuilder(value.length());
+        boolean pendingSpace = false;
+        for (int index = 0; index < value.length(); index++) {
+            char character = value.charAt(index);
+            if (character == ' ' || character == '\t' || character == '\r' || character == '\n') {
+                pendingSpace = !normalized.isEmpty();
+            } else {
+                if (pendingSpace) {
+                    normalized.append(' ');
+                    pendingSpace = false;
+                }
+                normalized.append(character);
+            }
+        }
+        return normalized.toString();
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        AttributeItem copy = new AttributeItem(this.dmNodeName, this.stringValue);
+        copy.typeAnnotation = this.typeAnnotation;
+        copy.nodeTypedValue = this.nodeTypedValue;
+        copy.id = this.id;
+        copy.idRefs = this.idRefs;
+        return copy;
+    }
+
+    @Override
+    public int setXmlDocumentPosition(String path, int current) {
+        this.documentPos = new XMLDocumentPosition(path, current);
+        return ++current;
+    }
+
+    @Override
+    public XMLDocumentPosition getXmlDocumentPosition() {
+        return this.documentPos;
+    }
+
+    @Override
+    public Name nodeName() {
+        return this.dmNodeName;
+    }
+
+    @Override
+    public Item parent() {
+        return this.parent;
+    }
+
+    @Override
+    public String getStringValue() {
+        return this.stringValue;
+    }
+
+    @Override
+    public void setParent(Item parent) {
+        this.parent = parent;
+    }
+
+    public void setNodeName(Name nodeName) {
+        this.dmNodeName = nodeName;
+    }
+
+    @Override
+    public void addParentToDescendants() {
+        // Attribute nodes are leaves and therefore have no descendants to update.
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemTypeFactory.attributeNodeItemType(this.dmNodeName);
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — node-kind.
+     *
+     * "For an Attribute Node, dm:node-kind returns the string \"attribute\"."
+     */
+    @Override
+    public String nodeKind() {
+        return "attribute";
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — children.
+     *
+     * "For an Attribute Node, dm:children returns the empty sequence."
+     */
+    @Override
+    public List<Item> children() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — attributes.
+     *
+     * "For an Attribute Node, dm:attributes returns the empty sequence."
+     */
+    @Override
+    public List<Item> attributes() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — is-id.
+     *
+     * "For an Attribute Node, dm:is-id returns true if the attribute node is of type xs:ID or
+     * is derived by restriction from xs:ID; otherwise it returns false."
+     */
+    @Override
+    public boolean isId() {
+        return this.id;
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — is-idrefs.
+     *
+     * "For an Attribute Node, dm:is-idrefs returns true if the attribute node is of type
+     * xs:IDREF or xs:IDREFS or is derived by restriction from one of these types; otherwise
+     * it returns false."
+     */
+    @Override
+    public boolean isIdrefs() {
+        return this.idRefs;
+    }
+
+    @Override
+    public boolean isNode() {
+        return true;
+    }
+
+    @Override
+    public boolean isAttributeNode() {
+        return true;
+    }
+
+    @Override
+    public List<Item> atomizedValue() {
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.AVAILABLE) {
+            return this.nodeTypedValue.getItems();
+        }
+        if (this.nodeTypedValue.getState() == NodeTypedValue.State.UNAVAILABLE) {
+            throw new TypedValueUnavailableException(
+                    "The typed value is not available for attribute " + this.dmNodeName + ".",
+                    ExceptionMetadata.EMPTY_METADATA);
+        }
+        return Collections.singletonList(ItemFactory.getInstance().createUntypedAtomicItem(this.stringValue));
+    }
+
+    @Override
+    public List<Item> namespaceNodes() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public List<Item> declaredNamespaceNodes() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — base-uri.
+     *
+     * For an Attribute Node, dm:base-uri returns the base URI of the parent element or document
+     * node, if it has one; otherwise it returns the empty sequence.
+     */
+    @Override
+    public List<Item> baseUri() {
+        if (this.parent == null) {
+            return Collections.emptyList();
+        }
+        return this.parent.baseUri();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — document-uri.
+     *
+     * For an Attribute Node, dm:document-uri returns the document-uri of the document node that
+     * is the root of the tree containing the attribute, if it has one; otherwise it returns the
+     * empty sequence.
+     */
+    @Override
+    public List<Item> documentUri() {
+        if (this.parent == null) {
+            return Collections.emptyList();
+        }
+        return this.parent.documentUri();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — nilled.
+     *
+     * For an Attribute Node, dm:nilled returns the empty sequence.
+     */
+    @Override
+    public List<Item> nilled() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * XDM 3.1 Section 6.3 Attribute Node Accessors — type-name.
+     *
+     * For an Attribute Node, dm:type-name returns the name of the dynamic type of the attribute
+     * node, or the empty sequence if the node is untyped.
+     */
+    @Override
+    public List<Item> typeName() {
+        if (this.typeAnnotation == null) {
+            return Collections.emptyList();
+        }
+        return Collections.singletonList(ItemFactory.getInstance().createQNameItem(this.typeAnnotation.name()));
+    }
+
+    @Override
+    public void setSchemaType(@NonNull XmlSchemaTypeAnnotation typeAnnotation, List<Item> typedValue) {
+        NodeTypedValue newTypedValue = NodeTypedValue.available(typedValue);
+        this.typeAnnotation = typeAnnotation;
+        this.nodeTypedValue = newTypedValue;
+        this.id = false;
+        this.idRefs = false;
+    }
+
+    @Override
+    public void clearSchemaType() {
+        this.typeAnnotation = null;
+        this.nodeTypedValue = NodeTypedValue.untyped();
+        this.id = false;
+        this.idRefs = false;
+    }
+
+    @Override
+    public XmlSchemaTypeAnnotation getSchemaTypeAnnotation() {
+        return this.typeAnnotation;
+    }
+
+    @Override
+    public void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        this.id = id;
+        this.idRefs = idRefs;
+    }
+}

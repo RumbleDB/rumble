@@ -1,0 +1,151 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.flwor;
+
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.UDFRegistration;
+import org.apache.spark.sql.types.StructType;
+
+import lombok.Getter;
+import lombok.extern.log4j.Log4j2;
+
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+import org.rumbledb.types.SequenceType;
+
+@Log4j2
+public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializable {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    @Getter
+    private Dataset<Row> dataFrame;
+
+    @Getter
+    private List<FlworDataFrameColumn> columns;
+
+    private Map<Name, SequenceType> columnTypes;
+
+    public FlworDataFrame(Dataset<Row> dataFrame) {
+        if (dataFrame == null) {
+            throw new OurBadException("The dataframe cannot be null!");
+        }
+        this.dataFrame = dataFrame;
+        StructType schema = dataFrame.schema();
+        this.columns = new ArrayList<>();
+        this.columnTypes = new HashMap<>();
+        for (String c : schema.fieldNames()) {
+            this.columns.add(new FlworDataFrameColumn(c, schema));
+        }
+    }
+
+    @Override
+    public JavaRDD<FlworTuple> toRDD(ExceptionMetadata metadata) {
+        throw new OurBadException("Converting a FLWOR DataFrame to an RDD of tuples is not implemented.", metadata);
+    }
+
+    public List<Name> getVariableNames() {
+        List<Name> result = new ArrayList<>();
+        for (FlworDataFrameColumn c : getColumns()) {
+            result.add(c.getVariableName());
+        }
+        return result;
+    }
+
+    public boolean hasVariableName(Name name) {
+        for (FlworDataFrameColumn c : getColumns()) {
+            if (name.equals(c.getVariableName())) return true;
+        }
+        return false;
+    }
+
+    public UDFRegistration getUDFRegistration() {
+        return this.dataFrame.sparkSession().udf();
+    }
+
+    public FlworDataFrame sql(String sqlQuery) {
+        FlworDataFrame result = new FlworDataFrame(this.dataFrame.sparkSession().sql(sqlQuery));
+        for (Name v : this.getVariableNames()) {
+            SequenceType type = this.getVariableType(v);
+            if (result.hasVariableName(v)) {
+                result.setVariableType(v, type);
+            }
+        }
+        return result;
+    }
+
+    public Dataset<Row> sqlRaw(String sqlQuery) {
+        return this.dataFrame.sparkSession().sql(sqlQuery);
+    }
+
+    public List<FlworDataFrameColumn> getColumns(
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            List<Name> variablesToRestrictTo,
+            List<Name> variablesToExclude) {
+        return FlworDataFrameUtils.getColumns(
+                this.dataFrame.schema(), dependencies, variablesToRestrictTo, variablesToExclude);
+    }
+
+    public void setVariableType(Name name, SequenceType type) {
+        if (!hasVariableName(name)) {
+            throw new OurBadException("Variable " + name + "does not exist!");
+        }
+        this.columnTypes.put(name, type);
+    }
+
+    public SequenceType getVariableType(Name name) {
+        if (!hasVariableName(name)) {
+            throw new OurBadException("Variable " + name + "does not exist!");
+        }
+        if (!this.columnTypes.containsKey(name)) {
+            return SequenceType.createSequenceType("item*");
+        }
+        return this.columnTypes.get(name);
+    }
+
+    public String createTempView() {
+        return FlworDataFrameUtils.createTempView(this.dataFrame);
+    }
+
+    public void show() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("FLWOR DataFrame\n");
+        sb.append("Columns\n");
+        for (FlworDataFrameColumn c : this.columns) {
+            sb.append(c).append('\n');
+        }
+        sb.append("Column types\n");
+        for (Name n : this.columnTypes.keySet()) {
+            sb.append(n).append(' ').append(this.columnTypes.get(n)).append('\n');
+        }
+        sb.append("Data Frame");
+        log.debug(sb);
+        this.dataFrame.show();
+    }
+}

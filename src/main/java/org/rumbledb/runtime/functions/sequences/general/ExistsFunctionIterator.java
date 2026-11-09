@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,56 +11,59 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
+import java.io.Serial;
 import java.util.List;
 
-public class ExistsFunctionIterator extends LocalFunctionCallIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
+public class ExistsFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
 
-    public ExistsFunctionIterator(
-            List<RuntimeIterator> parameters,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(parameters, executionMode, iteratorMetadata);
-        this.sequenceIterator = this.children.get(0);
+    public ExistsFunctionIterator(List<ItemRuntimePlan> parameters, RuntimeStaticContext staticContext) {
+        super(parameters, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext()) {
-            this.hasNext = false;
-            if (this.sequenceIterator.isRDDOrDataFrame()) {
-                List<Item> i = this.sequenceIterator.getRDD(this.currentDynamicContextForLocalExecution).take(1);
-                return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
-            }
-            this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-            Item result;
-            if (this.sequenceIterator.hasNext()) {
-                result = ItemFactory.getInstance().createBooleanItem(true);
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        return ItemFactory.getInstance()
+                .createBooleanItem(this.getChild(0).materializeFirstOrNull(dynamicContext) != null);
+    }
 
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
+        if (childQuery != NativeClauseContext.NoNativeQuery) {
+            if (childQuery.getResultingType().getItemType().isArrayItemType()
+                    || SequenceType.Arity.OneOrMore.isSubtypeOf(
+                            childQuery.getResultingType().getArity())) {
+                String resultingQuery = String.format("size(%s) > 0", childQuery.getResultingQuery());
+                return new NativeClauseContext(
+                        childQuery,
+                        resultingQuery,
+                        new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
             } else {
-                result = ItemFactory.getInstance().createBooleanItem(false);
+                String resultingQuery = String.format("not %s is null", childQuery.getResultingQuery());
+                return new NativeClauseContext(
+                        childQuery,
+                        resultingQuery,
+                        new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
             }
-            this.sequenceIterator.close();
-            return result;
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "exists function", getMetadata());
+        return NativeClauseContext.NoNativeQuery;
     }
 }

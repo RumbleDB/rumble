@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,110 +11,398 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package iq;
+
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.io.TempDir;
+
+import org.rumbledb.api.ExternalBindings;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-
-import sparksoniq.spark.SparkSessionManager;
-
-import java.util.List;
+import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.resources.ResourceResolver;
+import org.rumbledb.serialization.JsonSerializer;
+import org.rumbledb.serialization.SerializationParameters;
+import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.ItemTypeFactory;
 
 public class JavaAPITest {
 
-    public JavaAPITest() {
-    }
+    private static final String XQUERY_SERIALIZATION_NAMESPACE = "http://www.w3.org/2010/xslt-xquery-serialization";
 
-    @BeforeClass
+    public JavaAPITest() {}
+
+    @BeforeAll
     public static void setupSparkSession() {
+        SparkSessionManager.getInstance().resetSession();
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
         sparkConfiguration.set("spark.submit.deployMode", "client");
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
+        sparkConfiguration.set("spark.driver.host", "127.0.0.1");
+        sparkConfiguration.set("spark.driver.bindAddress", "127.0.0.1");
+        sparkConfiguration.set("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension");
+        sparkConfiguration.set("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog");
+        sparkConfiguration.set("spark.databricks.delta.schema.autoMerge.enabled", "true");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
     public void testLocal() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in 1 to 5 return { \"foo\" : $i }");
-        Assert.assertTrue(!iterator.isOpen());
-        Assert.assertTrue(!iterator.availableAsRDD());
+        Assertions.assertTrue(!iterator.isOpen());
+        Assertions.assertTrue(!iterator.availableAsRDD());
         iterator.open();
-        Assert.assertTrue(iterator.isOpen());
-        Assert.assertTrue(iterator.hasNext());
+        Assertions.assertTrue(iterator.isOpen());
+        Assertions.assertTrue(iterator.hasNext());
         for (int i = 1; i <= 5; ++i) {
-            Assert.assertTrue(iterator.hasNext());
+            Assertions.assertTrue(iterator.hasNext());
             Item item = iterator.next();
-            Assert.assertTrue(item.isObject());
-            List<String> keys = item.getKeys();
-            Assert.assertTrue(keys.size() == 1);
+            Assertions.assertTrue(item.isObject());
+            List<String> keys = item.getStringKeys();
+            Assertions.assertTrue(keys.size() == 1);
             String key = keys.get(0);
-            Assert.assertTrue(key.contentEquals("foo"));
+            Assertions.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
-            Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntValue() == i);
+            Assertions.assertTrue(value.isInteger());
+            Assertions.assertTrue(value.getIntValue() == i);
         }
         iterator.close();
-        Assert.assertTrue(!iterator.isOpen());
+        Assertions.assertTrue(!iterator.isOpen());
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
+    public void testResourceResolverWithExternalBindings() throws Throwable {
+        Path queryFile = Files.createTempFile("rumble-resolved-query-", ".jq");
+        try {
+            Files.writeString(queryFile, "$answer");
+            URI logicalLocation = URI.create("urn:rumble:test:resolved-query");
+            ResourceResolver resolver = new ResourceResolver(Map.of(logicalLocation, queryFile.toUri()));
+            Rumble rumble =
+                    new Rumble(new CompilationConfiguration(RumbleConfiguration.defaultConfiguration(), resolver));
+            ExternalBindings bindings = ExternalBindings.empty();
+            bindings.bindLiteral("answer", "42");
+
+            SequenceOfItems result = rumble.runQuery(logicalLocation, bindings);
+
+            result.open();
+            Assertions.assertEquals("42", result.next().getStringValue());
+            Assertions.assertFalse(result.hasNext());
+            result.close();
+        } finally {
+            Files.deleteIfExists(queryFile);
+        }
+    }
+
+    @Test
+    public void testQueryWithBaseUri(@TempDir Path directory) throws Exception {
+        Path schemas = Files.createDirectory(directory.resolve("schemas"));
+        Files.writeString(
+                schemas.resolve("types.xsd"),
+                "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\" targetNamespace=\"urn:test\">"
+                        + "<xs:simpleType name=\"Code\"><xs:restriction base=\"xs:string\"/></xs:simpleType>"
+                        + "</xs:schema>");
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        URI baseUri = directory.resolve("unsaved-query.jq").toUri();
+
+        // The URI supplies context for the editor text; no query file exists at that URI.
+        Assertions.assertEquals(
+                "editor value",
+                rumble.runQuery(
+                                "import schema namespace t = \"urn:test\" at \"schemas/types.xsd\"; t:Code(\"editor value\")",
+                                baseUri)
+                        .serialize());
+        // A declaration in the query still overrides the initial base URI.
+        Assertions.assertEquals(
+                "editor value",
+                rumble.runQuery(
+                                "declare base-uri \"schemas/\"; "
+                                        + "import schema namespace t = \"urn:test\" at \"types.xsd\"; t:Code(\"editor value\")",
+                                baseUri)
+                        .serialize());
+    }
+
+    @Test
+    @Timeout(1000)
     public void testCollect() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
-        Assert.assertTrue(!iterator.isOpen());
-        Assert.assertTrue(iterator.availableAsRDD());
+        Assertions.assertTrue(!iterator.isOpen());
+        Assertions.assertTrue(iterator.availableAsRDD());
         iterator.open();
-        Assert.assertTrue(iterator.isOpen());
-        Assert.assertTrue(iterator.hasNext());
+        Assertions.assertTrue(iterator.isOpen());
+        Assertions.assertTrue(iterator.hasNext());
         for (int i = 1; i <= 5; ++i) {
-            Assert.assertTrue(iterator.hasNext());
+            Assertions.assertTrue(iterator.hasNext());
             Item item = iterator.next();
-            Assert.assertTrue(item.isObject());
-            List<String> keys = item.getKeys();
-            Assert.assertTrue(keys.size() == 1);
+            Assertions.assertTrue(item.isObject());
+            List<String> keys = item.getStringKeys();
+            Assertions.assertTrue(keys.size() == 1);
             String key = keys.get(0);
-            Assert.assertTrue(key.contentEquals("foo"));
+            Assertions.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
-            Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntValue() == i);
+            Assertions.assertTrue(value.isInteger());
+            Assertions.assertTrue(value.getIntValue() == i);
         }
         iterator.close();
-        Assert.assertTrue(!iterator.isOpen());
+        Assertions.assertTrue(!iterator.isOpen());
     }
 
-    @Test(timeout = 1000000)
+    @Test
+    @Timeout(1000)
     public void testRDD() throws Throwable {
-        Rumble rumble = new Rumble(RumbleRuntimeConfiguration.getDefaultConfiguration());
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
         SequenceOfItems iterator = rumble.runQuery("for $i in parallelize(1 to 5) return { \"foo\" : $i }");
-        Assert.assertTrue(!iterator.isOpen());
-        Assert.assertTrue(iterator.availableAsRDD());
+        Assertions.assertTrue(!iterator.isOpen());
+        Assertions.assertTrue(iterator.availableAsRDD());
         JavaRDD<Item> items = iterator.getAsRDD();
         List<Item> list = items.collect();
         for (int i = 1; i <= 5; ++i) {
             Item item = list.get(i - 1);
-            Assert.assertTrue(item.isObject());
-            List<String> keys = item.getKeys();
-            Assert.assertTrue(keys.size() == 1);
+            Assertions.assertTrue(item.isObject());
+            List<String> keys = item.getStringKeys();
+            Assertions.assertTrue(keys.size() == 1);
             String key = keys.get(0);
-            Assert.assertTrue(key.contentEquals("foo"));
+            Assertions.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
-            Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntValue() == i);
+            Assertions.assertTrue(value.isInteger());
+            Assertions.assertTrue(value.getIntValue() == i);
         }
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testGetAsDataFramePreservesArrayMembers() throws Throwable {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        SequenceOfItems iterator = rumble.runQuery("({ \"arr\" : [ { \"x\" : 1 }]},{\"arr\":[{\"x\":\"s\"}]})");
+
+        Dataset<Row> dataFrame = iterator.getAsDataFrame();
+        List<Row> rows = dataFrame.collectAsList();
+
+        Assertions.assertEquals(2, rows.size());
+        Assertions.assertEquals(1, rows.get(0).getList(0).size());
+        Assertions.assertEquals(1, rows.get(1).getList(0).size());
+
+        JavaRDD<Item> itemRDD = dataFrame
+                .javaRDD()
+                .map(new RowToItemMapper(
+                        ExceptionMetadata.EMPTY_METADATA, ItemTypeFactory.createItemType(dataFrame.schema())));
+        List<Item> items = itemRDD.collect();
+
+        Assertions.assertEquals(
+                "1",
+                items.get(0).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
+        Assertions.assertEquals(
+                "s",
+                items.get(1).getItemByKey("arr").getItemAt(0).getItemByKey("x").getStringValue());
+    }
+
+    private static RumbleConfiguration xqueryConfiguration() {
+        return RumbleConfiguration.builder()
+                .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
+                .build();
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testGetAsDataFrameFromRDD() throws Throwable {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        SequenceOfItems iterator = rumble.runQuery("parallelize(({ \"x\" : 1 }, { \"x\" : 2 }))");
+
+        List<Row> rows = iterator.getAsDataFrame().collectAsList();
+
+        Assertions.assertEquals(2, rows.size());
+        Assertions.assertEquals(1, ((Number) rows.get(0).get(0)).intValue());
+        Assertions.assertEquals(2, ((Number) rows.get(1).get(0)).intValue());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testGetAsDataFrameFromEmptyRDD() throws Throwable {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        SequenceOfItems iterator =
+                rumble.runQuery("for $i in parallelize(({ \"x\" : 1 }, { \"x\" : 2 })) where $i.x gt 10 return $i");
+
+        Assertions.assertTrue(iterator.availableAsRDD());
+        Dataset<Row> dataFrame = iterator.getAsDataFrame();
+        Assertions.assertEquals(0, dataFrame.count());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testGetAsDataFrameFromMergedDataFrameBindings() throws Throwable {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        Dataset<Row> input = rumble.runQuery("{ \"e\": 1, \"f\": 2, \"g\": 3, \"h\": 4, \"i\": 5, \"Count\": 7 }")
+                .getAsDataFrame();
+        for (boolean matching : new boolean[] {true, false}) {
+            ExternalBindings bindings = ExternalBindings.empty();
+            bindings.bindDataFrame("foo", input);
+            bindings.bindDataFrame("bar", matching ? input : input.limit(0));
+            bindings.bindDataFrame("foobar", input);
+            SequenceOfItems result = rumble.runQuery(
+                    """
+                        declare variable $foo external;
+                        declare variable $bar external;
+                        declare variable $foobar external;
+                        for $c in {remove-keys($foo, ("a", "b", "c"))}
+                        for $d in $bar
+                        where $d.e eq $c.e and $d.f eq $c.f
+                        for $j in $foobar
+                        where $j.e eq $c.e and $j.f eq $c.f and $j.g eq $c.g and $j.h eq $c.h and $j.i eq $c.i
+                        for $k in $foobar
+                        where $k.f eq $c.f
+                        return {|
+                          $c,
+                          { "a": $d.Count, "b": $j.Count, "c": count($k) }
+                        |}
+                        """,
+                    bindings);
+            Dataset<Row> dataFrame = result.getAsDataFrame();
+            Assertions.assertEquals(matching ? 1 : 0, dataFrame.count());
+            if (matching) {
+                Row row = dataFrame.first();
+                Assertions.assertEquals(7, ((Number) row.getAs("a")).intValue());
+                Assertions.assertEquals(7, ((Number) row.getAs("b")).intValue());
+                Assertions.assertEquals(1, ((Number) row.getAs("c")).intValue());
+            }
+        }
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testHtmlSerializationRejectsEmptyMap() {
+        Rumble rumble = new Rumble(xqueryConfiguration());
+        RumbleException exception = Assertions.assertThrows(
+                RumbleException.class,
+                () -> rumble.runQueryToString(
+                        """
+                        declare namespace output = "http://www.w3.org/2010/xslt-xquery-serialization";
+                        declare option output:method "html";
+                        map { }
+                        """));
+        Assertions.assertEquals("SENR0001", exception.getErrorCode().getLocalName());
+        Assertions.assertEquals("SENR0001", exception.getErrorCode().toString());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonSerializationEscapesUnencodableSupplementaryCharacterForAscii() {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        String supplementaryCharacter = new String(Character.toChars(0x10330));
+        String query = String.join(
+                "\n",
+                "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",
+                "declare option output:method \"json\";",
+                "declare option output:encoding \"US-ASCII\";",
+                "\"" + supplementaryCharacter + "\"");
+
+        Assertions.assertEquals("\"\\uD800\\uDF30\"", rumble.runQuery(query).serialize());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testTextSerializationRejectsMapWithErrNamespaceCode() {
+        Rumble rumble = new Rumble(xqueryConfiguration());
+        RumbleException exception = Assertions.assertThrows(
+                RumbleException.class,
+                () -> rumble.runQueryToString(
+                        """
+                        declare namespace output = "%s";
+                        declare option output:method "text";
+                        map { "a" : 1 }
+                        """
+                                .formatted(XQUERY_SERIALIZATION_NAMESPACE)));
+        Assertions.assertEquals("SENR0001", exception.getErrorCode().toString());
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonSerializationEscapesSolidusInStrings() {
+        Rumble rumble = new Rumble(xqueryConfiguration());
+        String result = rumble.runQueryToString(
+                """
+                    declare namespace output = "%s";
+                    declare option output:method "json";
+                    <e/>
+                    """
+                        .formatted(XQUERY_SERIALIZATION_NAMESPACE));
+        Assertions.assertEquals("\"<e\\/>\"", result);
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonCharacterMapReplacementIsNotEscaped() {
+        SerializationParameters params = SerializationParameters.defaults(LanguageVersion.XQUERY_31);
+        params.setMethod("json");
+        Map<String, String> characterMaps = new HashMap<>();
+        characterMaps.put("y", "\"");
+        params.setCharacterMaps(characterMaps);
+        JsonSerializer serializer = new JsonSerializer(params);
+        String result = serializer.serialize(ItemFactory.getInstance().createStringItem("y"));
+        Assertions.assertEquals("\"\"\"", result);
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonCharacterMapsDoNotTriggerDuplicateNameError() {
+        SerializationParameters params = SerializationParameters.defaults(LanguageVersion.XQUERY_31);
+        params.setMethod("json");
+        Map<String, String> characterMaps = new HashMap<>();
+        characterMaps.put("w", "k");
+        characterMaps.put("x", "k");
+        params.setCharacterMaps(characterMaps);
+        JsonSerializer serializer = new JsonSerializer(params);
+
+        Item map = ItemFactory.getInstance()
+                .createObjectItem(
+                        List.of("w", "x"),
+                        List.of(
+                                ItemFactory.getInstance().createIntItem(1),
+                                ItemFactory.getInstance().createIntItem(1)),
+                        ExceptionMetadata.EMPTY_METADATA,
+                        false);
+
+        Assertions.assertEquals("{\"k\":1,\"k\":1}", serializer.serialize(map));
+    }
+
+    @Test
+    @Timeout(1000)
+    public void testJsonSerializationEscapesEuroCharacterForAscii() {
+        Rumble rumble = new Rumble(RumbleConfiguration.defaultConfiguration());
+        String query = String.join(
+                "\n",
+                "declare namespace output = \"http://www.w3.org/2010/xslt-xquery-serialization\";",
+                "declare option output:method \"json\";",
+                "declare option output:encoding \"US-ASCII\";",
+                "\"€\"");
+
+        Assertions.assertEquals("\"\\u20AC\"", rumble.runQuery(query).serialize());
     }
 }

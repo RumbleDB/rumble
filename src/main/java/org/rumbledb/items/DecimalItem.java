@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,56 +11,43 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
+import java.io.Serial;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
-public class DecimalItem implements Item {
+public class DecimalItem extends AbstractAtomicItem {
 
-
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private BigDecimal value;
 
-    public DecimalItem() {
-        super();
-    }
+    // Float/double casts retain their exact decimal value for op:same-key while serializing
+    // with the concise lexical representation users expect from the source numeric value.
+    private String displayValue;
 
     public DecimalItem(BigDecimal decimal) {
-        super();
         this.value = decimal;
     }
 
-    @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
+    public DecimalItem(BigDecimal decimal, String displayValue) {
+        this.value = decimal;
+        this.displayValue = displayValue;
     }
 
-    public BigDecimal getValue() {
-        return this.value;
+    @Override
+    public Item copy(boolean mutable) {
+        return new DecimalItem(this.value, this.displayValue);
     }
 
     @Override
@@ -72,26 +56,44 @@ public class DecimalItem implements Item {
     }
 
     @Override
-    public boolean getEffectiveBooleanValue() {
-        return !this.getDecimalValue().equals(BigDecimal.ZERO);
+    public Object getVariantValue() {
+        return getDecimalValue();
     }
 
+    @Override
+    public String getStringValue() {
+        if (this.displayValue != null) {
+            return this.displayValue;
+        }
+        return String.valueOf(this.value.stripTrailingZeros().toPlainString());
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return !(this.getDecimalValue().compareTo(BigDecimal.ZERO) == 0);
+    }
+
+    @Override
     public double castToDoubleValue() {
         return getDecimalValue().doubleValue();
     }
 
+    @Override
     public float castToFloatValue() {
         return getDecimalValue().floatValue();
     }
 
+    @Override
     public BigDecimal castToDecimalValue() {
         return getDecimalValue();
     }
 
+    @Override
     public int castToIntValue() {
         return getDecimalValue().intValue();
     }
 
+    @Override
     public BigInteger castToIntegerValue() {
         return getDecimalValue().toBigInteger();
     }
@@ -102,30 +104,13 @@ public class DecimalItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        return String.valueOf(this.value.stripTrailingZeros().toPlainString());
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.getValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.value = kryo.readObject(input, BigDecimal.class);
-    }
-
-    public int hashCode() {
-        if (getDecimalValue().stripTrailingZeros().scale() == 0) {
-            return getDecimalValue().intValue();
-        }
-        return getDecimalValue().hashCode();
-    }
-
-    @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.decimalItem;
+        return BuiltinTypesCatalogue.decimalItem;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return new NativeClauseContext(context, this.value.toString(), SequenceType.createSequenceType("decimal"));
     }
 
     @Override
@@ -136,5 +121,21 @@ public class DecimalItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return this.value.stripTrailingZeros().toPlainString();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return this.value.stripTrailingZeros().toPlainString();
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        // TODO: Make enum?
+        return "DECIMAL";
     }
 }

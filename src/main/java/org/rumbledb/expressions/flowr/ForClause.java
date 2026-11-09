@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +11,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.flowr;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
@@ -31,20 +32,43 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-import java.util.Collections;
-import java.util.List;
-
 public class ForClause extends Clause {
 
+    @Getter
     private final Name variableName;
+
     private final boolean allowingEmpty;
+
+    @Getter
     private final Name positionalVariableName;
+
+    /** Variable token metadata, or null for compiler-generated clauses, which bind no source variable. */
+    @Getter
+    private final ExceptionMetadata variableMetadata;
+
+    /** Positional variable token metadata, or null when there is no source token. */
+    @Getter
+    private final ExceptionMetadata positionalVariableMetadata;
+
     protected SequenceType sequenceType;
+
+    @Getter
     protected Expression expression;
 
     // Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    @Setter
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
+    /** Creates a compiler-generated clause, whose variables have no source tokens. */
+    public ForClause(
+            Name variableName,
+            boolean allowEmpty,
+            SequenceType sequenceType,
+            Name positionalVariableName,
+            Expression expression,
+            ExceptionMetadata metadata) {
+        this(variableName, allowEmpty, sequenceType, positionalVariableName, expression, metadata, null, null);
+    }
 
     public ForClause(
             Name variableName,
@@ -52,8 +76,9 @@ public class ForClause extends Clause {
             SequenceType sequenceType,
             Name positionalVariableName,
             Expression expression,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata,
+            ExceptionMetadata variableMetadata,
+            ExceptionMetadata positionalVariableMetadata) {
         super(FLWOR_CLAUSES.FOR, metadata);
         if (variableName == null) {
             throw new SemanticException("For clause must have a variable", metadata);
@@ -61,21 +86,14 @@ public class ForClause extends Clause {
         this.variableName = variableName;
         this.allowingEmpty = allowEmpty;
         this.positionalVariableName = positionalVariableName;
+        this.variableMetadata = variableMetadata;
+        this.positionalVariableMetadata = positionalVariableMetadata;
         this.sequenceType = sequenceType;
         this.expression = expression;
-
-    }
-
-    public Name getVariableName() {
-        return this.variableName;
     }
 
     public boolean isAllowEmpty() {
         return this.allowingEmpty;
-    }
-
-    public Name getPositionalVariableName() {
-        return this.positionalVariableName;
     }
 
     public SequenceType getSequenceType() {
@@ -86,27 +104,9 @@ public class ForClause extends Clause {
         return this.sequenceType;
     }
 
-    public Expression getExpression() {
-        return this.expression;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode =
-            (this.expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
-                || (this.previousClause != null
-                    && this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()))
-                        ? ExecutionMode.DATAFRAME
-                        : ExecutionMode.LOCAL;
-
-        this.variableHighestStorageMode = ExecutionMode.LOCAL;
-    }
-
     public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
-        if (
-            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.variableHighestStorageMode == ExecutionMode.UNSET
-        ) {
+        if (!visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.variableHighestStorageMode == ExecutionMode.UNSET) {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
@@ -114,7 +114,14 @@ public class ForClause extends Clause {
 
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(this.expression);
+        List<Node> result = new ArrayList<>();
+        if (this.expression != null) {
+            result.add(this.expression);
+        }
+        if (this.getChildClause() != null) {
+            result.add(this.getChildClause());
+        }
+        return result;
     }
 
     @Override
@@ -122,22 +129,23 @@ public class ForClause extends Clause {
         return visitor.visitForClause(this, argument);
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    @Override
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(
-            " ("
-                + (this.variableName)
+        buffer.append(" ("
+                + ("$" + this.variableName)
                 + ", "
                 + this.getSequenceType().toString()
+                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
                 + ", "
                 + (this.allowingEmpty ? "allowing empty, " : "")
                 + this.positionalVariableName
-                + ") "
-        );
-        buffer.append(" | " + this.highestExecutionMode);
+                + ") ");
+        buffer.append(" | mode: " + this.highestExecutionMode);
+        buffer.append(" | variable mode: " + this.variableHighestStorageMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -145,5 +153,17 @@ public class ForClause extends Clause {
         if (this.previousClause != null) {
             this.previousClause.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("for $" + this.variableName.toString());
+        if (this.sequenceType != null) sb.append(" as " + this.sequenceType.toString());
+        if (this.allowingEmpty) sb.append(" allowing empty ");
+        if (this.positionalVariableName != null) sb.append(" at $" + this.positionalVariableName.toString());
+        sb.append(" in (");
+        this.expression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
     }
 }

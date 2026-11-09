@@ -1,2 +1,2 @@
-(:JIQS: ShouldCrash; ErrorCode="XPTY0004" :)
+(:JIQS: ShouldCrash; ErrorCode="JNTY0004" :)
 (12 treat as item) eq 22

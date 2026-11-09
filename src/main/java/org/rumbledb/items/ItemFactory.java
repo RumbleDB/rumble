@@ -1,42 +1,90 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
-
-import org.joda.time.DateTime;
-import org.joda.time.Period;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
 import java.util.List;
 import java.util.Map;
+
+import org.w3c.dom.Node;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.xml.AttributeItem;
+import org.rumbledb.items.xml.CommentItem;
+import org.rumbledb.items.xml.DocumentItem;
+import org.rumbledb.items.xml.ElementItem;
+import org.rumbledb.items.xml.NamespaceItem;
+import org.rumbledb.items.xml.ProcessingInstructionItem;
+import org.rumbledb.items.xml.TextItem;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 
 public class ItemFactory {
 
     private static ItemFactory instance;
     private Item nullItem;
+    private Item emptyStringItem;
     private Item trueBooleanItem;
     private Item falseBooleanItem;
     private Item zeroItem;
     private Item positiveInfinityDoubleItem;
     private Item negativeInfinityDoubleItem;
     private Item NaNDoubleItem;
+    private Item positiveInfinityFloatItem;
+    private Item negativeInfinityFloatItem;
+    private Item NaNFloatItem;
 
     public static ItemFactory getInstance() {
         if (instance == null) {
             instance = new ItemFactory();
             instance.nullItem = new NullItem();
+            instance.emptyStringItem = new StringItem("");
             instance.trueBooleanItem = new BooleanItem(true);
             instance.falseBooleanItem = new BooleanItem(false);
             instance.zeroItem = new IntItem(0);
             instance.positiveInfinityDoubleItem = new DoubleItem(Double.POSITIVE_INFINITY);
             instance.negativeInfinityDoubleItem = new DoubleItem(Double.NEGATIVE_INFINITY);
             instance.NaNDoubleItem = new DoubleItem(Double.NaN);
+            instance.positiveInfinityFloatItem = new FloatItem(Float.POSITIVE_INFINITY);
+            instance.negativeInfinityFloatItem = new FloatItem(Float.NEGATIVE_INFINITY);
+            instance.NaNFloatItem = new FloatItem(Float.NaN);
         }
         return instance;
     }
 
     public Item createStringItem(String s) {
+        if (s == null || s.isEmpty()) {
+            return this.emptyStringItem;
+        }
         return new StringItem(s);
+    }
+
+    public Item createLanguageItem(String s) {
+        return this.createAnnotatedItem(this.createStringItem(s), BuiltinTypesCatalogue.languageItem);
+    }
+
+    public Item createUntypedAtomicItem(String s) {
+        return new UntypedAtomicItem(s);
     }
 
     public Item createBooleanItem(boolean b) {
@@ -51,7 +99,17 @@ public class ItemFactory {
         return new DecimalItem(d);
     }
 
+    public Item createDecimalItem(BigDecimal d, String displayValue) {
+        return new DecimalItem(d, displayValue);
+    }
+
     public Item createIntegerItem(BigInteger i) {
+        if (i.bitLength() <= 31) {
+            return new IntPosingAsIntegerItem(i.intValue());
+        }
+        if (i.bitLength() <= 63) {
+            return new LongPosingAsIntegerItem(i.longValue());
+        }
         return new IntegerItem(i);
     }
 
@@ -69,14 +127,19 @@ public class ItemFactory {
         if (l >= Integer.MIN_VALUE && l <= Integer.MAX_VALUE) {
             return new IntItem((int) l);
         }
-        return new IntegerItem(BigInteger.valueOf(l));
+        return new LongItem(l);
     }
 
     public Item createIntegerItem(String lexicalValue) {
-        if (lexicalValue.length() >= 10) {
-            return new IntegerItem(new BigInteger(lexicalValue));
+        try {
+            long value = Long.parseLong(lexicalValue);
+            if (value >= Integer.MIN_VALUE && value <= Integer.MAX_VALUE) {
+                return new IntPosingAsIntegerItem((int) value);
+            }
+            return new LongPosingAsIntegerItem(value);
+        } catch (NumberFormatException e) {
+            return createIntegerItem(new BigInteger(lexicalValue));
         }
-        return new IntItem(Integer.parseInt(lexicalValue));
     }
 
     public Item createDoubleItem(double d) {
@@ -93,10 +156,27 @@ public class ItemFactory {
     }
 
     public Item createFloatItem(float d) {
+        if (d == Float.POSITIVE_INFINITY) {
+            return this.positiveInfinityFloatItem;
+        }
+        if (d == Float.NEGATIVE_INFINITY) {
+            return this.negativeInfinityFloatItem;
+        }
+        if (d == Float.NaN) {
+            return this.NaNFloatItem;
+        }
         return new FloatItem(d);
     }
 
-    public Item createDurationItem(Period p) {
+    public Item createAnnotatedItem(Item itemToAnnotate, ItemType type) {
+        return new AnnotatedItem(itemToAnnotate, type);
+    }
+
+    public Item createDurationItem(Duration p) {
+        return new DurationItem(p);
+    }
+
+    public Item createDurationItem(String p) {
         return new DurationItem(p);
     }
 
@@ -104,11 +184,19 @@ public class ItemFactory {
         return new YearMonthDurationItem(p);
     }
 
-    public Item createDayTimeDurationItem(Period p) {
+    public Item createYearMonthDurationItem(String p) {
+        return new YearMonthDurationItem(p);
+    }
+
+    public Item createDayTimeDurationItem(Duration p) {
         return new DayTimeDurationItem(p);
     }
 
-    public Item createDateTimeItem(DateTime dt, boolean hasTimeZone) {
+    public Item createDayTimeDurationItem(String p) {
+        return new DayTimeDurationItem(p);
+    }
+
+    public Item createDateTimeItem(OffsetDateTime dt, boolean hasTimeZone) {
         return new DateTimeItem(dt, hasTimeZone);
     }
 
@@ -116,7 +204,15 @@ public class ItemFactory {
         return new DateTimeItem(s);
     }
 
-    public Item createDateItem(DateTime dt, boolean hasTimeZone) {
+    public Item createDateTimeStampItem(OffsetDateTime dt, boolean checkTimezone) {
+        return new DateTimeStampItem(dt, checkTimezone);
+    }
+
+    public Item createDateTimeStampItem(String s) {
+        return new DateTimeStampItem(s);
+    }
+
+    public Item createDateItem(OffsetDateTime dt, boolean hasTimeZone) {
         return new DateItem(dt, hasTimeZone);
     }
 
@@ -124,7 +220,7 @@ public class ItemFactory {
         return new DateItem(s);
     }
 
-    public Item createTimeItem(DateTime dt, boolean hasTimeZone) {
+    public Item createTimeItem(OffsetTime dt, boolean hasTimeZone) {
         return new TimeItem(dt, hasTimeZone);
     }
 
@@ -132,8 +228,60 @@ public class ItemFactory {
         return new TimeItem(s);
     }
 
+    public Item createGDayItem(OffsetDateTime s, boolean timezone) {
+        return new gDayItem(s, timezone);
+    }
+
+    public Item createGDayItem(String s) {
+        return new gDayItem(s);
+    }
+
+    public Item createGMonthItem(OffsetDateTime s, boolean timezone) {
+        return new gMonthItem(s, timezone);
+    }
+
+    public Item createGMonthItem(String s) {
+        return new gMonthItem(s);
+    }
+
+    public Item createGYearItem(OffsetDateTime s, boolean hasTimeZone) {
+        return new gYearItem(s, hasTimeZone);
+    }
+
+    public Item createGYearItem(String s) {
+        return new gYearItem(s);
+    }
+
+    public Item createGMonthDayItem(String s) {
+        return new gMonthDayItem(s);
+    }
+
+    public Item createGMonthDayItem(OffsetDateTime s, boolean hasTimeZone) {
+        return new gMonthDayItem(s, hasTimeZone);
+    }
+
+    public Item createGYearMonthItem(String s) {
+        return new gYearMonthItem(s);
+    }
+
+    public Item createGYearMonthItem(OffsetDateTime s, boolean hasTimeZone) {
+        return new gYearMonthItem(s, hasTimeZone);
+    }
+
     public Item createAnyURIItem(String s) {
         return new AnyURIItem(s);
+    }
+
+    public Item createNotationItem(Name name) {
+        return new NotationItem(name);
+    }
+
+    public Item createQNameItem(Name name) {
+        return new QNameItem(name);
+    }
+
+    public Item createNCNameItem(String s) {
+        return this.createAnnotatedItem(this.createStringItem(s), BuiltinTypesCatalogue.NCNameItem);
     }
 
     public Item createHexBinaryItem(String s) {
@@ -148,20 +296,179 @@ public class ItemFactory {
         return new ObjectItem();
     }
 
-    public Item createArrayItem() {
-        return new ArrayItem();
+    public Item createLazyObjectItem() {
+        return new LazyObjectItem();
     }
 
-    public Item createArrayItem(List<Item> items) {
-        return new ArrayItem(items);
+    public Item createArrayItem(boolean mutable) {
+        Item result = new ArrayItem();
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
-    public Item createObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
-        return new ObjectItem(keys, values, itemMetadata);
+    public Item createArrayItem(List<Item> items, boolean mutable) {
+        Item result = new ArrayItem(items);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
-    public Item createObjectItem(Map<String, List<Item>> keyValuePairs) {
-        return new ObjectItem(keyValuePairs);
+    public Item createSequenceArrayItem(List<List<Item>> memberSequences, boolean mutable) {
+        Item result = new SequenceArrayItem(memberSequences);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
     }
 
+    public Item createObjectItem(
+            List<String> keys, List<Item> values, ExceptionMetadata itemMetadata, boolean mutable) {
+        Item result = new ObjectItem(keys, values, itemMetadata);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
+    public Item createObjectItemFromValueLists(Map<String, List<Item>> keyValuePairs, boolean mutable) {
+        Item result = new ObjectItem(keyValuePairs);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
+    public Item createObjectItemOptimized(Map<String, Item> keyValuePairs, boolean mutable) {
+        Item result = new ObjectItem(keyValuePairs);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
+    public Item createMapItem(Item onlyKey, List<Item> onlyValue, boolean mutable) {
+        return createMapItem(List.of(onlyKey), List.of(onlyValue), ExceptionMetadata.EMPTY_METADATA, mutable);
+    }
+
+    // These two do not set -1 on the values of an immutable map: that would visit every entry on each put or remove.
+    public Item createMapItemRemovingKeys(Item original, List<Item> keysToRemove, boolean mutable) {
+        Item result = MapItem.from(original).without(keysToRemove);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        }
+        return result;
+    }
+
+    public Item createMapItemAddingKey(Item original, Item keyToAdd, List<Item> valueToAdd, boolean mutable) {
+        Item result = MapItem.from(original).with(keyToAdd, valueToAdd);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        }
+        return result;
+    }
+
+    public Item createMapItem(
+            List<Item> keys, List<List<Item>> values, ExceptionMetadata itemMetadata, boolean mutable) {
+        Item result = new MapItem(keys, values, itemMetadata);
+        if (mutable) {
+            result.setMutabilityLevel(0);
+        } else {
+            result.setMutabilityLevel(-1);
+        }
+        return result;
+    }
+
+    public Item createXmlTextNode(Node currentNode) {
+        return new TextItem(currentNode);
+    }
+
+    /**
+     * Create a text item.
+     *
+     * @param content The string content of the text item
+     * @return The text item
+     */
+    public Item createXmlTextNode(String content) {
+        return new TextItem(content);
+    }
+
+    public Item createXmlCommentNode(String content) {
+        return new CommentItem(content);
+    }
+
+    public Item createXmlCommentNode(Node currentNode) {
+        return new CommentItem(currentNode);
+    }
+
+    public Item createXmlAttributeNode(Node attribute) {
+        return new AttributeItem(attribute);
+    }
+
+    public Item createXmlAttributeNode(Name nodeName, String stringValue) {
+        return new AttributeItem(nodeName, stringValue);
+    }
+
+    public DocumentItem createXmlDocumentNode(Node documentNode, List<Item> children) {
+        return new DocumentItem(documentNode, children);
+    }
+
+    /**
+     * Create a document item.
+     *
+     * @param children The children items of the document
+     * @return The document item
+     */
+    public DocumentItem createXmlDocumentNode(List<Item> children) {
+        return new DocumentItem(children);
+    }
+
+    public ElementItem createXmlElementNode(
+            Node elementNode, List<Item> children, List<Item> attributes, Map<String, String> namespaceBindings) {
+        return new ElementItem(elementNode, children, attributes, namespaceBindings);
+    }
+
+    public ElementItem createXmlElementNode(Name nodeName, List<Item> children, List<Item> attributes) {
+        return new ElementItem(nodeName, children, attributes);
+    }
+
+    /**
+     * Create a namespace item.
+     *
+     * @param prefix The namespace prefix (possibly empty)
+     * @param uri The namespace URI
+     * @return The namespace item
+     */
+    public Item createXmlNamespaceNode(String prefix, String uri) {
+        return new NamespaceItem(prefix, uri);
+    }
+
+    /**
+     * Create a processing instruction item.
+     *
+     * @param target The processing instruction target
+     * @param content The processing instruction content
+     * @return The processing instruction item
+     */
+    public Item createXmlProcessingInstructionNode(String target, String content) {
+        return new ProcessingInstructionItem(target, content);
+    }
+
+    public Item createXmlProcessingInstructionNode(Node currentNode) {
+        return new ProcessingInstructionItem(currentNode);
+    }
 }

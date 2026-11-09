@@ -1,37 +1,93 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.api;
 
-import java.net.URI;
 import java.io.IOException;
+import java.net.URI;
 
-import org.rumbledb.compiler.VisitorHelpers;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.apache.spark.sql.SparkSession;
+
+import org.rumbledb.compiler.CompilationPipeline;
+import org.rumbledb.compiler.DynamicContextVisitor;
+import org.rumbledb.compiler.EffectiveConfigurationVisitor;
+import org.rumbledb.compiler.RuntimeIteratorVisitor;
+import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.spark.SparkSessionManager;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.spark.SparkSessionManager;
 
 /**
  * The entry point for Java applications that want to execute JSONiq queries with Rumble.
  *
  * The query must be provided as a string and a sequence of items is returned.
  *
- * It is possible for the queries to use the text-file() and json-file() functions if Spark and either the local file
+ * It is possible for the queries to use the text-file() and json-lines() functions if Spark and either the local file
  * system or HDFS are properly configured.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
 public class Rumble {
-
-    private RumbleRuntimeConfiguration configuration;
+    private final CompilationConfiguration compilationConfiguration;
 
     /**
-     * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
+     * Creates a new Rumble instance. This initializes a brand new Spark session.
      *
-     * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
+     * @param configuration a RumbleConfiguration object containing the configuration.
      */
-    public Rumble(RumbleRuntimeConfiguration configuration) {
-        this.configuration = configuration;
-        SparkSessionManager.COLLECT_ITEM_LIMIT = this.configuration.getResultSizeCap();
+    public Rumble(RumbleConfiguration configuration) {
+        this(new CompilationConfiguration(configuration.getInternalConfiguration()));
+    }
+
+    /**
+     * Creates a new Rumble instance with explicit compilation configuration.
+     *
+     * @param compilationConfiguration the configuration used to compile queries.
+     */
+    public Rumble(CompilationConfiguration compilationConfiguration) {
+        this.compilationConfiguration = compilationConfiguration;
+    }
+
+    /**
+     * Creates a new Rumble instance from internal configuration.
+     * This should only be used for internal purposes.
+     *
+     * @param configuration
+     */
+    public Rumble(org.rumbledb.config.RumbleConfiguration configuration) {
+        this(new CompilationConfiguration(configuration));
+    }
+
+    /**
+     * Creates a new Rumble instance. It uses the supplied spark session.
+     *
+     */
+    public Rumble(SparkSession session) {
+        this.compilationConfiguration =
+                new CompilationConfiguration(new RumbleConfiguration().getInternalConfiguration());
+        SparkSessionManager.getInstance(session);
+    }
+
+    /**
+     * Gets the configuration
+     *
+     * @return the configuration
+     */
+    public RumbleConfiguration getConfiguration() {
+        return new RumbleConfiguration(this.compilationConfiguration.runtimeConfiguration());
     }
 
     /**
@@ -41,35 +97,144 @@ public class Rumble {
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(String query) {
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
-            query,
-            this.configuration
-        );
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
-            mainModule,
-            this.configuration
-        );
-        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+        return runQuery(query, ExternalBindings.empty());
+    }
+
+    /**
+     * Runs query text using the supplied initial static base URI.
+     * Relative imports and resource references resolve against this URI; a query's
+     * declare base-uri declaration can override it. The URI is not read as a query file.
+     *
+     * @param query the content of the main module
+     * @param baseUri the initial static base URI
+     * @return the resulting sequence
+     */
+    public SequenceOfItems runQuery(String query, URI baseUri) {
+        org.rumbledb.bindings.ExternalBindings bindings = org.rumbledb.bindings.ExternalBindings.empty();
+        MainModule mainModule =
+                CompilationPipeline.compileMainModule(query, baseUri, this.compilationConfiguration, bindings);
+        return createSequence(mainModule, bindings);
+    }
+
+    /**
+     * Runs a query and returns an iterator over the resulting sequence of Items.
+     *
+     * @param query the content of the JSONiq main module.
+     * @param bindings the external bindings to apply for this execution.
+     * @return the resulting sequence as an ItemIterator.
+     */
+    public SequenceOfItems runQuery(String query, ExternalBindings bindings) {
+        return runQuery(query, bindings.getInternalBindings());
+    }
+
+    /**
+     * Internal entry point used by command-line integrations.
+     *
+     * @param query the content of the JSONiq main module
+     * @param bindings the internal external bindings to apply
+     * @return the resulting sequence
+     */
+    public SequenceOfItems runQuery(String query, org.rumbledb.bindings.ExternalBindings bindings) {
+        org.rumbledb.bindings.ExternalBindings snapshot = bindings.snapshot();
+        MainModule mainModule =
+                CompilationPipeline.compileMainModuleFromQuery(query, this.compilationConfiguration, snapshot);
+        return createSequence(mainModule, snapshot);
+    }
+
+    /**
+     * Runs a query and returns its serialized result using the method and options declared in the
+     * static context.
+     *
+     * @param query the content of the JSONiq main module.
+     * @return the serialized query result.
+     */
+    public String runQueryToString(String query) {
+        return runQuery(query).serialize();
+    }
+
+    public String runQueryToString(String query, ExternalBindings bindings) {
+        return runQuery(query, bindings).serialize();
     }
 
     /**
      * Runs a query and returns an iterator over the resulting sequence of Items.
      *
      * @param location the JSONiq main module location.
-     * @throws java.io.IOException if there was an issue reading a module.
+     * @throws IOException if there was an issue reading a module.
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(URI location) throws IOException {
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
-            location,
-            this.configuration
-        );
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
-            mainModule,
-            this.configuration
-        );
-        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+        return runQuery(location, ExternalBindings.empty());
+    }
+
+    /**
+     * Runs a query and returns an iterator over the resulting sequence of Items.
+     *
+     * @param location the JSONiq main module location.
+     * @param bindings the external bindings to apply for this execution.
+     * @throws java.io.IOException if there was an issue reading a module.
+     * @return the resulting sequence as an ItemIterator.
+     */
+    public SequenceOfItems runQuery(URI location, ExternalBindings bindings) throws IOException {
+        return runQuery(location, bindings.getInternalBindings());
+    }
+
+    /**
+     * Internal entry point used by command-line integrations.
+     *
+     * @param location the JSONiq main module location
+     * @param bindings the internal external bindings to apply
+     * @return the resulting sequence
+     * @throws IOException if the module cannot be read
+     */
+    public SequenceOfItems runQuery(URI location, org.rumbledb.bindings.ExternalBindings bindings) throws IOException {
+        org.rumbledb.bindings.ExternalBindings snapshot = bindings.snapshot();
+        MainModule mainModule =
+                CompilationPipeline.compileMainModuleFromLocation(location, this.compilationConfiguration, snapshot);
+        return createSequence(mainModule, snapshot);
+    }
+
+    private SequenceOfItems createSequence(MainModule mainModule, org.rumbledb.bindings.ExternalBindings bindings) {
+        var effectiveConfiguration = new EffectiveConfigurationVisitor()
+                .getEffectiveConfiguration(
+                        mainModule, this.compilationConfiguration.runtimeConfiguration().toBuilder());
+        DynamicContext dynamicContext = new DynamicContextVisitor(
+                        effectiveConfiguration,
+                        bindings,
+                        this.compilationConfiguration.resourceResolver().forQuery())
+                .visit(mainModule, null);
+        ItemRuntimePlan plan = new RuntimeIteratorVisitor(effectiveConfiguration).generateRuntimePlan(mainModule);
+
+        return new SequenceOfItems(plan, dynamicContext, effectiveConfiguration);
+    }
+
+    /**
+     * Runs a query from a location and returns its serialized result using the method and options
+     * declared in the static context.
+     *
+     * @param location the JSONiq main module location.
+     * @throws IOException if there was an issue reading a module.
+     * @return the serialized query result.
+     */
+    public String runQueryToString(URI location) throws IOException {
+        return runQuery(location).serialize();
+    }
+
+    public String runQueryToString(URI location, ExternalBindings bindings) throws IOException {
+        return runQuery(location, bindings).serialize();
+    }
+
+    /**
+     * Creates JSONiq Expression Tree from a query and returns serialization of the Tree.
+     *
+     * @param query the content of the JSONiq or XQuery main module.
+     * @return serialization of the JSONiq Expression Tree.
+     */
+    public String serializeToJSONiq(String query) {
+        MainModule mainModule = CompilationPipeline.compileMainModuleFromQuery(
+                query, this.compilationConfiguration, ExternalBindings.empty().getInternalBindings());
+        StringBuilder sb = new StringBuilder();
+        mainModule.serializeToJSONiq(sb, 0);
+        return sb.toString();
     }
 }

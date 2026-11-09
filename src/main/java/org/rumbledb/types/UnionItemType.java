@@ -1,0 +1,339 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.types;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+
+public class UnionItemType extends AbstractItemType {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private static final Set<ConstrainingFacetTypes> allowedFacets =
+            new HashSet<>(Arrays.asList(ConstrainingFacetTypes.CONTENT));
+
+    private final Name name;
+    private final ItemType baseType;
+    private final int typeTreeDepth;
+    private final List<ItemType> types;
+    private final boolean userDefined;
+
+    UnionItemType(Name name, ItemType baseType, List<ItemType> types) {
+        this(name, baseType, types, true);
+    }
+
+    UnionItemType(Name name, ItemType baseType, List<ItemType> types, boolean userDefined) {
+        this.name = name;
+        this.baseType = baseType;
+        this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
+        this.types = types;
+        this.userDefined = userDefined;
+    }
+
+    UnionItemType(Name name, List<ItemType> types, boolean userDefined) {
+        this.name = name;
+        this.baseType = BuiltinTypesCatalogue.item;
+        this.typeTreeDepth = 1;
+        this.types = types;
+        this.userDefined = userDefined;
+    }
+
+    @Override
+    public boolean isUnionType() {
+        return true;
+    }
+
+    @Override
+    public boolean hasName() {
+        return this.name != null;
+    }
+
+    @Override
+    public Name getName() {
+        return this.name;
+    }
+
+    @Override
+    public int getTypeTreeDepth() {
+        return this.typeTreeDepth;
+    }
+
+    @Override
+    public ItemType getBaseType() {
+        return this.baseType;
+    }
+
+    @Override
+    public boolean isUserDefined() {
+        return this.userDefined;
+    }
+
+    @Override
+    public boolean isNumeric() {
+        for (ItemType member : this.types) {
+            if (!member.isNumeric()) {
+                return false;
+            }
+        }
+        return !this.types.isEmpty();
+    }
+
+    @Override
+    public boolean isStaticallyCastableAs(ItemType other) {
+        return other.equals(this)
+                || allMemberTypesMatch(member ->
+                        member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem) && member.isStaticallyCastableAs(other));
+    }
+
+    @Override
+    public boolean canBePromotedTo(ItemType other) {
+        return allMemberTypesMatch(member -> member.isSubtypeOf(other) || member.canBePromotedTo(other));
+    }
+
+    @Override
+    public boolean isPrimitive() {
+        return false;
+    }
+
+    @Override
+    public ItemType getPrimitiveType() {
+        return BuiltinTypesCatalogue.item;
+    }
+
+    @Override
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
+        return allowedFacets;
+    }
+
+    @Override
+    public List<ItemType> getTypes() {
+        return this.types;
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (this.equals(superType) || super.isSubtypeOf(superType)) {
+            return true;
+        }
+        // Every possible member must fit the target type; overlap only requires one member to overlap it.
+        return this.types.stream().allMatch(type -> type.isSubtypeOf(superType));
+    }
+
+    @Override
+    public String getIdentifierString() {
+        if (this.hasName()) {
+            return this.name.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("#anonymous-union-base{");
+        sb.append(this.baseType.getIdentifierString());
+        sb.append("}");
+        if (this.types != null) {
+            sb.append("-content{");
+            String comma = "";
+            for (ItemType it : this.types) {
+                sb.append(comma);
+                sb.append(it.getIdentifierString());
+                comma = ",";
+            }
+            sb.append("}");
+        }
+        return sb.toString();
+    }
+
+    @Override
+    public String toString() {
+        if ((new Name(Name.JS_NS, "js", "object")).equals(this.name)) {
+            // generic object
+            return this.name.toString();
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("{ ");
+            if (this.name != null && !this.name.getLocalName().equals("")) {
+                sb.append("\"name\": \"");
+                sb.append(this.name.toString());
+                sb.append("\", ");
+            }
+            sb.append("\"kind\": \"union\", ");
+
+            sb.append("\"baseType\": \"");
+            sb.append(this.baseType.toString());
+            sb.append("\", ");
+
+            sb.append("\"treeDepth\": ");
+            sb.append(this.typeTreeDepth);
+            sb.append(", ");
+
+            if (isResolved()) {
+                sb.append("\"content\": [ ");
+                String comma = "";
+                for (ItemType type : this.types) {
+                    sb.append(comma);
+                    comma = ", ";
+                    if (type.toString().startsWith("{")) {
+                        sb.append(type);
+                    } else {
+                        sb.append("\"");
+                        sb.append(type.toString());
+                        sb.append("\"");
+                    }
+                }
+                sb.append(" ]");
+            } else {
+                sb.append(" (content not resolved yet) ");
+            }
+            sb.append(" }");
+            return sb.toString();
+        }
+    }
+
+    @Override
+    public boolean isResolved() {
+        for (ItemType itemType : this.types) {
+            if (!itemType.isResolved()) return false;
+        }
+        return true;
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        for (ItemType itemType : this.types) {
+            if (!itemType.isResolved()) {
+                itemType.resolve(context, metadata);
+            }
+        }
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        for (ItemType itemType : this.types) {
+            if (!itemType.isResolved()) {
+                itemType.resolve(context, metadata);
+            }
+        }
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
+        if (this.types.size() != 2) {
+            return false;
+        }
+        ItemType first = this.types.get(0);
+        ItemType second = this.types.get(1);
+        if (first.equals(BuiltinTypesCatalogue.nullItem)
+                && second.isAtomicItemType()
+                && second.isCompatibleWithDataFrames(configuration)) {
+            return true;
+        }
+        if (second.equals(BuiltinTypesCatalogue.nullItem)
+                && first.isAtomicItemType()
+                && first.isCompatibleWithDataFrames(configuration)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (this.isSubtypeOf(other)) {
+            return other;
+        }
+        if (other.isSubtypeOf(this)) {
+            return this;
+        }
+        ItemType otherBaseType = other.getBaseType();
+        List<ItemType> otherTypes;
+        if (other.isUnionType()) {
+            otherTypes = other.getTypes();
+        } else {
+            otherTypes = List.of(other);
+        }
+        boolean hasNumeric = false;
+        boolean hasNonNumeric = false;
+        boolean hasNull = false;
+        // Keep operand order so that the same join always displays its members in the same order.
+        Set<ItemType> resultTypes = new LinkedHashSet<>(this.types);
+        resultTypes.addAll(otherTypes);
+        // The atomic join below widens to an atomic base type, which cannot cover non-atomic members
+        // (for example, the array alternative of an inferred object field). Keep every member instead.
+        if (resultTypes.stream().anyMatch(type -> !type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem))) {
+            return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes), false);
+        }
+        for (ItemType member : resultTypes) {
+            if (member.equals(BuiltinTypesCatalogue.nullItem)) {
+                hasNull = true;
+                continue;
+            }
+            if (member.equals(BuiltinTypesCatalogue.atomicItem)) {
+                hasNumeric = true;
+                hasNonNumeric = true;
+                continue;
+            }
+            if (member.isNumeric()) {
+                hasNumeric = true;
+                continue;
+            }
+            hasNonNumeric = true;
+        }
+        if (hasNumeric && hasNonNumeric) {
+            return BuiltinTypesCatalogue.atomicItem;
+        }
+        if (hasNumeric && !hasNull) {
+            return BuiltinTypesCatalogue.numericItem;
+        }
+        if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
+            return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes), false);
+        }
+        return new UnionItemType(null, BuiltinTypesCatalogue.item, new ArrayList<>(resultTypes), false);
+    }
+
+    @Override
+    public boolean canBeNull() {
+        for (ItemType member : this.types) {
+            if (member.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public ItemType getSingleNullableType() {
+        if (this.types.size() == 2) {
+            ItemType firstType = this.types.get(0);
+            ItemType secondType = this.types.get(1);
+            if (firstType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+                return secondType;
+            }
+            if (secondType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
+                return firstType;
+            }
+        }
+        return null;
+    }
+}

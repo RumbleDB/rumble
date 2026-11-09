@@ -1,0 +1,5 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:simpleType name="Code">
+    <xs:restriction base="xs:string"/>
+  </xs:simpleType>
+</xs:schema>

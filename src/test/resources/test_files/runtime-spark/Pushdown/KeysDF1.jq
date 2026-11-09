@@ -1,2 +1,4 @@
 (:JIQS: ShouldRun; Output="(choices, country, date, guess, sample, target)" :)
-keys(structured-json-file("../../../queries/conf-ex.json"))
+for $k in keys(structured-json-lines("../../../queries/conf-ex.json"))
+order by $k
+return $k

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,22 +11,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.control;
-
-
-import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 
 public class ConditionalExpression extends Expression {
 
@@ -38,16 +30,11 @@ public class ConditionalExpression extends Expression {
     private final Expression elseExpression;
 
     public ConditionalExpression(
-            Expression condition,
-            Expression branch,
-            Expression elseBranch,
-            ExceptionMetadata metadataFromContext
-    ) {
+            Expression condition, Expression branch, Expression elseBranch, ExceptionMetadata metadataFromContext) {
         super(metadataFromContext);
         this.conditionExpression = condition;
         this.thenExpression = branch;
         this.elseExpression = elseBranch;
-
     }
 
     public Expression getElseBranch() {
@@ -72,20 +59,27 @@ public class ConditionalExpression extends Expression {
     }
 
     @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (
-            this.thenExpression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
-                && this.elseExpression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
-        ) {
-            this.highestExecutionMode = ExecutionMode.RDD;
-            return;
-        }
-        this.highestExecutionMode = ExecutionMode.LOCAL;
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("if (");
+        this.conditionExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+
+        indentIt(sb, indent + 1);
+        sb.append("then (");
+
+        this.thenExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+
+        indentIt(sb, indent + 1);
+        sb.append("else (");
+
+        this.elseExpression.serializeToJSONiq(sb, indent + 1);
+        sb.append(")\n");
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitConditionalExpression(this, argument);
     }
-
 }

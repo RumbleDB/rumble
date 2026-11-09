@@ -1,6 +1,6 @@
-(:for $i in json-file("wasb:///example/confusion-2014-03-02.json"):)
-(:for $i in json-file("hdfs:///user/istefan/confusion-2014-03-02.json", 100):)
-for $i in json-file("hdfs:///user/istefan/confusion_sample.json")
+(:for $i in json-lines("wasb:///example/confusion-2014-03-02.json"):)
+(:for $i in json-lines("hdfs:///user/istefan/confusion-2014-03-02.json", 100):)
+for $i in json-lines("hdfs:///user/istefan/confusion_sample.json")
 let $guess := $i."guess"
 let $target := $i."target"
 where $guess eq $target

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,71 +11,160 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.primary;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import javax.annotation.Nullable;
+
+import lombok.Getter;
+import lombok.Setter;
 
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidAnnotationException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
+import org.rumbledb.expressions.scripting.annotations.AnnotationConstants;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.types.SequenceType;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.NON_SEQUENTIAL;
+import static org.rumbledb.expressions.scripting.annotations.AnnotationConstants.SEQUENTIAL;
 
 public class InlineFunctionExpression extends Expression {
 
+    @Getter
     private final Name name;
+
+    @Getter
+    private final ExceptionMetadata nameMetadata;
+
+    @Getter
     private final FunctionIdentifier functionIdentifier;
+
+    @Getter
     private final Map<Name, SequenceType> params;
+
+    /** Synthetic parameters have no source token and are absent from this map. */
+    @Getter
+    private final Map<Name, ExceptionMetadata> parameterMetadata;
+
     private final SequenceType returnType;
-    private final Expression body;
+
+    @Getter
+    private final StatementsAndOptionalExpr body;
+
+    private final List<Annotation> annotations;
+    private boolean hasSequentialPropertyAnnotation;
+
+    @Setter
+    private boolean hasExitStatement;
+
+    // Whether the body contains a call marked by TailCallOptimizationVisitor.
+    @Setter
+    private boolean hasTailCalls;
+
+    @Getter
+    private final boolean isExternal;
 
     public InlineFunctionExpression(
+            List<Annotation> annotations,
             Name name,
             Map<Name, SequenceType> params,
             SequenceType returnType,
-            Expression body,
-            ExceptionMetadata metadata
-    ) {
+            StatementsAndOptionalExpr body,
+            boolean isExternal,
+            ExceptionMetadata metadata) {
+        this(annotations, name, params, returnType, body, isExternal, metadata, metadata, Map.of());
+    }
+
+    public InlineFunctionExpression(
+            List<Annotation> annotations,
+            Name name,
+            Map<Name, SequenceType> params,
+            SequenceType returnType,
+            StatementsAndOptionalExpr body,
+            boolean isExternal,
+            ExceptionMetadata metadata,
+            ExceptionMetadata nameMetadata,
+            Map<Name, ExceptionMetadata> parameterMetadata) {
         super(metadata);
         this.name = name;
+        this.nameMetadata = nameMetadata;
         this.params = params;
+        this.parameterMetadata = Map.copyOf(parameterMetadata);
         this.returnType = returnType;
         this.body = body;
+        this.annotations = annotations;
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
+        this.isExternal = isExternal;
+        this.hasExitStatement = false;
+        this.hasTailCalls = false;
+        if (annotations != null) {
+            this.setSequentialFromAnnotations();
+        } else {
+            this.hasSequentialPropertyAnnotation = false;
+        }
     }
 
-    public Name getName() {
-        return this.name;
+    private void setSequentialFromAnnotations() {
+        boolean foundSeqAnnotation = false;
+        boolean foundNonSeqAnnotation = false;
+        for (Annotation annotation : this.annotations) {
+            if (annotation.getAnnotationName().equals(SEQUENTIAL)) {
+                foundSeqAnnotation = true;
+                this.hasSequentialPropertyAnnotation = true;
+            }
+            if (annotation.getAnnotationName().equals(NON_SEQUENTIAL)) {
+                foundNonSeqAnnotation = true;
+                this.hasSequentialPropertyAnnotation = true;
+            }
+        }
+        if (foundSeqAnnotation && foundNonSeqAnnotation) {
+            throw new InvalidAnnotationException(
+                    "A function cannot be declared as both sequential and non-sequential!", this.getMetadata());
+        }
+        this.setSequential(foundSeqAnnotation);
     }
 
-    public FunctionIdentifier getFunctionIdentifier() {
-        return this.functionIdentifier;
-    }
-
-    public Map<Name, SequenceType> getParams() {
-        return this.params;
+    public InlineFunctionExpression(
+            List<Annotation> annotations,
+            Name name,
+            Map<Name, SequenceType> params,
+            SequenceType returnType,
+            StatementsAndOptionalExpr body,
+            ExceptionMetadata metadata) {
+        this(annotations, name, params, returnType, body, false, metadata);
     }
 
     public SequenceType getReturnType() {
-        return this.returnType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.returnType;
+        return this.returnType == null ? SequenceType.createSequenceType("item*") : this.returnType;
     }
 
     public SequenceType getActualReturnType() {
         return this.returnType;
     }
 
-    public Expression getBody() {
-        return this.body;
+    @Nullable public List<Annotation> getAnnotations() {
+        return this.annotations;
+    }
+
+    @Override
+    public boolean isUpdating() {
+        for (Annotation a : this.annotations) {
+            if (a.getAnnotationName().equals(AnnotationConstants.UPDATING)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
@@ -86,19 +172,17 @@ public class InlineFunctionExpression extends Expression {
         return Arrays.asList(this.body);
     }
 
-    public void registerUserDefinedFunctionExecutionMode(
-            VisitorConfig visitorConfig
-    ) {
+    public void registerUserDefinedFunctionExecutionMode(VisitorConfig visitorConfig) {
         FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
         if (this.name != null) {
-            getStaticContext().getUserDefinedFunctionsExecutionModes()
-                .setExecutionMode(
-                    identifier,
-                    this.body.getHighestExecutionMode(visitorConfig),
-                    visitorConfig.suppressErrorsForFunctionSignatureCollision(),
-                    this.getMetadata()
-                );
+            getStaticContext()
+                    .getUserDefinedFunctionsExecutionModes()
+                    .setExecutionMode(
+                            identifier,
+                            this.body.getHighestExecutionMode(visitorConfig),
+                            visitorConfig.suppressErrorsForFunctionSignatureCollision(),
+                            this.getMetadata());
         }
     }
 
@@ -107,7 +191,8 @@ public class InlineFunctionExpression extends Expression {
         return visitor.visitInlineFunctionExpr(this, argument);
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    @Override
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -116,19 +201,71 @@ public class InlineFunctionExpression extends Expression {
         for (Map.Entry<Name, SequenceType> entry : this.params.entrySet()) {
             buffer.append(entry.getKey());
             buffer.append(", ");
-            buffer.append(entry.getValue().toString());
+            buffer.append(
+                    entry.getValue().toString() + (entry.getValue().isResolved() ? " (resolved)" : " (unresolved)"));
             buffer.append(", ");
         }
-        buffer.append(this.returnType == null ? "not set" : this.returnType.toString());
+        buffer.append(
+                this.returnType == null
+                        ? "not set"
+                        : this.returnType.toString()
+                                + (this.returnType.isResolved() ? " (resolved)" : " (unresolved)"));
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append(" | " + this.expressionClassification);
+        buffer.append(" | "
+                + (this.staticSequenceType == null
+                        ? "not set"
+                        : this.staticSequenceType
+                                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")));
         buffer.append("\n");
         for (int i = 0; i < indent + 2; ++i) {
             buffer.append("  ");
         }
         buffer.append("Body:\n");
-        this.body.print(buffer, indent + 2);
+        this.body.print(buffer, indent + 4);
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        indentIt(sb, indent);
+        String updating = isUpdating() ? "%updating " : "";
+        if (this.name != null) {
+            sb.append("declare " + updating + " function " + this.name.toString() + "(");
+        } else {
+            sb.append("function (");
+        }
+        if (this.params != null) {
+            int i = 0;
+            for (Map.Entry<Name, SequenceType> entry : this.params.entrySet()) {
+                indentIt(sb, indent);
+                sb.append("$" + entry.getKey() + " as " + entry.getValue().toString());
+                if (i == this.params.size() - 1) {
+                    sb.append(")");
+                } else {
+                    sb.append(", ");
+                }
+                i++;
+            }
+            if (this.returnType != null) sb.append(" as " + this.returnType.toString());
+            else sb.append("\n");
+            indentIt(sb, indent);
+            sb.append("{\n");
+            this.body.serializeToJSONiq(sb, indent + 1);
+            indentIt(sb, indent);
+            sb.append("}\n");
+        }
+    }
+
+    public boolean hasSequentialPropertyAnnotation() {
+        return this.hasSequentialPropertyAnnotation;
+    }
+
+    public boolean hasExitStatement() {
+        return this.hasExitStatement;
+    }
+
+    public boolean hasTailCalls() {
+        return this.hasTailCalls;
     }
 }
-

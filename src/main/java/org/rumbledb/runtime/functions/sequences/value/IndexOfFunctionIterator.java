@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,124 +11,152 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.sequences.value;
 
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-
+import java.io.Serial;
 import java.util.List;
 
-public class IndexOfFunctionIterator extends HybridRuntimeIterator {
+import org.apache.spark.api.java.JavaRDD;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.cursor.AbstractLocalCursor;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.misc.AtomicDeepEqual;
+import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
+public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
+
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator sequenceIterator;
-    private RuntimeIterator searchIterator;
-    private Item search;
-    private Item nextResult;
-    private int currentIndex;
 
-    public IndexOfFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
-        this.sequenceIterator = this.children.get(0);
-        this.searchIterator = this.children.get(1);
+    private final ItemRuntimePlan sequenceIterator;
+    private final ItemRuntimePlan searchIterator;
+
+    public IndexOfFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
+        this.sequenceIterator = this.getChild(0);
+        this.searchIterator = this.getChild(1);
     }
 
     @Override
-    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return new IndexOfLocalCursor(context);
+    }
+
+    private String resolveCollation(DynamicContext context) {
+        return CollationSupport.resolveCollationArgument(
+                this.getChildren().size() > 2 ? this.getChild(2) : null,
+                context,
+                getRuntimeStaticContext(),
+                getMetadata());
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        String collation = resolveCollation(context);
+        Item search = this.searchIterator.materializeFirstOrNull(context);
+        boolean searchIsNaN = isItemNaN(search);
+        ExceptionMetadata metadata = getMetadata();
+
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
-        this.search = this.searchIterator.materializeFirstItemOrNull(context);
-
-        JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
-        JavaPairRDD<Item, Long> filteredRDD = zippedRDD.filter((item) -> item._1().equals(this.search));
-        return filteredRDD.map((item) -> ItemFactory.getInstance().createIntItem(item._2.intValue() + 1));
+        return childRDD.zipWithIndex()
+                .filter(item -> matches(item._1(), search, searchIsNaN, collation, metadata))
+                .map(item -> ItemFactory.getInstance().createIntItem(item._2.intValue() + 1));
     }
 
-    @Override
-    protected void openLocal() {
-        this.currentIndex = 0;
-        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
-        this.search = this.searchIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
-        this.sequenceIterator.close();
-    }
-
-    @Override
-    protected void resetLocal() {
-        this.currentIndex = 0;
-        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    @Override
-    protected Item nextLocal() {
-        if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
-            return result;
+    private static boolean matches(
+            Item item, Item search, boolean searchIsNaN, String collation, ExceptionMetadata metadata) {
+        if (!item.isAtomic()) {
+            throw new NonAtomicKeyException(
+                    "Invalid args. index-of can't be performed with a non-atomic in the input sequence", metadata);
         }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "index-of function", getMetadata());
+        if (search == null || searchIsNaN) {
+            return false;
+        }
+        if (CollationSupport.isStringCollationType(item) && CollationSupport.isStringCollationType(search)) {
+            return CollationSupport.compareStrings(item.getStringValue(), search.getStringValue(), collation, metadata)
+                    == 0;
+        }
+        return AtomicDeepEqual.deepEqual(item, search);
     }
 
-    public void setNextResult() {
-        this.nextResult = null;
+    private static boolean isItemNaN(Item item) {
+        return item != null && (item.isDouble() || item.isFloat()) && item.isNaN();
+    }
 
-        while (this.sequenceIterator.hasNext()) {
-            this.currentIndex += 1;
-            Item item = this.sequenceIterator.next();
-            if (!item.isAtomic()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. index-of can't be performed with a non-atomic in the input sequence",
-                        getMetadata()
-                );
-            } else {
-                long c = ComparisonIterator.compareItems(
-                    item,
-                    this.search,
-                    ComparisonOperator.VC_EQ,
-                    ExceptionMetadata.EMPTY_METADATA
-                );
+    private final class IndexOfLocalCursor extends AbstractLocalCursor<Item> {
 
-                if (c == 0) {
-                    this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
-                    break;
+        private final DynamicContext context;
+        private Cursor<Item> sequenceCursor;
+        private Item search;
+        private boolean searchIsNaN;
+        private String collation;
+        private Item nextResult;
+        private int index;
+
+        private IndexOfLocalCursor(DynamicContext context) {
+            super(IndexOfFunctionIterator.this.getMetadata());
+            this.context = context;
+        }
+
+        @Override
+        protected void openLocal() {
+            this.collation = IndexOfFunctionIterator.this.resolveCollation(this.context);
+            this.search = IndexOfFunctionIterator.this.searchIterator.materializeFirstOrNull(this.context);
+            this.searchIsNaN = isItemNaN(this.search);
+            this.sequenceCursor = IndexOfFunctionIterator.this.sequenceIterator.getCursor(this.context);
+            this.index = 0;
+            advance();
+        }
+
+        private void advance() {
+            this.nextResult = null;
+            while (this.sequenceCursor.hasNext()) {
+                Item item = this.sequenceCursor.next();
+                this.index++;
+                if (matches(item, this.search, this.searchIsNaN, this.collation, getMetadata())) {
+                    this.nextResult = ItemFactory.getInstance().createIntItem(this.index);
+                    return;
                 }
             }
         }
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.sequenceIterator.close();
-        } else {
-            this.hasNext = true;
+        @Override
+        protected boolean hasNextLocal() {
+            return this.nextResult != null;
+        }
+
+        @Override
+        protected Item nextLocal() {
+            if (this.nextResult == null) {
+                throw invalidState("No more index-of results are available.");
+            }
+            Item result = this.nextResult;
+            advance();
+            return result;
+        }
+
+        @Override
+        protected void closeLocal() {
+            if (this.sequenceCursor != null) {
+                this.sequenceCursor.close();
+                this.sequenceCursor = null;
+            }
+            this.search = null;
+            this.searchIsNaN = false;
+            this.nextResult = null;
+            this.collation = null;
+            this.index = 0;
         }
     }
 }
