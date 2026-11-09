@@ -117,6 +117,12 @@ public final class StaticTypeErrors {
         report(message, node, actual.mayMatch(expected));
     }
 
+    /** Reports that the actual type is not a subtype of the expected one, which is possible if they may overlap. */
+    public void reportMismatch(
+            TypeErrorMessages.Message message, SequenceType actual, SequenceType expected, Node node) {
+        report(message, node, actual.mayMatch(expected));
+    }
+
     private void record(String message, ErrorCode code, Node node, boolean certain) {
         if (!this.configuration.analysis().enableStaticTyping()) {
             return;

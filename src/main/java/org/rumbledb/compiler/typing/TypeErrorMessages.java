@@ -76,6 +76,13 @@ public final class TypeErrorMessages {
                 conversionErrorCode(actual, declared));
     }
 
+    /** A value that does not match the declared type of the variable it is bound or assigned to. */
+    public static Message declaredMismatch(Name variable, SequenceType declared, SequenceType actual) {
+        return new Message(
+                "$" + variable + " is declared as " + declared + ", but its value is " + actual + ".",
+                ErrorCode.UnexpectedTypeErrorCode);
+    }
+
     /** An expression that always returns the empty sequence, for a reason such as "its left operand does". */
     public static Message inferredEmpty(String reason) {
         return new Message(

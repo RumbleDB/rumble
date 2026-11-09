@@ -860,13 +860,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (expression.checksDeclaredType()) {
             if (!expressionSequenceType.isSubtypeOf(treatedSequenceType)) {
                 this.errors.reportMismatch(
-                        "$"
-                                + expression.getDeclaredTypeVariable()
-                                + " is declared as "
-                                + treatedSequenceType
-                                + ", but its value is "
-                                + expressionSequenceType
-                                + ".",
+                        TypeErrorMessages.declaredMismatch(
+                                expression.getDeclaredTypeVariable(), treatedSequenceType, expressionSequenceType),
                         expressionSequenceType,
                         treatedSequenceType,
                         expression);
@@ -1133,25 +1128,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         SequenceType leftType = typeOf(expression.getLeftExpression(), expression);
         SequenceType rightType = typeOf(expression.getRightExpression(), expression);
-        SequenceType nodes = SequenceType.createSequenceType("node()*");
-        if (!leftType.isEmptySequence() && !leftType.getItemType().isNodeItemType()) {
-            this.errors.reportMismatch(
-                    "A node set operator expects nodes, but its left operand is " + leftType + ".",
-                    leftType,
-                    nodes,
-                    expression);
-        }
-        if (!rightType.isEmptySequence() && !rightType.getItemType().isNodeItemType()) {
-            this.errors.reportMismatch(
-                    "A node set operator expects nodes, but its right operand is " + rightType + ".",
-                    rightType,
-                    nodes,
-                    expression);
-        }
+        checkNodeSetOperand(leftType, "its left operand", expression);
+        checkNodeSetOperand(rightType, "its right operand", expression);
 
         expression.setStaticSequenceType(
                 new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceType.Arity.ZeroOrMore));
         return argument;
+    }
+
+    private void checkNodeSetOperand(SequenceType type, String operand, Node node) {
+        if (!type.isEmptySequence() && !type.getItemType().isNodeItemType()) {
+            this.errors.reportMismatch(
+                    "A node set operator expects nodes, but " + operand + " is " + type + ".",
+                    type,
+                    SequenceType.createSequenceType("node()*"),
+                    node);
+        }
     }
 
     // endregion
@@ -2186,12 +2178,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType expressionType = statement.getAssignExpression().getStaticSequenceType();
         if (!expressionType.isSubtypeOf(variableDeclaredType)) {
             this.errors.reportMismatch(
-                    "Declared type: "
-                            + variableDeclaredType
-                            + " of variable: $"
-                            + statement.getName()
-                            + " is not a supertype of assigned expression type: "
-                            + expressionType,
+                    TypeErrorMessages.declaredMismatch(statement.getName(), variableDeclaredType, expressionType),
                     expressionType,
                     variableDeclaredType,
                     statement);

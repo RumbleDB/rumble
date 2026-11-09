@@ -16,8 +16,10 @@
 package org.rumbledb.compiler.typing;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
@@ -82,8 +84,7 @@ public final class ArithmeticTyping {
                                 + rightType
                                 + ", unless one is empty");
             } else {
-                this.errors.report(
-                        "'" + operator + "' is not defined for " + leftType + " and " + rightType + ".", node, mayPass);
+                this.errors.report(notDefinedMessage("'" + operator + "'", leftType, rightType), node, mayPass);
             }
             inferredType = BuiltinTypesCatalogue.atomicItem;
         }
@@ -295,7 +296,7 @@ public final class ArithmeticTyping {
                                 + childInferredType
                                 + ", unless it is empty");
             } else {
-                this.errors.report(operator + " is not defined for " + childInferredType + ".", node, mayPass);
+                this.errors.report(notDefinedMessage(operator, childInferredType), node, mayPass);
             }
             childItemType = BuiltinTypesCatalogue.numericItem;
         }
@@ -320,5 +321,13 @@ public final class ArithmeticTyping {
             results.add(normalized);
         }
         return ItemTypeFactory.createInferredUnionType(results);
+    }
+
+    /** The message for an operator that is not defined for the types of its operands, such as '+' for a string. */
+    private static String notDefinedMessage(String operator, SequenceType... operands) {
+        return operator
+                + " is not defined for "
+                + Arrays.stream(operands).map(SequenceType::toString).collect(Collectors.joining(" and "))
+                + ".";
     }
 }

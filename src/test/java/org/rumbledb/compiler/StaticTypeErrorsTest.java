@@ -123,6 +123,10 @@ class StaticTypeErrorsTest {
                         "XPTY0004",
                         "local:f declares the return type xs:integer, but returns xs:string."),
                 Arguments.of(
+                        "let $x as integer := \"a\" return $x",
+                        "XPTY0004",
+                        "$x is declared as xs:integer, but its value is xs:string."),
+                Arguments.of(
                         "(1, 2) + 1",
                         "XPTY0004",
                         "'+' expects at most one value, but its left operand is xs:integer+."),
