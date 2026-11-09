@@ -46,7 +46,7 @@ public final class TypeAtomization {
      * Whether atomizing this type yields values whose type is only known at runtime, such as a node's typed value or
      * the members of an array of any items. Checks on such values are left to runtime.
      */
-    public static boolean hasUnknownTypedValue(ItemType type) {
+    public static boolean hasUnknownAtomizedType(ItemType type) {
         return containsNodeOrArray(type) && atomizedItemType(type).equals(BuiltinTypesCatalogue.atomicItem);
     }
 
@@ -66,7 +66,7 @@ public final class TypeAtomization {
      * members, and a node's unknown typed value any number of values. Cardinality checks on them are left to runtime.
      */
     public static boolean hasUnknownAtomizedCount(ItemType type) {
-        return hasUnknownTypedValue(type) || type.getMemberTypes().stream().anyMatch(TypeAtomization::isArray);
+        return hasUnknownAtomizedType(type) || type.getMemberTypes().stream().anyMatch(TypeAtomization::isArray);
     }
 
     private static boolean isArray(ItemType type) {

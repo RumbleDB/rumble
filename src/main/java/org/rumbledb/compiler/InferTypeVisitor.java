@@ -247,9 +247,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 : ErrorCode.UnexpectedTypeErrorCode;
     }
 
-    /** Checks that the operands of an operator that atomizes them, e.g. "Comparison operands", can be atomized. */
+    /** Checks that the operands of an operator that atomizes them, such as + or eq, can be atomized. */
     private void checkAtomizableOperands(
-            String operands, SequenceType left, SequenceType right, Expression expression) {
+            String operator, SequenceType left, SequenceType right, Expression expression) {
         ItemType reported = null;
         for (SequenceType operand : List.of(left, right)) {
             ItemType type = operand.isEmptySequence() ? null : operand.getItemType();
@@ -262,7 +262,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (reported != null) {
             throwStaticTypeException(
-                    operands + " must be atomizable, found " + reported,
+                    "The operands of '" + operator + "' must be atomizable, found " + reported,
                     nonAtomizableErrorCode(reported),
                     expression.getMetadata());
         }
@@ -689,7 +689,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         boolean validInput = TypeAtomization.containsNodeOrArray(inputType.getItemType())
                 ? inputType
                         .getItemType()
-                        .allMemberTypesMatch(member -> TypeAtomization.hasUnknownTypedValue(member)
+                        .allMemberTypesMatch(member -> TypeAtomization.hasUnknownAtomizedType(member)
                                 || isStrictAggregateItemType(normalizeAggregateItemType(member)))
                 : isStrictAggregateItemType(inputItemType);
         if (!validInput) {
@@ -1089,10 +1089,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // Function conversion atomizes arguments for atomic parameters, which fails for objects, maps and functions.
     private static ErrorCode argumentErrorCode(SequenceType actual, SequenceType expected) {
-        return !actual.isEmptySequence()
-                        && expected.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                        && TypeAtomization.isNeverAtomizable(actual.getItemType())
-                ? ErrorCode.FunctionAtomizationErrorCode
+        return !actual.isEmptySequence() && expected.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                ? nonAtomizableErrorCode(actual.getItemType())
                 : ErrorCode.UnexpectedTypeErrorCode;
     }
 
@@ -1106,7 +1104,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     isFunctionArgumentCompatible(new SequenceType(member, actual.getCardinality()), expected));
         }
         if (expected.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            if (TypeAtomization.hasUnknownTypedValue(itemType)) {
+            if (TypeAtomization.hasUnknownAtomizedType(itemType)) {
                 // Runtime function conversion checks the type and size of the typed value, just as for casts.
                 return true;
             }
@@ -1297,7 +1295,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private boolean isCastOperandTypeCompatible(ItemType source, ItemType target) {
         // A node is cast through its typed value: an unknown one is checked at runtime, a known one statically.
-        return source.allMemberTypesMatch(member -> TypeAtomization.hasUnknownTypedValue(member)
+        return source.allMemberTypesMatch(member -> TypeAtomization.hasUnknownAtomizedType(member)
                 || TypeAtomization.atomizedItemType(member)
                         .allMemberTypesMatch(atomized -> atomized.isStaticallyCastableAs(target)));
     }
@@ -1528,7 +1526,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             inferredArity = SequenceType.Arity.OneOrZero;
         }
 
-        checkAtomizableOperands("Arithmetic operands", leftInferredType, rightInferredType, expression);
+        checkAtomizableOperands(expression.isMinus() ? "-" : "+", leftInferredType, rightInferredType, expression);
         ItemType leftItemType = leftInferredType.getItemType();
         ItemType rightItemType = rightInferredType.getItemType();
 
@@ -1578,8 +1576,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (!TypeAtomization.isAtomizable(left) || !TypeAtomization.isAtomizable(right)) {
             return null;
         }
-        if (!TypeAtomization.hasUnknownTypedValue(left)
-                && !TypeAtomization.hasUnknownTypedValue(right)
+        if (!TypeAtomization.hasUnknownAtomizedType(left)
+                && !TypeAtomization.hasUnknownAtomizedType(right)
                 && (left.equals(BuiltinTypesCatalogue.atomicItem) || right.equals(BuiltinTypesCatalogue.atomicItem))) {
             return null; // Retain strict checks for declared, unrefined atomic operands.
         }
@@ -1766,7 +1764,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             inferredArity = SequenceType.Arity.OneOrZero;
         }
 
-        checkAtomizableOperands("Arithmetic operands", leftInferredType, rightInferredType, expression);
+        checkAtomizableOperands(
+                expression.getMultiplicativeOperator().toString(), leftInferredType, rightInferredType, expression);
         ItemType leftItemType = leftInferredType.getItemType();
         ItemType rightItemType = rightInferredType.getItemType();
 
@@ -1847,7 +1846,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             if (!TypeAtomization.isAtomizable(member)) {
                 return null;
             }
-            if (TypeAtomization.hasUnknownTypedValue(member)) {
+            if (TypeAtomization.hasUnknownAtomizedType(member)) {
                 results.add(BuiltinTypesCatalogue.numericItem);
                 continue;
             }
@@ -1960,7 +1959,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        checkAtomizableOperands("Comparison operands", leftInferredType, rightInferredType, expression);
+        checkAtomizableOperands(operator.toString(), leftInferredType, rightInferredType, expression);
 
         // if any of the element is the empty sequence, we set its sequence type to the other, if both are we do not
         // need additional checks
@@ -1996,7 +1995,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private static boolean areAtomizedComparisonTypesCompatible(
             ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
-        if (TypeAtomization.hasUnknownTypedValue(left) || TypeAtomization.hasUnknownTypedValue(right)) {
+        if (TypeAtomization.hasUnknownAtomizedType(left) || TypeAtomization.hasUnknownAtomizedType(right)) {
             return true; // Unknown typed values require runtime comparison checks.
         }
         left = TypeAtomization.atomizedItemType(left);
@@ -2341,7 +2340,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     "A child expression of a ConcatExpression has no inferred type", expression.getMetadata());
         }
 
-        checkAtomizableOperands("Concatenation operands", leftType, rightType, expression);
+        checkAtomizableOperands("||", leftType, rightType, expression);
         if (resolveArities(leftType, rightType) == null) {
             throwStaticTypeException(
                     "operands of the concat expression must match type atomic? instead found: "
@@ -2987,7 +2986,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType checkedKeyType = unknownCount
                 ? new SequenceType(atomizedKeyType.getItemType(), declaredType.getArity())
                 : atomizedKeyType;
-        if (!TypeAtomization.hasUnknownTypedValue(keyType.getItemType()) && !checkedKeyType.isSubtypeOf(declaredType)) {
+        if (!TypeAtomization.hasUnknownAtomizedType(keyType.getItemType())
+                && !checkedKeyType.isSubtypeOf(declaredType)) {
             throwStaticTypeException(
                     "group by variable $"
                             + variableName
@@ -3014,7 +3014,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // runtime is compared then
             if (atomizedKeyType != null
                     && !atomizedKeyType.isEmptySequence()
-                    && !TypeAtomization.hasUnknownTypedValue(keyType.getItemType())
+                    && !TypeAtomization.hasUnknownAtomizedType(keyType.getItemType())
                     && !hasMutuallyComparableItems(atomizedKeyType.getItemType())) {
                 throwStaticTypeException(
                         message + describeAtomizedType(keyType, knownAtomizedType(keyType)), expression.getMetadata());
