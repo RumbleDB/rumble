@@ -18,6 +18,7 @@ package org.rumbledb.api;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -101,7 +102,7 @@ class SequenceWriterTest {
             List<Path> parts = files.filter(p -> p.getFileName().toString().startsWith("part-"))
                     .toList();
             assertEquals(2, parts.size());
-            java.util.ArrayList<String> values = new java.util.ArrayList<>();
+            ArrayList<String> values = new ArrayList<>();
             for (Path part : parts) {
                 values.addAll(Files.readAllLines(part, StandardCharsets.UTF_16));
             }
