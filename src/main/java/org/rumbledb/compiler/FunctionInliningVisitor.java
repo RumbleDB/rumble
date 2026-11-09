@@ -154,8 +154,10 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 ? body
                 : convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
         ReturnClause returnClause = new ReturnClause(returnValue, expression.getMetadata());
-        Clause expressionClauses = null;
-        Clause assignmentClauses = null;
+        // The arguments are bound in let clauses, followed by the assignments of the temporary variables used on name
+        // collisions, then the return clause. Each list holds the clauses of later arguments first.
+        List<Clause> clauses = new ArrayList<>();
+        List<Clause> assignmentClauses = new ArrayList<>();
         for (int i = 0; i < expression.getArguments().size(); i++) {
             Name paramName = paramNames.get(i);
             SequenceType paramType = inlineFunction.getParams().get(paramName);
@@ -166,34 +168,20 @@ public class FunctionInliningVisitor extends CloneVisitor {
             if (isVariableReferenced(expression.getArguments(), paramName, i)) {
                 Name columnName = Name.createVariableInNoNamespace(
                         String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
-                Clause expressionClause = new LetClause(columnName, null, argumentExpression, expression.getMetadata());
+                clauses.add(0, new LetClause(columnName, null, argumentExpression, expression.getMetadata()));
                 Expression assignmentExpression = convertArgument(
                         new VariableReferenceExpression(columnName, expression.getMetadata()), paramType, expression);
-                Clause assignmentClause =
-                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
-                if (assignmentClauses != null) {
-                    assignmentClause.chainWith(assignmentClauses);
-                }
-                assignmentClauses = assignmentClause;
-                if (expressionClauses != null) {
-                    expressionClause.chainWith(expressionClauses);
-                }
-                expressionClauses = expressionClause;
+                assignmentClauses.add(
+                        0, new LetClause(paramName, null, assignmentExpression, expression.getMetadata()));
             } else {
                 Expression assignmentExpression = convertArgument(argumentExpression, paramType, expression);
-                Clause expressionClause =
-                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
-                if (expressionClauses != null) {
-                    expressionClause.chainWith(expressionClauses);
-                }
-                expressionClauses = expressionClause;
+                clauses.add(0, new LetClause(paramName, null, assignmentExpression, expression.getMetadata()));
             }
         }
-        if (assignmentClauses != null) {
-            assignmentClauses.getLastClause().chainWith(returnClause);
-            expressionClauses.getLastClause().chainWith(assignmentClauses);
-        } else {
-            expressionClauses.getLastClause().chainWith(returnClause);
+        clauses.addAll(assignmentClauses);
+        clauses.add(returnClause);
+        for (int i = 0; i + 1 < clauses.size(); i++) {
+            clauses.get(i).chainWith(clauses.get(i + 1));
         }
         return new FlworExpression(returnClause, expression.getMetadata());
     }
