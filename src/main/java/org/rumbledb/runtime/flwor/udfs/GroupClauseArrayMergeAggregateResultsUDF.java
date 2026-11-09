@@ -23,12 +23,12 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
 
 import scala.collection.Iterator;
-import scala.collection.immutable.ArraySeq;
+import scala.collection.mutable.WrappedArray;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
-public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<Object>, Object[]> {
+public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<WrappedArray<Object>, Object[]> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -42,7 +42,7 @@ public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<O
     }
 
     @Override
-    public Object[] call(ArraySeq<Object> wrappedParameters) {
+    public Object[] call(WrappedArray<Object> wrappedParameters) {
         this.nextResult.clear();
         this.deserializedParams.clear();
         List<Object> result = new ArrayList<Object>();
@@ -52,9 +52,9 @@ public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<O
             if (o instanceof Row row) {
                 result.add(row);
             }
-            if (o instanceof ArraySeq) {
+            if (o instanceof WrappedArray) {
                 @SuppressWarnings("unchecked")
-                ArraySeq<Object> arraySeq = (ArraySeq<Object>) o;
+                WrappedArray<Object> arraySeq = (WrappedArray<Object>) o;
                 Iterator<Object> iterator2 = arraySeq.iterator();
                 while (iterator2.hasNext()) result.add(iterator2.next());
             } else {

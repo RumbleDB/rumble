@@ -30,7 +30,7 @@ public abstract class SparkAnnotationsTestsBase extends AnnotationsTestsBase {
     final void setupSparkSession() {
         SparkSessionManager.getInstance().resetSession();
         log.info("Java version: {}", System.getProperty("java.version"));
-        log.info("Scala version: {}", Properties.scalaPropOrElse("version.number", () -> "unknown"));
+        log.info("Scala version: {}", Properties.scalaPropOrElse("version.number", "unknown"));
 
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
