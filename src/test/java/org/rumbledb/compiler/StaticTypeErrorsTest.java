@@ -257,6 +257,23 @@ class StaticTypeErrorsTest {
                 certainties(errors("declare function local:f($x as " + type + ") as " + returnType + " { $x }; 1")));
     }
 
+    @ParameterizedTest
+    @CsvSource(
+            delimiter = '|',
+            value = {
+                "map{1: 2} | true",
+                "if ($x) then map{1: 2} else function($a, $b) { $a } | false",
+                "if ($x) then map{1: 2} else function($a) { $a } | true"
+            })
+    void aMapOrArrayCalledWithTwoArgumentsFailsUnlessItMayBeSuchAFunction(String callee, boolean certain) {
+        Assertions.assertEquals(
+                List.of(certain),
+                certainties(errors("xquery version \"3.1\";\n"
+                        + "declare function local:f($x as xs:boolean) { ("
+                        + callee
+                        + ")(1, 2) }; 1")));
+    }
+
     @Test
     void anEmptyOptionalOperandCanPassAComparison() {
         Assertions.assertEquals(

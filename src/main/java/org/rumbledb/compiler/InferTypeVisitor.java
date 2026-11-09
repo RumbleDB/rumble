@@ -1546,8 +1546,28 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return argument;
         }
 
+        checkLookupCallArity(expression, mainType.getItemType());
         expression.setStaticSequenceType(inferDynamicFunctionCallType(expression, mainType.getItemType()));
         return argument;
+    }
+
+    /**
+     * A map or an array is called with exactly one argument, the key or position to select, and fails with any other
+     * number. The error is only possible when the called item may also be a function that takes that many.
+     */
+    private void checkLookupCallArity(DynamicFunctionCallExpression expression, ItemType type) {
+        int arity = expression.getArguments().size();
+        if (arity == 1 || type.getMemberTypes().stream().noneMatch(LookupTyping::isCallableLookupInput)) {
+            return;
+        }
+        boolean mayPass = type.getMemberTypes().stream()
+                .anyMatch(member -> member.isFunctionItemType()
+                        && (member.equals(BuiltinTypesCatalogue.anyFunctionItem)
+                                || member.getSignature().getParameterTypes().size() == arity));
+        this.errors.report(
+                "A map or an array takes exactly one argument when it is called, but this call has " + arity,
+                expression,
+                mayPass);
     }
 
     private SequenceType inferDynamicFunctionCallType(DynamicFunctionCallExpression expression, ItemType type) {
