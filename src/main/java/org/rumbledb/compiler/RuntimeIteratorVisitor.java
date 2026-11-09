@@ -450,9 +450,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitVariableReference(VariableReferenceExpression expression, ItemRuntimePlan argument) {
         ItemRuntimePlan runtimeIterator;
-        if (expression.getType().isEmptySequence()
-                || expression.getType().getArity().equals(Arity.One)
-                || expression.getType().getArity().equals(Arity.OneOrZero)) {
+        if (expression.getStaticSequenceType().isEmptySequence()
+                || expression.getStaticSequenceType().getArity().equals(Arity.One)
+                || expression.getStaticSequenceType().getArity().equals(Arity.OneOrZero)) {
             runtimeIterator = new AtMostOneItemVariableReferenceIterator(
                     expression.getVariableName(),
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig));
