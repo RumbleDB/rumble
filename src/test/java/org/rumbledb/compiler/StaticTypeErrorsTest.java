@@ -208,6 +208,15 @@ class StaticTypeErrorsTest {
     }
 
     @Test
+    void reportsUndeclaredFunctionsAndUnknownValidationTypesWithTheOtherErrors() {
+        List<RumbleException> errors = errors("xquery version \"3.1\";\n"
+                + "(local:nope(1 + \"a\"), concat#0, validate type xs:nope { <a/> }, 2 + \"b\")");
+        Assertions.assertEquals(
+                List.of("XPTY0004", "XPST0017", "XPST0017", "XQST0104", "XPTY0004"),
+                errors.stream().map(error -> error.getErrorCode().toString()).toList());
+    }
+
+    @Test
     void suppressesAnAssertionWhoseOperandAlreadyFailed() {
         Assertions.assertEquals(1, errors("(1 + \"a\") is statically string").size());
     }

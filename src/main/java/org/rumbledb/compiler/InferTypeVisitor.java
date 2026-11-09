@@ -626,10 +626,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
             expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
         } catch (UnknownFunctionCallException e) {
-            throw new UnknownFunctionCallException(
-                    expression.getIdentifier().getName(),
-                    expression.getIdentifier().getArity(),
-                    expression.getMetadata());
+            this.errors.reportStaticError(
+                    new UnknownFunctionCallException(
+                            expression.getIdentifier().getName(),
+                            expression.getIdentifier().getArity(),
+                            expression.getMetadata()),
+                    expression);
         }
         return argument;
     }
@@ -675,11 +677,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         contextType.getItemType().mayOverlapWith(BuiltinTypesCatalogue.nodeItem));
             }
         }
-        FunctionSignature signature = null;
+        FunctionSignature signature;
         try {
             signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
         } catch (UnknownFunctionCallException e) {
-            throw new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata());
+            this.errors.reportStaticError(
+                    new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata()),
+                    expression);
+            return argument;
         }
         List<Expression> parameterExpressions = expression.getArguments();
         List<SequenceType> parameterTypes = signature.getParameterTypes();
@@ -2101,19 +2106,25 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
             boolean importedType = schemaCatalog.getTypeDefinition(typeName).isPresent();
             if (!builtInType && !importedType) {
-                throw new SemanticException(
-                        "The type " + typeName + " is not defined in the in-scope schema types.",
-                        ErrorCode.ValidateTypeNotFoundErrorCode,
-                        expression.getMetadata());
+                this.errors.reportStaticError(
+                        new SemanticException(
+                                "The type " + typeName + " is not defined in the in-scope schema types.",
+                                ErrorCode.ValidateTypeNotFoundErrorCode,
+                                expression.getMetadata()),
+                        expression);
+                return argument;
             }
             if (builtInType) {
                 ItemType targetType = BuiltinTypesCatalogue.getItemTypeByName(typeName);
                 if (!targetType.isAtomicItemType()
                         || targetType.equals(BuiltinTypesCatalogue.atomicItem)
                         || targetType.equals(BuiltinTypesCatalogue.NOTATIONItem)) {
-                    throw new UnsupportedFeatureException(
-                            "Validate type currently supports concrete built-in XML Schema atomic types.",
-                            expression.getMetadata());
+                    this.errors.reportStaticError(
+                            new UnsupportedFeatureException(
+                                    "Validate type currently supports concrete built-in XML Schema atomic types.",
+                                    expression.getMetadata()),
+                            expression);
+                    return argument;
                 }
             }
         }
