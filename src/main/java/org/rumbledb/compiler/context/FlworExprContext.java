@@ -31,13 +31,21 @@ public record FlworExprContext<ExprSingleCtx extends ParserRuleContext>(
 
     public static FlworExprContext<JsoniqParser.ExprSingleContext> from(JsoniqParser.FlworExprContext c) {
         ParseTree start = c.start_window != null ? c.start_window : (c.start_for == null ? c.start_let : c.start_for);
-        List<ParseTree> intermediate = c.children.subList(1, c.children.size() - 2);
-        return new FlworExprContext<>(start, intermediate, c.return_expr, c);
+        return new FlworExprContext<>(start, intermediateClauses(c, start, c.return_expr), c.return_expr, c);
     }
 
     public static FlworExprContext<XQueryParser.ExprSingleContext> from(XQueryParser.FlworExprContext c) {
         ParseTree start = c.start_window != null ? c.start_window : (c.start_for == null ? c.start_let : c.start_for);
-        List<ParseTree> intermediate = c.children.subList(1, c.children.size() - 2);
-        return new FlworExprContext<>(start, intermediate, c.return_expr, c);
+        return new FlworExprContext<>(start, intermediateClauses(c, start, c.return_expr), c.return_expr, c);
+    }
+
+    /**
+     * Selects the clauses by kind rather than by position, because a parser that recovers from syntax errors can leave
+     * out the return keyword and expression, or add error nodes.
+     */
+    private static List<ParseTree> intermediateClauses(ParserRuleContext flwor, ParseTree start, ParseTree returnExpr) {
+        return flwor.children.stream()
+                .filter(child -> child instanceof ParserRuleContext && child != start && child != returnExpr)
+                .toList();
     }
 }
