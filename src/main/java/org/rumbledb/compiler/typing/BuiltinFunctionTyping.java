@@ -90,6 +90,18 @@ public final class BuiltinFunctionTyping {
                     ? Optional.of(new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceCardinality.ZERO_OR_ONE))
                     : Optional.empty();
         });
+        // The math functions are declared on xs:double? because an empty argument gives an empty result, so the
+        // result of one number is one xs:double.
+        for (String name :
+                List.of("exp", "exp10", "log", "log10", "pow", "sqrt", "sin", "cos", "tan", "asin", "acos", "atan")) {
+            this.rules.put(new Name(Name.MATH_NS, "math", name), (call, staticContext) -> {
+                SequenceType input =
+                        TypeAtomization.inferType(call.getArguments().get(0).getStaticSequenceType());
+                return input.getArity() == SequenceType.Arity.One
+                        ? Optional.of(new SequenceType(BuiltinTypesCatalogue.doubleItem))
+                        : Optional.empty();
+            });
+        }
         // These functions return items of their first argument, so only its cardinality changes.
         addInputItemsRule("exactly-one", cardinality -> SequenceCardinality.ONE);
         addInputItemsRule("one-or-more", SequenceCardinality::replaceZeroWithOne);

@@ -203,7 +203,9 @@ class ObjectConstructorTypeInferenceTest {
 
     @Test
     void preservesFieldsInOriginalFlworExample() {
-        String query = "for $i in 1 to 10 return {\"i\": $i, \"power_of_two\": math:pow($i, 2)}";
+        // math:pow of an optional number is optional, which the field turns into null.
+        String query =
+                "for $i in 1 to 10 return {\"i\": $i, \"power_of_two\": math:pow(if ($i gt 5) then $i else (), 2)}";
         SequenceType result = infer(query, "jq");
         ItemType objectType = result.getItemType();
         assertEquals(List.of("i", "power_of_two"), objectType.getObjectKeysFacet());
@@ -273,14 +275,18 @@ class ObjectConstructorTypeInferenceTest {
 
     @Test
     void preservesNestedObjectFields() {
-        ItemType objectType = infer("{\"nested\": {\"value\": math:pow(2, 3)}, \"known\": 1}", "jq")
+        ItemType objectType = infer(
+                        "declare variable $x as xs:integer? := 2; {\"nested\": {\"value\": math:pow($x, 3)}, \"known\": 1}",
+                        "jq")
                 .getItemType();
         ItemType nestedType = field(objectType, "nested");
         assertTrue(nestedType.isObjectItemType());
         assertTrue(field(nestedType, "value").isUnionType());
         assertEquals(
                 BuiltinTypesCatalogue.integerItem,
-                infer("{\"nested\": {\"value\": math:pow(2, 3)}, \"known\": 1}.known", "jq")
+                infer(
+                                "declare variable $x as xs:integer? := 2; {\"nested\": {\"value\": math:pow($x, 3)}, \"known\": 1}.known",
+                                "jq")
                         .getItemType());
     }
 
