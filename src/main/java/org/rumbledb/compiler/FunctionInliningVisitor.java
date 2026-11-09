@@ -83,16 +83,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return false;
     }
 
-    private static boolean allArgumentsMatch(FunctionCallExpression expression, List<Name> paramNames) {
-        boolean allArgumentsMatch = true;
-        for (int i = 0; i < expression.getArguments().size(); i++) {
-            allArgumentsMatch = allArgumentsMatch
-                    && expression.getArguments().get(i) instanceof VariableReferenceExpression variableReference
-                    && paramNames.get(i).equals(variableReference.getVariableName());
-        }
-        return allArgumentsMatch;
-    }
-
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
         this.prolog = mainModule.getProlog();
@@ -148,7 +138,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
         StatementsAndOptionalExpr body = (StatementsAndOptionalExpr) visit(inlineFunction.getBody(), argument);
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
-        if (expression.getArguments().isEmpty() || allArgumentsMatch(expression, paramNames)) {
+        if (expression.getArguments().isEmpty()) {
             if (inlineFunction.getReturnType() != null) {
                 FunctionArgumentConversionExpression result =
                         convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
@@ -171,12 +161,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
             SequenceType paramType = inlineFunction.getParams().get(paramName);
             Expression argumentExpression =
                     (Expression) visit(expression.getArguments().get(i), argument);
-            // only use assignment clause when the variables have different names
-            if (argumentExpression instanceof VariableReferenceExpression variableReference
-                    && variableReference.getVariableName().equals(paramName)) {
-                continue;
-            }
-
+            // Every argument is bound and converted, even a variable with the name of the parameter.
             // if there is a name collision, use a temporary variable
             if (isVariableReferenced(expression.getArguments(), paramName, i)) {
                 Name columnName = Name.createVariableInNoNamespace(
@@ -203,15 +188,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 }
                 expressionClauses = expressionClause;
             }
-        }
-        if (expressionClauses == null) {
-            if (inlineFunction.getReturnType() != null) {
-                FunctionArgumentConversionExpression result =
-                        convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
-                result.setSequential(inlineFunction.isSequential());
-                return result;
-            }
-            return body;
         }
         if (assignmentClauses != null) {
             assignmentClauses.getLastClause().chainWith(returnClause);
