@@ -409,6 +409,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         null,
                         Objects.requireNonNullElse(c.getVariableMetadata(), expression.getMetadata()));
             }
+            c.setStaticContext(caseContext);
             this.visit(c.getReturnExpression(), caseContext);
             for (SequenceType sequenceType : c.getUnion()) {
                 sequenceType.resolve(argument, expression.getMetadata());
@@ -426,6 +427,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     null,
                     Objects.requireNonNullElse(
                             expression.getDefaultCase().getVariableMetadata(), expression.getMetadata()));
+            expression.getDefaultCase().setStaticContext(defaultCaseStaticContext);
             this.visit(expression.getDefaultCase().getReturnExpression(), defaultCaseStaticContext);
         }
         // return the given context unchanged as defined variables go out of scope
@@ -778,6 +780,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         null,
                         Objects.requireNonNullElse(tssc.getVariableMetadata(), statement.getMetadata()));
             }
+            tssc.setStaticContext(caseContext);
             this.visit(tssc.getReturnStatement(), caseContext);
             for (SequenceType sequenceType : tssc.getUnion()) {
                 sequenceType.resolve(argument, statement.getMetadata());
@@ -793,6 +796,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     null,
                     Objects.requireNonNullElse(
                             statement.getDefaultCase().getVariableMetadata(), statement.getMetadata()));
+            statement.getDefaultCase().setStaticContext(defaultCaseStaticContext);
             this.visit(statement.getDefaultCase().getReturnStatement(), defaultCaseStaticContext);
         }
         return argument;
