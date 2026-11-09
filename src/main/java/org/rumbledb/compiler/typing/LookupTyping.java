@@ -23,6 +23,7 @@ import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeAtomization;
 
 /** Typing rules of JSONiq object and array lookups, array unboxing and XQuery ? lookups. */
 public final class LookupTyping {
@@ -85,19 +86,24 @@ public final class LookupTyping {
             new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceCardinality.ANY));
 
     /**
-     * Infers an XQuery lookup E?K, or E?* when wildcard (XQuery 3.1, 3.11.3.1). Each input item contributes
-     * separately: a map the value of its key K, which may be absent, or all its values; an array its member at
-     * position K, or all its members.
+     * Infers an XQuery lookup E?K, or E?* when the key type is null (XQuery 3.1, 3.11.3.1). Each input item
+     * contributes separately: a map the value of each key in K, which may be absent, or all its values; an array its
+     * member at each position in K, or all its members.
      */
-    public SequenceType inferPostfixLookupType(SequenceType mainType, boolean wildcard, Node node) {
+    public SequenceType inferPostfixLookupType(SequenceType mainType, SequenceType keyType, Node node) {
         if (mainType.isEmptySequence() || LOOKUP_INPUTS.stream().noneMatch(mainType::hasOverlapWith)) {
             this.errors.reportInferredEmpty(node);
             return SequenceType.createSequenceType("item*");
         }
+        boolean wildcard = keyType == null;
         SequenceType perItem = null;
         for (ItemType member : mainType.getItemType().getMemberTypes()) {
             SequenceType memberType = inferItemLookupType(member, wildcard);
             perItem = perItem == null ? memberType : perItem.leastCommonSupertypeWith(memberType);
+        }
+        if (!wildcard) {
+            // Each atomized key selects separately, so E?(1 to 2) gives a value for each of the two keys.
+            perItem = perItem.repeated(TypeAtomization.inferType(keyType).getCardinality());
         }
         return perItem.repeated(mainType.getCardinality());
     }

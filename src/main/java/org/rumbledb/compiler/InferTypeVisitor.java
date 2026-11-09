@@ -1262,9 +1262,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitPostfixLookupExpression(PostfixLookupExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        Expression key = expression.getLookupExpression();
         expression.setStaticSequenceType(this.lookups.inferPostfixLookupType(
                 typeOf(expression.getMainExpression(), expression),
-                expression.getLookupExpression() == null,
+                key == null ? null : typeOf(key, expression),
                 expression));
         return argument;
     }
