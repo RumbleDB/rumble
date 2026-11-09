@@ -73,6 +73,7 @@ import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.flowr.WindowClause;
@@ -1999,22 +2000,42 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
         visitDescendants(expression, argument);
         InlineFunctionExpression inlineExpression = (InlineFunctionExpression) expression.getExpression();
-        SequenceType inferredType = inlineExpression.getBody().getExpression().getStaticSequenceType();
+        Expression body = inlineExpression.getBody().getExpression();
+        SequenceType inferredType = typeOf(body, expression);
         SequenceType expectedType = inlineExpression.getActualReturnType();
 
-        if (expectedType == null) {
-            expectedType = inferredType;
-        } else if (!inferredType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
+        // An unknown body type follows from an error in the body, which is reported already.
+        if (expectedType != null
+                && !StaticTypeErrors.isUnknown(inferredType)
+                && !inferredType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
             this.errors.report(
                     "The declared function return inferred type "
                             + inferredType
                             + " does not match or can be promoted to the expected return type "
                             + expectedType,
-                    expression,
+                    resultExpression(body),
                     mayConvertTo(inferredType, expectedType));
         }
 
         return argument;
+    }
+
+    /**
+     * The expression that gives a function body its result, where a return type mismatch is reported rather than on
+     * the whole function. It is the return expression of a FLWOR with only let clauses, which has the type of the
+     * FLWOR. Other clauses can change the number of results, so other FLWORs are reported as a whole.
+     */
+    private static Expression resultExpression(Expression body) {
+        if (!(body instanceof FlworExpression flwor)) {
+            return body;
+        }
+        ReturnClause returnClause = flwor.getReturnClause();
+        for (Clause clause = returnClause.getPreviousClause(); clause != null; clause = clause.getPreviousClause()) {
+            if (clause.getClauseType() != FLWOR_CLAUSES.LET) {
+                return body;
+            }
+        }
+        return resultExpression(returnClause.getReturnExpr());
     }
 
     @Override

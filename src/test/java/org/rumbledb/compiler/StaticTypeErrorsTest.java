@@ -134,6 +134,28 @@ class StaticTypeErrorsTest {
     }
 
     @Test
+    void reportsAReturnTypeMismatchAtTheResult() {
+        List<RumbleException> errors = errors("declare function local:f($x as xs:double?) as xs:double {\n"
+                + "  let $y := $x\n"
+                + "  return math:sin($y)\n"
+                + "};\n"
+                + "1");
+        Assertions.assertEquals(List.of(3), lines(errors));
+        Assertions.assertEquals(9, errors.get(0).getMetadata().getStart().column());
+    }
+
+    @Test
+    void reportsAReturnTypeMismatchAtAFlworThatChangesTheNumberOfResults() {
+        // The for clause makes the result a sequence, so the whole FLWOR is reported.
+        List<RumbleException> errors = errors("declare function local:f() as xs:integer {\n"
+                + "  for $i in (1, 2)\n"
+                + "  return $i\n"
+                + "};\n"
+                + "1");
+        Assertions.assertEquals(List.of(2), lines(errors));
+    }
+
+    @Test
     void throwsASingleErrorAsItIs() {
         RumbleException error = Assertions.assertThrows(RumbleException.class, () -> compile("1 + \"a\""));
         Assertions.assertEquals(UnexpectedStaticTypeException.class, error.getClass());
