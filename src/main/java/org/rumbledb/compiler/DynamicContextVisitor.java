@@ -356,7 +356,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
-        if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
+        String key = module.getModuleGroupKey();
+        if (!this.importedModuleContexts.containsKey(key)) {
             DynamicContext newContext =
                     new DynamicContext(this.configuration, this.externalBindings, this.resourceResolver);
             newContext.setNamedFunctions(argument.getNamedFunctions());
@@ -367,29 +368,28 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 newContext.getVariableValues().setLast(1);
             }
             DynamicContext importedContext;
-            this.importedModuleContexts.put(module.getNamespace(), newContext);
             this.libraryModuleDepth++;
             try {
                 importedContext = visitDescendants(module, newContext);
             } finally {
                 this.libraryModuleDepth--;
             }
-            this.importedModuleContexts.put(module.getNamespace(), importedContext);
+            this.importedModuleContexts.put(key, importedContext);
         }
         argument.getVariableValues()
-                .importModuleValues(
-                        this.importedModuleContexts.get(module.getNamespace()).getVariableValues());
+                .importModuleValues(this.importedModuleContexts.get(key).getVariableValues());
         argument.getInScopeSchemaTypes()
-                .importModuleTypes(
-                        this.importedModuleContexts.get(module.getNamespace()).getInScopeSchemaTypes());
+                .importModuleTypes(this.importedModuleContexts.get(key).getInScopeSchemaTypes());
         return argument;
     }
 
     @Override
     public DynamicContext visitProlog(Prolog prolog, DynamicContext argument) {
-        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-            argument.addGlobalVariable(declaration.getVariableName());
-        }
+        // Modules of a group may each declare the context item.
+        prolog.getVariableDeclarations().stream()
+                .map(VariableDeclaration::getVariableName)
+                .distinct()
+                .forEach(argument::addGlobalVariable);
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             visit(declaration, argument);
         }
@@ -412,6 +412,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 if (!declaration.external()
                         && !Name.CONTEXT_ITEM.equals(declaration.getVariableName())
                         && !declaration.isAssignable()
+                        && initializer != null
                         && !initializer.isSequential()) {
                     ItemRuntimePlan plan =
                             new RuntimeIteratorVisitor(this.configuration).generateRuntimePlan(initializer);

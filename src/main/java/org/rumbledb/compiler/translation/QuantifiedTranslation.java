@@ -89,11 +89,10 @@ public final class QuantifiedTranslation {
         }
         WhereClause whereClause = null;
         if (!isUniversal) {
-            whereClause = new WhereClause(expression, translationContext.metadata(ctx.exprSingle()));
+            whereClause = new WhereClause(expression, expression.getMetadata());
         } else {
-            whereClause = new WhereClause(
-                    new NotExpression(expression, translationContext.metadata(ctx.exprSingle())),
-                    translationContext.metadata(ctx.exprSingle()));
+            whereClause =
+                    new WhereClause(new NotExpression(expression, expression.getMetadata()), expression.getMetadata());
         }
         lastClause.chainWith(whereClause);
         ReturnClause returnClause = new ReturnClause(

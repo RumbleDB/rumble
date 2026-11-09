@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.jar.JarFile;
 import java.util.zip.GZIPInputStream;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
@@ -82,7 +83,7 @@ public class CLIJarIT {
         @Test
         void inlineAndFileQueriesIncludingPathsWithSpaces() throws Exception {
             assertSuccess(run("", "run", "--query", "1 + 1"), "2");
-            Path query = directory.resolve("query with spaces.jq");
+            Path query = CLIJarIT.this.directory.resolve("query with spaces.jq");
             Files.writeString(query, "for $i in 1 to 3 return $i * $i");
             assertSuccess(run("", "run", query.toString()), "1\n4\n9");
             assertSuccess(run("", "run", "--query-path", query.toString()), "1\n4\n9");
@@ -203,7 +204,7 @@ public class CLIJarIT {
         @ParameterizedTest(name = "serialize-each-item with method {0}")
         @ValueSource(strings = {"text", "adaptive", "xml", "xml-json-hybrid"})
         void eachItemSerializationAlwaysUsesNewlinesBetweenItems(String method) throws Exception {
-            Path output = directory.resolve("each-item.txt");
+            Path output = CLIJarIT.this.directory.resolve("each-item.txt");
             String[] options = {
                 "--output-format-option",
                 "method=" + method,
@@ -233,7 +234,7 @@ public class CLIJarIT {
 
         @Test
         void eachItemJsonCanSerializeMultipleResultsAndReadThemBack() throws Exception {
-            Path output = directory.resolve("stores serialized");
+            Path output = CLIJarIT.this.directory.resolve("stores serialized");
             assertSuccess(
                     run(
                             "",
@@ -297,7 +298,7 @@ public class CLIJarIT {
             assertSuccess(run("", "run", "-q", "1, 2"), "1\n2");
             String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><a/><b/>";
             assertSuccess(run("", "run", "-q", "<a/>, <b/>", "--default-language", "xquery31"), xml);
-            Path output = directory.resolve("default-xquery.xml");
+            Path output = CLIJarIT.this.directory.resolve("default-xquery.xml");
             assertSuccess(
                     run("", "run", "-q", "<a/>, <b/>", "--default-language", "xquery31", "-o", output.toString()), "");
             assertEquals(xml, Files.readString(output));
@@ -310,11 +311,11 @@ public class CLIJarIT {
                             "--output-format-option",
                             "omit-xml-declaration=yes"),
                     "1 2");
-            Path query = directory.resolve("detected.xq");
+            Path query = CLIJarIT.this.directory.resolve("detected.xq");
             Files.writeString(query, "1, 2");
             assertSuccess(
                     run("", "run", query.toString(), "--output-format-option", "omit-xml-declaration=yes"), "1 2");
-            Path jsoniqOutput = directory.resolve("default-jsoniq.txt");
+            Path jsoniqOutput = CLIJarIT.this.directory.resolve("default-jsoniq.txt");
             assertSuccess(run("", "run", "-q", "1, 2", "-o", jsoniqOutput.toString(), "-P", "1"), "");
             assertEquals("1\n2\n", Files.readString(jsoniqOutput));
             assertSuccess(
@@ -335,7 +336,7 @@ public class CLIJarIT {
         @ParameterizedTest(name = "{0}: file format, partitions and all records survive read-back")
         @ValueSource(strings = {"json", "csv", "parquet", "avro"})
         void structuredFormatsCanBeReadBack(String format) throws Exception {
-            Path output = directory.resolve("stores output." + format);
+            Path output = CLIJarIT.this.directory.resolve("stores output." + format);
             List<String> arguments = new ArrayList<>(List.of(
                     "run",
                     "-q",
@@ -384,7 +385,7 @@ public class CLIJarIT {
 
         @Test
         void csvCompressionOptionProducesReadableGzipFiles() throws Exception {
-            Path output = directory.resolve("compressed csv");
+            Path output = CLIJarIT.this.directory.resolve("compressed csv");
             assertSuccess(
                     run(
                             "",
@@ -417,7 +418,7 @@ public class CLIJarIT {
 
         @Test
         void jsonScalarResultsCanBeReadBackWithoutWrappingThemInObjects() throws Exception {
-            Path output = directory.resolve("scalars.json");
+            Path output = CLIJarIT.this.directory.resolve("scalars.json");
             assertSuccess(run("", "run", "-q", "1 to 3", "-f", "json", "-o", output.toString(), "-P", "1"), "");
             assertTrue(Files.isRegularFile(output));
             assertEquals(List.of("1", "2", "3"), Files.readAllLines(output));
@@ -436,7 +437,7 @@ public class CLIJarIT {
 
         @Test
         void localJsonOutputIsIndentedAndReadable() throws Exception {
-            Path output = directory.resolve("local object.json");
+            Path output = CLIJarIT.this.directory.resolve("local object.json");
             assertSuccess(
                     run(
                             "",
@@ -500,7 +501,7 @@ public class CLIJarIT {
 
         @Test
         void serializeNormalizesTheWholeSequenceAndHonorsItsSeparator() throws Exception {
-            Path output = directory.resolve("serialized sequence.txt");
+            Path output = CLIJarIT.this.directory.resolve("serialized sequence.txt");
             assertSuccess(
                     run(
                             "",
@@ -537,7 +538,7 @@ public class CLIJarIT {
 
         @Test
         void serializeWritesTheRequestedEncodingWithoutCorruptingUnicode() throws Exception {
-            Path output = directory.resolve("unicode.txt");
+            Path output = CLIJarIT.this.directory.resolve("unicode.txt");
             assertSuccess(
                     run(
                             "",
@@ -569,7 +570,7 @@ public class CLIJarIT {
 
         @Test
         void serializeRejectsPartitioningAndEnforcesItsMaterializationCap() throws Exception {
-            Path output = directory.resolve("one-string.txt");
+            Path output = CLIJarIT.this.directory.resolve("one-string.txt");
             Result partitions = run("", "run", "-q", "1, 2", "-f", "serialize", "-o", output.toString(), "-P", "2");
             assertEquals(42, partitions.code(), partitions.toString());
             assertTrue(partitions.err().contains("single string"), partitions.toString());
@@ -594,7 +595,7 @@ public class CLIJarIT {
 
         @Test
         void serializeJsonRejectsMultipleTopLevelItemsAndDoesNotCreateOutput() throws Exception {
-            Path output = directory.resolve("invalid sequence.json");
+            Path output = CLIJarIT.this.directory.resolve("invalid sequence.json");
             Result result = run(
                     "",
                     "run",
@@ -613,7 +614,7 @@ public class CLIJarIT {
 
         @Test
         void serializeWritesXmlWithExactlyOneDeclaration() throws Exception {
-            Path output = directory.resolve("answer.xml");
+            Path output = CLIJarIT.this.directory.resolve("answer.xml");
             assertSuccess(
                     run(
                             "",
@@ -631,9 +632,8 @@ public class CLIJarIT {
                     "");
             String xml = Files.readString(output);
             assertEquals(1, xml.split("<\\?xml", -1).length - 1, xml);
-            var document = javax.xml.parsers.DocumentBuilderFactory.newInstance()
-                    .newDocumentBuilder()
-                    .parse(output.toFile());
+            var document =
+                    DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(output.toFile());
             assertEquals("answer", document.getDocumentElement().getTagName());
             assertEquals("42", document.getDocumentElement().getTextContent());
             assertSuccess(
@@ -659,7 +659,7 @@ public class CLIJarIT {
                     "-q",
                     "1, {\"a\":2}",
                     "-o",
-                    directory.resolve("not-parquet").toString(),
+                    CLIJarIT.this.directory.resolve("not-parquet").toString(),
                     "-f",
                     "parquet");
             assertEquals(42, result.code(), result.toString());
@@ -670,7 +670,7 @@ public class CLIJarIT {
 
         @Test
         void overwriteProtectsExistingOutputAndThenReplacesIt() throws Exception {
-            Path output = directory.resolve("result with spaces.txt");
+            Path output = CLIJarIT.this.directory.resolve("result with spaces.txt");
             assertSuccess(
                     run(
                             "",
@@ -756,7 +756,7 @@ public class CLIJarIT {
                             "--output-format-option",
                             "method=text"),
                     "hello");
-            Path input = directory.resolve("context with spaces.json");
+            Path input = CLIJarIT.this.directory.resolve("context with spaces.json");
             Files.writeString(input, "{\"answer\":42}");
             assertSuccess(
                     run("", "run", "-q", "$$.answer", "-i", input.toString(), "--context-item-input-format", "json"),
@@ -781,7 +781,7 @@ public class CLIJarIT {
                             "--output-format-option",
                             "method=text"),
                     "HELLO");
-            Path text = directory.resolve("context.txt");
+            Path text = CLIJarIT.this.directory.resolve("context.txt");
             Files.writeString(text, "hello");
             assertSuccess(
                     run(
@@ -808,7 +808,7 @@ public class CLIJarIT {
             Result limited = run("", "run", "-q", "1 to 4", "--result-size", "2", "-c", "100");
             assertSuccess(limited, "1\n2");
             assertTrue(limited.err().contains("capped"), limited.toString());
-            Path output = directory.resolve("uncapped.txt");
+            Path output = CLIJarIT.this.directory.resolve("uncapped.txt");
             assertSuccess(
                     run(
                             "",
@@ -1003,7 +1003,7 @@ public class CLIJarIT {
     class DiagnosticsAndErrors {
         @Test
         void executionLogIsWrittenToRequestedPath() throws Exception {
-            Path log = directory.resolve("execution log.txt");
+            Path log = CLIJarIT.this.directory.resolve("execution log.txt");
             assertSuccess(run("", "run", "-q", "42", "--log-path", log.toString()), "42");
             String content = Files.readString(log);
             assertTrue(content.contains("[ExecTime]"), content);
@@ -1073,7 +1073,7 @@ public class CLIJarIT {
     private static final ObjectMapper JSON = new ObjectMapper();
 
     private Path fixture(String name) throws Exception {
-        Path destination = directory.resolve(name);
+        Path destination = this.directory.resolve(name);
         if (!Files.exists(destination)) {
             try (var input = CLIJarIT.class.getResourceAsStream("/queries/" + name)) {
                 assertNotNull(input, "Missing existing test fixture: " + name);
@@ -1191,7 +1191,7 @@ public class CLIJarIT {
         Process process = builder.start();
         try {
             try (var stdin = process.getOutputStream()) {
-                stdin.write(input.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                stdin.write(input.getBytes(StandardCharsets.UTF_8));
             }
             int timeoutSeconds = packages.isEmpty() ? 60 : 180;
             assertTrue(process.waitFor(timeoutSeconds, TimeUnit.SECONDS), () -> "CLI timed out: " + command);

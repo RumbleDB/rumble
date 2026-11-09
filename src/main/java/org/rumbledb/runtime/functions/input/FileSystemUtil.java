@@ -22,6 +22,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -245,7 +246,7 @@ public class FileSystemUtil {
             FSDataOutputStream outputStream =
                     fileContext.create(path, EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE));
             for (String s : content) {
-                outputStream.write(s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                outputStream.write(s.getBytes(StandardCharsets.UTF_8));
                 outputStream.writeBytes("\n");
             }
             outputStream.close();
@@ -263,7 +264,7 @@ public class FileSystemUtil {
             FSDataOutputStream outputStream =
                     fileContext.create(path, EnumSet.of(CreateFlag.CREATE, CreateFlag.APPEND));
             for (String s : content) {
-                outputStream.write(s.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                outputStream.write(s.getBytes(StandardCharsets.UTF_8));
                 outputStream.writeBytes("\n");
             }
             outputStream.close();
