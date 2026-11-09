@@ -74,7 +74,8 @@
         <encoding>UTF-8</encoding>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <antlr4.version>4.13.2</antlr4.version>
+        <!-- Keep the generator and runtime aligned with Spark 3.5 SQL parsers. -->
+        <antlr4.version>4.9.3</antlr4.version>
         <junit.version>6.1.1</junit.version>
         <surefire.enableOutErrElements>true</surefire.enableOutErrElements>
         <lombok.version>1.18.46</lombok.version>
