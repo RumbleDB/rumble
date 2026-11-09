@@ -1,52 +1,49 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
 package org.rumbledb.runtime.functions.maps;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
-
-import java.math.BigInteger;
-import java.util.List;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 /**
  * W3C map:size function.
  */
-public class MapSizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class MapSizeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public MapSizeFunctionIterator(
-            List<RuntimeIterator> arguments,
-            RuntimeStaticContext staticContext
-    ) {
+    public MapSizeFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
         super(arguments, staticContext);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item map = this.children.get(0).materializeFirstItemOrNull(context);
-        if (map == null) {
-            return null;
-        }
-        return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf(map.getItemKeys().size()));
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item map = this.getChild(0).materializeFirstOrNull(context);
+        return map == null ? null : size(map);
+    }
+
+    private static Item size(Item map) {
+        return ItemFactory.getInstance().createIntItem(map.getSize());
     }
 }
-

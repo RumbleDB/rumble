@@ -1,5 +1,5 @@
 (:JIQS: ShouldCompile :)
-declare %sequential function foo() { 1 };
+declare %an:sequential function foo() { 1 };
 
  {
      variable $x := 3;

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,20 +11,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.flowr;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
-
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class GroupByClause extends Clause {
 
@@ -62,7 +56,8 @@ public class GroupByClause extends Clause {
         return visitor.visitGroupByClause(this, argument);
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    @Override
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -85,14 +80,13 @@ public class GroupByClause extends Clause {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("group by ");
         int i = 0;
         for (GroupByVariableDeclaration groupby : this.variables) {
             sb.append("$" + groupby.variableName.toString());
-            if (groupby.sequenceType != null)
-                sb.append(" as " + groupby.sequenceType.toString());
+            if (groupby.sequenceType != null) sb.append(" as " + groupby.sequenceType.toString());
             if (groupby.expression != null) {
                 sb.append(" := (");
                 groupby.expression.serializeToJSONiq(sb, 0);

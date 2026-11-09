@@ -27,7 +27,7 @@ declare function jsoniq_utils:shape($arr as array) {
             $pos := $pos + 1;
             $it := $it[[1]];
         }
-    } catch XPTY0004 {
+    } catch err:XPTY0004 {
         (: While loop stops when $it becomes a single value :)
         ();
     }

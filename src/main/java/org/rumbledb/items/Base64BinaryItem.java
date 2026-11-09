@@ -1,21 +1,33 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.lang3.StringUtils;
+import java.io.Serial;
 import java.util.Base64;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.ItemType;
-
-import java.util.Arrays;
 import java.util.regex.Pattern;
 
-public class Base64BinaryItem implements Item {
+import org.apache.commons.lang3.StringUtils;
+
+import lombok.Getter;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+
+public class Base64BinaryItem extends AbstractAtomicItem {
 
     private static final String B64 = "[A-Za-z0-9+/]";
     private static final String B64S = B64 + "\\s?";
@@ -31,13 +43,13 @@ public class Base64BinaryItem implements Item {
     private static final String base64Binary = "((" + b64quad + ")*" + b64final + ")?";
     private static final Pattern base64BinaryPattern = Pattern.compile(base64Binary);
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private byte[] value;
-    private String stringValue;
 
-    public Base64BinaryItem() {
-        super();
-    }
+    @Getter
+    private byte[] value;
+
+    private String stringValue;
 
     public Base64BinaryItem(String stringValue) {
         stringValue = stringValue.replaceAll("\\s", "");
@@ -46,21 +58,8 @@ public class Base64BinaryItem implements Item {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
-    }
-
-    public byte[] getValue() {
-        return this.value;
+    public Item copy(boolean mutable) {
+        return new Base64BinaryItem(this.stringValue);
     }
 
     @Override
@@ -102,24 +101,6 @@ public class Base64BinaryItem implements Item {
     @Override
     public boolean isBase64Binary() {
         return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return Arrays.hashCode(this.getValue());
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        output.writeInt(this.getValue().length);
-        output.writeBytes(this.getValue());
-    }
-
-    @Override
-    public void read(Kryo kryo, Input input) {
-        int bytesLength = input.readInt();
-        this.value = input.readBytes(bytesLength);
-        this.stringValue = StringUtils.chomp(Base64.getEncoder().encodeToString(this.value));
     }
 
     @Override

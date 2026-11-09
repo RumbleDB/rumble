@@ -1,5 +1,5 @@
 (:JIQS: ShouldCompile :)
-declare %nonsequential function foo() {
+declare %an:nonsequential function foo() {
     exit returning 1;
  };
 

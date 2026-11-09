@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,15 +11,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.CannotAtomizeException;
@@ -30,22 +28,21 @@ import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.runtime.update.primitives.Collection;
 
+public class ObjectItem extends AbstractMapItem {
 
-import java.util.*;
-
-public class ObjectItem implements Item {
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private List<Item> values;
     private List<String> keys;
     /** String key → index in {@link #keys} / {@link #values}; rebuilt after remove and Kryo read. */
     private Map<String, Integer> keyStringToIndex;
+
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -54,7 +51,6 @@ public class ObjectItem implements Item {
     private Collection collection;
 
     public ObjectItem() {
-        super();
         this.keys = new ArrayList<>();
         this.values = new ArrayList<>();
         this.keyStringToIndex = new HashMap<>();
@@ -67,7 +63,6 @@ public class ObjectItem implements Item {
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
-        super();
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
@@ -81,33 +76,18 @@ public class ObjectItem implements Item {
         this.topLevelOrder = 0.0;
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
+    @Override
+    public Item copy(boolean mutable) {
+        List<String> newKeys = new ArrayList<>(this.keys);
+        List<Item> newValues = new ArrayList<>();
+        for (Item value : this.values) {
+            newValues.add(value.copy(mutable));
         }
-        Item o = (Item) otherItem;
-        if (!o.isObject()) {
-            return false;
+        Item result = new ObjectItem(newKeys, newValues, ExceptionMetadata.EMPTY_METADATA);
+        if (mutable) {
+            result.setMutabilityLevel(this.mutabilityLevel);
         }
-        for (String s : getKeys()) {
-            Item v = o.getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        for (String s : o.getKeys()) {
-            Item v = getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!o.getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        return true;
+        return result;
     }
 
     /**
@@ -118,10 +98,7 @@ public class ObjectItem implements Item {
      * @param keyValuePairs LinkedHashMap -- this map implementation preserves order of the keys -- essential for
      *        functionality
      */
-    public ObjectItem(Map<String, ?> keyValuePairs)
-
-    {
-        super();
+    public ObjectItem(Map<String, ?> keyValuePairs) {
 
         List<String> keyList = new ArrayList<>();
         List<Item> valueList = new ArrayList<>();
@@ -143,16 +120,13 @@ public class ObjectItem implements Item {
                     } else {
                         throw new RuntimeException("Unexpected list size found.");
                     }
-                } else if (keyValuePairs.get(key) instanceof Item) {
-                    Item value = (Item) keyValuePairs.get(key);
+                } else if (keyValuePairs.get(key) instanceof Item value) {
                     valueList.add(value);
                 } else {
                     throw new RuntimeException("Unexpected value type found.");
                 }
-
             }
         }
-
 
         this.keys = keyList;
         this.values = valueList;
@@ -165,8 +139,6 @@ public class ObjectItem implements Item {
         this.collection = null;
         this.topLevelOrder = 0.0;
     }
-
-
 
     private void rebuildKeyStringIndex() {
         if (this.keyStringToIndex == null) {
@@ -192,13 +164,26 @@ public class ObjectItem implements Item {
     }
 
     @Override
-    public List<String> getKeys() {
+    public List<String> getStringKeys() {
         return this.keys;
     }
 
     @Override
-    public List<String> getStringKeys() {
-        return this.keys;
+    public int getSize() {
+        return this.keys.size();
+    }
+
+    @Override
+    public boolean hasKey(String key) throws UnsupportedOperationException {
+        return this.keyStringToIndex.containsKey(key);
+    }
+
+    @Override
+    public boolean hasKey(Item key) throws UnsupportedOperationException {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
+            return false;
+        }
+        return hasKey(key.getStringValue());
     }
 
     @Override
@@ -208,11 +193,6 @@ public class ObjectItem implements Item {
             result.add(ItemFactory.getInstance().createStringItem(key));
         }
         return result;
-    }
-
-    @Override
-    public List<Item> getValues() {
-        return this.values;
     }
 
     @Override
@@ -243,7 +223,7 @@ public class ObjectItem implements Item {
 
     @Override
     public Item getItemByKey(Item key) {
-        if (!key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getItemByKey(key.getStringValue());
@@ -260,7 +240,7 @@ public class ObjectItem implements Item {
 
     @Override
     public List<Item> getSequenceByKey(Item key) {
-        if (!key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             return null;
         }
         return getSequenceByKey(key.getStringValue());
@@ -288,7 +268,6 @@ public class ObjectItem implements Item {
         putItemByKey(key.getStringValue(), value);
     }
 
-
     @Override
     public void putSequenceByKey(String key, List<Item> valueSequence) {
         if (valueSequence == null) {
@@ -299,8 +278,7 @@ public class ObjectItem implements Item {
             return;
         }
         throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
-        );
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
     }
 
     @Override
@@ -315,8 +293,7 @@ public class ObjectItem implements Item {
         }
         // throw an error
         throw new OurBadException(
-                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences."
-        );
+                "ObjectItem only supports singleton values; use MapItem for non-singleton sequences.");
     }
 
     @Override
@@ -336,7 +313,7 @@ public class ObjectItem implements Item {
 
     @Override
     public void removeItemByKey(Item key) {
-        if (key == null || !key.isString()) {
+        if (key == null || !(key.isString() || key.isAnyURI() || key.isUntypedAtomic())) {
             // if the key is not a string, then there is for sure nothing to remove.
             return;
         }
@@ -361,41 +338,6 @@ public class ObjectItem implements Item {
                 frequencies.put(key, 1);
             }
         }
-    }
-
-    @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.keys);
-        kryo.writeObject(output, this.values);
-        output.writeInt(this.mutabilityLevel);
-        output.writeLong(this.topLevelID);
-        kryo.writeObject(output, this.pathIn);
-        kryo.writeObject(output, this.location);
-        output.writeDouble(this.topLevelOrder);
-        kryo.writeObjectOrNull(output, this.collection, Collection.class);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.keys = kryo.readObject(input, ArrayList.class);
-        this.values = kryo.readObject(input, ArrayList.class);
-        this.mutabilityLevel = input.readInt();
-        this.topLevelID = input.readLong();
-        this.pathIn = kryo.readObject(input, String.class);
-        this.location = kryo.readObject(input, String.class);
-        this.topLevelOrder = input.readDouble();
-        this.collection = kryo.readObjectOrNull(input, Collection.class);
-        rebuildKeyStringIndex();
-    }
-
-    public int hashCode() {
-        int result = 0;
-        result += getKeys().size();
-        for (String s : getKeys()) {
-            result += getItemByKey(s).hashCode();
-        }
-        return result;
     }
 
     @Override
@@ -500,14 +442,13 @@ public class ObjectItem implements Item {
     public String getSparkSQLValue(ItemType itemType) {
         StringBuilder sb = new StringBuilder();
 
-        Map<String, FieldDescriptor> content = itemType.getObjectContentFacet();
-        String[] keys = content.keySet().toArray(new String[0]);
+        List<String> keys = itemType.getObjectKeysFacet();
 
         sb.append("named_struct(");
 
-        for (int i = 0; i < keys.length; i++) {
-            String key = keys[i];
-            FieldDescriptor field = content.get(key);
+        for (int i = 0; i < keys.size(); i++) {
+            String key = keys.get(i);
+            FieldDescriptor field = itemType.getObjectContentFacet(key);
             if (this.keyStringToIndex == null) {
                 rebuildKeyStringIndex();
             }
@@ -527,7 +468,7 @@ public class ObjectItem implements Item {
                 sb.append(this.values.get(keyIndex).getSparkSQLValue(field.getType()));
             }
 
-            if (i + 1 < keys.length) {
+            if (i + 1 < keys.size()) {
                 sb.append(", ");
             }
         }
@@ -560,9 +501,7 @@ public class ObjectItem implements Item {
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
@@ -586,6 +525,5 @@ public class ObjectItem implements Item {
         for (Item item : this.values) {
             item.setCollection(collection);
         }
-
     }
 }

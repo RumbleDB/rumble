@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,56 +11,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.types;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.List;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+
+@Getter
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class FunctionSignature implements Serializable {
+    @EqualsAndHashCode.Include
     private List<SequenceType> parameterTypes;
+
+    @EqualsAndHashCode.Include
     private SequenceType returnType;
+
     private boolean isUpdating;
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public FunctionSignature(
-            List<SequenceType> parameterTypes,
-            SequenceType returnType,
-            boolean isUpdating
-    ) {
+    public FunctionSignature(List<SequenceType> parameterTypes, SequenceType returnType, boolean isUpdating) {
         this.parameterTypes = parameterTypes;
         this.returnType = returnType;
         this.isUpdating = isUpdating;
     }
 
-    public FunctionSignature(
-            List<SequenceType> parameterTypes,
-            SequenceType returnType
-    ) {
+    public FunctionSignature(List<SequenceType> parameterTypes, SequenceType returnType) {
         this(parameterTypes, returnType, false);
-    }
-
-
-    public List<SequenceType> getParameterTypes() {
-        return this.parameterTypes;
-    }
-
-    public SequenceType getReturnType() {
-        return this.returnType;
-    }
-
-    public boolean isUpdating() {
-        return this.isUpdating;
-    }
-
-    @Override
-    public boolean equals(Object instance) {
-        return instance instanceof FunctionSignature
-            && this.getParameterTypes() == ((FunctionSignature) instance).getParameterTypes()
-            && this.getReturnType() == ((FunctionSignature) instance).getReturnType();
     }
 
     public boolean isSubtypeOf(FunctionSignature other) {
@@ -85,11 +65,6 @@ public class FunctionSignature implements Serializable {
             }
         }
         return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return this.getParameterTypes().hashCode() + this.getReturnType().hashCode();
     }
 
     @Override

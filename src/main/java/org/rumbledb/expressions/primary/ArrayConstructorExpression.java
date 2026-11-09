@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,26 +11,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.primary;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
-import java.util.List;
-
-
+@Getter
 public class ArrayConstructorExpression extends Expression {
 
-    private Expression expression;
-    private List<Expression> memberExpressions;
-    private boolean isFixedSlotsArrayConstructor;
+    private final Expression expression;
+    private final List<Expression> memberExpressions;
+    private final boolean isFixedSlotsArrayConstructor;
 
     /**
      * Curly array constructor: {@code array { expr }}.
@@ -61,26 +58,11 @@ public class ArrayConstructorExpression extends Expression {
      * Each expression becomes a separate member whose result (possibly a sequence) is preserved.
      */
     public ArrayConstructorExpression(
-            List<Expression> memberExpressions,
-            boolean isFixedSlotsArrayConstructor,
-            ExceptionMetadata metadata
-    ) {
+            List<Expression> memberExpressions, boolean isFixedSlotsArrayConstructor, ExceptionMetadata metadata) {
         super(metadata);
         this.expression = null;
         this.memberExpressions = memberExpressions;
         this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
-    }
-
-    public Expression getExpression() {
-        return this.expression;
-    }
-
-    public List<Expression> getMemberExpressions() {
-        return this.memberExpressions;
-    }
-
-    public boolean isFixedSlotsArrayConstructor() {
-        return this.isFixedSlotsArrayConstructor;
     }
 
     @Override
@@ -95,7 +77,7 @@ public class ArrayConstructorExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         if (this.isFixedSlotsArrayConstructor) {
             sb.append("[");
@@ -117,10 +99,8 @@ public class ArrayConstructorExpression extends Expression {
         }
     }
 
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitArrayConstructor(this, argument);
     }
-
 }

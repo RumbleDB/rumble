@@ -2,6 +2,8 @@
 
 With RumbleDB, you can query with ease a lot of different nested, heterogeneous data formats like JSON, CSV, Parquet, Avro, LibSVM, text, etc.
 
+XML Schema imports and schema validation currently support **XML Schema 1.0 only**. Schemas requiring XML Schema 1.1 are not supported.
+
 RumbleDB exposes a query language rather than a DataFrame API, for more flexibility, more productivity but also because a lot of data simply will not fit in DataFrames.
 
 You can query it in place from any local file systems or data lakes (Azure blob storage, Amazon S3, HDFS, etc).
@@ -14,4 +16,16 @@ The documentation also contains an introduction specific to RumbleDB and how you
 
 [The documentation of the latest official release is available here.](https://docs.rumbledb.org/)
 
+RumbleDB was started in February 2017 at ETH Zurich as the Master's thesis of Stefan Irimescu, under the supervision of Ghislain Fourny and Gustavo Alonso.
+
 Contributors (Ghislain Fourny's students at ETH): Stefan Irimescu, Renato Marroquin, Rodrigo Bruno, Falko Noé, Ioana Stefan, Andrea Rinaldi, Stevan Mihajlovic, Mario Arduini, Can Berker Çıkış, Elwin Stephan, David Dao, Zirun Wang, Ingo Müller, Dan-Ovidiu Graur, Thomas Zhou, Olivier Goerens, Alexandru Meterez, Pierre Motard, Remo Röthlisberger, Dominik Bruggisser, David Loughlin, David Buzatu, Marco Schöb, Maciej Byczko, Abishek Ramdas, Matteo Agnoletto, Dwij Dixit, Omar Hammoud, Henrik Pätzold, Jimmy Cai.
+
+### XML Schema version semantics
+
+Use `--xsd-version 1.0` or `--xsd-version 1.1` (default) to select datatype casting
+and regular-expression semantics. This is independent of `--xml-version`.
+The Java configuration key is `semantics.xsdVersion`; the typed builder exposes
+`configureSemantics(s -> s.xsdVersion("1.0"))`.
+
+Schema import and XML validation continue to use Xerces XSD 1.0 in both modes.
+Selecting 1.1 does not enable XSD 1.1 schema features such as multiple substitution groups.

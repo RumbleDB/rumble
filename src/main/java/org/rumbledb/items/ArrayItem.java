@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,34 +11,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.items;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ArrayIndexOutOfBoundsException;
-import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.update.primitives.Collection;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import org.rumbledb.types.ItemTypeFactory;
 
-public class ArrayItem implements Item {
+public class ArrayItem extends AbstractArrayItem {
 
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private List<Item> arrayItems;
+
+    private final List<Item> arrayItems;
     private int mutabilityLevel;
     private long topLevelID;
     private String pathIn;
@@ -49,7 +43,6 @@ public class ArrayItem implements Item {
     private Collection collection;
 
     public ArrayItem() {
-        super();
         this.arrayItems = new ArrayList<>();
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
@@ -59,7 +52,6 @@ public class ArrayItem implements Item {
     }
 
     public ArrayItem(List<Item> arrayItems) {
-        super();
         this.arrayItems = arrayItems;
         this.mutabilityLevel = -1;
         this.topLevelID = -1;
@@ -68,23 +60,17 @@ public class ArrayItem implements Item {
         this.collection = null;
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
+    @Override
+    public Item copy(boolean mutable) {
+        List<Item> copiedItems = new ArrayList<>(this.arrayItems.size());
+        for (Item item : this.arrayItems) {
+            copiedItems.add(item.copy(mutable));
         }
-        Item o = (Item) otherItem;
-        if (!o.isArray()) {
-            return false;
+        ArrayItem copy = new ArrayItem(copiedItems);
+        if (mutable) {
+            copy.setMutabilityLevel(0);
         }
-        if (getSize() != o.getSize()) {
-            return false;
-        }
-        for (int i = 0; i < getSize(); ++i) {
-            if (!getItemAt(i).equals(o.getItemAt(i))) {
-                return false;
-            }
-        }
-        return true;
+        return copy;
     }
 
     // region arrays
@@ -102,12 +88,6 @@ public class ArrayItem implements Item {
     @Override
     public int getSize() {
         return this.arrayItems.size();
-    }
-
-    @Deprecated
-    @Override
-    public List<Item> getItems() {
-        return this.arrayItems;
     }
 
     @Override
@@ -129,11 +109,10 @@ public class ArrayItem implements Item {
         if (position >= this.arrayItems.size() || position < 0) {
             throw new ArrayIndexOutOfBoundsException(
                     "Tried to access array index: "
-                        + (position + 1)
-                        + ", of array with length: "
-                        + this.arrayItems.size(),
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+                            + (position + 1)
+                            + ", of array with length: "
+                            + this.arrayItems.size(),
+                    ExceptionMetadata.EMPTY_METADATA);
         }
         return this.arrayItems.get(position);
     }
@@ -142,11 +121,6 @@ public class ArrayItem implements Item {
     public List<Item> getSequenceAt(int position) throws ArrayIndexOutOfBoundsException {
         Item member = this.getItemAt(position);
         return Collections.singletonList(member);
-    }
-
-    @Override
-    public void append(Item item) {
-        appendItem(item);
     }
 
     @Override
@@ -207,37 +181,10 @@ public class ArrayItem implements Item {
     // endregion arrays
 
     @Override
-    public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.arrayItems);
-        output.writeInt(this.mutabilityLevel);
-        output.writeLong(this.topLevelID);
-        kryo.writeObject(output, this.pathIn);
-        kryo.writeObject(output, this.location);
-        kryo.writeObjectOrNull(output, this.collection, Collection.class);
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void read(Kryo kryo, Input input) {
-        this.arrayItems = kryo.readObject(input, ArrayList.class);
-        this.mutabilityLevel = input.readInt();
-        this.topLevelID = input.readLong();
-        this.pathIn = kryo.readObject(input, String.class);
-        this.location = kryo.readObject(input, String.class);
-        this.collection = kryo.readObjectOrNull(input, Collection.class);
-    }
-
-    public int hashCode() {
-        int result = 0;
-        result += getSize();
-        for (int i = 0; i < getSize(); ++i) {
-            result += getItemAt(i).hashCode();
-        }
-        return result;
-    }
-
-    @Override
     public ItemType getDynamicType() {
+        if (this.arrayItems.isEmpty()) {
+            return ItemTypeFactory.createEmptyArrayType();
+        }
         return BuiltinTypesCatalogue.arrayItem;
     }
 
@@ -345,21 +292,22 @@ public class ArrayItem implements Item {
 
     @Override
     public List<Item> atomizedValue() {
-        throw new CannotAtomizeException("tried to atomize Array", ExceptionMetadata.EMPTY_METADATA);
-        // return getItems();
+        List<Item> result = new ArrayList<>();
+        for (Item member : this.arrayItems) {
+            result.addAll(member.atomizedValue());
+        }
+        return result;
     }
 
     @Override
     public String getStringValue() {
         throw new FunctionItemStringValueException(
-                FunctionItemStringValueException.DEFAULT_MESSAGE,
-                ExceptionMetadata.EMPTY_METADATA
-        );
+                FunctionItemStringValueException.DEFAULT_MESSAGE, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override
     public Object getVariantValue() {
-        List<Item> arrayItems = this.getItems();
+        List<Item> arrayItems = this.getItemMembers();
         List<Object> arrayItemsForRow = new ArrayList<>(arrayItems.size());
         for (int i = 0; i < arrayItems.size(); i++) {
             arrayItemsForRow.add(this.getItemAt(i).getVariantValue());

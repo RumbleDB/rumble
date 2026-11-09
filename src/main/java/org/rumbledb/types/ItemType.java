@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,29 +11,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.types;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
-import com.esotericsoftware.kryo.KryoSerializable;
+public interface ItemType extends Serializable {
 
-import java.io.Serializable;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-public interface ItemType extends Serializable, KryoSerializable {
-
+    @Serial
     long serialVersionUID = 1L;
 
     /**
@@ -47,7 +45,6 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     boolean equals(Object other);
 
-
     /**
      * Tests for itemType equality.
      *
@@ -55,16 +52,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return true it is equal to other, false otherwise.
      */
     default boolean isEqualTo(ItemType otherType) {
-        if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
-            if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
-                return false;
-            }
-            return this.toString().equals(otherType.toString());
-        }
-        if (!this.hasName() || !otherType.hasName()) {
-            return this == otherType;
-        }
-        return this.getName().equals(otherType.getName());
+        return this.equals(otherType);
     }
     // region kind
 
@@ -143,6 +131,22 @@ public interface ItemType extends Serializable, KryoSerializable {
         return false;
     }
 
+    /**
+     *
+     * @return [true] if the null value is in the value space.
+     */
+    default boolean canBeNull() {
+        return false;
+    }
+
+    /**
+     *
+     * @return [true] if this is just one type unioned with null, returns that type.
+     */
+    default ItemType getSingleNullableType() {
+        return null;
+    }
+
     // endregion
 
     // region concrete-specific-function
@@ -155,7 +159,6 @@ public interface ItemType extends Serializable, KryoSerializable {
     default boolean hasName() {
         return false;
     }
-
 
     /**
      *
@@ -171,6 +174,15 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default FunctionSignature getSignature() {
         throw new UnsupportedOperationException("getSignature operation is not supported for non-function item types");
+    }
+
+    /**
+     * The values that atomizing a node of this type produces, as declared by its schema type.
+     *
+     * @return the typed value type, or null when it is only known to be xs:anyAtomicType*
+     */
+    default SequenceType getTypedValueType() {
+        return null;
     }
 
     // endregion
@@ -213,6 +225,29 @@ public interface ItemType extends Serializable, KryoSerializable {
      *         and [other] (does not take into account union types as common ancestor, but only the type tree)
      */
     default ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (other.isUnionType()) {
+            return other.findLeastCommonSuperTypeWith(this);
+        }
+        if (this.equals(BuiltinTypesCatalogue.nullItem) && other.equals(BuiltinTypesCatalogue.nullItem)) {
+            return BuiltinTypesCatalogue.nullItem;
+        }
+        if (this.isAtomicItemType() && other.equals(BuiltinTypesCatalogue.nullItem)) {
+            if (this.equals(BuiltinTypesCatalogue.atomicItem)) {
+                return BuiltinTypesCatalogue.atomicItem;
+            }
+            return new UnionItemType(
+                    null, BuiltinTypesCatalogue.atomicItem, Arrays.asList(this, BuiltinTypesCatalogue.nullItem), false);
+        }
+        if (other.isAtomicItemType() && this.equals(BuiltinTypesCatalogue.nullItem)) {
+            if (other.equals(BuiltinTypesCatalogue.atomicItem)) {
+                return BuiltinTypesCatalogue.atomicItem;
+            }
+            return new UnionItemType(
+                    null,
+                    BuiltinTypesCatalogue.atomicItem,
+                    Arrays.asList(other, BuiltinTypesCatalogue.nullItem),
+                    false);
+        }
         ItemType current = this;
         while (other.getTypeTreeDepth() > current.getTypeTreeDepth()) {
             other = other.getBaseType();
@@ -258,8 +293,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default boolean isStaticallyCastableAs(ItemType other) {
         throw new UnsupportedOperationException(
-                "isStaticallyCastableAs operation is not supported for non-atomic item types"
-        );
+                "isStaticallyCastableAs operation is not supported for non-atomic item types");
     }
 
     /**
@@ -300,9 +334,9 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default boolean isCastingPrimitive() {
         return this.isPrimitive()
-            || this.equals(BuiltinTypesCatalogue.integerItem)
-            || this.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
-            || this.equals(BuiltinTypesCatalogue.dayTimeDurationItem);
+                || this.equals(BuiltinTypesCatalogue.integerItem)
+                || this.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
+                || this.equals(BuiltinTypesCatalogue.dayTimeDurationItem);
     }
 
     /**
@@ -334,8 +368,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default List<Item> getEnumerationFacet() {
         throw new UnsupportedOperationException(
-                "enumeration facet is allowed only for atomic, object and array item types"
-        );
+                "enumeration facet is allowed only for atomic, object and array item types");
     }
 
     /**
@@ -345,8 +378,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default List<String> getConstraintsFacet() {
         throw new UnsupportedOperationException(
-                "constraints facet is allowed only for atomic, object and array item types"
-        );
+                "constraints facet is allowed only for atomic, object and array item types");
     }
 
     /**
@@ -355,8 +387,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default Integer getMinLengthFacet() {
         throw new UnsupportedOperationException(
-                "minimum length facet is not allowed for " + this.toString() + " item type"
-        );
+                "minimum length facet is not allowed for " + this.toString() + " item type");
     }
 
     /**
@@ -373,8 +404,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default Integer getMaxLengthFacet() {
         throw new UnsupportedOperationException(
-                "maximum length facet is not allowed for " + this.toString() + " item type"
-        );
+                "maximum length facet is not allowed for " + this.toString() + " item type");
     }
 
     /**
@@ -384,8 +414,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default Item getMinExclusiveFacet() {
         throw new UnsupportedOperationException(
-                "minimum exclusive facet is not allowed for " + this.toString() + " item types"
-        );
+                "minimum exclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -395,8 +424,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default Item getMinInclusiveFacet() {
         throw new UnsupportedOperationException(
-                "minimum inclusive facet is not allowed for " + this.toString() + " item types"
-        );
+                "minimum inclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -406,8 +434,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default Item getMaxExclusiveFacet() {
         throw new UnsupportedOperationException(
-                "maximum exclusive facet is not allowed for " + this.toString() + " item types"
-        );
+                "maximum exclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -417,8 +444,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default Item getMaxInclusiveFacet() {
         throw new UnsupportedOperationException(
-                "maximum inclusive facet is not allowed for " + this.toString() + " item types"
-        );
+                "maximum inclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -427,8 +453,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default Integer getTotalDigitsFacet() {
         throw new UnsupportedOperationException(
-                "total digits facet is not allowed for " + this.toString() + " item types"
-        );
+                "total digits facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -437,8 +462,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default Integer getFractionDigitsFacet() {
         throw new UnsupportedOperationException(
-                "fraction digits facet is not allowed for " + this.toString() + " item types"
-        );
+                "fraction digits facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -447,8 +471,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default TimezoneFacet getExplicitTimezoneFacet() {
         throw new UnsupportedOperationException(
-                "explicit timezone facet is not allowed for " + this.toString() + " item types"
-        );
+                "explicit timezone facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -457,8 +480,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default WhitespaceFacet getWhitespaceFacet() {
         throw new UnsupportedOperationException(
-                "whiteSpace facet is not allowed for " + this.toString() + " item types"
-        );
+                "whiteSpace facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -472,9 +494,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      *         or null if no pattern restriction is set
      */
     default List<String> getPatternFacet() {
-        throw new UnsupportedOperationException(
-                "pattern facet is not allowed for " + this.toString() + " item types"
-        );
+        throw new UnsupportedOperationException("pattern facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -493,7 +513,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      *         is modeled.
      */
     default List<String> getLexicalSpacePatterns() {
-        return java.util.Collections.emptyList();
+        return Collections.emptyList();
     }
 
     // region fundamental facets (XSD 1.1 §4.2)
@@ -503,8 +523,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default OrderedFacetValue getOrderedFacet() {
         throw new UnsupportedOperationException(
-                "ordered facet is not applicable to " + this.toString() + " item types"
-        );
+                "ordered facet is not applicable to " + this.toString() + " item types");
     }
 
     /**
@@ -512,8 +531,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default Boolean getBoundedFacet() {
         throw new UnsupportedOperationException(
-                "bounded facet is not applicable to " + this.toString() + " item types"
-        );
+                "bounded facet is not applicable to " + this.toString() + " item types");
     }
 
     /**
@@ -521,8 +539,7 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default CardinalityFacetValue getCardinalityFacet() {
         throw new UnsupportedOperationException(
-                "cardinality facet is not applicable to " + this.toString() + " item types"
-        );
+                "cardinality facet is not applicable to " + this.toString() + " item types");
     }
 
     /**
@@ -530,24 +547,41 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default Boolean getNumericFacet() {
         throw new UnsupportedOperationException(
-                "numeric facet is not applicable to " + this.toString() + " item types"
-        );
+                "numeric facet is not applicable to " + this.toString() + " item types");
     }
 
     // endregion fundamental facets
 
-    /**
-     *
-     * @return content facet value for object item types (cumulative facet)
-     */
-    default Map<String, FieldDescriptor> getObjectContentFacet() {
-        throw new UnsupportedOperationException(
-                "object content facet is allowed only for object item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+    default List<String> getObjectKeysFacet() {
+        throw new UnsupportedOperationException("keys content facet is allowed only for object item types, but "
+                + getIdentifierString()
+                + " is not one (class "
+                + this.getClass().getCanonicalName()
+                + ")");
+    }
+
+    default FieldDescriptor getObjectContentFacet(String key) {
+        throw new UnsupportedOperationException("object content facet is allowed only for object item types, but "
+                + getIdentifierString()
+                + " is not one (class "
+                + this.getClass().getCanonicalName()
+                + ")");
+    }
+
+    default List<FieldDescriptor> getObjectContentFacet() {
+        throw new UnsupportedOperationException("object content facet is allowed only for object item types, but "
+                + getIdentifierString()
+                + " is not one (class "
+                + this.getClass().getCanonicalName()
+                + ")");
+    }
+
+    default Map<String, FieldDescriptor> getObjectContentFacetAsUnorderedMap() {
+        throw new UnsupportedOperationException("object content facet is allowed only for object item types, but "
+                + getIdentifierString()
+                + " is not one (class "
+                + this.getClass().getCanonicalName()
+                + ")");
     }
 
     /**
@@ -563,39 +597,33 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @return content facet value for array item types
      */
     default ItemType getArrayContentFacet() {
-        throw new UnsupportedOperationException(
-                "array content facet is allowed only for array item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+        throw new UnsupportedOperationException("array content facet is allowed only for array item types, but "
+                + getIdentifierString()
+                + " is not one (class "
+                + this.getClass().getCanonicalName()
+                + ")");
     }
 
     /**
      * @return atomic key type for map item types (map(K, V)).
      */
     default ItemType getMapKeyItemType() {
-        throw new UnsupportedOperationException(
-                "map key facet is allowed only for map item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+        throw new UnsupportedOperationException("map key facet is allowed only for map item types, but "
+                + getIdentifierString()
+                + " is not one (class "
+                + this.getClass().getCanonicalName()
+                + ")");
     }
 
     /**
      * @return value sequence type for map item types (map(K, V)).
      */
     default SequenceType getMapValueSequenceType() {
-        throw new UnsupportedOperationException(
-                "map value sequence type is allowed only for map item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+        throw new UnsupportedOperationException("map value sequence type is allowed only for map item types, but "
+                + getIdentifierString()
+                + " is not one (class "
+                + this.getClass().getCanonicalName()
+                + ")");
     }
 
     /**
@@ -603,13 +631,11 @@ public interface ItemType extends Serializable, KryoSerializable {
      * @throws UnsupportedOperationException if the item type is not an xquery array item type
      */
     default SequenceType getMemberSequenceType() {
-        throw new UnsupportedOperationException(
-                "member sequence type is allowed only for array item types, but "
-                    + getIdentifierString()
-                    + " is not one (class "
-                    + this.getClass().getCanonicalName()
-                    + ")"
-        );
+        throw new UnsupportedOperationException("member sequence type is allowed only for array item types, but "
+                + getIdentifierString()
+                + " is not one (class "
+                + this.getClass().getCanonicalName()
+                + ")");
     }
 
     /**
@@ -618,6 +644,28 @@ public interface ItemType extends Serializable, KryoSerializable {
      */
     default List<ItemType> getTypes() {
         throw new UnsupportedOperationException("union content facet is allowed only for union item types");
+    }
+
+    /**
+     * Returns the types a value of this type can have: the members of a union, with nested unions expanded, or this
+     * type itself.
+     */
+    default List<ItemType> getMemberTypes() {
+        if (!isUnionType()) {
+            return List.of(this);
+        }
+        List<ItemType> members = new ArrayList<>();
+        for (ItemType member : getTypes()) {
+            members.addAll(member.getMemberTypes());
+        }
+        return members;
+    }
+
+    /**
+     * Static typing is pessimistic: a check passes for a union only if it passes for every member type.
+     */
+    default boolean allMemberTypesMatch(Predicate<ItemType> check) {
+        return getMemberTypes().stream().allMatch(check);
     }
 
     // endregion
@@ -635,10 +683,10 @@ public interface ItemType extends Serializable, KryoSerializable {
 
     /**
      * Checks compatibility with DataFrames.
-     * 
+     *
      * @return true if compatible with DataFrames and false otherwise.
      */
-    default boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+    default boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
         return false;
     }
 

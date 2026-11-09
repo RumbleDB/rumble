@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,20 +11,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.comparison;
+
+import java.util.Arrays;
+import java.util.List;
+
+import lombok.Getter;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import java.util.Arrays;
-import java.util.List;
 
 public class ComparisonExpression extends Expression {
 
@@ -45,8 +42,10 @@ public class ComparisonExpression extends Expression {
         GC_GT(">"),
         GC_GE(">=");
 
-        private String name;
-        private boolean isValueComparison;
+        private final String name;
+
+        @Getter
+        private final boolean isValueComparison;
 
         ComparisonOperator(String name) {
             switch (name) {
@@ -67,10 +66,6 @@ public class ComparisonExpression extends Expression {
         @Override
         public String toString() {
             return this.name;
-        }
-
-        public boolean isValueComparison() {
-            return this.isValueComparison;
         }
 
         public ComparisonOperator getCorrespondingValueComparison() {
@@ -158,22 +153,21 @@ public class ComparisonExpression extends Expression {
         }
     };
 
-    private Expression leftExpression;
-    private Expression rightExpression;
-    private ComparisonOperator comparisonOperator;
-    private ComparisonOperator originalComparisonOperator;
+    private final Expression leftExpression;
+    private final Expression rightExpression;
+
+    @Getter
+    private final ComparisonOperator comparisonOperator;
 
     public ComparisonExpression(
             Expression leftExpression,
             Expression rightExpression,
             ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
+            ExceptionMetadata metadata) {
         super(metadata);
         this.leftExpression = leftExpression;
         this.rightExpression = rightExpression;
         this.comparisonOperator = comparisonOperator;
-        this.originalComparisonOperator = comparisonOperator;
     }
 
     @Override
@@ -186,19 +180,8 @@ public class ComparisonExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
-    public ComparisonOperator getComparisonOperator() {
-        return this.comparisonOperator;
-    }
-
-    public ComparisonOperator getOriginalComparisonOperator() {
-        return this.originalComparisonOperator;
-    }
-
-    public void setOriginalComparisonOperator(ComparisonOperator originalComparisonOperator) {
-        this.originalComparisonOperator = originalComparisonOperator;
-    }
-
-    public void print(StringBuffer buffer, int indent) {
+    @Override
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
@@ -214,7 +197,7 @@ public class ComparisonExpression extends Expression {
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("(\n");
 

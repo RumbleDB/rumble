@@ -6,7 +6,7 @@ try {
   validate type local:x* {
     { "foo" : [ { "bar" : 1 }, { "bar" : 2 }, { "bar" : 3 }, { "bar" : 1 }, { "bar" : 2 } ] }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 validate type local:y* {
@@ -22,14 +22,14 @@ try {
   validate type local:y* {
     { "foo" : [ { "bar" : 24, "foobar" : "foo" }, { "bar" : 24, "foobar" : "bar" } ] }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 try {
   validate type local:z* {
     { "foo" : [ { "date" : "2025-10-01", "bar" : "2", "foobar" : "foo" }, { "date" : "2025-10-01", "bar" : "2", "foobar" : "bar" } ] }
   }
-} catch XQDY0027 {
+} catch err:XQDY0027 {
   "Success"
 },
 validate type local:z* {

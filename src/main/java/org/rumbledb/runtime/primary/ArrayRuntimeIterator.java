@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,69 +11,66 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.primary;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.IntFunction;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.CommaExpressionIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.ArrayItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.List;
+public class ArrayRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
-public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private boolean isFixedSlotsArrayConstructor;
+
+    private final boolean isFixedSlotsArrayConstructor;
+    private final boolean mutable;
 
     /**
      * Curly array constructor: single child whose items become singleton members.
      */
-    public ArrayRuntimeIterator(
-            RuntimeIterator arrayItems,
-            RuntimeStaticContext staticContext
-    ) {
-        super(null, staticContext);
+    public ArrayRuntimeIterator(ItemRuntimePlan arrayItems, RuntimeStaticContext staticContext, boolean mutable) {
+        super(arrayItems == null ? List.of() : List.of(arrayItems), staticContext);
         this.isFixedSlotsArrayConstructor = false;
-        if (arrayItems != null) {
-            this.children.add(arrayItems);
-        }
+        this.mutable = mutable;
     }
 
     /**
      * Square array constructor: each child iterator produces one member (possibly a sequence).
      */
     public ArrayRuntimeIterator(
-            List<RuntimeIterator> memberIterators,
+            List<? extends ItemRuntimePlan> memberIterators,
             boolean isFixedSlotsArrayConstructor,
-            RuntimeStaticContext staticContext
-    ) {
-        super(null, staticContext);
+            RuntimeStaticContext staticContext,
+            boolean mutable) {
+        super(memberIterators == null ? List.of() : memberIterators, staticContext);
         this.isFixedSlotsArrayConstructor = isFixedSlotsArrayConstructor;
-        if (memberIterators != null) {
-            this.children.addAll(memberIterators);
-        }
+        this.mutable = mutable;
     }
 
-    public Item materializeFirstItemOrNull(
-            DynamicContext dynamicContext
-    ) {
+    @Override
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        IntFunction<List<Item>> materializeChild = index -> this.getChild(index).materialize(dynamicContext);
         if (isEffectiveFixedSlotsArrayConstructor()) {
             boolean allSingleton = true;
             List<List<Item>> memberSequences = new ArrayList<>();
-            for (RuntimeIterator child : this.children) {
-                List<Item> member = child.materialize(dynamicContext);
+            for (int i = 0; i < this.getChildren().size(); i++) {
+                List<Item> member = materializeChild.apply(i);
                 if (allSingleton && member.size() != 1) {
                     allSingleton = false;
                 }
@@ -87,16 +81,16 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                 for (List<Item> member : memberSequences) {
                     items.add(member.get(0));
                 }
-                return ItemFactory.getInstance().createArrayItem(items, true);
+                return ItemFactory.getInstance().createArrayItem(items, this.mutable);
             } else {
-                return ItemFactory.getInstance().createSequenceArrayItem(memberSequences, true);
+                return ItemFactory.getInstance().createSequenceArrayItem(memberSequences, this.mutable);
             }
         }
         List<Item> result = new ArrayList<>();
-        for (RuntimeIterator child : this.children) {
-            result.addAll(child.materialize(dynamicContext));
+        for (int i = 0; i < this.getChildren().size(); i++) {
+            result.addAll(materializeChild.apply(i));
         }
-        return ItemFactory.getInstance().createArrayItem(result, true);
+        return ItemFactory.getInstance().createArrayItem(result, this.mutable);
     }
 
     @Override
@@ -104,33 +98,28 @@ public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         if (isEffectiveFixedSlotsArrayConstructor()) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (this.children.size() == 1) {
-            NativeClauseContext childQuery = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (this.getChildren().size() == 1) {
+            NativeClauseContext childQuery = NativeQueryRuntimePlan.generate(this.getChild(0), nativeClauseContext);
             if (childQuery == NativeClauseContext.NoNativeQuery) {
                 return NativeClauseContext.NoNativeQuery;
             }
             String resultingQuery;
-            if (this.children.get(0) instanceof CommaExpressionIterator) {
+            if (this.getChild(0) instanceof CommaExpressionIterator) {
                 resultingQuery = childQuery.getResultingQuery();
             } else {
-                resultingQuery = "array( "
-                    + childQuery.getResultingQuery()
-                    + " )";
+                resultingQuery = "array( " + childQuery.getResultingQuery() + " )";
             }
             return new NativeClauseContext(
                     childQuery,
                     resultingQuery,
                     new SequenceType(
                             ArrayItemType.arrayOf(childQuery.getResultingType().getItemType()),
-                            SequenceType.Arity.One
-                    )
-            );
+                            SequenceType.Arity.One));
         } else {
             return new NativeClauseContext(
                     nativeClauseContext,
                     "array()",
-                    new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One)
-            );
+                    new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.One));
         }
     }
 
