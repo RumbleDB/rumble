@@ -86,10 +86,13 @@ public final class ArithmeticTyping {
                 this.errors.report(
                         "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
                         node,
-                        !TypeAtomization.isNeverAtomizable(leftType.getItemType())
-                                && !TypeAtomization.isNeverAtomizable(rightType.getItemType())
-                                && (TypeAtomization.mayAtomizeToAnyType(leftType.getItemType())
-                                        || TypeAtomization.mayAtomizeToAnyType(rightType.getItemType())));
+                        leftType.getItemType().getMemberTypes().stream().anyMatch(left ->
+                                rightType.getItemType().getMemberTypes().stream().anyMatch(right ->
+                                        inferMemberOperationType(left, right, operation) != null
+                                                || (!TypeAtomization.isNeverAtomizable(left)
+                                                        && !TypeAtomization.isNeverAtomizable(right)
+                                                        && (TypeAtomization.mayAtomizeToAnyType(left)
+                                                                || TypeAtomization.mayAtomizeToAnyType(right))))));
             }
             inferredType = BuiltinTypesCatalogue.atomicItem;
         }
@@ -273,7 +276,8 @@ public final class ArithmeticTyping {
                 this.errors.report(
                         "It is not possible to have a unary expression with the following type: " + childInferredType,
                         node,
-                        TypeAtomization.mayAtomizeToAnyType(childInferredType.getItemType()));
+                        childInferredType.getItemType().getMemberTypes().stream().anyMatch(member ->
+                                inferUnaryItemType(member) != null || TypeAtomization.mayAtomizeToAnyType(member)));
             }
             childItemType = BuiltinTypesCatalogue.numericItem;
         }

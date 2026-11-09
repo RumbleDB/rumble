@@ -211,10 +211,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             visitor.visit(module, module.getStaticContext());
         } catch (RumbleException exception) {
             stoppedBy = exception;
-        } catch (RuntimeException exception) {
-            if (!visitor.errors.hasErrors()) {
-                throw exception;
-            }
         }
         visitor.errors.throwCollected(stoppedBy);
     }
@@ -245,23 +241,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     /**
      * Types the node, and gives the unknown type to an expression with an error so that the checks of its parent
-     * report nothing. The typing of a node with an error, or with an unknown operand, may fail further on the types it
-     * inferred, which only follows from that error.
+     * report nothing. Unexpected compiler exceptions are allowed to propagate; they are not evidence of a
+     * cascading type error.
      */
     @Override
     public StaticContext visit(Node node, StaticContext argument) {
-        StaticContext result = argument;
-        boolean failed;
-        try {
-            result = super.visit(node, argument);
-            failed = this.errors.hasFailed(node);
-        } catch (RuntimeException exception) {
-            if (!this.errors.hasFailed(node) && !StaticTypeErrors.hasUnknownOperand(node)) {
-                throw exception;
-            }
-            failed = true;
-        }
-        if (failed && node instanceof Expression expression) {
+        StaticContext result = super.visit(node, argument);
+        if (this.errors.hasFailed(node) && node instanceof Expression expression) {
             expression.setStaticSequenceType(StaticTypeErrors.UNKNOWN);
         }
         return result;
@@ -841,9 +827,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType expected = expression.getSequenceType();
         // Equality compares declared occurrence indicators, which is all an assertion's type can express.
         if (!inferred.equals(expected)) {
-            throw new IsStaticallyUnexpectedTypeException(
-                    "expected static type is " + expected + " instead " + inferred + " was inferred",
-                    expression.getMetadata());
+            this.errors.reportAssertion(
+                    new IsStaticallyUnexpectedTypeException(
+                            "expected static type is " + expected + " instead " + inferred + " was inferred",
+                            expression.getMetadata()),
+                    expression);
         }
 
         // An assertion checks the type without discarding its inference refinements.

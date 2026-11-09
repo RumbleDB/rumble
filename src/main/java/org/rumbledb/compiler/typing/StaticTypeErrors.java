@@ -119,6 +119,17 @@ public final class StaticTypeErrors {
         this.errors.add(new UnexpectedStaticTypeException(message, code, node.getMetadata(), certain));
     }
 
+    /** Explicit static assertions apply even when optional static typing is disabled. */
+    public void reportAssertion(RumbleException error, Node node) {
+        if (!this.nodesWithErrors.add(node)) {
+            return;
+        }
+        this.failedNodes.add(node);
+        if (!hasUnknownOperand(node)) {
+            this.errors.add(error);
+        }
+    }
+
     /** The errors reported so far, in the order they were found. */
     public List<RumbleException> getErrors() {
         return Collections.unmodifiableList(this.errors);

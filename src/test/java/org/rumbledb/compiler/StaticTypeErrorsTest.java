@@ -169,6 +169,44 @@ class StaticTypeErrorsTest {
         Assertions.assertEquals(1, error.getMetadata().getStart().line());
     }
 
+    @Test
+    void preservesIndependentAssertionsAndContinuesWithLaterSiblings() {
+        List<RumbleException> errors = errors("(1 + \"a\",\n 1 is statically string,\n 2 + \"b\")");
+        Assertions.assertEquals(List.of(1, 2, 3), lines(errors));
+        Assertions.assertInstanceOf(
+                org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException.class, errors.get(1));
+    }
+
+    @Test
+    void suppressesAnAssertionWhoseOperandAlreadyFailed() {
+        Assertions.assertEquals(1, errors("(1 + \"a\") is statically string").size());
+    }
+
+    @ParameterizedTest
+    @CsvSource(delimiter = '|', value = {
+        "(if ($x) then 1 else \"a\") + 1 | false",
+        "-(if ($x) then 1 else \"a\") | false",
+        "(if ($x) then \"a\" else true()) + 1 | true"
+    })
+    void classifiesArithmeticUnionAlternatives(String body, boolean certain) {
+        Assertions.assertEquals(List.of(certain), certainties(errors(
+                "declare function local:f($x as boolean) { " + body + " }; 1")));
+    }
+
+    @Test
+    void unrelatedMapRestrictionsCanShareTheEmptyMap() {
+        Assertions.assertEquals(List.of(false), certainties(errors(
+                "declare function local:f($x as map(xs:string, xs:integer)) "
+                        + "as map(xs:integer, xs:string) { $x }; 1")));
+    }
+
+    @Test
+    void unrelatedArrayRestrictionsCanShareTheEmptyArray() {
+        Assertions.assertEquals(List.of(false), certainties(errors(
+                "declare function local:f($x as array(xs:integer)) "
+                        + "as array(xs:string) { $x }; 1")));
+    }
+
     private static List<RumbleException> errors(String query) {
         RumbleException error = Assertions.assertThrows(RumbleException.class, () -> compile(query));
         return error instanceof StaticTypeErrorsException errors ? errors.getErrors() : List.of(error);

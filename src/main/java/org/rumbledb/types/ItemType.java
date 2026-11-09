@@ -647,18 +647,27 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     * Returns the types a value of this type can have: the members of a union, with nested unions expanded, or this
-     * type itself.
-     */
-    /**
-     * Whether an item may have both types: some member of one is a subtype of some member of the other. Types such
-     * as xs:integer and xs:string, or element(a) and element(b), have no item in common.
+     * Whether two types may share a value. Subtyping proves overlap, but its absence does not prove disjointness:
+     * empty maps and arrays, for example, satisfy otherwise unrelated content restrictions. For structural types
+     * and atomic restrictions, conservatively retain possible overlap instead of reporting a certain failure.
      */
     default boolean mayOverlapWith(ItemType other) {
         return getMemberTypes().stream().anyMatch(member -> other.getMemberTypes().stream()
-                .anyMatch(target -> member.isSubtypeOf(target) || target.isSubtypeOf(member)));
+                .anyMatch(target -> member.isSubtypeOf(target) || target.isSubtypeOf(member)
+                        || (member.isMapItemType() && target.isMapItemType())
+                        || (member.isObjectItemType() && target.isObjectItemType())
+                        || (member.isArrayItemType() && target.isArrayItemType())
+                        || (member.isXQueryArrayItemType() && target.isXQueryArrayItemType())
+                        || (member.isFunctionItemType() && target.isFunctionItemType())
+                        || (member.isNodeItemType() && target.isNodeItemType())
+                        || (member.isAtomicItemType() && target.isAtomicItemType()
+                                && member.getCastingPrimitiveType().equals(target.getCastingPrimitiveType()))));
     }
 
+    /**
+     * Returns the types a value of this type can have: the members of a union, with nested unions expanded, or this
+     * type itself.
+     */
     default List<ItemType> getMemberTypes() {
         if (!isUnionType()) {
             return List.of(this);
