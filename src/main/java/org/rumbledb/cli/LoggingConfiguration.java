@@ -15,11 +15,14 @@
  */
 package org.rumbledb.cli;
 
+import java.net.URI;
 import java.util.Arrays;
 import java.util.Locale;
 
 import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.config.Configurator;
+import org.apache.logging.log4j.core.config.DefaultConfiguration;
 import org.apache.logging.log4j.spi.StandardLevel;
 
 import org.rumbledb.config.RumbleConfiguration;
@@ -45,7 +48,18 @@ public final class LoggingConfiguration {
     static void configure(RumbleConfiguration configuration) {
         currentDebugConfig = configuration.debug();
         printInferredTypes = configuration.analysis().printInferredTypes();
+        useCliConfigurationIfUnconfigured();
         apply();
+    }
+
+    /**
+     * Log4j2's fallback configuration logs to stdout, which would mix log messages into query results.
+     * A configuration supplied by the user or by spark-submit is left alone.
+     */
+    private static void useCliConfigurationIfUnconfigured() {
+        if (LoggerContext.getContext(false).getConfiguration() instanceof DefaultConfiguration) {
+            Configurator.reconfigure(URI.create("classpath:rumble-cli-log4j2.properties"));
+        }
     }
 
     public static void apply() {

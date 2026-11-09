@@ -19,6 +19,7 @@ import java.io.Serial;
 import java.util.List;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -35,6 +36,11 @@ public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan
         super(arguments, staticContext);
     }
 
+    /** Version 3.1 widened fn:string-join to atomic items in both languages; version 1.0 still requires strings. */
+    public static boolean acceptsAtomicItems(LanguageVersion queryLanguage) {
+        return queryLanguage != null && queryLanguage.isAtLeast(LanguageVersion.Version.V3_1);
+    }
+
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item joinString = ItemFactory.getInstance().createStringItem("");
@@ -49,7 +55,7 @@ public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan
         StringBuilder stringBuilder = new StringBuilder();
         boolean first = true;
         for (Item item : strings) {
-            if (!item.isString() && !("xquery31".equals(this.staticContext.getQueryLanguage()) && item.isAtomic())) {
+            if (!item.isString() && !(acceptsAtomicItems(this.staticContext.getQueryLanguage()) && item.isAtomic())) {
                 throw new UnexpectedTypeException(
                         "String item expected",
                         this.getChild(0).getRuntimeStaticContext().getMetadata());

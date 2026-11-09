@@ -108,7 +108,7 @@ public final class DeclarationTranslation {
         if (ctx.sequenceType() != null) {
             seq = processSequenceType.apply(ctx.sequenceType());
         }
-        if ("xquery31".equals(translationContext.moduleContext().getQueryLanguage())) {
+        if (translationContext.moduleContext().getQueryLanguage().isXQuery()) {
             if (seq == null) {
                 seq = SequenceType.createSequenceType("item");
             } else if (seq.isEmptySequence() || seq.getArity() != SequenceType.Arity.One) {
@@ -155,7 +155,7 @@ public final class DeclarationTranslation {
         List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
         AnnotationValidator.validateFunctionAnnotations(annotations);
         Name name = parseFunctionName.apply(ctx.functionName());
-        boolean xquery = "xquery31".equals(translationContext.moduleContext().getQueryLanguage());
+        boolean xquery = translationContext.moduleContext().getQueryLanguage().isXQuery();
         String lexicalName = ctx.functionName().getText();
         if (xquery
                 && translationContext.moduleContext().getDefaultFunctionNamespaceUri() == null

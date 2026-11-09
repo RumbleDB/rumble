@@ -29,6 +29,7 @@ import org.rumbledb.bindings.ItemSequenceBinding;
 import org.rumbledb.compiler.CompilationPipeline;
 import org.rumbledb.compiler.DynamicContextVisitor;
 import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -103,7 +104,7 @@ public class LoadXQueryModuleFunctionIterator extends AbstractAtMostOneItemRunti
         }
         query.append("()");
         var configuration = this.staticContext.getConfiguration().toBuilder()
-                .configureSemantics(s -> s.queryLanguage("xquery31"))
+                .configureSemantics(s -> s.queryLanguage(LanguageVersion.XQUERY_31))
                 .build();
         MainModule module;
         try {
@@ -135,22 +136,22 @@ public class LoadXQueryModuleFunctionIterator extends AbstractAtMostOneItemRunti
         Map<Item, Map<Item, List<Item>>> functionExports = new LinkedHashMap<>();
         ItemFactory factory = ItemFactory.getInstance();
         for (var library : module.getProlog().getImportedModules()) {
-            if (!namespace.equals(library.getNamespace())) {
-                continue;
-            }
+            // A library can hold other namespaces' declarations when their modules import each other in a cycle.
             for (var declaration : library.getProlog().getVariableDeclarations()) {
                 Name name = declaration.getVariableName();
-                if (!Name.CONTEXT_ITEM.equals(name) && !hasPrivateAnnotation(declaration.getAnnotations())) {
+                if (namespace.equals(name.getNamespace()) && !hasPrivateAnnotation(declaration.getAnnotations())) {
                     variableExports.put(
                             factory.createQNameItem(name),
                             loaded.getVariableValues().getLocalVariableValue(name, getMetadata()));
                 }
             }
             for (var declaration : library.getProlog().getFunctionDeclarations()) {
-                if (hasPrivateAnnotation(((InlineFunctionExpression) declaration.getExpression()).getAnnotations())) {
+                var id = declaration.getFunctionIdentifier();
+                if (!namespace.equals(id.getName().getNamespace())
+                        || hasPrivateAnnotation(
+                                ((InlineFunctionExpression) declaration.getExpression()).getAnnotations())) {
                     continue;
                 }
-                var id = declaration.getFunctionIdentifier();
                 functionExports
                         .computeIfAbsent(factory.createQNameItem(id.getName()), ignored -> new LinkedHashMap<>())
                         .put(

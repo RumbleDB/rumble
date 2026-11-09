@@ -15,6 +15,7 @@
  */
 package org.rumbledb.cli;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -34,10 +35,10 @@ import org.rumbledb.exceptions.CliException;
 public final class CLIArgumentParser {
     public static final class BannerVersionProvider implements CommandLine.IVersionProvider {
         @Override
-        public String[] getVersion() throws java.io.IOException {
+        public String[] getVersion() throws IOException {
             try (var banner = CLIArgumentParser.class.getResourceAsStream("/assets/banner.txt")) {
                 if (banner == null) {
-                    throw new java.io.IOException("Missing banner resource: /assets/banner.txt");
+                    throw new IOException("Missing banner resource: /assets/banner.txt");
                 }
                 return new String(banner.readAllBytes(), StandardCharsets.UTF_8)
                         .lines()

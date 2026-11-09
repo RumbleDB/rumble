@@ -28,6 +28,21 @@ parser grammar CommonParser;
 moduleAndThisIsIt
    : module EOF
    ;
+   // rumble-test-suite reads the main label, so it must stay even though this repository does not use it.
+   
+module
+   : decl = versionDecl? (libraryModule | main = mainModule)
+   ;
+   // How a library module starts. No main module can start this way, so this tells the two kinds apart without parsing the whole source.
+   
+libraryModuleStart
+   : versionDecl? KW_MODULE KW_NAMESPACE
+   ;
+   // Both keywords are accepted so that either grammar can read the declaration that selects the language.
+   
+versionDecl
+   : language = (KW_JSONIQ | KW_XQUERY) (KW_VERSION version = stringLiteral (KW_ENCODING encoding = stringLiteral)? | KW_ENCODING encoding = stringLiteral) SEMICOLON
+   ;
 
 libraryModule
    : KW_MODULE KW_NAMESPACE ncName EQUAL uri = uriLiteral SEMICOLON prolog
@@ -886,9 +901,10 @@ keyword
    | keywordNotOKForFunction
    ;
 
-keywordOKForFunction
+commonKeywordOKForFunction
    // These keywords do not conflict with function syntax, including decimal-format properties.
-   : dialectKeywordOKForFunction
+   : KW_JSONIQ
+   | KW_XQUERY
    | DFPropertyName
    | KW_AFTER
    | KW_ALLOWING
