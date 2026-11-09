@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 
+import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -41,7 +42,7 @@ public class UserDefinedFunctionExecutionModes {
     private final List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
 
     @Setter
-    private String queryLanguage;
+    private LanguageVersion queryLanguage;
 
     public UserDefinedFunctionExecutionModes() {
         this.userDefinedFunctionsExecutionMode = new HashMap<>();

@@ -20,10 +20,14 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.xerces.impl.dv.InvalidDatatypeValueException;
+import org.apache.xerces.impl.dv.SchemaDVFactory;
+import org.apache.xerces.impl.validation.ValidationState;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -191,19 +195,16 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         // date parser report representational overflow as FODT0001 rather than Xerces FORG0001.
         if ("1.0".equals(xsdVersion) && (item.isString() || item.isUntypedAtomic())) {
             String name = targetType.getCastingPrimitiveType().getName().getLocalName();
-            if (java.util.Set.of("date", "dateTime", "gYear", "gYearMonth").contains(name)
+            if (Set.of("date", "dateTime", "gYear", "gYearMonth").contains(name)
                     && item.getStringValue().trim().matches("-?0{4,}(?:$|[-+ZT].*)")) {
                 return null;
             }
-            if (java.util.Set.of("anyURI", "float", "double").contains(name)) {
+            if (Set.of("anyURI", "float", "double").contains(name)) {
                 try {
-                    org.apache.xerces.impl.dv.SchemaDVFactory.getInstance()
+                    SchemaDVFactory.getInstance()
                             .getBuiltInType(name)
-                            .validate(
-                                    item.getStringValue(),
-                                    new org.apache.xerces.impl.validation.ValidationState(),
-                                    null);
-                } catch (org.apache.xerces.impl.dv.InvalidDatatypeValueException e) {
+                            .validate(item.getStringValue(), new ValidationState(), null);
+                } catch (InvalidDatatypeValueException e) {
                     return null;
                 }
             }

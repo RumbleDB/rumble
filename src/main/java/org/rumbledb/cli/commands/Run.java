@@ -19,12 +19,17 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
+import org.rumbledb.cli.CLIArgumentParser;
 import org.rumbledb.cli.CLIInvocation;
 import org.rumbledb.cli.arguments.InputArguments;
 import org.rumbledb.cli.arguments.OutputArguments;
 import org.rumbledb.config.model.RumbleMode;
 
-@Command(name = "run", description = "Executes a query.", mixinStandardHelpOptions = true)
+@Command(
+        name = "run",
+        description = "Executes a query.",
+        mixinStandardHelpOptions = true,
+        versionProvider = CLIArgumentParser.BannerVersionProvider.class)
 public final class Run extends BaseCommand {
     @ArgGroup(exclusive = true, multiplicity = "1")
     InputArguments input;
