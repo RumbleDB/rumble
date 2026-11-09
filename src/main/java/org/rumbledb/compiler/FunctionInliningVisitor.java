@@ -77,8 +77,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return false;
     }
 
-    private boolean isVariableReferenced(List<Expression> expressions, Name name, int index) {
-        for (int i = 0; i < index; i++) {
+    private boolean isVariableReferencedAfter(List<Expression> expressions, Name name, int index) {
+        for (int i = index + 1; i < expressions.size(); i++) {
             if (isVariableReferenced(expressions.get(i), name)) {
                 return true;
             }
@@ -170,28 +170,29 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 ? body
                 : convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
         ReturnClause returnClause = new ReturnClause(returnValue, expression.getMetadata());
-        // The arguments are bound from last to first, so an argument is evaluated after the parameters of the later
-        // ones are bound. A parameter that an earlier argument reads is therefore bound through a temporary variable,
-        // and assigned once every argument is bound, just before the return clause.
+        // The arguments are bound and converted in order, like the arguments of a call. A parameter that a later
+        // argument reads would hide the variable it reads, so its argument is bound to a temporary variable, which is
+        // assigned to the parameter once every argument is bound.
         List<Clause> clauses = new ArrayList<>();
         List<Clause> assignmentClauses = new ArrayList<>();
-        for (int i = expression.getArguments().size() - 1; i >= 0; i--) {
+        for (int i = 0; i < expression.getArguments().size(); i++) {
             Name paramName = paramNames.get(i);
-            SequenceType paramType = inlineFunction.getParams().get(paramName);
             Expression argumentExpression =
                     (Expression) visit(expression.getArguments().get(i), argument);
-            // Every argument is bound and converted, even a variable with the name of the parameter.
-            // if there is a name collision, use a temporary variable
-            if (isVariableReferenced(expression.getArguments(), paramName, i)) {
-                Name columnName = Name.createVariableInNoNamespace(
+            // Every argument is converted, even a variable with the name of the parameter.
+            Expression convertedArgument = convertArgument(
+                    argumentExpression, inlineFunction.getParams().get(paramName), expression);
+            if (isVariableReferencedAfter(expression.getArguments(), paramName, i)) {
+                Name temporaryName = Name.createVariableInNoNamespace(
                         String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
-                clauses.add(new LetClause(columnName, null, argumentExpression, expression.getMetadata()));
-                Expression assignmentExpression = convertArgument(
-                        new VariableReferenceExpression(columnName, expression.getMetadata()), paramType, expression);
-                assignmentClauses.add(new LetClause(paramName, null, assignmentExpression, expression.getMetadata()));
+                clauses.add(new LetClause(temporaryName, null, convertedArgument, expression.getMetadata()));
+                assignmentClauses.add(new LetClause(
+                        paramName,
+                        null,
+                        new VariableReferenceExpression(temporaryName, expression.getMetadata()),
+                        expression.getMetadata()));
             } else {
-                Expression assignmentExpression = convertArgument(argumentExpression, paramType, expression);
-                clauses.add(new LetClause(paramName, null, assignmentExpression, expression.getMetadata()));
+                clauses.add(new LetClause(paramName, null, convertedArgument, expression.getMetadata()));
             }
         }
         clauses.addAll(assignmentClauses);
