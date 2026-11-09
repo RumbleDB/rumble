@@ -66,14 +66,8 @@ public final class ArithmeticTyping {
             Node node) {
         this.errors.rejectEmptyOperands(leftType, rightType, node);
 
-        SequenceType.Arity inferredArity = AtomizedOperands.resolveArities(leftType, rightType);
-        if (inferredArity == null) {
-            this.errors.report(
-                    "'+' and '*' arities are not allowed for the operands of " + operator,
-                    node,
-                    AtomizedOperands.mayBeSingleton(leftType) && AtomizedOperands.mayBeSingleton(rightType));
-            inferredArity = SequenceType.Arity.OneOrZero;
-        }
+        SequenceType.Arity inferredArity =
+                AtomizedOperands.checkSingletonOperands(this.errors, operator, leftType, rightType, node);
 
         AtomizedOperands.checkAtomizableOperands(this.errors, operator, leftType, rightType, node);
         ItemType inferredType = inferBinaryOperationType(leftType.getItemType(), rightType.getItemType(), operation);
@@ -89,9 +83,7 @@ public final class ArithmeticTyping {
                                 + ", unless one is empty");
             } else {
                 this.errors.report(
-                        "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
-                        node,
-                        mayPass);
+                        "'" + operator + "' is not defined for " + leftType + " and " + rightType + ".", node, mayPass);
             }
             inferredType = BuiltinTypesCatalogue.atomicItem;
         }
@@ -276,7 +268,8 @@ public final class ArithmeticTyping {
         }
     }
 
-    public SequenceType inferUnaryType(SequenceType childInferredType, Node node) {
+    public SequenceType inferUnaryType(SequenceType childInferredType, boolean negated, Node node) {
+        String operator = "Unary '" + (negated ? "-" : "+") + "'";
 
         // if the child is the empty sequence just infer the empty sequence
         this.errors.rejectInferredEmpty(childInferredType, node, "its operand does");
@@ -284,7 +277,7 @@ public final class ArithmeticTyping {
         SequenceType.Arity resultArity = AtomizedOperands.atomizedSingletonArity(childInferredType);
         if (resultArity == null) {
             this.errors.report(
-                    "'+' and '*' arities are not allowed for unary expressions",
+                    TypeErrorMessages.severalValues(operator, "its operand", childInferredType),
                     node,
                     AtomizedOperands.mayBeSingleton(childInferredType));
             resultArity = SequenceType.Arity.OneOrZero;
@@ -302,10 +295,7 @@ public final class ArithmeticTyping {
                                 + childInferredType
                                 + ", unless it is empty");
             } else {
-                this.errors.report(
-                        "It is not possible to have a unary expression with the following type: " + childInferredType,
-                        node,
-                        mayPass);
+                this.errors.report(operator + " is not defined for " + childInferredType + ".", node, mayPass);
             }
             childItemType = BuiltinTypesCatalogue.numericItem;
         }

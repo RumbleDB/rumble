@@ -107,6 +107,11 @@ public final class StaticTypeErrors {
         record(message, code, node, !mayPass);
     }
 
+    /** Reports a shared error, which is possible when some values may still pass the check, and otherwise certain. */
+    public void report(TypeErrorMessages.Message message, Node node, boolean mayPass) {
+        report(message.text(), message.code(), node, mayPass);
+    }
+
     /** Reports that the actual type is not a subtype of the expected one, which is possible if they may overlap. */
     public void reportMismatch(String message, SequenceType actual, SequenceType expected, Node node) {
         report(message, node, actual.mayMatch(expected));
@@ -215,11 +220,7 @@ public final class StaticTypeErrors {
      * for a reason such as "its left operand does".
      */
     public void reportInferredEmpty(Node node, String reason) {
-        reportInferredEmpty(
-                "This expression always returns the empty sequence, because "
-                        + reason
-                        + ". Static typing only allows this for ().",
-                node);
+        report(TypeErrorMessages.inferredEmpty(reason), node, false);
     }
 
     /** Reports a node that makes its expression always return the empty sequence, which the message explains. */

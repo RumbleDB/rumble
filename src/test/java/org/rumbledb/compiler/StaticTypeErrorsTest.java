@@ -17,11 +17,14 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import org.rumbledb.bindings.ExternalBindings;
@@ -93,15 +96,54 @@ class StaticTypeErrorsTest {
     @Test
     void explainsWhyAnExpressionIsAlwaysEmpty() {
         Assertions.assertEquals(
-                "This expression always returns the empty sequence, because its right operand does."
-                        + " Static typing only allows this for ().",
+                "This expression always returns the empty sequence, because its right operand does.",
                 errors("1 + ()").get(0).getJSONiqErrorMessage());
+    }
+
+    @ParameterizedTest
+    @MethodSource("sharedErrors")
+    void namesTheOperandAndItsTypeInSharedErrors(String query, String code, String message) {
+        RumbleException error = errors(query).get(0);
+        Assertions.assertEquals(code, error.getErrorCode().toString());
+        Assertions.assertEquals(message, error.getJSONiqErrorMessage());
+    }
+
+    private static Stream<Arguments> sharedErrors() {
+        return Stream.of(
+                Arguments.of(
+                        "declare function local:f($x as integer) { $x }; local:f(\"a\")",
+                        "XPTY0004",
+                        "local:f expects xs:integer for this argument, but it is xs:string."),
+                Arguments.of(
+                        "declare function local:f($x as string) { $x }; local:f({\"a\": 1})",
+                        "FOTY0013",
+                        "local:f expects xs:string for this argument, but it is { a: xs:integer }."),
+                Arguments.of(
+                        "declare function local:f() as integer { \"a\" }; local:f()",
+                        "XPTY0004",
+                        "local:f declares the return type xs:integer, but returns xs:string."),
+                Arguments.of(
+                        "(1, 2) + 1",
+                        "XPTY0004",
+                        "'+' expects at most one value, but its left operand is xs:integer+."),
+                Arguments.of(
+                        "1 eq {\"a\": 1}",
+                        "FOTY0013",
+                        "'eq' expects atomizable values, but its right operand is { a: xs:integer }."),
+                Arguments.of(
+                        "if (function() { 1 }) then 1 else 2",
+                        "XPTY0004",
+                        "The condition of this if is function() as item*, which has no effective boolean value."),
+                Arguments.of(
+                        "declare function local:f($x) { if ($x) then 1 else 2 }; local:f(1)",
+                        "XPTY0004",
+                        "The condition of this if is item*, which may have no effective boolean value."));
     }
 
     @Test
     void describesAnInferredUnionByItsMembers() {
         Assertions.assertEquals(
-                "The following types operation is not possible: (xs:integer | xs:string) + xs:boolean",
+                "'+' is not defined for (xs:integer | xs:string) and xs:boolean.",
                 errors("declare function local:f($x as xs:boolean) { (if ($x) then 1 else \"a\") + $x }; 1")
                         .get(0)
                         .getJSONiqErrorMessage());

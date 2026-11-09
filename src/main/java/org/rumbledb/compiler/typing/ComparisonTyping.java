@@ -15,8 +15,6 @@
  */
 package org.rumbledb.compiler.typing;
 
-import java.util.List;
-
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -45,15 +43,8 @@ public final class ComparisonTyping {
         // XPST0005 error
         if (operator.isValueComparison()) {
             this.errors.rejectEmptyOperands(leftInferredType, rightInferredType, node);
-            returnArity = AtomizedOperands.resolveArities(leftInferredType, rightInferredType);
-            if (returnArity == null) {
-                this.errors.report(
-                        "'+' and '*' arities are not allowed for this comparison operator: " + operator,
-                        node,
-                        AtomizedOperands.mayBeSingleton(leftInferredType)
-                                && AtomizedOperands.mayBeSingleton(rightInferredType));
-                returnArity = SequenceType.Arity.OneOrZero;
-            }
+            returnArity = AtomizedOperands.checkSingletonOperands(
+                    this.errors, operator.toString(), leftInferredType, rightInferredType, node);
         }
 
         AtomizedOperands.checkAtomizableOperands(
@@ -70,12 +61,7 @@ public final class ComparisonTyping {
 
             if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator)) {
                 this.errors.report(
-                        "It is not possible to compare these types: "
-                                + leftItemType
-                                + " "
-                                + operator
-                                + " "
-                                + rightItemType,
+                        "'" + operator + "' cannot compare " + leftItemType + " with " + rightItemType + ".",
                         node,
                         // An empty operand passes: the comparison is then false or empty.
                         leftInferredType.getCardinality().allowsZero()
@@ -156,18 +142,11 @@ public final class ComparisonTyping {
                         && right.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem));
     }
 
-    public SequenceType inferNodeComparisonType(SequenceType leftType, SequenceType rightType, Node node) {
-
+    public SequenceType inferNodeComparisonType(
+            SequenceType leftType, SequenceType rightType, String operator, Node node) {
         SequenceType operandType = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceCardinality.ZERO_OR_ONE);
-        for (SequenceType type : List.of(leftType, rightType)) {
-            if (!type.isSubtypeOf(operandType)) {
-                this.errors.reportMismatch(
-                        "A node comparison operand must be a single node or empty, found " + type,
-                        type,
-                        operandType,
-                        node);
-            }
-        }
+        checkNodeComparisonOperand(leftType, operandType, operator, "its left operand", node);
+        checkNodeComparisonOperand(rightType, operandType, operator, "its right operand", node);
 
         // XQuery 3.1 section 3.7.3: an empty operand produces an empty result. Otherwise,
         // a successful comparison produces one boolean, even when operand checks are deferred to runtime.
@@ -183,6 +162,17 @@ public final class ComparisonTyping {
             cardinality = SequenceCardinality.ONE;
         }
         return new SequenceType(BuiltinTypesCatalogue.booleanItem, cardinality);
+    }
+
+    private void checkNodeComparisonOperand(
+            SequenceType type, SequenceType operandType, String operator, String operand, Node node) {
+        if (!type.isSubtypeOf(operandType)) {
+            this.errors.reportMismatch(
+                    "'" + operator + "' expects at most one node, but " + operand + " is " + type + ".",
+                    type,
+                    operandType,
+                    node);
+        }
     }
 
     /**
