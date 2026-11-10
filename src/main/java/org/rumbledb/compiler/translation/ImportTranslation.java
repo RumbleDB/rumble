@@ -79,12 +79,6 @@ public final class ImportTranslation {
                 .map(processURILiteral)
                 .map(URILiteralUtils::normalizeAsAnyURI)
                 .toList();
-        if (ModuleImportLoader.isActive(namespace)) {
-            if (ctx.prefix() != null) {
-                translationContext.bindNamespace(ctx.prefix(), namespace, metadata);
-            }
-            return ModuleImportLoader.activeReference(namespace, metadata);
-        }
         LibraryModule libraryModule = ModuleImportLoader.load(
                 namespace,
                 locationHints,
@@ -92,7 +86,16 @@ public final class ImportTranslation {
                 translationContext.compilationConfiguration(),
                 metadata);
         if (ctx.prefix() != null) {
-            translationContext.bindNamespace(ctx.prefix(), libraryModule.getNamespace(), metadata);
+            boolean sameModuleBinding = libraryModule.getNamespace().equals(translationContext.libraryModuleNamespace())
+                    && libraryModule
+                            .getNamespace()
+                            .equals(translationContext
+                                    .moduleContext()
+                                    .getInScopeNamespaceBindings()
+                                    .get(ctx.prefix()));
+            if (!sameModuleBinding) {
+                translationContext.bindNamespace(ctx.prefix(), libraryModule.getNamespace(), metadata);
+            }
         }
         return libraryModule;
     }

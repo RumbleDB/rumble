@@ -17,6 +17,8 @@ package org.rumbledb.config.model;
 
 import java.io.Serial;
 import java.io.Serializable;
+import java.time.DateTimeException;
+import java.time.ZoneId;
 import java.util.Locale;
 import java.util.Objects;
 
@@ -113,9 +115,9 @@ public class FormattingConfig implements Serializable {
             return null;
         }
         try {
-            java.time.ZoneId.of(place);
+            ZoneId.of(place);
             return place;
-        } catch (java.time.DateTimeException e) {
+        } catch (DateTimeException e) {
             throw new CliException("Invalid argument supplied for default-formatting-place: " + place);
         }
     }

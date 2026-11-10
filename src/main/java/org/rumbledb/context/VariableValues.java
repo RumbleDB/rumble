@@ -19,8 +19,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.Serial;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -117,7 +119,7 @@ public class VariableValues implements Serializable {
         if (this.parent != null) {
             this.parent.populateClosure(local, rdd, dataFrames);
         }
-        new java.util.LinkedHashMap<>(this.localVariableValues).forEach((name, value) -> {
+        new LinkedHashMap<>(this.localVariableValues).forEach((name, value) -> {
             // Module variables are read through the function's module context. Capturing them would
             // evaluate unrelated initializers, including the initializer creating this function.
             if (this.parent == null
@@ -126,7 +128,7 @@ public class VariableValues implements Serializable {
                     && !name.equals(Name.CONTEXT_COUNT)) return;
             rdd.remove(name);
             dataFrames.remove(name);
-            local.put(name, value == null ? null : new java.util.ArrayList<>(value));
+            local.put(name, value == null ? null : new ArrayList<>(value));
         });
         this.rddVariableValues.forEach((name, value) -> {
             local.remove(name);

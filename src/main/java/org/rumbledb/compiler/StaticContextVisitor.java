@@ -59,6 +59,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.OptionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -146,12 +147,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
+        String key = libraryModule.getModuleGroupKey();
+        if (!this.importedModuleContexts.containsKey(key)) {
             StaticContext moduleContext = libraryModule.getStaticContext();
-            this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
             this.visit(libraryModule.getProlog(), moduleContext);
+            this.importedModuleContexts.put(key, moduleContext);
         }
-        StaticContext importedContext = this.importedModuleContexts.get(libraryModule.getNamespace());
+        StaticContext importedContext = this.importedModuleContexts.get(key);
         for (var entry : importedContext.getInScopeVariables().entrySet()) {
             Name name = entry.getKey();
             var existing = argument.getInScopeVariables().get(name);
@@ -162,9 +164,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         argument.importModuleContext(importedContext);
         argument.getInScopeSchemaTypes()
-                .importModuleTypes(this.importedModuleContexts
-                        .get(libraryModule.getNamespace())
-                        .getInScopeSchemaTypes());
+                .importModuleTypes(this.importedModuleContexts.get(key).getInScopeSchemaTypes());
         return argument;
     }
 
@@ -546,29 +546,50 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
             if (hasPrivateAnnotation(declaration.getAnnotations())) {
-                argument.markPrivateVariable(declaration.getVariableName());
+                prolog.getDeclarationContext(declaration, argument).markPrivateVariable(declaration.getVariableName());
             }
         }
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-            argument.addFunctionSignature(
+            StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
+            declarationContext.addFunctionSignature(
                     expression.getFunctionIdentifier(),
                     new FunctionSignature(
                             new ArrayList<>(expression.getParams().values()),
                             expression.getReturnType(),
                             expression.isUpdating()));
             if (hasPrivateAnnotation(expression.getAnnotations())) {
-                argument.markPrivateFunction(expression.getFunctionIdentifier());
+                declarationContext.markPrivateFunction(expression.getFunctionIdentifier());
             }
         }
         for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-            argument.addVariable(
-                    declaration.getVariableName(),
-                    declaration.getActualSequenceType(),
-                    declaration.getMetadata(),
-                    declaration.isAssignable());
+            prolog.getDeclarationContext(declaration, argument)
+                    .addVariable(
+                            declaration.getVariableName(),
+                            declaration.getActualSequenceType(),
+                            declaration.getMetadata(),
+                            declaration.isAssignable());
         }
-        StaticContext generatedContext = visitDescendants(prolog, argument);
+        StaticContext generatedContext = argument;
+        if (prolog.getSourceModuleContexts().isEmpty()) {
+            generatedContext = visitDescendants(prolog, argument);
+        } else {
+            for (SchemaImport schema : prolog.getSchemaImports()) {
+                visit(schema, argument);
+            }
+            for (LibraryModule imported : prolog.getImportedModules()) {
+                visit(imported, argument);
+            }
+            // Function signatures and types must be visible throughout a mutually recursive group.
+            for (StaticContext sourceContext : prolog.getSourceModuleContexts().values()) {
+                prolog.shareGroupDeclarations(sourceContext, argument);
+            }
+            for (Node declaration : prolog.getDeclarations()) {
+                StaticContext declarationContext = prolog.getDeclarationContext(declaration, argument);
+                visit(declaration, declarationContext);
+                prolog.shareGroupDeclarations(declarationContext, argument);
+            }
+        }
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(generatedContext, prolog.getMetadata());
         }
@@ -608,8 +629,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // and therefore cannot be resolved through InScopeSchemaTypes.
         ItemType itemType = sequenceType.getItemType();
         XmlSchemaCatalog schemaCatalog = staticContext.getInScopeSchemaTypes().getXmlSchemaCatalog();
-        boolean xquery = staticContext.getQueryLanguage() != null
-                && staticContext.getQueryLanguage().startsWith("xquery");
+        boolean xquery = staticContext.getQueryLanguage().isXQuery();
         if (xquery
                 && itemType.hasName()
                 && Name.XS_NS.equals(itemType.getName().getNamespace())
