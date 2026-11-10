@@ -1389,7 +1389,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitUnaryLookupExpression(UnaryLookupExpression expression, StaticContext argument) {
-        return withType(expression, SequenceType.createSequenceType("item*"), argument);
+        visitDescendants(expression, argument);
+        SequenceType contextType = expression.getStaticContext().getContextItemStaticType();
+        // An unknown focus leaves both presence and lookup compatibility to the runtime.
+        if (contextType == null || StaticTypeErrors.isUnknown(contextType)) {
+            expression.setStaticSequenceType(contextType == null ? SequenceType.createSequenceType("item*") : contextType);
+            return argument;
+        }
+        Expression key = expression.getLookupExpression();
+        setLookupType(
+                expression,
+                this.lookups.inferPostfixLookupType(
+                        contextType, key == null ? null : typeOf(key, expression), expression));
+        return argument;
     }
 
     @Override
