@@ -89,7 +89,7 @@ public final class TypeErrorMessages {
     /** A function result that does not match the declared return type. */
     public static Message returnMismatch(Name function, SequenceType declared, SequenceType actual) {
         return new Message(
-                function
+                (function == null ? "An anonymous function" : function)
                         + " declares the return type "
                         + TypeNotation.shortened(declared)
                         + ", but returns "

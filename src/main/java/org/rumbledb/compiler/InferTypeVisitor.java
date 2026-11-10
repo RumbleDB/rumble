@@ -31,6 +31,7 @@ import org.rumbledb.compiler.typing.ArithmeticTyping;
 import org.rumbledb.compiler.typing.AtomizedOperands;
 import org.rumbledb.compiler.typing.CastTyping;
 import org.rumbledb.compiler.typing.ComparisonTyping;
+import org.rumbledb.compiler.typing.FunctionConversionTyping;
 import org.rumbledb.compiler.typing.LookupTyping;
 import org.rumbledb.compiler.typing.PathStepTyping;
 import org.rumbledb.compiler.typing.ReturnTypeContext;
@@ -600,26 +601,35 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        SequenceType returnType = expression.getActualReturnType();
-        if (returnType == null) {
-            returnType = expression.getBody().getExpression().getStaticSequenceType();
+        Expression body = expression.getBody().getExpression();
+        SequenceType inferredType = typeOf(body, expression);
+        SequenceType declaredType = expression.getActualReturnType();
+        if (declaredType != null
+                && !StaticTypeErrors.isUnknown(inferredType)
+                && !FunctionConversionTyping.isCompatible(inferredType, declaredType)) {
+            this.errors.report(
+                    TypeErrorMessages.returnMismatch(expression.getName(), declaredType, inferredType),
+                    resultExpression(body),
+                    FunctionConversionTyping.mayConvertTo(inferredType, declaredType));
         }
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
-        FunctionSignature signature = new FunctionSignature(params, returnType, expression.isUpdating());
+        FunctionSignature signature =
+                new FunctionSignature(params, functionReturnType(expression), expression.isUpdating());
         expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
         return argument;
     }
 
-    private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
-        BuiltinFunction function = null;
-        FunctionSignature signature = null;
-        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext);
-        if (function != null) {
-            signature = function.getSignature();
-        } else {
-            signature = staticContext.getFunctionSignature(identifier);
+    /** Explicit annotations define the contract; early exits need more than the final expression's type. */
+    private static SequenceType functionReturnType(InlineFunctionExpression function) {
+        if (function.getActualReturnType() != null || function.hasExitStatement()) {
+            return function.getReturnType();
         }
-        return signature;
+        return typeOf(function.getBody().getExpression(), function);
+    }
+
+    private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
+        BuiltinFunction function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext);
+        return function == null ? staticContext.getFunctionSignature(identifier) : function.getSignature();
     }
 
     @Override
@@ -648,11 +658,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     /** Checks an input using the same function-conversion rules for explicit and implicit arguments. */
     private void checkFunctionInput(
             FunctionCallExpression call, String input, SequenceType actual, SequenceType expected) {
-        if (!StaticTypeErrors.isUnknown(actual) && !isFunctionArgumentCompatible(actual, expected)) {
+        if (!StaticTypeErrors.isUnknown(actual) && !FunctionConversionTyping.isCompatible(actual, expected)) {
             this.errors.report(
                     TypeErrorMessages.argumentMismatch(call.getFunctionName(), input, expected, actual),
                     call,
-                    mayConvertTo(actual, expected));
+                    FunctionConversionTyping.mayConvertTo(actual, expected));
         }
     }
 
@@ -699,7 +709,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         FunctionSignature signature;
         try {
-            signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
+            signature = builtinFunction == null
+                    ? expression.getStaticContext().getFunctionSignature(expression.getFunctionIdentifier())
+                    : builtinFunction.getSignature();
         } catch (UnknownFunctionCallException e) {
             this.errors.reportStaticError(
                     new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata()),
@@ -716,10 +728,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         Optional<SequenceType> returnType = inferBuiltinReturnType(expression, builtinFunction, inputTypes, argument);
-        expression.setStaticSequenceType(returnType.orElseGet(() -> {
-            SequenceType declaredReturnType = signature.getReturnType();
-            return declaredReturnType == null ? SequenceType.createSequenceType("item*") : declaredReturnType;
-        }));
+        expression.setStaticSequenceType(returnType.orElse(signature.getReturnType()));
         return argument;
     }
 
@@ -774,56 +783,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                                 this.resourceResolver,
                                 staticContext,
                                 inputTypes));
-    }
-
-    /**
-     * Whether some value of the actual type passes function conversion to the expected type, which atomizes nodes
-     * and arrays and casts untyped values when an atomic type is expected.
-     */
-    private static boolean mayConvertTo(SequenceType actual, SequenceType expected) {
-        SequenceType converted = actual;
-        if (expected.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            converted = TypeAtomization.containsNodeOrArray(actual.getItemType())
-                    ? TypeAtomization.inferType(actual)
-                    : actual;
-            SequenceType untyped = new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem, expected.getCardinality());
-            if (converted.mayMatch(untyped)) {
-                return true;
-            }
-        }
-        return converted.mayMatchOrBePromotedTo(expected);
-    }
-
-    private boolean isFunctionArgumentCompatible(SequenceType actual, SequenceType expected) {
-        if (actual.isEmptySequence()) {
-            return actual.isSubtypeOfOrCanBePromotedTo(expected);
-        }
-        ItemType itemType = actual.getItemType();
-        if (itemType.isUnionType()) {
-            return itemType.allMemberTypesMatch(member ->
-                    isFunctionArgumentCompatible(new SequenceType(member, actual.getCardinality()), expected));
-        }
-        if (expected.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            if (TypeAtomization.hasUnknownAtomizedType(itemType)) {
-                // Runtime function conversion checks the type and size of the typed value, just as for casts.
-                return true;
-            }
-            if (TypeAtomization.hasUnknownAtomizedCount(itemType)) {
-                // An array atomizes to any number of values: only their type is checked, their count at runtime.
-                SequenceType atomized = TypeAtomization.inferType(actual);
-                return atomized.isEmptySequence()
-                        || isFunctionArgumentCompatible(
-                                new SequenceType(atomized.getItemType(), expected.getCardinality()), expected);
-            }
-            if (TypeAtomization.containsNodeOrArray(itemType)) {
-                // Function conversion atomizes the node, so its known typed value must match.
-                return isFunctionArgumentCompatible(TypeAtomization.inferType(actual), expected);
-            }
-            if (itemType.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
-                return actual.getCardinality().isSubtypeOf(expected.getCardinality());
-            }
-        }
-        return actual.isSubtypeOfOrCanBePromotedTo(expected);
     }
 
     // endregion
@@ -914,7 +873,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
         SequenceType argumentType = typeOf(expression.getArgument(), expression);
         SequenceType parameterType = expression.getParameterType();
-        if (!isFunctionArgumentCompatible(argumentType, parameterType)) {
+        if (!FunctionConversionTyping.isCompatible(argumentType, parameterType)) {
             this.errors.report(
                     expression.isReturnValue()
                             ? TypeErrorMessages.returnMismatch(
@@ -922,7 +881,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             : TypeErrorMessages.argumentMismatch(
                                     expression.getFunctionName(), "this argument", parameterType, argumentType),
                     expression,
-                    mayConvertTo(argumentType, parameterType));
+                    FunctionConversionTyping.mayConvertTo(argumentType, parameterType));
         }
         // A matching argument is passed unchanged, so it keeps its more precise type.
         expression.setStaticSequenceType(argumentType.isSubtypeOf(parameterType) ? argumentType : parameterType);
@@ -1509,7 +1468,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return false;
         }
         for (int i = 0; i < length; ++i) {
-            if (!isFunctionArgumentCompatible(types.get(i), expectedTypes.get(i))) {
+            if (!FunctionConversionTyping.isCompatible(types.get(i), expectedTypes.get(i))) {
                 return false;
             }
         }
@@ -1614,8 +1573,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (!checkArguments(formalParameterTypes, actualParameterTypes)) {
             boolean mayPass = true;
             for (int argumentIndex = 0; argumentIndex < actualParameterTypes.size(); argumentIndex++) {
-                mayPass &=
-                        mayConvertTo(actualParameterTypes.get(argumentIndex), formalParameterTypes.get(argumentIndex));
+                mayPass &= FunctionConversionTyping.mayConvertTo(
+                        actualParameterTypes.get(argumentIndex), formalParameterTypes.get(argumentIndex));
             }
             this.errors.report(
                     "The arguments of this call do not match the parameters of " + TypeNotation.shortened(type) + ".",
@@ -2018,28 +1977,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        InlineFunctionExpression inlineExpression = (InlineFunctionExpression) expression.getExpression();
-        Expression body = inlineExpression.getBody().getExpression();
-        SequenceType inferredType = typeOf(body, expression);
-        SequenceType expectedType = inlineExpression.getActualReturnType();
-
-        // Dependencies are inferred first. Recursive groups retain their declared/default contract until
-        // fixed-point inference is supported; exit statements may return before the body's final expression.
-        if (expectedType == null && !expression.hasCyclicTypeDependencies() && !inlineExpression.hasExitStatement()) {
-            argument.getFunctionSignature(expression.getFunctionIdentifier()).refineReturnType(inferredType);
+        InlineFunctionExpression function = (InlineFunctionExpression) expression.getExpression();
+        // Dependencies are inferred first. Cyclic signatures stay conservative until fixed-point inference is
+        // supported.
+        if (function.getActualReturnType() == null && !expression.hasCyclicTypeDependencies()) {
+            argument.getFunctionSignature(expression.getFunctionIdentifier())
+                    .refineReturnType(functionReturnType(function));
         }
-
-        // An unknown body type follows from an error in the body, which is reported already.
-        if (expectedType != null
-                && !StaticTypeErrors.isUnknown(inferredType)
-                && !inferredType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
-            this.errors.report(
-                    TypeErrorMessages.returnMismatch(
-                            expression.getFunctionIdentifier().getName(), expectedType, inferredType),
-                    resultExpression(body),
-                    mayConvertTo(inferredType, expectedType));
-        }
-
         return argument;
     }
 

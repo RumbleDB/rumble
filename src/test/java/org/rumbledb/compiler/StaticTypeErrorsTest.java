@@ -139,7 +139,7 @@ class StaticTypeErrorsTest {
                 Arguments.of(
                         "if (function() { 1 }) then 1 else 2",
                         "XPTY0004",
-                        "The condition of this if is function() as item*, which has no effective boolean value."),
+                        "The condition of this if is function() as xs:integer, which has no effective boolean value."),
                 Arguments.of(
                         "declare function local:f($x) { if ($x) then 1 else 2 }; local:f(1)",
                         "XPTY0004",
