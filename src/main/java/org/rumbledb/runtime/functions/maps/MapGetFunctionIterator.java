@@ -96,6 +96,6 @@ public class MapGetFunctionIterator extends ItemRuntimePlan implements LocalRunt
 
     /** The value type of a map whose key and value types are known. */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        return MapTyping.typedMapArgument(call).map(LookupTyping::inferLookupCallType);
+        return MapTyping.typedMapArgument(context.argumentType(0)).map(LookupTyping::inferLookupCallType);
     }
 }

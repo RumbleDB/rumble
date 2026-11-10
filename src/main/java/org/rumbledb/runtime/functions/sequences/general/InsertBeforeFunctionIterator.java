@@ -199,9 +199,6 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
 
     /** The items of the sequence and of the inserted items. */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        return Optional.of(call.getArguments()
-                .get(0)
-                .getStaticSequenceType()
-                .concatenateWith(call.getArguments().get(2).getStaticSequenceType()));
+        return Optional.of(context.argumentType(0).concatenateWith(context.argumentType(2)));
     }
 }

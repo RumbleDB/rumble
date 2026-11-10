@@ -64,8 +64,7 @@ public class MapEntryFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     /** A map from the key's type to the value's type. */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        SequenceType valueType = call.getArguments().get(1).getStaticSequenceType();
-        return MapTyping.atomizedKeyType(call.getArguments().get(0))
-                .map(keyType -> MapTyping.mapType(keyType, valueType));
+        SequenceType valueType = context.argumentType(1);
+        return MapTyping.atomizedKeyType(context.argumentType(0)).map(keyType -> MapTyping.mapType(keyType, valueType));
     }
 }

@@ -21,7 +21,6 @@ import java.util.Optional;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.compiler.typing.ReturnTypeRule;
-import org.rumbledb.compiler.typing.StaticTypeErrors;
 import org.rumbledb.context.ConstructorFunctionResolver.ResolvedConstructor;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -43,8 +42,7 @@ public class ConstructorFunctionIterator extends ItemRuntimePlan implements Loca
      */
     public static ReturnTypeRule returnTypeRule(SequenceType declaredReturnType) {
         return (call, context) -> {
-            SequenceType argumentType = StaticTypeErrors.requireInferredType(
-                    call.getArguments().get(0).getStaticSequenceType(), call);
+            SequenceType argumentType = context.argumentType(0);
             return declaredReturnType.getArity() == SequenceType.Arity.OneOrZero
                             && TypeAtomization.inferType(argumentType).getCardinality() == SequenceCardinality.ONE
                     ? Optional.of(new SequenceType(declaredReturnType.getItemType(), SequenceType.Arity.One))

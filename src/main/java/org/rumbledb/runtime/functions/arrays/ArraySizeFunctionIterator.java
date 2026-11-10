@@ -65,7 +65,7 @@ public class ArraySizeFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     /** One integer for one array. */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        return call.getArguments().get(0).getStaticSequenceType().getArity() == SequenceType.Arity.One
+        return context.argumentType(0).getArity() == SequenceType.Arity.One
                 ? Optional.of(new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One))
                 : Optional.empty();
     }
