@@ -154,10 +154,8 @@ public class ItemFactory {
             return this.negativeInfinityDoubleItem;
         }
         if (d == 0.0) {
-            return this.positiveZeroDoubleItem;
-        }
-        if (d == 0.0) {
-            return this.negativeZeroDoubleItem;
+            // Equality does not distinguish IEEE 754 positive and negative zero.
+            return Double.doubleToRawLongBits(d) < 0 ? this.negativeZeroDoubleItem : this.positiveZeroDoubleItem;
         }
         if (d == Double.NaN) {
             return this.NaNDoubleItem;
