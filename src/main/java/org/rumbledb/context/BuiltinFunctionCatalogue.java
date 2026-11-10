@@ -3093,11 +3093,12 @@ public class BuiltinFunctionCatalogue {
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction has_children_without_arg = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "has-children"),
-            List.of(),
-            "boolean",
-            HasChildrenFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "has-children"),
+                    List.of(),
+                    "boolean",
+                    HasChildrenFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(HasChildrenFunctionIterator::inferReturnType);
 
     static final BuiltinFunction has_children_with_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "has-children"),

@@ -167,7 +167,6 @@ import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
 import org.rumbledb.resources.ResourceResolver;
-import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
@@ -678,21 +677,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMetadata());
             }
         }
-        // The zero-argument form has an implicit node argument. Check the focus type
-        // just as the one-argument form checks its explicit argument under static typing.
-        Name functionName = expression.getFunctionIdentifier().getName();
-        if ((Name.FN_NS.equals(functionName.getNamespace())
-                        || Name.JSONIQ_DEFAULT_FUNCTION_NS.equals(functionName.getNamespace()))
-                && functionName.getLocalName().equals("has-children")
-                && expression.getArguments().isEmpty()) {
-            SequenceType contextType = expression.getStaticContext().getContextItemStaticType();
-            if (contextType != null && !contextType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.nodeItem)) {
-                this.errors.report(
-                        "fn:has-children() expects a node as its context item, but it is " + contextType + ".",
-                        expression,
-                        contextType.getItemType().mayOverlapWith(BuiltinTypesCatalogue.nodeItem));
-            }
-        }
         FunctionSignature signature;
         try {
             signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
@@ -718,7 +702,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 if (!isFunctionArgumentCompatible(actualType, expectedType)) {
                     this.errors.report(
                             TypeErrorMessages.argumentMismatch(
-                                    functionName, "argument " + (i + 1), expectedType, actualType),
+                                    expression.getFunctionName(), "argument " + (i + 1), expectedType, actualType),
                             expression,
                             mayConvertTo(actualType, expectedType));
                 }
@@ -741,20 +725,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 SequenceType returnType = signature.getReturnType();
                 if (returnType == null) {
                     returnType = SequenceType.createSequenceType("item*");
-                }
-                if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), expression.getStaticContext())
-                        && parameterExpressions.size() == 1) {
-                    BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                            expression.getFunctionIdentifier(), expression.getStaticContext());
-                    if (builtinFunction != null
-                            && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
-                        SequenceType argumentType = parameterExpressions.get(0).getStaticSequenceType();
-                        if (argumentType != null
-                                && TypeAtomization.inferType(argumentType).getCardinality() == SequenceCardinality.ONE
-                                && returnType.getArity().equals(SequenceType.Arity.OneOrZero)) {
-                            returnType = new SequenceType(returnType.getItemType(), SequenceType.Arity.One);
-                        }
-                    }
                 }
                 expression.setStaticSequenceType(returnType);
             }
