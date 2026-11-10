@@ -711,7 +711,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return argument;
         }
 
-        Optional<SequenceType> returnType = inferBuiltinReturnType(expression, builtinFunction, argumentTypes, argument);
+        Optional<SequenceType> returnType =
+                inferBuiltinReturnType(expression, builtinFunction, argumentTypes, argument);
         expression.setStaticSequenceType(returnType.orElseGet(() -> {
             SequenceType declaredReturnType = signature.getReturnType();
             return declaredReturnType == null ? SequenceType.createSequenceType("item*") : declaredReturnType;
@@ -729,7 +730,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 continue;
             }
             SequenceType actualType = typeOf(argument, call);
-            checkFunctionInput(call, "argument " + (i + 1), actualType, signature.getParameterTypes().get(i));
+            checkFunctionInput(
+                    call,
+                    "argument " + (i + 1),
+                    actualType,
+                    signature.getParameterTypes().get(i));
             argumentTypes.add(actualType);
         }
         return argumentTypes;
@@ -760,14 +765,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (function.getContextArgument() != null) {
             argumentTypes.add(contextArgumentType(call, function.getContextArgument()));
         }
-        return function.getReturnTypeRule().infer(
-                call,
-                new ReturnTypeContext(
-                        this.errors,
-                        this.rumbleRuntimeConfiguration,
-                        this.resourceResolver,
-                        staticContext,
-                        argumentTypes));
+        return function.getReturnTypeRule()
+                .infer(
+                        call,
+                        new ReturnTypeContext(
+                                this.errors,
+                                this.rumbleRuntimeConfiguration,
+                                this.resourceResolver,
+                                staticContext,
+                                argumentTypes));
     }
 
     /**

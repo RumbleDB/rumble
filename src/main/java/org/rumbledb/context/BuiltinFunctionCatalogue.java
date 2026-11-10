@@ -569,7 +569,8 @@ public class BuiltinFunctionCatalogue {
             GetRootFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction root_without_arg = root_with_arg.withLastArgumentFromContext().withReturnType("node()");
+    static final BuiltinFunction root_without_arg =
+            root_with_arg.withLastArgumentFromContext().withReturnType("node()");
 
     static final BuiltinFunction name_with_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "name"),
@@ -578,8 +579,7 @@ public class BuiltinFunctionCatalogue {
             NodeNameFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction name_without_arg =
-            name_with_arg.withLastArgumentFromContext();
+    static final BuiltinFunction name_without_arg = name_with_arg.withLastArgumentFromContext();
 
     /**
      * fn:nilled (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.8 dm:nilled)
@@ -599,8 +599,7 @@ public class BuiltinFunctionCatalogue {
             NilledFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction nilled_without_arg =
-            nilled_with_arg.withLastArgumentFromContext();
+    static final BuiltinFunction nilled_without_arg = nilled_with_arg.withLastArgumentFromContext();
 
     /**
      * fn:node-name (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.10 dm:node-name)
@@ -620,8 +619,7 @@ public class BuiltinFunctionCatalogue {
             NodeQNameFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction node_name_without_arg =
-            node_name_with_arg.withLastArgumentFromContext();
+    static final BuiltinFunction node_name_without_arg = node_name_with_arg.withLastArgumentFromContext();
 
     /**
      * fn:QName (Functions and Operators 3.1)
@@ -687,8 +685,7 @@ public class BuiltinFunctionCatalogue {
             BaseUriFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction base_uri_without_arg =
-            base_uri_with_arg.withLastArgumentFromContext();
+    static final BuiltinFunction base_uri_without_arg = base_uri_with_arg.withLastArgumentFromContext();
 
     /**
      * fn:document-uri (Functions and Operators 3.1, wrapping XDM 3.1 Section 5.4 dm:document-uri)
@@ -708,8 +705,7 @@ public class BuiltinFunctionCatalogue {
             DocumentUriFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction document_uri_without_arg =
-            document_uri_with_arg.withLastArgumentFromContext();
+    static final BuiltinFunction document_uri_without_arg = document_uri_with_arg.withLastArgumentFromContext();
 
     /**
      * fn:in-scope-prefixes (Functions and Operators 3.1 Section 14.1)
@@ -1850,8 +1846,8 @@ public class BuiltinFunctionCatalogue {
                     BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
             .withReturnTypeRule(DataFunctionIterator::inferReturnType);
 
-    static final BuiltinFunction data0 = data1.withLastArgumentFromContext()
-            .withExecutionMode(BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+    static final BuiltinFunction data0 =
+            data1.withLastArgumentFromContext().withExecutionMode(BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
     /**
      * function that returns the value of the default collation property
      */
@@ -3003,8 +2999,7 @@ public class BuiltinFunctionCatalogue {
             LocalNameFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction local_name_without_arg =
-            local_name_with_arg.withLastArgumentFromContext();
+    static final BuiltinFunction local_name_without_arg = local_name_with_arg.withLastArgumentFromContext();
 
     static final BuiltinFunction namespace_uri_with_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "namespace-uri"),
@@ -3013,8 +3008,7 @@ public class BuiltinFunctionCatalogue {
             NamespaceUriFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction namespace_uri_without_arg =
-            namespace_uri_with_arg.withLastArgumentFromContext();
+    static final BuiltinFunction namespace_uri_without_arg = namespace_uri_with_arg.withLastArgumentFromContext();
 
     static final BuiltinFunction lang2 = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "lang"),
@@ -3032,8 +3026,7 @@ public class BuiltinFunctionCatalogue {
             PathFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction path_without_arg =
-            path_with_arg.withLastArgumentFromContext();
+    static final BuiltinFunction path_without_arg = path_with_arg.withLastArgumentFromContext();
 
     static final BuiltinFunction has_children_with_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "has-children"),
@@ -3042,8 +3035,7 @@ public class BuiltinFunctionCatalogue {
             HasChildrenFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction has_children_without_arg =
-            has_children_with_arg.withLastArgumentFromContext();
+    static final BuiltinFunction has_children_without_arg = has_children_with_arg.withLastArgumentFromContext();
 
     static final BuiltinFunction innermost = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "innermost"),
@@ -3075,8 +3067,7 @@ public class BuiltinFunctionCatalogue {
             ElementWithIdFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction element_with_id1 =
-            element_with_id2.withLastArgumentFromContext();
+    static final BuiltinFunction element_with_id1 = element_with_id2.withLastArgumentFromContext();
 
     static final BuiltinFunction idref2 = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "idref"),
@@ -3094,8 +3085,7 @@ public class BuiltinFunctionCatalogue {
             GenerateIdFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction generate_id_without_arg =
-            generate_id_with_arg.withLastArgumentFromContext();
+    static final BuiltinFunction generate_id_without_arg = generate_id_with_arg.withLastArgumentFromContext();
 
     static final BuiltinFunction namespace_uri_for_prefix = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "namespace-uri-for-prefix"),
