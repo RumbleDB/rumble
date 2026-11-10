@@ -970,9 +970,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             // keep the input arity if it is already narrower, otherwise use the enforced one
             SequenceType.Arity inputArity = input.getArity();
-            SequenceType.Arity resultArity = inputArity.isSubtypeOf(cardinalityArity)
-                    ? inputArity
-                    : cardinalityArity;
+            SequenceType.Arity resultArity = inputArity.isSubtypeOf(cardinalityArity) ? inputArity : cardinalityArity;
             expression.setStaticSequenceType(new SequenceType(input.getItemType(), resultArity));
             return true;
         }
