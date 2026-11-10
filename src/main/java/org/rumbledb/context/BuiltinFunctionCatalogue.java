@@ -16,6 +16,7 @@
 package org.rumbledb.context;
 
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -271,6 +272,10 @@ public class BuiltinFunctionCatalogue {
 
     private static final HashMap<Name, VariadicBuiltinFunction> variadicFunctions = new HashMap<>();
 
+    /** The functions whose signature changed in a later version of the language, by that version. */
+    private static final EnumMap<LanguageVersion.Version, HashMap<FunctionIdentifier, BuiltinFunction>>
+            revisedFunctions = new EnumMap<>(LanguageVersion.Version.class);
+
     /** The namespaces in which a function called in the JSONiq default function namespace is looked up, in order. */
     private static final List<String> defaultFunctionNamespaces =
             List.of(Name.FN_NS, Name.JN_NS, Name.MATH_NS, Name.MAP_NS, Name.ARRAY_NS);
@@ -318,19 +323,19 @@ public class BuiltinFunctionCatalogue {
         return function == null ? null : forQueryLanguage(function, queryLanguage);
     }
 
+    /** The function as it is in a version of the language: its latest revision up to that version, if any. */
     private static BuiltinFunction forQueryLanguage(BuiltinFunction function, LanguageVersion queryLanguage) {
-        if (StringJoinFunctionIterator.acceptsAtomicItems(queryLanguage)
-                && (function == string_join1 || function == string_join2)) {
-            return createBuiltinFunction(
-                    function.getIdentifier().getName(),
-                    function.getIdentifier().getArity() == 1
-                            ? List.of("anyAtomicType*")
-                            : List.of("anyAtomicType*", "string"),
-                    "string",
-                    StringJoinFunctionIterator.class,
-                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+        if (queryLanguage == null) {
+            return function;
         }
-        return function;
+        BuiltinFunction result = function;
+        // An EnumMap iterates in version order, so a later revision replaces an earlier one.
+        for (var revisions : revisedFunctions.entrySet()) {
+            if (queryLanguage.isAtLeast(revisions.getKey())) {
+                result = revisions.getValue().getOrDefault(function.getIdentifier(), result);
+            }
+        }
+        return result;
     }
 
     public static BuiltinFunction getBuiltinFunction(FunctionIdentifier identifier, StaticContext staticContext) {
@@ -428,6 +433,30 @@ public class BuiltinFunctionCatalogue {
             throw new IllegalStateException("Duplicate built-in function registration: " + functionName);
         }
         return function;
+    }
+
+    /**
+     * Defines the signature that a function, already defined, has from a version of the language on. The catalogue
+     * keeps the original, which the earlier versions use.
+     */
+    private static BuiltinFunction defineRevision(
+            LanguageVersion.Version since,
+            Name functionName,
+            List<String> paramTypes,
+            String returnType,
+            Class<? extends ItemRuntimePlan> functionIteratorClass,
+            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode) {
+        BuiltinFunction revision = createBuiltinFunction(
+                functionName, paramTypes, returnType, functionIteratorClass, builtInFunctionExecutionMode);
+        if (!builtinFunctions.containsKey(revision.getIdentifier())) {
+            throw new IllegalStateException("Revision of an undefined built-in function: " + revision.getIdentifier());
+        }
+        if (revisedFunctions.computeIfAbsent(since, version -> new HashMap<>()).put(revision.getIdentifier(), revision)
+                != null) {
+            throw new IllegalStateException(
+                    "Duplicate built-in function revision: " + revision.getIdentifier() + " in " + since);
+        }
+        return revision;
     }
 
     private static BuiltinFunction register(BuiltinFunction builtinFunction) {
@@ -1613,6 +1642,23 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction string_join2 = define(
             fn("string-join"),
             List.of("string*", "string"),
+            "string",
+            StringJoinFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+
+    // Version 3.1 widened fn:string-join to atomic items, which it converts to strings.
+    static final BuiltinFunction string_join1_v31 = defineRevision(
+            LanguageVersion.Version.V3_1,
+            fn("string-join"),
+            List.of("anyAtomicType*"),
+            "string",
+            StringJoinFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+
+    static final BuiltinFunction string_join2_v31 = defineRevision(
+            LanguageVersion.Version.V3_1,
+            fn("string-join"),
+            List.of("anyAtomicType*", "string"),
             "string",
             StringJoinFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
