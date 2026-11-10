@@ -1380,7 +1380,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         Expression key = expression.getLookupExpression();
         setLookupType(
                 expression,
-                this.lookups.inferPostfixLookupType(
+                this.lookups.inferLookupType(
                         typeOf(expression.getMainExpression(), expression),
                         key == null ? null : typeOf(key, expression),
                         expression));
@@ -1393,14 +1393,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType contextType = expression.getStaticContext().getContextItemStaticType();
         // An unknown focus leaves both presence and lookup compatibility to the runtime.
         if (contextType == null || StaticTypeErrors.isUnknown(contextType)) {
-            expression.setStaticSequenceType(contextType == null ? SequenceType.createSequenceType("item*") : contextType);
+            setLookupType(expression, contextType == null ? SequenceType.createSequenceType("item*") : contextType);
             return argument;
         }
         Expression key = expression.getLookupExpression();
         setLookupType(
                 expression,
-                this.lookups.inferPostfixLookupType(
-                        contextType, key == null ? null : typeOf(key, expression), expression));
+                this.lookups.inferLookupType(contextType, key == null ? null : typeOf(key, expression), expression));
         return argument;
     }
 

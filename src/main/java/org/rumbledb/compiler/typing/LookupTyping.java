@@ -139,11 +139,11 @@ public final class LookupTyping {
             new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceCardinality.ANY));
 
     /**
-     * Infers an XQuery lookup E?K, or E?* when the key type is null (XQuery 3.1, 3.11.3.1). Each input item
-     * contributes separately: a map the value of each key in K, which may be absent, or all its values; an array its
-     * member at each position in K, or all its members.
+     * Infers a postfix or unary XQuery lookup, using the explicit input or context item type. A null key type
+     * denotes a wildcard (XQuery 3.1, 3.11.3). Each input item contributes separately: a map the value of each
+     * key, which may be absent, or all its values; an array its member at each position, or all its members.
      */
-    public SequenceType inferPostfixLookupType(SequenceType mainType, SequenceType keyType, Node node) {
+    public SequenceType inferLookupType(SequenceType mainType, SequenceType keyType, Node node) {
         if (rejectInput(
                 mainType, LOOKUP_INPUTS.stream().anyMatch(mainType::hasOverlapWith), "a map or an array", node)) {
             return SequenceType.createSequenceType("item*");
