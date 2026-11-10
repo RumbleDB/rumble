@@ -31,7 +31,6 @@ import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.utils.AnnotationValidator;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
@@ -85,7 +84,7 @@ public final class DeclarationTranslation {
         if (ctx.exprSingle() != null) {
             expr = visitExprSingle.apply(ctx.exprSingle());
             if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
+                expr = TreatExpression.forDeclaredType(expr, seq, var);
             }
         }
         return new VariableDeclaration(
@@ -108,7 +107,7 @@ public final class DeclarationTranslation {
         if (ctx.sequenceType() != null) {
             seq = processSequenceType.apply(ctx.sequenceType());
         }
-        if ("xquery31".equals(translationContext.moduleContext().getQueryLanguage())) {
+        if (translationContext.moduleContext().getQueryLanguage().isXQuery()) {
             if (seq == null) {
                 seq = SequenceType.createSequenceType("item");
             } else if (seq.isEmptySequence() || seq.getArity() != SequenceType.Arity.One) {
@@ -122,7 +121,7 @@ public final class DeclarationTranslation {
         if (ctx.exprSingle() != null) {
             expr = visitExprSingle.apply(ctx.exprSingle());
             if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
+                expr = TreatExpression.forDeclaredType(expr, seq, Name.CONTEXT_ITEM);
             }
         }
         return new VariableDeclaration(
@@ -155,7 +154,7 @@ public final class DeclarationTranslation {
         List<Annotation> annotations = processAnnotations.apply(ctx.annotations());
         AnnotationValidator.validateFunctionAnnotations(annotations);
         Name name = parseFunctionName.apply(ctx.functionName());
-        boolean xquery = "xquery31".equals(translationContext.moduleContext().getQueryLanguage());
+        boolean xquery = translationContext.moduleContext().getQueryLanguage().isXQuery();
         String lexicalName = ctx.functionName().getText();
         if (xquery
                 && translationContext.moduleContext().getDefaultFunctionNamespaceUri() == null

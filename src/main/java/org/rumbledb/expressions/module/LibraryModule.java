@@ -32,10 +32,6 @@ public class LibraryModule extends Module {
     protected StaticContext staticContext;
 
     @Getter
-    @Setter
-    private boolean importBackReference;
-
-    @Getter
     private final String namespace;
 
     @Getter
@@ -45,6 +41,12 @@ public class LibraryModule extends Module {
         super(metadata);
         this.prolog = prolog;
         this.namespace = namespace;
+    }
+
+    /** Identity of the declaration group shared by repeated imports and namespace aliases. */
+    public String getModuleGroupKey() {
+        String key = this.prolog.getModuleGroupKey();
+        return key == null ? this.namespace : key;
     }
 
     @Override

@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
@@ -124,9 +125,13 @@ import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
 import org.rumbledb.expressions.xml.NamespaceDeclaration;
 import org.rumbledb.expressions.xml.PathRootExpression;
 import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
 import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
+import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
 
 public class CloneVisitor extends AbstractNodeVisitor<Node> {
     @Override
@@ -160,10 +165,20 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
         List<LibraryModule> libraryModules = expression.getImportedModules().stream()
                 .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
                 .collect(Collectors.toList());
+        Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
         List<Node> declarations = expression.getDeclarations().stream()
-                .map(expr -> visit(expr, argument))
+                .map(expr -> {
+                    Node clone = visit(expr, argument);
+                    var sourceContext = expression.getSourceModuleContexts().get(expr);
+                    if (sourceContext != null) {
+                        sourceModuleContexts.put(clone, sourceContext);
+                    }
+                    return clone;
+                })
                 .collect(Collectors.toList());
         expression.setDeclarations(declarations);
+        expression.getSourceModuleContexts().clear();
+        expression.getSourceModuleContexts().putAll(sourceModuleContexts);
         expression.getSchemaImports().clear();
         expression.getSchemaImports().addAll(schemaImports);
         expression.getImportedModules().clear();
@@ -432,6 +447,38 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                         ? (Expression) visit(expression.getLookupExpression(), argument)
                         : null,
                 expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitSlashExpr(SlashExpr expression, Node argument) {
+        SlashExpr result = new SlashExpr(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitStepExpr(StepExpr expression, Node argument) {
+        // A step has no children, but a copy needs its own static context, which holds its context item type.
+        StepExpr result;
+        if (expression instanceof ForwardStepExpr forwardStep) {
+            result = new ForwardStepExpr(
+                    forwardStep.getForwardAxis(), forwardStep.getNodeTest(), forwardStep.getMetadata());
+        } else if (expression instanceof ReverseStepExpr reverseStep) {
+            result = new ReverseStepExpr(
+                    reverseStep.getReverseAxis(), reverseStep.getNodeTest(), reverseStep.getMetadata());
+        } else {
+            throw new OurBadException(
+                    "Unexpected step expression " + expression.getClass().getSimpleName());
+        }
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
         result.setSequential(expression.isSequential());
@@ -1049,6 +1096,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 (Expression) visit(expression.getMainExpression(), argument),
                 expression.getSequenceType(),
                 expression.errorCodeThatShouldBeThrown(),
+                expression.getDeclaredTypeVariable(),
                 expression.getMetadata());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());

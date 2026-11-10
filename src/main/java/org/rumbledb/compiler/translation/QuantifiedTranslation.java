@@ -22,7 +22,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 
 import org.rumbledb.compiler.context.QuantifiedExprContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.flowr.Clause;
@@ -67,8 +66,7 @@ public final class QuantifiedTranslation {
                 SequenceType sourceType = sequenceType.isEmptySequence()
                         ? sequenceType
                         : new SequenceType(sequenceType.getItemType(), SequenceType.Arity.ZeroOrMore);
-                varExpression = new TreatExpression(
-                        varExpression, sourceType, ErrorCode.UnexpectedTypeErrorCode, varExpression.getMetadata());
+                varExpression = TreatExpression.forDeclaredType(varExpression, sourceType, variableName);
             }
             Clause newClause = new ForClause(
                     variableName,
@@ -89,11 +87,10 @@ public final class QuantifiedTranslation {
         }
         WhereClause whereClause = null;
         if (!isUniversal) {
-            whereClause = new WhereClause(expression, translationContext.metadata(ctx.exprSingle()));
+            whereClause = new WhereClause(expression, expression.getMetadata());
         } else {
-            whereClause = new WhereClause(
-                    new NotExpression(expression, translationContext.metadata(ctx.exprSingle())),
-                    translationContext.metadata(ctx.exprSingle()));
+            whereClause =
+                    new WhereClause(new NotExpression(expression, expression.getMetadata()), expression.getMetadata());
         }
         lastClause.chainWith(whereClause);
         ReturnClause returnClause = new ReturnClause(
