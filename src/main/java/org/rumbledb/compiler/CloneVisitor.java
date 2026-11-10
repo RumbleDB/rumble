@@ -129,6 +129,11 @@ import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
 import org.rumbledb.expressions.xml.TextNodeExpression;
 import org.rumbledb.expressions.xml.UnaryLookupExpression;
 
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
+import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
+
 public class CloneVisitor extends AbstractNodeVisitor<Node> {
     @Override
     protected Node defaultAction(Node node, Node argument) {
@@ -418,6 +423,33 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata());
         result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitSlashExpr(SlashExpr expression, Node argument) {
+        SlashExpr result = new SlashExpr(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitStepExpr(StepExpr expression, Node argument) {
+        StepExpr result;
+        if (expression instanceof ForwardStepExpr forward) {
+            result = new ForwardStepExpr(forward.getForwardAxis(), forward.getNodeTest(), forward.getMetadata());
+        } else {
+            ReverseStepExpr reverse = (ReverseStepExpr) expression;
+            result = new ReverseStepExpr(reverse.getReverseAxis(), reverse.getNodeTest(), reverse.getMetadata());
+        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
         result.setSequential(expression.isSequential());
         return result;
     }

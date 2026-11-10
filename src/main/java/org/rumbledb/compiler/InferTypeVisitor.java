@@ -2460,18 +2460,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata());
         }
 
-        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
-                ? SequenceType.Arity.OneOrZero
-                : SequenceType.Arity.ZeroOrMore;
-
+        // A lookup may flatten several array members or a sequence-valued map entry.
+        // Even one input item (and one lookup key) can therefore return many items.
         ItemType inferredType = BuiltinTypesCatalogue.item;
+        SequenceCardinality cardinality = SequenceCardinality.ANY;
         if (mainType.getItemType().isMapItemType()) {
-            SequenceType mapValueType = mainType.getItemType().getMapValueSequenceType();
-            inferredType = mapValueType.getItemType();
-            inferredArity = mapValueType.getArity();
+            SequenceType valueType = mainType.getItemType().getMapValueSequenceType();
+            inferredType = valueType.getItemType();
+            if (expression.getLookupExpression() != null) {
+                // A key can be absent, and both the input and key expression can be sequences.
+                cardinality = valueType.getCardinality()
+                        .union(SequenceCardinality.EMPTY)
+                        .repeated(expression.getLookupExpression().getStaticSequenceType().getCardinality())
+                        .repeated(mainType.getCardinality());
+            }
         }
-
-        expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
+        expression.setStaticSequenceType(new SequenceType(inferredType, cardinality));
         return argument;
     }
 
@@ -3740,7 +3744,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
             }
             if (axis.equals(ReverseAxis.ANCESTOR_OR_SELF)) {
-                return !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, null);
+                return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
+                        && !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, null);
             }
         }
         return false;

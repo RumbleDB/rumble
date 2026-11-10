@@ -212,8 +212,8 @@ public class ComparisonVisitor extends CloneVisitor {
 
     @Override
     public Node visitSlashExpr(SlashExpr expression, Node argument) {
-        // CloneVisitor leaves path expressions unchanged. Comparisons inside their
-        // predicates still need the same atomization and pairwise rewrite as top-level comparisons.
+        // Comparisons inside path predicates need the same atomization and pairwise
+        // rewrite as top-level comparisons.
         SlashExpr result = new SlashExpr(
                 (Expression) visit(expression.getLeftExpression(), argument),
                 (Expression) visit(expression.getRightExpression(), argument),
