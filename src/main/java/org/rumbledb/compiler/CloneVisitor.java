@@ -1266,8 +1266,11 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitFunctionDeclaration(FunctionDeclaration expression, Node argument) {
-        return new FunctionDeclaration(
+        FunctionDeclaration result = new FunctionDeclaration(
                 (InlineFunctionExpression) visit(expression.getExpression(), argument), expression.getMetadata());
+        result.setRecursive(expression.isRecursive());
+        result.setCyclicTypeDependencies(expression.hasCyclicTypeDependencies());
+        return result;
     }
 
     @Override

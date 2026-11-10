@@ -22,6 +22,8 @@ import java.util.List;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import org.rumbledb.exceptions.OurBadException;
+
 @Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class FunctionSignature implements Serializable {
@@ -44,6 +46,14 @@ public class FunctionSignature implements Serializable {
 
     public FunctionSignature(List<SequenceType> parameterTypes, SequenceType returnType) {
         this(parameterTypes, returnType, false);
+    }
+
+    /** Narrows the shared signature so importing contexts also see the inferred return type. */
+    public void refineReturnType(SequenceType inferredType) {
+        if (!inferredType.isSubtypeOf(this.returnType)) {
+            throw new OurBadException("An inferred function return type must refine its existing type.");
+        }
+        this.returnType = inferredType;
     }
 
     public boolean isSubtypeOf(FunctionSignature other) {

@@ -2023,6 +2023,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferredType = typeOf(body, expression);
         SequenceType expectedType = inlineExpression.getActualReturnType();
 
+        // Dependencies are inferred first. Recursive groups retain their declared/default contract until
+        // fixed-point inference is supported; exit statements may return before the body's final expression.
+        if (expectedType == null && !expression.hasCyclicTypeDependencies() && !inlineExpression.hasExitStatement()) {
+            argument.getFunctionSignature(expression.getFunctionIdentifier()).refineReturnType(inferredType);
+        }
+
         // An unknown body type follows from an error in the body, which is reported already.
         if (expectedType != null
                 && !StaticTypeErrors.isUnknown(inferredType)
