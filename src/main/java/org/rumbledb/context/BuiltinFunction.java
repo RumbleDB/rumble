@@ -18,6 +18,7 @@ package org.rumbledb.context;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import org.rumbledb.compiler.typing.ReturnTypeRule;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.types.FunctionSignature;
 
@@ -43,6 +44,10 @@ public class BuiltinFunction {
     private final Class<? extends ItemRuntimePlan> functionIteratorClass;
     private final BuiltinFunctionExecutionMode builtinFunctionExecutionMode;
 
+    /** Infers the return type of a call more precisely than the signature does. */
+    @EqualsAndHashCode.Exclude
+    private final ReturnTypeRule returnTypeRule;
+
     BuiltinFunction(
             FunctionIdentifier identifier,
             FunctionSignature signature,
@@ -52,5 +57,19 @@ public class BuiltinFunction {
         this.signature = signature;
         this.functionIteratorClass = functionIteratorClass;
         this.builtinFunctionExecutionMode = builtInFunctionExecutionMode;
+        this.returnTypeRule = ReturnTypeRule.NONE;
+    }
+
+    private BuiltinFunction(BuiltinFunction function, ReturnTypeRule returnTypeRule) {
+        this.identifier = function.identifier;
+        this.signature = function.signature;
+        this.functionIteratorClass = function.functionIteratorClass;
+        this.builtinFunctionExecutionMode = function.builtinFunctionExecutionMode;
+        this.returnTypeRule = returnTypeRule;
+    }
+
+    /** This function, with a rule that infers the return type of its calls more precisely than its signature. */
+    BuiltinFunction withReturnTypeRule(ReturnTypeRule rule) {
+        return new BuiltinFunction(this, rule);
     }
 }

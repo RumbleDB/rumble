@@ -19,16 +19,19 @@ import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import org.apache.spark.api.java.JavaRDD;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
@@ -43,6 +46,7 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeAtomization;
 
 public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
 
@@ -174,5 +178,31 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
         }
         // each row contains a single value
         return childContext;
+    }
+
+    /**
+     * The sum of a non-empty input is one item of its normalized type; an empty input returns the zero argument
+     * instead.
+     */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        SequenceType inputType = AggregateTyping.validateStrictInput(call, context, "fn:sum");
+        SequenceType zeroType = call.getArguments().size() > 1
+                ? call.getArguments().get(1).getStaticSequenceType()
+                : new SequenceType(BuiltinTypesCatalogue.integerItem);
+        if (!zeroType.isEmptySequence() && TypeAtomization.containsNodeOrArray(zeroType.getItemType())) {
+            zeroType = TypeAtomization.inferType(zeroType);
+            // The zero parameter is atomic?: successful function conversion has
+            // already excluded multiple typed values before sum is evaluated.
+            zeroType = new SequenceType(
+                    zeroType.getItemType(), zeroType.getCardinality().atMostOne());
+        }
+        if (inputType.isEmptySequence()) {
+            return Optional.of(zeroType);
+        }
+        SequenceType sumType = new SequenceType(inputType.getItemType());
+        if (!inputType.getCardinality().allowsZero()) {
+            return Optional.of(sumType);
+        }
+        return Optional.of(sumType.leastCommonSupertypeWith(zeroType));
     }
 }

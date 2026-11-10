@@ -17,13 +17,17 @@ package org.rumbledb.runtime.functions.maps;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.Optional;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.SequenceType;
 
 /**
  * W3C XPath/XQuery {@code map:entry}:
@@ -56,5 +60,12 @@ public class MapEntryFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         return ItemFactory.getInstance()
                 .createMapItem(
                         key, valueSequence, this.getRuntimeStaticContext().isQuerySideEffecting());
+    }
+
+    /** A map from the key's type to the value's type. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        SequenceType valueType = call.getArguments().get(1).getStaticSequenceType();
+        return MapTyping.atomizedKeyType(call.getArguments().get(0))
+                .map(keyType -> MapTyping.mapType(keyType, valueType));
     }
 }

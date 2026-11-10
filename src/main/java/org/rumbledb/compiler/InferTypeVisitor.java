@@ -29,11 +29,11 @@ import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.compiler.typing.ArithmeticTyping;
 import org.rumbledb.compiler.typing.AtomizedOperands;
-import org.rumbledb.compiler.typing.BuiltinFunctionTyping;
 import org.rumbledb.compiler.typing.CastTyping;
 import org.rumbledb.compiler.typing.ComparisonTyping;
 import org.rumbledb.compiler.typing.LookupTyping;
 import org.rumbledb.compiler.typing.PathStepTyping;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.compiler.typing.StaticTypeErrors;
 import org.rumbledb.compiler.typing.TypeErrorMessages;
 import org.rumbledb.config.RumbleConfiguration;
@@ -195,7 +195,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private final CastTyping cast;
 
-    private final BuiltinFunctionTyping builtinFunctions;
+    private final ResourceResolver resourceResolver;
 
     private final PathStepTyping pathSteps;
 
@@ -227,7 +227,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         this.arithmetic = new ArithmeticTyping(this.errors);
         this.comparison = new ComparisonTyping(this.errors);
         this.cast = new CastTyping(this.errors);
-        this.builtinFunctions = new BuiltinFunctionTyping(this.errors, rumbleRuntimeConfiguration, resourceResolver);
+        this.resourceResolver = resourceResolver;
         this.pathSteps = new PathStepTyping(this.errors);
         this.lookups = new LookupTyping(this.errors);
     }
@@ -644,6 +644,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         || functionName.getNamespace().equals(Name.FN_NS));
     }
 
+    /** The return type of a call of a builtin function, from its rule, if it is more precise than the signature's. */
+    private Optional<SequenceType> inferSpecificReturnType(FunctionCallExpression call, StaticContext staticContext) {
+        BuiltinFunction function =
+                BuiltinFunctionCatalogue.getBuiltinFunction(call.getFunctionIdentifier(), call.getStaticContext());
+        if (function == null) {
+            return Optional.empty();
+        }
+        return function.getReturnTypeRule()
+                .infer(
+                        call,
+                        new ReturnTypeContext(
+                                this.errors, this.rumbleRuntimeConfiguration, this.resourceResolver, staticContext));
+    }
+
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
@@ -719,7 +733,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(
                     new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature)));
         } else {
-            Optional<SequenceType> specificType = this.builtinFunctions.inferSpecificReturnType(expression, argument);
+            Optional<SequenceType> specificType = inferSpecificReturnType(expression, argument);
             if (specificType.isPresent()) {
                 expression.setStaticSequenceType(specificType.get());
             } else {
