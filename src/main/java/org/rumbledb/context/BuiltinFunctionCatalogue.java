@@ -15,7 +15,6 @@
  */
 package org.rumbledb.context;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -263,7 +262,6 @@ import org.rumbledb.spark.ml.AnnotateFunctionIterator;
 import org.rumbledb.spark.ml.BinaryClassificationMetricsFunctionIterator;
 import org.rumbledb.spark.ml.GetEstimatorFunctionIterator;
 import org.rumbledb.spark.ml.GetTransformerFunctionIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -446,20 +444,8 @@ public class BuiltinFunctionCatalogue {
             String returnType,
             Class<? extends ItemRuntimePlan> functionIteratorClass,
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode) {
-        List<SequenceType> parameterTypes = new ArrayList<>();
-        for (String paramType : paramTypes) {
-            parameterTypes.add(SequenceType.createSequenceType(paramType));
-        }
-        return createBuiltinFunctionWithSequenceTypes(
-                functionName, parameterTypes, returnType, functionIteratorClass, builtInFunctionExecutionMode);
-    }
-
-    private static BuiltinFunction createBuiltinFunctionWithSequenceTypes(
-            Name functionName,
-            List<SequenceType> parameterTypes,
-            String returnType,
-            Class<? extends ItemRuntimePlan> functionIteratorClass,
-            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode) {
+        List<SequenceType> parameterTypes =
+                paramTypes.stream().map(SequenceType::createSequenceType).toList();
         return new BuiltinFunction(
                 new FunctionIdentifier(functionName, parameterTypes.size()),
                 new FunctionSignature(parameterTypes, SequenceType.createSequenceType(returnType)),
@@ -787,12 +773,12 @@ public class BuiltinFunctionCatalogue {
      * fn:in-scope-prefixes($element as element()) as xs:string*
      * Returns the prefixes of the in-scope namespaces for $element.
      */
-    static final BuiltinFunction in_scope_prefixes = register(createBuiltinFunctionWithSequenceTypes(
+    static final BuiltinFunction in_scope_prefixes = define(
             fn("in-scope-prefixes"),
-            List.of(new SequenceType(BuiltinTypesCatalogue.elementNode)),
+            List.of("element()"),
             "string*",
             InScopePrefixesFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL));
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     /**
      * function that parses a text file
