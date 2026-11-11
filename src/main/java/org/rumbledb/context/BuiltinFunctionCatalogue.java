@@ -1470,7 +1470,8 @@ public class BuiltinFunctionCatalogue {
             StringFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
-    static final BuiltinFunction string0 = string1.withLastArgumentFromContext();
+    static final BuiltinFunction string0 =
+            string1.withLastArgumentFromContext(BuiltinFunction.ContextConversion.STRING_VALUE);
 
     /**
      * function that returns substrings
