@@ -77,23 +77,13 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return false;
     }
 
-    private boolean isVariableReferenced(List<Expression> expressions, Name name, int index) {
-        for (int i = 0; i < index; i++) {
+    private boolean isVariableReferencedAfter(List<Expression> expressions, Name name, int index) {
+        for (int i = index + 1; i < expressions.size(); i++) {
             if (isVariableReferenced(expressions.get(i), name)) {
                 return true;
             }
         }
         return false;
-    }
-
-    private static boolean allArgumentsMatch(FunctionCallExpression expression, List<Name> paramNames) {
-        boolean allArgumentsMatch = true;
-        for (int i = 0; i < expression.getArguments().size(); i++) {
-            allArgumentsMatch = allArgumentsMatch
-                    && expression.getArguments().get(i) instanceof VariableReferenceExpression variableReference
-                    && paramNames.get(i).equals(variableReference.getVariableName());
-        }
-        return allArgumentsMatch;
     }
 
     @Override
@@ -164,7 +154,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
         StatementsAndOptionalExpr body = (StatementsAndOptionalExpr) visit(inlineFunction.getBody(), argument);
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
-        if (expression.getArguments().isEmpty() || allArgumentsMatch(expression, paramNames)) {
+        if (expression.getArguments().isEmpty()) {
             if (inlineFunction.getReturnType() != null) {
                 FunctionArgumentConversionExpression result =
                         convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
@@ -180,60 +170,35 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 ? body
                 : convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
         ReturnClause returnClause = new ReturnClause(returnValue, expression.getMetadata());
-        Clause expressionClauses = null;
-        Clause assignmentClauses = null;
+        // The arguments are bound and converted in order, like the arguments of a call. A parameter that a later
+        // argument reads would hide the variable it reads, so its argument is bound to a temporary variable, which is
+        // assigned to the parameter once every argument is bound.
+        List<Clause> clauses = new ArrayList<>();
+        List<Clause> assignmentClauses = new ArrayList<>();
         for (int i = 0; i < expression.getArguments().size(); i++) {
             Name paramName = paramNames.get(i);
-            SequenceType paramType = inlineFunction.getParams().get(paramName);
             Expression argumentExpression =
                     (Expression) visit(expression.getArguments().get(i), argument);
-            // only use assignment clause when the variables have different names
-            if (argumentExpression instanceof VariableReferenceExpression variableReference
-                    && variableReference.getVariableName().equals(paramName)) {
-                continue;
-            }
-
-            // if there is a name collision, use a temporary variable
-            if (isVariableReferenced(expression.getArguments(), paramName, i)) {
-                Name columnName = Name.createVariableInNoNamespace(
+            // Every argument is converted, even a variable with the name of the parameter.
+            Expression convertedArgument = convertArgument(
+                    argumentExpression, inlineFunction.getParams().get(paramName), expression);
+            if (isVariableReferencedAfter(expression.getArguments(), paramName, i)) {
+                Name temporaryName = Name.createVariableInNoNamespace(
                         String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
-                Clause expressionClause = new LetClause(columnName, null, argumentExpression, expression.getMetadata());
-                Expression assignmentExpression = convertArgument(
-                        new VariableReferenceExpression(columnName, expression.getMetadata()), paramType, expression);
-                Clause assignmentClause =
-                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
-                if (assignmentClauses != null) {
-                    assignmentClause.chainWith(assignmentClauses);
-                }
-                assignmentClauses = assignmentClause;
-                if (expressionClauses != null) {
-                    expressionClause.chainWith(expressionClauses);
-                }
-                expressionClauses = expressionClause;
+                clauses.add(new LetClause(temporaryName, null, convertedArgument, expression.getMetadata()));
+                assignmentClauses.add(new LetClause(
+                        paramName,
+                        null,
+                        new VariableReferenceExpression(temporaryName, expression.getMetadata()),
+                        expression.getMetadata()));
             } else {
-                Expression assignmentExpression = convertArgument(argumentExpression, paramType, expression);
-                Clause expressionClause =
-                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
-                if (expressionClauses != null) {
-                    expressionClause.chainWith(expressionClauses);
-                }
-                expressionClauses = expressionClause;
+                clauses.add(new LetClause(paramName, null, convertedArgument, expression.getMetadata()));
             }
         }
-        if (expressionClauses == null) {
-            if (inlineFunction.getReturnType() != null) {
-                FunctionArgumentConversionExpression result =
-                        convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
-                result.setSequential(inlineFunction.isSequential());
-                return result;
-            }
-            return body;
-        }
-        if (assignmentClauses != null) {
-            assignmentClauses.getLastClause().chainWith(returnClause);
-            expressionClauses.getLastClause().chainWith(assignmentClauses);
-        } else {
-            expressionClauses.getLastClause().chainWith(returnClause);
+        clauses.addAll(assignmentClauses);
+        clauses.add(returnClause);
+        for (int i = 0; i + 1 < clauses.size(); i++) {
+            clauses.get(i).chainWith(clauses.get(i + 1));
         }
         return new FlworExpression(returnClause, expression.getMetadata());
     }
