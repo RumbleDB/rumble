@@ -22,24 +22,66 @@ import java.util.List;
 public final class TypeAtomization {
     private TypeAtomization() {}
 
-    public static boolean isAtomicOrNode(ItemType type) {
+    /**
+     * Whether every item of this type can be atomized: atomic values, nodes, and arrays, which atomize to the atomized
+     * values of their members. Objects, maps and other function items cannot (FOTY0013).
+     */
+    public static boolean isAtomizable(ItemType type) {
         return type.allMemberTypesMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                || member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem));
+                || member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem)
+                || (isArray(member) && isAtomizable(arrayMemberType(member))));
     }
 
-    /** Whether atomization changes a member. The error type is both a node and atomic, and atomizes to itself. */
-    public static boolean containsNode(ItemType type) {
+    /**
+     * Whether any member is a node or an array, which atomization replaces with other values: a node's typed value, an
+     * array's atomized members. The error type is both a node and atomic, and atomizes to itself.
+     */
+    public static boolean containsNodeOrArray(ItemType type) {
         return type.getMemberTypes().stream()
-                .anyMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem)
+                .anyMatch(member -> (member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem) || isArray(member))
                         && !member.isSubtypeOf(BuiltinTypesCatalogue.atomicItem));
     }
 
     /**
-     * Whether atomizing this type yields values whose type is only known at runtime, such as a node's typed value.
-     * Checks on such values are left to runtime.
+     * Whether atomizing this type yields values whose type is only known at runtime, such as a node's typed value or
+     * the members of an array of any items. Checks on such values are left to runtime.
      */
-    public static boolean hasUnknownTypedValue(ItemType type) {
-        return containsNode(type) && atomizedItemType(type).equals(BuiltinTypesCatalogue.atomicItem);
+    public static boolean hasUnknownAtomizedType(ItemType type) {
+        return containsNodeOrArray(type) && atomizedItemType(type).equals(BuiltinTypesCatalogue.atomicItem);
+    }
+
+    /**
+     * Whether atomizing any item of this type fails (FOTY0013): it is only objects, maps, other function items, or
+     * arrays of them.
+     */
+    public static boolean isNeverAtomizable(ItemType type) {
+        return type.allMemberTypesMatch(member -> isArray(member)
+                ? !arrayMemberType(member).isEmptySequence()
+                        && isNeverAtomizable(arrayMemberType(member).getItemType())
+                : member.isObjectItemType() || member.isMapItemType() || member.isFunctionItemType());
+    }
+
+    /**
+     * Whether the number of values that atomizing this type yields is only known at runtime: an array has any number of
+     * members, and a node's unknown typed value any number of values. Cardinality checks on them are left to runtime.
+     */
+    public static boolean hasUnknownAtomizedCount(ItemType type) {
+        return hasUnknownAtomizedType(type) || type.getMemberTypes().stream().anyMatch(TypeAtomization::isArray);
+    }
+
+    private static boolean isArray(ItemType type) {
+        return type.isArrayItemType() || type.isXQueryArrayItemType();
+    }
+
+    private static boolean isAtomizable(SequenceType type) {
+        return type.isEmptySequence() || isAtomizable(type.getItemType());
+    }
+
+    /** The type of one member of an array: a single item in a JSONiq array, a sequence in an XQuery array. */
+    private static SequenceType arrayMemberType(ItemType array) {
+        return array.isXQueryArrayItemType()
+                ? array.getMemberSequenceType()
+                : new SequenceType(array.getArrayContentFacet());
     }
 
     /** Returns the type of the values that atomizing one item of this type produces. */
@@ -62,6 +104,15 @@ public final class TypeAtomization {
         }
         if (type.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
             return new SequenceType(type);
+        }
+        if (isArray(type)) {
+            // An array atomizes to the atomized values of its members, of which it has any number.
+            SequenceType member = inferType(arrayMemberType(type));
+            ItemType memberItemType =
+                    member.isEmptySequence() ? BuiltinTypesCatalogue.atomicItem : member.getItemType();
+            SequenceCardinality memberCardinality =
+                    member.isEmptySequence() ? SequenceCardinality.EMPTY : member.getCardinality();
+            return new SequenceType(memberItemType, memberCardinality.repeated(SequenceCardinality.ANY));
         }
         SequenceType typedValue = type.getTypedValueType();
         if (typedValue != null) {

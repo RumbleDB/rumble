@@ -127,7 +127,6 @@ public final class ErrorCode implements Serializable {
 
     public static final ErrorCode StringOfJSONiqItemsErrorCode = registerBuiltIn("JNTY0024");
 
-    public static final ErrorCode NonAtomicElementErrorCode = registerBuiltIn("JNTY0004");
     public static final ErrorCode InvalidSelectorErrorCode = registerBuiltIn("JNTY0018");
 
     public static final ErrorCode CannotMaterializeErrorCode = registerBuiltIn("RBDY0005");
