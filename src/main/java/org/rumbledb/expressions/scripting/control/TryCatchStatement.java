@@ -1,0 +1,95 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.expressions.scripting.control;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import lombok.Getter;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.control.CatchPattern;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.statement.Statement;
+
+@Getter
+public class TryCatchStatement extends Statement {
+    private final BlockStatement tryStatement;
+    private final Map<CatchPattern, BlockStatement> catchStatements;
+
+    public TryCatchStatement(
+            BlockStatement tryStatement,
+            Map<CatchPattern, BlockStatement> catchStatements,
+            ExceptionMetadata metadata) {
+        super(metadata);
+        this.tryStatement = tryStatement;
+        this.catchStatements = new LinkedHashMap<>(catchStatements);
+    }
+
+    public List<CatchPattern> getCatchPatterns() {
+        return new ArrayList<>(this.catchStatements.keySet());
+    }
+
+    public BlockStatement getCatchAllStatement() {
+        for (Map.Entry<CatchPattern, BlockStatement> entry : this.catchStatements.entrySet()) {
+            if (entry.getKey().isCatchAll()) {
+                return entry.getValue();
+            }
+        }
+        return null;
+    }
+
+    public BlockStatement getBlockStatementCatching(CatchPattern pattern) {
+        return this.catchStatements.get(pattern);
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitTryCatchStatement(this, argument);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        result.add(this.tryStatement);
+        result.addAll(this.catchStatements.values());
+        return result;
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("try {\n");
+        this.tryStatement.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append("}\n");
+
+        if (this.catchStatements != null) {
+            for (Map.Entry<CatchPattern, BlockStatement> entry : this.catchStatements.entrySet()) {
+                indentIt(sb, indent);
+                sb.append("catch " + entry.getKey() + " {\n");
+                entry.getValue().serializeToJSONiq(sb, indent + 1);
+                indentIt(sb, indent);
+                sb.append("}\n");
+            }
+        }
+    }
+}

@@ -1,6 +1,6 @@
 (:JIQS: ShouldRun; Output="(true, true)" :)
-({"a": 1}, 2, 3) or false,
-(["a", "b"], 2, 3) or false
+("a") or false,
+(1) or false
 
 
 

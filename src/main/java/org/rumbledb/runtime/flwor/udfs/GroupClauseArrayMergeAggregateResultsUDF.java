@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,28 +11,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.flwor.udfs;
 
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.api.java.UDF1;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.OurBadException;
-
-import scala.collection.mutable.WrappedArray;
-
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<WrappedArray<Object>, Object[]> {
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
 
+import scala.collection.Iterator;
+import scala.collection.immutable.ArraySeq;
 
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.OurBadException;
+
+public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<ArraySeq<Object>, Object[]> {
+
+    @Serial
     private static final long serialVersionUID = 1L;
-    private List<Item> nextResult;
-    private List<List<Item>> deserializedParams;
+
+    private final List<Item> nextResult;
+    private final List<List<Item>> deserializedParams;
 
     public GroupClauseArrayMergeAggregateResultsUDF() {
         this.nextResult = new ArrayList<>();
@@ -43,22 +42,21 @@ public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<WrappedArr
     }
 
     @Override
-    public Object[] call(WrappedArray<Object> wrappedParameters) {
+    public Object[] call(ArraySeq<Object> wrappedParameters) {
         this.nextResult.clear();
         this.deserializedParams.clear();
         List<Object> result = new ArrayList<Object>();
-        Object[] insideArrays = (Object[]) wrappedParameters.array();
-        for (Object o : insideArrays) {
-            if (o instanceof Row) {
-                Row row = (Row) o;
+        Iterator<Object> iterator = wrappedParameters.iterator();
+        while (iterator.hasNext()) {
+            Object o = iterator.next();
+            if (o instanceof Row row) {
                 result.add(row);
             }
-            if (o instanceof WrappedArray) {
-                @SuppressWarnings("rawtypes")
-                WrappedArray wrappedArray = (WrappedArray) o;
-                Object[] insideArrays2 = (Object[]) wrappedArray.array();
-                for (Object p : insideArrays2)
-                    result.add(p);
+            if (o instanceof ArraySeq) {
+                @SuppressWarnings("unchecked")
+                ArraySeq<Object> arraySeq = (ArraySeq<Object>) o;
+                Iterator<Object> iterator2 = arraySeq.iterator();
+                while (iterator2.hasNext()) result.add(iterator2.next());
             } else {
                 throw new OurBadException("We cannot process " + o.getClass().getCanonicalName());
             }

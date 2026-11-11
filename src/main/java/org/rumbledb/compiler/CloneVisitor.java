@@ -1,0 +1,1456 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.compiler;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.arithmetic.AdditiveExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.expressions.arithmetic.UnaryExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
+import org.rumbledb.expressions.control.CatchPattern;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchCase;
+import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
+import org.rumbledb.expressions.control.TypeSwitchExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
+import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.CountClause;
+import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.ForClause;
+import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
+import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
+import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.flowr.WindowClause;
+import org.rumbledb.expressions.logic.AndExpression;
+import org.rumbledb.expressions.logic.NotExpression;
+import org.rumbledb.expressions.logic.OrExpression;
+import org.rumbledb.expressions.miscellaneous.NodeSetExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
+import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
+import org.rumbledb.expressions.module.TypeDeclaration;
+import org.rumbledb.expressions.module.VariableDeclaration;
+import org.rumbledb.expressions.postfix.ArrayLookupExpression;
+import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
+import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.BooleanLiteralExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
+import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DoubleLiteralExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.MapConstructorExpression;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
+import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.StringConstructorExpression;
+import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.scripting.Program;
+import org.rumbledb.expressions.scripting.block.BlockStatement;
+import org.rumbledb.expressions.scripting.control.SwitchCaseStatement;
+import org.rumbledb.expressions.scripting.control.SwitchStatement;
+import org.rumbledb.expressions.scripting.control.TryCatchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatement;
+import org.rumbledb.expressions.scripting.control.TypeSwitchStatementCase;
+import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
+import org.rumbledb.expressions.scripting.declaration.VariableDeclStatement;
+import org.rumbledb.expressions.scripting.loops.ExitStatement;
+import org.rumbledb.expressions.scripting.loops.FlowrStatement;
+import org.rumbledb.expressions.scripting.loops.ReturnStatementClause;
+import org.rumbledb.expressions.scripting.loops.WhileStatement;
+import org.rumbledb.expressions.scripting.mutation.ApplyStatement;
+import org.rumbledb.expressions.scripting.mutation.AssignStatement;
+import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.expressions.scripting.statement.StatementsAndExpr;
+import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.IsStaticallyExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.expressions.xml.AttributeNodeContentExpression;
+import org.rumbledb.expressions.xml.AttributeNodeExpression;
+import org.rumbledb.expressions.xml.CommentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedElementConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedNamespaceConstructorExpression;
+import org.rumbledb.expressions.xml.ComputedPIConstructorExpression;
+import org.rumbledb.expressions.xml.DirElemConstructorExpression;
+import org.rumbledb.expressions.xml.DirPIConstructorExpression;
+import org.rumbledb.expressions.xml.DirectCommentConstructorExpression;
+import org.rumbledb.expressions.xml.DocumentNodeConstructorExpression;
+import org.rumbledb.expressions.xml.NamespaceDeclaration;
+import org.rumbledb.expressions.xml.PathRootExpression;
+import org.rumbledb.expressions.xml.PostfixLookupExpression;
+import org.rumbledb.expressions.xml.SlashExpr;
+import org.rumbledb.expressions.xml.StepExpr;
+import org.rumbledb.expressions.xml.TextNodeConstructorExpression;
+import org.rumbledb.expressions.xml.TextNodeExpression;
+import org.rumbledb.expressions.xml.UnaryLookupExpression;
+import org.rumbledb.expressions.xml.axis.ForwardStepExpr;
+import org.rumbledb.expressions.xml.axis.ReverseStepExpr;
+
+public class CloneVisitor extends AbstractNodeVisitor<Node> {
+    @Override
+    protected Node defaultAction(Node node, Node argument) {
+        return node;
+    }
+
+    @Override
+    public Node visitMainModule(MainModule module, Node argument) {
+        MainModule result = new MainModule(
+                (Prolog) visit(module.getProlog(), module.getProlog()),
+                (Program) visit(module.getProgram(), argument),
+                module.getMetadata());
+        result.setStaticContext(module.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitLibraryModule(LibraryModule module, Node argument) {
+        LibraryModule result = new LibraryModule(
+                (Prolog) visit(module.getProlog(), module.getProlog()), module.getNamespace(), module.getMetadata());
+        result.setStaticContext(module.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitProlog(Prolog expression, Node argument) {
+        List<SchemaImport> schemaImports = expression.getSchemaImports().stream()
+                .map(schemaImport -> (SchemaImport) visit(schemaImport, argument))
+                .collect(Collectors.toList());
+        List<LibraryModule> libraryModules = expression.getImportedModules().stream()
+                .map(libraryModule -> (LibraryModule) visit(libraryModule, argument))
+                .collect(Collectors.toList());
+        Map<Node, StaticContext> sourceModuleContexts = new LinkedHashMap<>();
+        List<Node> declarations = expression.getDeclarations().stream()
+                .map(expr -> {
+                    Node clone = visit(expr, argument);
+                    var sourceContext = expression.getSourceModuleContexts().get(expr);
+                    if (sourceContext != null) {
+                        sourceModuleContexts.put(clone, sourceContext);
+                    }
+                    return clone;
+                })
+                .collect(Collectors.toList());
+        expression.setDeclarations(declarations);
+        expression.getSourceModuleContexts().clear();
+        expression.getSourceModuleContexts().putAll(sourceModuleContexts);
+        expression.getSchemaImports().clear();
+        expression.getSchemaImports().addAll(schemaImports);
+        expression.getImportedModules().clear();
+        expression.getImportedModules().addAll(libraryModules);
+        return expression;
+    }
+
+    @Override
+    public Node visitSchemaImport(SchemaImport schemaImport, Node argument) {
+        return new SchemaImport(
+                schemaImport.getTargetNamespace(),
+                schemaImport.getBindingKind(),
+                schemaImport.getPrefix(),
+                schemaImport.getLocationHints(),
+                schemaImport.getMetadata());
+    }
+
+    @Override
+    public Node visitProgram(Program program, Node argument) {
+        StatementsAndOptionalExpr statementsAndOptionalExpr =
+                (StatementsAndOptionalExpr) visit(program.getStatementsAndOptionalExpr(), argument);
+        return new Program(statementsAndOptionalExpr, statementsAndOptionalExpr.getMetadata());
+    }
+
+    @Override
+    public Node visitStatementsAndOptionalExpr(StatementsAndOptionalExpr statementsAndOptionalExpr, Node argument) {
+        List<Statement> statements = new ArrayList<>();
+        statementsAndOptionalExpr.getStatements().forEach(statement -> {
+            statements.add((Statement) visit(statement, argument));
+        });
+        Expression optionalExpr = null;
+        if (statementsAndOptionalExpr.getExpression() != null) {
+            optionalExpr = (Expression) visit(statementsAndOptionalExpr.getExpression(), argument);
+            optionalExpr.setStaticContext(
+                    statementsAndOptionalExpr.getExpression().getStaticContext());
+            optionalExpr.setStaticSequenceType(
+                    statementsAndOptionalExpr.getExpression().getStaticSequenceType());
+        }
+        StatementsAndOptionalExpr result =
+                new StatementsAndOptionalExpr(statements, optionalExpr, statementsAndOptionalExpr.getMetadata());
+        result.setStaticContext(statementsAndOptionalExpr.getStaticContext());
+        result.setStaticSequenceType(statementsAndOptionalExpr.getStaticSequenceType());
+        result.setSequential(statementsAndOptionalExpr.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitStatementsAndExpr(StatementsAndExpr statementsAndExpr, Node argument) {
+        List<Statement> statements = new ArrayList<>();
+        statementsAndExpr.getStatements().forEach(statement -> {
+            statements.add((Statement) visit(statement, argument));
+        });
+        Expression expression = (Expression) visit(statementsAndExpr.getExpression(), argument);
+        expression.setStaticContext(statementsAndExpr.getExpression().getStaticContext());
+        expression.setStaticSequenceType(statementsAndExpr.getExpression().getStaticSequenceType());
+        StatementsAndExpr result = new StatementsAndExpr(statements, expression, statementsAndExpr.getMetadata());
+        result.setStaticContext(statementsAndExpr.getStaticContext());
+        result.setStaticSequenceType(statementsAndExpr.getStaticSequenceType());
+        result.setSequential(statementsAndExpr.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitCommaExpression(CommaExpression expression, Node argument) {
+        List<Expression> children = new ArrayList<>();
+        for (Expression child : expression.getExpressions()) {
+            children.add((Expression) visit(child, argument));
+        }
+        CommaExpression result = new CommaExpression(children, expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    // region flwor
+    @Override
+    public Node visitFlowrExpression(FlworExpression expression, Node argument) {
+        Clause clause = expression.getReturnClause().getFirstClause();
+        Clause result = null;
+        while (clause != null) {
+            Clause temp = (Clause) this.visit(clause, argument);
+            if (result != null) {
+                result.chainWith(temp);
+            }
+            result = temp;
+            clause = clause.getNextClause();
+        }
+        Expression resultingExpression = new FlworExpression((ReturnClause) result, expression.getMetadata());
+        resultingExpression.setStaticContext(expression.getStaticContext());
+        resultingExpression.setStaticSequenceType(expression.getStaticSequenceType());
+        resultingExpression.setSequential(expression.isSequential());
+        return resultingExpression;
+    }
+
+    @Override
+    public Node visitVariableReference(VariableReferenceExpression expression, Node argument) {
+        VariableReferenceExpression result =
+                new VariableReferenceExpression(expression.getVariableName(), expression.getMetadata());
+        result.setActualType(expression.getActualType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitForClause(ForClause clause, Node argument) {
+        ForClause result = new ForClause(
+                clause.getVariableName(),
+                clause.isAllowEmpty(),
+                clause.getActualSequenceType(),
+                clause.getPositionalVariableName(),
+                (Expression) visit(clause.getExpression(), argument),
+                clause.getMetadata(),
+                clause.getVariableMetadata(),
+                clause.getPositionalVariableMetadata());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitWindowClause(WindowClause clause, Node argument) {
+        WindowClause result = new WindowClause(
+                clause.getWindowType(),
+                clause.getWindowVariable(),
+                clause.getActualSequenceType(),
+                (Expression) visit(clause.getExpression(), argument),
+                cloneWindowCondition(clause.getStartCondition(), argument),
+                clause.getEndCondition() == null ? null : cloneWindowCondition(clause.getEndCondition(), argument),
+                clause.getMetadata(),
+                clause.getVariableMetadata());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
+    }
+
+    private WindowClause.WindowCondition cloneWindowCondition(WindowClause.WindowCondition condition, Node argument) {
+        return new WindowClause.WindowCondition(
+                condition.variables(), (Expression) visit(condition.expression(), argument), condition.only());
+    }
+
+    @Override
+    public Node visitLetClause(LetClause clause, Node argument) {
+        LetClause result = new LetClause(
+                clause.getVariableName(),
+                clause.getActualSequenceType(),
+                (Expression) visit(clause.getExpression(), argument),
+                clause.getMetadata(),
+                clause.getVariableMetadata());
+        result.setStaticType(clause.getStaticType());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitGroupByClause(GroupByClause clause, Node argument) {
+        List<GroupByVariableDeclaration> groupByVariableDeclarations = new ArrayList<>();
+        for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
+            GroupByVariableDeclaration copy = new GroupByVariableDeclaration(
+                    variable.getVariableName(),
+                    variable.getActualSequenceType(),
+                    (variable.getExpression() == null)
+                            ? variable.getExpression()
+                            : (Expression) visit(variable.getExpression(), argument),
+                    variable.getCollationURI(),
+                    variable.getVariableMetadata());
+            groupByVariableDeclarations.add(copy);
+        }
+        Clause result = new GroupByClause(groupByVariableDeclarations, clause.getMetadata());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitOrderByClause(OrderByClause clause, Node argument) {
+        List<OrderByClauseSortingKey> groupByVariableDeclarations = new ArrayList<>();
+        for (OrderByClauseSortingKey orderByClauseSortingKey : clause.getSortingKeys()) {
+            groupByVariableDeclarations.add(new OrderByClauseSortingKey(
+                    (Expression) visit(orderByClauseSortingKey.getExpression(), argument),
+                    orderByClauseSortingKey.isAscending(),
+                    orderByClauseSortingKey.getUri(),
+                    orderByClauseSortingKey.getEmptyOrder()));
+        }
+        Clause result = new OrderByClause(groupByVariableDeclarations, clause.isStable(), clause.getMetadata());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitCountClause(CountClause expression, Node argument) {
+        Clause result = new CountClause(
+                expression.getCountVariableName(), expression.getMetadata(), expression.getVariableMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitWhereClause(WhereClause clause, Node argument) {
+        Clause result =
+                new WhereClause((Expression) visit(clause.getWhereExpression(), argument), clause.getMetadata());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitReturnClause(ReturnClause clause, Node argument) {
+        Clause result = new ReturnClause((Expression) visit(clause.getReturnExpr(), argument), clause.getMetadata());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
+    }
+    // endregion
+
+    // region postfix
+    @Override
+    public Node visitArrayUnboxingExpression(ArrayUnboxingExpression expression, Node argument) {
+        ArrayUnboxingExpression result = new ArrayUnboxingExpression(
+                (Expression) visit(expression.getMainExpression(), argument), expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitArrayLookupExpression(ArrayLookupExpression expression, Node argument) {
+        ArrayLookupExpression result = new ArrayLookupExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                (Expression) visit(expression.getLookupExpression(), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitObjectLookupExpression(ObjectLookupExpression expression, Node argument) {
+        ObjectLookupExpression result = new ObjectLookupExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                (Expression) visit(expression.getLookupExpression(), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitPostfixLookupExpression(PostfixLookupExpression expression, Node argument) {
+        PostfixLookupExpression result = new PostfixLookupExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                (expression.getLookupExpression() != null)
+                        ? (Expression) visit(expression.getLookupExpression(), argument)
+                        : null,
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitUnaryLookupExpression(UnaryLookupExpression expression, Node argument) {
+        UnaryLookupExpression result = new UnaryLookupExpression(
+                (expression.getLookupExpression() != null)
+                        ? (Expression) visit(expression.getLookupExpression(), argument)
+                        : null,
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitSlashExpr(SlashExpr expression, Node argument) {
+        SlashExpr result = new SlashExpr(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitStepExpr(StepExpr expression, Node argument) {
+        // A step has no children, but a copy needs its own static context, which holds its context item type.
+        StepExpr result;
+        if (expression instanceof ForwardStepExpr forwardStep) {
+            result = new ForwardStepExpr(
+                    forwardStep.getForwardAxis(), forwardStep.getNodeTest(), forwardStep.getMetadata());
+        } else if (expression instanceof ReverseStepExpr reverseStep) {
+            result = new ReverseStepExpr(
+                    reverseStep.getReverseAxis(), reverseStep.getNodeTest(), reverseStep.getMetadata());
+        } else {
+            throw new OurBadException(
+                    "Unexpected step expression " + expression.getClass().getSimpleName());
+        }
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitFilterExpression(FilterExpression expression, Node argument) {
+        FilterExpression result = new FilterExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                (Expression) visit(expression.getPredicateExpression(), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, Node argument) {
+        List<Expression> arguments = expression.getArguments().stream()
+                .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
+                .collect(Collectors.toList());
+        DynamicFunctionCallExpression result = new DynamicFunctionCallExpression(
+                (Expression) visit(expression.getMainExpression(), argument), arguments, expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+    // endregion
+
+    // region primary
+    @Override
+    public Node visitArrayConstructor(ArrayConstructorExpression expression, Node argument) {
+        ArrayConstructorExpression result;
+        if (expression.isFixedSlotsArrayConstructor()) {
+            List<Expression> clonedMembers = new ArrayList<>();
+            if (expression.getMemberExpressions() != null) {
+                for (Expression memberExpr : expression.getMemberExpressions()) {
+                    clonedMembers.add((Expression) visit(memberExpr, argument));
+                }
+            }
+            result = new ArrayConstructorExpression(clonedMembers, true, expression.getMetadata());
+        } else {
+            result = new ArrayConstructorExpression(
+                    (expression.getExpression() == null)
+                            ? expression.getExpression()
+                            : (Expression) visit(expression.getExpression(), argument),
+                    expression.getMetadata());
+        }
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitStringConstructor(StringConstructorExpression expression, Node argument) {
+        List<Expression> clonedParts = new ArrayList<>();
+        for (Expression part : expression.getParts()) {
+            clonedParts.add(part == null ? null : (Expression) visit(part, argument));
+        }
+        StringConstructorExpression result = new StringConstructorExpression(
+                clonedParts, new ArrayList<>(expression.getIsInterpolated()), expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitObjectConstructor(ObjectConstructorExpression expression, Node argument) {
+        if (expression.isMergedConstructor()) {
+            Expression result = new ObjectConstructorExpression(
+                    (Expression) visit(expression.getChildren().get(0), argument), expression.getMetadata());
+            result.setStaticContext(expression.getStaticContext());
+            result.setStaticSequenceType(expression.getStaticSequenceType());
+            result.setSequential(expression.isSequential());
+            return result;
+        } else {
+            List<Expression> keys = expression.getKeys().stream()
+                    .map(key -> (Expression) visit(key, argument))
+                    .collect(Collectors.toList());
+            List<Expression> values = expression.getValues().stream()
+                    .map(key -> (Expression) visit(key, argument))
+                    .collect(Collectors.toList());
+            Expression result = new ObjectConstructorExpression(keys, values, expression.getMetadata());
+            result.setStaticContext(expression.getStaticContext());
+            result.setStaticSequenceType(expression.getStaticSequenceType());
+            result.setSequential(expression.isSequential());
+            return result;
+        }
+    }
+
+    @Override
+    public Node visitMapConstructor(MapConstructorExpression expression, Node argument) {
+        List<Expression> keys = expression.getKeys().stream()
+                .map(key -> (Expression) visit(key, argument))
+                .collect(Collectors.toList());
+        List<Expression> values = expression.getValues().stream()
+                .map(value -> (Expression) visit(value, argument))
+                .collect(Collectors.toList());
+        Expression result = new MapConstructorExpression(keys, values, expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitDirElemConstructor(DirElemConstructorExpression expression, Node argument) {
+        List<Expression> content = expression.getContent().stream()
+                .map(child -> (Expression) visit(child, argument))
+                .collect(Collectors.toList());
+
+        List<Expression> attributes = expression.getAttributes().stream()
+                .map(child -> (Expression) visit(child, argument))
+                .collect(Collectors.toList());
+        List<NamespaceDeclaration> namespaceDeclarations = expression.getNamespaceDeclarations().stream()
+                .map(ns -> new NamespaceDeclaration(ns.getPrefix(), ns.getUri(), ns.getMetadata()))
+                .collect(Collectors.toList());
+
+        DirElemConstructorExpression result = new DirElemConstructorExpression(
+                expression.getNodeName(), content, attributes, namespaceDeclarations, expression.getMetadata());
+        result.setDirectlyNested(expression.isDirectlyNested());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitDirPIConstructor(DirPIConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression() != null
+                ? (Expression) visit(expression.getContentExpression(), argument)
+                : null;
+        DirPIConstructorExpression result =
+                new DirPIConstructorExpression(expression.getTarget(), contentExpression, expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitComputedElementConstructor(ComputedElementConstructorExpression expression, Node argument) {
+        ComputedElementConstructorExpression result;
+        if (expression.hasStaticName()) {
+            result = new ComputedElementConstructorExpression(
+                    expression.getElementName(),
+                    expression.getContentExpression() != null
+                            ? (Expression) visit(expression.getContentExpression(), argument)
+                            : null,
+                    expression.getMetadata());
+        } else {
+            result = new ComputedElementConstructorExpression(
+                    (Expression) visit(expression.getNameExpression(), argument),
+                    expression.getContentExpression() != null
+                            ? (Expression) visit(expression.getContentExpression(), argument)
+                            : null,
+                    expression.getMetadata());
+        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitComputedPIConstructor(ComputedPIConstructorExpression expression, Node argument) {
+        ComputedPIConstructorExpression result;
+        if (expression.hasStaticTarget()) {
+            result = new ComputedPIConstructorExpression(
+                    expression.getTarget(),
+                    expression.getContentExpression() != null
+                            ? (Expression) visit(expression.getContentExpression(), argument)
+                            : null,
+                    expression.getMetadata());
+        } else {
+            result = new ComputedPIConstructorExpression(
+                    (Expression) visit(expression.getNameExpression(), argument),
+                    expression.getContentExpression() != null
+                            ? (Expression) visit(expression.getContentExpression(), argument)
+                            : null,
+                    expression.getMetadata());
+        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitComputedAttributeConstructor(ComputedAttributeConstructorExpression expression, Node argument) {
+        ComputedAttributeConstructorExpression result;
+        if (expression.hasStaticName()) {
+            result = new ComputedAttributeConstructorExpression(
+                    expression.getAttributeName(),
+                    (Expression) visit(expression.getValueExpression(), argument),
+                    expression.getMetadata());
+        } else {
+            if (expression.getNameExpression() == null) {
+                throw new OurBadException(
+                        "Computed attribute constructor has neither a static name nor a dynamic name expression.");
+            }
+            result = new ComputedAttributeConstructorExpression(
+                    (Expression) visit(expression.getNameExpression(), argument),
+                    (Expression) visit(expression.getValueExpression(), argument),
+                    expression.getMetadata());
+        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitComputedNamespaceConstructor(ComputedNamespaceConstructorExpression expression, Node argument) {
+        ComputedNamespaceConstructorExpression result;
+        if (expression.hasStaticPrefix()) {
+            result = new ComputedNamespaceConstructorExpression(
+                    expression.getPrefix(),
+                    (Expression) visit(expression.getUriExpression(), argument),
+                    expression.getMetadata());
+        } else {
+            result = new ComputedNamespaceConstructorExpression(
+                    (Expression) visit(expression.getPrefixExpression(), argument),
+                    (Expression) visit(expression.getUriExpression(), argument),
+                    expression.getMetadata());
+        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitDocumentNodeConstructor(DocumentNodeConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression();
+        Expression clonedContentExpression =
+                contentExpression != null ? (Expression) visit(contentExpression, argument) : null;
+
+        DocumentNodeConstructorExpression result =
+                new DocumentNodeConstructorExpression(clonedContentExpression, expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitPathRootExpr(PathRootExpression expression, Node argument) {
+        PathRootExpression result = new PathRootExpression(expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitCommentNodeConstructor(CommentNodeConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression();
+        Expression clonedContentExpression =
+                contentExpression != null ? (Expression) visit(contentExpression, argument) : null;
+
+        CommentNodeConstructorExpression result =
+                new CommentNodeConstructorExpression(clonedContentExpression, expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitDirectCommentConstructor(DirectCommentConstructorExpression expression, Node argument) {
+        DirectCommentConstructorExpression result =
+                new DirectCommentConstructorExpression(expression.getContent(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitTextNodeConstructor(TextNodeConstructorExpression expression, Node argument) {
+        Expression contentExpression = expression.getContentExpression();
+        Expression clonedContentExpression =
+                contentExpression != null ? (Expression) visit(contentExpression, argument) : null;
+
+        TextNodeConstructorExpression result =
+                new TextNodeConstructorExpression(clonedContentExpression, expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitTextNode(TextNodeExpression expression, Node argument) {
+        Expression result = new TextNodeExpression(expression.getContent(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitAttributeNode(AttributeNodeExpression expression, Node argument) {
+        List<Expression> value = expression.getValue().stream()
+                .map(child -> (Expression) visit(child, argument))
+                .collect(Collectors.toList());
+        AttributeNodeExpression result =
+                new AttributeNodeExpression(expression.getNodeName(), value, expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitAttributeNodeContent(AttributeNodeContentExpression expression, Node argument) {
+        Expression result = new AttributeNodeContentExpression(expression.getContent(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitContextExpr(ContextItemExpression expression, Node argument) {
+        Expression result = new ContextItemExpression(expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
+        List<Expression> arguments = expression.getArguments().stream()
+                .map(expr -> expr != null ? (Expression) visit(expr, argument) : null)
+                .collect(Collectors.toList());
+        Expression result =
+                new FunctionCallExpression(expression.getFunctionName(), arguments, expression.getMetadata());
+        if (expression.isTailCallOptimization()) {
+            ((FunctionCallExpression) result).setTailCallOptimization(true);
+        }
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitInlineFunctionExpr(InlineFunctionExpression expression, Node argument) {
+        InlineFunctionExpression result = new InlineFunctionExpression(
+                expression.getAnnotations(),
+                expression.getName(),
+                expression.getParams(),
+                expression.getActualReturnType(),
+                (StatementsAndOptionalExpr) visit(expression.getBody(), argument),
+                expression.isExternal(),
+                expression.getMetadata(),
+                expression.getNameMetadata(),
+                expression.getParameterMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        result.setHasExitStatement(expression.hasExitStatement());
+        result.setHasTailCalls(expression.hasTailCalls());
+        return result;
+    }
+
+    @Override
+    public Node visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Node argument) {
+        Expression result = new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+    // endregion
+
+    // region literal
+    @Override
+    public Node visitInteger(IntegerLiteralExpression expression, Node argument) {
+        Expression result = new IntegerLiteralExpression(expression.getLexicalValue(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitString(StringLiteralExpression expression, Node argument) {
+        Expression result = new StringLiteralExpression(expression.getValue(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitDouble(DoubleLiteralExpression expression, Node argument) {
+        Expression result = new DoubleLiteralExpression(expression.getValue(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitDecimal(DecimalLiteralExpression expression, Node argument) {
+        Expression result = new DecimalLiteralExpression(expression.getValue(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitNull(NullLiteralExpression expression, Node argument) {
+        Expression result = new NullLiteralExpression(expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitBoolean(BooleanLiteralExpression expression, Node argument) {
+        Expression result = new BooleanLiteralExpression(expression.getValue(), expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+    // endregion
+
+    // region operational
+    @Override
+    public Node visitAdditiveExpr(AdditiveExpression expression, Node argument) {
+        AdditiveExpression result = new AdditiveExpression(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.isMinus(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitMultiplicativeExpr(MultiplicativeExpression expression, Node argument) {
+        MultiplicativeExpression result = new MultiplicativeExpression(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getMultiplicativeOperator(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitSimpleMapExpr(SimpleMapExpression expression, Node argument) {
+        SimpleMapExpression result = new SimpleMapExpression(
+                (Expression) visit(expression.getChildren().get(0), argument),
+                (Expression) visit(expression.getChildren().get(1), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitAndExpr(AndExpression expression, Node argument) {
+        AndExpression result = new AndExpression(
+                (Expression) visit(expression.getChildren().get(0), argument),
+                (Expression) visit(expression.getChildren().get(1), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitOrExpr(OrExpression expression, Node argument) {
+        OrExpression result = new OrExpression(
+                (Expression) visit(expression.getChildren().get(0), argument),
+                (Expression) visit(expression.getChildren().get(1), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitNotExpr(NotExpression expression, Node argument) {
+        NotExpression result = new NotExpression(
+                (Expression) visit(expression.getMainExpression(), argument), expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitUnaryExpr(UnaryExpression expression, Node argument) {
+        UnaryExpression result = new UnaryExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.isNegated(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitRangeExpr(RangeExpression expression, Node argument) {
+        RangeExpression result = new RangeExpression(
+                (Expression) visit(expression.getChildren().get(0), argument),
+                (Expression) visit(expression.getChildren().get(1), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitNodeSetExpr(NodeSetExpression expression, Node argument) {
+        NodeSetExpression result = new NodeSetExpression(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getOperator(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitStringConcatExpr(StringConcatExpression expression, Node argument) {
+        StringConcatExpression result = new StringConcatExpression(
+                (Expression) visit(expression.getChildren().get(0), argument),
+                (Expression) visit(expression.getChildren().get(1), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitComparisonExpr(ComparisonExpression expression, Node argument) {
+        ComparisonExpression result = new ComparisonExpression(
+                (Expression) visit(expression.getChildren().get(0), argument),
+                (Expression) visit(expression.getChildren().get(1), argument),
+                expression.getComparisonOperator(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitNodeComparisonExpr(NodeComparisonExpression expression, Node argument) {
+        NodeComparisonExpression result = new NodeComparisonExpression(
+                (Expression) visit(expression.getLeftExpression(), argument),
+                (Expression) visit(expression.getRightExpression(), argument),
+                expression.getOperator(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitInstanceOfExpression(InstanceOfExpression expression, Node argument) {
+        InstanceOfExpression result = new InstanceOfExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.getSequenceType(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitIsStaticallyExpr(IsStaticallyExpression expression, Node argument) {
+        IsStaticallyExpression result = new IsStaticallyExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.getSequenceType(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitTreatExpression(TreatExpression expression, Node argument) {
+        TreatExpression result = new TreatExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.getSequenceType(),
+                expression.errorCodeThatShouldBeThrown(),
+                expression.getDeclaredTypeVariable(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitFunctionArgumentConversion(FunctionArgumentConversionExpression expression, Node argument) {
+        FunctionArgumentConversionExpression result = new FunctionArgumentConversionExpression(
+                (Expression) visit(expression.getArgument(), argument),
+                expression.getParameterType(),
+                expression.getFunctionName(),
+                expression.isReturnValue(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitCastableExpression(CastableExpression expression, Node argument) {
+        CastableExpression result = new CastableExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.getSequenceType(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitCastExpression(CastExpression expression, Node argument) {
+        CastExpression result = new CastExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.getSequenceType(),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+    // endregion
+
+    // region control
+    @Override
+    public Node visitConditionalExpression(ConditionalExpression expression, Node argument) {
+        ConditionalExpression result = new ConditionalExpression(
+                (Expression) visit(expression.getCondition(), argument),
+                (Expression) visit(expression.getBranch(), argument),
+                (Expression) visit(expression.getElseBranch(), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitSwitchExpression(SwitchExpression expression, Node argument) {
+        List<SwitchCase> resultCases = new ArrayList<>();
+        for (SwitchCase switchCase : expression.getCases()) {
+            List<Expression> children = new ArrayList<>();
+            for (Expression child : switchCase.getConditionExpressions()) {
+                children.add((Expression) visit(child, argument));
+            }
+            resultCases.add(new SwitchCase(children, (Expression) visit(switchCase.getReturnExpression(), argument)));
+        }
+        SwitchExpression result = new SwitchExpression(
+                (Expression) visit(expression.getTestCondition(), argument),
+                resultCases,
+                (Expression) visit(expression.getDefaultExpression(), argument),
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    private TypeswitchCase cloneTypeswitchCase(TypeswitchCase switchCase, Node argument) {
+        Expression body = (Expression) visit(switchCase.getReturnExpression(), argument);
+        TypeswitchCase copy = switchCase.getUnion() == null
+                ? new TypeswitchCase(switchCase.getVariableName(), body, switchCase.getVariableMetadata())
+                : new TypeswitchCase(
+                        switchCase.getVariableName(), switchCase.getUnion(), body, switchCase.getVariableMetadata());
+        return copy;
+    }
+
+    private TypeSwitchStatementCase cloneTypeswitchCase(TypeSwitchStatementCase switchCase, Node argument) {
+        Statement body = (Statement) visit(switchCase.getReturnStatement(), argument);
+        TypeSwitchStatementCase copy = switchCase.getUnion() == null
+                ? new TypeSwitchStatementCase(switchCase.getVariableName(), body, switchCase.getVariableMetadata())
+                : new TypeSwitchStatementCase(
+                        switchCase.getVariableName(), switchCase.getUnion(), body, switchCase.getVariableMetadata());
+        return copy;
+    }
+
+    @Override
+    public Node visitTypeSwitchExpression(TypeSwitchExpression expression, Node argument) {
+        List<TypeswitchCase> resultCases = new ArrayList<>();
+        for (TypeswitchCase switchCase : expression.getCases()) {
+            resultCases.add(cloneTypeswitchCase(switchCase, argument));
+        }
+        TypeswitchCase defaultCase = cloneTypeswitchCase(expression.getDefaultCase(), argument);
+
+        TypeSwitchExpression result = new TypeSwitchExpression(
+                (Expression) visit(expression.getTestCondition(), argument),
+                resultCases,
+                defaultCase,
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitTryCatchExpression(TryCatchExpression expression, Node argument) {
+        Map<CatchPattern, Expression> catchExpressions = new LinkedHashMap<>();
+        for (CatchPattern key : expression.getCatchExpressions().keySet()) {
+            catchExpressions.put(
+                    key, (Expression) visit(expression.getCatchExpressions().get(key), argument));
+        }
+        TryCatchExpression result = new TryCatchExpression(
+                (Expression) visit(expression.getTryExpression(), argument),
+                catchExpressions,
+                expression.getMetadata());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setStaticContext(expression.getStaticContext());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+    // endregion
+
+    // region prolog
+    @Override
+    public Node visitVariableDeclaration(VariableDeclaration expression, Node argument) {
+        return new VariableDeclaration(
+                expression.getVariableName(),
+                expression.external(),
+                expression.getActualSequenceType(),
+                expression.getExpression() == null ? null : (Expression) visit(expression.getExpression(), argument),
+                expression.getAnnotations(),
+                expression.getMetadata(),
+                expression.getVariableMetadata());
+    }
+
+    @Override
+    public Node visitFunctionDeclaration(FunctionDeclaration expression, Node argument) {
+        return new FunctionDeclaration(
+                (InlineFunctionExpression) visit(expression.getExpression(), argument), expression.getMetadata());
+    }
+
+    @Override
+    public Node visitTypeDeclaration(TypeDeclaration expression, Node argument) {
+        return new TypeDeclaration(expression.getDefinition(), expression.getMetadata());
+    }
+
+    @Override
+    public Node visitValidateTypeExpression(ValidateTypeExpression expression, Node argument) {
+        Expression result = new ValidateTypeExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.isValidate(),
+                expression.getSequenceType(),
+                expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitValidateExpression(ValidateExpression expression, Node argument) {
+        Expression result = new ValidateExpression(
+                (Expression) visit(expression.getMainExpression(), argument),
+                expression.getValidationMode(),
+                expression.getTypeName(),
+                expression.getMetadata());
+        result.setStaticContext(expression.getStaticContext());
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        result.setSequential(expression.isSequential());
+        return result;
+    }
+
+    // region scripting
+    @Override
+    public Node visitApplyStatement(ApplyStatement statement, Node argument) {
+        Expression exprSingle = (Expression) visit(statement.getApplyExpression(), argument);
+        ApplyStatement result = new ApplyStatement(exprSingle, statement.getMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        result.setSequential(statement.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitAssignStatement(AssignStatement statement, Node argument) {
+        Expression exprSingle = (Expression) visit(statement.getAssignExpression(), argument);
+        AssignStatement result = new AssignStatement(exprSingle, statement.getName(), statement.getMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        result.setSequential(statement.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitBlockStatement(BlockStatement statement, Node argument) {
+        List<Statement> statements = new ArrayList<>();
+        statement.getBlockStatements().forEach(stmt -> {
+            statements.add((Statement) visit(stmt, argument));
+        });
+        BlockStatement result = new BlockStatement(statements, statement.getMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        result.setSequential(statement.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitExitStatement(ExitStatement statement, Node argument) {
+        Expression exprSingle = (Expression) visit(statement.getExitExpression(), argument);
+        ExitStatement result = new ExitStatement(exprSingle, statement.getMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        result.setSequential(statement.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitFlowrStatement(FlowrStatement statement, Node argument) {
+        Clause flowrClause = statement.getReturnStatementClause().getFirstClause();
+        Clause newClause = null;
+        while (flowrClause != null) {
+            Clause temp = (Clause) this.visit(flowrClause, argument);
+            if (newClause != null) {
+                newClause.chainWith(temp);
+            }
+            newClause = temp;
+            flowrClause = flowrClause.getNextClause();
+        }
+        FlowrStatement resultStatement = new FlowrStatement((ReturnStatementClause) newClause, statement.getMetadata());
+        resultStatement.setStaticContext(statement.getStaticContext());
+        resultStatement.setStaticSequenceType(statement.getStaticSequenceType());
+        resultStatement.setSequential(statement.isSequential());
+        return resultStatement;
+    }
+
+    @Override
+    public Node visitReturnStatementClause(ReturnStatementClause clause, Node argument) {
+        Clause result = new ReturnStatementClause(
+                (Statement) visit(clause.getReturnStatement(), argument), clause.getMetadata());
+        result.setStaticContext(clause.getStaticContext());
+        return result;
+    }
+
+    @Override
+    public Node visitTryCatchStatement(TryCatchStatement statement, Node argument) {
+        Map<CatchPattern, BlockStatement> catchStatements = new LinkedHashMap<>();
+        statement
+                .getCatchStatements()
+                .forEach((key, value) -> catchStatements.put(key, (BlockStatement) visit(value, argument)));
+        TryCatchStatement result = new TryCatchStatement(
+                (BlockStatement) visit(statement.getTryStatement(), argument),
+                catchStatements,
+                statement.getMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        result.setSequential(statement.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitSwitchStatement(SwitchStatement statement, Node argument) {
+        List<SwitchCaseStatement> resultCases = new ArrayList<>();
+        statement.getCases().forEach(swcCase -> {
+            List<Expression> children = new ArrayList<>();
+            swcCase.getConditionExpressions().forEach(expr -> {
+                children.add((Expression) visit(expr, argument));
+            });
+            resultCases.add(
+                    new SwitchCaseStatement(children, (Statement) visit(swcCase.getReturnStatement(), argument)));
+        });
+        SwitchStatement result = new SwitchStatement(
+                (Expression) visit(statement.getTestCondition(), argument),
+                resultCases,
+                (Statement) visit(statement.getDefaultStatement(), argument),
+                statement.getMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        result.setSequential(statement.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitTypeSwitchStatement(TypeSwitchStatement statement, Node argument) {
+        List<TypeSwitchStatementCase> resultCases = new ArrayList<>();
+        for (TypeSwitchStatementCase switchCase : statement.getCases()) {
+            resultCases.add(cloneTypeswitchCase(switchCase, argument));
+        }
+        TypeSwitchStatementCase defaultCase = cloneTypeswitchCase(statement.getDefaultCase(), argument);
+
+        TypeSwitchStatement result = new TypeSwitchStatement(
+                (Expression) visit(statement.getTestCondition(), argument),
+                resultCases,
+                defaultCase,
+                statement.getMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        result.setSequential(statement.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitWhileStatement(WhileStatement statement, Node argument) {
+        Expression testExpr = (Expression) visit(statement.getTestCondition(), argument);
+        Statement body = (Statement) visit(statement.getStatement(), argument);
+        WhileStatement result = new WhileStatement(testExpr, body, statement.getMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        result.setSequential(statement.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitCommaVariableDeclStatement(CommaVariableDeclStatement statement, Node argument) {
+        List<VariableDeclStatement> variables = new ArrayList<>();
+        statement.getVariables().forEach(variable -> {
+            variables.add((VariableDeclStatement) visit(variable, argument));
+        });
+        CommaVariableDeclStatement result = new CommaVariableDeclStatement(variables, statement.getMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        result.setSequential(statement.isSequential());
+        return result;
+    }
+
+    @Override
+    public Node visitVariableDeclStatement(VariableDeclStatement statement, Node argument) {
+        Expression initializer = statement.getVariableExpression() == null
+                ? null
+                : (Expression) visit(statement.getVariableExpression(), argument);
+        VariableDeclStatement result = new VariableDeclStatement(
+                statement.getAnnotations(),
+                statement.getVariableName(),
+                statement.getActualSequenceType(),
+                initializer,
+                statement.getMetadata(),
+                statement.getVariableMetadata());
+        result.setStaticContext(statement.getStaticContext());
+        result.setStaticSequenceType(statement.getStaticSequenceType());
+        result.setSequential(statement.isSequential());
+        return result;
+    }
+    // end region scripting
+}

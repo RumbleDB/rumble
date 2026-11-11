@@ -1,10 +1,19 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.types;
-
-import org.apache.spark.sql.types.DataTypes;
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.IntItem;
-import org.rumbledb.items.IntegerItem;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -12,276 +21,563 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.IntItem;
+import org.rumbledb.items.IntegerItem;
+
 public class BuiltinTypesCatalogue {
     public static final ItemType item = new ItemItemType(Name.createVariableInDefaultTypeNamespace("item"));
 
-    public static final ItemType atomicItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "atomic"),
-            Collections.emptySet(),
-            DataTypes.BinaryType
-    );
+    public static final ItemType atomicItem =
+            new AtomicItemType(new Name(Name.XS_NS, "xs", "anyAtomicType"), Collections.emptySet());
+    public static final ItemType errorItem = new ErrorItemType();
     public static final ItemType stringItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "string"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
-                    )
-            ),
-            DataTypes.StringType
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.LENGTH,
+                    ConstrainingFacetTypes.MINLENGTH,
+                    ConstrainingFacetTypes.MAXLENGTH,
+                    ConstrainingFacetTypes.WHITESPACE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.PRESERVE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            null);
 
-    // numeric is an internal type for avoiding function overloading, it is not available in JSONiq
-    // it is the base type for xs:decimal, xs:double, and xs:float (those are now treated specially in type functions)
-    public static final ItemType numericItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "numeric"),
+    public static final ItemType untypedAtomicItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "untypedAtomic"),
             Collections.emptySet(),
-            DataTypes.BinaryType // TODO: consider if specific type is needed
-    );
+            WhitespaceFacet.PRESERVE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            null);
 
     public static final ItemType decimalItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "decimal"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.TOTALDIGITS,
-                        FacetTypes.FRACTIONDIGITS
-                    )
-            ),
-            DataTypes.createDecimalType()
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.TOTALDIGITS,
+                    ConstrainingFacetTypes.FRACTIONDIGITS,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.TOTAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            true,
+            // XSD 1.1 §4.3.5 decimal lexical representation
+            Collections.singletonList("[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)"));
     public static final ItemType doubleItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "double"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
-                    )
-            ),
-            DataTypes.DoubleType
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            true,
+            CardinalityFacetValue.FINITE,
+            true,
+            // XSD 1.1 §4.3.6 double lexical representation
+            Arrays.asList("[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?", "INF", "\\+INF", "-INF", "NaN"));
     public static final ItemType floatItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "float"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
-                    )
-            ),
-            DataTypes.FloatType
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            true,
+            CardinalityFacetValue.FINITE,
+            true,
+            // Same lexical space as xs:double
+            Arrays.asList("[-+]?([0-9]+(\\.[0-9]*)?|\\.[0-9]+)([eE][-+]?[0-9]+)?", "INF", "\\+INF", "-INF", "NaN"));
+
+    // xs:numeric is a union type for xs:double, xs:float, xs:decimal (XSD 1.1 §2.4.1)
+    public static final ItemType numericItem = new UnionItemType(
+            new Name(Name.XS_NS, "xs", "numeric"),
+            atomicItem,
+            Arrays.asList(doubleItem, floatItem, decimalItem),
+            false);
 
     public static final ItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean"),
-            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS)),
-            DataTypes.BooleanType
-    );
-    public static final ItemType nullItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "null"),
-            Collections.emptySet(),
-            DataTypes.NullType // TODO : see appropriate type
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.FINITE,
+            false,
+            Arrays.asList("true", "false", "0", "1"));
+    public static final ItemType nullItem =
+            new AtomicItemType(new Name(Name.JS_NS, "js", "null"), Collections.emptySet());
     public static final ItemType durationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "duration"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
-                    )
-            ),
-            DataTypes.BinaryType // TODO : appropriate datatype
-    );
-    public static final ItemType yearMonthDurationItem = new AtomicItemType(
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            // Simplified duration lexical pattern
+            Collections.singletonList(
+                    "[-+]?P(?!$)([0-9]+Y)?([0-9]+M)?([0-9]+D)?(T([0-9]+H)?([0-9]+M)?([0-9]+(\\.[0-9]+)?S)?)?"));
+    public static final ItemType yearMonthDurationItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
-                    )
-            ),
-            DataTypes.BinaryType // TODO : appropriate datatype
-    );
-    public static final ItemType dayTimeDurationItem = new AtomicItemType(
+            durationItem,
+            durationItem,
+            Facets.createPatternFacets(Collections.singletonList("[^DT]*")),
+            false);
+    public static final ItemType dayTimeDurationItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "dayTimeDuration"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
-                    )
-            ),
-            DataTypes.BinaryType // TODO : appropriate datatype
-    );
+            durationItem,
+            durationItem,
+            Facets.createPatternFacets(Collections.singletonList("[^YM]*(T.*)?")),
+            false);
     public static final ItemType dateTimeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTime"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
-                    )
-            ),
-            DataTypes.DateType
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            Collections.singletonList(
+                    "-?[0-9]{4,}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})?"));
+    public static final ItemType dateTimeStampItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "dateTimeStamp"),
+            dateTimeItem,
+            dateTimeItem,
+            Facets.createTimezoneFacets(TimezoneFacet.REQUIRED),
+            false);
     public static final ItemType dateItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "date"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
-                    )
-            ),
-            DataTypes.TimestampType
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            Collections.singletonList("-?[0-9]{4,}-[0-9]{2}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
     public static final ItemType timeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "time"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
-                    )
-            ),
-            DataTypes.TimestampType
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            Collections.singletonList("[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})?"));
+    public static final ItemType gDayItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "gDay"),
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            Collections.singletonList("---[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
+    public static final ItemType gMonthItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "gMonth"),
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            Collections.singletonList("--[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
+    public static final ItemType gYearItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "gYear"),
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            Collections.singletonList("-?[0-9]{4,}(Z|[+-][0-9]{2}:[0-9]{2})?"));
+    public static final ItemType gMonthDayItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "gMonthDay"),
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            Collections.singletonList("--[0-9]{2}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
+    public static final ItemType gYearMonthItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "gYearMonth"),
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.MININCLUSIVE,
+                    ConstrainingFacetTypes.MAXINCLUSIVE,
+                    ConstrainingFacetTypes.MINEXCLUSIVE,
+                    ConstrainingFacetTypes.MAXEXCLUSIVE,
+                    ConstrainingFacetTypes.EXPLICITTIMEZONE,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.PARTIAL,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            Collections.singletonList("-?[0-9]{4,}-[0-9]{2}(Z|[+-][0-9]{2}:[0-9]{2})?"));
     public static final ItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
-                    )
-            ),
-            DataTypes.BinaryType
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.LENGTH,
+                    ConstrainingFacetTypes.MINLENGTH,
+                    ConstrainingFacetTypes.MAXLENGTH,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            Collections.singletonList("[0-9a-fA-F]*"));
     public static final ItemType anyURIItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "anyURI"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
-                    )
-            ),
-            DataTypes.StringType
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.LENGTH,
+                    ConstrainingFacetTypes.MINLENGTH,
+                    ConstrainingFacetTypes.MAXLENGTH,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            null);
     public static final ItemType base64BinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "base64Binary"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.LENGTH,
-                        FacetTypes.MINLENGTH,
-                        FacetTypes.MAXLENGTH
-                    )
-            ),
-            DataTypes.BinaryType
-    );
+            new HashSet<>(Arrays.asList(
+                    ConstrainingFacetTypes.ENUMERATION,
+                    ConstrainingFacetTypes.CONSTRAINTS,
+                    ConstrainingFacetTypes.LENGTH,
+                    ConstrainingFacetTypes.MINLENGTH,
+                    ConstrainingFacetTypes.MAXLENGTH,
+                    ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            // Simplified base64 lexical pattern
+            Collections.singletonList(
+                    "((([A-Za-z0-9+/] ?){4})*(([A-Za-z0-9+/] ?){3}[A-Za-z0-9+/]|([A-Za-z0-9+/] ?){2}[AEIMQUYcgkosw048] ?=|[A-Za-z0-9+/] ?[AQgw] ?= ?=))?"));
+
+    public static final ItemType QNameItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "QName"),
+            new HashSet<>(Arrays.asList(ConstrainingFacetTypes.ENUMERATION, ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            null);
+
+    public static final ItemType NOTATIONItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "NOTATION"),
+            new HashSet<>(Arrays.asList(ConstrainingFacetTypes.ENUMERATION, ConstrainingFacetTypes.PATTERN)),
+            WhitespaceFacet.COLLAPSE,
+            OrderedFacetValue.FALSE,
+            false,
+            CardinalityFacetValue.COUNTABLY_INFINITE,
+            false,
+            null);
+
+    // String-derived types per XDM 3.1 hierarchy:
+    // string -> normalizedString -> token -> (language, NMTOKEN, Name -> NCName -> ID, IDREF, ENTITY)
+
+    public static final ItemType normalizedStringItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "normalizedString"),
+            stringItem,
+            stringItem,
+            Facets.createWhitespaceFacets(WhitespaceFacet.REPLACE),
+            false);
+
+    public static final ItemType tokenItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "token"),
+            normalizedStringItem,
+            stringItem,
+            Facets.createWhitespaceFacets(WhitespaceFacet.COLLAPSE),
+            false);
+
+    public static final ItemType languageItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "language"),
+            tokenItem,
+            stringItem,
+            Facets.createPatternFacets(Collections.singletonList("[a-zA-Z]{1,8}(-[a-zA-Z0-9]{1,8})*")),
+            false);
+
+    public static final ItemType NMTOKENItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "NMTOKEN"),
+            tokenItem,
+            stringItem,
+            Facets.createPatternFacets(Collections.singletonList("\\c+")),
+            false);
+
+    public static final ItemType NameItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "Name"),
+            tokenItem,
+            stringItem,
+            Facets.createPatternFacets(Collections.singletonList("\\i\\c*")),
+            false);
+
+    public static final ItemType NCNameItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "NCName"),
+            NameItem,
+            stringItem,
+            // derived from Name, so whitespace is COLLAPSE
+            new Facets(),
+            false);
+
+    public static final ItemType IDItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "ID"),
+            NCNameItem,
+            stringItem,
+            // derived from NCName, so whitespace is COLLAPSE
+            new Facets(),
+            false);
+
+    public static final ItemType IDREFItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "IDREF"),
+            NCNameItem,
+            stringItem,
+            // derived from NCName, so whitespace is COLLAPSE
+            new Facets(),
+            false);
+
+    public static final ItemType ENTITYItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "ENTITY"),
+            NCNameItem,
+            stringItem,
+            // derived from NCName, so whitespace is COLLAPSE
+            new Facets(),
+            false);
 
     public static final ItemType integerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "integer"),
-            AtomicItemType.decimalItem,
-            AtomicItemType.decimalItem,
-            Facets.getIntegerFacets(),
-            false,
-            DataTypes.createDecimalType() // TODO : how to support arbitrary-sized integer
-    );
+            new Name(Name.XS_NS, "xs", "integer"), decimalItem, decimalItem, Facets.getIntegerFacets(), false);
 
     public static final ItemType longItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "long"),
             integerItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
-                new IntegerItem(new BigInteger("9223372036854775807")),
-                true
-            ),
-            false,
-            DataTypes.LongType // TODO : how to support arbitrary-sized integer
-    );
+                    new IntegerItem(new BigInteger("-9223372036854775808")),
+                    new IntegerItem(new BigInteger("9223372036854775807")),
+                    true),
+            false);
 
     public static final ItemType intItem = new DerivedAtomicItemType(
-            Name.createVariableInDefaultTypeNamespace("int"),
+            new Name(Name.XS_NS, "xs", "int"),
             longItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(new IntItem(-2147483648), new IntItem(2147483647), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
+            false);
 
     public static final ItemType shortItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "short"),
             intItem,
-            AtomicItemType.decimalItem,
+            decimalItem,
             Facets.createMinMaxFacets(new IntItem(-32768), new IntItem(32767), true),
-            false,
-            DataTypes.ShortType // TODO : how to support arbitrary-sized integer
-    );
+            false);
+
+    public static final DerivedAtomicItemType byteItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "byte"),
+            shortItem,
+            decimalItem,
+            Facets.createMinMaxFacets(new IntItem(-128), new IntItem(127), true),
+            false);
+
+    public static final DerivedAtomicItemType nonNegativeIntegerItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "nonNegativeInteger"),
+            integerItem,
+            decimalItem,
+            Facets.createMinFacets(new IntegerItem(new BigInteger("0")), true),
+            false);
+
+    public static final DerivedAtomicItemType nonPositiveIntegerItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "nonPositiveInteger"),
+            integerItem,
+            decimalItem,
+            Facets.createMaxFacets(new IntegerItem(new BigInteger("0")), true),
+            false);
+
+    public static final DerivedAtomicItemType negativeIntegerItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "negativeInteger"),
+            nonPositiveIntegerItem,
+            decimalItem,
+            Facets.createMaxFacets(new IntegerItem(new BigInteger("-1")), true),
+            false);
+
+    public static final DerivedAtomicItemType positiveIntegerItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "positiveInteger"),
+            nonNegativeIntegerItem,
+            decimalItem,
+            Facets.createMinFacets(new IntegerItem(new BigInteger("1")), true),
+            false);
+
+    public static final DerivedAtomicItemType unsignedLongItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "unsignedLong"),
+            nonNegativeIntegerItem,
+            decimalItem,
+            Facets.createMinMaxFacets(
+                    new IntegerItem(new BigInteger("0")),
+                    new IntegerItem(new BigInteger("18446744073709551615")),
+                    true),
+            false);
+
+    public static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "unsignedInt"),
+            unsignedLongItem,
+            decimalItem,
+            Facets.createMinMaxFacets(
+                    new IntegerItem(new BigInteger("0")), new IntegerItem(new BigInteger("4294967295")), true),
+            false);
+
+    public static final DerivedAtomicItemType unsignedShortItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "unsignedShort"),
+            unsignedIntItem,
+            decimalItem,
+            Facets.createMinMaxFacets(new IntItem(0), new IntItem(65535), true),
+            false);
+
+    public static final DerivedAtomicItemType unsignedByteItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "unsignedByte"),
+            unsignedShortItem,
+            decimalItem,
+            Facets.createMinMaxFacets(new IntItem(0), new IntItem(255), true),
+            false);
+
+    // XML node types (per XPath Data Model 3.1, Section 2.7.4)
+    public static final ItemType nodeItem = new NodeItemType();
+    public static final ItemType elementNode = new ElementNodeItemType();
+    public static final ItemType attributeNode = new AttributeNodeItemType();
+    public static final ItemType documentNode = new DocumentNodeItemType();
+    public static final ItemType commentNode =
+            new XmlNodeItemType(Name.createVariableInDefaultTypeNamespace("comment"));
+    public static final ItemType textNode = new XmlNodeItemType(Name.createVariableInDefaultTypeNamespace("text"));
+    public static final ItemType namespaceNode =
+            new XmlNodeItemType(Name.createVariableInDefaultTypeNamespace("namespace-node"));
+    public static final ItemType processingInstructionNode = new PINodeItemType();
 
     public static final ItemType JSONItem = new JsonItemType();
     public static final ItemType objectItem = new ObjectItemType(
             new Name(Name.JS_NS, "js", "object"),
             BuiltinTypesCatalogue.JSONItem,
             false,
-            Collections.emptyMap(),
             Collections.emptyList(),
-            null
-    );
+            Collections.emptyList(),
+            Collections.emptyList(),
+            null);
     public static final ItemType arrayItem = new ArrayItemType(
             new Name(Name.JS_NS, "js", "array"),
             BuiltinTypesCatalogue.JSONItem,
+            BuiltinTypesCatalogue.item,
             null,
             null,
-            null,
-            null
-    );
+            null);
     public static final ItemType anyFunctionItem = new FunctionItemType(true);
+
+    public static final ItemType mapItem = new MapItemType(
+            Name.createVariableInDefaultTypeNamespace("map"),
+            anyFunctionItem,
+            atomicItem,
+            new SequenceType(BuiltinTypesCatalogue.item, SequenceCardinality.ANY));
+    public static final ItemType xqueryArrayItem = new XQueryArrayItemType(
+            new Name(Name.XS_NS, "xs", "array"),
+            anyFunctionItem,
+            new SequenceType(BuiltinTypesCatalogue.item, SequenceCardinality.ANY));
 
     public static boolean typeExists(Name name) {
         for (ItemType builtInItemType : builtInItemTypes) {
@@ -299,32 +595,73 @@ public class BuiltinTypesCatalogue {
     }
 
     private static final List<ItemType> builtInItemTypes = Arrays.asList(
-        objectItem,
-        atomicItem,
-        stringItem,
-        integerItem,
-        intItem,
-        decimalItem,
-        doubleItem,
-        floatItem,
-        numericItem,
-        booleanItem,
-        arrayItem,
-        nullItem,
-        JSONItem,
-        durationItem,
-        yearMonthDurationItem,
-        dayTimeDurationItem,
-        dateTimeItem,
-        dateItem,
-        timeItem,
-        hexBinaryItem,
-        anyURIItem,
-        base64BinaryItem,
-        item,
-        longItem,
-        shortItem
-    );
+            nodeItem,
+            elementNode,
+            attributeNode,
+            documentNode,
+            commentNode,
+            textNode,
+            namespaceNode,
+            processingInstructionNode,
+            objectItem,
+            atomicItem,
+            errorItem,
+            stringItem,
+            untypedAtomicItem,
+            integerItem,
+            intItem,
+            decimalItem,
+            doubleItem,
+            floatItem,
+            numericItem,
+            booleanItem,
+            arrayItem,
+            mapItem,
+            xqueryArrayItem,
+            nullItem,
+            JSONItem,
+            durationItem,
+            yearMonthDurationItem,
+            dayTimeDurationItem,
+            dateTimeItem,
+            dateTimeStampItem,
+            dateItem,
+            timeItem,
+            gDayItem,
+            gMonthItem,
+            gYearItem,
+            gMonthDayItem,
+            gYearMonthItem,
+            hexBinaryItem,
+            anyURIItem,
+            base64BinaryItem,
+            item,
+            longItem,
+            shortItem,
+            byteItem,
+            positiveIntegerItem,
+            negativeIntegerItem,
+            nonPositiveIntegerItem,
+            nonNegativeIntegerItem,
+            unsignedIntItem,
+            unsignedLongItem,
+            unsignedShortItem,
+            unsignedByteItem,
+            QNameItem,
+            NOTATIONItem,
+            normalizedStringItem,
+            tokenItem,
+            languageItem,
+            NMTOKENItem,
+            NameItem,
+            NCNameItem,
+            IDItem,
+            IDREFItem,
+            ENTITYItem);
+
+    public static List<ItemType> getBuiltinItemTypes() {
+        return Collections.unmodifiableList(builtInItemTypes);
+    }
 
     public static ItemType getItemTypeByName(Name name) {
         for (ItemType builtInItemType : builtInItemTypes) {

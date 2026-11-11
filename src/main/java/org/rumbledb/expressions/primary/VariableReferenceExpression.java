@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,32 +11,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.primary;
 
+import java.util.ArrayList;
+import java.util.List;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-
-public class VariableReferenceExpression extends Expression implements Serializable {
-
-    private static final long serialVersionUID = 1L;
-    private Name name;
+public class VariableReferenceExpression extends Expression {
+    private final Name name;
     private SequenceType type;
-
 
     public VariableReferenceExpression(Name name, ExceptionMetadata metadata) {
         super(metadata);
@@ -52,7 +40,7 @@ public class VariableReferenceExpression extends Expression implements Serializa
 
     // default to item* if type is null
     public SequenceType getType() {
-        return this.type == null ? SequenceType.ITEM_STAR : this.type;
+        return this.type == null ? SequenceType.createSequenceType("item*") : this.type;
     }
 
     public SequenceType getActualType() {
@@ -61,13 +49,6 @@ public class VariableReferenceExpression extends Expression implements Serializa
 
     public void setActualType(SequenceType type) {
         this.type = type;
-    }
-
-    @Override
-    public final void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        // Variable reference execution mode can only be resolved in conjunction with a static context
-        // variable reference's execution mode gets initialized in staticContextVisitor by a setter
-        throw new OurBadException("Variable references do not use the highestExecutionMode initializer");
     }
 
     @Override
@@ -80,20 +61,20 @@ public class VariableReferenceExpression extends Expression implements Serializa
         return new ArrayList<>();
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    @Override
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" ($" + this.name + ") ");
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(
-            " | "
+        buffer.append(" | " + this.expressionClassification);
+        buffer.append(" | "
                 + (this.staticSequenceType == null
-                    ? "not set"
-                    : this.staticSequenceType
-                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
-        );
+                        ? "not set"
+                        : this.staticSequenceType
+                                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
@@ -101,7 +82,7 @@ public class VariableReferenceExpression extends Expression implements Serializa
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
         sb.append("($" + this.name + ")\n");
     }

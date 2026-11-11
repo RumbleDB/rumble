@@ -1,0 +1,12 @@
+(:JIQS: ShouldRun; Output="" :)
+annotate(
+    json-lines("./src/main/resources/queries/rumbleML/sample-ml-data-date.json"),
+    {
+        "id": "integer",
+        "birthDate": "date",
+        "birthDateTime": "datetime"
+    }
+)
+
+(: Date atomic types :)
+(: disabled due to lack of support for date-related atomic types - also missing data set:)

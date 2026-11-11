@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,32 +11,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.expressions.flowr;
-
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReferenceExpression;
 
 import java.util.Collections;
 import java.util.List;
 
+import lombok.Getter;
+
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Node;
 
 public class CountClause extends Clause {
-    private VariableReferenceExpression countClauseVar;
+    private final Name variableName;
 
-    public CountClause(VariableReferenceExpression countClauseVar, ExceptionMetadata metadata) {
+    @Getter
+    private final ExceptionMetadata variableMetadata;
+
+    public CountClause(Name variableName, ExceptionMetadata metadata, ExceptionMetadata variableMetadata) {
         super(FLWOR_CLAUSES.COUNT, metadata);
-        this.countClauseVar = countClauseVar;
+        this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
     }
 
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(this.countClauseVar);
+        return Collections.singletonList(this.getPreviousClause());
     }
 
     @Override
@@ -47,31 +47,27 @@ public class CountClause extends Clause {
         return visitor.visitCountClause(this, argument);
     }
 
-    public VariableReferenceExpression getCountVariable() {
-        return this.countClauseVar;
+    public Name getCountVariableName() {
+        return this.variableName;
     }
 
-    public void print(StringBuffer buffer, int indent) {
+    @Override
+    public void print(StringBuilder buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.countClauseVar) + ") ");
+        buffer.append(" (" + (this.variableName) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
-        if (this.previousClause != null) {
-            this.previousClause.print(buffer, indent + 1);
-        }
     }
 
     @Override
-    public void serializeToJSONiq(StringBuffer sb, int indent) {
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
         indentIt(sb, indent);
-        sb.append("count ");
-        this.countClauseVar.serializeToJSONiq(sb, 0);
+        sb.append("count $" + this.variableName);
     }
-
 }

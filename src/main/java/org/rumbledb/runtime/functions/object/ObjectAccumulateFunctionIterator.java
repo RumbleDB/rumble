@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,70 +11,50 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.object;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
+import java.io.Serial;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class ObjectAccumulateFunctionIterator extends LocalFunctionCallIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+public class ObjectAccumulateFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     /**
      *
      */
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public ObjectAccumulateFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public ObjectAccumulateFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            RuntimeIterator sequenceIterator = this.children.get(0);
-            List<Item> items = sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
-            LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
-            for (Item item : items) {
-                // ignore non-object items
-                if (item.isObject()) {
-                    for (String key : item.getKeys()) {
-                        Item value = item.getItemByKey(key);
-                        if (!keyValuePairs.containsKey(key)) {
-                            List<Item> valueList = new ArrayList<>();
-                            valueList.add(value);
-                            keyValuePairs.put(key, valueList);
-                        }
-                        // store values for key collisions in a list
-                        else {
-                            keyValuePairs.get(key).add(value);
-                        }
-                    }
+    public Item evaluateAtMostOne(DynamicContext context) {
+        // The values of each key keep the input order, so the input is collected rather than reduced on Spark.
+        return accumulate(this.getChild(0).materialize(context));
+    }
+
+    private Item accumulate(List<Item> items) {
+        LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
+        for (Item item : items) {
+            if (item.isObject()) {
+                for (String key : item.getStringKeys()) {
+                    keyValuePairs
+                            .computeIfAbsent(key, ignored -> new ArrayList<>())
+                            .add(item.getItemByKey(key));
                 }
             }
-
-            Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs);
-
-            this.hasNext = false;
-            return result;
         }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ACCUMULATE function",
-                getMetadata()
-        );
+        return ItemFactory.getInstance().createObjectItemFromValueLists(keyValuePairs, true);
     }
 }

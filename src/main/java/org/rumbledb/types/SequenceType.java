@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,232 +11,259 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.types;
 
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import lombok.Getter;
+import lombok.NonNull;
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.runtime.functions.FunctionCoercion;
 
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
-
+@Log4j2
+@Getter
 public class SequenceType implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 1L;
+
     private ItemType itemType;
-    private Arity arity;
-
-    public final static SequenceType ITEM_STAR = new SequenceType(
-            BuiltinTypesCatalogue.item,
-            Arity.ZeroOrMore
-    );
-
-    public final static SequenceType EMPTY_SEQUENCE = new SequenceType();
-
+    private SequenceCardinality cardinality;
 
     public SequenceType(ItemType itemType, Arity arity) {
-        if (arity == Arity.Zero) {
-            this.itemType = BuiltinTypesCatalogue.item;
-            this.arity = Arity.Zero;
-            return;
-        }
-        this.itemType = itemType;
-        this.arity = arity;
+        this(itemType, cardinalityOf(itemType, arity));
+    }
+
+    public SequenceType(ItemType itemType, SequenceCardinality cardinality) {
+        this.cardinality = cardinality;
+        this.itemType = cardinality == SequenceCardinality.EMPTY ? BuiltinTypesCatalogue.item : itemType;
         if (this.itemType == null) {
-            System.err.println(
-                "[WARNING] Missing item type in incomplete sequence type "
-                    + this.arity
-                    + ", defaulting to item. Please let us know as we would like to look into this!"
-            );
+            log.warn("Missing item type in incomplete sequence type "
+                    + getArity()
+                    + ", defaulting to item. Please let us know as we would like to look into this!");
             this.itemType = BuiltinTypesCatalogue.item;
-        }
-        if (this.arity == null) {
-            System.err.println(
-                "[WARNING] Missing arity in incomplete sequence type "
-                    + this.itemType
-                    + ", defaulting to *. Please let us know as we would like to look into this!"
-            );
-            this.arity = Arity.ZeroOrMore;
         }
     }
 
-    public SequenceType(ItemType itemType) {
+    public SequenceType(@NonNull ItemType itemType) {
         this.itemType = itemType;
-        this.arity = Arity.One;
-        if (this.itemType == null) {
-            throw new OurBadException("Missing item type in incomplete sequence type " + this.arity);
+        this.cardinality = SequenceCardinality.ONE;
+    }
+
+    private static SequenceCardinality cardinalityOf(ItemType itemType, Arity arity) {
+        if (arity == null) {
+            log.warn("Missing arity in incomplete sequence type "
+                    + itemType
+                    + ", defaulting to *. Please let us know as we would like to look into this!");
+            return SequenceCardinality.ANY;
         }
+        return SequenceCardinality.fromArity(arity);
     }
 
     private SequenceType() {
-        this.itemType = BuiltinTypesCatalogue.item;
-        this.arity = Arity.Zero;
+        this(BuiltinTypesCatalogue.item, SequenceCardinality.EMPTY);
+    }
+
+    // Declared occurrence indicators remain a conservative view for existing runtime consumers.
+    public Arity getArity() {
+        return this.cardinality.toArity();
     }
 
     public boolean isResolved() {
-        if (isEmptySequence()) {
-            return true;
-        }
-        return this.itemType.isResolved();
+        return isEmptySequence() || this.itemType.isResolved();
     }
 
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
-        if (isEmptySequence()) {
-            return;
+        if (!isEmptySequence()) {
+            this.itemType.resolve(context, metadata);
         }
-        this.itemType.resolve(context, metadata);
     }
 
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
-        if (isEmptySequence()) {
-            return;
+        if (!isEmptySequence()) {
+            this.itemType.resolve(context, metadata);
         }
-        this.itemType.resolve(context, metadata);
     }
 
     public boolean isEmptySequence() {
-        return this.arity == Arity.Zero;
-    }
-
-    public ItemType getItemType() {
-        return this.itemType;
-    }
-
-    public Arity getArity() {
-        return this.arity;
+        return this.cardinality == SequenceCardinality.EMPTY;
     }
 
     public boolean isSubtypeOf(SequenceType superType) {
         if (isEmptySequence()) {
-            return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
+            return superType.cardinality.allowsZero();
         }
-        return this.itemType.isSubtypeOf(superType.getItemType())
-            &&
-            this.isAritySubtypeOf(superType.arity);
+        if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
+            return !this.cardinality.allowsZero() || superType.cardinality.allowsZero();
+        }
+        return this.itemType.isSubtypeOf(superType.itemType) && this.cardinality.isSubtypeOf(superType.cardinality);
     }
 
-    // keep in consideration also automatic promotion of integer > decimal > double and anyURI > string
+    // Includes automatic promotions and function coercion used for declared parameter types.
     public boolean isSubtypeOfOrCanBePromotedTo(SequenceType superType) {
         if (isEmptySequence()) {
-            return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
+            return superType.cardinality.allowsZero();
         }
-        return this.isAritySubtypeOf(superType.arity)
-            && (this.itemType.isSubtypeOf(superType.getItemType())
-                ||
-                (this.itemType.canBePromotedTo(superType.itemType)));
+        if (this.itemType.equals(BuiltinTypesCatalogue.errorItem)) {
+            return !this.cardinality.allowsZero() || superType.cardinality.allowsZero();
+        }
+        if (this.itemType.isUnionType()) {
+            // A member can fit directly while another needs promotion or function coercion.
+            return this.itemType.allMemberTypesMatch(
+                    member -> new SequenceType(member, this.cardinality).isSubtypeOfOrCanBePromotedTo(superType));
+        }
+        return this.cardinality.isSubtypeOf(superType.cardinality)
+                && (this.itemType.isSubtypeOf(superType.itemType)
+                        || this.itemType.canBePromotedTo(superType.itemType)
+                        || FunctionCoercion.canItemTypeBeFunctionCoercedTo(this.itemType, superType.itemType));
     }
 
-    // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence
-    // TODO: consider removing it
     public boolean isAritySubtypeOf(Arity superArity) {
-        return this.arity.isSubtypeOf(superArity);
+        return this.cardinality.isSubtypeOf(SequenceCardinality.fromArity(superArity));
     }
 
     public boolean hasEffectiveBooleanValue() {
         if (isEmptySequence()) {
             return true;
-        } else if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
-            return true;
-        } else if (
-            (this.arity == Arity.One || this.arity == Arity.OneOrZero)
-                && (this.itemType.isNumeric()
-                    ||
-                    this.itemType.equals(BuiltinTypesCatalogue.stringItem)
-                    ||
-                    this.itemType.equals(BuiltinTypesCatalogue.anyURIItem)
-                    ||
-                    this.itemType.equals(BuiltinTypesCatalogue.nullItem)
-                    ||
-                    this.itemType.equals(BuiltinTypesCatalogue.booleanItem))
-        ) {
-            return true;
-        } else {
-            return false;
         }
+        return this.itemType.allMemberTypesMatch(this::memberHasEffectiveBooleanValue);
+    }
+
+    private boolean memberHasEffectiveBooleanValue(ItemType member) {
+        if (member.isSubtypeOf(BuiltinTypesCatalogue.nodeItem) || member.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
+            return true;
+        }
+        return !this.cardinality.allowsMany()
+                && (member.isNumeric()
+                        || member.isSubtypeOf(BuiltinTypesCatalogue.stringItem)
+                        || member.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)
+                        || member.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
+                        || member.equals(BuiltinTypesCatalogue.nullItem)
+                        || member.equals(BuiltinTypesCatalogue.booleanItem));
     }
 
     public boolean hasOverlapWith(SequenceType other) {
-        // types overlap if both itemType and Arity overlap, we also need to take care of empty sequence
-        if (isEmptySequence()) {
-            return other.isEmptySequence()
-                || other.getArity() == Arity.OneOrZero
-                || other.getArity() == Arity.ZeroOrMore;
+        if (!this.cardinality.overlaps(other.cardinality)) {
+            return false;
         }
-        if (other.isEmptySequence()) {
-            return this.getArity() == Arity.OneOrZero || this.getArity() == Arity.ZeroOrMore;
+        if (isEmptySequence() || other.isEmptySequence()) {
+            return true;
         }
-        // All arities overlap between each other
-        return this.getItemType().isSubtypeOf(other.getItemType())
-            || other.getItemType().isSubtypeOf(this.getItemType());
+        // A union overlaps another item type when at least one member overlaps it.
+        if (this.itemType.isUnionType()) {
+            return this.itemType.getTypes().stream()
+                    .anyMatch(member -> new SequenceType(member, this.cardinality).hasOverlapWith(other));
+        }
+        if (other.itemType.isUnionType()) {
+            return other.hasOverlapWith(this);
+        }
+        return this.itemType.isSubtypeOf(other.itemType) || other.itemType.isSubtypeOf(this.itemType);
     }
 
     public SequenceType leastCommonSupertypeWith(SequenceType other) {
+        ItemType itemSupertype = isEmptySequence()
+                ? other.itemType
+                : other.isEmptySequence() ? this.itemType : joinItemTypes(other.itemType);
+        return new SequenceType(itemSupertype, this.cardinality.union(other.cardinality));
+    }
+
+    public SequenceType concatenateWith(SequenceType other) {
         if (isEmptySequence()) {
-            if (other.isEmptySequence()) {
-                return this;
-            } else {
-                Arity resultingArity = other.getArity();
-                if (resultingArity == Arity.One) {
-                    resultingArity = Arity.OneOrZero;
-                } else if (resultingArity == Arity.OneOrMore) {
-                    resultingArity = Arity.ZeroOrMore;
-                }
-                return new SequenceType(other.itemType, resultingArity);
-            }
+            return other;
         }
         if (other.isEmptySequence()) {
-            Arity resultingArity = this.getArity();
-            if (resultingArity == Arity.One) {
-                resultingArity = Arity.OneOrZero;
-            } else if (resultingArity == Arity.OneOrMore) {
-                resultingArity = Arity.ZeroOrMore;
-            }
-            return new SequenceType(this.itemType, resultingArity);
+            return this;
         }
-
-        ItemType itemSupertype = this.getItemType().findLeastCommonSuperTypeWith(other.getItemType());
-        Arity aritySuperType = Arity.ZeroOrMore;
-        if (this.isAritySubtypeOf(other.getArity())) {
-            aritySuperType = other.getArity();
-        } else if (other.isAritySubtypeOf(this.getArity())) {
-            aritySuperType = this.getArity();
-        }
-        // no need additional check because the only disjointed arity are ? and +, which least common supertype is *
-        return new SequenceType(itemSupertype, aritySuperType);
+        ItemType contentType = joinItemTypes(other.itemType);
+        return new SequenceType(contentType, this.cardinality.concatenate(other.cardinality));
     }
 
-    // increment arity of a sequence type from ? to * and from 1 to +, leave others arity or sequence types untouched
+    /**
+     * Joins the item types of two sequences that are concatenated or that are alternatives, e.g. the branches of a
+     * conditional. Atomic types, and types of different kinds such as xs:integer and an object, become an inferred
+     * union that keeps its members in operand order. Two types of the same structured kind keep their existing join,
+     * which navigation and native execution rely on.
+     */
+    private ItemType joinItemTypes(ItemType other) {
+        if (this.itemType.equals(other)) {
+            return this.itemType;
+        }
+        if (other.isSubtypeOf(this.itemType)) {
+            return this.itemType;
+        }
+        if (this.itemType.isObjectItemType() && other.isObjectItemType()) {
+            boolean anonymous = !this.itemType.hasName()
+                    && !other.hasName()
+                    && this.itemType.getBaseType().equals(BuiltinTypesCatalogue.objectItem)
+                    && other.getBaseType().equals(BuiltinTypesCatalogue.objectItem);
+            // A sequence of anonymous objects keeps the union of their fields, which are optional unless every
+            // object has them. This is the schema DataFrame conversion infers from the items themselves.
+            if (anonymous) {
+                ItemType laxJoin = this.itemType.findLeastCommonSuperTypeLax(other);
+                // In a DataFrame, SQL NULL in an optional field means the field is absent, so it cannot also stand
+                // for JSON null. Such a join would let DataFrames turn {"a": null} into {}.
+                if (!hasOptionalNullableField(laxJoin)) {
+                    return laxJoin;
+                }
+            }
+            return this.itemType.findLeastCommonSuperTypeWith(other);
+        }
+        if (haveSameStructuredKind(this.itemType, other)) {
+            return this.itemType.findLeastCommonSuperTypeWith(other);
+        }
+        return ItemTypeFactory.createInferredUnionType(List.of(this.itemType, other));
+    }
+
+    private static boolean hasOptionalNullableField(ItemType type) {
+        if (type.isArrayItemType()) {
+            return hasOptionalNullableField(type.getArrayContentFacet());
+        }
+        if (!type.isObjectItemType()) {
+            return false;
+        }
+        for (FieldDescriptor field : type.getObjectContentFacet()) {
+            if (!field.isRequired() && BuiltinTypesCatalogue.nullItem.isSubtypeOf(field.getType())) {
+                return true;
+            }
+            if (hasOptionalNullableField(field.getType())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean haveSameStructuredKind(ItemType left, ItemType right) {
+        return (left.isArrayItemType() && right.isArrayItemType())
+                || (left.isMapItemType() && right.isMapItemType())
+                || (left.isFunctionItemType() && right.isFunctionItemType())
+                || (left.isNodeItemType() && right.isNodeItemType());
+    }
+
+    /** The type of evaluating an expression of this type once for each of times items. */
+    public SequenceType repeated(SequenceCardinality times) {
+        return isEmptySequence() ? this : new SequenceType(this.itemType, this.cardinality.repeated(times));
+    }
+
+    // Grouping concatenates one or more sequences for each group.
     public SequenceType incrementArity() {
-        if (!isEmptySequence()) {
-            if (this.arity == Arity.One) {
-                return new SequenceType(this.getItemType(), Arity.OneOrMore);
-            } else if (this.arity == Arity.OneOrZero) {
-                return new SequenceType(this.getItemType(), Arity.ZeroOrMore);
-            }
-        }
-        return this;
+        return new SequenceType(this.itemType, this.cardinality.repeated(SequenceCardinality.ONE_OR_MANY));
     }
 
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof SequenceType)) {
-            return false;
-        }
-        SequenceType sequenceType = (SequenceType) other;
-        if (isEmptySequence()) {
-            return sequenceType.isEmptySequence();
-        }
-        if (sequenceType.isEmptySequence()) {
-            return false;
-        }
-        return this.getItemType().equals(sequenceType.getItemType()) && this.getArity().equals(sequenceType.getArity());
+    public SequenceType refineCardinalityIfSubtype(SequenceCardinality other) {
+        return other.isSubtypeOf(this.cardinality) ? new SequenceType(this.itemType, other) : this;
     }
 
     public enum Arity {
@@ -277,33 +301,31 @@ public class SequenceType implements Serializable {
         public abstract String getSymbol();
 
         public boolean isSubtypeOf(Arity superArity) {
-            if (superArity == Zero) {
-                return this == Arity.Zero;
-            }
-            if (this == Zero) {
-                return this == Arity.ZeroOrMore || this == Arity.OneOrZero;
-            }
-            if (superArity == Arity.ZeroOrMore || superArity == this)
-                return true;
-            else
-                return this == Arity.One;
+            return SequenceCardinality.fromArity(this).isSubtypeOf(SequenceCardinality.fromArity(superArity));
         }
 
+        // Declared arities that allow many items also allow one, so the operand order does not matter here.
         public Arity multiplyWith(Arity other) {
-            if (this == Zero || other == Zero) {
-                return Zero;
-            }
-            if (this == One && other == One) {
-                return One;
-            } else if (this.isSubtypeOf(OneOrZero) && other.isSubtypeOf(OneOrZero)) {
-                return OneOrZero;
-            } else if (this.isSubtypeOf(OneOrMore) && other.isSubtypeOf(OneOrMore)) {
-                return OneOrMore;
-            } else {
-                return ZeroOrMore;
-            }
+            return SequenceCardinality.fromArity(this)
+                    .repeated(SequenceCardinality.fromArity(other))
+                    .toArity();
         }
+    }
 
+    /**
+     * Equal sequence types have the same item type and declared occurrence indicator, as their notation shows.
+     * Inferred refinements such as MANY are not part of equality; compare getCardinality() where they matter.
+     */
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof SequenceType that
+                && this.itemType.equals(that.itemType)
+                && getArity() == that.getArity();
+    }
+
+    @Override
+    public int hashCode() {
+        return 31 * this.itemType.hashCode() + getArity().hashCode();
     }
 
     @Override
@@ -311,9 +333,19 @@ public class SequenceType implements Serializable {
         if (isEmptySequence()) {
             return "()";
         }
+        ItemType itemType = this.getItemType();
         StringBuilder result = new StringBuilder();
-        result.append(this.getItemType().toString());
-        result.append(this.arity.getSymbol());
+        if (itemType.hasName()) {
+            Name name = itemType.getName();
+            if (name != null) {
+                result.append(name);
+            } else {
+                result.append("<anonymous>(").append(itemType).append(")");
+            }
+        } else {
+            result.append(itemType);
+        }
+        result.append(getArity().getSymbol());
         return result.toString();
     }
 
@@ -321,166 +353,82 @@ public class SequenceType implements Serializable {
 
     static {
         sequenceTypes = new HashMap<>();
-        sequenceTypes.put("item", new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.One));
-        sequenceTypes.put("item?", new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("item*", new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.ZeroOrMore));
-        sequenceTypes.put("item+", new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.OneOrMore));
-
-        sequenceTypes.put("object", new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.One));
-        sequenceTypes.put("object+", new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.OneOrMore));
-        sequenceTypes.put("object*", new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore));
-
-        sequenceTypes.put(
-            "json-item*",
-            new SequenceType(BuiltinTypesCatalogue.JSONItem, SequenceType.Arity.ZeroOrMore)
-        );
-
-        sequenceTypes.put("array?", new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("array*", new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.ZeroOrMore));
-
-        sequenceTypes.put("atomic", new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.One));
-        sequenceTypes.put("atomic?", new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("atomic*", new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore));
-
-        sequenceTypes.put("string", new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.One));
-        sequenceTypes.put("string?", new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("string*", new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.ZeroOrMore));
-
-        sequenceTypes.put("integer", new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
-        sequenceTypes.put(
-            "integer?",
-            new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.OneOrZero)
-        );
-        sequenceTypes.put(
-            "integer*",
-            new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.ZeroOrMore)
-        );
-
-        sequenceTypes.put(
-            "numeric?",
-            new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceType.Arity.OneOrZero)
-        );
-        sequenceTypes.put(
-            "numeric",
-            new SequenceType(BuiltinTypesCatalogue.numericItem)
-        );
-        sequenceTypes.put(
-            "numeric+",
-            new SequenceType(BuiltinTypesCatalogue.numericItem, Arity.OneOrMore)
-        );
-        sequenceTypes.put(
-            "numeric*",
-            new SequenceType(BuiltinTypesCatalogue.numericItem, Arity.ZeroOrMore)
-        );
-
-        sequenceTypes.put(
-            "decimal?",
-            new SequenceType(BuiltinTypesCatalogue.decimalItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put("double", new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One));
-        sequenceTypes.put("double?", new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("float", new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.One));
-        sequenceTypes.put("float?", new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("boolean", new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
-        sequenceTypes.put(
-            "boolean?",
-            new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put(
-            "duration?",
-            new SequenceType(BuiltinTypesCatalogue.durationItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put(
-            "yearMonthDuration?",
-            new SequenceType(BuiltinTypesCatalogue.yearMonthDurationItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put(
-            "dayTimeDuration?",
-            new SequenceType(BuiltinTypesCatalogue.dayTimeDurationItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put(
-            "dateTime?",
-            new SequenceType(BuiltinTypesCatalogue.dateTimeItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put("date?", new SequenceType(BuiltinTypesCatalogue.dateItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("time?", new SequenceType(BuiltinTypesCatalogue.timeItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("anyURI", new SequenceType(BuiltinTypesCatalogue.anyURIItem));
-        sequenceTypes.put("anyURI?", new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put(
-            "hexBinary?",
-            new SequenceType(BuiltinTypesCatalogue.hexBinaryItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put(
-            "base64Binary?",
-            new SequenceType(BuiltinTypesCatalogue.base64BinaryItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put("null?", new SequenceType(BuiltinTypesCatalogue.nullItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put(
-            "function(object*, object) as object*",
-            new SequenceType(
-                    ItemTypeFactory.createFunctionItemType(
-                        new FunctionSignature(
-                                Arrays.asList(
-                                    new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
-                                    new SequenceType(BuiltinTypesCatalogue.objectItem)
-                                ),
-                                new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore)
-                        )
-                    )
-            )
-        );
-        sequenceTypes.put(
-            "function(object*, object) as function(object*, object) as object*",
-            new SequenceType(
-                    ItemTypeFactory.createFunctionItemType(
-                        new FunctionSignature(
-                                Arrays.asList(
-                                    new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
-                                    new SequenceType(BuiltinTypesCatalogue.objectItem)
-                                ),
-                                new SequenceType(
-                                        ItemTypeFactory.createFunctionItemType(
-                                            new FunctionSignature(
-                                                    Arrays.asList(
-                                                        new SequenceType(
-                                                                BuiltinTypesCatalogue.objectItem,
-                                                                SequenceType.Arity.ZeroOrMore
-                                                        ),
-                                                        new SequenceType(BuiltinTypesCatalogue.objectItem)
-                                                    ),
-                                                    new SequenceType(
-                                                            BuiltinTypesCatalogue.objectItem,
-                                                            SequenceType.Arity.ZeroOrMore
-                                                    )
-                                            )
-                                        )
-                                )
-                        )
-                    )
-            )
-        );
     }
 
-    public static SequenceType createSequenceType(String userFriendlyName) {
-        if (sequenceTypes.containsKey(userFriendlyName)) {
-            return sequenceTypes.get(userFriendlyName);
+    /**
+     * Returns the sequence type of a notation such as "integer?", "item*", "node()+" or "function(item*) as boolean",
+     * whose item types are builtin types named without a prefix. Builtin function signatures are written this way.
+     */
+    public static SequenceType createSequenceType(String notation) {
+        // Not computeIfAbsent: parsing a function notation creates the sequence types of its parameters.
+        SequenceType sequenceType = sequenceTypes.get(notation);
+        if (sequenceType == null) {
+            sequenceType = parseSequenceType(notation);
+            sequenceTypes.put(notation, sequenceType);
         }
-        throw new OurBadException("Unrecognized type: " + userFriendlyName);
+        return sequenceType;
     }
 
+    private static SequenceType parseSequenceType(String notation) {
+        if (notation.equals("()")) {
+            return new SequenceType();
+        }
+        // The occurrence indicator of function(item*) as item* belongs to its return type.
+        if (notation.startsWith("function(") && !notation.startsWith("function(*)")) {
+            return new SequenceType(parseFunctionItemType(notation));
+        }
+        Arity arity =
+                switch (notation.charAt(notation.length() - 1)) {
+                    case '?' -> Arity.OneOrZero;
+                    case '*' -> Arity.ZeroOrMore;
+                    case '+' -> Arity.OneOrMore;
+                    default -> Arity.One;
+                };
+        String itemType = arity == Arity.One ? notation : notation.substring(0, notation.length() - 1);
+        return new SequenceType(parseItemType(itemType), arity);
+    }
 
+    /** Resolves a builtin type by its local name, as in node() or integer, except for arrays and functions. */
+    private static ItemType parseItemType(String name) {
+        return switch (name) {
+                // Both arrays are named array: in a notation it is array(*), and item-array is the JSON array.
+            case "array" -> BuiltinTypesCatalogue.xqueryArrayItem;
+            case "item-array" -> BuiltinTypesCatalogue.arrayItem;
+            case "function", "function(*)" -> BuiltinTypesCatalogue.anyFunctionItem;
+            default -> {
+                String localName = name.endsWith("()") ? name.substring(0, name.length() - "()".length()) : name;
+                yield BuiltinTypesCatalogue.getItemTypeByName(Name.createVariableInDefaultTypeNamespace(localName));
+            }
+        };
+    }
 
+    /** Parses function(T1, ..., Tn) as R, where each type may itself be a function notation. */
+    private static ItemType parseFunctionItemType(String notation) {
+        List<String> parameters = new ArrayList<>();
+        int depth = 0;
+        int start = "function(".length();
+        int index = start;
+        for (; depth >= 0; index++) {
+            char character = notation.charAt(index);
+            if (character == '(') {
+                depth++;
+            } else if (character == ')') {
+                depth--;
+            }
+            if ((character == ',' && depth == 0) || depth < 0) {
+                String parameter = notation.substring(start, index).strip();
+                if (!parameter.isEmpty()) {
+                    parameters.add(parameter);
+                }
+                start = index + 1;
+            }
+        }
+        String returnType = notation.substring(index).strip();
+        if (!returnType.startsWith("as ")) {
+            throw new OurBadException("Unrecognized type: " + notation);
+        }
+        return ItemTypeFactory.createFunctionItemType(new FunctionSignature(
+                parameters.stream().map(SequenceType::createSequenceType).toList(),
+                createSequenceType(returnType.substring("as ".length()).strip())));
+    }
 }

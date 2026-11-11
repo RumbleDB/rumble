@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +11,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.exceptions;
+
+import java.io.Serial;
 
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -26,31 +23,28 @@ import org.rumbledb.errorcodes.ErrorCode;
 
 public class UnknownFunctionCallException extends RumbleException {
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public UnknownFunctionCallException(Name fnName, int arity, ExceptionMetadata metadata) {
         super(
-            "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
-                +
-                fnName
-                + "\" called with "
-                + arity
-                + " parameters.",
-            ErrorCode.InvalidFunctionCallErrorCode,
-            metadata
-        );
+                "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
+                        + fnName
+                        + "\" called with "
+                        + arity
+                        + " parameters.",
+                ErrorCode.InvalidFunctionCallErrorCode,
+                metadata);
     }
 
     public UnknownFunctionCallException(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         super(
-            "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
-                +
-                identifier.getName()
-                + "\" called with "
-                + identifier.getArity()
-                + " parameters.",
-            ErrorCode.InvalidFunctionCallErrorCode,
-            metadata
-        );
+                "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
+                        + identifier.getName()
+                        + "\" called with "
+                        + identifier.getArity()
+                        + " parameters.",
+                ErrorCode.InvalidFunctionCallErrorCode,
+                metadata);
     }
 }

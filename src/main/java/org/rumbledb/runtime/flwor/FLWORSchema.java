@@ -1,3 +1,18 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
 package org.rumbledb.runtime.flwor;
 
 import java.io.Serializable;
@@ -10,6 +25,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
 import org.rumbledb.context.Name;
 import org.rumbledb.types.ItemType;
 
@@ -51,67 +67,51 @@ public class FLWORSchema implements Serializable {
         this.nativelyTypedSequences.put(name.toString(), itemType);
     }
 
-    public boolean isConsistent(Dataset<Row> dataFrame) {
-        StructType schema = dataFrame.schema();
+    /** Infers physical sequence representations using master's column naming conventions. */
+    public FLWORSchema(StructType schema) {
+        this();
         for (StructField field : schema.fields()) {
-            String fieldName = field.name();
-            if (this.counts.contains(fieldName)) {
-                if (this.sequencesAsBytes.contains(fieldName)) {
-                    return false;
-                }
-                if (this.sequencesAsArraysOfBytes.contains(fieldName)) {
-                    return false;
-                }
-                if (this.nativelyTypedSequences.containsKey(fieldName)) {
-                    return false;
-                }
-                return true;
+            String name = field.name();
+            if (name.endsWith(".count")) {
+                this.counts.add(name);
+            } else if (field.dataType().equals(org.apache.spark.sql.types.DataTypes.BinaryType)) {
+                this.sequencesAsBytes.add(name);
+            } else if (field.dataType() instanceof org.apache.spark.sql.types.ArrayType
+                    && ((org.apache.spark.sql.types.ArrayType) field.dataType())
+                            .elementType()
+                            .equals(org.apache.spark.sql.types.DataTypes.BinaryType)) {
+                this.sequencesAsArraysOfBytes.add(name);
+            } else {
+                this.nativelyTypedSequences.put(
+                        name, org.rumbledb.types.TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()));
             }
-            if (this.sequencesAsArraysOfBytes.contains(fieldName)) {
-                if (this.counts.contains(fieldName)) {
-                    return false;
-                }
-                if (this.sequencesAsBytes.contains(fieldName)) {
-                    return false;
-                }
-                if (this.nativelyTypedSequences.containsKey(fieldName)) {
-                    return false;
-                }
-                return true;
+        }
+    }
+
+    public boolean isConsistent(Dataset<Row> dataFrame) {
+        return isConsistent(dataFrame.schema());
+    }
+
+    public boolean isConsistent(StructType schema) {
+        Set<String> actual = new HashSet<>();
+        for (StructField field : schema.fields()) {
+            String name = field.name();
+            if (!actual.add(name)) {
+                return false;
             }
-            if (this.sequencesAsBytes.contains(fieldName)) {
-                if (this.sequencesAsArraysOfBytes.contains(fieldName)) {
-                    return false;
-                }
-                if (this.counts.contains(fieldName)) {
-                    return false;
-                }
-                if (this.nativelyTypedSequences.containsKey(fieldName)) {
-                    return false;
-                }
-                return true;
-            }
-            if (!this.nativelyTypedSequences.containsKey(fieldName)) {
+            int representations = (this.counts.contains(name) ? 1 : 0)
+                    + (this.sequencesAsBytes.contains(name) ? 1 : 0)
+                    + (this.sequencesAsArraysOfBytes.contains(name) ? 1 : 0)
+                    + (this.nativelyTypedSequences.containsKey(name) ? 1 : 0);
+            if (representations != 1) {
                 return false;
             }
         }
-        Set<String> allExpectedColumns = new HashSet<>();
-        allExpectedColumns.addAll(this.counts);
-        allExpectedColumns.addAll(this.sequencesAsArraysOfBytes);
-        allExpectedColumns.addAll(this.sequencesAsBytes);
-        allExpectedColumns.addAll(this.nativelyTypedSequences.keySet());
-        for (String key : allExpectedColumns) {
-            boolean found = false;
-            for (StructField field : schema.fields()) {
-                if (field.name().equals(key)) {
-                    found = true;
-                }
-            }
-            if (!found) {
-                return false;
-            }
-        }
-        return true;
+        Set<String> expected = new HashSet<>(this.counts);
+        expected.addAll(this.sequencesAsBytes);
+        expected.addAll(this.sequencesAsArraysOfBytes);
+        expected.addAll(this.nativelyTypedSequences.keySet());
+        return actual.equals(expected);
     }
 
     public boolean isCount(Name name) {
@@ -150,5 +150,4 @@ public class FLWORSchema implements Serializable {
         }
         return sb.toString();
     }
-
 }

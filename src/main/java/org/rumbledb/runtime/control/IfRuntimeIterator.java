@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,101 +11,74 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.control;
 
+import java.io.Serial;
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.HybridRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.plan.*;
+import org.rumbledb.runtime.update.PendingUpdateList;
 
-public class IfRuntimeIterator extends HybridRuntimeIterator {
+public class IfRuntimeIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, UpdatingRuntimePlan {
 
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator selectedIterator = null;
 
     public IfRuntimeIterator(
-            RuntimeIterator condition,
-            RuntimeIterator branch,
-            RuntimeIterator elseBranch,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(null, executionMode, iteratorMetadata);
-        this.children.add(condition);
-        this.children.add(branch);
-        this.children.add(elseBranch);
+            ItemRuntimePlan condition,
+            ItemRuntimePlan branch,
+            ItemRuntimePlan elseBranch,
+            RuntimeStaticContext staticContext) {
+        super(List.of(condition, branch, elseBranch), staticContext);
     }
 
     @Override
-    public void resetLocal() {
-        this.selectedIterator.close();
-        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.selectedIterator.hasNext();
+    public Cursor<Item> createNativeCursor(DynamicContext context) {
+        return this.selectApplicableIterator(context).getCursor(context);
     }
 
-    @Override
-    public void openLocal() {
-        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
-        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.selectedIterator.hasNext();
-    }
-
-    @Override
-    public void closeLocal() {
-        this.selectedIterator.close();
-    }
-
-    @Override
-    public Item nextLocal() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException("No next item.");
-        }
-        Item result = this.selectedIterator.next();
-        this.hasNext = this.selectedIterator.hasNext();
-        return result;
-    }
-
-    @Override
-    public boolean hasNextLocal() {
-        return this.hasNext;
-    }
-
-    public RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
-        RuntimeIterator condition = this.children.get(0);
-        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
+    public ItemRuntimePlan selectApplicableIterator(DynamicContext dynamicContext) {
+        ItemRuntimePlan condition = this.getChild(0);
+        boolean effectiveBooleanValue = EffectiveBooleanValue.evaluate(condition, dynamicContext);
         if (effectiveBooleanValue) {
-            return this.children.get(1);
+            return this.getChild(1);
         } else {
-            return this.children.get(2);
+            return this.getChild(2);
         }
     }
 
     @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
+    public JavaRDD<Item> createNativeRDD(DynamicContext dynamicContext) {
+        ItemRuntimePlan iterator = selectApplicableIterator(dynamicContext);
         return iterator.getRDD(dynamicContext);
     }
 
     @Override
-    protected boolean implementsDataFrames() {
-        return true;
+    public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
+        ItemRuntimePlan iterator = selectApplicableIterator(dynamicContext);
+
+        return ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, dynamicContext);
     }
 
     @Override
-    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
+    public PendingUpdateList getPendingUpdateList(DynamicContext context) {
+        if (!this.staticContext.isUpdating()) {
+            return new PendingUpdateList();
+        }
 
-        return iterator.getDataFrame(dynamicContext);
+        ItemRuntimePlan iterator = selectApplicableIterator(context);
+        return UpdatingRuntimePlan.get(iterator, context);
     }
 }
