@@ -125,7 +125,14 @@ public final class ReturnTypeRules {
             return Optional.empty();
         }
         // TODO : check if arity is correct
-        return Optional.ofNullable(readSchemaType.apply(FileSystemUtil.convertURIToStringForSpark(uri)))
-                .map(itemType -> new SequenceType(itemType, SequenceType.Arity.ZeroOrMore));
+        ItemType itemType;
+        try {
+            itemType = readSchemaType.apply(FileSystemUtil.convertURIToStringForSpark(uri));
+        } catch (Exception e) {
+            // An unreadable schema, such as that of a Delta table without Delta in the Spark session, leaves the type
+            // unknown, so that the rest of the module is still typed. Running the query reports the problem.
+            return Optional.empty();
+        }
+        return Optional.ofNullable(itemType).map(type -> new SequenceType(type, SequenceType.Arity.ZeroOrMore));
     }
 }

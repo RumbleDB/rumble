@@ -79,16 +79,13 @@ public class ParquetFileFunctionIterator extends ItemRuntimePlan implements Data
 
     /** The type of the rows of a file at a literal path, read from its schema. */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        return ReturnTypeRules.fileSchemaType(call, context, path -> {
-            try {
-                return ItemTypeFactory.createItemType(SparkSessionManager.getInstance()
+        return ReturnTypeRules.fileSchemaType(
+                call,
+                context,
+                path -> ItemTypeFactory.createItemType(SparkSessionManager.getInstance()
                         .getOrCreateSession()
                         .read()
                         .parquet(path)
-                        .schema());
-            } catch (Exception e) {
-                return null;
-            }
-        });
+                        .schema()));
     }
 }
