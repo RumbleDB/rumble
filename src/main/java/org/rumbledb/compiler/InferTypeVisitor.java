@@ -655,12 +655,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         || functionName.getNamespace().equals(Name.FN_NS));
     }
 
-    /** Checks an input using the same function-conversion rules for explicit and implicit arguments. */
+    /**
+     * Checks an input of a static or dynamic call using the same function-conversion rules for explicit and implicit
+     * arguments. The function is described by its name, or by its type for a dynamic call.
+     */
     private void checkFunctionInput(
-            FunctionCallExpression call, String input, SequenceType actual, SequenceType expected) {
+            Expression call, String function, String input, SequenceType actual, SequenceType expected) {
         if (!StaticTypeErrors.isUnknown(actual) && !FunctionConversionTyping.isCompatible(actual, expected)) {
             this.errors.report(
-                    TypeErrorMessages.argumentMismatch(call.getFunctionName(), input, expected, actual),
+                    TypeErrorMessages.argumentMismatch(function, input, expected, actual),
                     call,
                     FunctionConversionTyping.mayConvertTo(actual, expected));
         }
@@ -692,7 +695,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             type = SequenceType.createSequenceType("string");
         }
-        checkFunctionInput(call, "the context item", type, input.parameterType());
+        checkFunctionInput(call, call.getFunctionName().toString(), "the context item", type, input.parameterType());
         return type;
     }
 
@@ -718,9 +721,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression);
             return argument;
         }
-        List<SequenceType> inputTypes = checkFunctionArguments(expression, signature);
+        List<SequenceType> inputTypes = checkFunctionArguments(
+                expression,
+                expression.getFunctionName().toString(),
+                expression.getArguments(),
+                signature.getParameterTypes());
         if (expression.isPartialApplication()) {
-            expression.setStaticSequenceType(inferPartialApplicationType(expression, signature));
+            expression.setStaticSequenceType(
+                    inferPartialApplicationType(expression.getArguments(), signature, expression.isUpdating()));
             return argument;
         }
         if (builtinFunction != null && builtinFunction.getContextArgument() != null) {
@@ -732,36 +740,35 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    /** Checks supplied arguments and collects their types, skipping partial-application placeholders. */
-    private List<SequenceType> checkFunctionArguments(FunctionCallExpression call, FunctionSignature signature) {
+    /**
+     * Checks the supplied arguments of a static or dynamic call and collects their types, skipping partial-application
+     * placeholders. The function is described by its name, or by its type for a dynamic call.
+     */
+    private List<SequenceType> checkFunctionArguments(
+            Expression call, String function, List<Expression> arguments, List<SequenceType> parameterTypes) {
         List<SequenceType> argumentTypes = new ArrayList<>();
-        List<Expression> arguments = call.getArguments();
         for (int i = 0; i < arguments.size(); ++i) {
             Expression argument = arguments.get(i);
             if (argument == null) {
                 continue;
             }
             SequenceType actualType = typeOf(argument, call);
-            checkFunctionInput(
-                    call,
-                    "argument " + (i + 1),
-                    actualType,
-                    signature.getParameterTypes().get(i));
+            checkFunctionInput(call, function, "argument " + (i + 1), actualType, parameterTypes.get(i));
             argumentTypes.add(actualType);
         }
         return argumentTypes;
     }
 
     /** The resulting function takes the parameters left as placeholders. */
-    private SequenceType inferPartialApplicationType(FunctionCallExpression call, FunctionSignature signature) {
+    private static SequenceType inferPartialApplicationType(
+            List<Expression> arguments, FunctionSignature signature, boolean updating) {
         List<SequenceType> parameters = new ArrayList<>();
-        for (int i = 0; i < call.getArguments().size(); ++i) {
-            if (call.getArguments().get(i) == null) {
+        for (int i = 0; i < arguments.size(); ++i) {
+            if (arguments.get(i) == null) {
                 parameters.add(signature.getParameterTypes().get(i));
             }
         }
-        FunctionSignature partialSignature =
-                new FunctionSignature(parameters, signature.getReturnType(), call.isUpdating());
+        FunctionSignature partialSignature = new FunctionSignature(parameters, signature.getReturnType(), updating);
         return new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
     }
 
@@ -1461,20 +1468,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return false;
     }
 
-    // return [true] if [types] are subtype of or can be promoted to expected types, [false] otherwise
-    private boolean checkArguments(List<SequenceType> expectedTypes, List<SequenceType> types) {
-        int length = expectedTypes.size();
-        if (length != types.size()) {
-            return false;
-        }
-        for (int i = 0; i < length; ++i) {
-            if (!FunctionConversionTyping.isCompatible(types.get(i), expectedTypes.get(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     @Override
     public StaticContext visitDynamicFunctionCallExpression(
             DynamicFunctionCallExpression expression, StaticContext argument) {
@@ -1537,7 +1530,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         FunctionSignature signature = type.getSignature();
-        List<SequenceType> actualParameterTypes = new ArrayList<>();
         List<SequenceType> formalParameterTypes = signature.getParameterTypes();
         if (formalParameterTypes.size() != expression.getArguments().size()) {
             this.errors.report(
@@ -1552,36 +1544,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // a mismatched signature. Leave enforcement to the runtime call if it is evaluated.
             return SequenceType.createSequenceType("item*");
         }
-        List<SequenceType> partialFormalParameterTypes = new ArrayList<>();
-        boolean isPartialApplication = false;
-        int i = 0;
-        for (Expression e : expression.getArguments()) {
-            if (e == null) {
-                isPartialApplication = true;
-                partialFormalParameterTypes.add(formalParameterTypes.get(i));
-            }
-            if (e != null) {
-                actualParameterTypes.add(e.getStaticSequenceType());
-            }
-            ++i;
+        // A dynamic call has no function name, so errors describe the function by its type.
+        checkFunctionArguments(
+                expression, TypeNotation.shortened(type), expression.getArguments(), formalParameterTypes);
+        if (expression.getArguments().contains(null)) {
+            return inferPartialApplicationType(expression.getArguments(), signature, expression.isUpdating());
         }
-        if (isPartialApplication) {
-            FunctionSignature newSignature = new FunctionSignature(
-                    partialFormalParameterTypes, signature.getReturnType(), expression.isUpdating());
-            return new SequenceType(ItemTypeFactory.createFunctionItemType(newSignature));
-        }
-        if (!checkArguments(formalParameterTypes, actualParameterTypes)) {
-            boolean mayPass = true;
-            for (int argumentIndex = 0; argumentIndex < actualParameterTypes.size(); argumentIndex++) {
-                mayPass &= FunctionConversionTyping.mayConvertTo(
-                        actualParameterTypes.get(argumentIndex), formalParameterTypes.get(argumentIndex));
-            }
-            this.errors.report(
-                    "The arguments of this call do not match the parameters of " + TypeNotation.shortened(type) + ".",
-                    expression,
-                    mayPass);
-        }
-
         return signature.getReturnType();
     }
 

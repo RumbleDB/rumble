@@ -121,6 +121,16 @@ class StaticTypeErrorsTest {
                         "FOTY0013",
                         "local:f expects xs:string for this argument, but it is { a: xs:integer }."),
                 Arguments.of(
+                        "declare function local:f($x as integer) { $x }; declare variable $f := local:f#1; $f(\"a\")",
+                        "XPTY0004",
+                        "function(xs:integer) as xs:integer expects xs:integer for argument 1, but it is xs:string."),
+                Arguments.of(
+                        "declare function local:f($x as string) { $x }; declare variable $f := local:f#1;"
+                                + " $f({\"a\": 1})",
+                        "FOTY0013",
+                        "function(xs:string) as xs:string expects xs:string for argument 1,"
+                                + " but it is { a: xs:integer }."),
+                Arguments.of(
                         "declare function local:f() as integer { \"a\" }; local:f()",
                         "XPTY0004",
                         "local:f declares the return type xs:integer, but returns xs:string."),
