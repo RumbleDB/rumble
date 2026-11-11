@@ -77,13 +77,15 @@ public final class BuiltinFunctionTyping {
             return Optional.of(TypeAtomization.inferType(input));
         });
         addBuiltinRule("doc", this::inferDocumentType);
-        // set output type to the same of the first argument (special handling of numeric)
+        // Numeric inputs retain their precise type. Atomized node/array inputs use the signature's numeric type.
         addBuiltinRule("round", (call, staticContext) -> {
             SequenceType input = call.getArguments().get(0).getStaticSequenceType();
-            return Optional.of(
-                    TypeAtomization.containsNodeOrArray(input.getItemType())
-                            ? new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceCardinality.ZERO_OR_ONE)
-                            : input);
+            if (input.isEmptySequence() || input.getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
+                return Optional.of(input);
+            }
+            return TypeAtomization.containsNodeOrArray(input.getItemType())
+                    ? Optional.of(new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceCardinality.ZERO_OR_ONE))
+                    : Optional.empty();
         });
         // set output type to 'Integer' if inputType is 'Array'
         addBuiltinRule(
