@@ -74,6 +74,15 @@ public final class TypeErrorMessages {
 
     /** An argument that does not match the parameter type of the function it is passed to. */
     public static Message argumentMismatch(Name function, String argument, SequenceType expected, SequenceType actual) {
+        return argumentMismatch(function.toString(), argument, expected, actual);
+    }
+
+    /**
+     * An argument that does not match the parameter type of the function it is passed to, which is described by its
+     * name, or by its type when it is called dynamically.
+     */
+    public static Message argumentMismatch(
+            String function, String argument, SequenceType expected, SequenceType actual) {
         return new Message(
                 function
                         + " expects "
@@ -89,7 +98,7 @@ public final class TypeErrorMessages {
     /** A function result that does not match the declared return type. */
     public static Message returnMismatch(Name function, SequenceType declared, SequenceType actual) {
         return new Message(
-                function
+                (function == null ? "An anonymous function" : function)
                         + " declares the return type "
                         + TypeNotation.shortened(declared)
                         + ", but returns "

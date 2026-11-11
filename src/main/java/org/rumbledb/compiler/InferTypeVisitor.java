@@ -31,6 +31,7 @@ import org.rumbledb.compiler.typing.ArithmeticTyping;
 import org.rumbledb.compiler.typing.AtomizedOperands;
 import org.rumbledb.compiler.typing.CastTyping;
 import org.rumbledb.compiler.typing.ComparisonTyping;
+import org.rumbledb.compiler.typing.FunctionConversionTyping;
 import org.rumbledb.compiler.typing.LookupTyping;
 import org.rumbledb.compiler.typing.PathStepTyping;
 import org.rumbledb.compiler.typing.ReturnTypeContext;
@@ -600,26 +601,35 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        SequenceType returnType = expression.getActualReturnType();
-        if (returnType == null) {
-            returnType = expression.getBody().getExpression().getStaticSequenceType();
+        Expression body = expression.getBody().getExpression();
+        SequenceType inferredType = typeOf(body, expression);
+        SequenceType declaredType = expression.getActualReturnType();
+        if (declaredType != null
+                && !StaticTypeErrors.isUnknown(inferredType)
+                && !FunctionConversionTyping.isCompatible(inferredType, declaredType)) {
+            this.errors.report(
+                    TypeErrorMessages.returnMismatch(expression.getName(), declaredType, inferredType),
+                    resultExpression(body),
+                    FunctionConversionTyping.mayConvertTo(inferredType, declaredType));
         }
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
-        FunctionSignature signature = new FunctionSignature(params, returnType, expression.isUpdating());
+        FunctionSignature signature =
+                new FunctionSignature(params, functionReturnType(expression), expression.isUpdating());
         expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
         return argument;
     }
 
-    private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
-        BuiltinFunction function = null;
-        FunctionSignature signature = null;
-        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext);
-        if (function != null) {
-            signature = function.getSignature();
-        } else {
-            signature = staticContext.getFunctionSignature(identifier);
+    /** Explicit annotations define the contract; early exits need more than the final expression's type. */
+    private static SequenceType functionReturnType(InlineFunctionExpression function) {
+        if (function.getActualReturnType() != null || function.hasExitStatement()) {
+            return function.getReturnType();
         }
-        return signature;
+        return typeOf(function.getBody().getExpression(), function);
+    }
+
+    private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
+        BuiltinFunction function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier, staticContext);
+        return function == null ? staticContext.getFunctionSignature(identifier) : function.getSignature();
     }
 
     @Override
@@ -645,14 +655,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         || functionName.getNamespace().equals(Name.FN_NS));
     }
 
-    /** Checks an input using the same function-conversion rules for explicit and implicit arguments. */
+    /**
+     * Checks an input of a static or dynamic call using the same function-conversion rules for explicit and implicit
+     * arguments. The function is described by its name, or by its type for a dynamic call.
+     */
     private void checkFunctionInput(
-            FunctionCallExpression call, String input, SequenceType actual, SequenceType expected) {
-        if (!StaticTypeErrors.isUnknown(actual) && !isFunctionArgumentCompatible(actual, expected)) {
+            Expression call, String function, String input, SequenceType actual, SequenceType expected) {
+        if (!StaticTypeErrors.isUnknown(actual) && !FunctionConversionTyping.isCompatible(actual, expected)) {
             this.errors.report(
-                    TypeErrorMessages.argumentMismatch(call.getFunctionName(), input, expected, actual),
+                    TypeErrorMessages.argumentMismatch(function, input, expected, actual),
                     call,
-                    mayConvertTo(actual, expected));
+                    FunctionConversionTyping.mayConvertTo(actual, expected));
         }
     }
 
@@ -682,7 +695,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             type = SequenceType.createSequenceType("string");
         }
-        checkFunctionInput(call, "the context item", type, input.parameterType());
+        checkFunctionInput(call, call.getFunctionName().toString(), "the context item", type, input.parameterType());
         return type;
     }
 
@@ -699,16 +712,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         FunctionSignature signature;
         try {
-            signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
+            signature = builtinFunction == null
+                    ? expression.getStaticContext().getFunctionSignature(expression.getFunctionIdentifier())
+                    : builtinFunction.getSignature();
         } catch (UnknownFunctionCallException e) {
             this.errors.reportStaticError(
                     new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata()),
                     expression);
             return argument;
         }
-        List<SequenceType> inputTypes = checkFunctionArguments(expression, signature);
+        List<SequenceType> inputTypes = checkFunctionArguments(
+                expression,
+                expression.getFunctionName().toString(),
+                expression.getArguments(),
+                signature.getParameterTypes());
         if (expression.isPartialApplication()) {
-            expression.setStaticSequenceType(inferPartialApplicationType(expression, signature));
+            expression.setStaticSequenceType(
+                    inferPartialApplicationType(expression.getArguments(), signature, expression.isUpdating()));
             return argument;
         }
         if (builtinFunction != null && builtinFunction.getContextArgument() != null) {
@@ -716,43 +736,39 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         Optional<SequenceType> returnType = inferBuiltinReturnType(expression, builtinFunction, inputTypes, argument);
-        expression.setStaticSequenceType(returnType.orElseGet(() -> {
-            SequenceType declaredReturnType = signature.getReturnType();
-            return declaredReturnType == null ? SequenceType.createSequenceType("item*") : declaredReturnType;
-        }));
+        expression.setStaticSequenceType(returnType.orElse(signature.getReturnType()));
         return argument;
     }
 
-    /** Checks supplied arguments and collects their types, skipping partial-application placeholders. */
-    private List<SequenceType> checkFunctionArguments(FunctionCallExpression call, FunctionSignature signature) {
+    /**
+     * Checks the supplied arguments of a static or dynamic call and collects their types, skipping partial-application
+     * placeholders. The function is described by its name, or by its type for a dynamic call.
+     */
+    private List<SequenceType> checkFunctionArguments(
+            Expression call, String function, List<Expression> arguments, List<SequenceType> parameterTypes) {
         List<SequenceType> argumentTypes = new ArrayList<>();
-        List<Expression> arguments = call.getArguments();
         for (int i = 0; i < arguments.size(); ++i) {
             Expression argument = arguments.get(i);
             if (argument == null) {
                 continue;
             }
             SequenceType actualType = typeOf(argument, call);
-            checkFunctionInput(
-                    call,
-                    "argument " + (i + 1),
-                    actualType,
-                    signature.getParameterTypes().get(i));
+            checkFunctionInput(call, function, "argument " + (i + 1), actualType, parameterTypes.get(i));
             argumentTypes.add(actualType);
         }
         return argumentTypes;
     }
 
     /** The resulting function takes the parameters left as placeholders. */
-    private SequenceType inferPartialApplicationType(FunctionCallExpression call, FunctionSignature signature) {
+    private static SequenceType inferPartialApplicationType(
+            List<Expression> arguments, FunctionSignature signature, boolean updating) {
         List<SequenceType> parameters = new ArrayList<>();
-        for (int i = 0; i < call.getArguments().size(); ++i) {
-            if (call.getArguments().get(i) == null) {
+        for (int i = 0; i < arguments.size(); ++i) {
+            if (arguments.get(i) == null) {
                 parameters.add(signature.getParameterTypes().get(i));
             }
         }
-        FunctionSignature partialSignature =
-                new FunctionSignature(parameters, signature.getReturnType(), call.isUpdating());
+        FunctionSignature partialSignature = new FunctionSignature(parameters, signature.getReturnType(), updating);
         return new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
     }
 
@@ -774,56 +790,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                                 this.resourceResolver,
                                 staticContext,
                                 inputTypes));
-    }
-
-    /**
-     * Whether some value of the actual type passes function conversion to the expected type, which atomizes nodes
-     * and arrays and casts untyped values when an atomic type is expected.
-     */
-    private static boolean mayConvertTo(SequenceType actual, SequenceType expected) {
-        SequenceType converted = actual;
-        if (expected.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            converted = TypeAtomization.containsNodeOrArray(actual.getItemType())
-                    ? TypeAtomization.inferType(actual)
-                    : actual;
-            SequenceType untyped = new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem, expected.getCardinality());
-            if (converted.mayMatch(untyped)) {
-                return true;
-            }
-        }
-        return converted.mayMatchOrBePromotedTo(expected);
-    }
-
-    private boolean isFunctionArgumentCompatible(SequenceType actual, SequenceType expected) {
-        if (actual.isEmptySequence()) {
-            return actual.isSubtypeOfOrCanBePromotedTo(expected);
-        }
-        ItemType itemType = actual.getItemType();
-        if (itemType.isUnionType()) {
-            return itemType.allMemberTypesMatch(member ->
-                    isFunctionArgumentCompatible(new SequenceType(member, actual.getCardinality()), expected));
-        }
-        if (expected.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            if (TypeAtomization.hasUnknownAtomizedType(itemType)) {
-                // Runtime function conversion checks the type and size of the typed value, just as for casts.
-                return true;
-            }
-            if (TypeAtomization.hasUnknownAtomizedCount(itemType)) {
-                // An array atomizes to any number of values: only their type is checked, their count at runtime.
-                SequenceType atomized = TypeAtomization.inferType(actual);
-                return atomized.isEmptySequence()
-                        || isFunctionArgumentCompatible(
-                                new SequenceType(atomized.getItemType(), expected.getCardinality()), expected);
-            }
-            if (TypeAtomization.containsNodeOrArray(itemType)) {
-                // Function conversion atomizes the node, so its known typed value must match.
-                return isFunctionArgumentCompatible(TypeAtomization.inferType(actual), expected);
-            }
-            if (itemType.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)) {
-                return actual.getCardinality().isSubtypeOf(expected.getCardinality());
-            }
-        }
-        return actual.isSubtypeOfOrCanBePromotedTo(expected);
     }
 
     // endregion
@@ -914,7 +880,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
         SequenceType argumentType = typeOf(expression.getArgument(), expression);
         SequenceType parameterType = expression.getParameterType();
-        if (!isFunctionArgumentCompatible(argumentType, parameterType)) {
+        if (!FunctionConversionTyping.isCompatible(argumentType, parameterType)) {
             this.errors.report(
                     expression.isReturnValue()
                             ? TypeErrorMessages.returnMismatch(
@@ -922,7 +888,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             : TypeErrorMessages.argumentMismatch(
                                     expression.getFunctionName(), "this argument", parameterType, argumentType),
                     expression,
-                    mayConvertTo(argumentType, parameterType));
+                    FunctionConversionTyping.mayConvertTo(argumentType, parameterType));
         }
         // A matching argument is passed unchanged, so it keeps its more precise type.
         expression.setStaticSequenceType(argumentType.isSubtypeOf(parameterType) ? argumentType : parameterType);
@@ -1502,20 +1468,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return false;
     }
 
-    // return [true] if [types] are subtype of or can be promoted to expected types, [false] otherwise
-    private boolean checkArguments(List<SequenceType> expectedTypes, List<SequenceType> types) {
-        int length = expectedTypes.size();
-        if (length != types.size()) {
-            return false;
-        }
-        for (int i = 0; i < length; ++i) {
-            if (!isFunctionArgumentCompatible(types.get(i), expectedTypes.get(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     @Override
     public StaticContext visitDynamicFunctionCallExpression(
             DynamicFunctionCallExpression expression, StaticContext argument) {
@@ -1578,7 +1530,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         FunctionSignature signature = type.getSignature();
-        List<SequenceType> actualParameterTypes = new ArrayList<>();
         List<SequenceType> formalParameterTypes = signature.getParameterTypes();
         if (formalParameterTypes.size() != expression.getArguments().size()) {
             this.errors.report(
@@ -1593,36 +1544,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // a mismatched signature. Leave enforcement to the runtime call if it is evaluated.
             return SequenceType.createSequenceType("item*");
         }
-        List<SequenceType> partialFormalParameterTypes = new ArrayList<>();
-        boolean isPartialApplication = false;
-        int i = 0;
-        for (Expression e : expression.getArguments()) {
-            if (e == null) {
-                isPartialApplication = true;
-                partialFormalParameterTypes.add(formalParameterTypes.get(i));
-            }
-            if (e != null) {
-                actualParameterTypes.add(e.getStaticSequenceType());
-            }
-            ++i;
+        // A dynamic call has no function name, so errors describe the function by its type.
+        checkFunctionArguments(
+                expression, TypeNotation.shortened(type), expression.getArguments(), formalParameterTypes);
+        if (expression.getArguments().contains(null)) {
+            return inferPartialApplicationType(expression.getArguments(), signature, expression.isUpdating());
         }
-        if (isPartialApplication) {
-            FunctionSignature newSignature = new FunctionSignature(
-                    partialFormalParameterTypes, signature.getReturnType(), expression.isUpdating());
-            return new SequenceType(ItemTypeFactory.createFunctionItemType(newSignature));
-        }
-        if (!checkArguments(formalParameterTypes, actualParameterTypes)) {
-            boolean mayPass = true;
-            for (int argumentIndex = 0; argumentIndex < actualParameterTypes.size(); argumentIndex++) {
-                mayPass &=
-                        mayConvertTo(actualParameterTypes.get(argumentIndex), formalParameterTypes.get(argumentIndex));
-            }
-            this.errors.report(
-                    "The arguments of this call do not match the parameters of " + TypeNotation.shortened(type) + ".",
-                    expression,
-                    mayPass);
-        }
-
         return signature.getReturnType();
     }
 
@@ -2018,22 +1945,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        InlineFunctionExpression inlineExpression = (InlineFunctionExpression) expression.getExpression();
-        Expression body = inlineExpression.getBody().getExpression();
-        SequenceType inferredType = typeOf(body, expression);
-        SequenceType expectedType = inlineExpression.getActualReturnType();
-
-        // An unknown body type follows from an error in the body, which is reported already.
-        if (expectedType != null
-                && !StaticTypeErrors.isUnknown(inferredType)
-                && !inferredType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
-            this.errors.report(
-                    TypeErrorMessages.returnMismatch(
-                            expression.getFunctionIdentifier().getName(), expectedType, inferredType),
-                    resultExpression(body),
-                    mayConvertTo(inferredType, expectedType));
+        InlineFunctionExpression function = (InlineFunctionExpression) expression.getExpression();
+        // Dependencies are inferred first. Cyclic signatures stay conservative until fixed-point inference is
+        // supported.
+        if (function.getActualReturnType() == null && !expression.hasCyclicTypeDependencies()) {
+            argument.getFunctionSignature(expression.getFunctionIdentifier())
+                    .refineReturnType(functionReturnType(function));
         }
-
         return argument;
     }
 
