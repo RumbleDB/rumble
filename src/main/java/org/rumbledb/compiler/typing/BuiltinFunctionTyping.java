@@ -106,6 +106,10 @@ public final class BuiltinFunctionTyping {
                 "max",
                 (call, staticContext) -> Optional.of(
                         inferStrictMinMaxReturnType(call, call.getArguments().get(0), "fn:max")));
+        // Cardinality functions keep the item type of their argument and only narrow its arity.
+        addBuiltinRule("exactly-one", cardinalityRule(SequenceType.Arity.One));
+        addBuiltinRule("zero-or-one", cardinalityRule(SequenceType.Arity.OneOrZero));
+        addBuiltinRule("one-or-more", cardinalityRule(SequenceType.Arity.OneOrMore));
 
         // For input functions, we read the schema of the data to annotate the static type precisely
         this.rules.put(
@@ -147,6 +151,23 @@ public final class BuiltinFunctionTyping {
             ItemType schemaItemType = ItemTypeFactory.createItemType(s);
             return Optional.of(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
         });
+    }
+
+    /** Types a cardinality function by its argument, with the arity narrowed to the one the function enforces. */
+    private static ReturnTypeRule cardinalityRule(SequenceType.Arity enforcedArity) {
+        return (call, staticContext) -> {
+            if (call.getArguments().size() != 1) {
+                return Optional.empty();
+            }
+            SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+            if (input.isEmptySequence()) {
+                return Optional.empty();
+            }
+            // The argument keeps its arity if it is already narrower than the enforced one.
+            SequenceType.Arity inputArity = input.getArity();
+            return Optional.of(new SequenceType(
+                    input.getItemType(), inputArity.isSubtypeOf(enforcedArity) ? inputArity : enforcedArity));
+        };
     }
 
     /** Rejects data() of an element whose schema type permits content without a typed value. */
