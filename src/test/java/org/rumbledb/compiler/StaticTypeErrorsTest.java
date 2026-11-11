@@ -421,6 +421,13 @@ class StaticTypeErrorsTest {
         Assertions.assertTrue(message.endsWith(", field_20: xs:integer, … 80 more fields }."), message);
     }
 
+    @Test
+    void typesAStepWithoutAContextItem() {
+        // The step has no context type to name in a message; it fails at runtime instead.
+        Assertions.assertDoesNotThrow(
+                () -> compile("xquery version \"3.1\";\ndeclare function local:f() { child::a };\n1"));
+    }
+
     private static List<RumbleException> errors(String query) {
         RumbleException error = Assertions.assertThrows(RumbleException.class, () -> compile(query));
         return error instanceof StaticTypeErrorsException errors ? errors.getErrors() : List.of(error);

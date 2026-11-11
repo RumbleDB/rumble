@@ -81,7 +81,9 @@ public final class PathStepTyping {
         this.errors.rejectInferredEmpty(
                 inferredType,
                 stepExpr,
-                "this step never selects a node from its context, of type " + TypeNotation.shortened(contextType));
+                "this step never selects a node from its context"
+                        // A step that is empty whatever its context may have none.
+                        + (contextType == null ? "" : ", of type " + TypeNotation.shortened(contextType)));
         return inferredType;
     }
 
