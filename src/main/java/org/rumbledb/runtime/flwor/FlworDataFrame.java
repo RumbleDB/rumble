@@ -18,7 +18,7 @@ package org.rumbledb.runtime.flwor;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -50,7 +50,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     @Getter
     private List<FlworDataFrameColumn> columns;
 
-    private Map<Name, SequenceType> columnTypes;
+    private FLWORSchema flworSchema;
 
     public FlworDataFrame(Dataset<Row> dataFrame) {
         if (dataFrame == null) {
@@ -59,15 +59,35 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
         this.dataFrame = dataFrame;
         StructType schema = dataFrame.schema();
         this.columns = new ArrayList<>();
-        this.columnTypes = new HashMap<>();
+        this.flworSchema = new FLWORSchema(schema);
         for (String c : schema.fieldNames()) {
             this.columns.add(new FlworDataFrameColumn(c, schema));
         }
     }
 
-    /** Returns a snapshot of the physical representations of the current columns. */
+    public FlworDataFrame(Dataset<Row> dataFrame, FLWORSchema schema) {
+        this(dataFrame);
+        if (!schema.isConsistent(dataFrame)) {
+            throw new OurBadException("Inconsistent FLWOR schema.");
+        }
+        this.flworSchema = new FLWORSchema(schema);
+    }
+
+    /** Transforms rows while preserving types of retained, unmodified variables. */
+    public FlworDataFrame withDataFrame(Dataset<Row> result, Name... reboundVariables) {
+        return new FlworDataFrame(result, getSchema().project(result.schema(), Arrays.asList(reboundVariables)));
+    }
+
+    /** Adds metadata from a second input, for joins and Cartesian products. */
+    public FlworDataFrame inheritTypes(FlworDataFrame source) {
+        List<Name> variables = getVariableNames();
+        this.flworSchema.inheritTypes(source.getSchema(), variables);
+        return this;
+    }
+
+    /** Returns an independent snapshot of the stored physical and logical schema. */
     public FLWORSchema getSchema() {
-        return new FLWORSchema(this.dataFrame.schema());
+        return new FLWORSchema(this.flworSchema);
     }
 
     public boolean isConsistent() {
@@ -99,14 +119,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     public FlworDataFrame sql(String sqlQuery) {
-        FlworDataFrame result = new FlworDataFrame(this.dataFrame.sparkSession().sql(sqlQuery));
-        for (Name v : this.getVariableNames()) {
-            SequenceType type = this.getVariableType(v);
-            if (result.hasVariableName(v)) {
-                result.setVariableType(v, type);
-            }
-        }
-        return result;
+        return withDataFrame(this.dataFrame.sparkSession().sql(sqlQuery));
     }
 
     public Dataset<Row> sqlRaw(String sqlQuery) {
@@ -125,17 +138,14 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
         if (!hasVariableName(name)) {
             throw new OurBadException("Variable " + name + "does not exist!");
         }
-        this.columnTypes.put(name, type);
+        this.flworSchema.setVariableType(name, type);
     }
 
     public SequenceType getVariableType(Name name) {
         if (!hasVariableName(name)) {
             throw new OurBadException("Variable " + name + "does not exist!");
         }
-        if (!this.columnTypes.containsKey(name)) {
-            return SequenceType.createSequenceType("item*");
-        }
-        return this.columnTypes.get(name);
+        return this.flworSchema.getVariableType(name);
     }
 
     public String createTempView() {
@@ -150,8 +160,8 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
             sb.append(c).append('\n');
         }
         sb.append("Column types\n");
-        for (Name n : this.columnTypes.keySet()) {
-            sb.append(n).append(' ').append(this.columnTypes.get(n)).append('\n');
+        for (Name n : getVariableNames()) {
+            sb.append(n).append(' ').append(getVariableType(n)).append('\n');
         }
         sb.append("Data Frame");
         log.debug(sb);

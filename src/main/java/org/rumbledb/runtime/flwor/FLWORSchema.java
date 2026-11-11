@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.flwor;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -23,14 +24,20 @@ import java.util.Set;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeMappings;
 
 public class FLWORSchema implements Serializable {
     private static final long serialVersionUID = 1L;
+
+    private Map<Name, SequenceType> variableTypes;
 
     private Set<String> counts;
     private Set<String> sequencesAsArraysOfBytes;
@@ -38,6 +45,7 @@ public class FLWORSchema implements Serializable {
     private Map<String, ItemType> nativelyTypedSequences;
 
     public FLWORSchema() {
+        this.variableTypes = new HashMap<>();
         this.counts = new HashSet<>();
         this.sequencesAsArraysOfBytes = new HashSet<>();
         this.sequencesAsBytes = new HashSet<>();
@@ -45,6 +53,7 @@ public class FLWORSchema implements Serializable {
     }
 
     public FLWORSchema(FLWORSchema fdf) {
+        this.variableTypes = new HashMap<>(fdf.variableTypes);
         this.counts = new HashSet<>(fdf.counts);
         this.sequencesAsArraysOfBytes = new HashSet<>(fdf.sequencesAsArraysOfBytes);
         this.sequencesAsBytes = new HashSet<>(fdf.sequencesAsBytes);
@@ -74,16 +83,45 @@ public class FLWORSchema implements Serializable {
             String name = field.name();
             if (name.endsWith(".count")) {
                 this.counts.add(name);
-            } else if (field.dataType().equals(org.apache.spark.sql.types.DataTypes.BinaryType)) {
+            } else if (field.dataType().equals(DataTypes.BinaryType)) {
                 this.sequencesAsBytes.add(name);
-            } else if (field.dataType() instanceof org.apache.spark.sql.types.ArrayType
-                    && ((org.apache.spark.sql.types.ArrayType) field.dataType())
-                            .elementType()
-                            .equals(org.apache.spark.sql.types.DataTypes.BinaryType)) {
+            } else if (field.dataType() instanceof ArrayType
+                    && ((ArrayType) field.dataType()).elementType().equals(DataTypes.BinaryType)) {
                 this.sequencesAsArraysOfBytes.add(name);
             } else {
-                this.nativelyTypedSequences.put(
-                        name, org.rumbledb.types.TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()));
+                this.nativelyTypedSequences.put(name, TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()));
+            }
+        }
+    }
+
+    /** Logical types are independent of whether values are native or serialized. */
+    public void setVariableType(Name name, SequenceType type) {
+        this.variableTypes.put(name, type == null ? SequenceType.createSequenceType("item*") : type);
+    }
+
+    public SequenceType getVariableType(Name name) {
+        return this.variableTypes.getOrDefault(name, SequenceType.createSequenceType("item*"));
+    }
+
+    /** Retains types only for surviving variables, excluding newly rebound variables. */
+    public FLWORSchema project(StructType physicalSchema, Collection<Name> reboundVariables) {
+        FLWORSchema result = new FLWORSchema(physicalSchema);
+        Set<Name> survivingVariables = new HashSet<>();
+        for (String column : physicalSchema.fieldNames()) {
+            survivingVariables.add(new FlworDataFrameColumn(column, physicalSchema).getVariableName());
+        }
+        for (Map.Entry<Name, SequenceType> entry : this.variableTypes.entrySet()) {
+            if (survivingVariables.contains(entry.getKey()) && !reboundVariables.contains(entry.getKey())) {
+                result.setVariableType(entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
+    }
+
+    public void inheritTypes(FLWORSchema source, Collection<Name> variables) {
+        for (Name variable : variables) {
+            if (source.variableTypes.containsKey(variable)) {
+                this.variableTypes.put(variable, source.variableTypes.get(variable));
             }
         }
     }
@@ -93,6 +131,7 @@ public class FLWORSchema implements Serializable {
     }
 
     public boolean isConsistent(StructType schema) {
+        FLWORSchema inferred = new FLWORSchema(schema);
         Set<String> actual = new HashSet<>();
         for (StructField field : schema.fields()) {
             String name = field.name();
@@ -111,15 +150,20 @@ public class FLWORSchema implements Serializable {
         expected.addAll(this.sequencesAsBytes);
         expected.addAll(this.sequencesAsArraysOfBytes);
         expected.addAll(this.nativelyTypedSequences.keySet());
-        return actual.equals(expected);
+        return actual.equals(expected)
+                && this.counts.equals(inferred.counts)
+                && this.sequencesAsBytes.equals(inferred.sequencesAsBytes)
+                && this.sequencesAsArraysOfBytes.equals(inferred.sequencesAsArraysOfBytes)
+                && this.nativelyTypedSequences.keySet().equals(inferred.nativelyTypedSequences.keySet());
     }
 
     public boolean isCount(Name name) {
-        return this.counts.contains(name.toString());
+        return this.counts.contains(name.toString()) || this.counts.contains(name + ".count");
     }
 
     public boolean isArraysOfBytes(Name name) {
-        return this.sequencesAsArraysOfBytes.contains(name.toString());
+        return this.sequencesAsArraysOfBytes.contains(name.toString())
+                || this.sequencesAsArraysOfBytes.contains(name + ".sequence");
     }
 
     public boolean isBytes(Name name) {

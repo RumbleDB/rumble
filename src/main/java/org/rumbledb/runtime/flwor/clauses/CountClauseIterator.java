@@ -48,6 +48,8 @@ import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
@@ -126,13 +128,17 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
         if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
-        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
+        FlworDataFrame input = (FlworDataFrame) this.child.getDataFrame(context);
+        Dataset<Row> df = input.getDataFrame();
         if (!this.outputTupleProjection.containsKey(this.variableName)) {
-            return new FlworDataFrame(df);
+            return input;
         }
 
         Dataset<Row> dfWithIndex = addSerializedCountColumn(df, this.outputTupleProjection, this.variableName);
-        return new FlworDataFrame(dfWithIndex);
+        FlworDataFrame result = input.withDataFrame(dfWithIndex, this.variableName);
+        result.setVariableType(
+                this.variableName, new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.One));
+        return result;
     }
 
     // This method, which implements count semantics, is also intended for use by other clauses (e.g., for clause with

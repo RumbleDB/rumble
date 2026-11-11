@@ -29,6 +29,14 @@ class FLWORSchemaTest {
     }
 
     @Test
+    void rejectsNativeMetadataForSerializedValues() {
+        StructType physical = new StructType().add("x", DataTypes.BinaryType);
+        FLWORSchema schema = new FLWORSchema();
+        schema.setNativeType(name("x"), org.rumbledb.types.BuiltinTypesCatalogue.longItem);
+        assertFalse(schema.isConsistent(physical));
+    }
+
+    @Test
     void checksColumnsAfterSerializedColumnAndMissingColumns() {
         FLWORSchema schema = new FLWORSchema();
         schema.setBytes(name("x"));

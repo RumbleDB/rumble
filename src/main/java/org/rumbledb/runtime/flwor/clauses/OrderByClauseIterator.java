@@ -187,7 +187,8 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
+        FlworDataFrame input = (FlworDataFrame) this.child.getDataFrame(context);
+        Dataset<Row> df = input.getDataFrame();
         StructType inputSchema = df.schema();
 
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
@@ -199,7 +200,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
             nativeQueryResult = tryNativeQuery(df, this.expressionsWithIterator, allColumns, inputSchema, context);
         }
         if (nativeQueryResult != null) {
-            return nativeQueryResult;
+            return input.withDataFrame(nativeQueryResult.getDataFrame());
         }
 
         df.sparkSession()
@@ -223,7 +224,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
 
         if (columnTypesOfRows.length == 0) {
             // The input is empty, so we output this empty DF again.
-            return new FlworDataFrame(df);
+            return input.withDataFrame(df);
         }
 
         // Every column represents an order by expression
@@ -373,7 +374,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
 
-        return new FlworDataFrame(df.sparkSession()
+        return input.withDataFrame(df.sparkSession()
                 .sql(String.format(
                         "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
                         projectSQL, selectSQL, UDFParameters, appendedOrderingColumnsName, orderingSQL)));
