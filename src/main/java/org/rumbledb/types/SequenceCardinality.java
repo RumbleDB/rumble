@@ -85,6 +85,14 @@ public enum SequenceCardinality {
         return fromPossibilities(zero, one, many);
     }
 
+    /**
+     * The cardinality of a single value computed from a sequence of this cardinality, which is absent when the
+     * sequence may be empty.
+     */
+    public SequenceCardinality atMostOne() {
+        return allowsZero() ? ZERO_OR_ONE : ONE;
+    }
+
     public SequenceCardinality replaceZeroWithOne() {
         return fromPossibilities(false, allowsZero() || allowsOne(), allowsMany());
     }
