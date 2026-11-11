@@ -20,7 +20,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.UnaryOperator;
 
+import org.rumbledb.compiler.typing.ReturnTypeRules;
 import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.runtime.functions.FunctionLookupFunctionIterator;
 import org.rumbledb.runtime.functions.LoadXQueryModuleFunctionIterator;
@@ -265,6 +267,7 @@ import org.rumbledb.spark.ml.GetEstimatorFunctionIterator;
 import org.rumbledb.spark.ml.GetTransformerFunctionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 
 public class BuiltinFunctionCatalogue {
@@ -531,11 +534,12 @@ public class BuiltinFunctionCatalogue {
      * function that parses a xml file
      */
     static final BuiltinFunction doc = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "doc"),
-            List.of("string?"),
-            "document-node()?",
-            DocFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "doc"),
+                    List.of("string?"),
+                    "document-node()?",
+                    DocFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(DocFunctionIterator::inferReturnType);
     /**
      * function that parses multiple xml files into an RDD
      */
@@ -810,41 +814,45 @@ public class BuiltinFunctionCatalogue {
      * function that parses a parquet file
      */
     static final BuiltinFunction parquet_file1 = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "parquet-file"),
-            List.of("string"),
-            "item*",
-            ParquetFileFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME);
+                    new Name(Name.JN_NS, "jn", "parquet-file"),
+                    List.of("string"),
+                    "item*",
+                    ParquetFileFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME)
+            .withReturnTypeRule(ParquetFileFunctionIterator::inferReturnType);
 
     /**
      * function that parses a parquet file
      */
     static final BuiltinFunction parquet_file2 = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "parquet-file"),
-            List.of("string", "integer"),
-            "item*",
-            ParquetFileFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME);
+                    new Name(Name.JN_NS, "jn", "parquet-file"),
+                    List.of("string", "integer"),
+                    "item*",
+                    ParquetFileFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME)
+            .withReturnTypeRule(ParquetFileFunctionIterator::inferReturnType);
 
     /**
      * function that parses a delta file
      */
     static final BuiltinFunction delta_file = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "delta-file"),
-            List.of("string"),
-            "item*",
-            DeltaFileFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME);
+                    new Name(Name.JN_NS, "jn", "delta-file"),
+                    List.of("string"),
+                    "item*",
+                    DeltaFileFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME)
+            .withReturnTypeRule(DeltaFileFunctionIterator::inferReturnType);
 
     /**
      * function that parses a hive registered delta table
      */
     static final BuiltinFunction delta_table = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "table"),
-            List.of("string"),
-            "item*",
-            DeltaTableFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME);
+                    new Name(Name.JN_NS, "jn", "table"),
+                    List.of("string"),
+                    "item*",
+                    DeltaTableFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME)
+            .withReturnTypeRule(DeltaTableFunctionIterator::inferReturnType);
 
     /**
      * function that parses an iceberg table
@@ -1001,59 +1009,66 @@ public class BuiltinFunctionCatalogue {
      * function that returns the minimum of a sequence
      */
     static final BuiltinFunction min1 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "min"),
-            List.of("anyAtomicType*"),
-            "anyAtomicType?",
-            MinFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "min"),
+                    List.of("anyAtomicType*"),
+                    "anyAtomicType?",
+                    MinFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(MinFunctionIterator::inferReturnType);
 
     static final BuiltinFunction min2 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "min"),
-            List.of("anyAtomicType*", "string"),
-            "anyAtomicType?",
-            MinFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "min"),
+                    List.of("anyAtomicType*", "string"),
+                    "anyAtomicType?",
+                    MinFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(MinFunctionIterator::inferReturnType);
     /**
      * function that returns the maximum of a sequence
      */
     static final BuiltinFunction max1 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "max"),
-            List.of("anyAtomicType*"),
-            "anyAtomicType?",
-            MaxFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "max"),
+                    List.of("anyAtomicType*"),
+                    "anyAtomicType?",
+                    MaxFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(MaxFunctionIterator::inferReturnType);
 
     static final BuiltinFunction max2 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "max"),
-            List.of("anyAtomicType*", "string"),
-            "anyAtomicType?",
-            MaxFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "max"),
+                    List.of("anyAtomicType*", "string"),
+                    "anyAtomicType?",
+                    MaxFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(MaxFunctionIterator::inferReturnType);
     /**
      * function that returns the average of a sequence
      */
     static final BuiltinFunction avg = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "avg"),
-            List.of("anyAtomicType*"),
-            "anyAtomicType?",
-            AvgFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "avg"),
+                    List.of("anyAtomicType*"),
+                    "anyAtomicType?",
+                    AvgFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(AvgFunctionIterator::inferReturnType);
     /**
      * function that returns the sum of a sequence
      */
     static final BuiltinFunction sum1 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "sum"),
-            List.of("anyAtomicType*"),
-            "anyAtomicType?",
-            SumFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "sum"),
+                    List.of("anyAtomicType*"),
+                    "anyAtomicType?",
+                    SumFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(SumFunctionIterator::inferReturnType);
 
     static final BuiltinFunction sum2 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "sum"),
-            List.of("anyAtomicType*", "anyAtomicType?"),
-            "anyAtomicType?",
-            SumFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "sum"),
+                    List.of("anyAtomicType*", "anyAtomicType?"),
+                    "anyAtomicType?",
+                    SumFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(SumFunctionIterator::inferReturnType);
 
     /**
      * function that returns true if the argument is the empty sequence
@@ -1077,121 +1092,134 @@ public class BuiltinFunctionCatalogue {
      * function that returns the first item in a sequence
      */
     static final BuiltinFunction head = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "head"),
-            List.of("item*"),
-            "item?",
-            HeadFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "head"),
+                    List.of("item*"),
+                    "item?",
+                    HeadFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(SequenceCardinality::atMostOne));
     /**
      * function that returns all but the first item in a sequence
      */
     static final BuiltinFunction tail = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "tail"),
-            List.of("item*"),
-            "item*",
-            TailFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "tail"),
+                    List.of("item*"),
+                    "item*",
+                    TailFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(SequenceCardinality::withoutFirst));
     /**
      * function that returns the items of a given sequence
      */
     static final BuiltinFunction unordered = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "unordered"),
-            List.of("item*"),
-            "item*",
-            UnorderedFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "unordered"),
+                    List.of("item*"),
+                    "item*",
+                    UnorderedFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(UnaryOperator.identity()));
     /**
      * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
      * within an existing sequence
      */
     static final BuiltinFunction insert_before = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "insert-before"),
-            List.of("item*", "integer", "item*"),
-            "item*",
-            InsertBeforeFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "insert-before"),
+                    List.of("item*", "integer", "item*"),
+                    "item*",
+                    InsertBeforeFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(InsertBeforeFunctionIterator::inferReturnType);
     /**
      * function that returns a new sequence containing all the items of $target except the item at position
      * $position.
      */
     static final BuiltinFunction remove = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "remove"),
-            List.of("item*", "integer"),
-            "item*",
-            RemoveFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "remove"),
+                    List.of("item*", "integer"),
+                    "item*",
+                    RemoveFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(SequenceCardinality::filtered));
     /**
      * `
      * function that reverses the order of items in a sequence.
      */
     static final BuiltinFunction reverse = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "reverse"),
-            List.of("item*"),
-            "item*",
-            ReverseFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "reverse"),
+                    List.of("item*"),
+                    "item*",
+                    ReverseFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(UnaryOperator.identity()));
     /**
      * function that applies a subsequence operation to the given sequence with the given start index and length
      * parameters
      */
     static final BuiltinFunction subsequence2 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "subsequence"),
-            List.of("item*", "double"),
-            "item*",
-            SubsequenceFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "subsequence"),
+                    List.of("item*", "double"),
+                    "item*",
+                    SubsequenceFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(SequenceCardinality::filtered));
 
     static final BuiltinFunction subsequence3 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "subsequence"),
-            List.of("item*", "double", "double"),
-            "item*",
-            SubsequenceFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "subsequence"),
+                    List.of("item*", "double", "double"),
+                    "item*",
+                    SubsequenceFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(SequenceCardinality::filtered));
 
     /**
      * function that returns $arg if it contains zero or one items. Otherwise, raises an error.
      */
     static final BuiltinFunction zero_or_one = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "zero-or-one"),
-            List.of("item*"),
-            "item?",
-            ZeroOrOneIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "zero-or-one"),
+                    List.of("item*"),
+                    "item?",
+                    ZeroOrOneIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(SequenceCardinality::atMostOne));
     /**
      * function that returns $arg if it contains one or more items. Otherwise, raises an error.
      */
     static final BuiltinFunction one_or_more = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "one-or-more"),
-            List.of("item*"),
-            "item+",
-            OneOrMoreIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "one-or-more"),
+                    List.of("item*"),
+                    "item+",
+                    OneOrMoreIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(SequenceCardinality::replaceZeroWithOne));
     /**
      * function that returns $arg if it contains exactly one item. Otherwise, raises an error.
      */
     static final BuiltinFunction exactly_one = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "exactly-one"),
-            List.of("item*"),
-            "item",
-            ExactlyOneIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "exactly-one"),
+                    List.of("item*"),
+                    "item",
+                    ExactlyOneIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(cardinality -> SequenceCardinality.ONE));
 
     /**
      * function that returns the values that appear in a sequence, with duplicates eliminated
      */
     static final BuiltinFunction distinct_values1 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "distinct-values"),
-            List.of("anyAtomicType*"),
-            "anyAtomicType*",
-            DistinctValuesFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "distinct-values"),
+                    List.of("anyAtomicType*"),
+                    "anyAtomicType*",
+                    DistinctValuesFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(DistinctValuesFunctionIterator::inferReturnType);
 
     static final BuiltinFunction distinct_values2 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "distinct-values"),
-            List.of("anyAtomicType*", "string"),
-            "anyAtomicType*",
-            DistinctValuesFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "distinct-values"),
+                    List.of("anyAtomicType*", "string"),
+                    "anyAtomicType*",
+                    DistinctValuesFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(DistinctValuesFunctionIterator::inferReturnType);
 
     /**
      * function that returns indices of items that are equal to the search parameter
@@ -1257,18 +1285,20 @@ public class BuiltinFunctionCatalogue {
      * equally near
      */
     static final BuiltinFunction round1 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "round"),
-            List.of("numeric?"),
-            "numeric?",
-            RoundFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "round"),
+                    List.of("numeric?"),
+                    "numeric?",
+                    RoundFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(RoundFunctionIterator::inferReturnType);
 
     static final BuiltinFunction round2 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "round"),
-            List.of("numeric?", "integer"),
-            "numeric?",
-            RoundFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "round"),
+                    List.of("numeric?", "integer"),
+                    "numeric?",
+                    RoundFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(RoundFunctionIterator::inferReturnType);
     /**
      * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if
      * two such values are equally nearinT
@@ -1300,110 +1330,122 @@ public class BuiltinFunctionCatalogue {
      * function that returns the value of e^x
      */
     static final BuiltinFunction exp = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "exp"),
-            List.of("double?"),
-            "double?",
-            ExpFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "exp"),
+                    List.of("double?"),
+                    "double?",
+                    ExpFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the value of 10^x
      */
     static final BuiltinFunction exp10 = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "exp10"),
-            List.of("double?"),
-            "double?",
-            Exp10FunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "exp10"),
+                    List.of("double?"),
+                    "double?",
+                    Exp10FunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the natural logarithm of the argument
      */
     static final BuiltinFunction log = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "log"),
-            List.of("double?"),
-            "double?",
-            LogFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "log"),
+                    List.of("double?"),
+                    "double?",
+                    LogFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the base-ten logarithm of the argument
      */
     static final BuiltinFunction log10 = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "log10"),
-            List.of("double?"),
-            "double?",
-            Log10FunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "log10"),
+                    List.of("double?"),
+                    "double?",
+                    Log10FunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the result of raising the first argument to the power of the second
      */
     static final BuiltinFunction pow = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "pow"),
-            List.of("double?", "double"),
-            "double?",
-            PowFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "pow"),
+                    List.of("double?", "double"),
+                    "double?",
+                    PowFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the non-negative square root of the argument
      */
     static final BuiltinFunction sqrt = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "sqrt"),
-            List.of("double?"),
-            "double?",
-            SqrtFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "sqrt"),
+                    List.of("double?"),
+                    "double?",
+                    SqrtFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the sine of the angle given in radians
      */
     static final BuiltinFunction sin = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "sin"),
-            List.of("double?"),
-            "double?",
-            SinFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "sin"),
+                    List.of("double?"),
+                    "double?",
+                    SinFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the cosine of the angle given in radians
      */
     static final BuiltinFunction cos = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "cos"),
-            List.of("double?"),
-            "double?",
-            CosFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "cos"),
+                    List.of("double?"),
+                    "double?",
+                    CosFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the tangent of the angle given in radians
      */
     static final BuiltinFunction tan = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "tan"),
-            List.of("double?"),
-            "double?",
-            TanFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "tan"),
+                    List.of("double?"),
+                    "double?",
+                    TanFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the arc sine of the angle given in radians
      */
     static final BuiltinFunction asin = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "asin"),
-            List.of("double?"),
-            "double?",
-            ASinFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "asin"),
+                    List.of("double?"),
+                    "double?",
+                    ASinFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the arc cosine of the angle given in radians
      */
     static final BuiltinFunction acos = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "acos"),
-            List.of("double?"),
-            "double?",
-            ACosFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "acos"),
+                    List.of("double?"),
+                    "double?",
+                    ACosFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the arc tangent of the angle given in radians
      */
     static final BuiltinFunction atan = createBuiltinFunction(
-            new Name(Name.MATH_NS, "math", "atan"),
-            List.of("double?"),
-            "double?",
-            ATanFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MATH_NS, "math", "atan"),
+                    List.of("double?"),
+                    "double?",
+                    ATanFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.oneDoubleForOneNumber());
     /**
      * function that returns the the angle in radians subtended at the origin by the point on a plane with
      * coordinates (x, y) and the positive x-axis.
@@ -1840,11 +1882,12 @@ public class BuiltinFunctionCatalogue {
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction data1 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "data"),
-            List.of("item*"),
-            "anyAtomicType*",
-            DataFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "data"),
+                    List.of("item*"),
+                    "anyAtomicType*",
+                    DataFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(DataFunctionIterator::inferReturnType);
     /**
      * function that returns the value of the default collation property
      */
@@ -2268,21 +2311,23 @@ public class BuiltinFunctionCatalogue {
      * function that returns returns all members of all arrays of the supplied sequence
      */
     static final BuiltinFunction members = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "members"),
-            List.of("item*"),
-            "item*",
-            ArrayMembersFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.JN_NS, "jn", "members"),
+                    List.of("item*"),
+                    "item*",
+                    ArrayMembersFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ArrayMembersFunctionIterator::inferReturnType);
 
     /**
      * W3C map:get — F&O 3.1: map:get($map as map(*), $key as xs:anyAtomicType) as item()*.
      */
     static final BuiltinFunction map_get = createBuiltinFunction(
-            new Name(Name.MAP_NS, "map", "get"),
-            List.of("map", "anyAtomicType"),
-            "item*",
-            MapGetFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MAP_NS, "map", "get"),
+                    List.of("map", "anyAtomicType"),
+                    "item*",
+                    MapGetFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(MapGetFunctionIterator::inferReturnType);
     /**
      * W3C map:contains — F&O 3.1: map:contains($map as map(*), $key as xs:anyAtomicType) as xs:boolean.
      */
@@ -2296,20 +2341,22 @@ public class BuiltinFunctionCatalogue {
      * W3C map:put — F&O 3.1: map:put($map as map(*), $key as xs:anyAtomicType, $value as item()*) as map(*).
      */
     static final BuiltinFunction map_put = createBuiltinFunction(
-            new Name(Name.MAP_NS, "map", "put"),
-            List.of("map", "anyAtomicType", "item*"),
-            "map",
-            MapPutFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MAP_NS, "map", "put"),
+                    List.of("map", "anyAtomicType", "item*"),
+                    "map",
+                    MapPutFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(MapPutFunctionIterator::inferReturnType);
     /**
      * W3C map:remove — F&O 3.1: map:remove($map as map(*), $keys as xs:anyAtomicType*) as map(*).
      */
     static final BuiltinFunction map_remove = createBuiltinFunction(
-            new Name(Name.MAP_NS, "map", "remove"),
-            List.of("map", "anyAtomicType*"),
-            "map",
-            MapRemoveFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MAP_NS, "map", "remove"),
+                    List.of("map", "anyAtomicType*"),
+                    "map",
+                    MapRemoveFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(MapRemoveFunctionIterator::inferReturnType);
     /**
      * W3C map:merge — F&O 3.1: map:merge($maps as map(*)*) as map(*).
      */
@@ -2332,11 +2379,12 @@ public class BuiltinFunctionCatalogue {
      * W3C map:entry — F&O 3.1: map:entry($key as xs:anyAtomicType, $value as item()*) as map(*).
      */
     static final BuiltinFunction map_entry = createBuiltinFunction(
-            new Name(Name.MAP_NS, "map", "entry"),
-            List.of("anyAtomicType", "item*"),
-            "map",
-            MapEntryFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.MAP_NS, "map", "entry"),
+                    List.of("anyAtomicType", "item*"),
+                    "map",
+                    MapEntryFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(MapEntryFunctionIterator::inferReturnType);
 
     /**
      * W3C map:keys — F&O 3.1: map:keys($map as map(*)) as xs:anyAtomicType*.
@@ -2389,11 +2437,12 @@ public class BuiltinFunctionCatalogue {
      * function that returns the length of an array
      */
     static final BuiltinFunction size = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "size"),
-            List.of("item-array?"),
-            "integer?",
-            ArraySizeFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.JN_NS, "jn", "size"),
+                    List.of("item-array?"),
+                    "integer?",
+                    ArraySizeFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ArraySizeFunctionIterator::inferReturnType);
     /**
      * W3C array:size function that returns the length of an array
      */
@@ -2407,92 +2456,102 @@ public class BuiltinFunctionCatalogue {
      * W3C array:tail function that returns all members except the first
      */
     static final BuiltinFunction array_tail = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "tail"),
-            List.of("array"),
-            "array",
-            ArrayTailFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "tail"),
+                    List.of("array"),
+                    "array",
+                    ArrayTailFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayOfSameMembers());
     /**
      * W3C array:get function that returns members at a given position
      */
     static final BuiltinFunction array_get = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "get"),
-            List.of("array", "integer"),
-            "item*",
-            ArrayGetFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "get"),
+                    List.of("array", "integer"),
+                    "item*",
+                    ArrayGetFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayMember());
     /**
      * W3C array:head function that returns the first member of an array
      */
     static final BuiltinFunction array_head = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "head"),
-            List.of("array"),
-            "item*",
-            ArrayHeadFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "head"),
+                    List.of("array"),
+                    "item*",
+                    ArrayHeadFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayMember());
     /**
      * W3C array:reverse function that returns all members of an array in reverse order
      */
     static final BuiltinFunction array_reverse = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "reverse"),
-            List.of("array"),
-            "array",
-            ArrayReverseFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "reverse"),
+                    List.of("array"),
+                    "array",
+                    ArrayReverseFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayOfSameMembers());
     /**
      * W3C array:insert-before function that inserts a member before a given position
      */
     static final BuiltinFunction array_insert_before = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "insert-before"),
-            List.of("array", "integer", "item*"),
-            "array",
-            ArrayInsertBeforeFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "insert-before"),
+                    List.of("array", "integer", "item*"),
+                    "array",
+                    ArrayInsertBeforeFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayWithMembersOf(2));
     /**
      * W3C array:append — appends a member (a sequence) to an array, returning a new array.
      */
     static final BuiltinFunction array_append = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "append"),
-            List.of("array", "item*"),
-            "array",
-            ArrayAppendFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "append"),
+                    List.of("array", "item*"),
+                    "array",
+                    ArrayAppendFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayWithMembersOf(1));
     /**
      * W3C array:remove — returns a new array omitting members at the given 1-based positions (F&amp;O 3.1).
      */
     static final BuiltinFunction array_remove = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "remove"),
-            List.of("array", "integer*"),
-            "array",
-            ArrayRemoveFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "remove"),
+                    List.of("array", "integer*"),
+                    "array",
+                    ArrayRemoveFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayOfSameMembers());
     /**
      * W3C array:put — returns a new array with the member at a 1-based position replaced (F&amp;O 3.1).
      */
     static final BuiltinFunction array_put = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "put"),
-            List.of("array", "integer", "item*"),
-            "array",
-            ArrayPutFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "put"),
+                    List.of("array", "integer", "item*"),
+                    "array",
+                    ArrayPutFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayWithMembersOf(2));
     /**
      * W3C array:subarray function that extracts a subarray
      */
     static final BuiltinFunction array_subarray_2 = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "subarray"),
-            List.of("array", "integer"),
-            "array",
-            ArraySubarrayFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "subarray"),
+                    List.of("array", "integer"),
+                    "array",
+                    ArraySubarrayFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayOfSameMembers());
     /**
      * W3C array:subarray function that extracts a subarray of a given length
      */
     static final BuiltinFunction array_subarray_3 = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "subarray"),
-            List.of("array", "integer", "integer"),
-            "array",
-            ArraySubarrayFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "subarray"),
+                    List.of("array", "integer", "integer"),
+                    "array",
+                    ArraySubarrayFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayOfSameMembers());
     /**
      * W3C array:fold-left function that evaluates a function cumulatively over array members
      */
@@ -2538,11 +2597,12 @@ public class BuiltinFunctionCatalogue {
      * array(*). Map-as-predicate is not supported yet.
      */
     static final BuiltinFunction array_filter = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "filter"),
-            List.of("array", "function(item*) as boolean"),
-            "array",
-            ArrayFilterFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "filter"),
+                    List.of("array", "function(item*) as boolean"),
+                    "array",
+                    ArrayFilterFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayOfSameMembers());
     /**
      * W3C array:join — F&amp;O 3.1: array:join($arrays as array(*)*) as array(*).
      */
@@ -2565,20 +2625,22 @@ public class BuiltinFunctionCatalogue {
      * W3C array:sort — F&amp;O 3.1: array:sort($array as array(*)) as array(*).
      */
     static final BuiltinFunction array_sort_1 = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "sort"),
-            List.of("array"),
-            "array",
-            ArraySortFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "sort"),
+                    List.of("array"),
+                    "array",
+                    ArraySortFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayOfSameMembers());
     /**
      * W3C array:sort — F&amp;O 3.1: array:sort($array as array(*), $collation as xs:string?) as array(*).
      */
     static final BuiltinFunction array_sort_2 = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "sort"),
-            List.of("array", "string?"),
-            "array",
-            ArraySortFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "sort"),
+                    List.of("array", "string?"),
+                    "array",
+                    ArraySortFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayOfSameMembers());
     /**
      * W3C array:sort — F&amp;O 3.1: array:sort($array as array(*), $collation as xs:string?,
      * $key as function(item()*) as xs:anyAtomicType*) as array(*).
@@ -2586,11 +2648,12 @@ public class BuiltinFunctionCatalogue {
      * {@code array:filter}).
      */
     static final BuiltinFunction array_sort_3 = createBuiltinFunction(
-            new Name(Name.ARRAY_NS, "array", "sort"),
-            List.of("array", "string?", "item"),
-            "array",
-            ArraySortFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.ARRAY_NS, "array", "sort"),
+                    List.of("array", "string?", "item"),
+                    "array",
+                    ArraySortFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(ReturnTypeRules.arrayOfSameMembers());
     /**
      * function that dynamically creates an object that merges the values of key collisions into arrays
      */
@@ -2650,20 +2713,22 @@ public class BuiltinFunctionCatalogue {
      * function that projects objects by filtering their pairs and leaves non-objects intact
      */
     static final BuiltinFunction project = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "project"),
-            List.of("item*", "string*"),
-            "item*",
-            ObjectProjectFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.JN_NS, "jn", "project"),
+                    List.of("item*", "string*"),
+                    "item*",
+                    ObjectProjectFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.objectsChanged());
     /**
      * function that removes the pairs with the given keys from all objects and leaves non-objects intact
      */
     static final BuiltinFunction remove_keys = createBuiltinFunction(
-            new Name(Name.JN_NS, "jn", "remove-keys"),
-            List.of("item*", "string*"),
-            "item*",
-            ObjectRemoveKeysFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.JN_NS, "jn", "remove-keys"),
+                    List.of("item*", "string*"),
+                    "item*",
+                    ObjectRemoveKeysFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.objectsChanged());
     /**
      * function that returns the values of a Json Object
      */
@@ -2948,25 +3013,28 @@ public class BuiltinFunctionCatalogue {
             BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
 
     static final BuiltinFunction sort1 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "sort"),
-            List.of("item*"),
-            "item*",
-            SortFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "sort"),
+                    List.of("item*"),
+                    "item*",
+                    SortFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(UnaryOperator.identity()));
 
     static final BuiltinFunction sort2 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "sort"),
-            List.of("item*", "string?"),
-            "item*",
-            SortFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "sort"),
+                    List.of("item*", "string?"),
+                    "item*",
+                    SortFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(UnaryOperator.identity()));
 
     static final BuiltinFunction sort3 = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "sort"),
-            List.of("item*", "string?", "function(item) as anyAtomicType*"),
-            "item*",
-            SortFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
+                    new Name(Name.FN_NS, "fn", "sort"),
+                    List.of("item*", "string?", "function(item) as anyAtomicType*"),
+                    "item*",
+                    SortFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT)
+            .withReturnTypeRule(ReturnTypeRules.itemsOfFirstArgument(UnaryOperator.identity()));
 
     static final BuiltinFunction local_name_without_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "local-name"),
@@ -3025,11 +3093,12 @@ public class BuiltinFunctionCatalogue {
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction has_children_without_arg = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "has-children"),
-            List.of(),
-            "boolean",
-            HasChildrenFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                    new Name(Name.FN_NS, "fn", "has-children"),
+                    List.of(),
+                    "boolean",
+                    HasChildrenFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+            .withReturnTypeRule(HasChildrenFunctionIterator::inferReturnType);
 
     static final BuiltinFunction has_children_with_arg = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "has-children"),

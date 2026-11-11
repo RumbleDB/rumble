@@ -18,16 +18,21 @@ package org.rumbledb.runtime.functions.maps;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.LookupTyping;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.types.SequenceType;
 
 /**
  * W3C XPath/XQuery {@code map:get}:
@@ -87,5 +92,10 @@ public class MapGetFunctionIterator extends ItemRuntimePlan implements LocalRunt
         Item key = atomized.get(0);
         List<Item> seq = mapItem.getSequenceByKey(key);
         return seq == null ? List.of() : seq;
+    }
+
+    /** The value type of a map whose key and value types are known. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        return MapTyping.typedMapArgument(call).map(LookupTyping::inferLookupCallType);
     }
 }

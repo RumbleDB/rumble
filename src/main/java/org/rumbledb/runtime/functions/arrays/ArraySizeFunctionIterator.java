@@ -17,10 +17,13 @@ package org.rumbledb.runtime.functions.arrays;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.Optional;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -58,5 +61,12 @@ public class ArraySizeFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                     new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
         }
         return NativeClauseContext.NoNativeQuery;
+    }
+
+    /** One integer for one array. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        return call.getArguments().get(0).getStaticSequenceType().getArity() == SequenceType.Arity.One
+                ? Optional.of(new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One))
+                : Optional.empty();
     }
 }

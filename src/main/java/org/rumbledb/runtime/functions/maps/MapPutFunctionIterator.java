@@ -18,15 +18,21 @@ package org.rumbledb.runtime.functions.maps;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SequenceType;
 
 /**
  * W3C XPath/XQuery {@code map:put}:
@@ -85,5 +91,19 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         boolean mutable = mapItem.getMutabilityLevel() != -1
                 && this.getRuntimeStaticContext().isQuerySideEffecting();
         return ItemFactory.getInstance().createMapItemAddingKey(mapItem, key, valueSequence, mutable);
+    }
+
+    /** Adds the key's type and the value's type to those of the map. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        Optional<ItemType> map = MapTyping.typedMapArgument(call);
+        Optional<ItemType> keyType =
+                MapTyping.atomizedKeyType(call.getArguments().get(1));
+        if (map.isEmpty() || keyType.isEmpty()) {
+            return Optional.empty();
+        }
+        SequenceType valueType = call.getArguments().get(2).getStaticSequenceType();
+        return Optional.of(MapTyping.mapType(
+                ItemTypeFactory.createInferredUnionType(List.of(map.get().getMapKeyItemType(), keyType.get())),
+                map.get().getMapValueSequenceType().leastCommonSupertypeWith(valueType)));
     }
 }

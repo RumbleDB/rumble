@@ -20,13 +20,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -139,5 +142,16 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
                 new SequenceType(
                         BuiltinTypesCatalogue.floatItem,
                         value.getResultingType().getArity()));
+    }
+
+    /**
+     * Keeps the type of a numeric argument. Others, such as nodes and untyped values, are converted to xs:double
+     * first, so the signature's xs:numeric? applies.
+     */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+        return input.isEmptySequence() || input.getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+                ? Optional.of(input)
+                : Optional.empty();
     }
 }

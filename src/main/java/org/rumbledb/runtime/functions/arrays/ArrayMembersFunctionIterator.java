@@ -17,19 +17,24 @@ package org.rumbledb.runtime.functions.arrays;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.LookupTyping;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
 import org.rumbledb.runtime.navigation.ArrayMembersClosure;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.types.SequenceType;
 
 public class ArrayMembersFunctionIterator extends ItemRuntimePlan
         implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
@@ -69,5 +74,11 @@ public class ArrayMembersFunctionIterator extends ItemRuntimePlan
         FlatMapFunction<Item, Item> transformation = new ArrayMembersClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
+    }
+
+    /** The members of the arrays of the argument. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        return Optional.of(
+                LookupTyping.inferArrayMembersType(call.getArguments().get(0).getStaticSequenceType()));
     }
 }
