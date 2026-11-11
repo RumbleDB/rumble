@@ -666,15 +666,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             return type;
         }
         if (input.conversion() == BuiltinFunction.ContextConversion.STRING_VALUE) {
-            // fn:string(.) uses the string value, not function-conversion atomization.
+            // fn:string(.) takes the string value, not the atomized value; maps and arrays are function items too.
             boolean mayBeFunction = type.getItemType().getMemberTypes().stream()
                     // xs:error has no values, but is a subtype of every item type.
                     .filter(member -> !member.equals(BuiltinTypesCatalogue.errorItem))
                     .anyMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.anyFunctionItem));
             if (mayBeFunction) {
                 this.errors.report(
-                        call.getFunctionName() + " cannot take the string value of a function context item.",
-                        ErrorCode.FunctionItemStringValueErrorCode,
+                        TypeErrorMessages.noStringValue(call.getFunctionName(), type),
                         call,
                         !type.getItemType().isSubtypeOf(BuiltinTypesCatalogue.anyFunctionItem));
             }
