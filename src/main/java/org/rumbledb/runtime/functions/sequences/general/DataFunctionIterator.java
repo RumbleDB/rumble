@@ -42,6 +42,7 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 public class DataFunctionIterator extends ItemRuntimePlan
         implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
@@ -72,7 +73,8 @@ public class DataFunctionIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         HomogeneousItemDataFrame childDF =
                 ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.sequenceIterator, dynamicContext);
-        if (childDF.getItemType().isAtomicItemType()) {
+        // Atomic unions such as xs:decimal | js:null atomize to themselves too.
+        if (childDF.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
             return childDF;
         }
         if (childDF.isEmptySequence()) {
