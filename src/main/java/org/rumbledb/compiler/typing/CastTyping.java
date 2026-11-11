@@ -126,9 +126,9 @@ public final class CastTyping {
                     || castableMembers(operandType.getItemType(), castedSequenceType.getItemType())
                             .anyMatch(castable -> castable);
             this.errors.report(
-                    operandType
+                    TypeNotation.shortened(operandType)
                             + (mayPass ? " is not always castable as " : " is never castable as ")
-                            + castedSequenceType.getItemType()
+                            + TypeNotation.shortened(castedSequenceType.getItemType())
                             + ".",
                     ErrorCode.UnexpectedTypeErrorCode,
                     node,

@@ -79,7 +79,11 @@ public final class PathStepTyping {
         }
 
         this.errors.rejectInferredEmpty(
-                inferredType, stepExpr, "this step never selects a node from its context, of type " + contextType);
+                inferredType,
+                stepExpr,
+                "this step never selects a node from its context"
+                        // A step that is empty whatever its context may have none.
+                        + (contextType == null ? "" : ", of type " + TypeNotation.shortened(contextType)));
         return inferredType;
     }
 
@@ -164,7 +168,7 @@ public final class PathStepTyping {
         String kind = attributeAxis ? "attribute" : descendants ? "descendant element" : "child element";
         String where = descendants ? (attributeAxis ? " on or below " : " below ") : " for ";
         if (name == null) {
-            return "The schema declares no " + kind + "s" + where + contextType + ".";
+            return "The schema declares no " + kind + "s" + where + TypeNotation.shortened(contextType) + ".";
         }
         List<Name> declared = contentModel
                 .getStepNames(contextType, attributeAxis, descendants)
@@ -179,7 +183,14 @@ public final class PathStepTyping {
                         + (declared.size() > MAX_LISTED_STEP_NAMES
                                 ? ", and " + (declared.size() - MAX_LISTED_STEP_NAMES) + " more."
                                 : ".");
-        return "The schema declares no " + kind + " " + name + where + contextType + ". " + alternatives;
+        return "The schema declares no "
+                + kind
+                + " "
+                + name
+                + where
+                + TypeNotation.shortened(contextType)
+                + ". "
+                + alternatives;
     }
 
     private SequenceType.Arity inferStepResultArity(StepExpr stepExpr, SequenceType contextType) {

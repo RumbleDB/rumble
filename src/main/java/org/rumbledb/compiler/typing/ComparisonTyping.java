@@ -61,7 +61,13 @@ public final class ComparisonTyping {
 
             if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator)) {
                 this.errors.report(
-                        "'" + operator + "' cannot compare " + leftItemType + " with " + rightItemType + ".",
+                        "'"
+                                + operator
+                                + "' cannot compare "
+                                + TypeNotation.shortened(leftItemType)
+                                + " with "
+                                + TypeNotation.shortened(rightItemType)
+                                + ".",
                         node,
                         // An empty operand passes: the comparison is then false or empty.
                         leftInferredType.getCardinality().allowsZero()
@@ -168,7 +174,13 @@ public final class ComparisonTyping {
             SequenceType type, SequenceType operandType, String operator, String operand, Node node) {
         if (!type.isSubtypeOf(operandType)) {
             this.errors.reportMismatch(
-                    "'" + operator + "' expects at most one node, but " + operand + " is " + type + ".",
+                    "'"
+                            + operator
+                            + "' expects at most one node, but "
+                            + operand
+                            + " is "
+                            + TypeNotation.shortened(type)
+                            + ".",
                     type,
                     operandType,
                     node);

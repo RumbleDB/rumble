@@ -79,9 +79,9 @@ public final class ArithmeticTyping {
                 this.errors.reportInferredEmpty(
                         node,
                         "it fails for every pair of operands, of types "
-                                + leftType
+                                + TypeNotation.shortened(leftType)
                                 + " and "
-                                + rightType
+                                + TypeNotation.shortened(rightType)
                                 + ", unless one is empty");
             } else {
                 this.errors.report(notDefinedMessage("'" + operator + "'", leftType, rightType), node, mayPass);
@@ -293,7 +293,7 @@ public final class ArithmeticTyping {
                 this.errors.reportInferredEmpty(
                         node,
                         "it fails for every value of its operand, of type "
-                                + childInferredType
+                                + TypeNotation.shortened(childInferredType)
                                 + ", unless it is empty");
             } else {
                 this.errors.report(notDefinedMessage(operator, childInferredType), node, mayPass);
@@ -327,7 +327,7 @@ public final class ArithmeticTyping {
     private static String notDefinedMessage(String operator, SequenceType... operands) {
         return operator
                 + " is not defined for "
-                + Arrays.stream(operands).map(SequenceType::toString).collect(Collectors.joining(" and "))
+                + Arrays.stream(operands).map(TypeNotation::shortened).collect(Collectors.joining(" and "))
                 + ".";
     }
 }

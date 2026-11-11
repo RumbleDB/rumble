@@ -98,8 +98,8 @@ public final class AtomizedOperands {
     public static String describe(SequenceType operand) {
         SequenceType atomized = knownAtomizedType(operand);
         return atomized == null || operand.equals(atomized)
-                ? operand.toString()
-                : operand + " with typed value " + atomized;
+                ? TypeNotation.shortened(operand)
+                : TypeNotation.shortened(operand) + " with typed value " + TypeNotation.shortened(atomized);
     }
 
     /**
