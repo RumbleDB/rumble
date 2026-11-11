@@ -359,7 +359,9 @@ class StaticTypeErrorsTest {
             value = {
                 "nme | Did you mean \"name\"? It has the keys name, url.",
                 "NAME | Did you mean \"name\"? It has the keys name, url.",
-                "license | It has the keys name, url."
+                "license | It has the keys name, url.",
+                // A key of two characters may differ from a suggestion in one: "name" is two away.
+                "nm | It has the keys name, url."
             })
     void listsTheKeysOfAnObjectThatLacksTheKeyOfALookup(String key, String keys) {
         Assertions.assertEquals(
@@ -422,8 +424,9 @@ class StaticTypeErrorsTest {
     }
 
     @Test
-    void typesAStepWithoutAContextItem() {
-        // The step has no context type to name in a message; it fails at runtime instead.
+    void compilesAStepWithoutAContextType() {
+        // The message of a step that selects nothing named the context type even when there is none, and failed with a
+        // NullPointerException.
         Assertions.assertDoesNotThrow(
                 () -> compile("xquery version \"3.1\";\ndeclare function local:f() { child::a };\n1"));
     }
