@@ -1391,28 +1391,47 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
+        StaticContext copyVariables = expression.getStaticContext();
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
             visit(copyDecl.getSourceExpression(), argument);
-            SequenceType declaredType = copyDecl.getSourceSequenceType();
-            SequenceType inferredType;
-            if (declaredType == null) {
-                inferredType = copyDecl.getSourceExpression().getStaticSequenceType();
-            } else {
-                inferredType = declaredType;
-            }
-            checkAndUpdateVariableStaticType(
-                    declaredType,
-                    inferredType,
-                    argument,
-                    expression.getClass().getSimpleName(),
-                    copyDecl.getVariableName(),
-                    expression.getMetadata());
+            SequenceType sourceType = copyDecl.getSourceExpression().getStaticSequenceType();
+            basicChecks(sourceType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
+            copyVariables.replaceVariableSequenceType(copyDecl.getVariableName(), copiedType(sourceType));
         }
         visit(expression.getModifyExpression(), argument);
         visit(expression.getReturnExpression(), argument);
         expression.setStaticSequenceType(expression.getReturnExpression().getStaticSequenceType());
 
         return argument;
+    }
+
+    /** The kinds of items that an update can modify, keeping their kind. */
+    private static final List<ItemType> UPDATABLE_KINDS = List.of(
+            BuiltinTypesCatalogue.objectItem,
+            BuiltinTypesCatalogue.arrayItem,
+            BuiltinTypesCatalogue.elementNode,
+            BuiltinTypesCatalogue.attributeNode,
+            BuiltinTypesCatalogue.documentNode,
+            BuiltinTypesCatalogue.textNode,
+            BuiltinTypesCatalogue.commentNode,
+            BuiltinTypesCatalogue.processingInstructionNode,
+            BuiltinTypesCatalogue.namespaceNode);
+
+    /**
+     * The type of a copy in the modify and return clauses. An update keeps the kind of each item, but may change its
+     * names, fields, members, content and type annotations, so only the kind of the source is known.
+     */
+    private static SequenceType copiedType(SequenceType sourceType) {
+        if (sourceType.isEmptySequence()) {
+            return sourceType;
+        }
+        List<ItemType> kinds = sourceType.getItemType().getMemberTypes().stream()
+                .map(member -> UPDATABLE_KINDS.stream()
+                        .filter(member::isSubtypeOf)
+                        .findFirst()
+                        .orElse(member))
+                .collect(Collectors.toList());
+        return new SequenceType(ItemTypeFactory.createInferredUnionType(kinds), sourceType.getCardinality());
     }
 
     @Override
@@ -2230,13 +2249,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         for (TypeswitchCase typeswitchCase : expression.getCases()) {
             Name variableName = typeswitchCase.getVariableName();
             Expression returnExpression = typeswitchCase.getReturnExpression();
-            // if we bind a variable we add the static type of it in the context of the return expression
+            // if we bind a variable we add its static type in the context that binds it, which may be a parent of the
+            // context of the return expression
             if (variableName != null) {
                 SequenceType variableType = null;
                 for (SequenceType st : typeswitchCase.getUnion()) {
                     variableType = variableType == null ? st : variableType.leastCommonSupertypeWith(st);
                 }
-                returnExpression.getStaticContext().replaceVariableSequenceType(variableName, variableType);
+                typeswitchCase.getStaticContext().replaceVariableSequenceType(variableName, variableType);
             }
 
             visit(returnExpression, argument);
@@ -2249,7 +2269,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         Expression returnExpression = expression.getDefaultCase().getReturnExpression();
         // if we bind a variable in the default case, we infer testCondition type
         if (variableName != null) {
-            returnExpression.getStaticContext().replaceVariableSequenceType(variableName, conditionType);
+            expression.getDefaultCase().getStaticContext().replaceVariableSequenceType(variableName, conditionType);
         }
         visit(returnExpression, argument);
         SequenceType defaultType = returnExpression.getStaticSequenceType();
@@ -3287,7 +3307,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType variableDeclaredType = statement.getStaticContext().getVariableSequenceType(statement.getName());
         SequenceType expressionType = statement.getAssignExpression().getStaticSequenceType();
         if (!expressionType.isSubtypeOf(variableDeclaredType)) {
-            throw new UnexpectedStaticTypeException(
+            throwStaticTypeException(
                     "Declared type: "
                             + variableDeclaredType
                             + " of variable: $"
@@ -3451,7 +3471,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 for (SequenceType st : typeswitchCase.getUnion()) {
                     variableType = variableType == null ? st : variableType.leastCommonSupertypeWith(st);
                 }
-                returnStatement.getStaticContext().replaceVariableSequenceType(variableName, variableType);
+                typeswitchCase.getStaticContext().replaceVariableSequenceType(variableName, variableType);
             }
 
             visit(returnStatement, argument);
@@ -3464,7 +3484,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         Statement returnStatement = statement.getDefaultCase().getReturnStatement();
         // if we bind a variable in the default case, we infer testCondition type
         if (variableName != null) {
-            returnStatement.getStaticContext().replaceVariableSequenceType(variableName, conditionType);
+            statement.getDefaultCase().getStaticContext().replaceVariableSequenceType(variableName, conditionType);
         }
         visit(returnStatement, argument);
         SequenceType defaultType = returnStatement.getStaticSequenceType();
