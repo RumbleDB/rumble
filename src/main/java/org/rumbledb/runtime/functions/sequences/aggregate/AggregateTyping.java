@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 
 import org.rumbledb.compiler.typing.ComparisonTyping;
 import org.rumbledb.compiler.typing.ReturnTypeContext;
-import org.rumbledb.compiler.typing.StaticTypeErrors;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -40,8 +39,7 @@ final class AggregateTyping {
      */
     static SequenceType validateStrictInput(
             FunctionCallExpression call, ReturnTypeContext context, String functionName) {
-        SequenceType inputType =
-                StaticTypeErrors.requireInferredType(call.getArguments().get(0).getStaticSequenceType(), call);
+        SequenceType inputType = context.argumentType(0);
         if (inputType.isEmptySequence()) {
             return inputType;
         }
@@ -73,8 +71,7 @@ final class AggregateTyping {
 
     /** The return type of fn:min or fn:max, whose input must hold values that can be compared with each other. */
     static SequenceType inferExtremumType(FunctionCallExpression call, ReturnTypeContext context, String functionName) {
-        SequenceType inputType =
-                StaticTypeErrors.requireInferredType(call.getArguments().get(0).getStaticSequenceType(), call);
+        SequenceType inputType = context.argumentType(0);
         if (inputType.isEmptySequence()) {
             return SequenceType.createSequenceType("anyAtomicType?");
         }

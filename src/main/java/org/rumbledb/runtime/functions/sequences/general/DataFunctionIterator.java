@@ -174,7 +174,7 @@ public class DataFunctionIterator extends ItemRuntimePlan
      * The atomized type of the argument. Rejects an element whose schema type permits content without a typed value.
      */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+        SequenceType input = context.argumentType(0);
         if (!input.isEmptySequence()) {
             for (ItemType member : input.getItemType().getMemberTypes()) {
                 if (member instanceof ElementNodeItemType element

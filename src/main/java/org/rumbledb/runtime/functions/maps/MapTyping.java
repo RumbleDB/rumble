@@ -17,8 +17,6 @@ package org.rumbledb.runtime.functions.maps;
 
 import java.util.Optional;
 
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -34,8 +32,7 @@ final class MapTyping {
     private MapTyping() {}
 
     /** The type of the map passed as the first argument, when it is one map with known key and value types. */
-    static Optional<ItemType> typedMapArgument(FunctionCallExpression call) {
-        SequenceType type = call.getArguments().get(0).getStaticSequenceType();
+    static Optional<ItemType> typedMapArgument(SequenceType type) {
         return type.getArity() == SequenceType.Arity.One
                         && type.getItemType().isMapItemType()
                         && !type.getItemType().equals(BuiltinTypesCatalogue.mapItem)
@@ -44,8 +41,7 @@ final class MapTyping {
     }
 
     /** The type of a key argument, which is atomized. A key that is always empty makes the call fail. */
-    static Optional<ItemType> atomizedKeyType(Expression key) {
-        SequenceType type = key.getStaticSequenceType();
+    static Optional<ItemType> atomizedKeyType(SequenceType type) {
         return type.isEmptySequence()
                 ? Optional.empty()
                 : Optional.of(TypeAtomization.atomizedItemType(type.getItemType()));

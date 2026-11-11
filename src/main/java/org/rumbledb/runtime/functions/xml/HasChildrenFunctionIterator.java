@@ -17,20 +17,15 @@ package org.rumbledb.runtime.functions.xml;
 
 import java.io.Serial;
 import java.util.List;
-import java.util.Optional;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.SequenceType;
 
 public class HasChildrenFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
@@ -59,21 +54,5 @@ public class HasChildrenFunctionIterator extends AbstractAtMostOneItemRuntimePla
         return context.getVariableValues()
                 .getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0);
-    }
-
-    /**
-     * Checks the context item of the form without arguments, its implicit argument, as the form with one checks its
-     * explicit argument.
-     */
-    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        SequenceType contextType = call.getStaticContext().getContextItemStaticType();
-        if (contextType != null && !contextType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.nodeItem)) {
-            context.errors()
-                    .report(
-                            "fn:has-children() expects a node as its context item, but it is " + contextType + ".",
-                            call,
-                            contextType.getItemType().mayOverlapWith(BuiltinTypesCatalogue.nodeItem));
-        }
-        return Optional.empty();
     }
 }

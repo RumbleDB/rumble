@@ -42,7 +42,7 @@ public final class ReturnTypeRules {
      */
     public static ReturnTypeRule itemsOfFirstArgument(UnaryOperator<SequenceCardinality> cardinality) {
         return (call, context) -> {
-            SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+            SequenceType input = context.argumentType(0);
             return input.isEmptySequence()
                     ? Optional.of(input)
                     : Optional.of(new SequenceType(input.getItemType(), cardinality.apply(input.getCardinality())));
@@ -55,8 +55,7 @@ public final class ReturnTypeRules {
      */
     public static ReturnTypeRule oneDoubleForOneNumber() {
         return (call, context) -> {
-            SequenceType input =
-                    TypeAtomization.inferType(call.getArguments().get(0).getStaticSequenceType());
+            SequenceType input = TypeAtomization.inferType(context.argumentType(0));
             return input.getArity() == SequenceType.Arity.One
                     ? Optional.of(new SequenceType(BuiltinTypesCatalogue.doubleItem))
                     : Optional.empty();
@@ -66,7 +65,7 @@ public final class ReturnTypeRules {
     /** The rule of jn:project and jn:remove-keys, which change the fields of each object and return other items. */
     public static ReturnTypeRule objectsChanged() {
         return (call, context) -> {
-            SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+            SequenceType input = context.argumentType(0);
             if (input.isEmptySequence()) {
                 return Optional.of(input);
             }
@@ -80,12 +79,12 @@ public final class ReturnTypeRules {
 
     /** The rule of array:get and array:head, which return a member of their array. */
     public static ReturnTypeRule arrayMember() {
-        return (call, context) -> arrayMemberType(call);
+        return (call, context) -> arrayMemberType(context.argumentType(0));
     }
 
     /** The rule of a function that returns an array of members of its array, such as array:tail. */
     public static ReturnTypeRule arrayOfSameMembers() {
-        return (call, context) -> arrayMemberType(call).map(ReturnTypeRules::arrayOf);
+        return (call, context) -> arrayMemberType(context.argumentType(0)).map(ReturnTypeRules::arrayOf);
     }
 
     /**
@@ -93,14 +92,12 @@ public final class ReturnTypeRules {
      * array:append.
      */
     public static ReturnTypeRule arrayWithMembersOf(int argument) {
-        return (call, context) -> arrayMemberType(call)
-                .map(member -> arrayOf(member.leastCommonSupertypeWith(
-                        call.getArguments().get(argument).getStaticSequenceType())));
+        return (call, context) -> arrayMemberType(context.argumentType(0))
+                .map(member -> arrayOf(member.leastCommonSupertypeWith(context.argumentType(argument))));
     }
 
     /** The type of the members of the first argument, when it is one array. */
-    private static Optional<SequenceType> arrayMemberType(FunctionCallExpression call) {
-        SequenceType type = call.getArguments().get(0).getStaticSequenceType();
+    private static Optional<SequenceType> arrayMemberType(SequenceType type) {
         ItemType array = type.getItemType();
         return type.getArity() == SequenceType.Arity.One && (array.isArrayItemType() || array.isXQueryArrayItemType())
                 ? Optional.of(LookupTyping.inferLookupCallType(array))

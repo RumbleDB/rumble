@@ -149,7 +149,7 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
      * first, so the signature's xs:numeric? applies.
      */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+        SequenceType input = context.argumentType(0);
         return input.isEmptySequence() || input.getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)
                 ? Optional.of(input)
                 : Optional.empty();

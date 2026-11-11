@@ -95,13 +95,12 @@ public class MapPutFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
     /** Adds the key's type and the value's type to those of the map. */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        Optional<ItemType> map = MapTyping.typedMapArgument(call);
-        Optional<ItemType> keyType =
-                MapTyping.atomizedKeyType(call.getArguments().get(1));
+        Optional<ItemType> map = MapTyping.typedMapArgument(context.argumentType(0));
+        Optional<ItemType> keyType = MapTyping.atomizedKeyType(context.argumentType(1));
         if (map.isEmpty() || keyType.isEmpty()) {
             return Optional.empty();
         }
-        SequenceType valueType = call.getArguments().get(2).getStaticSequenceType();
+        SequenceType valueType = context.argumentType(2);
         return Optional.of(MapTyping.mapType(
                 ItemTypeFactory.createInferredUnionType(List.of(map.get().getMapKeyItemType(), keyType.get())),
                 map.get().getMapValueSequenceType().leastCommonSupertypeWith(valueType)));

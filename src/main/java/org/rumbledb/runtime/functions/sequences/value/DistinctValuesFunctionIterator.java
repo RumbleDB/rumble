@@ -185,8 +185,7 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
 
     /** The atomized values: equal values are merged, but a value remains. */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        SequenceType values =
-                TypeAtomization.inferType(call.getArguments().get(0).getStaticSequenceType());
+        SequenceType values = TypeAtomization.inferType(context.argumentType(0));
         return Optional.of(
                 new SequenceType(values.getItemType(), values.getCardinality().grouped()));
     }

@@ -186,8 +186,8 @@ public class SumFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
      */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
         SequenceType inputType = AggregateTyping.validateStrictInput(call, context, "fn:sum");
-        SequenceType zeroType = call.getArguments().size() > 1
-                ? call.getArguments().get(1).getStaticSequenceType()
+        SequenceType zeroType = context.argumentTypes().size() > 1
+                ? context.argumentType(1)
                 : new SequenceType(BuiltinTypesCatalogue.integerItem);
         if (!zeroType.isEmptySequence() && TypeAtomization.containsNodeOrArray(zeroType.getItemType())) {
             zeroType = TypeAtomization.inferType(zeroType);

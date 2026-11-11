@@ -44,7 +44,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
@@ -643,39 +642,57 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         || functionName.getNamespace().equals(Name.FN_NS));
     }
 
-    /** The return type of a call of a builtin function, from its rule, if it is more precise than the signature's. */
-    private Optional<SequenceType> inferSpecificReturnType(FunctionCallExpression call, StaticContext staticContext) {
-        BuiltinFunction function =
-                BuiltinFunctionCatalogue.getBuiltinFunction(call.getFunctionIdentifier(), call.getStaticContext());
-        if (function == null) {
-            return Optional.empty();
+    /** Checks an input using the same function-conversion rules for explicit and implicit arguments. */
+    private void checkFunctionInput(
+            FunctionCallExpression call, String input, SequenceType actual, SequenceType expected) {
+        if (!StaticTypeErrors.isUnknown(actual) && !isFunctionArgumentCompatible(actual, expected)) {
+            this.errors.report(
+                    TypeErrorMessages.argumentMismatch(call.getFunctionName(), input, expected, actual),
+                    call,
+                    mayConvertTo(actual, expected));
         }
-        return function.getReturnTypeRule()
-                .infer(
+    }
+
+    /** Checks the context item that replaces an omitted final argument, and returns its type after conversion. */
+    private SequenceType checkContextArgument(FunctionCallExpression call, BuiltinFunction.ContextArgument input) {
+        SequenceType type = call.getStaticContext().getContextItemStaticType();
+        // No known focus type does not prove absence. Leave the presence check to the runtime.
+        if (type == null) {
+            return input.conversion() == BuiltinFunction.ContextConversion.STRING_VALUE
+                    ? SequenceType.createSequenceType("string")
+                    : new SequenceType(BuiltinTypesCatalogue.item);
+        }
+        if (StaticTypeErrors.isUnknown(type)) {
+            return type;
+        }
+        if (input.conversion() == BuiltinFunction.ContextConversion.STRING_VALUE) {
+            // fn:string(.) takes the string value, not the atomized value; maps and arrays are function items too.
+            boolean mayBeFunction = type.getItemType().getMemberTypes().stream()
+                    // xs:error has no values, but is a subtype of every item type.
+                    .filter(member -> !member.equals(BuiltinTypesCatalogue.errorItem))
+                    .anyMatch(member -> member.isSubtypeOf(BuiltinTypesCatalogue.anyFunctionItem));
+            if (mayBeFunction) {
+                this.errors.report(
+                        TypeErrorMessages.noStringValue(call.getFunctionName(), type),
                         call,
-                        new ReturnTypeContext(
-                                this.errors, this.rumbleRuntimeConfiguration, this.resourceResolver, staticContext));
+                        !type.getItemType().isSubtypeOf(BuiltinTypesCatalogue.anyFunctionItem));
+            }
+            type = SequenceType.createSequenceType("string");
+        }
+        checkFunctionInput(call, "the context item", type, input.parameterType());
+        return type;
     }
 
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        if (BuiltinFunctionCatalogue.exists(expression.getFunctionIdentifier(), expression.getStaticContext())) {
-            if (expression.isPartialApplication()) {
-                // This should never be reached because partial application on built-in functions should have been
-                // rewritten before
-                throw new UnsupportedFeatureException(
-                        "Partial application on built-in functions are not supported.", expression.getMetadata());
-            }
-            BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
-                    expression.getFunctionIdentifier(), expression.getStaticContext());
-            if (builtinFunction == null) {
-                throw new UnknownFunctionCallException(
-                        expression.getFunctionIdentifier().getName(),
-                        expression.getFunctionIdentifier().getArity(),
-                        expression.getMetadata());
-            }
+        BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(
+                expression.getFunctionIdentifier(), expression.getStaticContext());
+        if (builtinFunction != null && expression.isPartialApplication()) {
+            // Builtin partial applications must have been rewritten before inference.
+            throw new UnsupportedFeatureException(
+                    "Partial application on built-in functions are not supported.", expression.getMetadata());
         }
         FunctionSignature signature;
         try {
@@ -686,51 +703,74 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression);
             return argument;
         }
-        List<Expression> parameterExpressions = expression.getArguments();
-        List<SequenceType> parameterTypes = signature.getParameterTypes();
-        List<SequenceType> partialParams = new ArrayList<>();
-        int paramsLength = parameterExpressions.size();
-
-        // check arguments are of correct type
-        for (int i = 0; i < paramsLength; ++i) {
-            if (parameterExpressions.get(i) != null) {
-                SequenceType actualType = parameterExpressions.get(i).getStaticSequenceType();
-                if (actualType == null) {
-                    throw new OurBadException("No static type inferred for expression " + parameterExpressions.get(i));
-                }
-                SequenceType expectedType = parameterTypes.get(i);
-                if (!isFunctionArgumentCompatible(actualType, expectedType)) {
-                    this.errors.report(
-                            TypeErrorMessages.argumentMismatch(
-                                    expression.getFunctionName(), "argument " + (i + 1), expectedType, actualType),
-                            expression,
-                            mayConvertTo(actualType, expectedType));
-                }
-            } else {
-                partialParams.add(parameterTypes.get(i));
-            }
-        }
-
+        List<SequenceType> inputTypes = checkFunctionArguments(expression, signature);
         if (expression.isPartialApplication()) {
-            FunctionSignature partialSignature =
-                    new FunctionSignature(partialParams, signature.getReturnType(), expression.isUpdating());
-            expression.setStaticSequenceType(
-                    new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature)));
-        } else {
-            Optional<SequenceType> specificType = inferSpecificReturnType(expression, argument);
-            if (specificType.isPresent()) {
-                expression.setStaticSequenceType(specificType.get());
-            } else {
-                // we did not annotate a specific function, therefore we use default return type
-                SequenceType returnType = signature.getReturnType();
-                if (returnType == null) {
-                    returnType = SequenceType.createSequenceType("item*");
-                }
-                expression.setStaticSequenceType(returnType);
-            }
+            expression.setStaticSequenceType(inferPartialApplicationType(expression, signature));
+            return argument;
+        }
+        if (builtinFunction != null && builtinFunction.getContextArgument() != null) {
+            inputTypes.add(checkContextArgument(expression, builtinFunction.getContextArgument()));
         }
 
+        Optional<SequenceType> returnType = inferBuiltinReturnType(expression, builtinFunction, inputTypes, argument);
+        expression.setStaticSequenceType(returnType.orElseGet(() -> {
+            SequenceType declaredReturnType = signature.getReturnType();
+            return declaredReturnType == null ? SequenceType.createSequenceType("item*") : declaredReturnType;
+        }));
         return argument;
+    }
+
+    /** Checks supplied arguments and collects their types, skipping partial-application placeholders. */
+    private List<SequenceType> checkFunctionArguments(FunctionCallExpression call, FunctionSignature signature) {
+        List<SequenceType> argumentTypes = new ArrayList<>();
+        List<Expression> arguments = call.getArguments();
+        for (int i = 0; i < arguments.size(); ++i) {
+            Expression argument = arguments.get(i);
+            if (argument == null) {
+                continue;
+            }
+            SequenceType actualType = typeOf(argument, call);
+            checkFunctionInput(
+                    call,
+                    "argument " + (i + 1),
+                    actualType,
+                    signature.getParameterTypes().get(i));
+            argumentTypes.add(actualType);
+        }
+        return argumentTypes;
+    }
+
+    /** The resulting function takes the parameters left as placeholders. */
+    private SequenceType inferPartialApplicationType(FunctionCallExpression call, FunctionSignature signature) {
+        List<SequenceType> parameters = new ArrayList<>();
+        for (int i = 0; i < call.getArguments().size(); ++i) {
+            if (call.getArguments().get(i) == null) {
+                parameters.add(signature.getParameterTypes().get(i));
+            }
+        }
+        FunctionSignature partialSignature =
+                new FunctionSignature(parameters, signature.getReturnType(), call.isUpdating());
+        return new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
+    }
+
+    /** Applies a builtin's return rule to the types of its inputs, the context item included. */
+    private Optional<SequenceType> inferBuiltinReturnType(
+            FunctionCallExpression call,
+            BuiltinFunction function,
+            List<SequenceType> inputTypes,
+            StaticContext staticContext) {
+        if (function == null) {
+            return Optional.empty();
+        }
+        return function.getReturnTypeRule()
+                .infer(
+                        call,
+                        new ReturnTypeContext(
+                                this.errors,
+                                this.rumbleRuntimeConfiguration,
+                                this.resourceResolver,
+                                staticContext,
+                                inputTypes));
     }
 
     /**

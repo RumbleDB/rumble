@@ -62,6 +62,16 @@ public final class TypeErrorMessages {
                 ErrorCode.UnexpectedTypeErrorCode);
     }
 
+    /** A context item that may be a map, array or function item, where its string value is taken. */
+    public static Message noStringValue(Name function, SequenceType contextType) {
+        return new Message(
+                function
+                        + " takes the string value of the context item, but it is "
+                        + contextType
+                        + ", and a map, array or function item has none.",
+                ErrorCode.FunctionItemStringValueErrorCode);
+    }
+
     /** An argument that does not match the parameter type of the function it is passed to. */
     public static Message argumentMismatch(Name function, String argument, SequenceType expected, SequenceType actual) {
         return new Message(

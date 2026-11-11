@@ -78,7 +78,6 @@ public class ArrayMembersFunctionIterator extends ItemRuntimePlan
 
     /** The members of the arrays of the argument. */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        return Optional.of(
-                LookupTyping.inferArrayMembersType(call.getArguments().get(0).getStaticSequenceType()));
+        return Optional.of(LookupTyping.inferArrayMembersType(context.argumentType(0)));
     }
 }

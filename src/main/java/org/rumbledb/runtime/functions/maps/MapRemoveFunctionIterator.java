@@ -101,6 +101,6 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
     /** The type of a map whose key and value types are known. */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
-        return MapTyping.typedMapArgument(call).map(SequenceType::new);
+        return MapTyping.typedMapArgument(context.argumentType(0)).map(SequenceType::new);
     }
 }

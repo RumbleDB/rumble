@@ -35,7 +35,8 @@ public interface ReturnTypeRule {
      * Infers the return type of a call whose arguments are typed, or returns empty to keep the signature's.
      *
      * @param call a call of the function the rule is attached to, with as many arguments as its signature
-     * @param context what the rule may need besides the call
+     * @param context the effective argument types (including implicit context inputs) and typing services; use
+     *        these types rather than indexing the source arguments when a rule also serves a context overload
      */
     Optional<SequenceType> infer(FunctionCallExpression call, ReturnTypeContext context);
 }

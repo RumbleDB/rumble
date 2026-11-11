@@ -15,9 +15,12 @@
  */
 package org.rumbledb.compiler.typing;
 
+import java.util.List;
+
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.resources.ResourceResolver;
+import org.rumbledb.types.SequenceType;
 
 /**
  * What a {@link ReturnTypeRule} may need besides the call.
@@ -26,9 +29,20 @@ import org.rumbledb.resources.ResourceResolver;
  * @param configuration the configuration, to read resources with
  * @param resourceResolver the resolver of resources, such as documents
  * @param staticContext the static context of the call
+ * @param argumentTypes supplied argument types, including the context input after its declared conversion when a
+ *        parameter is omitted
  */
 public record ReturnTypeContext(
         StaticTypeErrors errors,
         RumbleConfiguration configuration,
         ResourceResolver resourceResolver,
-        StaticContext staticContext) {}
+        StaticContext staticContext,
+        List<SequenceType> argumentTypes) {
+    public ReturnTypeContext {
+        argumentTypes = List.copyOf(argumentTypes);
+    }
+
+    public SequenceType argumentType(int index) {
+        return this.argumentTypes.get(index);
+    }
+}
