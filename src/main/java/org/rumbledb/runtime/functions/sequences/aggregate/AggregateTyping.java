@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 
 import org.rumbledb.compiler.typing.ComparisonTyping;
 import org.rumbledb.compiler.typing.ReturnTypeContext;
+import org.rumbledb.compiler.typing.TypeNotation;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -58,7 +59,7 @@ final class AggregateTyping {
                     .report(
                             functionName
                                     + " expects numbers, or durations of one kind, but its input is "
-                                    + inputType
+                                    + TypeNotation.shortened(inputType)
                                     + ".",
                             ErrorCode.InvalidArgumentType,
                             call,
@@ -85,7 +86,7 @@ final class AggregateTyping {
                     .report(
                             functionName
                                     + " expects values that can be compared with each other, but its input is "
-                                    + inputType
+                                    + TypeNotation.shortened(inputType)
                                     + ".",
                             ErrorCode.InvalidArgumentType,
                             call,

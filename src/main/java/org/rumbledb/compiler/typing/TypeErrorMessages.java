@@ -35,7 +35,7 @@ public final class TypeErrorMessages {
     /** An operand that may not be atomizable, such as a map, where atomic values are expected. */
     public static Message notAtomizable(String expecter, String operand, SequenceType type) {
         return new Message(
-                expecter + " expects atomizable values, but " + operand + " is " + type + ".",
+                expecter + " expects atomizable values, but " + operand + " is " + TypeNotation.shortened(type) + ".",
                 AtomizedOperands.nonAtomizableErrorCode(type.getItemType()));
     }
 
@@ -56,7 +56,7 @@ public final class TypeErrorMessages {
         return new Message(
                 operand
                         + " is "
-                        + type
+                        + TypeNotation.shortened(type)
                         + (type.mayHaveEffectiveBooleanValue() ? ", which may have" : ", which has")
                         + " no effective boolean value.",
                 ErrorCode.UnexpectedTypeErrorCode);
@@ -67,7 +67,7 @@ public final class TypeErrorMessages {
         return new Message(
                 function
                         + " takes the string value of the context item, but it is "
-                        + contextType
+                        + TypeNotation.shortened(contextType)
                         + ", and a map, array or function item has none.",
                 ErrorCode.FunctionItemStringValueErrorCode);
     }
@@ -75,21 +75,39 @@ public final class TypeErrorMessages {
     /** An argument that does not match the parameter type of the function it is passed to. */
     public static Message argumentMismatch(Name function, String argument, SequenceType expected, SequenceType actual) {
         return new Message(
-                function + " expects " + expected + " for " + argument + ", but it is " + actual + ".",
+                function
+                        + " expects "
+                        + TypeNotation.shortened(expected)
+                        + " for "
+                        + argument
+                        + ", but it is "
+                        + TypeNotation.shortened(actual)
+                        + ".",
                 conversionErrorCode(actual, expected));
     }
 
     /** A function result that does not match the declared return type. */
     public static Message returnMismatch(Name function, SequenceType declared, SequenceType actual) {
         return new Message(
-                function + " declares the return type " + declared + ", but returns " + actual + ".",
+                function
+                        + " declares the return type "
+                        + TypeNotation.shortened(declared)
+                        + ", but returns "
+                        + TypeNotation.shortened(actual)
+                        + ".",
                 conversionErrorCode(actual, declared));
     }
 
     /** A value that does not match the declared type of the variable it is bound or assigned to. */
     public static Message declaredMismatch(Name variable, SequenceType declared, SequenceType actual) {
         return new Message(
-                "$" + variable + " is declared as " + declared + ", but its value is " + actual + ".",
+                "$"
+                        + variable
+                        + " is declared as "
+                        + TypeNotation.shortened(declared)
+                        + ", but its value is "
+                        + TypeNotation.shortened(actual)
+                        + ".",
                 ErrorCode.UnexpectedTypeErrorCode);
     }
 

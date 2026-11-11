@@ -16,6 +16,7 @@
 package org.rumbledb.compiler.typing;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -28,6 +29,9 @@ import org.rumbledb.types.TypeAtomization;
 /** Typing rules of JSONiq object and array lookups, array unboxing and XQuery ? lookups. */
 public final class LookupTyping {
 
+    /** How many keys of an object type an error for a missing key lists before summarizing the rest. */
+    private static final int MAX_LISTED_KEYS = 10;
+
     private final StaticTypeErrors errors;
 
     public LookupTyping(StaticTypeErrors errors) {
@@ -38,7 +42,9 @@ public final class LookupTyping {
         SequenceType integer = SequenceType.createSequenceType("integer");
         if (!lookupType.isSubtypeOf(integer)) {
             this.errors.reportMismatch(
-                    "An array lookup expects an xs:integer position, but its key is " + lookupType + ".",
+                    "An array lookup expects an xs:integer position, but its key is "
+                            + TypeNotation.shortened(lookupType)
+                            + ".",
                     lookupType,
                     integer,
                     node);
@@ -63,7 +69,10 @@ public final class LookupTyping {
         SequenceType atomic = SequenceType.createSequenceType("anyAtomicType");
         if (!lookupType.isSubtypeOf(atomic)) {
             this.errors.reportMismatch(
-                    "A lookup expects an atomic key, but its key is " + lookupType + ".", lookupType, atomic, node);
+                    "A lookup expects an atomic key, but its key is " + TypeNotation.shortened(lookupType) + ".",
+                    lookupType,
+                    atomic,
+                    node);
         }
 
         boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
@@ -71,11 +80,67 @@ public final class LookupTyping {
         rejectInput(mainType, overlapsObject || overlapsMap, "an object or a map", node);
 
         SequenceType result = inferObjectSelectionType(mainType.getItemType(), mainType.getArity(), key);
-        this.errors.rejectInferredEmpty(
-                result,
-                node,
-                "its input, of type " + mainType + ", never has the key" + (key == null ? "" : " \"" + key + "\""));
+        if (result.isEmptySequence()) {
+            this.errors.reportInferredEmpty(missingKeyMessage(mainType, key), node);
+        }
         return result;
+    }
+
+    /** Explains a lookup that selects nothing, listing the keys that an object type has instead. */
+    private static String missingKeyMessage(SequenceType inputType, String key) {
+        ItemType itemType = inputType.getItemType();
+        List<String> keys = key != null && itemType.isObjectItemType()
+                ? itemType.getObjectContentFacet().stream()
+                        .map(FieldDescriptor::getName)
+                        .toList()
+                : List.of();
+        if (keys.isEmpty()) {
+            return TypeErrorMessages.inferredEmpty("its input, of type "
+                            + TypeNotation.shortened(inputType)
+                            + ", never has the key"
+                            + (key == null ? "" : " \"" + key + "\""))
+                    .text();
+        }
+        String closest = closestKey(key, keys);
+        return TypeErrorMessages.inferredEmpty("its input never has the key \"" + key + "\"")
+                        .text()
+                + (closest == null ? "" : " Did you mean \"" + closest + "\"?")
+                + (keys.size() == 1 ? " It has the key " : " It has the keys ")
+                + keys.stream().limit(MAX_LISTED_KEYS).collect(Collectors.joining(", "))
+                + (keys.size() > MAX_LISTED_KEYS ? ", and " + (keys.size() - MAX_LISTED_KEYS) + " more." : ".");
+    }
+
+    /** The key that a misspelled one most likely stands for, or null if none is close to it. */
+    private static String closestKey(String key, List<String> keys) {
+        String closest = null;
+        // A key that differs in more than a third of its characters is another word.
+        int closestDistance = Math.max(1, key.length() / 3) + 1;
+        for (String candidate : keys) {
+            int distance = editDistance(key.toLowerCase(), candidate.toLowerCase());
+            if (distance < closestDistance) {
+                closest = candidate;
+                closestDistance = distance;
+            }
+        }
+        return closest;
+    }
+
+    /** How many characters have to be inserted, deleted or replaced to turn one string into the other. */
+    private static int editDistance(String first, String second) {
+        int[] distances = new int[second.length() + 1];
+        for (int j = 0; j <= second.length(); j++) {
+            distances[j] = j;
+        }
+        for (int i = 1; i <= first.length(); i++) {
+            int diagonal = distances[0];
+            distances[0] = i;
+            for (int j = 1; j <= second.length(); j++) {
+                int replaced = diagonal + (first.charAt(i - 1) == second.charAt(j - 1) ? 0 : 1);
+                diagonal = distances[j];
+                distances[j] = Math.min(replaced, Math.min(distances[j], distances[j - 1]) + 1);
+            }
+        }
+        return distances[second.length()];
     }
 
     /** The items that an XQuery lookup can select from. */
@@ -160,7 +225,8 @@ public final class LookupTyping {
             return true;
         }
         if (!selectable) {
-            this.errors.reportInferredEmpty(node, "its input, of type " + inputType + ", is never " + kinds);
+            this.errors.reportInferredEmpty(
+                    node, "its input, of type " + TypeNotation.shortened(inputType) + ", is never " + kinds);
             return true;
         }
         return false;

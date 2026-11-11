@@ -36,6 +36,7 @@ import org.rumbledb.compiler.typing.PathStepTyping;
 import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.compiler.typing.StaticTypeErrors;
 import org.rumbledb.compiler.typing.TypeErrorMessages;
+import org.rumbledb.compiler.typing.TypeNotation;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
@@ -402,7 +403,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             SequenceType objects = SequenceType.createSequenceType("object*");
             if (!childSequenceType.isSubtypeOf(objects)) {
                 this.errors.reportMismatch(
-                        "A merged object constructor expects objects, but its content is " + childSequenceType + ".",
+                        "A merged object constructor expects objects, but its content is "
+                                + TypeNotation.shortened(childSequenceType)
+                                + ".",
                         childSequenceType,
                         objects,
                         expression);
@@ -415,7 +418,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 if (!keySequenceType.isSubtypeOf(string) && !keySequenceType.isSubtypeOf(anyURI)) {
                     this.errors.report(
                             "An object key must be one xs:string or xs:anyURI, but this one is "
-                                    + keySequenceType
+                                    + TypeNotation.shortened(keySequenceType)
                                     + ".",
                             expression,
                             keySequenceType.mayMatch(string) || keySequenceType.mayMatch(anyURI));
@@ -859,7 +862,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (!inferred.equals(expected)) {
             this.errors.reportAssertion(
                     new IsStaticallyUnexpectedTypeException(
-                            "expected static type is " + expected + " instead " + inferred + " was inferred",
+                            "expected static type is "
+                                    + TypeNotation.shortened(expected)
+                                    + " instead "
+                                    + TypeNotation.shortened(inferred)
+                                    + " was inferred",
                             expression.getMetadata()),
                     expression);
         }
@@ -1163,7 +1170,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private void checkNodeSetOperand(SequenceType type, String operand, Node node) {
         if (!type.isEmptySequence() && !type.getItemType().isNodeItemType()) {
             this.errors.reportMismatch(
-                    "A node set operator expects nodes, but " + operand + " is " + type + ".",
+                    "A node set operator expects nodes, but " + operand + " is " + TypeNotation.shortened(type) + ".",
                     type,
                     SequenceType.createSequenceType("node()*"),
                     node);
@@ -1212,7 +1219,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ItemType itemType = type.getItemType();
         if (itemType.isFunctionItemType()) {
             this.errors.report(
-                    "A switch expects atomizable values, but one of its operands is " + type + ".",
+                    "A switch expects atomizable values, but one of its operands is "
+                            + TypeNotation.shortened(type)
+                            + ".",
                     ErrorCode.UnexpectedFunctionItem,
                     switchNode);
         }
@@ -1331,7 +1340,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType intOpt = new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.OneOrZero);
         if (!leftType.isSubtypeOf(intOpt) || !rightType.isSubtypeOf(intOpt)) {
             this.errors.report(
-                    "'to' expects operands of type xs:integer?, but they are " + leftType + " and " + rightType + ".",
+                    "'to' expects operands of type xs:integer?, but they are "
+                            + TypeNotation.shortened(leftType)
+                            + " and "
+                            + TypeNotation.shortened(rightType)
+                            + ".",
                     expression,
                     leftType.mayMatch(intOpt) && rightType.mayMatch(intOpt));
         }
@@ -1552,7 +1565,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         if (!type.isFunctionItemType()) {
             this.errors.report(
-                    "Only a function, a map or an array can be called, but this is " + type + ".",
+                    "Only a function, a map or an array can be called, but this is "
+                            + TypeNotation.shortened(type)
+                            + ".",
                     expression,
                     type.mayOverlapWith(BuiltinTypesCatalogue.anyFunctionItem));
             return SequenceType.createSequenceType("item*");
@@ -1603,7 +1618,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         mayConvertTo(actualParameterTypes.get(argumentIndex), formalParameterTypes.get(argumentIndex));
             }
             this.errors.report(
-                    "The arguments of this call do not match the parameters of " + type + ".", expression, mayPass);
+                    "The arguments of this call do not match the parameters of " + TypeNotation.shortened(type) + ".",
+                    expression,
+                    mayPass);
         }
 
         return signature.getReturnType();
@@ -1852,7 +1869,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     "A group by clause expects an atomic declared type, but $"
                             + variableName
                             + " is declared as "
-                            + declaredType
+                            + TypeNotation.shortened(declaredType)
                             + ".",
                     clause);
         }
@@ -1871,9 +1888,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     "$"
                             + variableName
                             + " is declared as "
-                            + declaredType
+                            + TypeNotation.shortened(declaredType)
                             + ", but its key is "
-                            + atomizedKeyType
+                            + TypeNotation.shortened(atomizedKeyType)
                             + ".",
                     clause,
                     atomizedKeyType.mayMatch(declaredType));

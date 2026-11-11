@@ -17,6 +17,8 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
@@ -349,6 +351,74 @@ class StaticTypeErrorsTest {
                 errors("declare function local:f($x as xs:integer+) {\n" + "  (($x + \"a\") * 2,\n 3 + \"b\")\n}; 1");
         Assertions.assertEquals(List.of(2, 3), lines(errors));
         Assertions.assertEquals(List.of(true, true), certainties(errors));
+    }
+
+    @ParameterizedTest
+    @CsvSource(
+            delimiter = '|',
+            value = {
+                "nme | Did you mean \"name\"? It has the keys name, url.",
+                "NAME | Did you mean \"name\"? It has the keys name, url.",
+                "license | It has the keys name, url."
+            })
+    void listsTheKeysOfAnObjectThatLacksTheKeyOfALookup(String key, String keys) {
+        Assertions.assertEquals(
+                "This expression always returns the empty sequence, because its input never has the key \""
+                        + key
+                        + "\". "
+                        + keys,
+                errors("declare type local:t as { \"name\": \"string\", \"url\": \"string\" };\n"
+                                + "declare function local:f($x as local:t) { $x."
+                                + key
+                                + " };\n1")
+                        .get(0)
+                        .getJSONiqErrorMessage());
+    }
+
+    @Test
+    void summarizesTheKeysOfAnObjectWithManyKeys() {
+        String fields = IntStream.rangeClosed(1, 12)
+                .mapToObj(index -> "\"k" + index + "\": \"integer\"")
+                .collect(Collectors.joining(", "));
+        Assertions.assertEquals(
+                "This expression always returns the empty sequence, because its input never has the key \"other\". "
+                        + "It has the keys k1, k2, k3, k4, k5, k6, k7, k8, k9, k10, and 2 more.",
+                errors("declare type local:t as { "
+                                + fields
+                                + " };\n"
+                                + "declare function local:f($x as local:t) { $x.other };\n1")
+                        .get(0)
+                        .getJSONiqErrorMessage());
+    }
+
+    @Test
+    void hidesWhatIsNestedInTheFieldsOfALongType() {
+        String user = "{\"avatar_url\": \"a\", \"events_url\": \"b\", \"followers_url\": \"c\"}";
+        Assertions.assertEquals(
+                "local:f expects xs:string for this argument, but it is "
+                        + "{ id: xs:integer, actor: { … }, reviewers: [{ … }], repo: { name: xs:string } }.",
+                errors("declare function local:f($x as string) { $x }; local:f({\"id\": 1, \"actor\": "
+                                + user
+                                + ", \"reviewers\": ["
+                                + user
+                                + "], \"repo\": {\"name\": \"r\"}})")
+                        .get(0)
+                        .getJSONiqErrorMessage());
+    }
+
+    @Test
+    void listsOnlyTheFirstFieldsOfATypeWithVeryManyFields() {
+        String fields = IntStream.rangeClosed(1, 100)
+                .mapToObj(index -> "\"field_" + index + "\": " + index)
+                .collect(Collectors.joining(", "));
+        String message = errors("declare function local:f($x as string) { $x }; local:f({" + fields + "})")
+                .get(0)
+                .getJSONiqErrorMessage();
+        Assertions.assertTrue(
+                message.startsWith(
+                        "local:f expects xs:string for this argument, but it is { field_1: xs:integer, field_2: xs:integer, "),
+                message);
+        Assertions.assertTrue(message.endsWith(", field_20: xs:integer, … 80 more fields }."), message);
     }
 
     private static List<RumbleException> errors(String query) {
