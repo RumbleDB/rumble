@@ -278,6 +278,27 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
     @Override
     public FlworDataFrame createNativeDataFrame(DynamicContext context) {
+        return recordBindingTypes(createClauseDataFrame(context));
+    }
+
+    private FlworDataFrame recordBindingTypes(FlworDataFrame result) {
+        SequenceType assignmentType =
+                this.assignmentIterator.getRuntimeStaticContext().getStaticType();
+        if (result.hasVariableName(this.variableName)
+                && assignmentType != null
+                && result.getVariableType(this.variableName).equals(SequenceType.createSequenceType("item*"))) {
+            result.setVariableType(
+                    this.variableName,
+                    new SequenceType(assignmentType.getItemType(), this.allowingEmpty ? Arity.OneOrZero : Arity.One));
+        }
+        if (this.positionalVariableName != null && result.hasVariableName(this.positionalVariableName)) {
+            result.setVariableType(
+                    this.positionalVariableName, new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One));
+        }
+        return result;
+    }
+
+    private FlworDataFrame createClauseDataFrame(DynamicContext context) {
         // if it's a starting clause
         if (this.child == null || this.evaluationDepthLimit == 0) {
             return getDataFrameStartingClause(context, this.outputTupleProjection);
@@ -325,10 +346,10 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             startingClauseDependencies.put(
                     this.positionalVariableName, this.outputTupleProjection.get(this.positionalVariableName));
         }
-        expressionDF =
-                getDataFrameStartingClause(context, startingClauseDependencies).getDataFrame();
-
-        Dataset<Row> inputDF = this.child.getDataFrame(context).getDataFrame();
+        FlworDataFrame expression = getDataFrameStartingClause(context, startingClauseDependencies);
+        expressionDF = expression.getDataFrame();
+        FlworDataFrame input = (FlworDataFrame) this.child.getDataFrame(context);
+        Dataset<Row> inputDF = input.getDataFrame();
 
         // Now we prepare the two views that we want to compute the Cartesian product of.
         String inputDFTableName = FlworDataFrameUtils.createTempView(inputDF);
@@ -357,9 +378,14 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
 
         // And return the Cartesian product with the desired projection.
-        return new FlworDataFrame(inputDF.sparkSession()
-                .sql(String.format(
-                        "select %s from %s, %s", projectionVariables, inputDFTableName, expressionDFTableName)));
+        return input.withDataFrame(
+                        inputDF.sparkSession()
+                                .sql(String.format(
+                                        "select %s from %s, %s",
+                                        projectionVariables, inputDFTableName, expressionDFTableName)),
+                        this.variableName,
+                        this.positionalVariableName)
+                .inheritTypes(expression);
     }
 
     /**
@@ -448,10 +474,11 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             variablesInRightInputTuple.add(Name.CONTEXT_COUNT);
         }
 
+        FlworDataFrame input = (FlworDataFrame) this.child.getDataFrame(context);
         return JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
                 context,
-                this.child.getDataFrame(context).getDataFrame(),
-                expressionDF,
+                input,
+                new FlworDataFrame(expressionDF),
                 this.outputTupleProjection,
                 (this.child == null || this.evaluationDepthLimit == 0)
                         ? Collections.emptyList()
@@ -544,7 +571,8 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     private FlworDataFrame getDataFrameInParallel(DynamicContext context) {
 
         // the expression is locally evaluated
-        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
+        FlworDataFrame input = (FlworDataFrame) this.child.getDataFrame(context);
+        Dataset<Row> df = input.getDataFrame();
         StructType inputSchema = df.schema();
         List<Name> variableNamesToExclude = new ArrayList<>();
         variableNamesToExclude.add(this.variableName);
@@ -567,7 +595,8 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                     context);
         }
         if (nativeQueryResult != null) {
-            return nativeQueryResult;
+            return input.withDataFrame(
+                    nativeQueryResult.getDataFrame(), this.variableName, this.positionalVariableName);
         }
 
         List<FlworDataFrameColumn> UDFcolumns;
@@ -638,7 +667,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                                 this.variableName));
             }
         }
-        return new FlworDataFrame(df);
+        return input.withDataFrame(df, this.variableName, this.positionalVariableName);
     }
 
     private StructType generateSchema(FlworTuple inputTuple) {
@@ -689,7 +718,10 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> outputDependencies) {
         Dataset<Row> df = null;
-        SequenceType sequenceType = null;
+        SequenceType staticType = iterator.getRuntimeStaticContext().getStaticType();
+        SequenceType sequenceType = staticType == null
+                ? null
+                : new SequenceType(staticType.getItemType(), allowingEmpty ? Arity.OneOrZero : Arity.One);
         if (iterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
             HomogeneousItemDataFrame rows = ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(iterator, context);
             if (allowingEmpty) {
@@ -741,6 +773,10 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         if (!allowingEmpty) {
             FlworDataFrame result = new FlworDataFrame(dfWithIndex);
+            if (result.hasVariableName(positionalVariableName)) {
+                result.setVariableType(
+                        positionalVariableName, new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One));
+            }
             if (sequenceType != null && outputDependencies.containsKey(variableName)) {
                 result.setVariableType(variableName, sequenceType);
             }
@@ -765,6 +801,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                         positionalVariableName,
                         inputWithIndex));
         FlworDataFrame result = new FlworDataFrame(dfWithIndex);
+        result.setVariableType(positionalVariableName, new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One));
         if (sequenceType != null) {
             result.setVariableType(variableName, sequenceType);
         }

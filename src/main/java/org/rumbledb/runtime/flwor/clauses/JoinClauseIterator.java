@@ -56,6 +56,7 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 
 @Log4j2
@@ -106,6 +107,48 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
      * @return the joined tuple.
      */
     public static FlworDataFrame joinInputTupleWithSequenceOnPredicate(
+            DynamicContext context,
+            FlworDataFrame left,
+            FlworDataFrame right,
+            Map<Name, DynamicContext.VariableDependency> outputDependencies,
+            List<Name> leftVariables,
+            List<Name> rightVariables,
+            ItemRuntimePlan predicate,
+            boolean leftOuter,
+            Name renamedRightVariable,
+            ExceptionMetadata metadata,
+            RuntimeStaticContext staticContext) {
+        FlworDataFrame result = joinDataFrames(
+                        context,
+                        left.getDataFrame(),
+                        right.getDataFrame(),
+                        outputDependencies,
+                        leftVariables,
+                        rightVariables,
+                        predicate,
+                        leftOuter,
+                        renamedRightVariable,
+                        metadata,
+                        staticContext)
+                .inheritTypes(left)
+                .inheritTypes(right);
+        for (Name variable : right.getVariableNames()) {
+            Name output = renamedRightVariable != null && variable.equals(Name.CONTEXT_ITEM)
+                    ? renamedRightVariable
+                    : variable;
+            if (result.hasVariableName(output)) {
+                SequenceType type = right.getVariableType(variable);
+                if (leftOuter) {
+                    type = new SequenceType(
+                            type.getItemType(), type.getCardinality().union(SequenceCardinality.EMPTY));
+                }
+                result.setVariableType(output, type);
+            }
+        }
+        return result;
+    }
+
+    private static FlworDataFrame joinDataFrames(
             DynamicContext context,
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,

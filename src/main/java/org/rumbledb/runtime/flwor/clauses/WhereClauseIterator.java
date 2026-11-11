@@ -318,8 +318,8 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
 
             FlworDataFrame result = JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
                     context,
-                    leftTuples.getDataFrame(),
-                    rightTuples.getDataFrame(),
+                    leftTuples,
+                    rightTuples,
                     this.outputTupleProjection,
                     new ArrayList<Name>(leftVariables),
                     new ArrayList<Name>(rightVariables),
@@ -416,7 +416,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
                         FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
                         nativeQuery.getView(),
                         nativeQuery.getResultingQuery()));
-        return new FlworDataFrame(dataFrame
+        return dataFrame.withDataFrame(dataFrame
                 .getDataFrame()
                 .sparkSession()
                 .sql(String.format(

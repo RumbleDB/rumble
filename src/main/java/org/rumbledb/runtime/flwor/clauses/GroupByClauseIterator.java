@@ -322,7 +322,8 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
+        FlworDataFrame inputFrame = (FlworDataFrame) this.child.getDataFrame(context);
+        Dataset<Row> df = inputFrame.getDataFrame();
         StructType inputSchema;
         // String[] columnNamesArray;
         // List<String> columnNames;
@@ -347,6 +348,12 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                         null,
                         false,
                         getConfiguration());
+                inputFrame = inputFrame.withDataFrame(df, expression.getVariableName());
+                SequenceType keyType =
+                        expression.getExpression().getRuntimeStaticContext().getStaticType();
+                if (keyType != null) {
+                    inputFrame.setVariableType(expression.getVariableName(), keyType);
+                }
 
             } else {
                 if (!FlworDataFrameUtils.hasColumnForVariable(inputSchema, expression.getVariableName())) {
@@ -371,7 +378,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         }
         if (nativeQueryResult != null) {
 
-            return new FlworDataFrame(nativeQueryResult);
+            return groupedDataFrame(inputFrame, nativeQueryResult, variableAccessNames);
         }
 
         Map<Name, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
@@ -441,7 +448,18 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                 .sql(String.format(
                         "select %s from (%s) group by `%s`",
                         projectSQL, createColumnsSQL, appendedGroupingColumnsName));
-        return new FlworDataFrame(result);
+        return groupedDataFrame(inputFrame, result, variableAccessNames);
+    }
+
+    private FlworDataFrame groupedDataFrame(FlworDataFrame input, Dataset<Row> rows, List<Name> keys) {
+        FlworDataFrame result = input.withDataFrame(rows);
+        for (Name name : result.getVariableNames()) {
+            if (!keys.contains(name)) {
+                SequenceType type = result.getVariableType(name);
+                result.setVariableType(name, new SequenceType(type.getItemType(), SequenceType.Arity.ZeroOrMore));
+            }
+        }
+        return result;
     }
 
     @Override
