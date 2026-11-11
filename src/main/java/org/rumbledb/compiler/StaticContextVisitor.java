@@ -254,7 +254,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private StaticContext visitChildClause(Clause clause, StaticContext argument) {
+    private StaticContext visitPreviousClause(Clause clause, StaticContext argument) {
         StaticContext context =
                 clause.getPreviousClause() == null ? argument : this.visit(clause.getPreviousClause(), argument);
         clause.setStaticContext(context);
@@ -264,7 +264,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     // region FLWOR vars
     @Override
     public StaticContext visitForClause(ForClause clause, StaticContext argument) {
-        argument = visitChildClause(clause, argument);
+        argument = visitPreviousClause(clause, argument);
         // TODO visit at...
         this.visit(clause.getExpression(), argument);
 
@@ -286,7 +286,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitWindowClause(WindowClause clause, StaticContext argument) {
-        argument = visitChildClause(clause, argument);
+        argument = visitPreviousClause(clause, argument);
         this.visit(clause.getExpression(), argument);
 
         WindowClause.WindowVars start = clause.getStartCondition().variables();
@@ -332,7 +332,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
-        argument = visitChildClause(clause, argument);
+        argument = visitPreviousClause(clause, argument);
         this.visit(clause.getExpression(), argument);
 
         StaticContext result = new StaticContext(argument);
@@ -346,7 +346,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitWhereClause(WhereClause clause, StaticContext argument) {
-        argument = visitChildClause(clause, argument);
+        argument = visitPreviousClause(clause, argument);
         this.visit(clause.getWhereExpression(), argument);
 
         StaticContext result = new StaticContext(argument);
@@ -355,7 +355,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
-        argument = visitChildClause(clause, argument);
+        argument = visitPreviousClause(clause, argument);
         StaticContext result = new StaticContext(argument);
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             if (variable.getExpression() != null) {
@@ -375,7 +375,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitOrderByClause(OrderByClause clause, StaticContext argument) {
-        argument = visitChildClause(clause, argument);
+        argument = visitPreviousClause(clause, argument);
         for (OrderByClauseSortingKey s : clause.getSortingKeys()) {
             this.visit(s.getExpression(), argument);
         }
@@ -386,7 +386,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
-        argument = visitChildClause(clause, argument);
+        argument = visitPreviousClause(clause, argument);
         StaticContext result = new StaticContext(argument);
         result.addVariable(
                 clause.getCountVariableName(),
@@ -397,7 +397,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitReturnClause(ReturnClause clause, StaticContext argument) {
-        argument = visitChildClause(clause, argument);
+        argument = visitPreviousClause(clause, argument);
         this.visit(clause.getReturnExpr(), argument);
         return argument;
     }
@@ -857,7 +857,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitReturnStatementClause(ReturnStatementClause clause, StaticContext argument) {
-        argument = visitChildClause(clause, argument);
+        argument = visitPreviousClause(clause, argument);
         this.visit(clause.getReturnStatement(), argument);
         return argument;
     }
