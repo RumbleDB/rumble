@@ -44,14 +44,14 @@ public final class ComparisonTyping {
         // for value comparison arities * and + are not allowed, also if one return the empty sequence for sure throw
         // XPST0005 error
         if (operator.isValueComparison()) {
-            if (leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()) {
-                this.errors.reportInferredEmpty(node);
-            }
+            this.errors.rejectEmptyOperands(leftInferredType, rightInferredType, node);
             returnArity = AtomizedOperands.resolveArities(leftInferredType, rightInferredType);
             if (returnArity == null) {
                 this.errors.report(
                         "'+' and '*' arities are not allowed for this comparison operator: " + operator,
-                        node.getMetadata());
+                        node,
+                        AtomizedOperands.mayBeSingleton(leftInferredType)
+                                && AtomizedOperands.mayBeSingleton(rightInferredType));
                 returnArity = SequenceType.Arity.OneOrZero;
             }
         }
@@ -76,11 +76,25 @@ public final class ComparisonTyping {
                                 + operator
                                 + " "
                                 + rightItemType,
-                        node.getMetadata());
+                        node,
+                        // An empty operand passes: the comparison is then false or empty.
+                        leftInferredType.getCardinality().allowsZero()
+                                || rightInferredType.getCardinality().allowsZero()
+                                || mayCompare(leftItemType, rightItemType, operator));
             }
         }
 
         return new SequenceType(BuiltinTypesCatalogue.booleanItem, returnArity);
+    }
+
+    /** Whether some pair of member types may be compared, whereas static typing requires every pair to be. */
+    private static boolean mayCompare(ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
+        return left.getMemberTypes().stream().anyMatch(leftMember -> right.getMemberTypes().stream()
+                .anyMatch(rightMember -> !TypeAtomization.isNeverAtomizable(leftMember)
+                        && !TypeAtomization.isNeverAtomizable(rightMember)
+                        && (TypeAtomization.mayAtomizeToAnyType(leftMember)
+                                || TypeAtomization.mayAtomizeToAnyType(rightMember)
+                                || areAtomizedComparisonTypesCompatible(leftMember, rightMember, operator))));
     }
 
     // Static typing is pessimistic (XQuery 3.1, 2.2.3.1): every pair of member types must be comparable.
@@ -147,8 +161,11 @@ public final class ComparisonTyping {
         SequenceType operandType = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceCardinality.ZERO_OR_ONE);
         for (SequenceType type : List.of(leftType, rightType)) {
             if (!type.isSubtypeOf(operandType)) {
-                this.errors.report(
-                        "A node comparison operand must be a single node or empty, found " + type, node.getMetadata());
+                this.errors.reportMismatch(
+                        "A node comparison operand must be a single node or empty, found " + type,
+                        type,
+                        operandType,
+                        node);
             }
         }
 
@@ -157,8 +174,7 @@ public final class ComparisonTyping {
         SequenceCardinality cardinality;
         if (leftType.isEmptySequence() || rightType.isEmptySequence()) {
             // The strict Static Typing Feature rejects known-empty expressions other than () and data(()).
-            this.errors.reportInferredEmpty(
-                    "The node comparison is statically inferred to return an empty sequence", node);
+            this.errors.rejectEmptyOperands(leftType, rightType, node);
             cardinality = SequenceCardinality.EMPTY;
         } else if (leftType.getCardinality().allowsZero()
                 || rightType.getCardinality().allowsZero()) {

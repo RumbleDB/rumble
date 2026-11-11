@@ -78,7 +78,8 @@ public final class PathStepTyping {
                             inferStepResultItemType(stepExpr), inferStepResultArity(stepExpr, contextType)));
         }
 
-        this.errors.rejectInferredEmpty(inferredType, stepExpr);
+        this.errors.rejectInferredEmpty(
+                inferredType, stepExpr, "this step never selects a node from its context, of type " + contextType);
         return inferredType;
     }
 

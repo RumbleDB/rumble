@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
@@ -252,9 +253,7 @@ public final class BuiltinFunctionTyping {
                             .getXmlSchemaCatalog()
                             .mayHaveUnavailableTypedValue(element.getSchemaTypeName())) {
                 this.errors.report(
-                        "The element type permits content without a typed value.",
-                        ErrorCode.AtomizationError,
-                        call.getMetadata());
+                        "The element type permits content without a typed value.", ErrorCode.AtomizationError, call);
             }
         }
     }
@@ -440,11 +439,23 @@ public final class BuiltinFunctionTyping {
                             + " requires its inferred input sequence type to be empty or have an item type that is a subtype of xs:numeric, xs:yearMonthDuration, or xs:dayTimeDuration, found "
                             + inputType,
                     ErrorCode.InvalidArgumentType,
-                    expression.getMetadata());
+                    expression,
+                    mayAggregate(inputType, BuiltinFunctionTyping::isStrictAggregateItemType));
         }
 
         return new SequenceType(
                 inputItemType, TypeAtomization.inferType(inputType).getCardinality());
+    }
+
+    /**
+     * Whether an aggregate may succeed: the input may be empty, or some of its member types may be accepted, once
+     * normalized, or only be known at runtime.
+     */
+    private boolean mayAggregate(SequenceType inputType, Predicate<ItemType> acceptsNormalized) {
+        return inputType.getCardinality().allowsZero()
+                || inputType.getItemType().getMemberTypes().stream()
+                        .anyMatch(member -> TypeAtomization.mayAtomizeToAnyType(member)
+                                || acceptsNormalized.test(normalizeAggregateItemType(member)));
     }
 
     private static boolean isStrictAggregateItemType(ItemType type) {
@@ -534,7 +545,8 @@ public final class BuiltinFunctionTyping {
                             + " compared with each other, found "
                             + inputType,
                     ErrorCode.InvalidArgumentType,
-                    expression.getMetadata());
+                    expression,
+                    mayAggregate(inputType, ComparisonTyping::hasMutuallyComparableItems));
         }
 
         return new SequenceType(

@@ -64,30 +64,63 @@ public final class ArithmeticTyping {
             String operator,
             BiFunction<ItemType, ItemType, ItemType> operation,
             Node node) {
-        this.errors.rejectInferredEmpty(leftType, node);
-        this.errors.rejectInferredEmpty(rightType, node);
+        this.errors.rejectEmptyOperands(leftType, rightType, node);
 
         SequenceType.Arity inferredArity = AtomizedOperands.resolveArities(leftType, rightType);
         if (inferredArity == null) {
             this.errors.report(
-                    "'+' and '*' arities are not allowed for the operands of " + operator, node.getMetadata());
+                    "'+' and '*' arities are not allowed for the operands of " + operator,
+                    node,
+                    AtomizedOperands.mayBeSingleton(leftType) && AtomizedOperands.mayBeSingleton(rightType));
             inferredArity = SequenceType.Arity.OneOrZero;
         }
 
         AtomizedOperands.checkAtomizableOperands(this.errors, operator, leftType, rightType, node);
         ItemType inferredType = inferBinaryOperationType(leftType.getItemType(), rightType.getItemType(), operation);
         if (inferredType == null) {
-            if (inferredArity == SequenceType.Arity.OneOrZero) {
-                // Only possible resulting type is empty sequence so throw error XPST0005
-                this.errors.reportInferredEmpty(node);
+            boolean mayPass = mayArithmeticOperationSucceed(leftType.getItemType(), rightType.getItemType(), operation);
+            if (inferredArity == SequenceType.Arity.OneOrZero && !mayPass) {
+                this.errors.reportInferredEmpty(
+                        node,
+                        "it fails for every pair of operands, of types "
+                                + leftType
+                                + " and "
+                                + rightType
+                                + ", unless one is empty");
             } else {
                 this.errors.report(
                         "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
-                        node.getMetadata());
+                        node,
+                        mayPass);
             }
             inferredType = BuiltinTypesCatalogue.atomicItem;
         }
         return new SequenceType(inferredType, inferredArity);
+    }
+
+    /** A possible error needs only one successful pair, whereas inference requires every pair to succeed. */
+    private boolean mayArithmeticOperationSucceed(
+            ItemType leftType, ItemType rightType, BiFunction<ItemType, ItemType, ItemType> operation) {
+        for (ItemType left : leftType.getMemberTypes()) {
+            for (ItemType right : rightType.getMemberTypes()) {
+                if (inferMemberOperationType(left, right, operation) != null) {
+                    return true;
+                }
+                if (!TypeAtomization.isNeverAtomizable(left)
+                        && !TypeAtomization.isNeverAtomizable(right)
+                        && (TypeAtomization.mayAtomizeToAnyType(left) || TypeAtomization.mayAtomizeToAnyType(right))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** Whether the unary operation succeeds for some member of the operand type, as for a binary operation. */
+    private boolean mayUnaryOperationSucceed(ItemType type) {
+        return type.getMemberTypes().stream()
+                .anyMatch(member -> inferUnaryItemType(member) != null
+                        || (!TypeAtomization.isNeverAtomizable(member) && TypeAtomization.mayAtomizeToAnyType(member)));
     }
 
     // Evaluate each possible operand pair. A null result means an unsupported pair.
@@ -246,11 +279,14 @@ public final class ArithmeticTyping {
     public SequenceType inferUnaryType(SequenceType childInferredType, Node node) {
 
         // if the child is the empty sequence just infer the empty sequence
-        this.errors.rejectInferredEmpty(childInferredType, node);
+        this.errors.rejectInferredEmpty(childInferredType, node, "its operand does");
 
         SequenceType.Arity resultArity = AtomizedOperands.atomizedSingletonArity(childInferredType);
         if (resultArity == null) {
-            this.errors.report("'+' and '*' arities are not allowed for unary expressions", node.getMetadata());
+            this.errors.report(
+                    "'+' and '*' arities are not allowed for unary expressions",
+                    node,
+                    AtomizedOperands.mayBeSingleton(childInferredType));
             resultArity = SequenceType.Arity.OneOrZero;
         }
 
@@ -258,12 +294,18 @@ public final class ArithmeticTyping {
         // error
         ItemType childItemType = inferUnaryItemType(childInferredType.getItemType());
         if (childItemType == null) {
-            if (childInferredType.getArity() == SequenceType.Arity.OneOrZero) {
-                this.errors.reportInferredEmpty(node);
+            boolean mayPass = mayUnaryOperationSucceed(childInferredType.getItemType());
+            if (childInferredType.getArity() == SequenceType.Arity.OneOrZero && !mayPass) {
+                this.errors.reportInferredEmpty(
+                        node,
+                        "it fails for every value of its operand, of type "
+                                + childInferredType
+                                + ", unless it is empty");
             } else {
                 this.errors.report(
                         "It is not possible to have a unary expression with the following type: " + childInferredType,
-                        node.getMetadata());
+                        node,
+                        mayPass);
             }
             childItemType = BuiltinTypesCatalogue.numericItem;
         }

@@ -15,6 +15,8 @@
  */
 package org.rumbledb.compiler.typing;
 
+import java.util.stream.Stream;
+
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -42,9 +44,7 @@ public final class CastTyping {
         ItemType itemType = targetType.getItemType();
         if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             this.errors.report(
-                    "atomic item type is not allowed in castable expression",
-                    ErrorCode.CastableErrorCode,
-                    node.getMetadata());
+                    "atomic item type is not allowed in castable expression", ErrorCode.CastableErrorCode, node);
         }
         checkCastOperand(operandType, node);
         return new SequenceType(BuiltinTypesCatalogue.booleanItem);
@@ -57,9 +57,7 @@ public final class CastTyping {
 
             if (operandType.isEmptySequence()) {
                 if (targetType.getArity() != SequenceType.Arity.OneOrZero) {
-                    this.errors.report(
-                            "Empty sequence cannot be cast to a non-optional XML Schema simple type.",
-                            node.getMetadata());
+                    this.errors.report("Empty sequence cannot be cast to a non-optional XML Schema simple type.", node);
                 }
                 return new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.Zero);
             }
@@ -67,7 +65,11 @@ public final class CastTyping {
             SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(operandType);
             if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(targetType.getArity())) {
                 this.errors.report(
-                        castCardinalityMessage(operandType, atomizedOperand, targetType), node.getMetadata());
+                        castCardinalityMessage(operandType, atomizedOperand, targetType),
+                        node,
+                        atomizedOperand
+                                .getCardinality()
+                                .overlaps(SequenceCardinality.fromArity(targetType.getArity())));
             }
 
             // Check the type of result will casting to this schema type produce
@@ -89,17 +91,13 @@ public final class CastTyping {
         SequenceType castedSequenceType = targetType;
 
         if (castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.atomicItem)) {
-            this.errors.report(
-                    "atomic item type is not allowed in cast expression",
-                    ErrorCode.CastableErrorCode,
-                    node.getMetadata());
+            this.errors.report("atomic item type is not allowed in cast expression", ErrorCode.CastableErrorCode, node);
         }
 
         // Empty sequence case
         if (operandType.isEmptySequence()) {
             if (castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
-                this.errors.report(
-                        "Empty sequence cannot be cast to type with quantifier different from '?'", node.getMetadata());
+                this.errors.report("Empty sequence cannot be cast to type with quantifier different from '?'", node);
             } else {
                 // no additional check is needed
                 return castedSequenceType;
@@ -109,7 +107,11 @@ public final class CastTyping {
         SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(operandType);
         if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(castedSequenceType.getArity())) {
             this.errors.report(
-                    castCardinalityMessage(operandType, atomizedOperand, castedSequenceType), node.getMetadata());
+                    castCardinalityMessage(operandType, atomizedOperand, castedSequenceType),
+                    node,
+                    atomizedOperand
+                            .getCardinality()
+                            .overlaps(SequenceCardinality.fromArity(castedSequenceType.getArity())));
         }
 
         checkCastOperand(operandType, node);
@@ -117,10 +119,18 @@ public final class CastTyping {
         if (TypeAtomization.isAtomizable(operandType.getItemType())
                 && !castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.errorItem)
                 && !isCastOperandTypeCompatible(operandType.getItemType(), castedSequenceType.getItemType())) {
+            // The empty sequence passes a cast as T?.
+            boolean mayPass = (operandType.getCardinality().allowsZero()
+                            && castedSequenceType.getCardinality().allowsZero())
+                    || castableMembers(operandType.getItemType(), castedSequenceType.getItemType())
+                            .anyMatch(castable -> castable);
             this.errors.report(
-                    "It is never possible to cast a " + operandType + " as " + castedSequenceType,
+                    mayPass
+                            ? "The inferred type " + operandType + " is not guaranteed to cast as " + castedSequenceType
+                            : "It is never possible to cast a " + operandType + " as " + castedSequenceType,
                     ErrorCode.UnexpectedTypeErrorCode,
-                    node.getMetadata());
+                    node,
+                    mayPass);
         }
         if (TypeAtomization.inferType(operandType).getCardinality() == SequenceCardinality.ONE) {
             castedSequenceType = new SequenceType(castedSequenceType.getItemType(), SequenceType.Arity.One);
@@ -151,14 +161,25 @@ public final class CastTyping {
             this.errors.report(
                     "A cast operand must be atomic after atomization, found " + operandType,
                     AtomizedOperands.nonAtomizableErrorCode(operandType.getItemType()),
-                    node.getMetadata());
+                    node,
+                    !TypeAtomization.isNeverAtomizable(operandType.getItemType()));
         }
     }
 
-    private boolean isCastOperandTypeCompatible(ItemType source, ItemType target) {
-        // A node is cast through its typed value: an unknown one is checked at runtime, a known one statically.
-        return source.allMemberTypesMatch(member -> TypeAtomization.hasUnknownAtomizedType(member)
-                || TypeAtomization.atomizedItemType(member)
-                        .allMemberTypesMatch(atomized -> atomized.isStaticallyCastableAs(target)));
+    private static boolean isCastOperandTypeCompatible(ItemType source, ItemType target) {
+        return castableMembers(source, target).allMatch(castable -> castable);
+    }
+
+    /**
+     * Whether each member of the source type, once atomized, is statically castable to the target. A node is cast
+     * through its typed value: an unknown one is checked at runtime, so it counts as castable, and a known one
+     * statically.
+     */
+    private static Stream<Boolean> castableMembers(ItemType source, ItemType target) {
+        return source.getMemberTypes().stream()
+                .flatMap(member -> TypeAtomization.hasUnknownAtomizedType(member)
+                        ? Stream.of(true)
+                        : TypeAtomization.atomizedItemType(member).getMemberTypes().stream()
+                                .map(atomized -> atomized.isStaticallyCastableAs(target)));
     }
 }

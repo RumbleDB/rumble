@@ -35,15 +35,16 @@ public final class LookupTyping {
     }
 
     public SequenceType inferArrayLookupType(SequenceType mainType, SequenceType lookupType, Node node) {
-        if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("integer"))) {
-            this.errors.report(
+        SequenceType integer = SequenceType.createSequenceType("integer");
+        if (!lookupType.isSubtypeOf(integer)) {
+            this.errors.reportMismatch(
                     "the lookup expression type must match integer, instead " + lookupType + " was inferred",
-                    node.getMetadata());
+                    lookupType,
+                    integer,
+                    node);
         }
 
-        if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(node);
-        }
+        rejectInput(mainType, mainType.hasOverlapWith(SequenceType.createSequenceType("array*")), "an array", node);
 
         SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
                 ? SequenceType.Arity.OneOrZero
@@ -59,22 +60,26 @@ public final class LookupTyping {
 
     public SequenceType inferObjectLookupType(SequenceType mainType, SequenceType lookupType, String key, Node node) {
         // must be castable to string
-        if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType"))) {
-            this.errors.report(
+        SequenceType atomic = SequenceType.createSequenceType("anyAtomicType");
+        if (!lookupType.isSubtypeOf(atomic)) {
+            this.errors.reportMismatch(
                     "the lookup expression type must be castable to string (i.e. must match atomic), instead "
                             + lookupType
                             + " was inferred",
-                    node.getMetadata());
+                    lookupType,
+                    atomic,
+                    node);
         }
 
         boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
         boolean overlapsMap = mainType.hasOverlapWith(SequenceType.createSequenceType("map*"));
-        if ((!overlapsObject && !overlapsMap) || mainType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(node);
-        }
+        rejectInput(mainType, overlapsObject || overlapsMap, "an object or a map", node);
 
         SequenceType result = inferObjectSelectionType(mainType.getItemType(), mainType.getArity(), key);
-        this.errors.rejectInferredEmpty(result, node);
+        this.errors.rejectInferredEmpty(
+                result,
+                node,
+                "its input, of type " + mainType + ", never has the key" + (key == null ? "" : " \"" + key + "\""));
         return result;
     }
 
@@ -91,8 +96,8 @@ public final class LookupTyping {
      * member at each position in K, or all its members.
      */
     public SequenceType inferPostfixLookupType(SequenceType mainType, SequenceType keyType, Node node) {
-        if (mainType.isEmptySequence() || LOOKUP_INPUTS.stream().noneMatch(mainType::hasOverlapWith)) {
-            this.errors.reportInferredEmpty(node);
+        if (rejectInput(
+                mainType, LOOKUP_INPUTS.stream().anyMatch(mainType::hasOverlapWith), "a map or an array", node)) {
             return SequenceType.createSequenceType("item*");
         }
         boolean wildcard = keyType == null;
@@ -146,10 +151,24 @@ public final class LookupTyping {
     }
 
     public SequenceType inferArrayUnboxingType(SequenceType mainType, Node node) {
-        if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(node);
-        }
+        rejectInput(mainType, mainType.hasOverlapWith(SequenceType.createSequenceType("array*")), "an array", node);
         return inferArrayMembersType(mainType);
+    }
+
+    /**
+     * Reports a lookup whose input is empty, or never has an item it selects from, the kinds of which are named, such
+     * as "an array". Returns whether it reported it.
+     */
+    private boolean rejectInput(SequenceType inputType, boolean selectable, String kinds, Node node) {
+        if (inputType.isEmptySequence()) {
+            this.errors.reportInferredEmpty(node, "its input does");
+            return true;
+        }
+        if (!selectable) {
+            this.errors.reportInferredEmpty(node, "its input, of type " + inputType + ", is never " + kinds);
+            return true;
+        }
+        return false;
     }
 
     /** Infers E[], or members(E): the members of the arrays among the items of E. */
