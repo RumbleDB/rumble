@@ -369,18 +369,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
-        SequenceType variableType = expression.getActualType();
+        // The scope may have changed since static-context construction (for example, group by
+        // widens non-grouping variables from single items to sequences).
+        SequenceType variableType = expression.getStaticContext().getVariableSequenceType(expression.getVariableName());
         if (variableType == null) {
-            // if is null, no 'as [SequenceType]' part was present in the declaration, therefore we infer it
-            variableType = expression.getStaticContext().getVariableSequenceType(expression.getVariableName());
-            // we also set variableReference type
-            if (variableType == null) {
-                log.warn(
-                        "Variable reference type was null so we infer it. Please let us know as we would like to look into it.");
-                variableType = SequenceType.createSequenceType("item*");
-            }
-            expression.setActualType(variableType);
+            log.warn(
+                    "Variable reference type was null so we infer it. Please let us know as we would like to look into it.");
+            variableType = SequenceType.createSequenceType("item*");
         }
+        expression.setActualType(variableType);
         basicChecks(variableType, expression.getClass().getSimpleName(), false, true, expression.getMetadata());
         expression.setStaticSequenceType(variableType);
         return argument;

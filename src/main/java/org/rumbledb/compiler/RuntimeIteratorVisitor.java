@@ -201,6 +201,7 @@ import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.navigation.SequenceLookupIterator;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
+import org.rumbledb.runtime.primary.AtMostOneItemVariableReferenceIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.DecimalRuntimeIterator;
@@ -272,6 +273,7 @@ import org.rumbledb.runtime.xml.axis.AxisIterator;
 import org.rumbledb.runtime.xml.axis.AxisIteratorVisitor;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 import org.rumbledb.types.TypeAtomization;
 import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
@@ -447,8 +449,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
 
     @Override
     public ItemRuntimePlan visitVariableReference(VariableReferenceExpression expression, ItemRuntimePlan argument) {
-        ItemRuntimePlan runtimeIterator = new VariableReferenceIterator(
-                expression.getVariableName(), expression.getStaticContextForRuntime(this.config, this.visitorConfig));
+        ItemRuntimePlan runtimeIterator;
+        if (expression.getStaticSequenceType().isEmptySequence()
+                || expression.getStaticSequenceType().getArity().equals(Arity.One)
+                || expression.getStaticSequenceType().getArity().equals(Arity.OneOrZero)) {
+            runtimeIterator = new AtMostOneItemVariableReferenceIterator(
+                    expression.getVariableName(),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
+        } else {
+            runtimeIterator = new VariableReferenceIterator(
+                    expression.getVariableName(),
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
+        }
         return runtimeIterator;
     }
     // endregion
