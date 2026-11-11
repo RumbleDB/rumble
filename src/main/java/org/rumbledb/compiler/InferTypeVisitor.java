@@ -24,6 +24,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import lombok.extern.log4j.Log4j2;
+
 import org.rumbledb.compiler.typing.ArithmeticTyping;
 import org.rumbledb.compiler.typing.AtomizedOperands;
 import org.rumbledb.compiler.typing.BuiltinFunctionTyping;
@@ -41,6 +43,7 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -164,6 +167,7 @@ import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
+import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
@@ -176,6 +180,7 @@ import org.rumbledb.xml.schema.XmlSchemaCatalog;
 /**
  * This visitor infers a static SequenceType for each expression in the query
  */
+@Log4j2
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private final RumbleConfiguration rumbleRuntimeConfiguration;
@@ -287,11 +292,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
         SequenceType variableType = expression.getActualType();
         if (variableType == null) {
-            // Without a declared type, the type was inferred when the variable was bound.
+            // if is null, no 'as [SequenceType]' part was present in the declaration, therefore we infer it
             variableType = expression.getStaticContext().getVariableSequenceType(expression.getVariableName());
+            // we also set variableReference type
             if (variableType == null) {
-                // Only a cycle of global variable declarations leaves a variable untyped when it is used. Such a
-                // cycle is an error (XQDY0054) only if evaluation goes through it, so the reference is typed item*.
+                log.warn(
+                        "Variable reference type was null so we infer it. Please let us know as we would like to look into it.");
                 variableType = SequenceType.createSequenceType("item*");
             }
             expression.setActualType(variableType);
@@ -314,7 +320,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));
             return argument;
         }
-        ItemType contentItemType = typeOf(contentExpr, expression).getItemType();
+        ItemType contentItemType = contentExpr.getStaticSequenceType().getItemType();
         ItemType arrayType = ItemTypeFactory.createAnonymousArrayType(contentItemType);
         expression.setStaticSequenceType(new SequenceType(arrayType));
         return argument;
@@ -373,7 +379,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createAnonymousObjectType(
                     literalKeys,
                     expression.getValues().stream()
-                            .map(value -> ItemTypeFactory.createObjectFieldType(typeOf(value, expression)))
+                            .map(value -> ItemTypeFactory.createObjectFieldType(value.getStaticSequenceType()))
                             .collect(Collectors.toList()))));
         } else {
             expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
@@ -497,7 +503,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
         SequenceType returnType = expression.getActualReturnType();
         if (returnType == null) {
-            returnType = typeOf(expression.getBody().getExpression(), expression);
+            returnType = expression.getBody().getExpression().getStaticSequenceType();
         }
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
         FunctionSignature signature = new FunctionSignature(params, returnType, expression.isUpdating());
@@ -586,7 +592,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // check arguments are of correct type
         for (int i = 0; i < paramsLength; ++i) {
             if (parameterExpressions.get(i) != null) {
-                SequenceType actualType = typeOf(parameterExpressions.get(i), expression);
+                SequenceType actualType = parameterExpressions.get(i).getStaticSequenceType();
+                if (actualType == null) {
+                    throw new OurBadException("No static type inferred for expression " + parameterExpressions.get(i));
+                }
                 SequenceType expectedType = parameterTypes.get(i);
                 if (!isFunctionArgumentCompatible(actualType, expectedType)) {
                     this.errors.report(
@@ -620,8 +629,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             expression.getFunctionIdentifier(), expression.getStaticContext());
                     if (builtinFunction != null
                             && builtinFunction.getFunctionIteratorClass().equals(ConstructorFunctionIterator.class)) {
-                        SequenceType argumentType = typeOf(parameterExpressions.get(0), expression);
-                        if (TypeAtomization.inferType(argumentType).getCardinality() == SequenceCardinality.ONE
+                        SequenceType argumentType = parameterExpressions.get(0).getStaticSequenceType();
+                        if (argumentType != null
+                                && TypeAtomization.inferType(argumentType).getCardinality() == SequenceCardinality.ONE
                                 && returnType.getArity().equals(SequenceType.Arity.OneOrZero)) {
                             returnType = new SequenceType(returnType.getItemType(), SequenceType.Arity.One);
                         }
@@ -703,7 +713,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitIsStaticallyExpr(IsStaticallyExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        SequenceType inferred = typeOf(expression.getMainExpression(), expression);
+        SequenceType inferred = expression.getMainExpression().getStaticSequenceType();
         SequenceType expected = expression.getSequenceType();
         // Equality compares declared occurrence indicators, which is all an assertion's type can express.
         if (!inferred.equals(expected)) {
@@ -811,7 +821,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         visit(expression.getModifyExpression(), argument);
         visit(expression.getReturnExpression(), argument);
-        expression.setStaticSequenceType(typeOf(expression.getReturnExpression(), expression));
+        expression.setStaticSequenceType(expression.getReturnExpression().getStaticSequenceType());
 
         return argument;
     }
@@ -1411,7 +1421,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 partialFormalParameterTypes.add(formalParameterTypes.get(i));
             }
             if (e != null) {
-                actualParameterTypes.add(typeOf(e, expression));
+                actualParameterTypes.add(e.getStaticSequenceType());
             }
             ++i;
         }
@@ -1467,7 +1477,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(clause, clause.getStaticContext());
             if (clause.getClauseType() == FLWOR_CLAUSES.FOR) {
                 // Each tuple so far is repeated once per item of the for clause's sequence.
-                SequenceType forType = typeOf(((ForClause) clause).getExpression(), clause);
+                SequenceType forType = ((ForClause) clause).getExpression().getStaticSequenceType();
                 if (!forType.isEmptySequence()) {
                     SequenceCardinality sourceCardinality = forType.getCardinality();
                     if (((ForClause) clause).isAllowEmpty()) {
@@ -1802,7 +1812,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
         visitDescendants(expression, argument);
         InlineFunctionExpression inlineExpression = (InlineFunctionExpression) expression.getExpression();
-        SequenceType inferredType = typeOf(inlineExpression.getBody().getExpression(), expression);
+        SequenceType inferredType = inlineExpression.getBody().getExpression().getStaticSequenceType();
         SequenceType expectedType = inlineExpression.getActualReturnType();
 
         if (expectedType == null) {
@@ -1847,7 +1857,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
-        SequenceType sourceType = typeOf(expression.getMainExpression(), expression);
+        SequenceType sourceType = expression.getMainExpression().getStaticSequenceType();
         expression.setStaticSequenceType(
                 expression.getSequenceType().refineCardinalityIfSubtype(sourceType.getCardinality()));
         return argument;
@@ -1883,7 +1893,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // Preserve a statically known element or document subtype; otherwise use node(), since invalid operand kinds
         // are reported dynamically as XQTY0030.
         ItemType sourceItemType =
-                typeOf(expression.getMainExpression(), expression).getItemType();
+                expression.getMainExpression().getStaticSequenceType().getItemType();
         ItemType resultItemType = sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)
                         || sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
                 ? sourceItemType
@@ -1947,7 +1957,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitApplyStatement(ApplyStatement statement, StaticContext argument) {
         visit(statement.getApplyExpression(), argument);
-        statement.setStaticSequenceType(typeOf(statement.getApplyExpression(), statement));
+        statement.setStaticSequenceType(statement.getApplyExpression().getStaticSequenceType());
         return argument;
     }
 
@@ -1955,7 +1965,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitAssignStatement(AssignStatement statement, StaticContext argument) {
         visit(statement.getAssignExpression(), argument);
         SequenceType variableDeclaredType = statement.getStaticContext().getVariableSequenceType(statement.getName());
-        SequenceType expressionType = typeOf(statement.getAssignExpression(), statement);
+        SequenceType expressionType = statement.getAssignExpression().getStaticSequenceType();
         if (!expressionType.isSubtypeOf(variableDeclaredType)) {
             this.errors.report(
                     "Declared type: "
@@ -1986,14 +1996,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitExitStatement(ExitStatement statement, StaticContext argument) {
         visit(statement.getExitExpression(), argument);
-        statement.setStaticSequenceType(typeOf(statement.getExitExpression(), statement));
+        statement.setStaticSequenceType(statement.getExitExpression().getStaticSequenceType());
         return argument;
     }
 
     @Override
     public StaticContext visitWhileStatement(WhileStatement statement, StaticContext argument) {
         visitDescendants(statement, argument);
-        statement.setStaticSequenceType(typeOf(statement.getStatement(), statement));
+        statement.setStaticSequenceType(statement.getStatement().getStaticSequenceType());
         return argument;
     }
 
@@ -2122,8 +2132,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitBlockExpr(BlockExpression expression, StaticContext argument) {
         visitStatementsAndExpr(expression.getStatementsAndExpr(), argument);
-        expression.setStaticSequenceType(StaticTypeErrors.requireInferredType(
-                expression.getStatementsAndExpr().getStaticSequenceType(), expression));
+        expression.setStaticSequenceType(expression.getStatementsAndExpr().getStaticSequenceType());
         return argument;
     }
 

@@ -41,6 +41,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ElementNodeItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeAtomization;
 
@@ -76,12 +77,14 @@ public final class BuiltinFunctionTyping {
             return Optional.of(TypeAtomization.inferType(input));
         });
         addBuiltinRule("doc", this::inferDocumentType);
-        // fn:round keeps the type of a numeric argument. Others, such as nodes and untyped values, are converted to
-        // xs:double first, so the signature's xs:numeric? applies.
+        // Numeric inputs retain their precise type. Atomized node/array inputs use the signature's numeric type.
         addBuiltinRule("round", (call, staticContext) -> {
             SequenceType input = call.getArguments().get(0).getStaticSequenceType();
-            return input.isEmptySequence() || input.getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)
-                    ? Optional.of(input)
+            if (input.isEmptySequence() || input.getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
+                return Optional.of(input);
+            }
+            return TypeAtomization.containsNodeOrArray(input.getItemType())
+                    ? Optional.of(new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceCardinality.ZERO_OR_ONE))
                     : Optional.empty();
         });
         // set output type to 'Integer' if inputType is 'Array'
@@ -105,6 +108,10 @@ public final class BuiltinFunctionTyping {
                 "max",
                 (call, staticContext) -> Optional.of(
                         inferStrictMinMaxReturnType(call, call.getArguments().get(0), "fn:max")));
+        // Cardinality functions keep the item type of their argument and only narrow its arity.
+        addBuiltinRule("exactly-one", cardinalityRule(SequenceType.Arity.One));
+        addBuiltinRule("zero-or-one", cardinalityRule(SequenceType.Arity.OneOrZero));
+        addBuiltinRule("one-or-more", cardinalityRule(SequenceType.Arity.OneOrMore));
 
         // For input functions, we read the schema of the data to annotate the static type precisely
         this.rules.put(
@@ -146,6 +153,23 @@ public final class BuiltinFunctionTyping {
             ItemType schemaItemType = ItemTypeFactory.createItemType(s);
             return Optional.of(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
         });
+    }
+
+    /** Types a cardinality function by its argument, with the arity narrowed to the one the function enforces. */
+    private static ReturnTypeRule cardinalityRule(SequenceType.Arity enforcedArity) {
+        return (call, staticContext) -> {
+            if (call.getArguments().size() != 1) {
+                return Optional.empty();
+            }
+            SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+            if (input.isEmptySequence()) {
+                return Optional.empty();
+            }
+            // The argument keeps its arity if it is already narrower than the enforced one.
+            SequenceType.Arity inputArity = input.getArity();
+            return Optional.of(new SequenceType(
+                    input.getItemType(), inputArity.isSubtypeOf(enforcedArity) ? inputArity : enforcedArity));
+        };
     }
 
     /** Rejects data() of an element whose schema type permits content without a typed value. */
