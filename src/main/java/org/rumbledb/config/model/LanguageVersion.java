@@ -39,7 +39,7 @@ public enum LanguageVersion {
     XQUERY_31(Language.XQUERY, Version.V3_1, "3.0");
 
     /** The JSONiq version used when nothing selects one explicitly. */
-    public static final LanguageVersion DEFAULT_JSONIQ = JSONIQ_10;
+    public static final LanguageVersion DEFAULT_JSONIQ = JSONIQ_31;
 
     /** The XQuery version used when nothing selects one explicitly. */
     public static final LanguageVersion DEFAULT_XQUERY = XQUERY_31;
