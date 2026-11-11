@@ -16,7 +16,10 @@
 package org.rumbledb.compiler.typing;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
+
+import org.apache.commons.text.similarity.LevenshteinDistance;
 
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -112,35 +115,20 @@ public final class LookupTyping {
 
     /** The key that a misspelled one most likely stands for, or null if none is close to it. */
     private static String closestKey(String key, List<String> keys) {
-        String closest = null;
         // A key that differs in more than a third of its characters is another word.
-        int closestDistance = Math.max(1, key.length() / 3) + 1;
+        LevenshteinDistance editDistance = new LevenshteinDistance(Math.max(1, key.length() / 3));
+        String lowerCaseKey = key.toLowerCase(Locale.ROOT);
+        String closest = null;
+        int closestDistance = Integer.MAX_VALUE;
         for (String candidate : keys) {
-            int distance = editDistance(key.toLowerCase(), candidate.toLowerCase());
-            if (distance < closestDistance) {
+            // -1 when the distance exceeds the threshold.
+            int distance = editDistance.apply(lowerCaseKey, candidate.toLowerCase(Locale.ROOT));
+            if (distance >= 0 && distance < closestDistance) {
                 closest = candidate;
                 closestDistance = distance;
             }
         }
         return closest;
-    }
-
-    /** How many characters have to be inserted, deleted or replaced to turn one string into the other. */
-    private static int editDistance(String first, String second) {
-        int[] distances = new int[second.length() + 1];
-        for (int j = 0; j <= second.length(); j++) {
-            distances[j] = j;
-        }
-        for (int i = 1; i <= first.length(); i++) {
-            int diagonal = distances[0];
-            distances[0] = i;
-            for (int j = 1; j <= second.length(); j++) {
-                int replaced = diagonal + (first.charAt(i - 1) == second.charAt(j - 1) ? 0 : 1);
-                diagonal = distances[j];
-                distances[j] = Math.min(replaced, Math.min(distances[j], distances[j - 1]) + 1);
-            }
-        }
-        return distances[second.length()];
     }
 
     /** The items that an XQuery lookup can select from. */
