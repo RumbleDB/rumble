@@ -161,11 +161,11 @@ public final class LookupTyping {
             return SequenceType.createSequenceType("item*");
         }
         boolean wildcard = keyType == null;
-        SequenceType perItem = null;
-        for (ItemType member : mainType.getItemType().getMemberTypes()) {
-            SequenceType memberType = inferItemLookupType(member, wildcard);
-            perItem = perItem == null ? memberType : perItem.leastCommonSupertypeWith(memberType);
-        }
+        // A type always has a member; the empty sequence only stands in for none.
+        SequenceType perItem = mainType.getItemType().getMemberTypes().stream()
+                .map(member -> inferItemLookupType(member, wildcard))
+                .reduce(SequenceType::leastCommonSupertypeWith)
+                .orElse(SequenceType.createSequenceType("()"));
         if (!wildcard) {
             // Each atomized key selects separately, so E?(1 to 2) gives a value for each of the two keys.
             perItem = perItem.repeated(TypeAtomization.inferType(keyType).getCardinality());
