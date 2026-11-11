@@ -137,7 +137,7 @@ public class ComposabilityVisitor extends AbstractNodeVisitor<Node> {
         Clause itClause = expression.getReturnStatementClause().getFirstClause();
         while (itClause != null) {
             this.visit(itClause, expression);
-            itClause = itClause.getParentClause();
+            itClause = itClause.getNextClause();
         }
         return argument;
     }

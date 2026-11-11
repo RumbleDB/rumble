@@ -2681,7 +2681,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             } catch (UnexpectedStaticTypeException e) {
                 if (forCardinality == SequenceCardinality.EMPTY
                         && clause.getClauseType().equals(FLWOR_CLAUSES.WHERE)) {
-                    clause = clause.getParentClause();
+                    clause = clause.getNextClause();
                     continue;
                 }
                 throw e;
@@ -2710,7 +2710,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             } else if (clause.getClauseType() == FLWOR_CLAUSES.WINDOW) {
                 forCardinality = SequenceCardinality.ANY;
             }
-            clause = clause.getParentClause();
+            clause = clause.getNextClause();
         }
 
         return forCardinality;
@@ -2763,7 +2763,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         checkAndUpdateVariableStaticType(
                 declaredType,
                 inferredType,
-                expression.getParentClause().getStaticContext(),
+                expression.getNextClause().getStaticContext(),
                 expression.getClass().getSimpleName(),
                 expression.getVariableName(),
                 expression.getMetadata());
@@ -2793,7 +2793,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             checkWindowConditionType(end.expression(), expression);
         }
 
-        StaticContext followingContext = expression.getParentClause().getStaticContext();
+        StaticContext followingContext = expression.getNextClause().getStaticContext();
         if (expression.getActualSequenceType() == null) {
             // A window always contains at least one item.
             followingContext.replaceVariableSequenceType(
@@ -2839,7 +2839,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         checkAndUpdateVariableStaticType(
                 declaredType,
                 inferredType,
-                expression.getParentClause().getStaticContext(),
+                expression.getNextClause().getStaticContext(),
                 expression.getClass().getSimpleName(),
                 expression.getVariableName(),
                 expression.getMetadata());
@@ -2868,7 +2868,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause expression, StaticContext argument) {
-        Clause nextClause = expression.getParentClause(); // != null because group by cannot be last clause of FLOWR
+        Clause nextClause = expression.getNextClause(); // != null because group by cannot be last clause of FLOWR
         // expression
         Set<Name> groupingVars = new HashSet<>();
         for (GroupByVariableDeclaration groupByVar : expression.getGroupVariables()) {
@@ -2920,7 +2920,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // finally if there was a for clause we need to change the arity of the variables bound so far in the flwor
         // expression, from ? to * and from 1 to +
         // excluding the grouping variables
-        StaticContext nextClauseStaticContext = expression.getParentClause().getStaticContext();
+        StaticContext nextClauseStaticContext = expression.getNextClause().getStaticContext();
         nextClause.getStaticContext().incrementArities(nextClauseStaticContext, groupingVars);
         return argument;
     }
@@ -2958,7 +2958,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         checkAndUpdateVariableStaticType(
                 null,
                 SequenceType.createSequenceType("integer"),
-                clause.getParentClause().getStaticContext(),
+                clause.getNextClause().getStaticContext(),
                 clause.getClass().getSimpleName(),
                 clause.getCountVariableName(),
                 clause.getMetadata());

@@ -63,7 +63,7 @@ class FlworBindingMetadataTest {
         assertEquals(
                 forClause.getVariableMetadata(),
                 forClause
-                        .getParentClause()
+                        .getNextClause()
                         .getStaticContext()
                         .getInScopeVariables()
                         .get(forClause.getVariableName())
@@ -113,7 +113,7 @@ class FlworBindingMetadataTest {
     private static void assertType(String expected, Clause clause, Name variable) {
         assertEquals(
                 expected,
-                clause.getParentClause()
+                clause.getNextClause()
                         .getStaticContext()
                         .getVariableSequenceType(variable)
                         .toString());

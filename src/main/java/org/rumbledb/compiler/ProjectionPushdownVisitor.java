@@ -65,7 +65,7 @@ public class ProjectionPushdownVisitor extends CloneVisitor {
                 }
                 result = temp;
             }
-            clause = clause.getParentClause();
+            clause = clause.getNextClause();
         }
         return new FlworExpression((ReturnClause) result, expression.getMetadata());
     }

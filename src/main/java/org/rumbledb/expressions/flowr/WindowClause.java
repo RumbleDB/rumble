@@ -129,8 +129,8 @@ public class WindowClause extends Clause {
         if (this.endCondition != null && this.endCondition.expression() != null) {
             result.add(this.endCondition.expression());
         }
-        if (this.getChildClause() != null) {
-            result.add(this.getChildClause());
+        if (this.getPreviousClause() != null) {
+            result.add(this.getPreviousClause());
         }
         return result;
     }

@@ -56,11 +56,11 @@ public abstract class Clause extends Node {
         this.nextClause = null;
     }
 
-    public Clause getChildClause() {
+    public Clause getPreviousClause() {
         return this.previousClause;
     }
 
-    public Clause getParentClause() {
+    public Clause getNextClause() {
         return this.nextClause;
     }
 

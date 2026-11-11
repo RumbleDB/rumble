@@ -46,8 +46,8 @@ public class WhereClause extends Clause {
         if (this.whereExpression != null) {
             result.add(this.whereExpression);
         }
-        if (this.getChildClause() != null) {
-            result.add(this.getChildClause());
+        if (this.getPreviousClause() != null) {
+            result.add(this.getPreviousClause());
         }
         return result;
     }

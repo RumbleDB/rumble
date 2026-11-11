@@ -343,7 +343,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitFlowrExpression(FlworExpression expression, ItemRuntimePlan argument) {
         TupleRuntimePlan previous =
-                this.visitFlowrClause(expression.getReturnClause().getChildClause(), argument);
+                this.visitFlowrClause(expression.getReturnClause().getPreviousClause(), argument);
         ReturnClause returnClause = expression.getReturnClause();
         ItemRuntimePlan runtimeIterator = new ReturnClauseIterator(
                 previous,
@@ -357,8 +357,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
 
     private TupleRuntimePlan visitFlowrClause(Clause clause, ItemRuntimePlan argument) {
         TupleRuntimePlan previousIterator = null;
-        if (clause.getChildClause() != null) {
-            previousIterator = this.visitFlowrClause(clause.getChildClause(), argument);
+        if (clause.getPreviousClause() != null) {
+            previousIterator = this.visitFlowrClause(clause.getPreviousClause(), argument);
         }
         if (clause instanceof ForClause forClause) {
             ItemRuntimePlan assignmentIterator = this.visit(forClause.getExpression(), argument);
@@ -1895,7 +1895,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
     @Override
     public ItemRuntimePlan visitFlowrStatement(FlowrStatement statement, ItemRuntimePlan argument) {
         TupleRuntimePlan previous =
-                this.visitFlowrClause(statement.getReturnStatementClause().getChildClause(), argument);
+                this.visitFlowrClause(statement.getReturnStatementClause().getPreviousClause(), argument);
         ReturnStatementClause returnClause = statement.getReturnStatementClause();
         ItemRuntimePlan runtimeIterator = new ReturnStatementClauseIterator(
                 previous,

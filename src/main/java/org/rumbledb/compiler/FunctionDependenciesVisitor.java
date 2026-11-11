@@ -69,7 +69,7 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
      * Clause clause = expression.getReturnClause().getFirstClause();
      * while (clause != null) {
      * this.visit(clause, argument);
-     * clause = clause.getParentClause();
+     * clause = clause.getNextClause();
      * }
      * return argument;
      * }

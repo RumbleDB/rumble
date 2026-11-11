@@ -39,7 +39,7 @@ public class CountClause extends Clause {
 
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(this.getChildClause());
+        return Collections.singletonList(this.getPreviousClause());
     }
 
     @Override

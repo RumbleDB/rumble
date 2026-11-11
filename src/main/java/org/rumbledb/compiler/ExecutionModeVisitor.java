@@ -288,7 +288,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitReturnClause(ReturnClause expression, StaticContext argument) {
         visit(expression.getReturnExpr(), expression.getReturnExpr().getStaticContext());
         if (expression
-                .getChildClause()
+                .getPreviousClause()
                 .getHighestExecutionMode(this.visitorConfig)
                 .isDataFrame()) {
             if (expression
@@ -334,7 +334,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             return argument;
         }
         if (expression
-                .getChildClause()
+                .getPreviousClause()
                 .getHighestExecutionMode(this.visitorConfig)
                 .isUnset()) {
             expression.setHighestExecutionMode(ExecutionMode.UNSET);
@@ -349,12 +349,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         Clause clause = expression.getReturnClause().getFirstClause();
         while (clause != null) {
-            if (clause.getParentClause() != null) {
-                this.visit(clause, clause.getParentClause().getStaticContext());
+            if (clause.getNextClause() != null) {
+                this.visit(clause, clause.getNextClause().getStaticContext());
             } else {
                 this.visit(clause, null);
             }
-            clause = clause.getParentClause();
+            clause = clause.getNextClause();
         }
         if (expression.alwaysReturnsAtMostOneItem()) {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
@@ -373,8 +373,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 (clause.getExpression()
                                         .getHighestExecutionMode(this.visitorConfig)
                                         .isRDDOrDataFrame()
-                                || (clause.getChildClause() != null
-                                        && clause.getChildClause()
+                                || (clause.getPreviousClause() != null
+                                        && clause.getPreviousClause()
                                                 .getHighestExecutionMode(this.visitorConfig)
                                                 .isDataFrame()))
                         ? ExecutionMode.DATAFRAME
@@ -385,8 +385,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && (clause.getExpression()
                                 .getHighestExecutionMode(this.visitorConfig)
                                 .isUnset()
-                        || (clause.getChildClause() != null
-                                && clause.getChildClause()
+                        || (clause.getPreviousClause() != null
+                                && clause.getPreviousClause()
                                         .getHighestExecutionMode(this.visitorConfig)
                                         .isUnset()))) {
             clause.setHighestExecutionMode(ExecutionMode.UNSET);
@@ -445,10 +445,10 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
         this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
 
-        if (clause.getChildClause() == null) {
+        if (clause.getPreviousClause() == null) {
             clause.setHighestExecutionMode(ExecutionMode.LOCAL);
         } else {
-            clause.setHighestExecutionMode(clause.getChildClause().getHighestExecutionMode(this.visitorConfig));
+            clause.setHighestExecutionMode(clause.getPreviousClause().getHighestExecutionMode(this.visitorConfig));
         }
 
         // if let clause is local, defined variables are stored according to the execution mode of the expression
@@ -473,7 +473,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 argument.setVariableStorageMode(variable.getVariableName(), ExecutionMode.LOCAL);
             }
         }
-        clause.setHighestExecutionMode(clause.getChildClause().getHighestExecutionMode(this.visitorConfig));
+        clause.setHighestExecutionMode(clause.getPreviousClause().getHighestExecutionMode(this.visitorConfig));
         StaticContext clauseContext = clause.getStaticContext();
         for (Entry<Name, InScopeVariable> entry : argument.getInScopeVariables().entrySet()) {
             boolean isKeyVariable = false;
@@ -494,7 +494,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
-        expression.setHighestExecutionMode(expression.getChildClause().getHighestExecutionMode(this.visitorConfig));
+        expression.setHighestExecutionMode(expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig));
         argument.setVariableStorageMode(expression.getCountVariableName(), ExecutionMode.LOCAL);
         return argument;
     }
@@ -850,14 +850,14 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         for (OrderByClauseSortingKey s : clause.getSortingKeys()) {
             visit(s.getExpression(), argument);
         }
-        clause.setHighestExecutionMode(clause.getChildClause().getHighestExecutionMode(this.visitorConfig));
+        clause.setHighestExecutionMode(clause.getPreviousClause().getHighestExecutionMode(this.visitorConfig));
         return argument;
     }
 
     @Override
     public StaticContext visitWhereClause(WhereClause clause, StaticContext argument) {
         visit(clause.getWhereExpression(), argument);
-        clause.setHighestExecutionMode(clause.getChildClause().getHighestExecutionMode(this.visitorConfig));
+        clause.setHighestExecutionMode(clause.getPreviousClause().getHighestExecutionMode(this.visitorConfig));
         return argument;
     }
 
@@ -998,7 +998,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             return argument;
         }
         if (statement
-                .getChildClause()
+                .getPreviousClause()
                 .getHighestExecutionMode(this.visitorConfig)
                 .isUnset()) {
             statement.setHighestExecutionMode(ExecutionMode.UNSET);
@@ -1013,12 +1013,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
         Clause clause = statement.getReturnStatementClause().getFirstClause();
         while (clause != null) {
-            if (clause.getParentClause() != null) {
-                this.visit(clause, clause.getParentClause().getStaticContext());
+            if (clause.getNextClause() != null) {
+                this.visit(clause, clause.getNextClause().getStaticContext());
             } else {
                 this.visit(clause, null);
             }
-            clause = clause.getParentClause();
+            clause = clause.getNextClause();
         }
         statement.setHighestExecutionMode(ExecutionMode.LOCAL);
         return argument;

@@ -104,8 +104,8 @@ public class LetClause extends Clause {
         if (this.expression != null) {
             result.add(this.expression);
         }
-        if (this.getChildClause() != null) {
-            result.add(this.getChildClause());
+        if (this.getPreviousClause() != null) {
+            result.add(this.getPreviousClause());
         }
         return result;
     }

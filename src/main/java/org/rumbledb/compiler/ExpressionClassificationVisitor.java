@@ -179,7 +179,7 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         ExpressionClassification result = argument;
         while (clause != null) {
             result = this.visit(clause, result);
-            clause = clause.getParentClause();
+            clause = clause.getNextClause();
         }
         result = expression.getReturnClause().getReturnExpr().getExpressionClassification();
         result = result.isUpdating() ? ExpressionClassification.UPDATING : result;

@@ -256,7 +256,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private StaticContext visitChildClause(Clause clause, StaticContext argument) {
         StaticContext context =
-                clause.getChildClause() == null ? argument : this.visit(clause.getChildClause(), argument);
+                clause.getPreviousClause() == null ? argument : this.visit(clause.getPreviousClause(), argument);
         clause.setStaticContext(context);
         return context;
     }

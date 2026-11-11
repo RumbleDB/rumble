@@ -62,7 +62,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
             return variableReference.getVariableName().equals(name);
         }
         if (expression instanceof Clause clause) {
-            if (clause.getChildClause() != null && isVariableReferenced(clause.getChildClause(), name)) {
+            if (clause.getPreviousClause() != null && isVariableReferenced(clause.getPreviousClause(), name)) {
                 return true;
             }
         }

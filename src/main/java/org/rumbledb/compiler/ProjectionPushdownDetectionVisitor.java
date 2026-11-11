@@ -95,7 +95,7 @@ public class ProjectionPushdownDetectionVisitor
     @Override
     public ReferenceMap visitLetClause(LetClause clause, ReferenceMap argument) {
         // argument: the references made by subsequent clauses
-        if (clause.getChildClause() != null && !argument.containsKey(clause.getVariableName())) {
+        if (clause.getPreviousClause() != null && !argument.containsKey(clause.getVariableName())) {
             clause.setReferenced(false);
             return argument;
         }
@@ -182,7 +182,7 @@ public class ProjectionPushdownDetectionVisitor
         // starting with the references made by the outside world
         while (clause != null) {
             argument = this.visit(clause, argument);
-            clause = clause.getChildClause();
+            clause = clause.getPreviousClause();
         }
         // returns a copy of the references made by the FLWOR expression and the outside world
         // (will be passed to previous clauses and their subexpressions)

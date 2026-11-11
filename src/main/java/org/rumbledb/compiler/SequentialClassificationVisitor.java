@@ -298,7 +298,7 @@ public class SequentialClassificationVisitor extends AbstractNodeVisitor<Descend
         DescendentSequentialProperties result = argument;
         while (clause != null) {
             result = this.visit(clause, result);
-            clause = clause.getParentClause();
+            clause = clause.getNextClause();
         }
         if (result.isSequential()) {
             statement.setSequential(true);

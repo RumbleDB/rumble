@@ -261,7 +261,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 result.chainWith(temp);
             }
             result = temp;
-            clause = clause.getParentClause();
+            clause = clause.getNextClause();
         }
         Expression resultingExpression = new FlworExpression((ReturnClause) result, expression.getMetadata());
         resultingExpression.setStaticContext(expression.getStaticContext());
@@ -1300,7 +1300,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 newClause.chainWith(temp);
             }
             newClause = temp;
-            flowrClause = flowrClause.getParentClause();
+            flowrClause = flowrClause.getNextClause();
         }
         FlowrStatement resultStatement = new FlowrStatement((ReturnStatementClause) newClause, statement.getMetadata());
         resultStatement.setStaticContext(statement.getStaticContext());

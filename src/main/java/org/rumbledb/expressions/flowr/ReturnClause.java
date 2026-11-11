@@ -41,7 +41,7 @@ public class ReturnClause extends Clause {
         if (this.returnExpr != null) {
             result.add(this.returnExpr);
         }
-        result.add(this.getChildClause());
+        result.add(this.getPreviousClause());
         return result;
     }
 

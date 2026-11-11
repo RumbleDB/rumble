@@ -234,7 +234,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     }
 
     private void visitPreviousClause(Clause clause) {
-        Clause previous = clause.getChildClause();
+        Clause previous = clause.getPreviousClause();
         if (previous != null) {
             visit(previous, null);
             addOutputVariableDependencies(clause, getOutputVariableDependencies(previous));
@@ -242,7 +242,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     }
 
     private void inheritPreviousClauseDependencies(Clause clause) {
-        Clause previous = clause.getChildClause();
+        Clause previous = clause.getPreviousClause();
         if (previous != null) {
             // Only this clause's references are shadowed by preceding bindings.
             // Earlier free references must survive even if a later binding has the same name.
@@ -596,7 +596,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         visit(clause.getReturnStatement(), null);
         addInputVariableDependencies(clause, getInputVariableDependencies(clause.getReturnStatement()));
 
-        removeInputVariableDependencies(clause, getOutputVariableDependencies(clause.getChildClause()));
+        removeInputVariableDependencies(clause, getOutputVariableDependencies(clause.getPreviousClause()));
         return null;
     }
 
