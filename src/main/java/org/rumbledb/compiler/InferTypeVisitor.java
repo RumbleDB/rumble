@@ -653,8 +653,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
     }
 
-    /** Resolves the omitted final argument without adding an expression to the source AST. */
-    private SequenceType contextArgumentType(FunctionCallExpression call, BuiltinFunction.ContextArgument input) {
+    /** Checks the context item that replaces an omitted final argument, and returns its type after conversion. */
+    private SequenceType checkContextArgument(FunctionCallExpression call, BuiltinFunction.ContextArgument input) {
         SequenceType type = call.getStaticContext().getContextItemStaticType();
         // No known focus type does not prove absence. Leave the presence check to the runtime.
         if (type == null) {
@@ -703,14 +703,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression);
             return argument;
         }
-        List<SequenceType> argumentTypes = checkFunctionArguments(expression, signature);
+        List<SequenceType> inputTypes = checkFunctionArguments(expression, signature);
         if (expression.isPartialApplication()) {
             expression.setStaticSequenceType(inferPartialApplicationType(expression, signature));
             return argument;
         }
+        if (builtinFunction != null && builtinFunction.getContextArgument() != null) {
+            inputTypes.add(checkContextArgument(expression, builtinFunction.getContextArgument()));
+        }
 
-        Optional<SequenceType> returnType =
-                inferBuiltinReturnType(expression, builtinFunction, argumentTypes, argument);
+        Optional<SequenceType> returnType = inferBuiltinReturnType(expression, builtinFunction, inputTypes, argument);
         expression.setStaticSequenceType(returnType.orElseGet(() -> {
             SequenceType declaredReturnType = signature.getReturnType();
             return declaredReturnType == null ? SequenceType.createSequenceType("item*") : declaredReturnType;
@@ -751,17 +753,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature));
     }
 
-    /** Applies a builtin's return rule to its explicit and implicit inputs. */
+    /** Applies a builtin's return rule to the types of its inputs, the context item included. */
     private Optional<SequenceType> inferBuiltinReturnType(
             FunctionCallExpression call,
             BuiltinFunction function,
-            List<SequenceType> argumentTypes,
+            List<SequenceType> inputTypes,
             StaticContext staticContext) {
         if (function == null) {
             return Optional.empty();
-        }
-        if (function.getContextArgument() != null) {
-            argumentTypes.add(contextArgumentType(call, function.getContextArgument()));
         }
         return function.getReturnTypeRule()
                 .infer(
@@ -771,7 +770,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                                 this.rumbleRuntimeConfiguration,
                                 this.resourceResolver,
                                 staticContext,
-                                argumentTypes));
+                                inputTypes));
     }
 
     /**
