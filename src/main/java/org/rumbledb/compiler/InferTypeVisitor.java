@@ -167,7 +167,6 @@ import org.rumbledb.runtime.functions.ConstructorFunctionIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.DocumentNodeItemType;
 import org.rumbledb.types.ElementNodeItemType;
-import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
