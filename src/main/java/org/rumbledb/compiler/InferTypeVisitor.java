@@ -44,7 +44,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
