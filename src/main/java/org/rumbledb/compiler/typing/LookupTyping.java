@@ -38,7 +38,7 @@ public final class LookupTyping {
         SequenceType integer = SequenceType.createSequenceType("integer");
         if (!lookupType.isSubtypeOf(integer)) {
             this.errors.reportMismatch(
-                    "the lookup expression type must match integer, instead " + lookupType + " was inferred",
+                    "An array lookup expects an xs:integer position, but its key is " + lookupType + ".",
                     lookupType,
                     integer,
                     node);
@@ -63,12 +63,7 @@ public final class LookupTyping {
         SequenceType atomic = SequenceType.createSequenceType("anyAtomicType");
         if (!lookupType.isSubtypeOf(atomic)) {
             this.errors.reportMismatch(
-                    "the lookup expression type must be castable to string (i.e. must match atomic), instead "
-                            + lookupType
-                            + " was inferred",
-                    lookupType,
-                    atomic,
-                    node);
+                    "A lookup expects an atomic key, but its key is " + lookupType + ".", lookupType, atomic, node);
         }
 
         boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));

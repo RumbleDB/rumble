@@ -253,7 +253,12 @@ public final class BuiltinFunctionTyping {
                             .getXmlSchemaCatalog()
                             .mayHaveUnavailableTypedValue(element.getSchemaTypeName())) {
                 this.errors.report(
-                        "The element type permits content without a typed value.", ErrorCode.AtomizationError, call);
+                        "The schema type of "
+                                + member
+                                + " allows content without a typed value, so it may not be"
+                                + " atomized.",
+                        ErrorCode.AtomizationError,
+                        call);
             }
         }
     }
@@ -435,9 +440,7 @@ public final class BuiltinFunctionTyping {
                 : isStrictAggregateItemType(inputItemType);
         if (!validInput) {
             this.errors.report(
-                    functionName
-                            + " requires its inferred input sequence type to be empty or have an item type that is a subtype of xs:numeric, xs:yearMonthDuration, or xs:dayTimeDuration, found "
-                            + inputType,
+                    functionName + " expects numbers, or durations of one kind, but its input is " + inputType + ".",
                     ErrorCode.InvalidArgumentType,
                     expression,
                     mayAggregate(inputType, BuiltinFunctionTyping::isStrictAggregateItemType));
@@ -541,9 +544,9 @@ public final class BuiltinFunctionTyping {
         if (!comparedAtRuntime && !ComparisonTyping.hasMutuallyComparableItems(inputItemType)) {
             this.errors.report(
                     functionName
-                            + " requires an atomic input type other than xs:anyAtomicType whose member types can be"
-                            + " compared with each other, found "
-                            + inputType,
+                            + " expects values that can be compared with each other, but its input is "
+                            + inputType
+                            + ".",
                     ErrorCode.InvalidArgumentType,
                     expression,
                     mayAggregate(inputType, ComparisonTyping::hasMutuallyComparableItems));

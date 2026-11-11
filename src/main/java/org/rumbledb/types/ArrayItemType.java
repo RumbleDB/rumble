@@ -224,56 +224,20 @@ public class ArrayItemType extends AbstractItemType {
         return sb.toString();
     }
 
+    /**
+     * A named type by its name, and an anonymous one, such as an inferred type, by its members, as in [xs:integer]. A
+     * member type that is not resolved yet is shown by the name it refers to.
+     */
     @Override
     public String toString() {
-        if ((new Name(Name.JS_NS, "js", "array")).equals(this.name)) {
-            // generic object
+        if (this.name != null && !this.name.getLocalName().isEmpty()) {
             return this.name.toString();
-        } else {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{ ");
-            if (this.name != null && !this.name.getLocalName().equals("")) {
-                sb.append("\"name\": \"");
-                sb.append(this.name.toString());
-                sb.append("\", ");
-            }
-            sb.append("\"kind\": \"array\", ");
-
-            sb.append("\"baseType\": \"");
-            sb.append(this.baseType.toString());
-            sb.append("\", ");
-
-            sb.append("\"treeDepth\": ");
-            sb.append(this.typeTreeDepth);
-            sb.append(", ");
-
-            if (this.minLength != null) {
-                sb.append("\"minLength\": ");
-                sb.append(this.minLength);
-                sb.append(", ");
-            }
-            if (this.maxLength != null) {
-                sb.append("\"maxLength\": ");
-                sb.append(this.maxLength);
-                sb.append(", ");
-            }
-
-            if (isResolved()) {
-                sb.append("\"content\": ");
-                String type = this.getArrayContentFacet().toString();
-                if (type.startsWith("{")) {
-                    sb.append(type);
-                } else {
-                    sb.append("\"");
-                    sb.append(type);
-                    sb.append("\"");
-                }
-            } else {
-                sb.append(" (content not resolved yet) ");
-            }
-            sb.append(" }");
-            return sb.toString();
-        } // consider add content and various stuff
+        }
+        // An empty array literal is an anonymous array restricted to length 0.
+        if (Integer.valueOf(0).equals(this.maxLength)) {
+            return "[]";
+        }
+        return this.content == null ? "array" : "[" + this.content + "]";
     }
 
     public void processBaseType() {

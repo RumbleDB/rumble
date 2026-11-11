@@ -15,8 +15,6 @@
  */
 package org.rumbledb.compiler.typing;
 
-import java.util.List;
-
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.ItemType;
@@ -42,23 +40,44 @@ public final class AtomizedOperands {
     /** Checks that the operands of an operator that atomizes them, such as + or eq, can be atomized. */
     public static void checkAtomizableOperands(
             StaticTypeErrors errors, String operator, SequenceType left, SequenceType right, Node node) {
-        ItemType reported = null;
-        for (SequenceType operand : List.of(left, right)) {
-            ItemType type = operand.isEmptySequence() ? null : operand.getItemType();
-            // an operand that can never be atomized is reported first, since atomizing it always fails
-            if (type != null
-                    && !TypeAtomization.isAtomizable(type)
-                    && (reported == null || TypeAtomization.isNeverAtomizable(type))) {
-                reported = type;
-            }
+        boolean leftFails = mayNotAtomize(left);
+        boolean rightFails = mayNotAtomize(right);
+        if (!leftFails && !rightFails) {
+            return;
         }
-        if (reported != null) {
-            errors.report(
-                    "The operands of '" + operator + "' must be atomizable, found " + reported,
-                    nonAtomizableErrorCode(reported),
-                    node,
-                    !TypeAtomization.isNeverAtomizable(reported));
+        // an operand that can never be atomized is reported first, since atomizing it always fails
+        boolean reportRight = rightFails && (!leftFails || TypeAtomization.isNeverAtomizable(right.getItemType()));
+        SequenceType reported = reportRight ? right : left;
+        errors.report(
+                TypeErrorMessages.notAtomizable(
+                        "'" + operator + "'", reportRight ? "its right operand" : "its left operand", reported),
+                node,
+                !TypeAtomization.isNeverAtomizable(reported.getItemType()));
+    }
+
+    /**
+     * Checks that each operand of an operator such as + or eq atomizes to at most one value, and returns the arity of
+     * its result, which is at most one value when an operand may have several.
+     */
+    public static SequenceType.Arity checkSingletonOperands(
+            StaticTypeErrors errors, String operator, SequenceType left, SequenceType right, Node node) {
+        SequenceType.Arity arity = resolveArities(left, right);
+        if (arity != null) {
+            return arity;
         }
+        boolean reportLeft = atomizedSingletonArity(left) == null;
+        errors.report(
+                TypeErrorMessages.severalValues(
+                        "'" + operator + "'",
+                        reportLeft ? "its left operand" : "its right operand",
+                        reportLeft ? left : right),
+                node,
+                mayBeSingleton(left) && mayBeSingleton(right));
+        return SequenceType.Arity.OneOrZero;
+    }
+
+    private static boolean mayNotAtomize(SequenceType operand) {
+        return !operand.isEmptySequence() && !TypeAtomization.isAtomizable(operand.getItemType());
     }
 
     /**
@@ -75,8 +94,9 @@ public final class AtomizedOperands {
                 : TypeAtomization.inferType(operand);
     }
 
-    /** Describes an operand together with its typed value, when atomization changes it and it is known. */
-    public static String describeAtomizedType(SequenceType operand, SequenceType atomized) {
+    /** Describes an operand by its type, and by its typed value when atomization changes it and it is known. */
+    public static String describe(SequenceType operand) {
+        SequenceType atomized = knownAtomizedType(operand);
         return atomized == null || operand.equals(atomized)
                 ? operand.toString()
                 : operand + " with typed value " + atomized;

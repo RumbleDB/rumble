@@ -16,8 +16,10 @@
 package org.rumbledb.compiler.typing;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
@@ -66,14 +68,8 @@ public final class ArithmeticTyping {
             Node node) {
         this.errors.rejectEmptyOperands(leftType, rightType, node);
 
-        SequenceType.Arity inferredArity = AtomizedOperands.resolveArities(leftType, rightType);
-        if (inferredArity == null) {
-            this.errors.report(
-                    "'+' and '*' arities are not allowed for the operands of " + operator,
-                    node,
-                    AtomizedOperands.mayBeSingleton(leftType) && AtomizedOperands.mayBeSingleton(rightType));
-            inferredArity = SequenceType.Arity.OneOrZero;
-        }
+        SequenceType.Arity inferredArity =
+                AtomizedOperands.checkSingletonOperands(this.errors, operator, leftType, rightType, node);
 
         AtomizedOperands.checkAtomizableOperands(this.errors, operator, leftType, rightType, node);
         ItemType inferredType = inferBinaryOperationType(leftType.getItemType(), rightType.getItemType(), operation);
@@ -88,10 +84,7 @@ public final class ArithmeticTyping {
                                 + rightType
                                 + ", unless one is empty");
             } else {
-                this.errors.report(
-                        "The following types operation is not possible: " + leftType + " " + operator + " " + rightType,
-                        node,
-                        mayPass);
+                this.errors.report(notDefinedMessage("'" + operator + "'", leftType, rightType), node, mayPass);
             }
             inferredType = BuiltinTypesCatalogue.atomicItem;
         }
@@ -276,7 +269,8 @@ public final class ArithmeticTyping {
         }
     }
 
-    public SequenceType inferUnaryType(SequenceType childInferredType, Node node) {
+    public SequenceType inferUnaryType(SequenceType childInferredType, boolean negated, Node node) {
+        String operator = "Unary '" + (negated ? "-" : "+") + "'";
 
         // if the child is the empty sequence just infer the empty sequence
         this.errors.rejectInferredEmpty(childInferredType, node, "its operand does");
@@ -284,7 +278,7 @@ public final class ArithmeticTyping {
         SequenceType.Arity resultArity = AtomizedOperands.atomizedSingletonArity(childInferredType);
         if (resultArity == null) {
             this.errors.report(
-                    "'+' and '*' arities are not allowed for unary expressions",
+                    TypeErrorMessages.severalValues(operator, "its operand", childInferredType),
                     node,
                     AtomizedOperands.mayBeSingleton(childInferredType));
             resultArity = SequenceType.Arity.OneOrZero;
@@ -302,10 +296,7 @@ public final class ArithmeticTyping {
                                 + childInferredType
                                 + ", unless it is empty");
             } else {
-                this.errors.report(
-                        "It is not possible to have a unary expression with the following type: " + childInferredType,
-                        node,
-                        mayPass);
+                this.errors.report(notDefinedMessage(operator, childInferredType), node, mayPass);
             }
             childItemType = BuiltinTypesCatalogue.numericItem;
         }
@@ -330,5 +321,13 @@ public final class ArithmeticTyping {
             results.add(normalized);
         }
         return ItemTypeFactory.createInferredUnionType(results);
+    }
+
+    /** The message for an operator that is not defined for the types of its operands, such as '+' for a string. */
+    private static String notDefinedMessage(String operator, SequenceType... operands) {
+        return operator
+                + " is not defined for "
+                + Arrays.stream(operands).map(SequenceType::toString).collect(Collectors.joining(" and "))
+                + ".";
     }
 }

@@ -29,6 +29,8 @@ import org.rumbledb.xml.schema.XmlSchemaCatalog;
 /** Typing rules of cast and castable expressions, to atomic and XML Schema simple types. */
 public final class CastTyping {
 
+    private static final String INVALID_TARGET_MESSAGE = "xs:anyAtomicType is not a valid target type of a cast.";
+
     private final StaticTypeErrors errors;
 
     public CastTyping(StaticTypeErrors errors) {
@@ -43,8 +45,7 @@ public final class CastTyping {
         }
         ItemType itemType = targetType.getItemType();
         if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
-            this.errors.report(
-                    "atomic item type is not allowed in castable expression", ErrorCode.CastableErrorCode, node);
+            this.errors.report(INVALID_TARGET_MESSAGE, ErrorCode.CastableErrorCode, node);
         }
         checkCastOperand(operandType, node);
         return new SequenceType(BuiltinTypesCatalogue.booleanItem);
@@ -57,7 +58,7 @@ public final class CastTyping {
 
             if (operandType.isEmptySequence()) {
                 if (targetType.getArity() != SequenceType.Arity.OneOrZero) {
-                    this.errors.report("Empty sequence cannot be cast to a non-optional XML Schema simple type.", node);
+                    this.errors.report(castCardinalityMessage(operandType, targetType), node);
                 }
                 return new SequenceType(BuiltinTypesCatalogue.item, SequenceType.Arity.Zero);
             }
@@ -65,7 +66,7 @@ public final class CastTyping {
             SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(operandType);
             if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(targetType.getArity())) {
                 this.errors.report(
-                        castCardinalityMessage(operandType, atomizedOperand, targetType),
+                        castCardinalityMessage(operandType, targetType),
                         node,
                         atomizedOperand
                                 .getCardinality()
@@ -91,13 +92,13 @@ public final class CastTyping {
         SequenceType castedSequenceType = targetType;
 
         if (castedSequenceType.getItemType().equals(BuiltinTypesCatalogue.atomicItem)) {
-            this.errors.report("atomic item type is not allowed in cast expression", ErrorCode.CastableErrorCode, node);
+            this.errors.report(INVALID_TARGET_MESSAGE, ErrorCode.CastableErrorCode, node);
         }
 
         // Empty sequence case
         if (operandType.isEmptySequence()) {
             if (castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
-                this.errors.report("Empty sequence cannot be cast to type with quantifier different from '?'", node);
+                this.errors.report(castCardinalityMessage(operandType, castedSequenceType), node);
             } else {
                 // no additional check is needed
                 return castedSequenceType;
@@ -107,7 +108,7 @@ public final class CastTyping {
         SequenceType atomizedOperand = AtomizedOperands.knownAtomizedType(operandType);
         if (atomizedOperand != null && !atomizedOperand.isAritySubtypeOf(castedSequenceType.getArity())) {
             this.errors.report(
-                    castCardinalityMessage(operandType, atomizedOperand, castedSequenceType),
+                    castCardinalityMessage(operandType, castedSequenceType),
                     node,
                     atomizedOperand
                             .getCardinality()
@@ -125,9 +126,10 @@ public final class CastTyping {
                     || castableMembers(operandType.getItemType(), castedSequenceType.getItemType())
                             .anyMatch(castable -> castable);
             this.errors.report(
-                    mayPass
-                            ? "The inferred type " + operandType + " is not guaranteed to cast as " + castedSequenceType
-                            : "It is never possible to cast a " + operandType + " as " + castedSequenceType,
+                    operandType
+                            + (mayPass ? " is not always castable as " : " is never castable as ")
+                            + castedSequenceType.getItemType()
+                            + ".",
                     ErrorCode.UnexpectedTypeErrorCode,
                     node,
                     mayPass);
@@ -138,11 +140,15 @@ public final class CastTyping {
         return castedSequenceType;
     }
 
-    private static String castCardinalityMessage(SequenceType operand, SequenceType atomized, SequenceType target) {
-        return "with static type feature it is not possible to cast a "
-                + AtomizedOperands.describeAtomizedType(operand, atomized)
-                + " as "
-                + target;
+    private static String castCardinalityMessage(SequenceType operand, SequenceType target) {
+        String expected = target.getArity() == SequenceType.Arity.One ? "exactly one value" : "at most one value";
+        return "A cast as "
+                + target
+                + " expects "
+                + expected
+                + ", but its operand is "
+                + AtomizedOperands.describe(operand)
+                + ".";
     }
 
     private boolean isSchemaCastTarget(SequenceType sequenceType, XmlSchemaCatalog schemaCatalog) {
@@ -159,8 +165,7 @@ public final class CastTyping {
     private void checkCastOperand(SequenceType operandType, Node node) {
         if (!operandType.isEmptySequence() && !TypeAtomization.isAtomizable(operandType.getItemType())) {
             this.errors.report(
-                    "A cast operand must be atomic after atomization, found " + operandType,
-                    AtomizedOperands.nonAtomizableErrorCode(operandType.getItemType()),
+                    TypeErrorMessages.notAtomizable("A cast", "its operand", operandType),
                     node,
                     !TypeAtomization.isNeverAtomizable(operandType.getItemType()));
         }

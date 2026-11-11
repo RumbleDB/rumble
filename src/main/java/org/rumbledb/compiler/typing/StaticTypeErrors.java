@@ -107,8 +107,19 @@ public final class StaticTypeErrors {
         record(message, code, node, !mayPass);
     }
 
+    /** Reports a shared error, which is possible when some values may still pass the check, and otherwise certain. */
+    public void report(TypeErrorMessages.Message message, Node node, boolean mayPass) {
+        report(message.text(), message.code(), node, mayPass);
+    }
+
     /** Reports that the actual type is not a subtype of the expected one, which is possible if they may overlap. */
     public void reportMismatch(String message, SequenceType actual, SequenceType expected, Node node) {
+        report(message, node, actual.mayMatch(expected));
+    }
+
+    /** Reports that the actual type is not a subtype of the expected one, which is possible if they may overlap. */
+    public void reportMismatch(
+            TypeErrorMessages.Message message, SequenceType actual, SequenceType expected, Node node) {
         report(message, node, actual.mayMatch(expected));
     }
 
@@ -137,10 +148,25 @@ public final class StaticTypeErrors {
         }
     }
 
-    /** Explicit static assertions apply even when optional static typing is disabled. */
+    /**
+     * Explicit static assertions apply even when optional static typing is disabled. One whose operand is unknown is
+     * not reported, since its type is not known either.
+     */
     public void reportAssertion(IsStaticallyUnexpectedTypeException error, Node node) {
+        recordStaticError(error, node, hasUnknownOperand(node));
+    }
+
+    /**
+     * Reports an error that the query has whatever its operand types, and even when optional static typing is
+     * disabled, such as a call of an undeclared function. The node is typed as unknown, and typing goes on.
+     */
+    public void reportStaticError(RumbleException error, Node node) {
+        recordStaticError(error, node, false);
+    }
+
+    private void recordStaticError(RumbleException error, Node node, boolean suppressed) {
         this.failedNodes.add(node);
-        if (!hasUnknownOperand(node) && !this.errorIndices.containsKey(site(node))) {
+        if (!suppressed && !this.errorIndices.containsKey(site(node))) {
             this.errorIndices.put(site(node), this.errors.size());
             this.errors.add(error);
         }
@@ -200,11 +226,7 @@ public final class StaticTypeErrors {
      * for a reason such as "its left operand does".
      */
     public void reportInferredEmpty(Node node, String reason) {
-        reportInferredEmpty(
-                "This expression always returns the empty sequence, because "
-                        + reason
-                        + ". Static typing only allows this for ().",
-                node);
+        report(TypeErrorMessages.inferredEmpty(reason), node, false);
     }
 
     /** Reports a node that makes its expression always return the empty sequence, which the message explains. */
