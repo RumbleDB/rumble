@@ -22,6 +22,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -135,6 +136,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
                         || objectToMerge instanceof ObjectConstructorRuntimeIterator)) {
             return NativeClauseContext.NoNativeQuery;
         }
+        DataType rowSchema = nativeClauseContext.getSchema();
         List<String> queries = new ArrayList<>();
         List<String> keyNames = new ArrayList<>();
         List<ItemType> valueTypes = new ArrayList<>();
@@ -145,7 +147,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
                 if (objectPartContext == NativeClauseContext.NoNativeQuery) {
                     return NativeClauseContext.NoNativeQuery;
                 }
-                nativeClauseContext = new NativeClauseContext(objectPartContext, null, null);
+                nativeClauseContext = withSchema(objectPartContext, rowSchema);
                 ItemType objectPartContextResultingItemType =
                         objectPartContext.getResultingType().getItemType();
                 objectPartContextResultingItemType.getObjectKeysFacet().forEach(k -> {
@@ -172,7 +174,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
                         return NativeClauseContext.NoNativeQuery;
                     }
                     keyNativeContexts.add(keyNativeContext);
-                    nativeClauseContext = keyNativeContext;
+                    nativeClauseContext = withSchema(keyNativeContext, rowSchema);
                 }
                 for (ItemRuntimePlan value : child.values) {
                     NativeClauseContext valueNativeContext =
@@ -181,7 +183,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
                         return NativeClauseContext.NoNativeQuery;
                     }
                     valueNativeContexts.add(valueNativeContext);
-                    nativeClauseContext = valueNativeContext;
+                    nativeClauseContext = withSchema(valueNativeContext, rowSchema);
                 }
 
                 int subQueryCount = keyNativeContexts.size();
@@ -239,6 +241,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
         if (this.keys.stream().anyMatch(key -> !(key instanceof StringRuntimeIterator))) {
             return NativeClauseContext.NoNativeQuery;
         }
+        DataType rowSchema = nativeClauseContext.getSchema();
         List<NativeClauseContext> keyNativeContexts = new ArrayList<>();
         List<NativeClauseContext> valueNativeContexts = new ArrayList<>();
         for (ItemRuntimePlan key : this.keys) {
@@ -247,7 +250,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
                 return NativeClauseContext.NoNativeQuery;
             }
             keyNativeContexts.add(keyNativeContext);
-            nativeClauseContext = keyNativeContext;
+            nativeClauseContext = withSchema(keyNativeContext, rowSchema);
         }
         for (ItemRuntimePlan value : this.values) {
             NativeClauseContext valueNativeContext = NativeQueryRuntimePlan.generate(value, nativeClauseContext);
@@ -255,7 +258,7 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
                 return NativeClauseContext.NoNativeQuery;
             }
             valueNativeContexts.add(valueNativeContext);
-            nativeClauseContext = valueNativeContext;
+            nativeClauseContext = withSchema(valueNativeContext, rowSchema);
         }
         int subQueryCount = keyNativeContexts.size();
         if (subQueryCount == 0) {
@@ -311,5 +314,16 @@ public class ObjectConstructorRuntimeIterator extends AbstractAtMostOneItemRunti
             }
         }
         return constructorKeyNames;
+    }
+
+    /**
+     * Keys and values are generated one after the other on the same view, but a key or value can narrow the schema
+     * of its context to its own column type (e.g. a variable reference). The next key or value must see the schema of
+     * the row again.
+     */
+    private static NativeClauseContext withSchema(NativeClauseContext previous, DataType rowSchema) {
+        NativeClauseContext next = new NativeClauseContext(previous, null, null);
+        next.setSchema(rowSchema);
+        return next;
     }
 }
