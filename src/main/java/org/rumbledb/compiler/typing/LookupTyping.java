@@ -116,6 +116,16 @@ public final class LookupTyping {
                 : new SequenceType(value.getItemType(), value.getCardinality().union(SequenceCardinality.EMPTY));
     }
 
+    /** Whether a dynamic call can select from this item, like a lookup of one key. */
+    public static boolean isCallableLookupInput(ItemType itemType) {
+        return itemType.isMapItemType() || itemType.isArrayItemType() || itemType.isXQueryArrayItemType();
+    }
+
+    /** Infers a dynamic call $m(K) of a map or an array, which selects what the lookup $m?K does. */
+    public static SequenceType inferLookupCallType(ItemType itemType) {
+        return inferItemLookupType(itemType, false);
+    }
+
     private static SequenceType inferItemLookupType(ItemType itemType, boolean wildcard) {
         if (itemType.isMapItemType()) {
             return wildcard
@@ -139,7 +149,12 @@ public final class LookupTyping {
         if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
             this.errors.reportInferredEmpty(node);
         }
-        ItemType contentType = inferArrayContentType(mainType.getItemType());
+        return inferArrayMembersType(mainType);
+    }
+
+    /** Infers E[], or members(E): the members of the arrays among the items of E. */
+    public static SequenceType inferArrayMembersType(SequenceType type) {
+        ItemType contentType = inferArrayContentType(type.getItemType());
         if (contentType != null) {
             return new SequenceType(contentType, SequenceType.Arity.ZeroOrMore);
         }
@@ -191,7 +206,7 @@ public final class LookupTyping {
      * Nonarray alternatives contribute no results. Returns Java null when no array is possible;
      * a broad type that could contain arrays instead contributes item.
      */
-    private ItemType inferArrayContentType(ItemType itemType) {
+    private static ItemType inferArrayContentType(ItemType itemType) {
         if (itemType.isUnionType()) {
             ItemType result = null;
             for (ItemType member : itemType.getTypes()) {

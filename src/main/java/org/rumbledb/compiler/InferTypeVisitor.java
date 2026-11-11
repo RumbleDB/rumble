@@ -15,6 +15,7 @@
  */
 package org.rumbledb.compiler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -310,8 +311,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitArrayConstructor(ArrayConstructorExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         if (expression.isFixedSlotsArrayConstructor()) {
-            // Conservative: type as array(*) for fixed-slots constructors for now.
-            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));
+            expression.setStaticSequenceType(new SequenceType(inferFixedSlotsArrayType(expression)));
             return argument;
         }
         Expression contentExpr = expression.getExpression();
@@ -323,6 +323,24 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ItemType arrayType = ItemTypeFactory.createAnonymousArrayType(contentItemType);
         expression.setStaticSequenceType(new SequenceType(arrayType));
         return argument;
+    }
+
+    /**
+     * An array [E1, ..., En] whose members have the types of E1 to En. When each member is one item, it is a JSON
+     * array of these items, as the runtime builds it.
+     */
+    private static ItemType inferFixedSlotsArrayType(ArrayConstructorExpression expression) {
+        SequenceType memberType = null;
+        for (Expression member : expression.getMemberExpressions()) {
+            SequenceType type = typeOf(member, expression);
+            memberType = memberType == null ? type : memberType.leastCommonSupertypeWith(type);
+        }
+        if (memberType == null) {
+            return BuiltinTypesCatalogue.arrayItem;
+        }
+        return memberType.getArity() == SequenceType.Arity.One
+                ? ItemTypeFactory.createAnonymousArrayType(memberType.getItemType())
+                : ItemTypeFactory.xqueryArrayOf(memberType);
     }
 
     @Override
@@ -388,14 +406,41 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitMapConstructor(MapConstructorExpression expression, StaticContext argument) {
-        return withType(expression, new SequenceType(BuiltinTypesCatalogue.mapItem), argument);
+        visitDescendants(expression, argument);
+        expression.setStaticSequenceType(new SequenceType(inferMapConstructorType(expression)));
+        return argument;
+    }
+
+    /**
+     * A map whose keys have the atomized types of the key expressions, and whose values have their types. An empty
+     * map, or one with a key that is always empty, and so always fails, is typed map(*).
+     */
+    private static ItemType inferMapConstructorType(MapConstructorExpression expression) {
+        List<ItemType> keyTypes = new ArrayList<>();
+        SequenceType valueType = null;
+        for (int i = 0; i < expression.getKeys().size(); i++) {
+            SequenceType keyType = typeOf(expression.getKeys().get(i), expression);
+            if (keyType.isEmptySequence()) {
+                return BuiltinTypesCatalogue.mapItem;
+            }
+            keyTypes.add(TypeAtomization.atomizedItemType(keyType.getItemType()));
+            SequenceType entryValueType = typeOf(expression.getValues().get(i), expression);
+            valueType = valueType == null ? entryValueType : valueType.leastCommonSupertypeWith(entryValueType);
+        }
+        if (keyTypes.isEmpty()) {
+            return BuiltinTypesCatalogue.mapItem;
+        }
+        return ItemTypeFactory.mapOf(ItemTypeFactory.createInferredUnionType(keyTypes), valueType);
     }
 
     @Override
     public StaticContext visitDirElemConstructor(DirElemConstructorExpression expression, StaticContext argument) {
         // Translation has already resolved the element's expanded QName, including local namespaces.
         return withType(
-                expression, new SequenceType(ItemTypeFactory.elementNodeItemType(expression.getNodeName())), argument);
+                expression,
+                new SequenceType(ItemTypeFactory.constructedElementNodeItemType(
+                        expression.getNodeName(), expression.getStaticContext().isConstructionPreserve())),
+                argument);
     }
 
     @Override
@@ -406,10 +451,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitComputedElementConstructor(
             ComputedElementConstructorExpression expression, StaticContext argument) {
-        ItemType elementType = expression.hasStaticName()
-                ? ItemTypeFactory.elementNodeItemType(expression.getElementName())
-                : BuiltinTypesCatalogue.elementNode;
-        return withType(expression, new SequenceType(elementType), argument);
+        return withType(
+                expression,
+                new SequenceType(ItemTypeFactory.constructedElementNodeItemType(
+                        expression.hasStaticName() ? expression.getElementName() : null,
+                        expression.getStaticContext().isConstructionPreserve())),
+                argument);
     }
 
     @Override
@@ -1318,14 +1365,34 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata());
         }
 
-        // Filtering at most one item, or selecting one position, keeps at most one item.
+        // Filtering at most one item, or selecting one position, keeps at most one item. A nonempty sequence always
+        // has a first and a last item.
         boolean selectsOnePosition = predicateType.getItemType().equals(BuiltinTypesCatalogue.integerItem)
                 && isSameForEveryItem(predicateExpression);
-        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) || selectsOnePosition
-                ? SequenceType.Arity.OneOrZero
-                : SequenceType.Arity.ZeroOrMore;
+        boolean selectsAnEnd = isFirstPosition(predicateExpression) || isLastCall(predicateExpression);
+        SequenceType.Arity inferredArity;
+        if (selectsAnEnd && !mainType.getCardinality().allowsZero()) {
+            inferredArity = SequenceType.Arity.One;
+        } else if (mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) || selectsOnePosition) {
+            inferredArity = SequenceType.Arity.OneOrZero;
+        } else {
+            inferredArity = SequenceType.Arity.ZeroOrMore;
+        }
         expression.setStaticSequenceType(new SequenceType(mainType.getItemType(), inferredArity));
         return argument;
+    }
+
+    private static boolean isFirstPosition(Expression predicate) {
+        return predicate instanceof IntegerLiteralExpression literal
+                && new BigInteger(literal.getLexicalValue()).equals(BigInteger.ONE);
+    }
+
+    /** Whether the predicate is last(), the size of the filtered sequence. */
+    private static boolean isLastCall(Expression predicate) {
+        if (!(predicate instanceof FunctionCallExpression call)) {
+            return false;
+        }
+        return call.getArguments().isEmpty() && isBuiltinFunctionName(call.getFunctionName(), "last");
     }
 
     /**
@@ -1333,12 +1400,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      * e.g. $s[1], $s[$i] or $s[last() - 1], but not $s[position()] or $s[.], which may select every item.
      */
     private static boolean isSameForEveryItem(Expression predicate) {
-        if (predicate instanceof IntegerLiteralExpression || predicate instanceof VariableReferenceExpression) {
+        if (predicate instanceof IntegerLiteralExpression
+                || predicate instanceof VariableReferenceExpression
+                || isLastCall(predicate)) {
             return true;
-        }
-        if (predicate instanceof FunctionCallExpression call) {
-            // last() is the size of the filtered sequence, which all its items share.
-            return call.getArguments().isEmpty() && isBuiltinFunctionName(call.getFunctionName(), "last");
         }
         if (predicate instanceof AdditiveExpression
                 || predicate instanceof MultiplicativeExpression
@@ -1386,8 +1451,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             return result;
         }
-        if (type.isArrayItemType() || type.isMapItemType()) {
-            return SequenceType.createSequenceType("item*");
+        if (LookupTyping.isCallableLookupInput(type)) {
+            return LookupTyping.inferLookupCallType(type);
         }
         if (!type.isFunctionItemType()) {
             this.errors.report(
@@ -1895,13 +1960,32 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getMainExpression().getStaticSequenceType().getItemType();
         ItemType resultItemType = sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)
                         || sourceItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
-                ? sourceItemType
+                ? withoutTypeAnnotation(sourceItemType)
                 : BuiltinTypesCatalogue.nodeItem;
         resultItemType = inferValidatedType(expression, sourceItemType).orElse(resultItemType);
 
         // Successful validation always returns exactly one copied node.
         expression.setStaticSequenceType(new SequenceType(resultItemType, SequenceType.Arity.One));
         return argument;
+    }
+
+    /**
+     * Validation annotates the copy anew, so its type annotation is dropped: element(a, xs:untyped) becomes element(a),
+     * and document-node(element(a, xs:untyped)) becomes document-node(element(a)).
+     */
+    private static ItemType withoutTypeAnnotation(ItemType source) {
+        if (source instanceof DocumentNodeItemType document && document.getElementTestType() != null) {
+            ItemType element = withoutTypeAnnotation(document.getElementTestType());
+            return element == document.getElementTestType() ? source : ItemTypeFactory.documentNodeItemType(element);
+        }
+        if (!(source instanceof ElementNodeItemType element)
+                || source instanceof SchemaElementNodeItemType
+                || element.getSchemaTypeName() == null) {
+            return source;
+        }
+        return element.getNodeName() == null
+                ? BuiltinTypesCatalogue.elementNode
+                : ItemTypeFactory.elementNodeItemType(element.getNodeName());
     }
 
     /** Validating a document validates its single element child. */

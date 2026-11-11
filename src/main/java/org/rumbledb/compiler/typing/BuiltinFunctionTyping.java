@@ -17,9 +17,12 @@ package org.rumbledb.compiler.typing;
 
 import java.net.URI;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 import org.apache.spark.sql.SparkSession;
@@ -87,6 +90,42 @@ public final class BuiltinFunctionTyping {
                     ? Optional.of(new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceCardinality.ZERO_OR_ONE))
                     : Optional.empty();
         });
+        // The math functions are declared on xs:double? because an empty argument gives an empty result, so the
+        // result of one number is one xs:double.
+        for (String name :
+                List.of("exp", "exp10", "log", "log10", "pow", "sqrt", "sin", "cos", "tan", "asin", "acos", "atan")) {
+            this.rules.put(new Name(Name.MATH_NS, "math", name), (call, staticContext) -> {
+                SequenceType input =
+                        TypeAtomization.inferType(call.getArguments().get(0).getStaticSequenceType());
+                return input.getArity() == SequenceType.Arity.One
+                        ? Optional.of(new SequenceType(BuiltinTypesCatalogue.doubleItem))
+                        : Optional.empty();
+            });
+        }
+        // These functions return items of their first argument, so only its cardinality changes.
+        addInputItemsRule("exactly-one", cardinality -> SequenceCardinality.ONE);
+        addInputItemsRule("one-or-more", SequenceCardinality::replaceZeroWithOne);
+        addInputItemsRule("zero-or-one", SequenceCardinality::atMostOne);
+        addInputItemsRule("head", SequenceCardinality::atMostOne);
+        addInputItemsRule("tail", SequenceCardinality::withoutFirst);
+        addInputItemsRule("reverse", UnaryOperator.identity());
+        addInputItemsRule("unordered", UnaryOperator.identity());
+        addInputItemsRule("sort", UnaryOperator.identity());
+        addInputItemsRule("subsequence", SequenceCardinality::filtered);
+        addInputItemsRule("remove", SequenceCardinality::filtered);
+        addBuiltinRule(
+                "insert-before",
+                (call, staticContext) -> Optional.of(call.getArguments()
+                        .get(0)
+                        .getStaticSequenceType()
+                        .concatenateWith(call.getArguments().get(2).getStaticSequenceType())));
+        // Equal values are merged, but a value remains.
+        addBuiltinRule("distinct-values", (call, staticContext) -> {
+            SequenceType values =
+                    TypeAtomization.inferType(call.getArguments().get(0).getStaticSequenceType());
+            return Optional.of(new SequenceType(
+                    values.getItemType(), values.getCardinality().grouped()));
+        });
         // set output type to 'Integer' if inputType is 'Array'
         addBuiltinRule(
                 "size",
@@ -112,6 +151,33 @@ public final class BuiltinFunctionTyping {
         addBuiltinRule("exactly-one", cardinalityRule(SequenceType.Arity.One));
         addBuiltinRule("zero-or-one", cardinalityRule(SequenceType.Arity.OneOrZero));
         addBuiltinRule("one-or-more", cardinalityRule(SequenceType.Arity.OneOrMore));
+
+        addJsoniqRule(
+                "members",
+                (call, staticContext) -> Optional.of(LookupTyping.inferArrayMembersType(
+                        call.getArguments().get(0).getStaticSequenceType())));
+        addJsoniqRule("project", (call, staticContext) -> Optional.of(inferObjectsChangedType(call)));
+        addJsoniqRule("remove-keys", (call, staticContext) -> Optional.of(inferObjectsChangedType(call)));
+
+        // The map functions keep the key and value types of the maps they build, where their signatures say map(*).
+        addMapRule("entry", (call, staticContext) -> inferMapEntryType(call));
+        addMapRule("get", (call, staticContext) -> typedMapArgument(call).map(LookupTyping::inferLookupCallType));
+        addMapRule("put", (call, staticContext) -> inferMapPutType(call));
+        addMapRule("remove", (call, staticContext) -> typedMapArgument(call).map(SequenceType::new));
+
+        // The array functions keep the member type of their array, where their signatures say item* or array(*).
+        addArrayRule("get", (member, call) -> member);
+        addArrayRule("head", (member, call) -> member);
+        for (String localName : List.of("tail", "reverse", "remove", "subarray", "sort", "filter")) {
+            addArrayRule(localName, (member, call) -> arrayOf(member));
+        }
+        addArrayRule(
+                "append", (member, call) -> arrayOf(member, call.getArguments().get(1)));
+        addArrayRule(
+                "insert-before",
+                (member, call) -> arrayOf(member, call.getArguments().get(2)));
+        addArrayRule(
+                "put", (member, call) -> arrayOf(member, call.getArguments().get(2)));
 
         // For input functions, we read the schema of the data to annotate the static type precisely
         this.rules.put(
@@ -223,6 +289,103 @@ public final class BuiltinFunctionTyping {
     private void addBuiltinRule(String localName, ReturnTypeRule rule) {
         this.rules.put(Name.createVariableInDefaultFunctionNamespace(localName), rule);
         this.rules.put(Name.createVariableInDefaultBuiltinFunctionNamespace(localName), rule);
+    }
+
+    /** A function that returns items of its first argument, with a cardinality that depends on the argument's. */
+    private void addInputItemsRule(String localName, UnaryOperator<SequenceCardinality> cardinality) {
+        addBuiltinRule(localName, (call, staticContext) -> {
+            SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+            return input.isEmptySequence()
+                    ? Optional.of(input)
+                    : Optional.of(new SequenceType(input.getItemType(), cardinality.apply(input.getCardinality())));
+        });
+    }
+
+    // A JSONiq function can be called in the JSONiq default function namespace or in the jn namespace.
+    private void addJsoniqRule(String localName, ReturnTypeRule rule) {
+        this.rules.put(Name.createVariableInDefaultFunctionNamespace(localName), rule);
+        this.rules.put(new Name(Name.JN_NS, "jn", localName), rule);
+    }
+
+    /** jn:project and jn:remove-keys change the fields of each object, and return other items unchanged. */
+    private static SequenceType inferObjectsChangedType(FunctionCallExpression call) {
+        SequenceType input = call.getArguments().get(0).getStaticSequenceType();
+        if (input.isEmptySequence()) {
+            return input;
+        }
+        List<ItemType> members = input.getItemType().getMemberTypes().stream()
+                .map(member -> member.isObjectItemType() ? BuiltinTypesCatalogue.objectItem : member)
+                .toList();
+        return new SequenceType(ItemTypeFactory.createInferredUnionType(members), input.getCardinality());
+    }
+
+    private void addMapRule(String localName, ReturnTypeRule rule) {
+        this.rules.put(new Name(Name.MAP_NS, "map", localName), rule);
+    }
+
+    /** A rule for a function whose first argument is one array, from the type of the array's members. */
+    private void addArrayRule(String localName, BiFunction<SequenceType, FunctionCallExpression, SequenceType> rule) {
+        this.rules.put(new Name(Name.ARRAY_NS, "array", localName), (call, staticContext) -> arrayMemberType(call)
+                .map(member -> rule.apply(member, call)));
+    }
+
+    private static Optional<SequenceType> arrayMemberType(FunctionCallExpression call) {
+        SequenceType type = call.getArguments().get(0).getStaticSequenceType();
+        ItemType array = type.getItemType();
+        return type.getArity() == SequenceType.Arity.One && (array.isArrayItemType() || array.isXQueryArrayItemType())
+                ? Optional.of(LookupTyping.inferLookupCallType(array))
+                : Optional.empty();
+    }
+
+    /** An array(M), which also holds a JSON array whose members are items of type M. */
+    private static SequenceType arrayOf(SequenceType member) {
+        return new SequenceType(ItemTypeFactory.xqueryArrayOf(member));
+    }
+
+    /** An array whose members are those of an array, or the value of an argument. */
+    private static SequenceType arrayOf(SequenceType member, Expression added) {
+        return arrayOf(member.leastCommonSupertypeWith(added.getStaticSequenceType()));
+    }
+
+    /** The type of the map passed as the first argument, when it is one map with known key and value types. */
+    private static Optional<ItemType> typedMapArgument(FunctionCallExpression call) {
+        SequenceType type = call.getArguments().get(0).getStaticSequenceType();
+        return type.getArity() == SequenceType.Arity.One
+                        && type.getItemType().isMapItemType()
+                        && !type.getItemType().equals(BuiltinTypesCatalogue.mapItem)
+                ? Optional.of(type.getItemType())
+                : Optional.empty();
+    }
+
+    /** The type of a key argument, which is atomized. A key that is always empty makes the call fail. */
+    private static Optional<ItemType> atomizedKeyType(Expression key) {
+        SequenceType type = key.getStaticSequenceType();
+        return type.isEmptySequence()
+                ? Optional.empty()
+                : Optional.of(TypeAtomization.atomizedItemType(type.getItemType()));
+    }
+
+    /** map:entry($key, $value) is a map from the key's type to the value's type. */
+    private static Optional<SequenceType> inferMapEntryType(FunctionCallExpression call) {
+        SequenceType valueType = call.getArguments().get(1).getStaticSequenceType();
+        return atomizedKeyType(call.getArguments().get(0)).map(keyType -> mapType(keyType, valueType));
+    }
+
+    /** map:put($map, $key, $value) adds the key's type and the value's type to those of the map. */
+    private static Optional<SequenceType> inferMapPutType(FunctionCallExpression call) {
+        Optional<ItemType> map = typedMapArgument(call);
+        Optional<ItemType> keyType = atomizedKeyType(call.getArguments().get(1));
+        if (map.isEmpty() || keyType.isEmpty()) {
+            return Optional.empty();
+        }
+        SequenceType valueType = call.getArguments().get(2).getStaticSequenceType();
+        return Optional.of(mapType(
+                ItemTypeFactory.createInferredUnionType(List.of(map.get().getMapKeyItemType(), keyType.get())),
+                map.get().getMapValueSequenceType().leastCommonSupertypeWith(valueType)));
+    }
+
+    private static SequenceType mapType(ItemType keyType, SequenceType valueType) {
+        return new SequenceType(ItemTypeFactory.mapOf(keyType, valueType));
     }
 
     /**
