@@ -275,8 +275,21 @@ public class UnionItemType extends AbstractItemType {
         if (hasNumeric && hasNonNumeric) {
             return BuiltinTypesCatalogue.atomicItem;
         }
-        if (hasNumeric && !hasNull) {
-            return BuiltinTypesCatalogue.numericItem;
+        if (hasNumeric) {
+            // Join the numeric alternatives independently of null, just as for non-null input.
+            ItemType numericType = null;
+            for (ItemType member : resultTypes) {
+                if (!member.equals(BuiltinTypesCatalogue.nullItem)) {
+                    numericType = numericType == null ? member : numericType.findLeastCommonSuperTypeWith(member);
+                }
+            }
+            return hasNull
+                    ? new UnionItemType(
+                            null,
+                            BuiltinTypesCatalogue.atomicItem,
+                            Arrays.asList(numericType, BuiltinTypesCatalogue.nullItem),
+                            false)
+                    : numericType;
         }
         if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
             return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes), false);

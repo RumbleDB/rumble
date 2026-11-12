@@ -51,7 +51,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
         ItemType itemType = staticContext.getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
             itemType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                    items, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.DATAFRAME);
+                    items, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
             if (staticContext.getConfiguration().analysis().printInferredTypes()) {
                 log.debug("Inferred DataFrame type:\n" + itemType);
             }
@@ -65,7 +65,7 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
         ItemType itemType = staticContext.getStaticType().getItemType();
         if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
             itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                    rdd, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.DATAFRAME);
+                    rdd, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
         }
         return JSONiqValidateIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
     }

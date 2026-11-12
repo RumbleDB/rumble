@@ -76,7 +76,7 @@ class NullableNumericDataFrameTest {
 
         var rdd = SparkSessionManager.getInstance().getJavaSparkContext().parallelize(items, 3);
         ItemType inferred = TypeInferrenceUtils.inferItemTypeOfRDDItems(
-                rdd, ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.DATAFRAME);
+                rdd, ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.LAX);
         assertTrue(inferred.isCompatibleWithDataFrames(
                 sequence.getRuntimeStaticContext().getConfiguration()));
         Dataset<Row> distributed = ItemRuntimeDataFrameFactory.INSTANCE

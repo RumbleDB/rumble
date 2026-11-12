@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 
-class DataFrameSchemaTypeTest {
+class UnionItemTypeTest {
     @Test
     void nullableNumericJoinMatchesTheNonNullJoinInEveryOrderAndGrouping() {
         List<ItemType> types = List.of(
@@ -47,8 +47,9 @@ class DataFrameSchemaTypeTest {
                         ItemType x = operands.get(i);
                         ItemType y = operands.get(j);
                         ItemType z = operands.get(3 - i - j);
-                        assertNullable(expected, DataFrameSchemaType.merge(DataFrameSchemaType.merge(x, y), z));
-                        assertNullable(expected, DataFrameSchemaType.merge(x, DataFrameSchemaType.merge(y, z)));
+                        assertNullable(
+                                expected, x.findLeastCommonSuperTypeWith(y).findLeastCommonSuperTypeWith(z));
+                        assertNullable(expected, x.findLeastCommonSuperTypeWith(y.findLeastCommonSuperTypeWith(z)));
                     }
                 }
             }
@@ -62,24 +63,17 @@ class DataFrameSchemaTypeTest {
     }
 
     @Test
-    void runtimeSchemaMergingDoesNotChangeStaticOrLaxJoins() {
+    void staticAndRuntimeJoinsBothNormalizeNullableNumerics() {
         var sequence = new Rumble(new RumbleConfiguration()).runQuery("({\"n\":1},{\"n\":null},{\"n\":2.5e0})");
-        ItemType before = sequence.getRuntimeStaticContext().getStaticType().getItemType();
-        List<Item> items = sequence.getAsList();
-        ItemType laxBefore = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items, ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.LAX);
-        assertEquals(
-                3, laxBefore.getObjectContentFacet("n").getType().getTypes().size());
+        ItemType staticType = sequence.getRuntimeStaticContext().getStaticType().getItemType();
+        assertNullable(
+                BuiltinTypesCatalogue.numericItem,
+                staticType.getObjectContentFacet("n").getType());
         ItemType schema = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items, ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.DATAFRAME);
+                sequence.getAsList(), ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.LAX);
         assertNullable(
                 BuiltinTypesCatalogue.numericItem,
                 schema.getObjectContentFacet("n").getType());
-        ItemType laxAfter = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items, ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.LAX);
-        assertEquals(laxBefore.getIdentifierString(), laxAfter.getIdentifierString());
-        assertSame(before, sequence.getRuntimeStaticContext().getStaticType().getItemType());
-        assertEquals(3, before.getObjectContentFacet("n").getType().getTypes().size());
     }
 
     @Test
@@ -88,7 +82,7 @@ class DataFrameSchemaTypeTest {
                 .runQuery("({\"a\":[{\"n\":1},{\"n\":null}]},{\"a\":[{\"n\":2.5e0}]})")
                 .getAsList();
         ItemType schema = TypeInferrenceUtils.inferItemTypeOfLocalItems(
-                items, ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.DATAFRAME);
+                items, ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.LAX);
         ItemType field = schema.getObjectContentFacet("a")
                 .getType()
                 .getArrayContentFacet()
@@ -101,20 +95,21 @@ class DataFrameSchemaTypeTest {
                 .get(0);
         assertNullable(
                 BuiltinTypesCatalogue.numericItem,
-                DataFrameSchemaType.fromItem(array).getArrayContentFacet());
+                ItemTypeFactory.createItemTypeFromItem(array).getArrayContentFacet());
     }
 
     @Test
     void doesNotMergeNumericAndNonnumericAlternativesAsNumeric() {
         ItemType nullable =
-                DataFrameSchemaType.merge(BuiltinTypesCatalogue.integerItem, BuiltinTypesCatalogue.nullItem);
-        ItemType mixed = DataFrameSchemaType.merge(nullable, BuiltinTypesCatalogue.stringItem);
+                BuiltinTypesCatalogue.integerItem.findLeastCommonSuperTypeWith(BuiltinTypesCatalogue.nullItem);
+        ItemType mixed = nullable.findLeastCommonSuperTypeWith(BuiltinTypesCatalogue.stringItem);
         assertFalse(mixed.isNumeric());
         assertNull(mixed.getSingleNullableType());
-        ItemType empty = DataFrameSchemaType.fromItem(ItemFactory.getInstance().createArrayItem(List.of(), true));
+        ItemType empty =
+                ItemTypeFactory.createItemTypeFromItem(ItemFactory.getInstance().createArrayItem(List.of(), true));
         ItemType numbers = ItemTypeFactory.createAnonymousArrayType(BuiltinTypesCatalogue.integerItem);
         assertEquals(
                 BuiltinTypesCatalogue.integerItem,
-                DataFrameSchemaType.merge(empty, numbers).getArrayContentFacet());
+                empty.findLeastCommonSuperTypeLax(numbers).getArrayContentFacet());
     }
 }
