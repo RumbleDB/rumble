@@ -17,20 +17,27 @@ package org.rumbledb.runtime.functions.input;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.StructField;
 
 import static org.apache.spark.sql.functions.lit;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SequenceType;
 
 public class DeltaTableFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
@@ -83,6 +90,27 @@ public class DeltaTableFunctionIterator extends ItemRuntimePlan implements DataF
             dataFrame = dataFrame.withColumn(SparkSessionManager.pathInColumnName, lit(""));
             dataFrame = dataFrame.withColumn(SparkSessionManager.tableLocationColumnName, lit(collectionName));
             return new HomogeneousItemDataFrame(dataFrame);
+        }
+    }
+
+    /** The type of the rows of the table of a literal name, read from its schema, if the table exists. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        if (!(call.getArguments().get(0) instanceof StringLiteralExpression name)) {
+            return Optional.empty();
+        }
+        try {
+            SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+            if (!session.catalog().tableExists(name.getValue())) {
+                return Optional.empty();
+            }
+            return Optional.of(new SequenceType(
+                    ItemTypeFactory.createItemType(
+                            session.read().table(name.getValue()).schema()),
+                    SequenceType.Arity.ZeroOrMore));
+        } catch (Exception e) {
+            // As for files, a table whose schema cannot be read, for instance without Delta in the Spark session,
+            // has an unknown type, and running the query reports the problem.
+            return Optional.empty();
         }
     }
 }

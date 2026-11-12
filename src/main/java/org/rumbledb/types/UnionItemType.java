@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -166,50 +167,16 @@ public class UnionItemType extends AbstractItemType {
         return sb.toString();
     }
 
+    /** A named union by its name, and an anonymous one, such as an inferred type, as (A | B), for messages. */
     @Override
     public String toString() {
-        if ((new Name(Name.JS_NS, "js", "object")).equals(this.name)) {
-            // generic object
+        if (this.name != null && !this.name.getLocalName().isEmpty()) {
             return this.name.toString();
-        } else {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{ ");
-            if (this.name != null && !this.name.getLocalName().equals("")) {
-                sb.append("\"name\": \"");
-                sb.append(this.name.toString());
-                sb.append("\", ");
-            }
-            sb.append("\"kind\": \"union\", ");
-
-            sb.append("\"baseType\": \"");
-            sb.append(this.baseType.toString());
-            sb.append("\", ");
-
-            sb.append("\"treeDepth\": ");
-            sb.append(this.typeTreeDepth);
-            sb.append(", ");
-
-            if (isResolved()) {
-                sb.append("\"content\": [ ");
-                String comma = "";
-                for (ItemType type : this.types) {
-                    sb.append(comma);
-                    comma = ", ";
-                    if (type.toString().startsWith("{")) {
-                        sb.append(type);
-                    } else {
-                        sb.append("\"");
-                        sb.append(type.toString());
-                        sb.append("\"");
-                    }
-                }
-                sb.append(" ]");
-            } else {
-                sb.append(" (content not resolved yet) ");
-            }
-            sb.append(" }");
-            return sb.toString();
         }
+        if (!isResolved()) {
+            return "#anonymous-union (content not resolved yet)";
+        }
+        return this.types.stream().map(ItemType::toString).collect(Collectors.joining(" | ", "(", ")"));
     }
 
     @Override

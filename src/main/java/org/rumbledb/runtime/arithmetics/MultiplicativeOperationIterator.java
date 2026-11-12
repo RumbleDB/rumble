@@ -90,14 +90,14 @@ public class MultiplicativeOperationIterator extends AbstractAtMostOneItemRuntim
                     "Can not atomize an %1$s item: an %1$s has probably been passed where "
                             + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                     left.getDynamicType().toString());
-            throw new NonAtomicKeyException(message, metadata);
+            throw new CannotAtomizeException(message, metadata);
         }
         if (!right.isAtomic()) {
             String message = String.format(
                     "Can not atomize an %1$s item: an %1$s has probably been passed where "
                             + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                     right.getDynamicType().toString());
-            throw new NonAtomicKeyException(message, metadata);
+            throw new CannotAtomizeException(message, metadata);
         }
         if (left.isUntypedAtomic()) {
             left = ItemFactory.getInstance().createDoubleItem(left.castToDoubleValue());

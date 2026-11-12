@@ -19,6 +19,7 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -26,13 +27,16 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import lombok.NonNull;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
@@ -42,6 +46,11 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ElementNodeItemType;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeAtomization;
 
 public class DataFunctionIterator extends ItemRuntimePlan
         implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item> {
@@ -72,7 +81,8 @@ public class DataFunctionIterator extends ItemRuntimePlan
     public HomogeneousItemDataFrame createNativeDataFrame(DynamicContext dynamicContext) {
         HomogeneousItemDataFrame childDF =
                 ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(this.sequenceIterator, dynamicContext);
-        if (childDF.getItemType().isAtomicItemType()) {
+        // Atomic unions such as xs:decimal | js:null atomize to themselves too.
+        if (childDF.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
             return childDF;
         }
         if (childDF.isEmptySequence()) {
@@ -158,5 +168,32 @@ public class DataFunctionIterator extends ItemRuntimePlan
             return new IteratorFlowException(
                     IteratorFlowException.FLOW_EXCEPTION_MESSAGE + " atomization iterator", this.metadata);
         }
+    }
+
+    /**
+     * The atomized type of the argument. Rejects an element whose schema type permits content without a typed value.
+     */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        SequenceType input = context.argumentType(0);
+        if (!input.isEmptySequence()) {
+            for (ItemType member : input.getItemType().getMemberTypes()) {
+                if (member instanceof ElementNodeItemType element
+                        && element.getSchemaTypeName() != null
+                        && context.staticContext()
+                                .getInScopeSchemaTypes()
+                                .getXmlSchemaCatalog()
+                                .mayHaveUnavailableTypedValue(element.getSchemaTypeName())) {
+                    context.errors()
+                            .report(
+                                    "The schema type of "
+                                            + member
+                                            + " allows content without a typed value, so it may not be"
+                                            + " atomized.",
+                                    ErrorCode.AtomizationError,
+                                    call);
+                }
+            }
+        }
+        return Optional.of(TypeAtomization.inferType(input));
     }
 }

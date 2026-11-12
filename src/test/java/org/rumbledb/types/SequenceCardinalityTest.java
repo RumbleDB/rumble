@@ -59,6 +59,12 @@ class SequenceCardinalityTest {
                 allowingEmptySizes.add(Math.max(1, size));
             }
             assertEquals(allowingEmptySizes, sizes(left.replaceZeroWithOne()));
+            Set<Integer> withoutFirstSizes = new HashSet<>();
+            for (int size : sizes(left)) {
+                // A size of 2 stands for two or more items, which leave one or more.
+                withoutFirstSizes.addAll(size == 2 ? Set.of(1, 2) : Set.of(0));
+            }
+            assertEquals(withoutFirstSizes, sizes(left.withoutFirst()), left + " without its first item");
         }
     }
 
