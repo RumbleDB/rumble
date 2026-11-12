@@ -76,6 +76,12 @@ public abstract class UpdateRuntimeTestsBase extends SparkAnnotationsTestsBase {
     @Override
     protected final void configureSpark(SparkConf sparkConfiguration) {
         sparkConfiguration.set("spark.sql.adaptive.enabled", "false");
+        // Each update is a transaction of several small Spark jobs on a tiny table. Spark's defaults, sized for a
+        // cluster, split each of them into hundreds of tasks, so most of the time went to scheduling them.
+        sparkConfiguration.set("spark.sql.shuffle.partitions", "2");
+        sparkConfiguration.set("spark.databricks.delta.snapshotPartitions", "2");
+        sparkConfiguration.set("spark.sql.sources.parallelPartitionDiscovery.parallelism", "2");
+        sparkConfiguration.set("spark.ui.enabled", "false");
         configureUpdateStore(sparkConfiguration);
     }
 

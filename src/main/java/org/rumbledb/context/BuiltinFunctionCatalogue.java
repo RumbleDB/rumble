@@ -2645,7 +2645,7 @@ public class BuiltinFunctionCatalogue {
             List.of("item*"),
             "item*",
             ObjectDescendantPairsFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
     /**
      * function that recursively flattens arrays in the input sequence, leaving non-arrays intact
      */
