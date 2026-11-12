@@ -60,14 +60,14 @@ public class RumbleMLUtils {
 
         if (context.getVariableValues().isRDD(inputVariableName, metadata)) {
             JavaRDD<Item> rdd = context.getVariableValues().getRDDVariableValue(inputVariableName, metadata);
-            ItemType type =
-                    TypeInferrenceUtils.inferItemTypeOfRDDItems(rdd, metadata, TypeInferrenceUtils.TypeMergeMode.LAX);
+            ItemType type = TypeInferrenceUtils.inferItemTypeOfRDDItems(
+                    rdd, metadata, TypeInferrenceUtils.TypeMergeMode.DATAFRAME);
             return JSONiqValidateIterator.convertRDDToValidDataFrame(rdd, type, context, true, staticContext);
         }
 
         List<Item> items = context.getVariableValues().getLocalVariableValue(inputVariableName, metadata);
-        ItemType type =
-                TypeInferrenceUtils.inferItemTypeOfLocalItems(items, metadata, TypeInferrenceUtils.TypeMergeMode.LAX);
+        ItemType type = TypeInferrenceUtils.inferItemTypeOfLocalItems(
+                items, metadata, TypeInferrenceUtils.TypeMergeMode.DATAFRAME);
         return JSONiqValidateIterator.convertLocalItemsToDataFrame(items, type, context, true, staticContext);
     }
 

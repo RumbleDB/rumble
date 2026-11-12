@@ -22,6 +22,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.DataFrameSchemaType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
@@ -30,7 +31,9 @@ public final class TypeInferrenceUtils {
 
     public enum TypeMergeMode {
         STRICT,
-        LAX
+        LAX,
+        /** Runtime DataFrame schemas: join numeric alternatives independently of null. */
+        DATAFRAME
     }
 
     private TypeInferrenceUtils() {}
@@ -46,7 +49,7 @@ public final class TypeInferrenceUtils {
         return itemRDD.aggregate(
                 neutralElement,
                 (ItemType acc, Item item) -> {
-                    ItemType itemType = ItemTypeFactory.createItemTypeFromItem(item);
+                    ItemType itemType = typeOfItem(item, typeMergeMode);
                     return acc.equals(neutralElement) ? itemType : mergeItemTypes(acc, itemType, typeMergeMode);
                 },
                 (ItemType a, ItemType b) -> {
@@ -66,9 +69,9 @@ public final class TypeInferrenceUtils {
             return BuiltinTypesCatalogue.item;
         }
 
-        ItemType result = ItemTypeFactory.createItemTypeFromItem(items.get(0));
+        ItemType result = typeOfItem(items.get(0), typeMergeMode);
         for (int i = 1; i < items.size(); i++) {
-            result = mergeItemTypes(result, ItemTypeFactory.createItemTypeFromItem(items.get(i)), typeMergeMode);
+            result = mergeItemTypes(result, typeOfItem(items.get(i), typeMergeMode), typeMergeMode);
         }
 
         return result;
@@ -98,7 +101,16 @@ public final class TypeInferrenceUtils {
         return result;
     }
 
+    private static ItemType typeOfItem(Item item, TypeMergeMode mode) {
+        return mode == TypeMergeMode.DATAFRAME
+                ? DataFrameSchemaType.fromItem(item)
+                : ItemTypeFactory.createItemTypeFromItem(item);
+    }
+
     private static ItemType mergeItemTypes(ItemType left, ItemType right, TypeMergeMode typeMergeMode) {
+        if (typeMergeMode == TypeMergeMode.DATAFRAME) {
+            return DataFrameSchemaType.merge(left, right);
+        }
         if (typeMergeMode == TypeMergeMode.LAX) {
             return left.findLeastCommonSuperTypeLax(right);
         }
