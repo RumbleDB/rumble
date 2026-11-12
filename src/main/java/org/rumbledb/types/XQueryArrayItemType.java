@@ -80,7 +80,7 @@ public class XQueryArrayItemType extends AbstractItemType {
     protected Object equalityKey() {
         if (this.name == null
                 && BuiltinTypesCatalogue.xqueryArrayItem.equals(this.baseType)
-                && SequenceType.createSequenceType("item").equals(this.memberSequenceType)) {
+                && new SequenceType(BuiltinTypesCatalogue.item).equals(this.memberSequenceType)) {
             return namedTypeKey(new Name(Name.JS_NS, "js", "array"));
         }
         return structuralTypeKey(XQueryArrayItemType.class, this.name, this.baseType, this.memberSequenceType);
@@ -158,7 +158,7 @@ public class XQueryArrayItemType extends AbstractItemType {
         if (other.isXQueryArrayItemType()) {
             SequenceType memberSuperType =
                     this.memberSequenceType.leastCommonSupertypeWith(other.getMemberSequenceType());
-            if (memberSuperType.equals(SequenceType.createSequenceType("item*"))) {
+            if (memberSuperType.equals(new SequenceType(BuiltinTypesCatalogue.item, SequenceCardinality.ANY))) {
                 return BuiltinTypesCatalogue.xqueryArrayItem;
             }
             return new XQueryArrayItemType(null, BuiltinTypesCatalogue.xqueryArrayItem, memberSuperType);
@@ -209,7 +209,8 @@ public class XQueryArrayItemType extends AbstractItemType {
     void processBaseType() {
         this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
         if (isPrimitiveArray()) {
-            if (!this.memberSequenceType.equals(SequenceType.createSequenceType("item*"))) {
+            if (!this.memberSequenceType.equals(
+                    new SequenceType(BuiltinTypesCatalogue.item, SequenceCardinality.ANY))) {
                 throw new InvalidSchemaException(
                         "Primitive array(*) must use item* for members, got: " + this.memberSequenceType,
                         ExceptionMetadata.EMPTY_METADATA);

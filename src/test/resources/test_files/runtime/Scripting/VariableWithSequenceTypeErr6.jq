@@ -2,7 +2,7 @@
 variable $a as xs:string := "string";
 if ($a eq "string") then {
     while ($a eq "string") {
-        variable $a as xs:int := 3;
+        variable $a as xs:integer := 3;
         $a := "end";
     }
 }

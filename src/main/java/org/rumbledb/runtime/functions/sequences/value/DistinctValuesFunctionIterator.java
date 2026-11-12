@@ -18,13 +18,16 @@ package org.rumbledb.runtime.functions.sequences.value;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.spark.api.java.JavaRDD;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -40,6 +43,8 @@ import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeAtomization;
 
 public class DistinctValuesFunctionIterator extends ItemRuntimePlan
         implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item>, DataFrameRuntimePlan<Item>, NativeQueryRuntimePlan {
@@ -176,5 +181,12 @@ public class DistinctValuesFunctionIterator extends ItemRuntimePlan
             this.seen.clear();
             this.nextResult = null;
         }
+    }
+
+    /** The atomized values: equal values are merged, but a value remains. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        SequenceType values = TypeAtomization.inferType(context.argumentType(0));
+        return Optional.of(
+                new SequenceType(values.getItemType(), values.getCardinality().grouped()));
     }
 }

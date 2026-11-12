@@ -18,12 +18,15 @@ package org.rumbledb.runtime.functions.sequences.aggregate;
 import java.io.Serial;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
@@ -108,5 +111,10 @@ public class MinFunctionIterator extends AbstractAtMostOneItemRuntimePlan implem
                 nativeChildQuery,
                 "array_min(" + nativeChildQuery.getResultingQuery() + ")",
                 nativeChildQuery.getResultingType());
+    }
+
+    /** At most one item of the normalized type of the input, whose values must be comparable with each other. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        return Optional.of(AggregateTyping.inferExtremumType(call, context, "fn:min"));
     }
 }

@@ -49,6 +49,8 @@ public class ItemFactory {
     private Item zeroItem;
     private Item positiveInfinityDoubleItem;
     private Item negativeInfinityDoubleItem;
+    private Item positiveZeroDoubleItem;
+    private Item negativeZeroDoubleItem;
     private Item NaNDoubleItem;
     private Item positiveInfinityFloatItem;
     private Item negativeInfinityFloatItem;
@@ -64,6 +66,8 @@ public class ItemFactory {
             instance.zeroItem = new IntItem(0);
             instance.positiveInfinityDoubleItem = new DoubleItem(Double.POSITIVE_INFINITY);
             instance.negativeInfinityDoubleItem = new DoubleItem(Double.NEGATIVE_INFINITY);
+            instance.positiveZeroDoubleItem = new DoubleItem(0.0);
+            instance.negativeZeroDoubleItem = new DoubleItem(-0.0);
             instance.NaNDoubleItem = new DoubleItem(Double.NaN);
             instance.positiveInfinityFloatItem = new FloatItem(Float.POSITIVE_INFINITY);
             instance.negativeInfinityFloatItem = new FloatItem(Float.NEGATIVE_INFINITY);
@@ -148,6 +152,10 @@ public class ItemFactory {
         }
         if (d == Double.NEGATIVE_INFINITY) {
             return this.negativeInfinityDoubleItem;
+        }
+        if (d == 0.0) {
+            // Equality does not distinguish IEEE 754 positive and negative zero.
+            return Double.doubleToRawLongBits(d) < 0 ? this.negativeZeroDoubleItem : this.positiveZeroDoubleItem;
         }
         if (d == Double.NaN) {
             return this.NaNDoubleItem;

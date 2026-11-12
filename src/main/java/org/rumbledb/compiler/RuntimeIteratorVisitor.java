@@ -1727,6 +1727,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         return new AssignStatementIterator(
                 this.visit(statement.getAssignExpression(), argument),
                 statement.getName(),
+                statement.getStaticContext().getVariableSequenceType(statement.getName()),
                 statement.getStaticContextForRuntime(this.config, this.visitorConfig));
     }
 
