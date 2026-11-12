@@ -1202,6 +1202,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 ? new TypeswitchCase(switchCase.getVariableName(), body, switchCase.getVariableMetadata())
                 : new TypeswitchCase(
                         switchCase.getVariableName(), switchCase.getUnion(), body, switchCase.getVariableMetadata());
+        copy.setStaticContext(switchCase.getStaticContext());
         return copy;
     }
 
@@ -1211,6 +1212,7 @@ public class CloneVisitor extends AbstractNodeVisitor<Node> {
                 ? new TypeSwitchStatementCase(switchCase.getVariableName(), body, switchCase.getVariableMetadata())
                 : new TypeSwitchStatementCase(
                         switchCase.getVariableName(), switchCase.getUnion(), body, switchCase.getVariableMetadata());
+        copy.setStaticContext(switchCase.getStaticContext());
         return copy;
     }
 
