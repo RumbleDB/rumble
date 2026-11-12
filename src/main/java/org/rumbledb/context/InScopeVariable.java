@@ -26,7 +26,10 @@ import org.rumbledb.types.SequenceType;
 public class InScopeVariable {
 
     private final Name name;
-    private final SequenceType sequenceType;
+
+    @Setter
+    private SequenceType sequenceType;
+
     private final ExceptionMetadata metadata;
 
     @Setter

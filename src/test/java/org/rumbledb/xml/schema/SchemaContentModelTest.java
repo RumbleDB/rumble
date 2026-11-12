@@ -13,18 +13,20 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.exceptions;
+package org.rumbledb.xml.schema;
 
-import java.io.Serial;
+import org.junit.jupiter.api.Test;
 
-import org.rumbledb.errorcodes.ErrorCode;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
-public class NonAtomicKeyException extends RumbleException {
+import org.rumbledb.context.Name;
+import org.rumbledb.types.ItemTypeFactory;
 
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    public NonAtomicKeyException(String message, ExceptionMetadata expressionMetadata) {
-        super(message, ErrorCode.NonAtomicElementErrorCode, expressionMetadata);
+class SchemaContentModelTest {
+    @Test
+    void constructedElementsHaveNoSchemaContentModel() {
+        Name name = Name.createVariableInNoNamespace("a");
+        assertFalse(SchemaContentModel.isSchemaTyped(ItemTypeFactory.constructedElementNodeItemType(name, false)));
+        assertFalse(SchemaContentModel.isSchemaTyped(ItemTypeFactory.constructedElementNodeItemType(name, true)));
     }
 }

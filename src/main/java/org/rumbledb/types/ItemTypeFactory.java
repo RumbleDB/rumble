@@ -629,7 +629,7 @@ public class ItemTypeFactory {
         if (memberSequenceType == null) {
             throw new OurBadException("Array member sequence type cannot be null.");
         }
-        if (memberSequenceType.equals(SequenceType.createSequenceType("item*"))) {
+        if (memberSequenceType.equals(new SequenceType(BuiltinTypesCatalogue.item, SequenceCardinality.ANY))) {
             return BuiltinTypesCatalogue.xqueryArrayItem;
         }
         return new XQueryArrayItemType(null, BuiltinTypesCatalogue.xqueryArrayItem, memberSequenceType);
@@ -655,6 +655,24 @@ public class ItemTypeFactory {
             throw new OurBadException("Element node name cannot be null.");
         }
         return new ElementNodeItemType(nodeName);
+    }
+
+    /**
+     * The type of a constructed element, which is not validated: element(N, xs:untyped), or element(N, xs:anyType)
+     * in construction mode preserve. Either way its typed value is its string value, as one xs:untypedAtomic.
+     *
+     * @param nodeName the element name, or null when it is only known at runtime
+     * @param preserve whether the construction mode is preserve
+     */
+    public static ItemType constructedElementNodeItemType(Name nodeName, boolean preserve) {
+        Name anyType = new Name(Name.XS_NS, "xs", "anyType");
+        Name untyped = new Name(Name.XS_NS, "xs", "untyped");
+        return new ElementNodeItemType(
+                nodeName,
+                preserve ? anyType : untyped,
+                preserve ? List.of(anyType) : List.of(untyped, anyType),
+                false,
+                new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem));
     }
 
     /**

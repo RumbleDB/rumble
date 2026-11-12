@@ -27,8 +27,7 @@ public class TailCallOptimizationVisitor extends CloneVisitor {
 
     @Override
     public Node visitFunctionDeclaration(FunctionDeclaration expression, Node argument) {
-        FunctionDeclaration fd = new FunctionDeclaration(
-                (InlineFunctionExpression) visit(expression.getExpression(), argument), expression.getMetadata());
+        FunctionDeclaration fd = (FunctionDeclaration) super.visitFunctionDeclaration(expression, argument);
 
         InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) fd.getExpression();
 

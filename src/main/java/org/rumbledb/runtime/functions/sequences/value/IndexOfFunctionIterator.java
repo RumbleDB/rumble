@@ -23,8 +23,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -77,7 +77,7 @@ public class IndexOfFunctionIterator extends ItemRuntimePlan implements LocalRun
     private static boolean matches(
             Item item, Item search, boolean searchIsNaN, String collation, ExceptionMetadata metadata) {
         if (!item.isAtomic()) {
-            throw new NonAtomicKeyException(
+            throw new CannotAtomizeException(
                     "Invalid args. index-of can't be performed with a non-atomic in the input sequence", metadata);
         }
         if (search == null || searchIsNaN) {

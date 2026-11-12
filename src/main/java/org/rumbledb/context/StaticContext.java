@@ -289,17 +289,17 @@ public class StaticContext {
         }
     }
 
-    // replace the sequence type of an existing InScopeVariable, throws an error if the variable does not exists
+    /**
+     * Replaces the type of a variable bound in this context. Replacing the type in a context that does not bind the
+     * variable itself would leave the type that references see unchanged, so it is a compiler bug. The variable is
+     * updated in place, so that modules importing it see the new type too.
+     */
     public void replaceVariableSequenceType(Name varName, SequenceType newSequenceType) {
-        InScopeVariable variable = getInScopeVariable(varName);
-        this.inScopeVariables.replace(
-                varName,
-                new InScopeVariable(
-                        varName,
-                        newSequenceType,
-                        variable.getMetadata(),
-                        variable.getStorageMode(),
-                        variable.isAssignable()));
+        InScopeVariable variable = this.inScopeVariables.get(varName);
+        if (variable == null) {
+            throw new OurBadException("The type of $" + varName + " is replaced in a context that does not bind it.");
+        }
+        variable.setSequenceType(newSequenceType);
     }
 
     public SequenceType getVariableSequenceType(Name varName) {

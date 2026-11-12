@@ -20,6 +20,7 @@ import java.util.List;
 
 import lombok.Getter;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -38,8 +39,25 @@ public class TreatExpression extends Expression {
 
     private ErrorCode errorCode;
 
+    /**
+     * The variable whose declared type this checks, or null for a treat as expression. A value that does not match a
+     * declared type is a type error, which static typing reports. A treat as expression defers its check to runtime,
+     * where a mismatch is a dynamic error.
+     */
+    @Getter
+    private Name declaredTypeVariable;
+
     public TreatExpression(
             Expression mainExpression, SequenceType sequenceType, ErrorCode errorCode, ExceptionMetadata metadata) {
+        this(mainExpression, sequenceType, errorCode, null, metadata);
+    }
+
+    public TreatExpression(
+            Expression mainExpression,
+            SequenceType sequenceType,
+            ErrorCode errorCode,
+            Name declaredTypeVariable,
+            ExceptionMetadata metadata) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
@@ -47,10 +65,24 @@ public class TreatExpression extends Expression {
         this.errorCode = errorCode;
         this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
+        this.declaredTypeVariable = declaredTypeVariable;
+    }
+
+    /**
+     * Checks that the value bound to a variable matches its declared type. For a variable that binds each item of the
+     * value in turn, as in a for clause, the type allows any number of the declared items.
+     */
+    public static TreatExpression forDeclaredType(Expression value, SequenceType type, Name variable) {
+        return new TreatExpression(value, type, ErrorCode.UnexpectedTypeErrorCode, variable, value.getMetadata());
     }
 
     public ErrorCode errorCodeThatShouldBeThrown() {
         return this.errorCode;
+    }
+
+    /** Whether this checks the declared type of a variable, rather than being a treat as expression. */
+    public boolean checksDeclaredType() {
+        return this.declaredTypeVariable != null;
     }
 
     @Override

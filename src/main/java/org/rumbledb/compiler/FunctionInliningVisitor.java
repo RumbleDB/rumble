@@ -35,6 +35,19 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.scripting.Program;
 import org.rumbledb.expressions.scripting.statement.StatementsAndOptionalExpr;
 import org.rumbledb.expressions.typing.FunctionArgumentConversionExpression;
+import org.rumbledb.expressions.update.AppendExpression;
+import org.rumbledb.expressions.update.CreateCollectionExpression;
+import org.rumbledb.expressions.update.DeleteExpression;
+import org.rumbledb.expressions.update.DeleteIndexFromCollectionExpression;
+import org.rumbledb.expressions.update.DeleteSearchFromCollectionExpression;
+import org.rumbledb.expressions.update.EditCollectionExpression;
+import org.rumbledb.expressions.update.InsertExpression;
+import org.rumbledb.expressions.update.InsertIndexIntoCollectionExpression;
+import org.rumbledb.expressions.update.InsertSearchIntoCollectionExpression;
+import org.rumbledb.expressions.update.RenameExpression;
+import org.rumbledb.expressions.update.ReplaceExpression;
+import org.rumbledb.expressions.update.TransformExpression;
+import org.rumbledb.expressions.update.TruncateCollectionExpression;
 import org.rumbledb.expressions.xml.SlashExpr;
 import org.rumbledb.types.SequenceType;
 
@@ -77,23 +90,57 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return false;
     }
 
-    private boolean isVariableReferenced(List<Expression> expressions, Name name, int index) {
-        for (int i = 0; i < index; i++) {
-            if (isVariableReferenced(expressions.get(i), name)) {
+    /**
+     * Whether an expression may be updating: an update, or a call to a function declared updating. A copy-modify
+     * expression only updates its copies, and a function item is not updating itself.
+     */
+    private boolean mayBeUpdating(Node node) {
+        if (node instanceof InsertExpression
+                || node instanceof DeleteExpression
+                || node instanceof ReplaceExpression
+                || node instanceof RenameExpression
+                || node instanceof AppendExpression
+                || node instanceof CreateCollectionExpression
+                || node instanceof DeleteIndexFromCollectionExpression
+                || node instanceof DeleteSearchFromCollectionExpression
+                || node instanceof EditCollectionExpression
+                || node instanceof InsertIndexIntoCollectionExpression
+                || node instanceof InsertSearchIntoCollectionExpression
+                || node instanceof TruncateCollectionExpression) {
+            return true;
+        }
+        if (node instanceof TransformExpression transform) {
+            return mayBeUpdating(transform.getReturnExpression());
+        }
+        if (node instanceof InlineFunctionExpression) {
+            return false;
+        }
+        if (node instanceof FunctionCallExpression call) {
+            FunctionDeclaration target = getFunctionDeclarationFromProlog(this.prolog, call.getFunctionIdentifier());
+            if (target != null && ((InlineFunctionExpression) target.getExpression()).isUpdating()) {
+                return true;
+            }
+        }
+        if (node instanceof Clause clause && clause.getPreviousClause() != null) {
+            if (mayBeUpdating(clause.getPreviousClause())) {
+                return true;
+            }
+        }
+        for (Node child : node.getChildren()) {
+            if (child != null && mayBeUpdating(child)) {
                 return true;
             }
         }
         return false;
     }
 
-    private static boolean allArgumentsMatch(FunctionCallExpression expression, List<Name> paramNames) {
-        boolean allArgumentsMatch = true;
-        for (int i = 0; i < expression.getArguments().size(); i++) {
-            allArgumentsMatch = allArgumentsMatch
-                    && expression.getArguments().get(i) instanceof VariableReferenceExpression variableReference
-                    && paramNames.get(i).equals(variableReference.getVariableName());
+    private boolean isVariableReferencedAfter(List<Expression> expressions, Name name, int index) {
+        for (int i = index + 1; i < expressions.size(); i++) {
+            if (isVariableReferenced(expressions.get(i), name)) {
+                return true;
+            }
         }
-        return allArgumentsMatch;
+        return false;
     }
 
     @Override
@@ -139,7 +186,9 @@ public class FunctionInliningVisitor extends CloneVisitor {
     // Inlining is disabled for functions that:
     // 1. Are sequential.
     // 2. Contain an exit statement.
-    // Calls in a path expression are not inlined either.
+    // It is also disabled for calls in a path expression, and for calls with an argument that may be updating,
+    // which is an error (XUST0001). Updating expressions are classified after inlining, which binds an unused
+    // argument in a let clause that is then removed, so the call is kept for this error to be reported.
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
         FunctionDeclaration targetFunction =
@@ -151,7 +200,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 || isImportedFunction(this.prolog, targetFunction)
                 || targetFunction.isRecursive()
                 || targetFunction.getExpression().isSequential()
-                || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()) {
+                || ((InlineFunctionExpression) targetFunction.getExpression()).hasExitStatement()
+                || expression.getArguments().stream().anyMatch(arg -> arg != null && mayBeUpdating(arg))) {
             List<Expression> arguments = new ArrayList<>();
             for (Expression arg : expression.getArguments()) {
                 arguments.add(arg == null ? null : (Expression) visit(arg, argument));
@@ -164,7 +214,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
         StatementsAndOptionalExpr body = (StatementsAndOptionalExpr) visit(inlineFunction.getBody(), argument);
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
-        if (expression.getArguments().isEmpty() || allArgumentsMatch(expression, paramNames)) {
+        if (expression.getArguments().isEmpty()) {
             if (inlineFunction.getReturnType() != null) {
                 FunctionArgumentConversionExpression result =
                         convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
@@ -180,60 +230,35 @@ public class FunctionInliningVisitor extends CloneVisitor {
                 ? body
                 : convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
         ReturnClause returnClause = new ReturnClause(returnValue, expression.getMetadata());
-        Clause expressionClauses = null;
-        Clause assignmentClauses = null;
+        // The arguments are bound and converted in order, like the arguments of a call. A parameter that a later
+        // argument reads would hide the variable it reads, so its argument is bound to a temporary variable, which is
+        // assigned to the parameter once every argument is bound.
+        List<Clause> clauses = new ArrayList<>();
+        List<Clause> assignmentClauses = new ArrayList<>();
         for (int i = 0; i < expression.getArguments().size(); i++) {
             Name paramName = paramNames.get(i);
-            SequenceType paramType = inlineFunction.getParams().get(paramName);
             Expression argumentExpression =
                     (Expression) visit(expression.getArguments().get(i), argument);
-            // only use assignment clause when the variables have different names
-            if (argumentExpression instanceof VariableReferenceExpression variableReference
-                    && variableReference.getVariableName().equals(paramName)) {
-                continue;
-            }
-
-            // if there is a name collision, use a temporary variable
-            if (isVariableReferenced(expression.getArguments(), paramName, i)) {
-                Name columnName = Name.createVariableInNoNamespace(
+            // Every argument is converted, even a variable with the name of the parameter.
+            Expression convertedArgument = convertArgument(
+                    argumentExpression, inlineFunction.getParams().get(paramName), expression);
+            if (isVariableReferencedAfter(expression.getArguments(), paramName, i)) {
+                Name temporaryName = Name.createVariableInNoNamespace(
                         String.format("param%s", UUID.randomUUID().toString().replaceAll("-", "")));
-                Clause expressionClause = new LetClause(columnName, null, argumentExpression, expression.getMetadata());
-                Expression assignmentExpression = convertArgument(
-                        new VariableReferenceExpression(columnName, expression.getMetadata()), paramType, expression);
-                Clause assignmentClause =
-                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
-                if (assignmentClauses != null) {
-                    assignmentClause.chainWith(assignmentClauses);
-                }
-                assignmentClauses = assignmentClause;
-                if (expressionClauses != null) {
-                    expressionClause.chainWith(expressionClauses);
-                }
-                expressionClauses = expressionClause;
+                clauses.add(new LetClause(temporaryName, null, convertedArgument, expression.getMetadata()));
+                assignmentClauses.add(new LetClause(
+                        paramName,
+                        null,
+                        new VariableReferenceExpression(temporaryName, expression.getMetadata()),
+                        expression.getMetadata()));
             } else {
-                Expression assignmentExpression = convertArgument(argumentExpression, paramType, expression);
-                Clause expressionClause =
-                        new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
-                if (expressionClauses != null) {
-                    expressionClause.chainWith(expressionClauses);
-                }
-                expressionClauses = expressionClause;
+                clauses.add(new LetClause(paramName, null, convertedArgument, expression.getMetadata()));
             }
         }
-        if (expressionClauses == null) {
-            if (inlineFunction.getReturnType() != null) {
-                FunctionArgumentConversionExpression result =
-                        convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
-                result.setSequential(inlineFunction.isSequential());
-                return result;
-            }
-            return body;
-        }
-        if (assignmentClauses != null) {
-            assignmentClauses.getLastClause().chainWith(returnClause);
-            expressionClauses.getLastClause().chainWith(assignmentClauses);
-        } else {
-            expressionClauses.getLastClause().chainWith(returnClause);
+        clauses.addAll(assignmentClauses);
+        clauses.add(returnClause);
+        for (int i = 0; i + 1 < clauses.size(); i++) {
+            clauses.get(i).chainWith(clauses.get(i + 1));
         }
         return new FlworExpression(returnClause, expression.getMetadata());
     }

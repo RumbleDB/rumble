@@ -18,8 +18,10 @@ package org.rumbledb.expressions.scripting.control;
 import java.util.List;
 
 import lombok.Getter;
+import lombok.Setter;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.scripting.statement.Statement;
 import org.rumbledb.types.SequenceType;
@@ -36,6 +38,10 @@ public class TypeSwitchStatementCase {
 
     private final List<SequenceType> union;
     private final Statement returnStatement;
+
+    /** The context that binds the variable of the case, set by the StaticContextVisitor. */
+    @Setter
+    private StaticContext staticContext;
 
     public TypeSwitchStatementCase(
             Name variableName,
