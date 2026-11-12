@@ -98,13 +98,19 @@ public class DeltaTableFunctionIterator extends ItemRuntimePlan implements DataF
         if (!(call.getArguments().get(0) instanceof StringLiteralExpression name)) {
             return Optional.empty();
         }
-        SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
-        if (!session.catalog().tableExists(name.getValue())) {
+        try {
+            SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
+            if (!session.catalog().tableExists(name.getValue())) {
+                return Optional.empty();
+            }
+            return Optional.of(new SequenceType(
+                    ItemTypeFactory.createItemType(
+                            session.read().table(name.getValue()).schema()),
+                    SequenceType.Arity.ZeroOrMore));
+        } catch (Exception e) {
+            // As for files, a table whose schema cannot be read, for instance without Delta in the Spark session,
+            // has an unknown type, and running the query reports the problem.
             return Optional.empty();
         }
-        return Optional.of(new SequenceType(
-                ItemTypeFactory.createItemType(
-                        session.read().table(name.getValue()).schema()),
-                SequenceType.Arity.ZeroOrMore));
     }
 }

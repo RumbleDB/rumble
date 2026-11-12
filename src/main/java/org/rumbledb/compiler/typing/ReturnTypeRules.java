@@ -112,7 +112,7 @@ public final class ReturnTypeRules {
     /**
      * The type of the items read from a file whose path is the first argument, a string literal, if the file exists.
      *
-     * @param readSchemaType reads the schema of the file at a path, and returns null if it cannot
+     * @param readSchemaType reads the schema of the file at a path, and throws if it cannot
      */
     public static Optional<SequenceType> fileSchemaType(
             FunctionCallExpression call, ReturnTypeContext context, Function<String, ItemType> readSchemaType) {
@@ -125,7 +125,14 @@ public final class ReturnTypeRules {
             return Optional.empty();
         }
         // TODO : check if arity is correct
-        return Optional.ofNullable(readSchemaType.apply(FileSystemUtil.convertURIToStringForSpark(uri)))
-                .map(itemType -> new SequenceType(itemType, SequenceType.Arity.ZeroOrMore));
+        ItemType itemType;
+        try {
+            itemType = readSchemaType.apply(FileSystemUtil.convertURIToStringForSpark(uri));
+        } catch (Exception e) {
+            // An unreadable schema, such as that of a Delta table without Delta in the Spark session, leaves the type
+            // unknown, so that the rest of the module is still typed. Running the query reports the problem.
+            return Optional.empty();
+        }
+        return Optional.of(new SequenceType(itemType, SequenceType.Arity.ZeroOrMore));
     }
 }
