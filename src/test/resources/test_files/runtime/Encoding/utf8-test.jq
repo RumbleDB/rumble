@@ -1,3 +1,4 @@
+(:JIQS: ShouldRun; Output="(20320, 22909)" :)
 jsoniq version "1.0" encoding "UTF-8";
-(: Test with UTF-8 special characters: 你好, مرحبا, שלום :)
-"Success: UTF-8 encoding works"
+(: Test that UTF-8 encoding is honored - Chinese characters 你好 :)
+string-to-codepoints("你好")
