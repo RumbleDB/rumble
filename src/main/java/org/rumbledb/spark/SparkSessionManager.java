@@ -117,6 +117,12 @@ public class SparkSessionManager {
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
+            // Set driver bind address for local mode to prevent Spark from modifying localhost IP
+            if (this.configuration.get("spark.master", "").startsWith("local")) {
+                if (!this.configuration.contains("spark.driver.bindAddress")) {
+                    this.configuration.set("spark.driver.bindAddress", "127.0.0.1");
+                }
+            }
             this.configuration.set(
                     "spark.log.level", LoggingConfiguration.getSparkLogLevel().name());
         } catch (NoClassDefFoundError e) {
