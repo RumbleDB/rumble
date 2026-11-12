@@ -249,14 +249,22 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     // region FLWOR
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
-        Clause clause = expression.getReturnClause().getFirstClause();
+        Clause clause = expression.getReturnClause();
         this.visit(clause, argument);
         return argument;
+    }
+
+    private StaticContext visitPreviousClause(Clause clause, StaticContext argument) {
+        StaticContext context =
+                clause.getPreviousClause() == null ? argument : this.visit(clause.getPreviousClause(), argument);
+        clause.setStaticContext(context);
+        return context;
     }
 
     // region FLWOR vars
     @Override
     public StaticContext visitForClause(ForClause clause, StaticContext argument) {
+        argument = visitPreviousClause(clause, argument);
         // TODO visit at...
         this.visit(clause.getExpression(), argument);
 
@@ -273,12 +281,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     new SequenceType(BuiltinTypesCatalogue.integerItem),
                     Objects.requireNonNullElse(clause.getPositionalVariableMetadata(), clause.getMetadata()));
         }
-        this.visit(clause.getNextClause(), result);
-        return argument;
+        return result;
     }
 
     @Override
     public StaticContext visitWindowClause(WindowClause clause, StaticContext argument) {
+        argument = visitPreviousClause(clause, argument);
         this.visit(clause.getExpression(), argument);
 
         WindowClause.WindowVars start = clause.getStartCondition().variables();
@@ -309,8 +317,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             addWindowVars(end, followingClausesContext, clause);
         }
 
-        this.visit(clause.getNextClause(), followingClausesContext);
-        return argument;
+        return followingClausesContext;
     }
 
     private static void addWindowVars(WindowClause.WindowVars vars, StaticContext context, WindowClause clause) {
@@ -325,6 +332,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
+        argument = visitPreviousClause(clause, argument);
         this.visit(clause.getExpression(), argument);
 
         StaticContext result = new StaticContext(argument);
@@ -333,21 +341,21 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 clause.getActualSequenceType(),
                 Objects.requireNonNullElse(clause.getVariableMetadata(), clause.getMetadata()));
         clause.getSequenceType().resolve(result, clause.getMetadata());
-        this.visit(clause.getNextClause(), result);
-        return argument;
+        return result;
     }
 
     @Override
     public StaticContext visitWhereClause(WhereClause clause, StaticContext argument) {
+        argument = visitPreviousClause(clause, argument);
         this.visit(clause.getWhereExpression(), argument);
 
         StaticContext result = new StaticContext(argument);
-        this.visit(clause.getNextClause(), result);
-        return argument;
+        return result;
     }
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
+        argument = visitPreviousClause(clause, argument);
         StaticContext result = new StaticContext(argument);
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             if (variable.getExpression() != null) {
@@ -362,34 +370,34 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         "Uninitialized variable reference: " + variable.getVariableName(), clause.getMetadata());
             }
         }
-        this.visit(clause.getNextClause(), result);
-        return argument;
+        return result;
     }
 
     @Override
     public StaticContext visitOrderByClause(OrderByClause clause, StaticContext argument) {
+        argument = visitPreviousClause(clause, argument);
         for (OrderByClauseSortingKey s : clause.getSortingKeys()) {
             this.visit(s.getExpression(), argument);
         }
 
         StaticContext result = new StaticContext(argument);
-        this.visit(clause.getNextClause(), result);
-        return argument;
+        return result;
     }
 
     @Override
     public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
+        argument = visitPreviousClause(clause, argument);
         StaticContext result = new StaticContext(argument);
         result.addVariable(
                 clause.getCountVariableName(),
                 SequenceType.createSequenceType("integer"),
                 Objects.requireNonNullElse(clause.getVariableMetadata(), clause.getMetadata()));
-        this.visit(clause.getNextClause(), result);
-        return argument;
+        return result;
     }
 
     @Override
     public StaticContext visitReturnClause(ReturnClause clause, StaticContext argument) {
+        argument = visitPreviousClause(clause, argument);
         this.visit(clause.getReturnExpr(), argument);
         return argument;
     }
@@ -842,13 +850,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitFlowrStatement(FlowrStatement statement, StaticContext argument) {
-        Clause clause = statement.getReturnStatementClause().getFirstClause();
+        Clause clause = statement.getReturnStatementClause();
         this.visit(clause, argument);
         return argument;
     }
 
     @Override
     public StaticContext visitReturnStatementClause(ReturnStatementClause clause, StaticContext argument) {
+        argument = visitPreviousClause(clause, argument);
         this.visit(clause.getReturnStatement(), argument);
         return argument;
     }
