@@ -46,7 +46,8 @@ public final class TypeInferrenceUtils {
         return itemRDD.aggregate(
                 neutralElement,
                 (ItemType acc, Item item) -> {
-                    ItemType itemType = ItemTypeFactory.createItemTypeFromItem(item);
+                    ItemType itemType =
+                            ItemTypeFactory.createItemTypeFromItem(item, typeMergeMode == TypeMergeMode.LAX);
                     return acc.equals(neutralElement) ? itemType : mergeItemTypes(acc, itemType, typeMergeMode);
                 },
                 (ItemType a, ItemType b) -> {
@@ -66,9 +67,12 @@ public final class TypeInferrenceUtils {
             return BuiltinTypesCatalogue.item;
         }
 
-        ItemType result = ItemTypeFactory.createItemTypeFromItem(items.get(0));
+        ItemType result = ItemTypeFactory.createItemTypeFromItem(items.get(0), typeMergeMode == TypeMergeMode.LAX);
         for (int i = 1; i < items.size(); i++) {
-            result = mergeItemTypes(result, ItemTypeFactory.createItemTypeFromItem(items.get(i)), typeMergeMode);
+            result = mergeItemTypes(
+                    result,
+                    ItemTypeFactory.createItemTypeFromItem(items.get(i), typeMergeMode == TypeMergeMode.LAX),
+                    typeMergeMode);
         }
 
         return result;
