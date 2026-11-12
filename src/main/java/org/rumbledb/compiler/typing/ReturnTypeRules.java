@@ -112,7 +112,7 @@ public final class ReturnTypeRules {
     /**
      * The type of the items read from a file whose path is the first argument, a string literal, if the file exists.
      *
-     * @param readSchemaType reads the schema of the file at a path, and returns null if it cannot
+     * @param readSchemaType reads the schema of the file at a path, and throws if it cannot
      */
     public static Optional<SequenceType> fileSchemaType(
             FunctionCallExpression call, ReturnTypeContext context, Function<String, ItemType> readSchemaType) {
@@ -133,6 +133,6 @@ public final class ReturnTypeRules {
             // unknown, so that the rest of the module is still typed. Running the query reports the problem.
             return Optional.empty();
         }
-        return Optional.ofNullable(itemType).map(type -> new SequenceType(type, SequenceType.Arity.ZeroOrMore));
+        return Optional.of(new SequenceType(itemType, SequenceType.Arity.ZeroOrMore));
     }
 }

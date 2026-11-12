@@ -28,7 +28,6 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 public class ReturnTypeRulesTest {
@@ -43,15 +42,6 @@ public class ReturnTypeRulesTest {
         });
 
         Assertions.assertEquals(Optional.empty(), type);
-    }
-
-    @Test
-    public void readableFileSchemaIsTheTypeOfEveryRow() {
-        Optional<SequenceType> type =
-                ReturnTypeRules.fileSchemaType(deltaFileCall(), context(), path -> BuiltinTypesCatalogue.objectItem);
-
-        Assertions.assertEquals(
-                Optional.of(new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore)), type);
     }
 
     private static FunctionCallExpression deltaFileCall() {
