@@ -122,16 +122,18 @@ public class SparkSessionManager {
                 if (!this.configuration.contains("spark.driver.host")) {
                     this.configuration.set("spark.driver.host", "127.0.0.1");
                 } else if (!this.configuration.get("spark.driver.host").equals("127.0.0.1")) {
-                    log.warn("spark.driver.host is set to " + this.configuration.get("spark.driver.host")
-                        + " in local mode. Using an address other than 127.0.0.1 may cause Spark connectivity issues."
-                        + " Keeping the configured value.");
+                    log.warn("spark.driver.host is set to "
+                            + this.configuration.get("spark.driver.host")
+                            + " in local mode. Using an address other than 127.0.0.1 may cause Spark connectivity issues."
+                            + " Keeping the configured value.");
                 }
                 if (!this.configuration.contains("spark.driver.bindAddress")) {
                     this.configuration.set("spark.driver.bindAddress", "127.0.0.1");
                 } else if (!this.configuration.get("spark.driver.bindAddress").equals("127.0.0.1")) {
-                    log.warn("spark.driver.bindAddress is set to " + this.configuration.get("spark.driver.bindAddress")
-                        + " in local mode. Using an address other than 127.0.0.1 may cause Spark connectivity issues."
-                        + " Keeping the configured value.");
+                    log.warn("spark.driver.bindAddress is set to "
+                            + this.configuration.get("spark.driver.bindAddress")
+                            + " in local mode. Using an address other than 127.0.0.1 may cause Spark connectivity issues."
+                            + " Keeping the configured value.");
                 }
             }
             this.configuration.set(
