@@ -45,7 +45,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
-import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 
@@ -148,14 +147,10 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
 
         Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
 
-        df.sparkSession().udf().register("serializeCountIndex", new LongSerializeUDF(), DataTypes.BinaryType);
-
         String viewName = FlworDataFrameUtils.createTempView(dfWithIndex);
         dfWithIndex = dfWithIndex
                 .sparkSession()
-                .sql(String.format(
-                        "select %s serializeCountIndex(`%s`) as `%s` from %s",
-                        selectSQL, variableName, variableName, viewName));
+                .sql(String.format("select %s `%s` from %s", selectSQL, variableName, viewName));
         return dfWithIndex;
     }
 
