@@ -20,13 +20,16 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -87,14 +90,23 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
                 return ItemFactory.getInstance().createDecimalItem(bd);
             }
             if (value.isDouble()) {
-                double sign = getSign(value.getDoubleValue());
+                double dvalue = value.getDoubleValue();
+                if (precision.signum() == 0 && Math.abs(dvalue) < 0x1.0p52) {
+                    return ItemFactory.getInstance()
+                            .createDoubleItem(Math.copySign((double) Math.round(dvalue), dvalue));
+                }
+                double sign = getSign(dvalue);
                 BigDecimal bd = roundToPrecision(new BigDecimal(value.getDoubleValue()), precision);
 
                 return ItemFactory.getInstance().createDoubleItem(sign * Math.abs(bd.doubleValue()));
             }
             if (value.isFloat()) {
 
-                double sign = getSign(value.getFloatValue());
+                float fvalue = value.getFloatValue();
+                if (precision.signum() == 0 && Math.abs(fvalue) < 0x1.0p23f) {
+                    return ItemFactory.getInstance().createFloatItem(Math.copySign((float) Math.round(fvalue), fvalue));
+                }
+                double sign = getSign(fvalue);
                 BigDecimal bd = roundToPrecision(new BigDecimal(value.getFloatValue()), precision);
                 return ItemFactory.getInstance().createFloatItem((float) sign * Math.abs(bd.floatValue()));
             }
@@ -139,5 +151,16 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
                 new SequenceType(
                         BuiltinTypesCatalogue.floatItem,
                         value.getResultingType().getArity()));
+    }
+
+    /**
+     * Keeps the type of a numeric argument. Others, such as nodes and untyped values, are converted to xs:double
+     * first, so the signature's xs:numeric? applies.
+     */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        SequenceType input = context.argumentType(0);
+        return input.isEmptySequence() || input.getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+                ? Optional.of(input)
+                : Optional.empty();
     }
 }

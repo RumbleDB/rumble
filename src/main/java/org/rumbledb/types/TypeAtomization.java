@@ -33,6 +33,16 @@ public final class TypeAtomization {
     }
 
     /**
+     * Whether atomizing an item of this type may give a value of any atomic type, as for item() and
+     * xs:anyAtomicType, or for a node or an array whose atomized type is only known at runtime.
+     */
+    public static boolean mayAtomizeToAnyType(ItemType type) {
+        return type.getMemberTypes().stream()
+                .anyMatch(member ->
+                        BuiltinTypesCatalogue.atomicItem.isSubtypeOf(member) || hasUnknownAtomizedType(member));
+    }
+
+    /**
      * Whether any member is a node or an array, which atomization replaces with other values: a node's typed value, an
      * array's atomized members. The error type is both a node and atomic, and atomizes to itself.
      */

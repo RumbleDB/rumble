@@ -16,6 +16,10 @@
 package org.rumbledb.compiler.typing;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
+
+import org.apache.commons.text.similarity.LevenshteinDistance;
 
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -28,6 +32,9 @@ import org.rumbledb.types.TypeAtomization;
 /** Typing rules of JSONiq object and array lookups, array unboxing and XQuery ? lookups. */
 public final class LookupTyping {
 
+    /** How many keys of an object type an error for a missing key lists before summarizing the rest. */
+    private static final int MAX_LISTED_KEYS = 10;
+
     private final StaticTypeErrors errors;
 
     public LookupTyping(StaticTypeErrors errors) {
@@ -35,15 +42,18 @@ public final class LookupTyping {
     }
 
     public SequenceType inferArrayLookupType(SequenceType mainType, SequenceType lookupType, Node node) {
-        if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("integer"))) {
-            this.errors.report(
-                    "the lookup expression type must match integer, instead " + lookupType + " was inferred",
-                    node.getMetadata());
+        SequenceType integer = SequenceType.createSequenceType("integer");
+        if (!lookupType.isSubtypeOf(integer)) {
+            this.errors.reportMismatch(
+                    "An array lookup expects an xs:integer position, but its key is "
+                            + TypeNotation.shortened(lookupType)
+                            + ".",
+                    lookupType,
+                    integer,
+                    node);
         }
 
-        if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(node);
-        }
+        rejectInput(mainType, mainType.hasOverlapWith(SequenceType.createSequenceType("array*")), "an array", node);
 
         SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
                 ? SequenceType.Arity.OneOrZero
@@ -59,23 +69,66 @@ public final class LookupTyping {
 
     public SequenceType inferObjectLookupType(SequenceType mainType, SequenceType lookupType, String key, Node node) {
         // must be castable to string
-        if (!lookupType.isSubtypeOf(SequenceType.createSequenceType("anyAtomicType"))) {
-            this.errors.report(
-                    "the lookup expression type must be castable to string (i.e. must match atomic), instead "
-                            + lookupType
-                            + " was inferred",
-                    node.getMetadata());
+        SequenceType atomic = SequenceType.createSequenceType("anyAtomicType");
+        if (!lookupType.isSubtypeOf(atomic)) {
+            this.errors.reportMismatch(
+                    "A lookup expects an atomic key, but its key is " + TypeNotation.shortened(lookupType) + ".",
+                    lookupType,
+                    atomic,
+                    node);
         }
 
         boolean overlapsObject = mainType.hasOverlapWith(SequenceType.createSequenceType("object*"));
         boolean overlapsMap = mainType.hasOverlapWith(SequenceType.createSequenceType("map*"));
-        if ((!overlapsObject && !overlapsMap) || mainType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(node);
-        }
+        rejectInput(mainType, overlapsObject || overlapsMap, "an object or a map", node);
 
         SequenceType result = inferObjectSelectionType(mainType.getItemType(), mainType.getArity(), key);
-        this.errors.rejectInferredEmpty(result, node);
+        if (result.isEmptySequence()) {
+            this.errors.reportInferredEmpty(missingKeyMessage(mainType, key), node);
+        }
         return result;
+    }
+
+    /** Explains a lookup that selects nothing, listing the keys that an object type has instead. */
+    private static String missingKeyMessage(SequenceType inputType, String key) {
+        ItemType itemType = inputType.getItemType();
+        List<String> keys = key != null && itemType.isObjectItemType()
+                ? itemType.getObjectContentFacet().stream()
+                        .map(FieldDescriptor::getName)
+                        .toList()
+                : List.of();
+        if (keys.isEmpty()) {
+            return TypeErrorMessages.inferredEmpty("its input, of type "
+                            + TypeNotation.shortened(inputType)
+                            + ", never has the key"
+                            + (key == null ? "" : " \"" + key + "\""))
+                    .text();
+        }
+        String closest = closestKey(key, keys);
+        return TypeErrorMessages.inferredEmpty("its input never has the key \"" + key + "\"")
+                        .text()
+                + (closest == null ? "" : " Did you mean \"" + closest + "\"?")
+                + (keys.size() == 1 ? " It has the key " : " It has the keys ")
+                + keys.stream().limit(MAX_LISTED_KEYS).collect(Collectors.joining(", "))
+                + (keys.size() > MAX_LISTED_KEYS ? ", and " + (keys.size() - MAX_LISTED_KEYS) + " more." : ".");
+    }
+
+    /** The key that a misspelled one most likely stands for, or null if none is close to it. */
+    private static String closestKey(String key, List<String> keys) {
+        // A key that differs in more than a third of its characters is another word.
+        LevenshteinDistance editDistance = new LevenshteinDistance(Math.max(1, key.length() / 3));
+        String lowerCaseKey = key.toLowerCase(Locale.ROOT);
+        String closest = null;
+        int closestDistance = Integer.MAX_VALUE;
+        for (String candidate : keys) {
+            // -1 when the distance exceeds the threshold.
+            int distance = editDistance.apply(lowerCaseKey, candidate.toLowerCase(Locale.ROOT));
+            if (distance >= 0 && distance < closestDistance) {
+                closest = candidate;
+                closestDistance = distance;
+            }
+        }
+        return closest;
     }
 
     /** The items that an XQuery lookup can select from. */
@@ -86,21 +139,21 @@ public final class LookupTyping {
             new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceCardinality.ANY));
 
     /**
-     * Infers an XQuery lookup E?K, or E?* when the key type is null (XQuery 3.1, 3.11.3.1). Each input item
-     * contributes separately: a map the value of each key in K, which may be absent, or all its values; an array its
-     * member at each position in K, or all its members.
+     * Infers a postfix or unary XQuery lookup, using the explicit input or context item type. A null key type
+     * denotes a wildcard (XQuery 3.1, 3.11.3). Each input item contributes separately: a map the value of each
+     * key, which may be absent, or all its values; an array its member at each position, or all its members.
      */
-    public SequenceType inferPostfixLookupType(SequenceType mainType, SequenceType keyType, Node node) {
-        if (mainType.isEmptySequence() || LOOKUP_INPUTS.stream().noneMatch(mainType::hasOverlapWith)) {
-            this.errors.reportInferredEmpty(node);
+    public SequenceType inferLookupType(SequenceType mainType, SequenceType keyType, Node node) {
+        if (rejectInput(
+                mainType, LOOKUP_INPUTS.stream().anyMatch(mainType::hasOverlapWith), "a map or an array", node)) {
             return SequenceType.createSequenceType("item*");
         }
         boolean wildcard = keyType == null;
-        SequenceType perItem = null;
-        for (ItemType member : mainType.getItemType().getMemberTypes()) {
-            SequenceType memberType = inferItemLookupType(member, wildcard);
-            perItem = perItem == null ? memberType : perItem.leastCommonSupertypeWith(memberType);
-        }
+        // A type always has a member; the empty sequence only stands in for none.
+        SequenceType perItem = mainType.getItemType().getMemberTypes().stream()
+                .map(member -> inferItemLookupType(member, wildcard))
+                .reduce(SequenceType::leastCommonSupertypeWith)
+                .orElse(SequenceType.createSequenceType("()"));
         if (!wildcard) {
             // Each atomized key selects separately, so E?(1 to 2) gives a value for each of the two keys.
             perItem = perItem.repeated(TypeAtomization.inferType(keyType).getCardinality());
@@ -114,6 +167,16 @@ public final class LookupTyping {
         return value.isEmptySequence()
                 ? value
                 : new SequenceType(value.getItemType(), value.getCardinality().union(SequenceCardinality.EMPTY));
+    }
+
+    /** Whether a dynamic call can select from this item, like a lookup of one key. */
+    public static boolean isCallableLookupInput(ItemType itemType) {
+        return itemType.isMapItemType() || itemType.isArrayItemType() || itemType.isXQueryArrayItemType();
+    }
+
+    /** Infers a dynamic call $m(K) of a map or an array, which selects what the lookup $m?K does. */
+    public static SequenceType inferLookupCallType(ItemType itemType) {
+        return inferItemLookupType(itemType, false);
     }
 
     private static SequenceType inferItemLookupType(ItemType itemType, boolean wildcard) {
@@ -136,10 +199,30 @@ public final class LookupTyping {
     }
 
     public SequenceType inferArrayUnboxingType(SequenceType mainType, Node node) {
-        if (!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()) {
-            this.errors.reportInferredEmpty(node);
+        rejectInput(mainType, mainType.hasOverlapWith(SequenceType.createSequenceType("array*")), "an array", node);
+        return inferArrayMembersType(mainType);
+    }
+
+    /**
+     * Reports a lookup whose input is empty, or never has an item it selects from, the kinds of which are named, such
+     * as "an array". Returns whether it reported it.
+     */
+    private boolean rejectInput(SequenceType inputType, boolean selectable, String kinds, Node node) {
+        if (inputType.isEmptySequence()) {
+            this.errors.reportInferredEmpty(node, "its input does");
+            return true;
         }
-        ItemType contentType = inferArrayContentType(mainType.getItemType());
+        if (!selectable) {
+            this.errors.reportInferredEmpty(
+                    node, "its input, of type " + TypeNotation.shortened(inputType) + ", is never " + kinds);
+            return true;
+        }
+        return false;
+    }
+
+    /** Infers E[], or members(E): the members of the arrays among the items of E. */
+    public static SequenceType inferArrayMembersType(SequenceType type) {
+        ItemType contentType = inferArrayContentType(type.getItemType());
         if (contentType != null) {
             return new SequenceType(contentType, SequenceType.Arity.ZeroOrMore);
         }
@@ -191,7 +274,7 @@ public final class LookupTyping {
      * Nonarray alternatives contribute no results. Returns Java null when no array is possible;
      * a broad type that could contain arrays instead contributes item.
      */
-    private ItemType inferArrayContentType(ItemType itemType) {
+    private static ItemType inferArrayContentType(ItemType itemType) {
         if (itemType.isUnionType()) {
             ItemType result = null;
             for (ItemType member : itemType.getTypes()) {

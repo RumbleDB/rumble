@@ -15,8 +15,6 @@
  */
 package org.rumbledb.compiler.typing;
 
-import java.util.List;
-
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -44,16 +42,9 @@ public final class ComparisonTyping {
         // for value comparison arities * and + are not allowed, also if one return the empty sequence for sure throw
         // XPST0005 error
         if (operator.isValueComparison()) {
-            if (leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()) {
-                this.errors.reportInferredEmpty(node);
-            }
-            returnArity = AtomizedOperands.resolveArities(leftInferredType, rightInferredType);
-            if (returnArity == null) {
-                this.errors.report(
-                        "'+' and '*' arities are not allowed for this comparison operator: " + operator,
-                        node.getMetadata());
-                returnArity = SequenceType.Arity.OneOrZero;
-            }
+            this.errors.rejectEmptyOperands(leftInferredType, rightInferredType, node);
+            returnArity = AtomizedOperands.checkSingletonOperands(
+                    this.errors, operator.toString(), leftInferredType, rightInferredType, node);
         }
 
         AtomizedOperands.checkAtomizableOperands(
@@ -70,17 +61,32 @@ public final class ComparisonTyping {
 
             if (!areComparisonTypesCompatible(leftItemType, rightItemType, operator)) {
                 this.errors.report(
-                        "It is not possible to compare these types: "
-                                + leftItemType
-                                + " "
+                        "'"
                                 + operator
-                                + " "
-                                + rightItemType,
-                        node.getMetadata());
+                                + "' cannot compare "
+                                + TypeNotation.shortened(leftItemType)
+                                + " with "
+                                + TypeNotation.shortened(rightItemType)
+                                + ".",
+                        node,
+                        // An empty operand passes: the comparison is then false or empty.
+                        leftInferredType.getCardinality().allowsZero()
+                                || rightInferredType.getCardinality().allowsZero()
+                                || mayCompare(leftItemType, rightItemType, operator));
             }
         }
 
         return new SequenceType(BuiltinTypesCatalogue.booleanItem, returnArity);
+    }
+
+    /** Whether some pair of member types may be compared, whereas static typing requires every pair to be. */
+    private static boolean mayCompare(ItemType left, ItemType right, ComparisonExpression.ComparisonOperator operator) {
+        return left.getMemberTypes().stream().anyMatch(leftMember -> right.getMemberTypes().stream()
+                .anyMatch(rightMember -> !TypeAtomization.isNeverAtomizable(leftMember)
+                        && !TypeAtomization.isNeverAtomizable(rightMember)
+                        && (TypeAtomization.mayAtomizeToAnyType(leftMember)
+                                || TypeAtomization.mayAtomizeToAnyType(rightMember)
+                                || areAtomizedComparisonTypesCompatible(leftMember, rightMember, operator))));
     }
 
     // Static typing is pessimistic (XQuery 3.1, 2.2.3.1): every pair of member types must be comparable.
@@ -142,23 +148,18 @@ public final class ComparisonTyping {
                         && right.isSubtypeOf(BuiltinTypesCatalogue.yearMonthDurationItem));
     }
 
-    public SequenceType inferNodeComparisonType(SequenceType leftType, SequenceType rightType, Node node) {
-
+    public SequenceType inferNodeComparisonType(
+            SequenceType leftType, SequenceType rightType, String operator, Node node) {
         SequenceType operandType = new SequenceType(BuiltinTypesCatalogue.nodeItem, SequenceCardinality.ZERO_OR_ONE);
-        for (SequenceType type : List.of(leftType, rightType)) {
-            if (!type.isSubtypeOf(operandType)) {
-                this.errors.report(
-                        "A node comparison operand must be a single node or empty, found " + type, node.getMetadata());
-            }
-        }
+        checkNodeComparisonOperand(leftType, operandType, operator, "its left operand", node);
+        checkNodeComparisonOperand(rightType, operandType, operator, "its right operand", node);
 
         // XQuery 3.1 section 3.7.3: an empty operand produces an empty result. Otherwise,
         // a successful comparison produces one boolean, even when operand checks are deferred to runtime.
         SequenceCardinality cardinality;
         if (leftType.isEmptySequence() || rightType.isEmptySequence()) {
             // The strict Static Typing Feature rejects known-empty expressions other than () and data(()).
-            this.errors.reportInferredEmpty(
-                    "The node comparison is statically inferred to return an empty sequence", node);
+            this.errors.rejectEmptyOperands(leftType, rightType, node);
             cardinality = SequenceCardinality.EMPTY;
         } else if (leftType.getCardinality().allowsZero()
                 || rightType.getCardinality().allowsZero()) {
@@ -167,6 +168,23 @@ public final class ComparisonTyping {
             cardinality = SequenceCardinality.ONE;
         }
         return new SequenceType(BuiltinTypesCatalogue.booleanItem, cardinality);
+    }
+
+    private void checkNodeComparisonOperand(
+            SequenceType type, SequenceType operandType, String operator, String operand, Node node) {
+        if (!type.isSubtypeOf(operandType)) {
+            this.errors.reportMismatch(
+                    "'"
+                            + operator
+                            + "' expects at most one node, but "
+                            + operand
+                            + " is "
+                            + TypeNotation.shortened(type)
+                            + ".",
+                    type,
+                    operandType,
+                    node);
+        }
     }
 
     /**

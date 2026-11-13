@@ -18,19 +18,25 @@ package org.rumbledb.runtime.functions.input;
 import java.io.Serial;
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
+import org.rumbledb.compiler.typing.ReturnTypeRules;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SequenceType;
 
 public class ParquetFileFunctionIterator extends ItemRuntimePlan implements DataFrameRuntimePlan<Item> {
 
@@ -69,5 +75,17 @@ public class ParquetFileFunctionIterator extends ItemRuntimePlan implements Data
             }
             throw e;
         }
+    }
+
+    /** The type of the rows of a file at a literal path, read from its schema. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        return ReturnTypeRules.fileSchemaType(
+                call,
+                context,
+                path -> ItemTypeFactory.createItemType(SparkSessionManager.getInstance()
+                        .getOrCreateSession()
+                        .read()
+                        .parquet(path)
+                        .schema()));
     }
 }

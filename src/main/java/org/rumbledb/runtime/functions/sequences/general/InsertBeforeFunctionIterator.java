@@ -18,6 +18,7 @@ package org.rumbledb.runtime.functions.sequences.general;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -26,15 +27,18 @@ import lombok.NonNull;
 import scala.Tuple2;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.types.SequenceType;
 
 public class InsertBeforeFunctionIterator extends ItemRuntimePlan
         implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
@@ -191,5 +195,10 @@ public class InsertBeforeFunctionIterator extends ItemRuntimePlan
             return new IteratorFlowException(
                     IteratorFlowException.FLOW_EXCEPTION_MESSAGE + "insert-before function", this.metadata);
         }
+    }
+
+    /** The items of the sequence and of the inserted items. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        return Optional.of(context.argumentType(0).concatenateWith(context.argumentType(2)));
     }
 }
