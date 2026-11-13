@@ -132,13 +132,37 @@
             <version>${antlr4.version}</version>
         </dependency>
         <dependency>
-            <groupId>xerces</groupId>
+            <groupId>com.evolvedbinary.thirdparty.xerces</groupId>
             <artifactId>xercesImpl</artifactId>
-            <version>2.12.2</version>
+            <version>2.12.2.2</version>
+            <classifier>jdk14-xml-schema-1.1</classifier>
             <exclusions>
                 <exclusion>
-                    <groupId>xml-apis</groupId>
+                    <groupId>com.evolvedbinary.thirdparty.xml-apis</groupId>
                     <artifactId>xml-apis</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>edu.princeton.cup</groupId>
+            <artifactId>java-cup</artifactId>
+            <version>10k</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.evolvedbinary.thirdparty.org.eclipse.wst.xml</groupId>
+            <artifactId>xpath2</artifactId>
+            <version>1.2.1.1</version>
+            <scope>runtime</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.evolvedbinary.thirdparty.xml-apis</groupId>
+                    <artifactId>xml-apis</artifactId>
+                </exclusion>
+                <exclusion>
+                    <!-- Spark supplies ICU 76.1; do not bundle XPath2's older ICU classes. -->
+                    <groupId>com.ibm.icu</groupId>
+                    <artifactId>icu4j</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
@@ -252,7 +276,32 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>${project.basedir}</directory>
+                <targetPath>META-INF/rumbledb</targetPath>
+                <includes>
+                    <include>LICENSE.txt</include>
+                    <include>license/**</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>2.7.1</version>
+                <configuration>
+                    <useRepositoryMissingFiles>false</useRepositoryMissingFiles>
+                    <useMissingFile>true</useMissingFile>
+                    <missingFile>${project.basedir}/license/third-party-overrides.properties</missingFile>
+                    <outputDirectory>${project.build.directory}/license-audit</outputDirectory>
+                    <failOnMissing>true</failOnMissing>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>

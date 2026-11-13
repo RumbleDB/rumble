@@ -40,7 +40,14 @@ public class InScopeSchemaTypes implements Serializable {
     // Xerces definitions stay local; the mapped ItemTypes remain serializable.
     private transient XmlSchemaCatalog xmlSchemaCatalog;
 
+    private final String xsdVersion;
+
     public InScopeSchemaTypes() {
+        this("1.1");
+    }
+
+    public InScopeSchemaTypes(String xsdVersion) {
+        this.xsdVersion = xsdVersion;
         this.inScopeSchemaTypes = new HashMap<>();
     }
 
@@ -101,7 +108,7 @@ public class InScopeSchemaTypes implements Serializable {
 
     public XmlSchemaCatalog getXmlSchemaCatalog() {
         if (this.xmlSchemaCatalog == null) {
-            this.xmlSchemaCatalog = XmlSchemaCatalogLoader.loadBuiltInCatalog();
+            this.xmlSchemaCatalog = XmlSchemaCatalogLoader.loadBuiltInCatalog(this.xsdVersion);
         }
         return this.xmlSchemaCatalog;
     }

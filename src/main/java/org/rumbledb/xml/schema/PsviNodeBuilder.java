@@ -143,7 +143,7 @@ final class PsviNodeBuilder extends DefaultHandler {
                     ItemFactory.getInstance().createXmlNamespaceNode(namespace.getKey(), namespace.getValue()));
         }
 
-        this.setElementSchemaType(element, psvi);
+        this.setElementSchemaType(element, psvi, frame.inScopeNamespaces());
         this.addNode(element);
     }
 
@@ -189,7 +189,7 @@ final class PsviNodeBuilder extends DefaultHandler {
                             name, normalizedValue == null ? attributes.getValue(index) : normalizedValue);
 
             if (psvi != null && psvi.getTypeDefinition() != null && schemaValue != null) {
-                List<Item> typedValue = this.catalog.convertTypedValue(schemaValue);
+                List<Item> typedValue = this.catalog.convertTypedValue(schemaValue, inScopeNamespaces);
                 attribute.setSchemaType(this.catalog.getTypeAnnotation(psvi.getTypeDefinition()), typedValue);
                 setIdentityProperties(attribute, typedValue);
             } else if (Name.XML_NS.equals(name.getNamespace()) && "id".equals(name.getLocalName())) {
@@ -201,7 +201,7 @@ final class PsviNodeBuilder extends DefaultHandler {
         return result;
     }
 
-    private void setElementSchemaType(Item element, ElementPSVI psvi) {
+    private void setElementSchemaType(Item element, ElementPSVI psvi, Map<String, String> namespaces) {
         XSTypeDefinition schemaType = psvi.getTypeDefinition();
         var annotation = this.catalog.getTypeAnnotation(schemaType);
         List<Item> typedValue;
@@ -220,13 +220,13 @@ final class PsviNodeBuilder extends DefaultHandler {
                     typedValue = List.of(ItemFactory.getInstance().createUntypedAtomicItem(element.getStringValue()));
                     break;
                 case XSComplexTypeDefinition.CONTENTTYPE_SIMPLE:
-                    typedValue = this.schemaTypedValue(psvi);
+                    typedValue = this.schemaTypedValue(psvi, namespaces);
                     break;
                 default:
                     throw new OurBadException("Xerces returned an unknown complex-content type.");
             }
         } else {
-            typedValue = this.schemaTypedValue(psvi);
+            typedValue = this.schemaTypedValue(psvi, namespaces);
         }
 
         if (typedValue == null) {
@@ -239,11 +239,11 @@ final class PsviNodeBuilder extends DefaultHandler {
         element.setXmlSchemaNilled(psvi.getNil());
     }
 
-    private List<Item> schemaTypedValue(ElementPSVI psvi) {
+    private List<Item> schemaTypedValue(ElementPSVI psvi, Map<String, String> namespaces) {
         if (psvi.getSchemaValue() == null) {
             throw new OurBadException("Xerces did not provide a typed value for a simple-content element.");
         }
-        return this.catalog.convertTypedValue(psvi.getSchemaValue());
+        return this.catalog.convertTypedValue(psvi.getSchemaValue(), namespaces);
     }
 
     private static void setIdentityProperties(Item node, List<Item> typedValue) {
