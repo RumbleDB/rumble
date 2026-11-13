@@ -159,6 +159,11 @@
                     <groupId>com.evolvedbinary.thirdparty.xml-apis</groupId>
                     <artifactId>xml-apis</artifactId>
                 </exclusion>
+                <exclusion>
+                    <!-- Spark supplies ICU 76.1; do not bundle XPath2's older ICU classes. -->
+                    <groupId>com.ibm.icu</groupId>
+                    <artifactId>icu4j</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
