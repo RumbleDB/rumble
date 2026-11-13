@@ -30,8 +30,10 @@ import java.util.function.Consumer;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 
 import org.apache.xerces.dom.DOMInputImpl;
+import org.apache.xerces.jaxp.validation.XMLSchema11Factory;
 import org.apache.xerces.jaxp.validation.XMLSchemaFactory;
 import org.apache.xerces.jaxp.validation.XSGrammarPoolContainer;
 import org.apache.xerces.xni.grammars.Grammar;
@@ -57,7 +59,7 @@ import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.resources.ResolvedResource;
 
 /**
- * Loads the XSD 1.0 component model declared by an XQuery module's schema
+ * Loads the configured XSD 1.0 or 1.1 component model declared by an XQuery module's schema
  * imports.
  */
 public final class XmlSchemaCatalogLoader {
@@ -75,10 +77,14 @@ public final class XmlSchemaCatalogLoader {
     private XmlSchemaCatalogLoader() {}
 
     public static XmlSchemaCatalog loadBuiltInCatalog() {
+        return loadBuiltInCatalog("1.1");
+    }
+
+    public static XmlSchemaCatalog loadBuiltInCatalog(String xsdVersion) {
         ExceptionMetadata metadata = ExceptionMetadata.EMPTY_METADATA;
         try {
             SchemaErrorHandler errorHandler = new SchemaErrorHandler();
-            XMLSchemaFactory schemaFactory = new XMLSchemaFactory();
+            SchemaFactory schemaFactory = schemaFactory(xsdVersion);
             schemaFactory.setErrorHandler(errorHandler);
 
             // Xerces also supplies the standard built-in types such as xs:anyType.
@@ -157,7 +163,11 @@ public final class XmlSchemaCatalogLoader {
                 compilationConfiguration,
                 metadata,
                 schemaResourceObserver);
-        LoadedSchema loadedSchema = loadSchema(resolvedImports.locations(), resolver, metadata);
+        LoadedSchema loadedSchema = loadSchema(
+                resolvedImports.locations(),
+                resolver,
+                metadata,
+                compilationConfiguration.runtimeConfiguration().semantics().xsdVersion());
         Map<String, String> namespacePrefixes = new LinkedHashMap<>();
         for (SchemaImport schemaImport : schemaImports) {
             if (schemaImport.getBindingKind() == SchemaImport.BindingKind.PREFIX) {
@@ -194,10 +204,18 @@ public final class XmlSchemaCatalogLoader {
         return new ResolvedImports(Map.copyOf(locationsByNamespace), locations);
     }
 
+    private static SchemaFactory schemaFactory(String xsdVersion) {
+        return switch (xsdVersion) {
+            case "1.0" -> new XMLSchemaFactory();
+            case "1.1" -> new XMLSchema11Factory();
+            default -> throw new IllegalArgumentException("Unsupported XSD version: " + xsdVersion);
+        };
+    }
+
     private static LoadedSchema loadSchema(
-            List<URI> locations, SchemaResourceResolver resolver, ExceptionMetadata metadata) {
+            List<URI> locations, SchemaResourceResolver resolver, ExceptionMetadata metadata, String xsdVersion) {
         try {
-            return loadSchema(locations, resolver, metadata, new XMLSchemaFactory());
+            return loadSchema(locations, resolver, metadata, schemaFactory(xsdVersion));
         } catch (SchemaImportException exception) {
             throw exception;
         } catch (SAXException | RuntimeException exception) {

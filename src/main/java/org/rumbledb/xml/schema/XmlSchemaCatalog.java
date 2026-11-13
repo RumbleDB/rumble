@@ -26,6 +26,8 @@ import java.util.Optional;
 import java.util.Set;
 import javax.xml.validation.Schema;
 
+import org.apache.xerces.impl.Constants;
+import org.apache.xerces.jaxp.validation.XSGrammarPoolContainer;
 import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSConstants;
@@ -94,7 +96,13 @@ public final class XmlSchemaCatalog {
         this.validationSchema = validationSchema;
         this.typeMapper = new XmlSchemaTypeMapper(namespacePrefixes);
         this.typedValueConverter = new XercesTypedValueConverter(this.typeMapper);
-        this.simpleTypeCaster = new XercesSimpleTypeCaster(this.typeMapper, this.typedValueConverter);
+        this.simpleTypeCaster = new XercesSimpleTypeCaster(
+                this.typeMapper,
+                this.typedValueConverter,
+                Constants.W3C_XML_SCHEMA11_NS_URI.equals(
+                                ((XSGrammarPoolContainer) validationSchema).getXMLSchemaVersion())
+                        ? Constants.SCHEMA_VERSION_1_1
+                        : Constants.SCHEMA_VERSION_1_0);
         this.complexTypes = collectComplexTypes(schemaModel);
         this.contentModel = new SchemaContentModel(this);
     }
