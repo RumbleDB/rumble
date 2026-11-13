@@ -276,7 +276,32 @@
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>${project.basedir}</directory>
+                <targetPath>META-INF/rumbledb</targetPath>
+                <includes>
+                    <include>LICENSE.txt</include>
+                    <include>license/**</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>license-maven-plugin</artifactId>
+                <version>2.7.1</version>
+                <configuration>
+                    <useRepositoryMissingFiles>false</useRepositoryMissingFiles>
+                    <useMissingFile>true</useMissingFile>
+                    <missingFile>${project.basedir}/license/third-party-overrides.properties</missingFile>
+                    <outputDirectory>${project.build.directory}/license-audit</outputDirectory>
+                    <failOnMissing>true</failOnMissing>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>

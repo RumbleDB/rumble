@@ -1,0 +1,6 @@
+# Preserve upstream legal texts, including their original whitespace.
+license/THIRD-PARTY-NOTICES.txt -whitespace
+license/LICENSE-Xerces.txt -whitespace
+license/NOTICE-Xerces.txt -whitespace
+license/LICENSE-Eclipse-XPath2.txt -whitespace
+license/LICENSE-Java-CUP.txt -whitespace

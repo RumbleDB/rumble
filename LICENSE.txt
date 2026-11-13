@@ -13,88 +13,155 @@ See the License for the specific language governing permissions and
 limitations under the License.
 
 =======================================================================
-Rumble Subcomponents:
+RumbleDB third-party components
+=======================================================================
 
-The Rumble project contains subcomponents with separate copyright
-notices and license terms. Your use of the source code for the these
-subcomponents is subject to the terms and conditions of the following
-licenses.
+Third-party components retain their own copyright notices and license terms.
+The complete, versioned inventory of direct and transitive dependencies is:
 
+    license/THIRD-PARTY.md
 
-========================================================================
-For ANTLR 4.7
-========================================================================
+Original license, copyright, and NOTICE files from the resolved dependency
+JARs, including notices for shaded components, are preserved in:
 
-See license/LICENSE-ANTLR.txt
+    license/THIRD-PARTY-NOTICES.txt
 
-========================================================================
-For Apache Commons Text 1.6
-========================================================================
+The inventory distinguishes compile/runtime, externally provided, and test
+components. It also links each artifact to its preserved upstream notices.
+See license/README.md for regeneration instructions, source locations, and
+upstream metadata limitations. The license files are also included in the
+published JARs under META-INF/rumbledb/.
 
-See license/LICENSE-Apache-Commons-Text.txt
+=======================================================================
+Apache Xerces and the Evolved Binary Xerces distribution
+=======================================================================
 
-========================================================================
-For Apache Commons Lang 1.6
-========================================================================
+RumbleDB uses Evolved Binary's distribution of Apache Xerces2-J:
+com.evolvedbinary.thirdparty.xerces:xercesImpl:2.12.2.2
+Classifier: jdk14-xml-schema-1.1
 
-See license/LICENSE-Apache-Commons-Lang.txt
+License: Apache License, Version 2.0.
+See license/LICENSE-Xerces.txt and license/NOTICE-Xerces.txt.
+The distribution's name does not replace Apache Xerces's upstream attribution.
 
-========================================================================
-For Apache Commons IO 2.11.0
-========================================================================
+XSD 1.1 also uses the Evolved Binary distribution of Eclipse WST XPath 2:
+com.evolvedbinary.thirdparty.org.eclipse.wst.xml:xpath2:1.2.1.1
+See license/LICENSE-Eclipse-XPath2.txt (Eclipse Public License 1.0).
 
-See license/LICENSE-Apache-Commons-IO.txt
+The accompanying parser runtime is edu.princeton.cup:java-cup:10k.
+See license/LICENSE-Java-CUP.txt for its copyright, permission, and disclaimer.
 
-========================================================================
-For Apache HttpClient
-========================================================================
+=======================================================================
+Direct Maven dependencies (generated from pom.xml)
+=======================================================================
 
-See license/LICENSE-Apache-HttpClient.txt
+BEGIN GENERATED DIRECT DEPENDENCIES
+org.openjdk.jmh:jmh-core:jar:1.37 [compile]
+  GNU General Public License (GPL), version 2, with the Classpath exception
 
-========================================================================
-For gson
-========================================================================
+org.openjdk.jmh:jmh-generator-annprocess:jar:1.37 [compile]
+  GNU General Public License (GPL), version 2, with the Classpath exception
 
-See license/LICENSE-gson.txt
+org.apache.spark:spark-core_2.13:jar:4.0.5 [provided]
+  Apache-2.0
 
-========================================================================
-For JLine 3.11.0
-========================================================================
+org.apache.spark:spark-sql_2.13:jar:4.0.5 [provided]
+  Apache-2.0
 
-See license/LICENSE-JLine.txt
+org.apache.spark:spark-mllib_2.13:jar:4.0.5 [provided]
+  Apache-2.0
 
-========================================================================
-For Kryo
-========================================================================
+org.apache.spark:spark-hive_2.13:jar:4.0.5 [provided]
+  Apache-2.0
 
-See license/LICENSE-Kryo.txt
+org.apache.hadoop:hadoop-aws:jar:3.3.6 [provided]
+  Apache License, Version 2.0
 
-========================================================================
-For Laurelin
-========================================================================
+org.apache.spark:spark-avro_2.13:jar:4.0.5 [compile]
+  Apache-2.0
 
-See license/LICENSE-Laurelin.txt
+org.antlr:antlr4-runtime:jar:4.13.2 [compile]
+  BSD-3-Clause
 
-========================================================================
-For Spark 2.4.4
-========================================================================
+com.evolvedbinary.thirdparty.xerces:xercesImpl:jar:jdk14-xml-schema-1.1:2.12.2.2 [compile]
+  The Apache Software License, Version 2.0
 
-See license/LICENSE-Spark.txt
+edu.princeton.cup:java-cup:jar:10k [runtime]
+  CUP Parser Generator Copyright Notice, License, and Disclaimer
 
-========================================================================
-For the XQuery 3.1 grammar (Loren Cahlander/xqdoc)
-========================================================================
+com.evolvedbinary.thirdparty.org.eclipse.wst.xml:xpath2:jar:1.2.1.1 [runtime]
+  Eclipse Public License - v 1.0
 
-See license/LICENSE-xqdoc.txt
+org.jline:jline:jar:3.11.0 [compile]
+  The BSD License
 
-========================================================================
-For ICU4J 76.1
-========================================================================
+com.esotericsoftware:kryo-shaded:jar:4.0.3 [provided]
+  3-Clause BSD License
 
-See license/LICENSE-ICU4J.txt
+org.junit.jupiter:junit-jupiter:jar:6.1.1 [test]
+  Eclipse Public License v2.0
 
-========================================================================
-For the W3C schema for the XML representation of JSON
-========================================================================
+org.apache.commons:commons-text:jar:1.10.0 [compile]
+  Apache License, Version 2.0
 
-See license/LICENSE-W3C.txt
+org.apache.commons:commons-lang3:jar:3.18.0 [compile]
+  Apache-2.0
+
+commons-net:commons-net:jar:3.11.1 [compile]
+  Apache-2.0
+
+commons-io:commons-io:jar:2.18.0 [compile]
+  Apache-2.0
+
+org.apache.httpcomponents:httpclient:jar:4.5.13 [compile]
+  Apache License, Version 2.0
+
+org.jgrapht:jgrapht-core:jar:1.4.0 [compile]
+  Eclipse Public License (EPL) 2.0; GNU Lesser General Public License Version 2.1, February 1999
+
+com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:jar:2.18.2 [compile]
+  The Apache Software License, Version 2.0
+
+io.delta:delta-spark_2.13:jar:4.0.0 [compile]
+  Apache-2.0
+
+org.apache.iceberg:iceberg-spark-runtime-4.0_2.13:jar:1.10.0 [compile]
+  The Apache Software License, Version 2.0
+
+org.skyscreamer:jsonassert:jar:1.5.1 [test]
+  The Apache Software License, Version 2.0
+
+net.sf.py4j:py4j:jar:0.10.9.9 [compile]
+  The New BSD License
+
+org.postgresql:postgresql:jar:42.7.12 [compile]
+  BSD-2-Clause
+
+org.mongodb.spark:mongo-spark-connector_2.13:jar:10.5.0 [compile]
+  The Apache License, Version 2.0
+
+com.ibm.icu:icu4j:jar:76.1 [provided]
+  Unicode-3.0
+
+org.projectlombok:lombok:jar:1.18.46 [provided]
+  The MIT License
+
+info.picocli:picocli:jar:4.7.7 [compile]
+  The Apache Software License, version 2.0
+END GENERATED DIRECT DEPENDENCIES
+
+=======================================================================
+Additional source and data attributions
+=======================================================================
+
+The XQuery 3.1 grammar (Loren Cahlander/xqdoc):
+See license/LICENSE-xqdoc.txt.
+
+The W3C schema for the XML representation of JSON:
+See license/LICENSE-W3C.txt.
+
+ICU4J 76.1 (supplied by Spark):
+See license/LICENSE-ICU4J.txt.
+
+Other existing component-specific license texts remain in license/.
+The resolved inventory above identifies the versions actually used.
