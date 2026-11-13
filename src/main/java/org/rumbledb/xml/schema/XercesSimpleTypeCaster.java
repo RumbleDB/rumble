@@ -25,6 +25,8 @@ import org.apache.xerces.impl.dv.SchemaDVFactory;
 import org.apache.xerces.impl.dv.ValidatedInfo;
 import org.apache.xerces.impl.dv.ValidationContext;
 import org.apache.xerces.impl.dv.XSSimpleType;
+import org.apache.xerces.impl.dv.xs.Schema11DVFactoryImpl;
+import org.apache.xerces.impl.dv.xs.SchemaDVFactoryImpl;
 import org.apache.xerces.impl.dv.xs.TypeValidatorHelper;
 import org.apache.xerces.impl.xpath.regex.RegularExpression;
 import org.apache.xerces.xs.StringList;
@@ -54,6 +56,7 @@ import org.rumbledb.types.ItemType;
 final class XercesSimpleTypeCaster {
 
     private final short schemaVersion;
+    private final SchemaDVFactory datatypeFactory;
 
     @NonNull private final XmlSchemaTypeMapper typeMapper;
 
@@ -64,6 +67,8 @@ final class XercesSimpleTypeCaster {
             @NonNull XercesTypedValueConverter typedValueConverter,
             short schemaVersion) {
         this.schemaVersion = schemaVersion;
+        this.datatypeFactory =
+                schemaVersion == Constants.SCHEMA_VERSION_1_1 ? new Schema11DVFactoryImpl() : new SchemaDVFactoryImpl();
         this.typeMapper = typeMapper;
         this.typedValueConverter = typedValueConverter;
     }
@@ -292,7 +297,10 @@ final class XercesSimpleTypeCaster {
             ExceptionMetadata metadata)
             throws InvalidDatatypeValueException {
         SimpleTypeValidationContext validationContext = validationContext(value, namespaceResolver);
-        ValidatedInfo schemaValue = validateValue(builtInBaseType(schemaType), lexicalValue(value), validationContext);
+        // XSD 1.1 forbids validating directly against bare xs:NOTATION.
+        // Use the target restriction, whose enumeration permits the notation value.
+        XSSimpleType parsingType = value.isNotation() ? schemaType : builtInBaseType(schemaType);
+        ValidatedInfo schemaValue = validateValue(parsingType, lexicalValue(value), validationContext);
         // Use the basic types defined by the query casting rules. These treat integer and the
         // duration subtypes as casting primitives, although XML Schema does not call them primitives.
         ItemType primitiveType = this.typeMapper
@@ -306,13 +314,14 @@ final class XercesSimpleTypeCaster {
         while (!sourceBase.hasName() || !Name.XS_NS.equals(sourceBase.getName().getNamespace())) {
             sourceBase = sourceBase.getBaseType();
         }
-        XSSimpleType sourceSchemaType = SchemaDVFactory.getInstance(
-                        this.schemaVersion == Constants.SCHEMA_VERSION_1_1
-                                ? "org.apache.xerces.impl.dv.xs.Schema11DVFactory"
-                                : "org.apache.xerces.impl.dv.xs.SchemaDVFactoryImpl")
-                .getBuiltInType(sourceBase.getName().getLocalName());
-        ValidatedInfo sourceValue = validateValue(
-                sourceSchemaType, lexicalValue(patternSource), validationContext(patternSource, namespaceResolver));
+        XSSimpleType sourceSchemaType =
+                this.datatypeFactory.getBuiltInType(sourceBase.getName().getLocalName());
+        ValidatedInfo sourceValue = patternSource.isNotation()
+                ? schemaValue
+                : validateValue(
+                        sourceSchemaType,
+                        lexicalValue(patternSource),
+                        validationContext(patternSource, namespaceResolver));
         checkPatterns(schemaType, sourceValue.getActualValue().toString());
         // Patterns have already been checked against the required text form. Check the remaining
         // restrictions on the parsed value without parsing its text again.

@@ -27,7 +27,14 @@ import java.util.Set;
 import javax.xml.validation.Schema;
 
 import org.apache.xerces.impl.Constants;
+import org.apache.xerces.impl.dv.InvalidDatatypeValueException;
+import org.apache.xerces.impl.dv.ValidatedInfo;
+import org.apache.xerces.impl.dv.XSSimpleType;
+import org.apache.xerces.impl.dv.xs.TypeValidatorHelper;
+import org.apache.xerces.impl.validation.ValidationState;
+import org.apache.xerces.impl.xs.util.XS11TypeHelper;
 import org.apache.xerces.jaxp.validation.XSGrammarPoolContainer;
+import org.apache.xerces.util.NamespaceSupport;
 import org.apache.xerces.xs.XSAttributeDeclaration;
 import org.apache.xerces.xs.XSComplexTypeDefinition;
 import org.apache.xerces.xs.XSConstants;
@@ -75,6 +82,8 @@ public final class XmlSchemaCatalog {
     private final XmlSchemaTypeMapper typeMapper;
     private final XercesTypedValueConverter typedValueConverter;
     private final XercesSimpleTypeCaster simpleTypeCaster;
+
+    private final short schemaVersion;
     /**
      * Every complex type an element may be annotated with, named or anonymous, collected once by
      * {@link #collectComplexTypes}. {@link #typeAndDerivedTypes} scans it to find the types derived from a given type.
@@ -96,13 +105,12 @@ public final class XmlSchemaCatalog {
         this.validationSchema = validationSchema;
         this.typeMapper = new XmlSchemaTypeMapper(namespacePrefixes);
         this.typedValueConverter = new XercesTypedValueConverter(this.typeMapper);
-        this.simpleTypeCaster = new XercesSimpleTypeCaster(
-                this.typeMapper,
-                this.typedValueConverter,
-                Constants.W3C_XML_SCHEMA11_NS_URI.equals(
-                                ((XSGrammarPoolContainer) validationSchema).getXMLSchemaVersion())
-                        ? Constants.SCHEMA_VERSION_1_1
-                        : Constants.SCHEMA_VERSION_1_0);
+        this.schemaVersion = Constants.W3C_XML_SCHEMA11_NS_URI.equals(
+                        ((XSGrammarPoolContainer) validationSchema).getXMLSchemaVersion())
+                ? Constants.SCHEMA_VERSION_1_1
+                : Constants.SCHEMA_VERSION_1_0;
+        this.simpleTypeCaster =
+                new XercesSimpleTypeCaster(this.typeMapper, this.typedValueConverter, this.schemaVersion);
         this.complexTypes = collectComplexTypes(schemaModel);
         this.contentModel = new SchemaContentModel(this);
     }
@@ -587,6 +595,53 @@ public final class XmlSchemaCatalog {
 
     List<Item> convertTypedValue(XSValue schemaValue) {
         return this.typedValueConverter.convert(schemaValue);
+    }
+
+    List<Item> convertTypedValue(XSValue schemaValue, Map<String, String> namespaces) {
+        XSSimpleTypeDefinition type = schemaValue.getTypeDefinition();
+        if (this.schemaVersion == Constants.SCHEMA_VERSION_1_1
+                && type instanceof XSSimpleType simpleType
+                && type.getVariety() == XSSimpleTypeDefinition.VARIETY_UNION
+                && schemaValue.getMemberTypeDefinition() == null
+                && !hasAssertions(type)) {
+            // Xerces 1.1's assertion processing can clear the selected member of an
+            // assertion-free union. Reconstruct that metadata using the same datatype
+            // rules and namespace bindings. Never reselect assertion-bearing members:
+            // their selection belongs to the full schema validator.
+            NamespaceSupport namespaceContext = new NamespaceSupport();
+            namespaces.forEach((prefix, uri) -> namespaceContext.declarePrefix(prefix.intern(), uri.intern()));
+            ValidationState context = new ValidationState();
+            context.setNamespaceSupport(namespaceContext);
+            context.setExtraChecking(false);
+            context.setTypeValidatorHelper(TypeValidatorHelper.getInstance(this.schemaVersion));
+            ValidatedInfo recovered = new ValidatedInfo();
+            try {
+                simpleType.validate(schemaValue.getNormalizedValue(), context, recovered);
+                return this.typedValueConverter.convert(recovered);
+            } catch (InvalidDatatypeValueException exception) {
+                throw new OurBadException(
+                        "Unable to recover the member type of a validated union value: " + exception.getMessage());
+            }
+        }
+        return this.convertTypedValue(schemaValue);
+    }
+
+    private static boolean hasAssertions(XSSimpleTypeDefinition type) {
+        if (XS11TypeHelper.simpleTypeHasAsserts(type)) {
+            return true;
+        }
+        if (type.getVariety() == XSSimpleTypeDefinition.VARIETY_LIST) {
+            return hasAssertions(type.getItemType());
+        }
+        if (type.getVariety() == XSSimpleTypeDefinition.VARIETY_UNION) {
+            XSObjectList members = type.getMemberTypes();
+            for (int i = 0; i < members.getLength(); i++) {
+                if (hasAssertions((XSSimpleTypeDefinition) members.item(i))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private XSSimpleTypeDefinition simpleType(Name name) {

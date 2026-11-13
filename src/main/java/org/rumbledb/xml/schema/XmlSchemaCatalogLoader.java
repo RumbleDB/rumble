@@ -33,12 +33,14 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.apache.xerces.dom.DOMInputImpl;
+import org.apache.xerces.impl.Constants;
+import org.apache.xerces.impl.xs.SchemaGrammar;
+import org.apache.xerces.impl.xs.XSModelImpl;
 import org.apache.xerces.jaxp.validation.XMLSchema11Factory;
 import org.apache.xerces.jaxp.validation.XMLSchemaFactory;
 import org.apache.xerces.jaxp.validation.XSGrammarPoolContainer;
 import org.apache.xerces.xni.grammars.Grammar;
 import org.apache.xerces.xni.grammars.XMLGrammarDescription;
-import org.apache.xerces.xni.grammars.XSGrammar;
 import org.apache.xerces.xs.XSModel;
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
@@ -270,9 +272,9 @@ public final class XmlSchemaCatalogLoader {
         // We convert it into an XSModel, which will be used for validation and type checking.
         Grammar[] grammars =
                 grammarPoolContainer.getGrammarPool().retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
-        XSGrammar[] schemaGrammars = new XSGrammar[grammars.length];
+        SchemaGrammar[] schemaGrammars = new SchemaGrammar[grammars.length];
         for (int index = 0; index < grammars.length; index++) {
-            if (!(grammars[index] instanceof XSGrammar schemaGrammar)) {
+            if (!(grammars[index] instanceof SchemaGrammar schemaGrammar)) {
                 throw new SchemaImportException("Xerces returned a non-schema validation grammar.", metadata);
             }
             schemaGrammars[index] = schemaGrammar;
@@ -282,7 +284,12 @@ public final class XmlSchemaCatalogLoader {
             throw new SchemaImportException("Unable to build the XML Schema component model.", metadata);
         }
 
-        XSModel schemaModel = schemaGrammars[0].toXSModel(schemaGrammars);
+        // toXSModel() implicitly installs XSD 1.0 built-ins, even for 1.1 grammars.
+        // Keep anyType and the other built-ins identical to those used by the validator.
+        short schemaVersion = Constants.W3C_XML_SCHEMA11_NS_URI.equals(grammarPoolContainer.getXMLSchemaVersion())
+                ? Constants.SCHEMA_VERSION_1_1
+                : Constants.SCHEMA_VERSION_1_0;
+        XSModel schemaModel = new XSModelImpl(schemaGrammars, schemaVersion);
         return new LoadedSchema(validationSchema, schemaModel);
     }
 

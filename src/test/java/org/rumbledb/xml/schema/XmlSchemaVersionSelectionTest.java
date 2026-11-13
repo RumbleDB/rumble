@@ -28,6 +28,46 @@ import org.rumbledb.exceptions.SchemaImportException;
 
 public class XmlSchemaVersionSelectionTest {
     @Test
+    public void unionMembersRetainTheirTypesAndNamespaces(@TempDir Path directory) throws Exception {
+        Files.writeString(
+                directory.resolve("types.xsd"),
+                """
+                    <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:t="urn:test"
+                               targetNamespace="urn:test">
+                      <xs:simpleType name="Code">
+                        <xs:restriction base="xs:string"><xs:pattern value="[A-Z]+"/></xs:restriction>
+                      </xs:simpleType>
+                      <xs:simpleType name="Choice"><xs:union memberTypes="xs:integer t:Code"/></xs:simpleType>
+                      <xs:simpleType name="NamedQName"><xs:restriction base="xs:QName"/></xs:simpleType>
+                      <xs:element name="choice" type="t:Choice"/>
+                      <xs:element name="qualified">
+                        <xs:simpleType><xs:union memberTypes="xs:integer t:NamedQName"/></xs:simpleType>
+                      </xs:element>
+                    </xs:schema>
+                    """);
+        String query =
+                """
+                    import schema namespace t = 'urn:test' at 'types.xsd';
+                    let $code := data(validate strict { <t:choice>ABC</t:choice> })
+                    let $number := data(validate strict { <t:choice>42</t:choice> })
+                    let $name := data(validate strict { <t:qualified xmlns:p="urn:value">p:value</t:qualified> })
+                    return $code instance of t:Code and $code eq 'ABC'
+                        and $number instance of xs:integer and $number eq 42
+                        and $name instance of t:NamedQName and $name eq QName('urn:value', 'value')
+                    """;
+        for (String version : new String[] {"1.0", "1.1"}) {
+            var config = RumbleConfiguration.builder()
+                    .configureSemantics(s -> s.queryLanguage("xquery31").xsdVersion(version))
+                    .build();
+            Assertions.assertTrue(new Rumble(config)
+                    .runQuery(query, directory.resolve("query.xq").toUri())
+                    .getAsList()
+                    .get(0)
+                    .getBooleanValue());
+        }
+    }
+
+    @Test
     public void schema10ImportsWorkInBothVersions(@TempDir Path directory) throws Exception {
         Files.writeString(
                 directory.resolve("types.xsd"),
@@ -52,6 +92,12 @@ public class XmlSchemaVersionSelectionTest {
             var builtins = new org.rumbledb.context.StaticContext(directory.toUri(), config)
                     .getInScopeSchemaTypes()
                     .getXmlSchemaCatalog();
+            Assertions.assertSame(
+                    org.apache.xerces.impl.xs.SchemaGrammar.getXSAnyType(
+                            version.equals("1.1")
+                                    ? org.apache.xerces.impl.Constants.SCHEMA_VERSION_1_1
+                                    : org.apache.xerces.impl.Constants.SCHEMA_VERSION_1_0),
+                    builtins.getSchemaModel().getTypeDefinition("anyType", "http://www.w3.org/2001/XMLSchema"));
             Assertions.assertEquals(
                     version.equals("1.1")
                             ? org.apache.xerces.impl.Constants.W3C_XML_SCHEMA11_NS_URI
