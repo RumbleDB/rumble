@@ -86,7 +86,7 @@ public class DynamicContext implements Serializable {
         this.externalBindings = externalBindings;
         this.resourceResolver = resourceResolver;
         this.namedFunctions = new NamedFunctions();
-        this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.inScopeSchemaTypes = new InScopeSchemaTypes(conf.semantics().xsdVersion());
         this.currentDateTime = OffsetDateTime.now();
         this.currentMutabilityLevel = 0;
         this.globalVariables = new GlobalVariables();
