@@ -531,6 +531,14 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                         .orElseThrow()));
         while (iterator.hasNext()) {
             Set<Node> group = iterator.next().vertexSet();
+            // Includes cycles through named function references or global variables, and also applies to
+            // standalone library analysis, which does not run FunctionDependenciesVisitor.
+            for (Node declaration : group) {
+                if (declaration instanceof FunctionDeclaration function
+                        && (group.size() > 1 || dependencyGraph.containsEdge(declaration, declaration))) {
+                    function.setCyclicTypeDependencies(true);
+                }
+            }
             // Register the entire recursive group before evaluating any dependent declaration.
             group.stream()
                     .filter(declaration -> !(declaration instanceof TypeDeclaration))

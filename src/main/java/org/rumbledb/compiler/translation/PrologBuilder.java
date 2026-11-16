@@ -19,7 +19,9 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.context.Name;
@@ -44,7 +46,7 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.runtime.xml.NamespaceBindingUtils;
 import org.rumbledb.serialization.SerializationParameterUtils;
-import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
 
 /**
  * Handles shared prolog translation state and validation for both Jsoniq and XQuery frontends.
@@ -242,16 +244,17 @@ public final class PrologBuilder {
         this.translationContext.bindNamespace(prefix, namespace, schema.getMetadata());
     }
 
-    /** Complete header processing by loading schemas before any declaration is translated. */
-    public void finishHeader(ExceptionMetadata metadata) {
-        XmlSchemaCatalogLoader.load(
-                        this.schemas,
-                        this.translationContext.moduleContext().getStaticBaseURI(),
-                        this.translationContext.compilationConfiguration())
-                .ifPresent(catalog -> this.translationContext
-                        .moduleContext()
-                        .getInScopeSchemaTypes()
-                        .importSchema(catalog, metadata));
+    /**
+     * Complete header processing by loading schemas before any declaration is translated.
+     *
+     * @param loader loads the catalog of the schema imports
+     */
+    public void finishHeader(
+            ExceptionMetadata metadata, Function<List<SchemaImport>, Optional<XmlSchemaCatalog>> loader) {
+        loader.apply(this.schemas).ifPresent(catalog -> this.translationContext
+                .moduleContext()
+                .getInScopeSchemaTypes()
+                .importSchema(catalog, metadata));
     }
 
     public void addVariable(VariableDeclaration declaration) {

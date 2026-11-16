@@ -27,9 +27,9 @@ import java.util.Arrays;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
@@ -90,14 +90,14 @@ public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan 
                     "Can not atomize an %1$s item: an %1$s has probably been passed where "
                             + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                     left.getDynamicType().toString());
-            throw new NonAtomicKeyException(message, metadata);
+            throw new CannotAtomizeException(message, metadata);
         }
         if (!right.isAtomic()) {
             String message = String.format(
                     "Can not atomize an %1$s item: an %1$s has probably been passed where "
                             + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                     right.getDynamicType().toString());
-            throw new NonAtomicKeyException(message, metadata);
+            throw new CannotAtomizeException(message, metadata);
         }
         if (left.isUntypedAtomic()) {
             left = ItemFactory.getInstance().createDoubleItem(left.castToDoubleValue());

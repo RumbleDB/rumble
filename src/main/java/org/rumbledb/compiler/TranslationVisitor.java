@@ -19,6 +19,8 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.function.Consumer;
 
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
@@ -187,6 +189,7 @@ import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
@@ -256,6 +259,8 @@ import org.rumbledb.parser.jsoniq.JsoniqParserBaseVisitor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.xml.schema.XmlSchemaCatalog;
+import org.rumbledb.xml.schema.XmlSchemaCatalogLoader;
 
 /**
  * Translation is the phase in which the Abstract Syntax Tree is transformed
@@ -319,6 +324,19 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
         return new PrologVisitor().build(ctx);
     }
 
+    /** Translates one header or declaration of a prolog. Tools that accept incomplete queries can contain failures. */
+    protected void translatePrologEntry(ParseTree entry, Consumer<ParseTree> translation) {
+        translation.accept(entry);
+    }
+
+    /** Loads the catalog of the schema imports. Tools that accept incomplete queries can leave out those that fail. */
+    protected Optional<XmlSchemaCatalog> loadSchemas(List<SchemaImport> schemaImports) {
+        return XmlSchemaCatalogLoader.load(
+                schemaImports,
+                this.translationContext.moduleContext().getStaticBaseURI(),
+                this.translationContext.compilationConfiguration());
+    }
+
     private class PrologVisitor extends JsoniqParserBaseVisitor<Void> {
         private final PrologBuilder builder = new PrologBuilder(TranslationVisitor.this.translationContext);
 
@@ -327,11 +345,11 @@ public class TranslationVisitor extends JsoniqParserBaseVisitor<Node> {
                 return null;
             }
             for (JsoniqParser.PrologHeaderContext header : ctx.headers) {
-                visit(header);
+                translatePrologEntry(header, this::visit);
             }
-            this.builder.finishHeader(createMetadataFromContext(ctx));
+            this.builder.finishHeader(createMetadataFromContext(ctx), TranslationVisitor.this::loadSchemas);
             for (JsoniqParser.AnnotatedDeclContext declaration : ctx.declarations) {
-                visit(declaration);
+                translatePrologEntry(declaration, this::visit);
             }
             return this.builder.build(createMetadataFromContext(ctx));
         }

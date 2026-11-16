@@ -647,6 +647,58 @@ public interface ItemType extends Serializable {
     }
 
     /**
+     * Whether an item may have both types. Subtyping proves overlap, but its absence does not prove disjointness: an
+     * empty map is both a map(xs:string, xs:integer) and a map(xs:integer, xs:string), and element(*, xs:untyped) and
+     * element(a) share the untyped elements named a. Types of the same kind are then assumed to overlap, unless they
+     * are nodes with different names, or atomic types with different primitive types.
+     */
+    default boolean mayOverlapWith(ItemType other) {
+        return getMemberTypes().stream().anyMatch(member -> other.getMemberTypes().stream()
+                .anyMatch(target -> membersMayOverlap(member, target)));
+    }
+
+    private static boolean membersMayOverlap(ItemType member, ItemType target) {
+        return member.isSubtypeOf(target)
+                || target.isSubtypeOf(member)
+                || (member.isMapItemType() && target.isMapItemType())
+                || (member.isObjectItemType() && target.isObjectItemType())
+                || (member.isArrayItemType() && target.isArrayItemType())
+                || (member.isXQueryArrayItemType() && target.isXQueryArrayItemType())
+                || (member.isFunctionItemType() && target.isFunctionItemType())
+                || nodesMayOverlap(member, target)
+                || (member.isAtomicItemType()
+                        && target.isAtomicItemType()
+                        && member.getCastingPrimitiveType().equals(target.getCastingPrimitiveType()));
+    }
+
+    /** Nodes of the same kind may overlap when their names may match, whatever their type annotations. */
+    private static boolean nodesMayOverlap(ItemType member, ItemType target) {
+        if (member instanceof ElementNodeItemType element && target instanceof ElementNodeItemType other) {
+            // A schema element test also matches the elements of its substitution group, whatever their names.
+            return member instanceof SchemaElementNodeItemType
+                    || target instanceof SchemaElementNodeItemType
+                    || namesMayMatch(element.getNodeName(), other.getNodeName());
+        }
+        if (member instanceof AttributeNodeItemType attribute && target instanceof AttributeNodeItemType other) {
+            return namesMayMatch(attribute.getNodeName(), other.getNodeName());
+        }
+        if (member instanceof DocumentNodeItemType document && target instanceof DocumentNodeItemType other) {
+            return document.getElementTestType() == null
+                    || other.getElementTestType() == null
+                    || nodesMayOverlap(document.getElementTestType(), other.getElementTestType());
+        }
+        if (member instanceof PINodeItemType instruction && target instanceof PINodeItemType other) {
+            return namesMayMatch(instruction.getNormalizedTarget(), other.getNormalizedTarget());
+        }
+        return false;
+    }
+
+    /** Whether two node names may match, where null is the wildcard. */
+    private static boolean namesMayMatch(Object name, Object other) {
+        return name == null || other == null || name.equals(other);
+    }
+
+    /**
      * Returns the types a value of this type can have: the members of a union, with nested unions expanded, or this
      * type itself.
      */
