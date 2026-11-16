@@ -36,6 +36,14 @@ public class FunctionDeclaration extends Node {
     @Getter
     private boolean recursive = false;
 
+    /** Includes dependency cycles through function references and global variables. */
+    @Setter
+    private boolean cyclicTypeDependencies;
+
+    public boolean hasCyclicTypeDependencies() {
+        return this.cyclicTypeDependencies;
+    }
+
     public FunctionDeclaration(InlineFunctionExpression functionExpression, ExceptionMetadata metadata) {
         super(metadata);
         this.functionExpression = functionExpression;

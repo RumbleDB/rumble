@@ -23,8 +23,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.typing.TreatTypeValidator;
+import org.rumbledb.types.SequenceType;
 
 public class AssignStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     @Serial
@@ -32,17 +35,36 @@ public class AssignStatementIterator extends AbstractAtMostOneItemRuntimePlan {
 
     private final ItemRuntimePlan assignExpression;
     private final Name variableName;
+    /** Checks the assigned value against the declared type of the variable, or null if it has none. */
+    private final TreatTypeValidator validator;
 
     public AssignStatementIterator(
-            ItemRuntimePlan assignExpression, Name variableName, RuntimeStaticContext staticContext) {
+            ItemRuntimePlan assignExpression,
+            Name variableName,
+            SequenceType variableType,
+            RuntimeStaticContext staticContext) {
         super(Collections.singletonList(assignExpression), staticContext);
         this.assignExpression = assignExpression;
         this.variableName = variableName;
+        this.validator = variableType == null || variableType.equals(SequenceType.createSequenceType("item*"))
+                ? null
+                : new TreatTypeValidator(variableType, ErrorCode.UnexpectedTypeErrorCode, getMetadata());
     }
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         List<Item> exprItems = this.assignExpression.materialize(context);
+        if (this.validator != null) {
+            this.validator.resolve(context);
+            for (int i = 0; i < exprItems.size(); i++) {
+                Item item = exprItems.get(i);
+                if (!item.getDynamicType().isResolved()) {
+                    item.getDynamicType().resolve(context, getMetadata());
+                }
+                this.validator.validateItem(item, i + 1);
+            }
+            this.validator.validateEmpty(exprItems.size());
+        }
         context.getVariableValues().changeVariableValue(this.variableName, exprItems);
         return null;
     }

@@ -22,6 +22,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -166,50 +167,16 @@ public class UnionItemType extends AbstractItemType {
         return sb.toString();
     }
 
+    /** A named union by its name, and an anonymous one, such as an inferred type, as (A | B), for messages. */
     @Override
     public String toString() {
-        if ((new Name(Name.JS_NS, "js", "object")).equals(this.name)) {
-            // generic object
+        if (this.name != null && !this.name.getLocalName().isEmpty()) {
             return this.name.toString();
-        } else {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{ ");
-            if (this.name != null && !this.name.getLocalName().equals("")) {
-                sb.append("\"name\": \"");
-                sb.append(this.name.toString());
-                sb.append("\", ");
-            }
-            sb.append("\"kind\": \"union\", ");
-
-            sb.append("\"baseType\": \"");
-            sb.append(this.baseType.toString());
-            sb.append("\", ");
-
-            sb.append("\"treeDepth\": ");
-            sb.append(this.typeTreeDepth);
-            sb.append(", ");
-
-            if (isResolved()) {
-                sb.append("\"content\": [ ");
-                String comma = "";
-                for (ItemType type : this.types) {
-                    sb.append(comma);
-                    comma = ", ";
-                    if (type.toString().startsWith("{")) {
-                        sb.append(type);
-                    } else {
-                        sb.append("\"");
-                        sb.append(type.toString());
-                        sb.append("\"");
-                    }
-                }
-                sb.append(" ]");
-            } else {
-                sb.append(" (content not resolved yet) ");
-            }
-            sb.append(" }");
-            return sb.toString();
         }
+        if (!isResolved()) {
+            return "#anonymous-union (content not resolved yet)";
+        }
+        return this.types.stream().map(ItemType::toString).collect(Collectors.joining(" | ", "(", ")"));
     }
 
     @Override
@@ -240,18 +207,23 @@ public class UnionItemType extends AbstractItemType {
 
     @Override
     public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
+        // The built-in numeric union validates through double first, matching its Spark representation.
+        // Arbitrary numeric unions may validate through a narrower member and still need schema inference.
+        if (equals(BuiltinTypesCatalogue.numericItem)) {
+            return true;
+        }
         if (this.types.size() != 2) {
             return false;
         }
         ItemType first = this.types.get(0);
         ItemType second = this.types.get(1);
         if (first.equals(BuiltinTypesCatalogue.nullItem)
-                && second.isAtomicItemType()
+                && second.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
                 && second.isCompatibleWithDataFrames(configuration)) {
             return true;
         }
         if (second.equals(BuiltinTypesCatalogue.nullItem)
-                && first.isAtomicItemType()
+                && first.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
                 && first.isCompatibleWithDataFrames(configuration)) {
             return true;
         }
@@ -303,8 +275,21 @@ public class UnionItemType extends AbstractItemType {
         if (hasNumeric && hasNonNumeric) {
             return BuiltinTypesCatalogue.atomicItem;
         }
-        if (hasNumeric && !hasNull) {
-            return BuiltinTypesCatalogue.numericItem;
+        if (hasNumeric) {
+            // Join the numeric alternatives independently of null, just as for non-null input.
+            ItemType numericType = null;
+            for (ItemType member : resultTypes) {
+                if (!member.equals(BuiltinTypesCatalogue.nullItem)) {
+                    numericType = numericType == null ? member : numericType.findLeastCommonSuperTypeWith(member);
+                }
+            }
+            return hasNull
+                    ? new UnionItemType(
+                            null,
+                            BuiltinTypesCatalogue.atomicItem,
+                            Arrays.asList(numericType, BuiltinTypesCatalogue.nullItem),
+                            false)
+                    : numericType;
         }
         if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
             return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes), false);

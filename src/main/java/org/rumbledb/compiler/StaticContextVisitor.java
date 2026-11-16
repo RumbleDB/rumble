@@ -409,6 +409,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         null,
                         Objects.requireNonNullElse(c.getVariableMetadata(), expression.getMetadata()));
             }
+            c.setStaticContext(caseContext);
             this.visit(c.getReturnExpression(), caseContext);
             for (SequenceType sequenceType : c.getUnion()) {
                 sequenceType.resolve(argument, expression.getMetadata());
@@ -426,6 +427,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     null,
                     Objects.requireNonNullElse(
                             expression.getDefaultCase().getVariableMetadata(), expression.getMetadata()));
+            expression.getDefaultCase().setStaticContext(defaultCaseStaticContext);
             this.visit(expression.getDefaultCase().getReturnExpression(), defaultCaseStaticContext);
         }
         // return the given context unchanged as defined variables go out of scope
@@ -482,9 +484,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitTransformExpression(TransformExpression expression, StaticContext argument) {
         argument.setCurrentMutabilityLevel(argument.getCurrentMutabilityLevel() + 1);
-        StaticContext result = argument;
+        // One context binds every copy variable, so that type inference can refine their types in it.
+        StaticContext result = new StaticContext(argument);
         for (CopyDeclaration copyDecl : expression.getCopyDeclarations()) {
-            result = this.visitCopyDecl(copyDecl, result, argument);
+            this.visitCopyDecl(copyDecl, result, argument);
         }
 
         result = this.visit(expression.getModifyExpression(), result);
@@ -497,22 +500,17 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private StaticContext visitCopyDecl(
-            CopyDeclaration copyDeclaration, StaticContext argument, StaticContext copyContext) {
+    private void visitCopyDecl(
+            CopyDeclaration copyDeclaration, StaticContext copyVariables, StaticContext copyContext) {
         this.visit(copyDeclaration.getSourceExpression(), copyContext);
 
-        StaticContext result = new StaticContext(argument);
-        result.addVariable(
+        // A copy has no declared type: type inference binds it from the source.
+        copyVariables.addVariable(
                 copyDeclaration.getVariableName(),
-                copyDeclaration.getSourceSequenceType(),
+                null,
                 Objects.requireNonNullElse(
                         copyDeclaration.getVariableMetadata(),
                         copyDeclaration.getSourceExpression().getMetadata()));
-        copyDeclaration
-                .getSourceSequenceType()
-                .resolve(copyContext, copyDeclaration.getSourceExpression().getMetadata());
-
-        return result;
     }
 
     @Override
@@ -782,6 +780,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         null,
                         Objects.requireNonNullElse(tssc.getVariableMetadata(), statement.getMetadata()));
             }
+            tssc.setStaticContext(caseContext);
             this.visit(tssc.getReturnStatement(), caseContext);
             for (SequenceType sequenceType : tssc.getUnion()) {
                 sequenceType.resolve(argument, statement.getMetadata());
@@ -797,6 +796,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     null,
                     Objects.requireNonNullElse(
                             statement.getDefaultCase().getVariableMetadata(), statement.getMetadata()));
+            statement.getDefaultCase().setStaticContext(defaultCaseStaticContext);
             this.visit(statement.getDefaultCase().getReturnStatement(), defaultCaseStaticContext);
         }
         return argument;

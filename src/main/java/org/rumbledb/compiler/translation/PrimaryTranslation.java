@@ -224,7 +224,7 @@ public final class PrimaryTranslation {
         AnnotationValidator.validateInlineFunctionAnnotations(annotations);
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         Map<Name, ExceptionMetadata> parameterMetadata = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.createSequenceType("item*");
+        SequenceType fnReturnType = null;
         if (ctx.params() != null) {
             for (InlineFunctionExprContext.InlineFunctionParam<VarBindingCtx, SeqTypeCtx> param : ctx.params()) {
                 Name paramName = parseVariableBinding.apply(param.name());
