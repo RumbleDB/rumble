@@ -61,6 +61,10 @@ public class RuntimeConfig implements Serializable {
     @Default
     boolean useNativeExecution = true;
 
+    /** Escape embedded backticks in generated Spark SQL identifiers without renaming fields. */
+    @Default
+    boolean escapeBackticks = false;
+
     @Default
     boolean shouldApplyUpdates = false;
 
