@@ -25,8 +25,10 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.dv.InvalidDatatypeValueException;
 import org.apache.xerces.impl.dv.SchemaDVFactory;
+import org.apache.xerces.impl.dv.xs.TypeValidatorHelper;
 import org.apache.xerces.impl.validation.ValidationState;
 
 import org.rumbledb.api.Item;
@@ -201,9 +203,12 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
             }
             if (Set.of("anyURI", "float", "double").contains(name)) {
                 try {
+                    ValidationState validationState = new ValidationState();
+                    validationState.setTypeValidatorHelper(
+                            TypeValidatorHelper.getInstance(Constants.SCHEMA_VERSION_1_0));
                     SchemaDVFactory.getInstance()
                             .getBuiltInType(name)
-                            .validate(item.getStringValue(), new ValidationState(), null);
+                            .validate(item.getStringValue(), validationState, null);
                 } catch (InvalidDatatypeValueException e) {
                     return null;
                 }
