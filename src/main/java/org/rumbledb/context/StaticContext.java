@@ -146,7 +146,8 @@ public class StaticContext {
         this.copyNamespacesInherit = true;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
-        this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.inScopeSchemaTypes =
+                new InScopeSchemaTypes(configuration.semantics().xsdVersion());
         this.currentMutabilityLevel = 0;
         SerializationParameters configuredSerializationParameters =
                 configuration.output().serializationParameters();
