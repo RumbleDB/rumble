@@ -21,16 +21,20 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.apache.spark.api.java.JavaRDD;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.FlatMappingLocalCursor;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.runtime.plan.RDDRuntimePlan;
 
-public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIterator {
+public class ObjectDescendantPairsFunctionIterator extends ItemRuntimePlan
+        implements LocalRuntimePlan<Item>, RDDRuntimePlan<Item> {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -72,5 +76,10 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
                 // do nothing
             }
         }
+    }
+
+    @Override
+    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+        return getChild(0).getRDD(context).flatMap(new ObjectDescendantPairsClosure(getMetadata()));
     }
 }

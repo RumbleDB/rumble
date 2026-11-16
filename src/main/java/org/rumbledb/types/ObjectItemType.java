@@ -25,6 +25,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.collections.ListUtils;
 
@@ -392,72 +393,19 @@ public class ObjectItemType extends AbstractItemType {
         return sb.toString();
     }
 
+    /**
+     * A named type by its name, and an anonymous one, such as an inferred type, by its fields, as in
+     * { a: xs:integer, b?: xs:string } where b may be absent. A field type that is not resolved yet, which a debug
+     * print of the expression tree can show, is shown by the name it refers to.
+     */
     @Override
     public String toString() {
-        if ((new Name(Name.JS_NS, "js", "object")).equals(this.name)) {
-            // generic object
+        if (this.name != null && !this.name.getLocalName().isEmpty()) {
             return this.name.toString();
-        } else {
-            StringBuilder sb = new StringBuilder();
-            sb.append("{ ");
-            if (this.name != null && !this.name.getLocalName().equals("")) {
-                sb.append("\"name\": \"");
-                sb.append(this.name.toString());
-                sb.append("\", ");
-            }
-            sb.append("\"kind\": \"object\", ");
-
-            sb.append("\"baseType\": \"");
-            sb.append(this.baseType.toString());
-            sb.append("\", ");
-
-            sb.append("\"treeDepth\": ");
-            sb.append(this.typeTreeDepth);
-            sb.append(", ");
-
-            sb.append("\"closed\": ");
-            sb.append(this.isClosed ? "true" : "false");
-            sb.append(", ");
-
-            if (isResolved()) {
-                List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet());
-                if (fields.size() > 0) {
-                    sb.append("\"content\": [ ");
-                    String comma = "";
-                    for (FieldDescriptor field : fields) {
-                        sb.append(comma);
-                        comma = ", ";
-                        sb.append("{ \"name\": \"");
-                        sb.append(field.getName());
-                        sb.append("\", ");
-                        if (field.isRequired()) {
-                            sb.append("\"required\": true, ");
-                        } else {
-                            sb.append("\"required\": false, ");
-                        }
-                        String type = field.getType().toString();
-                        if (type.startsWith("{")) {
-                            sb.append("\"type\": ");
-                            sb.append(type);
-                            sb.append(", ");
-                        } else {
-                            sb.append("\"type\": \"");
-                            sb.append(type);
-                            sb.append("\", ");
-                        }
-                        boolean isUnique = field.isUnique();
-                        sb.append("\"unique\": ");
-                        sb.append(isUnique);
-                        sb.append(" }");
-                    }
-                    sb.append(" ]");
-                }
-            } else {
-                sb.append(" (content not resolved yet) ");
-            }
-            sb.append(" }");
-            return sb.toString();
         }
+        return getObjectContentFacet().stream()
+                .map(field -> field.getName() + (field.isRequired() ? "" : "?") + ": " + field.getType())
+                .collect(Collectors.joining(", ", "{ ", " }"));
     }
 
     @Override

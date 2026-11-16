@@ -17,8 +17,10 @@ package org.rumbledb.runtime.functions;
 
 import java.io.Serial;
 import java.util.List;
+import java.util.Optional;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeRule;
 import org.rumbledb.context.ConstructorFunctionResolver.ResolvedConstructor;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -27,10 +29,26 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.XmlSchemaCastIterator;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeAtomization;
 
 /** Executes an already resolved constructor using the cast plan bound to its static context. */
 public class ConstructorFunctionIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
+
+    /**
+     * The rule of a constructor function declared to return T?, as an empty argument gives an empty result: an
+     * argument that atomizes to one value gives one T.
+     */
+    public static ReturnTypeRule returnTypeRule(SequenceType declaredReturnType) {
+        return (call, context) -> {
+            SequenceType argumentType = context.argumentType(0);
+            return declaredReturnType.getArity() == SequenceType.Arity.OneOrZero
+                            && TypeAtomization.inferType(argumentType).getCardinality() == SequenceCardinality.ONE
+                    ? Optional.of(new SequenceType(declaredReturnType.getItemType(), SequenceType.Arity.One))
+                    : Optional.empty();
+        };
+    }
 
     @Serial
     private static final long serialVersionUID = 1L;
