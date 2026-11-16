@@ -166,6 +166,9 @@ public class FunctionInliningVisitor extends CloneVisitor {
         ReturnClause returnClause = new ReturnClause(returnValue, expression.getMetadata());
         Clause expressionClauses = null;
         Clause assignmentClauses = null;
+        // Prepending leaves each chain's original clause as its tail.
+        Clause expressionClausesTail = null;
+        Clause assignmentClausesTail = null;
         for (int i = 0; i < expression.getArguments().size(); i++) {
             Name paramName = paramNames.get(i);
             SequenceType paramType = inlineFunction.getParams().get(paramName);
@@ -188,10 +191,14 @@ public class FunctionInliningVisitor extends CloneVisitor {
                         new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
                 if (assignmentClauses != null) {
                     assignmentClause.chainWith(assignmentClauses);
+                } else {
+                    assignmentClausesTail = assignmentClause;
                 }
                 assignmentClauses = assignmentClause;
                 if (expressionClauses != null) {
                     expressionClause.chainWith(expressionClauses);
+                } else {
+                    expressionClausesTail = expressionClause;
                 }
                 expressionClauses = expressionClause;
             } else {
@@ -200,11 +207,13 @@ public class FunctionInliningVisitor extends CloneVisitor {
                         new LetClause(paramName, null, assignmentExpression, expression.getMetadata());
                 if (expressionClauses != null) {
                     expressionClause.chainWith(expressionClauses);
+                } else {
+                    expressionClausesTail = expressionClause;
                 }
                 expressionClauses = expressionClause;
             }
         }
-        if (expressionClauses == null) {
+        if (expressionClausesTail == null) {
             if (inlineFunction.getReturnType() != null) {
                 FunctionArgumentConversionExpression result =
                         convertReturnValue(body, inlineFunction.getReturnType(), expression, inlineFunction);
@@ -213,11 +222,11 @@ public class FunctionInliningVisitor extends CloneVisitor {
             }
             return body;
         }
-        if (assignmentClauses != null) {
-            assignmentClauses.getLastClause().chainWith(returnClause);
-            expressionClauses.getLastClause().chainWith(assignmentClauses);
+        if (assignmentClausesTail != null) {
+            assignmentClausesTail.chainWith(returnClause);
+            expressionClausesTail.chainWith(assignmentClauses);
         } else {
-            expressionClauses.getLastClause().chainWith(returnClause);
+            expressionClausesTail.chainWith(returnClause);
         }
         return new FlworExpression(returnClause, expression.getMetadata());
     }
