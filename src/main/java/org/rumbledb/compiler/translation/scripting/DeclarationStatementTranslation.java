@@ -24,7 +24,6 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.rumbledb.compiler.context.scripting.VarDeclStatementContext;
 import org.rumbledb.compiler.translation.TranslationContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.scripting.annotations.Annotation;
 import org.rumbledb.expressions.scripting.declaration.CommaVariableDeclStatement;
@@ -62,8 +61,7 @@ public final class DeclarationStatementTranslation {
             if (varDecl.exprSingle() != null) {
                 exprSingle = visitExprSingle.apply(varDecl.exprSingle());
                 if (seq != null) {
-                    exprSingle = new TreatExpression(
-                            exprSingle, seq, ErrorCode.UnexpectedTypeErrorCode, exprSingle.getMetadata());
+                    exprSingle = TreatExpression.forDeclaredType(exprSingle, seq, var);
                 }
             }
             variables.add(new VariableDeclStatement(

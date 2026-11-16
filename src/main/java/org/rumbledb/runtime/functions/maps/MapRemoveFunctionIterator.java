@@ -18,16 +18,20 @@ package org.rumbledb.runtime.functions.maps;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.types.SequenceType;
 
 /**
  * W3C XPath/XQuery {@code map:remove}:
@@ -93,5 +97,10 @@ public class MapRemoveFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         }
         this.mapIterator = arguments.get(0);
         this.keysIterator = arguments.get(1);
+    }
+
+    /** The type of a map whose key and value types are known. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        return MapTyping.typedMapArgument(context.argumentType(0)).map(SequenceType::new);
     }
 }

@@ -79,6 +79,20 @@ public class ArrayItemTypeTest {
      * Ensures that lax merging falls back to the strict common supertype when the other operand is not an array.
      */
     @Test
+    public void describesAnonymousTypesByTheirContent() {
+        ObjectItemType sale = createObjectType(
+                true,
+                field("day", BuiltinTypesCatalogue.integerItem, true, false),
+                field("promotion", BuiltinTypesCatalogue.stringItem, false, false));
+        Assertions.assertEquals("{ day: xs:integer, promotion?: xs:string }", sale.toString());
+        Assertions.assertEquals(
+                "[{ day: xs:integer, promotion?: xs:string }]",
+                createArrayType(sale, null, null).toString());
+        Assertions.assertEquals(
+                "[]", createArrayType(BuiltinTypesCatalogue.item, 0, 0).toString());
+    }
+
+    @Test
     public void laxMergeFallsBackForNonArrayTypes() {
         ArrayItemType left = createArrayType(BuiltinTypesCatalogue.intItem, null, null);
         ItemType strict = left.findLeastCommonSuperTypeWith(BuiltinTypesCatalogue.objectItem);
