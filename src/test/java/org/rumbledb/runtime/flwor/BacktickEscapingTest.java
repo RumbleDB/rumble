@@ -47,6 +47,33 @@ class BacktickEscapingTest {
     }
 
     @Test
+    void fileFieldErrorFixtureSucceedsWithEscapingEnabled() throws Exception {
+        Rumble rumble = new Rumble(RumbleConfiguration.builder()
+                .configureRuntime(runtime -> runtime.escapeBackticks(true))
+                .build());
+        var results = rumble.runQuery(Path.of(
+                        "src/test/resources/test_files/backticks/file-field-default-error.jq")
+                .toAbsolutePath()
+                .toUri()).getAsList();
+        assertEquals(
+                java.util.List.of("oh cmon", "why?"),
+                results.stream().map(item -> item.getStringValue()).toList());
+    }
+
+    @Test
+    void queryFieldErrorFixtureSucceedsWithEscapingEnabled() throws Exception {
+        Rumble rumble = new Rumble(RumbleConfiguration.builder()
+                .configureRuntime(runtime -> runtime.escapeBackticks(true))
+                .build());
+        var results = rumble.runQuery(Path.of(
+                        "src/test/resources/test_files/backticks/query-field-default-error.jq")
+                .toAbsolutePath()
+                .toUri()).getAsList();
+        assertEquals(1, results.size());
+        assertEquals(7, results.get(0).getIntValue());
+    }
+
+    @Test
     void configurationDefaultsToDisabledAndSupportsOverrides() {
         assertFalse(RumbleConfiguration.defaultConfiguration().runtime().escapeBackticks());
         assertTrue(RumbleConfiguration.builder()
