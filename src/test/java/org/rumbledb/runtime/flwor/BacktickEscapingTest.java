@@ -21,6 +21,8 @@ import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import iq.base.AnnotationTestExecutor;
+import iq.base.TestFileDiscovery;
 import picocli.CommandLine;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,6 +37,14 @@ import org.rumbledb.config.RumbleConfiguration;
 class BacktickEscapingTest {
     @TempDir
     Path directory;
+
+    @Test
+    void queryFixturesCheckDefaultBacktickBehavior() throws Exception {
+        Path fixtures = Path.of("src/test/resources/test_files/backticks");
+        for (java.io.File fixture : TestFileDiscovery.jsoniqFiles(fixtures.toFile())) {
+            AnnotationTestExecutor.run(fixture, RumbleConfiguration.defaultConfiguration(), true);
+        }
+    }
 
     @Test
     void configurationDefaultsToDisabledAndSupportsOverrides() {
