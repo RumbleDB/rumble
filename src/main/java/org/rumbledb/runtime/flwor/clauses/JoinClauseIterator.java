@@ -95,7 +95,8 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
      * @param context the dynamic context for the evaluation of the predicate expression.
      * @param left the left tuple.
      * @param right the right tuple.
-     * @param outputDependencies the necessary and sufficient variable dependencies that the output tuple should contain.
+     * @param outputDependencies the necessary and sufficient variable dependencies that the output tuple should
+     *        contain.
      * @param leftVariables a list of the variables in the left tuple.
      * @param rightVariables a list of the variables in the right tuple.
      * @param predicate the predicate iterator.
