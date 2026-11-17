@@ -1,0 +1,124 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.items;
+
+import java.io.Serial;
+import java.time.LocalDate;
+import java.time.Month;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+
+public class gMonthDayItem extends AbstractAtomicItem {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private boolean hasTimeZone;
+    private static final Pattern gMonthDayRegex = Pattern.compile(
+            "--(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|([+\\-])((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?");
+    private Month month;
+    private int day;
+    private ZoneOffset offset;
+
+    gMonthDayItem(OffsetDateTime dateTime, boolean hasTimeZone) {
+        this.month = Month.of(dateTime.getMonthValue());
+        this.day = dateTime.getDayOfMonth();
+        if (hasTimeZone) {
+            this.offset = dateTime.getOffset();
+            this.hasTimeZone = true;
+        } else {
+            this.offset = null;
+            this.hasTimeZone = false;
+        }
+    }
+
+    gMonthDayItem(String gMonthDayString) {
+        getgMonthDayFromString(gMonthDayString);
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new gMonthDayItem(this.getDateTimeValue(), this.hasTimeZone);
+    }
+
+    private void getgMonthDayFromString(String gMonthDayString) {
+        Matcher matcher = gMonthDayRegex.matcher(gMonthDayString);
+        if (!matcher.matches()) {
+            throw new IllegalArgumentException("Invalid xs:gMonthDay: \"" + gMonthDayString + "\"");
+        }
+        this.month = Month.of(Integer.parseInt(matcher.group(1)));
+        this.day = Integer.parseInt(matcher.group(2));
+        try {
+            @SuppressWarnings("unused")
+            LocalDate ignore = LocalDate.of(2000, this.month.getValue(), this.day);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Invalid xs:gMonthDay: \"" + gMonthDayString + "\"");
+        }
+        String tz = matcher.group(3);
+        if (tz == null) {
+            this.hasTimeZone = false;
+        } else {
+            this.hasTimeZone = true;
+            this.offset = ZoneOffset.of(tz);
+        }
+    }
+
+    @Override
+    public String getStringValue() {
+        if (this.hasTimeZone) {
+            return String.format("--%02d-%02d", this.month.getValue(), this.day) + this.offset;
+        } else {
+            return String.format("--%02d-%02d", this.month.getValue(), this.day);
+        }
+    }
+
+    @Override
+    public boolean isGMonthDay() {
+        return true;
+    }
+
+    @Override
+    public boolean hasTimeZone() {
+        return this.hasTimeZone;
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return BuiltinTypesCatalogue.gMonthDayItem;
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return false;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
+
+    @Override
+    public OffsetDateTime getDateTimeValue() {
+        return OffsetDateTime.of(
+                0, this.month.getValue(), this.day, 0, 0, 0, 0, this.hasTimeZone ? this.offset : ZoneOffset.UTC);
+    }
+}

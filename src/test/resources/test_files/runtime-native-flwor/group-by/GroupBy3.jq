@@ -6,4 +6,5 @@ for $i in annotate(
 let $l := ("foo", $i.foo.bar[[1]])
 group by $k := $i.key
 group by $k
+order by $k descending
 return { "k": $k, "c" : [ $l ] }

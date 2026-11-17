@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,82 +11,71 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
-import java.util.List;
+import java.io.Serial;
 import java.util.HashMap;
-import java.util.stream.Collectors;
+import java.util.List;
+import java.util.Map;
 
-public class TranslateFunctionIterator extends LocalFunctionCallIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
+public class TranslateFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public TranslateFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public TranslateFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item inputItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            Item mapStringItem = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            Item transStringItem = this.children.get(2)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item inputItem = this.getChild(0).materializeFirstOrNull(context);
+        Item mapStringItem = this.getChild(1).materializeFirstOrNull(context);
+        Item transStringItem = this.getChild(2).materializeFirstOrNull(context);
 
-            if (inputItem == null) {
-                return ItemFactory.getInstance().createStringItem("");
+        if (inputItem == null) {
+            return ItemFactory.getInstance().createStringItem("");
+        }
+
+        String input = inputItem.getStringValue();
+        String mapString = mapStringItem.getStringValue();
+        String transString = transStringItem.getStringValue();
+
+        // Java .codePoints() returns an IntStream of Unicode code points
+        // This is better than using charAt() because it handles surrogate pairs correctly
+        // (Chars are 16 bits and Unicode code points can be larger)
+        int[] mapCodePoints = mapString.codePoints().toArray();
+        int[] translationCodePoints = transString.codePoints().toArray();
+
+        Map<Integer, Integer> translations = new HashMap<>();
+        for (int i = 0; i < mapCodePoints.length; i++) {
+            int codePoint = mapCodePoints[i];
+            if (!translations.containsKey(codePoint)) {
+                translations.put(codePoint, i < translationCodePoints.length ? translationCodePoints[i] : null);
             }
+        }
 
-            String input = inputItem.getStringValue();
-            String mapString = mapStringItem.getStringValue();
-            String transString = transStringItem.getStringValue();
-
-            HashMap<Character, Character> mp = new HashMap<>();
-            for (int i = 0; i < mapString.length(); i++) {
-                char c = mapString.charAt(i);
-                if (!(mp.containsKey(c))) {
-                    mp.put(c, i < transString.length() ? transString.charAt(i) : '\0');
-                }
+        StringBuilder output = new StringBuilder(input.length());
+        input.codePoints().forEach(codePoint -> {
+            if (!translations.containsKey(codePoint)) {
+                output.appendCodePoint(codePoint);
+                return;
             }
+            Integer translatedCodePoint = translations.get(codePoint);
+            if (translatedCodePoint != null) {
+                output.appendCodePoint(translatedCodePoint);
+            }
+        });
 
-            String output = input
-                .codePoints()
-                .mapToObj(c -> (char) c)
-                .filter(s -> !(mp.containsKey(s) && mp.get(s) == '\0'))
-                .map(s -> {
-                    if (mp.containsKey(s)) {
-                        return mp.get(s);
-                    }
-                    return s;
-                })
-                .map(String::valueOf)
-                .collect(Collectors.joining());
-
-            return ItemFactory.getInstance().createStringItem(output);
-
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " translate function",
-                    getMetadata()
-            );
+        return ItemFactory.getInstance().createStringItem(output.toString());
     }
 }

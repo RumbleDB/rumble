@@ -1,0 +1,125 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.expressions.scripting.declaration;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
+
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidVariableDeclarationException;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.scripting.annotations.Annotation;
+import org.rumbledb.expressions.scripting.statement.Statement;
+import org.rumbledb.types.SequenceType;
+
+import static org.rumbledb.compiler.utils.AnnotationValidator.checkAssignable;
+
+// TODO: Update specification document to reflect this definition:
+// A variable decl statement will be visible to subsequent comma declarations.
+public class VariableDeclStatement extends Statement {
+    // Default is True for statement variable declaration.
+    private final boolean DEFAULT_ASSIGNABLE = true;
+
+    @Getter
+    private final List<Annotation> annotations;
+
+    @Getter
+    private final Name variableName;
+
+    @Getter
+    private final ExceptionMetadata variableMetadata;
+
+    private final SequenceType variableSequenceType;
+
+    @Getter
+    private final Expression variableExpression;
+
+    @Getter
+    private final boolean isAssignable;
+
+    public VariableDeclStatement(
+            List<Annotation> annotations,
+            Name variableName,
+            SequenceType variableSequenceType,
+            Expression variableExpression,
+            ExceptionMetadata metadata,
+            ExceptionMetadata variableMetadata) {
+        super(metadata);
+        this.annotations = annotations;
+        this.variableName = variableName;
+        this.variableMetadata = variableMetadata;
+        this.variableSequenceType = variableSequenceType;
+        this.variableExpression = variableExpression;
+        if (this.annotations != null) {
+            this.isAssignable = checkAssignable(this.annotations, this.DEFAULT_ASSIGNABLE, metadata); // default is true
+            // for
+            // variable statements
+        } else {
+            this.isAssignable = this.DEFAULT_ASSIGNABLE;
+        }
+        if (!this.isAssignable && this.variableExpression == null) {
+            throw new InvalidVariableDeclarationException(
+                    "Variable declaration is redundant: marked as '%an:unassignable' without initializing expression! This makes the variable unusable as it cannot be changed by Assign statements!",
+                    metadata);
+        }
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitVariableDeclStatement(this, argument);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        if (this.variableExpression != null) {
+            result.add(this.variableExpression);
+        }
+        return result;
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("declare variable $").append(this.variableName);
+        if (this.variableSequenceType != null) {
+            sb.append(" as ").append(this.variableSequenceType);
+        }
+        sb.append(" ");
+        this.variableExpression.serializeToJSONiq(sb, 0);
+    }
+
+    // TODO: VariableStorageMode!
+
+    public SequenceType getSequenceType() {
+        if (this.variableSequenceType != null) {
+            return this.variableSequenceType;
+        }
+        if (this.variableExpression != null && this.variableExpression.getStaticSequenceType() != null) {
+            return this.variableExpression.getStaticSequenceType();
+        }
+        return SequenceType.createSequenceType("item*");
+    }
+
+    public SequenceType getActualSequenceType() {
+        return this.variableSequenceType;
+    }
+}

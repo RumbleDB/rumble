@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,76 +11,111 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.numerics;
+
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
+import java.util.List;
+import java.util.function.Supplier;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-import java.util.List;
+public class RoundHalfToEvenFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
-public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
-
-
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
-    public RoundHalfToEvenFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public RoundHalfToEvenFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item value = this.getChild(0).materializeFirstOrNull(context);
+        return evaluate(
+                value,
+                () -> this.getChildren().size() > 1
+                        ? this.getChild(1).materializeFirstOrNull(context).getIntegerValue()
+                        : BigInteger.ZERO);
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item value = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            Item precision;
-            if (this.children.size() > 1) {
-                precision = this.children.get(1)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            }
-            // if second param is not given precision is set as 0 (rounds to a whole number)
-            else {
-                precision = ItemFactory.getInstance().createIntItem(0);
-            }
-            try {
-                BigDecimal bd = new BigDecimal(value.castToDoubleValue());
-                bd = bd.setScale(precision.getIntValue(), RoundingMode.HALF_EVEN);
-                return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
-
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+    private Item evaluate(Item value, Supplier<BigInteger> precisionSupplier) {
+        if (value == null) {
+            return null;
         }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " round-half-to-even function",
-                getMetadata()
-        );
+        if ((value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
+            return value;
+        }
+        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
+            return value;
+        }
+        if ((value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0
+                || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))) {
+            return value;
+        }
+
+        BigInteger precision = precisionSupplier.get();
+        try {
+            if (value.isInt()) {
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getIntValue()), precision);
+                return ItemFactory.getInstance().createIntItem(bd.intValue());
+            }
+            if (value.isInteger()) {
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getIntegerValue()), precision);
+                return ItemFactory.getInstance().createIntegerItem(bd.toBigInteger());
+            }
+            if (value.isDecimal()) {
+                BigDecimal bd = roundToPrecision(value.getDecimalValue(), precision);
+                return ItemFactory.getInstance().createDecimalItem(bd);
+            }
+            if (value.isDouble()) {
+                double sign = getSign(value.getDoubleValue());
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getDoubleValue()), precision);
+                return ItemFactory.getInstance().createDoubleItem(sign * Math.abs(bd.doubleValue()));
+            }
+            if (value.isFloat()) {
+                double sign = getSign(value.getFloatValue());
+                BigDecimal bd = roundToPrecision(new BigDecimal(value.getFloatValue()), precision);
+                return ItemFactory.getInstance().createFloatItem((float) sign * Math.abs(bd.floatValue()));
+            }
+            throw new UnexpectedTypeException(
+                    "Unexpected value in round-half-to-even(): " + value.getDynamicType(), getMetadata());
+
+        } catch (IteratorFlowException e) {
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+        }
     }
 
+    private static BigDecimal roundToPrecision(BigDecimal value, BigInteger precision) {
+        // Large positive precisions leave the value unchanged; large negative ones round to zero.
+        // Check these bounds before narrowing xs:integer or allocating a power of ten in setScale().
+        if (precision.compareTo(BigInteger.valueOf(value.scale())) >= 0) {
+            return value;
+        }
+        long zeroPrecision = (long) value.scale() - value.precision();
+        if (precision.compareTo(BigInteger.valueOf(zeroPrecision)) < 0) {
+            return BigDecimal.ZERO;
+        }
+        return value.setScale(precision.intValueExact(), RoundingMode.HALF_EVEN);
+    }
 
+    private double getSign(double doubleValue) {
+        double sign = 0;
+        if (doubleValue > 0) sign = 1;
+        if (doubleValue < 0) sign = -1;
+        return sign;
+    }
 }

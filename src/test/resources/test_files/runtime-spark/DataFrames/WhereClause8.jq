@@ -2,7 +2,7 @@
 let $guess := "Russian"
 let $pos := 1
 return
-  for $i in json-file("../../../queries/conf-ex.json", 10)
+  for $i in json-lines("../../../queries/conf-ex.json", 10)
   where $i.target eq $guess
   return $i[$pos]
   

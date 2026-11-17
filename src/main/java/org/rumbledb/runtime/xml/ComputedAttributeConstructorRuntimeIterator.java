@@ -1,0 +1,182 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.xml;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.InvalidElementNameExpressionException;
+import org.rumbledb.exceptions.InvalidLexicalValueException;
+import org.rumbledb.exceptions.UnexpectedStaticTypeException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+/**
+ * Runtime iterator for computed attribute constructors.
+ *
+ * @see org.rumbledb.expressions.xml.ComputedAttributeConstructorExpression
+ */
+public class ComputedAttributeConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final Name staticAttributeName;
+    private final DataFunctionIterator nameIterator;
+    private final DataFunctionIterator contentExpression;
+
+    /**
+     * Constructor for static attribute name: attribute attributeName { value }
+     *
+     * @param staticAttributeName The static attribute name (expanded)
+     * @param contentExpression The value iterator
+     * @param staticContext The runtime static context
+     */
+    public ComputedAttributeConstructorRuntimeIterator(
+            Name staticAttributeName, DataFunctionIterator contentExpression, RuntimeStaticContext staticContext) {
+        super(Collections.singletonList(contentExpression), staticContext);
+        this.staticAttributeName = staticAttributeName;
+        this.nameIterator = null;
+        this.contentExpression = contentExpression;
+    }
+
+    /**
+     * Constructor for dynamic attribute name: attribute { nameExpression } { value }
+     *
+     * @param nameIterator The dynamic attribute name iterator (wrapped in AtomizationIterator)
+     * @param contentExpression The value iterator
+     * @param staticContext The runtime static context
+     */
+    public ComputedAttributeConstructorRuntimeIterator(
+            DataFunctionIterator nameIterator,
+            DataFunctionIterator contentExpression,
+            RuntimeStaticContext staticContext) {
+        super(List.of(nameIterator, contentExpression), staticContext);
+        this.staticAttributeName = null;
+        this.nameIterator = nameIterator;
+        this.contentExpression = contentExpression;
+    }
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
+        Item attributeName;
+        if (this.staticAttributeName != null) {
+            attributeName = ItemFactory.getInstance()
+                    .createQNameItem(NamespaceBindingUtils.normalizeComputedAttributeName(this.staticAttributeName));
+        } else {
+            // Dynamic attribute name - evaluate the name expression
+            // processing of the name expression according to
+            // https://www.w3.org/TR/xquery-31/#id-computedAttributes
+            // 1. Atomization is applied to the result of the name expression. If the result of
+            // atomization is not a single atomic value of type xs:QName, xs:string, or
+            // xs:untypedAtomic, a type error is raised [err:XPTY0004].
+            List<Item> atomizedNameItems = materialize.apply(this.nameIterator);
+            if (atomizedNameItems.size() != 1) {
+                throw new UnexpectedStaticTypeException(
+                        "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata());
+            }
+            Item atomizedNameItem = atomizedNameItems.get(0);
+            if (!(atomizedNameItem.isAtomic())) {
+                throw new UnexpectedStaticTypeException(
+                        "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata());
+            }
+            if (atomizedNameItem.isQName()) {
+                // 2. If the atomized value of the name expression is of type xs:QName:
+                // a. If the expanded QName returned by the atomized name expression has a namespace URI
+                // but has no prefix, it is given an implementation-dependent prefix.
+                // b. The resulting expanded QName (including its prefix) is used as the node-name
+                // property of the constructed attribute node.
+                attributeName = ItemFactory.getInstance()
+                        .createQNameItem(
+                                NamespaceBindingUtils.normalizeComputedAttributeName(atomizedNameItem.getQNameValue()));
+            } else if (atomizedNameItem.isString() || atomizedNameItem.isUntypedAtomic()) {
+                // 3. If the atomized value of the name expression is of type xs:string or xs:untypedAtomic,
+                // that value is converted to an expanded QName. If the string value contains a namespace
+                // prefix, that prefix is resolved to a namespace URI using the statically known namespaces.
+                // If the string value contains no namespace prefix, it is treated as a local name in no
+                // namespace. The resulting expanded QName (including its prefix) is used as the node-name
+                // property of the constructed attribute. If conversion of the atomized name expression to
+                // an expanded QName is not successful, a dynamic error is raised [err:XQDY0074].
+                String collapsed = NamespaceBindingUtils.collapseQNameLexical(atomizedNameItem.getStringValue());
+                try {
+                    attributeName = ItemFactory.getInstance()
+                            .createQNameItem(NamespaceBindingUtils.normalizeComputedAttributeName(
+                                    NamespaceBindingUtils.parseLexicalQNameForComputedAttribute(
+                                            collapsed,
+                                            NamespaceBindingUtils.namespaceResolver(this.staticContext),
+                                            getMetadata())));
+                } catch (InvalidLexicalValueException e) {
+                    throw new InvalidElementNameExpressionException(e.getMessage(), getMetadata());
+                }
+            } else {
+                throw new UnexpectedStaticTypeException(
+                        "Computed attribute constructor name must evaluate to a single atomic value of type xs:QName, xs:string, or xs:untypedAtomic",
+                        getMetadata());
+            }
+        }
+        NamespaceBindingUtils.validateConstructedAttributeName(attributeName.getQNameValue(), getMetadata());
+        // Process content expression according to XQuery 3.1 spec
+        // https://www.w3.org/TR/xquery-31/#id-computedAttributes
+        StringBuilder contentExpressionBuilder = new StringBuilder();
+        if (this.contentExpression != null) {
+            // 1: Atomization is applied to the result of the content expression,
+            // converting it to a sequence of atomic values. (If the content expression
+            // is absent, the result of this step is an empty sequence.)
+            // Note: contentExpression is already an AtomizationIterator
+            List<Item> atomizedContentItems = materialize.apply(this.contentExpression);
+            // 2: If the result of atomization is an empty sequence, the value of
+            // the attribute is the zero-length string. Otherwise, each atomic value in
+            // the atomized sequence is cast into a string.
+            if (!atomizedContentItems.isEmpty()) {
+                List<String> stringValues = new ArrayList<>();
+                for (Item item : atomizedContentItems) {
+                    stringValues.add(item.getStringValue());
+                }
+                // 3: The individual strings resulting from the previous step are
+                // merged into a single string by concatenating them with a single space
+                // character between each pair.
+                contentExpressionBuilder.append(String.join(" ", stringValues));
+            }
+            // If empty sequence, contentExpressionBuilder remains empty (zero-length string)
+        }
+        String attributeValue = contentExpressionBuilder.toString();
+        // AttributeItem applies the shared xml:id whitespace normalization and is-id property.
+        // 7: If the attribute name is xml:space and the attribute value is other
+        // than preserve or default, a dynamic error MAY be raised [err:XQDY0092].
+        // Note: this is a MAY, so we are not mandated to raise an error here
+        // Create and return the attribute item
+        // 4: The parent property of the attribute node is set to empty.
+        Item attributeItem =
+                ItemFactory.getInstance().createXmlAttributeNode(attributeName.getQNameValue(), attributeValue);
+        // Nested constructor results need document order before the enclosing constructor finishes.
+        String documentPath = XMLDocumentPosition.generateConstructedTreePath();
+        attributeItem.setXmlDocumentPosition(documentPath, 0);
+        return attributeItem;
+    }
+}

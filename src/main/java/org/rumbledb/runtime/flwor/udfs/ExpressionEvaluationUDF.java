@@ -1,0 +1,76 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.flwor.udfs;
+
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final DataFrameContext dataFrameContext;
+    private final ItemRuntimePlan expression;
+
+    private transient List<byte[]> results;
+
+    public ExpressionEvaluationUDF(
+            ItemRuntimePlan expression, DynamicContext context, List<FlworDataFrameColumn> columns) {
+        this.dataFrameContext = new DataFrameContext(context, columns);
+        this.expression = expression;
+        if (this.expression.isSparkJobNeeded()) {
+            throw new JobWithinAJobException(
+                    "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                    this.expression.getRuntimeStaticContext().getMetadata());
+        }
+
+        this.results = new ArrayList<>();
+    }
+
+    @Override
+    public List<byte[]> call(Row row) {
+        this.dataFrameContext.setFromRow(row);
+
+        this.results.clear();
+        // apply expression in the dynamic context
+        for (Item nextItem : this.expression.materialize(this.dataFrameContext.getContext())) {
+            this.results.add(FlworDataFrameUtils.serializeItem(
+                    nextItem, this.dataFrameContext.getKryo(), this.dataFrameContext.getOutput()));
+        }
+
+        return this.results;
+    }
+
+    @Serial
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        in.defaultReadObject();
+        this.results = new ArrayList<>();
+    }
+}

@@ -1,0 +1,111 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.primary;
+
+import java.io.Serial;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+
+/**
+ * XQuery 3.1 map constructor: atomized single-atomic keys and general- sequence values.
+ */
+public class MapConstructorRuntimeIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final List<? extends ItemRuntimePlan> keys;
+    private final List<? extends ItemRuntimePlan> values;
+    private final boolean mutable;
+
+    public MapConstructorRuntimeIterator(
+            List<? extends ItemRuntimePlan> keys,
+            List<? extends ItemRuntimePlan> values,
+            RuntimeStaticContext staticContext,
+            boolean mutable) {
+        super(Stream.concat(keys.stream(), values.stream()).toList(), staticContext);
+        this.keys = keys;
+        this.values = values;
+        this.mutable = mutable;
+    }
+
+    private static Item atomizeSingleMapKey(List<Item> keySequence, ExceptionMetadata metadata) {
+        List<Item> atomized = new ArrayList<>();
+        for (Item item : keySequence) {
+            atomized.addAll(item.atomizedValue());
+        }
+        if (atomized.size() != 1) {
+            throw new UnexpectedTypeException(
+                    "Map constructor key must atomize to a single atomic value [err:XPTY0004].", metadata);
+        }
+        Item k = atomized.get(0);
+        if (!k.isAtomic()) {
+            throw new UnexpectedTypeException(
+                    "Map constructor key must atomize to a single atomic value [err:XPTY0004].", metadata);
+        }
+        return k;
+    }
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        Function<ItemRuntimePlan, List<Item>> materialize = iterator -> iterator.materialize(dynamicContext);
+        List<Item> mapKeys = new ArrayList<>();
+        List<List<Item>> valueSequences = new ArrayList<>();
+        boolean allKeysString = true;
+        boolean allValuesSingletons = true;
+        for (int i = 0; i < this.keys.size(); i++) {
+            Item key = atomizeSingleMapKey(materialize.apply(this.keys.get(i)), getMetadata());
+            mapKeys.add(key);
+            List<Item> valueSeq = materialize.apply(this.values.get(i));
+            if (!key.isString()) {
+                allKeysString = false;
+            }
+            if (valueSeq.size() != 1) {
+                allValuesSingletons = false;
+            }
+            valueSequences.add(valueSeq);
+        }
+        if (allKeysString && allValuesSingletons) {
+            return ItemFactory.getInstance()
+                    .createObjectItem(
+                            mapKeys.stream().map(Item::getStringValue).collect(Collectors.toList()),
+                            valueSequences.stream().map(values -> values.get(0)).collect(Collectors.toList()),
+                            getMetadata(),
+                            false);
+        } else {
+            return ItemFactory.getInstance().createMapItem(mapKeys, valueSequences, getMetadata(), this.mutable);
+        }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return NativeClauseContext.NoNativeQuery;
+    }
+}

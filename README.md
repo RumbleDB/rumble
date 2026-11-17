@@ -1,10 +1,31 @@
-# Rumble
+# RumbleDB
 
-Getting started: you will find a Jupyter notebook that introduces the JSONiq language on top of Rumble [here](https://github.com/ghislainfourny/jsoniq-tutorial). You can use it by installing the all-in-one Data Science platform [Anaconda](https://www.anaconda.com), unless you prefer to install Python+Spark+PySpark+Jupyter manually (brew, apt...).
+With RumbleDB, you can query with ease a lot of different nested, heterogeneous data formats like JSON, CSV, Parquet, Avro, LibSVM, text, etc.
 
-The documentation also contains an introduction specific to Rumble and how you can read input datasets, but we have not converted it to Jupyter notebooks yet (this will follow).
+XML Schema imports and schema validation currently support **XML Schema 1.0 only**. Schemas requiring XML Schema 1.1 are not supported.
 
-[The documentation of the latest official release is available here.](http://rumble.readthedocs.io/en/latest/)
+RumbleDB exposes a query language rather than a DataFrame API, for more flexibility, more productivity but also because a lot of data simply will not fit in DataFrames.
 
-[The documentation of the current master (for the adventurous and curious) is available here.](http://sparksoniq.readthedocs.io/en/latest/)
+You can query it in place from any local file systems or data lakes (Azure blob storage, Amazon S3, HDFS, etc).
 
+You can prepare, clean up, validate your data and put it right into your machine learning pipelines with RumbleDB ML.
+
+Getting started: you will find a Jupyter notebook that introduces the JSONiq language on top of RumbleDB [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb). You can also run it locally if you prefer.
+
+The documentation also contains an introduction specific to RumbleDB and how you can read input datasets, but we have not converted it to Jupyter notebooks yet (this will follow).
+
+[The documentation of the latest official release is available here.](https://docs.rumbledb.org/)
+
+RumbleDB was started in February 2017 at ETH Zurich as the Master's thesis of Stefan Irimescu, under the supervision of Ghislain Fourny and Gustavo Alonso.
+
+Contributors (Ghislain Fourny's students at ETH): Stefan Irimescu, Renato Marroquin, Rodrigo Bruno, Falko Noé, Ioana Stefan, Andrea Rinaldi, Stevan Mihajlovic, Mario Arduini, Can Berker Çıkış, Elwin Stephan, David Dao, Zirun Wang, Ingo Müller, Dan-Ovidiu Graur, Thomas Zhou, Olivier Goerens, Alexandru Meterez, Pierre Motard, Remo Röthlisberger, Dominik Bruggisser, David Loughlin, David Buzatu, Marco Schöb, Maciej Byczko, Abishek Ramdas, Matteo Agnoletto, Dwij Dixit, Omar Hammoud, Henrik Pätzold, Jimmy Cai.
+
+### XML Schema version semantics
+
+Use `--xsd-version 1.0` or `--xsd-version 1.1` (default) to select datatype casting
+and regular-expression semantics. This is independent of `--xml-version`.
+The Java configuration key is `semantics.xsdVersion`; the typed builder exposes
+`configureSemantics(s -> s.xsdVersion("1.0"))`.
+
+Schema import and XML validation continue to use Xerces XSD 1.0 in both modes.
+Selecting 1.1 does not enable XSD 1.1 schema features such as multiple substitution groups.

@@ -1,0 +1,84 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.scripting.flwor;
+
+import java.io.Serial;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.BreakStatementException;
+import org.rumbledb.exceptions.ContinueStatementException;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.TupleRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.flwor.tuple.FlworTuple;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+public class ReturnStatementClauseIterator extends AbstractAtMostOneItemRuntimePlan {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final TupleRuntimePlan clauseIterator;
+    private final ItemRuntimePlan expression;
+
+    public ReturnStatementClauseIterator(
+            TupleRuntimePlan clauseIterator, ItemRuntimePlan expression, RuntimeStaticContext context) {
+        super(Collections.singletonList(expression), context);
+        this.clauseIterator = clauseIterator;
+        this.expression = expression;
+        setInputAndOutputTupleVariableDependencies();
+    }
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext context) {
+        DynamicContext tupleContext = new DynamicContext(context);
+        try (Cursor<FlworTuple> tuples = this.clauseIterator.createNativeCursor(context)) {
+            while (tuples.hasNext()) {
+                FlworTuple tuple = tuples.next();
+                tupleContext.getVariableValues().removeAllVariables();
+                tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
+                try (Cursor<Item> results = this.expression.getCursor(tupleContext)) {
+                    while (results.hasNext()) {
+                        results.next();
+                    }
+                } catch (BreakStatementException ignored) {
+                    break;
+                } catch (ContinueStatementException ignored) {
+                    // Continue with the next tuple.
+                }
+            }
+        }
+        return null;
+    }
+
+    private void setInputAndOutputTupleVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> dependencies = this.expression.getVariableDependencies();
+        Set<Name> allTupleNames = this.clauseIterator.getOutputTupleVariableNames();
+        Map<Name, DynamicContext.VariableDependency> projection = new HashMap<>();
+        for (Name n : dependencies.keySet()) {
+            if (allTupleNames.contains(n)) {
+                projection.put(n, dependencies.get(n));
+            }
+        }
+        this.clauseIterator.setInputAndOutputTupleVariableDependencies(projection);
+    }
+}

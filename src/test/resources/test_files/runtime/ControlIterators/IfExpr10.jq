@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="first branch" :)
-if(([]))
+if((0.01))
 then
 "first branch"
 else

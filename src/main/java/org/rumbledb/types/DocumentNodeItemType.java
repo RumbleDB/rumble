@@ -1,0 +1,166 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.types;
+
+import java.io.Serial;
+import java.util.Set;
+
+import lombok.Getter;
+
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.Name;
+
+/**
+ * Class representing document-node() and document-node(element(...)) item types.
+ *
+ * Wildcard document-node() is represented with no element-test restriction.
+ * document-node(element(...)) is represented with a concrete inner element node item type.
+ */
+@Getter
+public class DocumentNodeItemType extends AbstractItemType {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private Name catalogueName;
+    /** The test that the document's single element child matches, or null for document-node(). */
+    @Getter
+    private ItemType elementTestType;
+
+    public DocumentNodeItemType() {
+        this.catalogueName = Name.createVariableInDefaultTypeNamespace("document-node");
+        this.elementTestType = null;
+    }
+
+    public DocumentNodeItemType(ItemType elementTestType) {
+        if (elementTestType == null) {
+            throw new IllegalArgumentException("Document element-test type cannot be null.");
+        }
+        this.catalogueName = null;
+        this.elementTestType = elementTestType;
+    }
+
+    private boolean isWildcardDocument() {
+        return this.elementTestType == null;
+    }
+
+    @Override
+    protected Object equalityKey() {
+        return structuralTypeKey(DocumentNodeItemType.class, this.catalogueName, this.elementTestType);
+    }
+
+    @Override
+    public boolean hasName() {
+        return this.catalogueName != null;
+    }
+
+    @Override
+    public Name getName() {
+        if (this.catalogueName == null) {
+            throw new UnsupportedOperationException("Named document node item type has no builtin QName");
+        }
+        return this.catalogueName;
+    }
+
+    @Override
+    public boolean isNodeItemType() {
+        return true;
+    }
+
+    @Override
+    public boolean isSubtypeOf(ItemType superType) {
+        if (superType.isUnionType()) {
+            for (ItemType unionItemType : superType.getTypes()) {
+                if (this.isSubtypeOf(unionItemType)) {
+                    return true;
+                }
+            }
+        }
+        if (this.equals(superType)
+                || superType.equals(BuiltinTypesCatalogue.item)
+                || superType.equals(BuiltinTypesCatalogue.nodeItem)) {
+            return true;
+        }
+        if (!(superType instanceof DocumentNodeItemType other)) {
+            return false;
+        }
+        if (other.isWildcardDocument()) {
+            return true;
+        }
+        return this.elementTestType != null && this.elementTestType.isSubtypeOf(other.elementTestType);
+    }
+
+    @Override
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
+        if (this.equals(other)) {
+            return this;
+        }
+        if (other instanceof DocumentNodeItemType otherDocument) {
+            if (this.isWildcardDocument() || otherDocument.isWildcardDocument()) {
+                return BuiltinTypesCatalogue.documentNode;
+            }
+            ItemType innerLeastCommonSuperType =
+                    this.elementTestType.findLeastCommonSuperTypeWith(otherDocument.elementTestType);
+            return new DocumentNodeItemType((ElementNodeItemType) innerLeastCommonSuperType);
+        }
+        ItemType current = this;
+        ItemType o = other;
+        while (o.getTypeTreeDepth() > current.getTypeTreeDepth()) {
+            o = o.getBaseType();
+        }
+        while (o.getTypeTreeDepth() < current.getTypeTreeDepth()) {
+            current = current.getBaseType();
+        }
+        while (!current.equals(o)) {
+            current = current.getBaseType();
+            o = o.getBaseType();
+        }
+        return current;
+    }
+
+    @Override
+    public int getTypeTreeDepth() {
+        return 2;
+    }
+
+    @Override
+    public ItemType getBaseType() {
+        return BuiltinTypesCatalogue.nodeItem;
+    }
+
+    @Override
+    public Set<ConstrainingFacetTypes> getAllowedFacets() {
+        throw new UnsupportedOperationException("document node item type does not support facets");
+    }
+
+    @Override
+    public String toString() {
+        if (isWildcardDocument()) {
+            return this.catalogueName.toString();
+        }
+        return "document-node(" + this.elementTestType + ")";
+    }
+
+    @Override
+    public boolean isResolved() {
+        return true;
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
+        return false;
+    }
+}

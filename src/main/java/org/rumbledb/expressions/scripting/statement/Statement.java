@@ -1,0 +1,90 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.expressions.scripting.statement;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.types.SequenceType;
+
+@Getter
+public abstract class Statement extends Node {
+    @Setter
+    protected StaticContext staticContext;
+
+    @Setter
+    protected SequenceType staticSequenceType;
+
+    protected boolean isSequential;
+
+    protected Statement(ExceptionMetadata metadata) {
+        super(metadata);
+    }
+
+    public void setSequential(boolean isSequential) {
+        this.isSequential = isSequential;
+        if (isSequential) {
+            setIsInSequentialBlock(true);
+        }
+    }
+
+    @Override
+    public void setIsInSequentialBlock(boolean isInSequentialBlock) {
+        this.isInSequentialBlock = isInSequentialBlock;
+        for (Node child : getChildren()) {
+            child.setIsInSequentialBlock(isInSequentialBlock);
+        }
+    }
+
+    public RuntimeStaticContext getStaticContextForRuntime(RumbleConfiguration conf, VisitorConfig visitorConfig) {
+        return RuntimeStaticContext.fromStaticContext(getStaticContext())
+                .configuration(conf)
+                .staticType(getStaticSequenceType())
+                .executionMode(getHighestExecutionMode(visitorConfig))
+                .metadata(getMetadata())
+                .isSequential(isSequential())
+                .build();
+    }
+
+    @Override
+    public void print(StringBuilder buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" | " + this.highestExecutionMode);
+        if (this.isSequential) {
+            buffer.append(" | " + "sequential");
+        } else {
+            buffer.append(" | " + "non-sequential");
+        }
+        if (this.isInSequentialBlock) {
+            buffer.append(" | " + "in sequential block");
+        } else {
+            buffer.append(" | " + "not in sequential block");
+        }
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+    }
+}

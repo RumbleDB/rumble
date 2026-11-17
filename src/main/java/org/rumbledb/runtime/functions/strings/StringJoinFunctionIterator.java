@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,65 +11,62 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.strings;
 
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
+import java.io.Serial;
 import java.util.List;
 
-public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
+import org.rumbledb.api.Item;
+import org.rumbledb.config.model.LanguageVersion;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
+public class StringJoinFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
+
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public StringJoinFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public StringJoinFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
+    }
+
+    /** Version 3.1 widened fn:string-join to atomic items in both languages; version 1.0 still requires strings. */
+    public static boolean acceptsAtomicItems(LanguageVersion queryLanguage) {
+        return queryLanguage != null && queryLanguage.isAtLeast(LanguageVersion.Version.V3_1);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item joinString = ItemFactory.getInstance().createStringItem("");
-            List<Item> strings = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
-            if (this.children.size() > 1) {
-                RuntimeIterator joinStringIterator = this.children.get(1);
-                joinStringIterator.open(this.currentDynamicContextForLocalExecution);
-                if (joinStringIterator.hasNext()) {
-                    joinString = joinStringIterator.next();
-                }
-            }
-
-            StringBuilder stringBuilder = new StringBuilder();
-            for (Item item : strings) {
-                if (!(item.isString())) {
-                    throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
-                }
-                if (!stringBuilder.toString().isEmpty()) {
-                    stringBuilder.append(joinString.getStringValue());
-                }
-                stringBuilder.append(item.getStringValue());
-            }
-            this.hasNext = false;
-            return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-join function",
-                    getMetadata()
-            );
+    public Item evaluateAtMostOne(DynamicContext context) {
+        Item joinString = ItemFactory.getInstance().createStringItem("");
+        if (this.getChildren().size() > 1) {
+            joinString = this.getChild(1).materializeFirstOrNull(context);
         }
+        List<Item> strings = this.getChild(0).materialize(context);
+        return join(strings, joinString);
+    }
+
+    private Item join(List<Item> strings, Item joinString) {
+        StringBuilder stringBuilder = new StringBuilder();
+        boolean first = true;
+        for (Item item : strings) {
+            if (!item.isString() && !(acceptsAtomicItems(this.staticContext.getQueryLanguage()) && item.isAtomic())) {
+                throw new UnexpectedTypeException(
+                        "String item expected",
+                        this.getChild(0).getRuntimeStaticContext().getMetadata());
+            }
+            if (!first) {
+                stringBuilder.append(joinString.getStringValue());
+            }
+            stringBuilder.append(item.getStringValue());
+            first = false;
+        }
+
+        return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
     }
 }

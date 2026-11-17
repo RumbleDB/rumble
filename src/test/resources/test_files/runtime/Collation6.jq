@@ -3,4 +3,5 @@ declare default collation "http://www.w3.org/2005/xpath-functions/collation/code
 
 for $i in ("foo", "bar")
 group by $j := $i collation "http://www.w3.org/2005/xpath-functions/collation/codepoint"
+order by $j descending
 return $i

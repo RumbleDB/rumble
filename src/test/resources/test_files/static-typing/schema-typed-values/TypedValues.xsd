@@ -1,0 +1,55 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:t="urn:typed-values"
+           targetNamespace="urn:typed-values"
+           elementFormDefault="qualified">
+    <xs:simpleType name="Price">
+        <xs:restriction base="xs:decimal">
+            <xs:minInclusive value="0"/>
+        </xs:restriction>
+    </xs:simpleType>
+
+    <xs:simpleType name="Tags">
+        <xs:list itemType="xs:string"/>
+    </xs:simpleType>
+
+    <xs:complexType name="Amount">
+        <xs:simpleContent>
+            <xs:extension base="t:Price">
+                <xs:attribute name="currency" type="xs:string"/>
+            </xs:extension>
+        </xs:simpleContent>
+    </xs:complexType>
+
+    <xs:complexType name="Note" mixed="true">
+        <xs:sequence>
+            <xs:element name="b" type="xs:string" minOccurs="0"/>
+        </xs:sequence>
+    </xs:complexType>
+
+    <!-- Marker has empty content, but an instance may select Remark, which adds mixed content. -->
+    <xs:complexType name="Marker"/>
+
+    <xs:complexType name="Remark" mixed="true">
+        <xs:complexContent mixed="true">
+            <xs:extension base="t:Marker">
+                <xs:sequence>
+                    <xs:element name="b" type="xs:string" minOccurs="0"/>
+                </xs:sequence>
+            </xs:extension>
+        </xs:complexContent>
+    </xs:complexType>
+
+    <xs:element name="price" type="t:Price"/>
+    <xs:element name="optional-price" type="t:Price" nillable="true"/>
+    <xs:element name="amount" type="t:Amount"/>
+    <xs:element name="tags" type="t:Tags"/>
+    <xs:element name="note" type="t:Note"/>
+    <xs:element name="marker" type="t:Marker"/>
+    <xs:element name="order">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element ref="t:price"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

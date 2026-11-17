@@ -1,0 +1,121 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.expressions.xml;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import lombok.Getter;
+
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+
+/**
+ * Expression representing a computed attribute constructor.
+ *
+ * @see <a href="https://www.w3.org/TR/xquery-31/#id-computedAttributes">XQuery 3.1, 3.9.3.2: Computed Attribute
+ *      Constructors</a>
+ */
+@Getter
+public class ComputedAttributeConstructorExpression extends Expression {
+    /** The static attribute name (if specified) */
+    private final Name attributeName;
+    /** The dynamic attribute name expression (if specified) */
+    private final Expression nameExpression;
+    /** The value expression */
+    private final Expression valueExpression;
+
+    /**
+     * Constructor for static attribute name: attribute attributeName { value }
+     *
+     * @param attributeName The static attribute name
+     * @param valueExpression The value expression
+     * @param metadata The exception metadata
+     */
+    public ComputedAttributeConstructorExpression(
+            Name attributeName, Expression valueExpression, ExceptionMetadata metadata) {
+        super(metadata);
+        this.attributeName = attributeName;
+        this.nameExpression = null;
+        this.valueExpression = valueExpression;
+    }
+
+    /**
+     * Constructor for dynamic attribute name: attribute { nameExpression } { value }
+     *
+     * @param nameExpression The dynamic attribute name expression
+     * @param valueExpression The value expression
+     * @param metadata The exception metadata
+     */
+    public ComputedAttributeConstructorExpression(
+            Expression nameExpression, Expression valueExpression, ExceptionMetadata metadata) {
+        super(metadata);
+        if (nameExpression == null) {
+            throw new OurBadException("Dynamic computed attribute constructors must have a name expression.");
+        }
+        this.attributeName = null;
+        this.nameExpression = nameExpression;
+        this.valueExpression = valueExpression;
+    }
+
+    /**
+     * Check if the attribute has a static name
+     *
+     * @return True if the attribute has a static name, false otherwise
+     */
+    public boolean hasStaticName() {
+        return this.attributeName != null;
+    }
+
+    @Override
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitComputedAttributeConstructor(this, argument);
+    }
+
+    @Override
+    public List<Node> getChildren() {
+        List<Node> result = new ArrayList<>();
+        if (this.nameExpression != null) {
+            result.add(this.nameExpression);
+        }
+        if (this.valueExpression != null) {
+            result.add(this.valueExpression);
+        }
+        return result;
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuilder sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("attribute ");
+        if (this.hasStaticName()) {
+            sb.append(this.attributeName.toString());
+        } else {
+            sb.append("{ ");
+            this.nameExpression.serializeToJSONiq(sb, 0);
+            sb.append(" }");
+        }
+        sb.append(" { ");
+        if (this.valueExpression != null) {
+            this.valueExpression.serializeToJSONiq(sb, 0);
+        }
+        sb.append(" }\n");
+    }
+}

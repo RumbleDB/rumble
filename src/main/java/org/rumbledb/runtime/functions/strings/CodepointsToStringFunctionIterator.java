@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,71 +11,72 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.functions.strings;
 
+import java.io.Serial;
+import java.util.List;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
+
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CodepointNotValidException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.xml.XMLUtils;
 
-import java.util.List;
+public class CodepointsToStringFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
-public class CodepointsToStringFunctionIterator extends LocalFunctionCallIterator {
-
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    public CodepointsToStringFunctionIterator(
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(arguments, executionMode, iteratorMetadata);
+    public CodepointsToStringFunctionIterator(List<ItemRuntimePlan> arguments, RuntimeStaticContext staticContext) {
+        super(arguments, staticContext);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            List<Item> codepoints = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
+    public Item evaluateAtMostOne(DynamicContext context) {
+        String xmlVersion = getConfiguration().semantics().xmlVersion();
+        ItemRuntimePlan argumentIterator = this.getChild(0);
 
-            StringBuilder stringBuilder = new StringBuilder();
-            for (Item item : codepoints) {
-                if (!(item.isInt())) {
-                    throw new UnexpectedTypeException(
-                            "Int item expected",
-                            this.children.get(0).getMetadata()
-                    );
-                } else if (!(isValidCodePoint(item.getIntValue()))) {
-                    throw new CodepointNotValidException(
-                            "Non-XML-conformant codepoint: " + item.getIntValue(),
-                            this.children.get(0).getMetadata()
-                    );
-                }
-                stringBuilder.appendCodePoint(item.getIntValue());
-            }
-            this.hasNext = false;
-            return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " codepoints-to-string function",
-                    getMetadata()
-            );
+        try (Cursor<Item> cursor = argumentIterator.getCursor(context)) {
+            return ItemFactory.getInstance()
+                    .createStringItem(buildStringFromCodepoints(cursor::hasNext, cursor::next, xmlVersion));
+        }
     }
 
-    private static boolean isValidCodePoint(int codepoint) {
-        /* Checks if the codepoints are within the ranges allowed for in the XML 1.1 specification. */
-        return 1 <= codepoint && codepoint <= 55295
-            ||
-            57344 <= codepoint && codepoint <= 65533
-            ||
-            65536 <= codepoint && codepoint <= 1114111;
+    private String buildStringFromCodepoints(BooleanSupplier hasNext, Supplier<Item> next, String xmlVersion) {
+        StringBuilder result = new StringBuilder();
+        while (hasNext.getAsBoolean()) {
+            Item item = next.get();
+            int codepoint = extractCodePoint(item);
+            if (!XMLUtils.isValidXmlCharacter(codepoint, xmlVersion)) {
+                throw new CodepointNotValidException(
+                        "Non-XML-conformant codepoint: " + item.getIntegerValue(),
+                        this.getChild(0).getRuntimeStaticContext().getMetadata());
+            }
+            result.appendCodePoint(codepoint);
+        }
+        return result.toString();
+    }
+
+    private int extractCodePoint(Item item) {
+        if (item.isInt()) {
+            return item.getIntValue();
+        }
+        try {
+            return item.getIntegerValue().intValueExact();
+        } catch (ArithmeticException e) {
+            CodepointNotValidException ex = new CodepointNotValidException(
+                    "Non-XML-conformant codepoint: " + item.getIntegerValue(),
+                    this.getChild(0).getRuntimeStaticContext().getMetadata());
+            ex.initCause(e);
+            throw ex;
+        }
     }
 }

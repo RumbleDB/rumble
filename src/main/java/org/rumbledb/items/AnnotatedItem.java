@@ -1,0 +1,921 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.items;
+
+import java.io.Serial;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.Duration;
+import java.time.OffsetDateTime;
+import java.time.OffsetTime;
+import java.time.Period;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.Transformer;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.DuplicateObjectKeyException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.structured.HomogeneousItemDataFrame;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
+
+public class AnnotatedItem implements Item {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final Item itemToAnnotate;
+    private final ItemType type;
+
+    public AnnotatedItem(Item itemToAnnotate, ItemType type) {
+        this.itemToAnnotate = itemToAnnotate;
+        this.type = type;
+        if (type.getName() == null) {
+            throw new OurBadException("It it not possible to annotate an item with an anonymous type.");
+        }
+    }
+
+    @Override
+    public Item copy(boolean mutable) {
+        return new AnnotatedItem(this.itemToAnnotate.copy(mutable), this.type);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+        if (other instanceof Item otherItem) {
+            if (otherItem.isAtomic()) {
+                return AtomicItemEquivalence.equivalent(this, otherItem);
+            }
+            return this.itemToAnnotate.equals(otherItem);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return this.isAtomic() ? AtomicItemEquivalence.hash(this) : this.itemToAnnotate.hashCode();
+    }
+
+    @Override
+    public boolean isFunction() {
+        return this.itemToAnnotate.isFunction();
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return this.itemToAnnotate.isAtomic();
+    }
+
+    @Override
+    public boolean isString() {
+        return this.itemToAnnotate.isString();
+    }
+
+    @Override
+    public boolean isUntypedAtomic() {
+        return this.itemToAnnotate.isUntypedAtomic();
+    }
+
+    @Override
+    public boolean isBoolean() {
+        return this.itemToAnnotate.isBoolean();
+    }
+
+    @Override
+    public boolean isNull() {
+        return this.itemToAnnotate.isNull();
+    }
+
+    @Override
+    public boolean isNumeric() {
+        return this.itemToAnnotate.isNumeric();
+    }
+
+    @Override
+    public boolean isDecimal() {
+        return this.itemToAnnotate.isDecimal();
+    }
+
+    @Override
+    public boolean isWithinIntRange() {
+        return this.itemToAnnotate.isWithinIntRange();
+    }
+
+    @Override
+    public boolean isWithinLongRange() {
+        return this.itemToAnnotate.isWithinLongRange();
+    }
+
+    @Override
+    public boolean isInteger() {
+        return this.itemToAnnotate.isInteger();
+    }
+
+    @Override
+    public boolean isInt() {
+        return this.itemToAnnotate.isInt();
+    }
+
+    @Override
+    public boolean isDouble() {
+        return this.itemToAnnotate.isDouble();
+    }
+
+    @Override
+    public boolean isFloat() {
+        return this.itemToAnnotate.isFloat();
+    }
+
+    @Override
+    public boolean isDuration() {
+        return this.itemToAnnotate.isDuration();
+    }
+
+    @Override
+    public boolean isPeriod() {
+        return this.itemToAnnotate.isPeriod();
+    }
+
+    @Override
+    public boolean isYearMonthDuration() {
+        return this.itemToAnnotate.isYearMonthDuration();
+    }
+
+    @Override
+    public boolean isDayTimeDuration() {
+        return this.itemToAnnotate.isDayTimeDuration();
+    }
+
+    @Override
+    public boolean isDateTime() {
+        return this.itemToAnnotate.isDateTime();
+    }
+
+    @Override
+    public boolean isDate() {
+        return this.itemToAnnotate.isDate();
+    }
+
+    @Override
+    public boolean isTime() {
+        return this.itemToAnnotate.isTime();
+    }
+
+    @Override
+    public boolean isGDay() {
+        return this.itemToAnnotate.isGDay();
+    }
+
+    @Override
+    public boolean isGMonth() {
+        return this.itemToAnnotate.isGMonth();
+    }
+
+    @Override
+    public boolean isGYear() {
+        return this.itemToAnnotate.isGYear();
+    }
+
+    @Override
+    public boolean isGMonthDay() {
+        return this.itemToAnnotate.isGMonthDay();
+    }
+
+    @Override
+    public boolean isGYearMonth() {
+        return this.itemToAnnotate.isGYearMonth();
+    }
+
+    @Override
+    public boolean isAnyURI() {
+        return this.itemToAnnotate.isAnyURI();
+    }
+
+    @Override
+    public boolean isQName() {
+        return this.itemToAnnotate.isQName();
+    }
+
+    @Override
+    public Name getQNameValue() {
+        return this.itemToAnnotate.getQNameValue();
+    }
+
+    @Override
+    public boolean isNotation() {
+        return this.itemToAnnotate.isNotation();
+    }
+
+    @Override
+    public Name getNotationValue() {
+        return this.itemToAnnotate.getNotationValue();
+    }
+
+    @Override
+    public boolean isBinary() {
+        return this.itemToAnnotate.isBinary();
+    }
+
+    @Override
+    public boolean isHexBinary() {
+        return this.itemToAnnotate.isHexBinary();
+    }
+
+    @Override
+    public boolean isBase64Binary() {
+        return this.itemToAnnotate.isBase64Binary();
+    }
+
+    @Override
+    public boolean isElementNode() {
+        return this.itemToAnnotate.isElementNode();
+    }
+
+    @Override
+    public boolean isAttributeNode() {
+        return this.itemToAnnotate.isAttributeNode();
+    }
+
+    @Override
+    public boolean getContent() {
+        return this.itemToAnnotate.getContent();
+    }
+
+    @Override
+    public boolean isDocumentNode() {
+        return this.itemToAnnotate.isDocumentNode();
+    }
+
+    @Override
+    public boolean isTextNode() {
+        return this.itemToAnnotate.isTextNode();
+    }
+
+    @Override
+    public boolean isCommentNode() {
+        return this.itemToAnnotate.isCommentNode();
+    }
+
+    @Override
+    public boolean isNamespaceNode() {
+        return this.itemToAnnotate.isNamespaceNode();
+    }
+
+    @Override
+    public boolean isProcessingInstructionNode() {
+        return this.itemToAnnotate.isProcessingInstructionNode();
+    }
+
+    @Override
+    public boolean isNode() {
+        return this.itemToAnnotate.isNode();
+    }
+
+    // region maps
+
+    @Override
+    public boolean isMap() {
+        return this.itemToAnnotate.isMap();
+    }
+
+    @Override
+    public boolean isObject() {
+        return this.itemToAnnotate.isObject();
+    }
+
+    @Override
+    public List<String> getStringKeys() {
+        return this.itemToAnnotate.getStringKeys();
+    }
+
+    @Override
+    public List<Item> getItemKeys() {
+        return this.itemToAnnotate.getItemKeys();
+    }
+
+    @Override
+    public List<Item> getItemValues() {
+        return this.itemToAnnotate.getItemValues();
+    }
+
+    @Override
+    public List<List<Item>> getSequenceValues() {
+        return this.itemToAnnotate.getSequenceValues();
+    }
+
+    @Override
+    public Item getItemByKey(String key) {
+        return this.itemToAnnotate.getItemByKey(key);
+    }
+
+    @Override
+    public Item getItemByKey(Item key) {
+        return this.itemToAnnotate.getItemByKey(key);
+    }
+
+    @Override
+    public List<Item> getSequenceByKey(String key) {
+        return this.itemToAnnotate.getSequenceByKey(key);
+    }
+
+    @Override
+    public List<Item> getSequenceByKey(Item key) {
+        return this.itemToAnnotate.getSequenceByKey(key);
+    }
+
+    @Override
+    public void putItemByKey(String key, Item value) {
+        this.itemToAnnotate.putItemByKey(key, value);
+    }
+
+    @Override
+    public void putItemByKey(Item key, Item value) {
+        this.itemToAnnotate.putItemByKey(key, value);
+    }
+
+    @Override
+    public void putSequenceByKey(String key, List<Item> valueSequence) {
+        this.itemToAnnotate.putSequenceByKey(key, valueSequence);
+    }
+
+    @Override
+    public void putSequenceByKey(Item key, List<Item> valueSequence)
+            throws UnsupportedOperationException, OurBadException, DuplicateObjectKeyException {
+        this.itemToAnnotate.putSequenceByKey(key, valueSequence);
+    }
+
+    @Override
+    public void removeItemByKey(String key) throws UnsupportedOperationException {
+        this.itemToAnnotate.removeItemByKey(key);
+    }
+
+    @Override
+    public void removeItemByKey(Item key) throws UnsupportedOperationException {
+        this.itemToAnnotate.removeItemByKey(key);
+    }
+
+    @Override
+    public void putLazyItemByKey(String key, ItemRuntimePlan iterator, DynamicContext context, boolean isArray)
+            throws UnsupportedOperationException {
+        this.itemToAnnotate.putLazyItemByKey(key, iterator, context, isArray);
+    }
+
+    // endregion maps
+
+    // region arrays
+
+    @Override
+    public boolean isArray() {
+        return this.itemToAnnotate.isArray();
+    }
+
+    @Override
+    public boolean isArrayOfItems() {
+        return this.itemToAnnotate.isArrayOfItems();
+    }
+
+    @Override
+    public int getSize() throws UnsupportedOperationException {
+        return this.itemToAnnotate.getSize();
+    }
+
+    @Override
+    public List<Item> getItemMembers() throws UnsupportedOperationException, OurBadException {
+        return this.itemToAnnotate.getItemMembers();
+    }
+
+    @Override
+    public List<List<Item>> getSequenceMembers() throws UnsupportedOperationException {
+        return this.itemToAnnotate.getSequenceMembers();
+    }
+
+    @Override
+    public Item getItemAt(int position) throws UnsupportedOperationException, OurBadException {
+        return this.itemToAnnotate.getItemAt(position);
+    }
+
+    @Override
+    public List<Item> getSequenceAt(int position) throws UnsupportedOperationException {
+        return this.itemToAnnotate.getSequenceAt(position);
+    }
+
+    @Override
+    public void appendItem(Item item) throws UnsupportedOperationException {
+        this.itemToAnnotate.appendItem(item);
+    }
+
+    @Override
+    public void appendSequence(List<Item> sequence) throws UnsupportedOperationException, OurBadException {
+        this.itemToAnnotate.appendSequence(sequence);
+    }
+
+    @Override
+    public void putItemAt(Item item, int index) throws UnsupportedOperationException {
+        this.itemToAnnotate.putItemAt(item, index);
+    }
+
+    @Override
+    public void putSequenceAt(List<Item> sequence, int index) throws UnsupportedOperationException, OurBadException {
+        this.itemToAnnotate.putSequenceAt(sequence, index);
+    }
+
+    @Override
+    public void putItemsAt(List<Item> items, int i) throws UnsupportedOperationException {
+        this.itemToAnnotate.putItemsAt(items, i);
+    }
+
+    @Override
+    public void putSequencesAt(List<List<Item>> sequences, int index)
+            throws UnsupportedOperationException, OurBadException {
+        this.itemToAnnotate.putSequencesAt(sequences, index);
+    }
+
+    @Override
+    public void removeItemAt(int index) throws UnsupportedOperationException {
+        this.itemToAnnotate.removeItemAt(index);
+    }
+
+    @Override
+    public void removeSequenceAt(int index) throws UnsupportedOperationException {
+        this.itemToAnnotate.removeSequenceAt(index);
+    }
+
+    // endregion arrays
+
+    @Override
+    public String getStringValue() {
+        return this.itemToAnnotate.getStringValue();
+    }
+
+    @Override
+    public boolean getBooleanValue() {
+        return this.itemToAnnotate.getBooleanValue();
+    }
+
+    @Override
+    public double getDoubleValue() {
+        return this.itemToAnnotate.getDoubleValue();
+    }
+
+    @Override
+    public float getFloatValue() {
+        return this.itemToAnnotate.getFloatValue();
+    }
+
+    @Override
+    public long getLongValue() {
+        return this.itemToAnnotate.getLongValue();
+    }
+
+    @Override
+    public int getIntValue() {
+        return this.itemToAnnotate.getIntValue();
+    }
+
+    @Override
+    public BigInteger getIntegerValue() {
+        return this.itemToAnnotate.getIntegerValue();
+    }
+
+    @Override
+    public BigDecimal getDecimalValue() {
+        return this.itemToAnnotate.getDecimalValue();
+    }
+
+    @Override
+    public Period getPeriodValue() {
+        return this.itemToAnnotate.getPeriodValue();
+    }
+
+    @Override
+    public Duration getDurationValue() {
+        return this.itemToAnnotate.getDurationValue();
+    }
+
+    @Override
+    public Duration getDayTimeDurationComponent() {
+        return this.itemToAnnotate.getDayTimeDurationComponent();
+    }
+
+    @Override
+    public long getEpochMillis() {
+        return this.itemToAnnotate.getEpochMillis();
+    }
+
+    @Override
+    public OffsetDateTime getDateTimeValue() {
+        return this.itemToAnnotate.getDateTimeValue();
+    }
+
+    @Override
+    public OffsetTime getTimeValue() {
+        return this.itemToAnnotate.getTimeValue();
+    }
+
+    @Override
+    public int getYear() {
+        return this.itemToAnnotate.getYear();
+    }
+
+    @Override
+    public int getMonth() {
+        return this.itemToAnnotate.getMonth();
+    }
+
+    @Override
+    public int getDay() {
+        return this.itemToAnnotate.getDay();
+    }
+
+    @Override
+    public int getOffset() {
+        return this.itemToAnnotate.getOffset();
+    }
+
+    @Override
+    public int getHour() {
+        return this.itemToAnnotate.getHour();
+    }
+
+    @Override
+    public int getMinute() {
+        return this.itemToAnnotate.getMinute();
+    }
+
+    @Override
+    public double getSecond() {
+        return this.itemToAnnotate.getSecond();
+    }
+
+    @Override
+    public int getNanosecond() {
+        return this.itemToAnnotate.getNanosecond();
+    }
+
+    @Override
+    public byte[] getBinaryValue() {
+        return this.itemToAnnotate.getBinaryValue();
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return this.type;
+    }
+
+    @Override
+    public FunctionIdentifier getIdentifier() {
+        return this.itemToAnnotate.getIdentifier();
+    }
+
+    @Override
+    public List<Name> getParameterNames() {
+        return this.itemToAnnotate.getParameterNames();
+    }
+
+    @Override
+    public FunctionSignature getSignature() {
+        return this.itemToAnnotate.getSignature();
+    }
+
+    @Override
+    public ItemRuntimePlan getBodyIterator() {
+        return this.itemToAnnotate.getBodyIterator();
+    }
+
+    @Override
+    public Map<Name, List<Item>> getLocalVariablesInClosure() {
+        return this.itemToAnnotate.getLocalVariablesInClosure();
+    }
+
+    @Override
+    public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
+        return this.itemToAnnotate.getRDDVariablesInClosure();
+    }
+
+    @Override
+    public Map<Name, HomogeneousItemDataFrame> getDFVariablesInClosure() {
+        return this.itemToAnnotate.getDFVariablesInClosure();
+    }
+
+    @Override
+    public DynamicContext getModuleDynamicContext() {
+        return this.itemToAnnotate.getModuleDynamicContext();
+    }
+
+    @Override
+    public boolean hasTimeZone() {
+        return this.itemToAnnotate.hasTimeZone();
+    }
+
+    @Override
+    public boolean hasDateTime() {
+        return this.itemToAnnotate.hasDateTime();
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return this.itemToAnnotate.getEffectiveBooleanValue();
+    }
+
+    @Override
+    public double castToDoubleValue() {
+        return this.itemToAnnotate.castToDoubleValue();
+    }
+
+    @Override
+    public float castToFloatValue() {
+        return this.itemToAnnotate.castToFloatValue();
+    }
+
+    @Override
+    public BigDecimal castToDecimalValue() {
+        return this.itemToAnnotate.castToDecimalValue();
+    }
+
+    @Override
+    public BigInteger castToIntegerValue() {
+        return this.itemToAnnotate.castToIntegerValue();
+    }
+
+    @Override
+    public int castToIntValue() {
+        return this.itemToAnnotate.castToIntValue();
+    }
+
+    @Override
+    public boolean isNaN() {
+        return this.itemToAnnotate.isNaN();
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return this.itemToAnnotate.generateNativeQuery(context);
+    }
+
+    @Override
+    public String getSparkSQLValue() {
+        return this.itemToAnnotate.getSparkSQLValue();
+    }
+
+    @Override
+    public String getSparkSQLValue(ItemType itemType) {
+        return this.itemToAnnotate.getSparkSQLValue(itemType);
+    }
+
+    @Override
+    public String getSparkSQLType() {
+        return this.itemToAnnotate.getSparkSQLType();
+    }
+
+    @Override
+    public Object getVariantValue() {
+        return this.itemToAnnotate.getVariantValue();
+    }
+
+    @Override
+    public boolean physicalEquals(Object other) {
+        if (other instanceof AnnotatedItem annotatedItem) {
+            return this.itemToAnnotate.physicalEquals(annotatedItem.itemToAnnotate);
+        }
+        return this.itemToAnnotate.physicalEquals(other);
+    }
+
+    @Override
+    public boolean isEstimator() {
+        return this.itemToAnnotate.isEstimator();
+    }
+
+    @Override
+    public Estimator<?> getEstimator() {
+        return this.itemToAnnotate.getEstimator();
+    }
+
+    @Override
+    public boolean isTransformer() {
+        return this.itemToAnnotate.isTransformer();
+    }
+
+    @Override
+    public Transformer getTransformer() {
+        return this.itemToAnnotate.getTransformer();
+    }
+
+    @Override
+    public String getTextValue() {
+        return this.itemToAnnotate.getTextValue();
+    }
+
+    @Override
+    public void addParentToDescendants() {
+        this.itemToAnnotate.addParentToDescendants();
+    }
+
+    @Override
+    public List<Item> attributes() {
+        return this.itemToAnnotate.attributes();
+    }
+
+    @Override
+    public List<Item> children() {
+        return this.itemToAnnotate.children();
+    }
+
+    @Override
+    public List<Item> namespaceNodes() {
+        return this.itemToAnnotate.namespaceNodes();
+    }
+
+    @Override
+    public List<Item> declaredNamespaceNodes() {
+        return this.itemToAnnotate.declaredNamespaceNodes();
+    }
+
+    @Override
+    public String nodeKind() {
+        return this.itemToAnnotate.nodeKind();
+    }
+
+    @Override
+    public List<Item> baseUri() {
+        return this.itemToAnnotate.baseUri();
+    }
+
+    @Override
+    public List<Item> documentUri() {
+        return this.itemToAnnotate.documentUri();
+    }
+
+    @Override
+    public boolean isId() {
+        return this.itemToAnnotate.isId();
+    }
+
+    @Override
+    public boolean isIdrefs() {
+        return this.itemToAnnotate.isIdrefs();
+    }
+
+    @Override
+    public List<Item> nilled() {
+        return this.itemToAnnotate.nilled();
+    }
+
+    @Override
+    public List<Item> typeName() {
+        return this.itemToAnnotate.typeName();
+    }
+
+    @Override
+    public List<Item> typedValue() {
+        return this.itemToAnnotate.typedValue();
+    }
+
+    @Override
+    public void setXmlSchemaNilled(boolean nilled) {
+        this.itemToAnnotate.setXmlSchemaNilled(nilled);
+    }
+
+    @Override
+    public void setXmlSchemaIdentityProperties(boolean id, boolean idRefs) {
+        this.itemToAnnotate.setXmlSchemaIdentityProperties(id, idRefs);
+    }
+
+    @Override
+    public List<Item> unparsedEntityPublicId(String name) {
+        return this.itemToAnnotate.unparsedEntityPublicId(name);
+    }
+
+    @Override
+    public List<Item> unparsedEntitySystemId(String name) {
+        return this.itemToAnnotate.unparsedEntitySystemId(name);
+    }
+
+    @Override
+    public Name nodeName() {
+        return this.itemToAnnotate.nodeName();
+    }
+
+    @Override
+    public Item parent() {
+        return this.itemToAnnotate.parent();
+    }
+
+    @Override
+    public void setParent(Item parent) {
+        this.itemToAnnotate.setParent(parent);
+    }
+
+    @Override
+    public XMLDocumentPosition getXmlDocumentPosition() {
+        return this.itemToAnnotate.getXmlDocumentPosition();
+    }
+
+    @Override
+    public int setXmlDocumentPosition(String path, int current) {
+        return this.itemToAnnotate.setXmlDocumentPosition(path, current);
+    }
+
+    @Override
+    public Collection getCollection() {
+        return this.itemToAnnotate.getCollection();
+    }
+
+    @Override
+    public void setCollection(Collection collection) {
+        this.itemToAnnotate.setCollection(collection);
+    }
+
+    @Override
+    public int getMutabilityLevel() {
+        return this.itemToAnnotate.getMutabilityLevel();
+    }
+
+    @Override
+    public void setMutabilityLevel(int mutabilityLevel) {
+        this.itemToAnnotate.setMutabilityLevel(mutabilityLevel);
+    }
+
+    @Override
+    public long getTopLevelID() {
+        return this.itemToAnnotate.getTopLevelID();
+    }
+
+    @Override
+    public void setTopLevelID(long topLevelID) {
+        this.itemToAnnotate.setTopLevelID(topLevelID);
+    }
+
+    @Override
+    public String getPathIn() {
+        return this.itemToAnnotate.getPathIn();
+    }
+
+    @Override
+    public void setPathIn(String pathIn) {
+        this.itemToAnnotate.setPathIn(pathIn);
+    }
+
+    @Override
+    public String getTableLocation() {
+        return this.itemToAnnotate.getTableLocation();
+    }
+
+    @Override
+    public void setTableLocation(String location) {
+        this.itemToAnnotate.setTableLocation(location);
+    }
+
+    @Override
+    public double getTopLevelOrder() {
+        return this.itemToAnnotate.getTopLevelOrder();
+    }
+
+    @Override
+    public void setTopLevelOrder(double topLevelOrder) {
+        this.itemToAnnotate.setTopLevelOrder(topLevelOrder);
+    }
+
+    @Override
+    public List<Item> atomizedValue() {
+        // An annotated atomic item atomizes to itself. Delegating to the
+        // wrapped item would discard the annotation and lose its subtype.
+        return this.isAtomic() ? List.of(this) : this.itemToAnnotate.atomizedValue();
+    }
+
+    @Override
+    public String serialize() {
+        return Item.super.serialize();
+    }
+
+    @Override
+    public String serializeAsJSON() {
+        return Item.super.serializeAsJSON();
+    }
+}

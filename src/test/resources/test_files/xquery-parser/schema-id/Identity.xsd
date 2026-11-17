@@ -1,0 +1,18 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:t="urn:identity"
+           targetNamespace="urn:identity" elementFormDefault="qualified">
+    <xs:element name="root">
+        <xs:complexType><xs:sequence>
+            <xs:element name="entry" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:attribute name="key" use="required"><xs:simpleType><xs:restriction base="xs:ID"/></xs:simpleType></xs:attribute>
+                    <xs:attribute name="refs" type="xs:IDREFS"/>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="key" type="xs:ID"/>
+            <xs:element name="ref" type="xs:IDREF"/>
+            <xs:element name="refs"><xs:simpleType><xs:list><xs:simpleType>
+                <xs:restriction base="xs:IDREF"/>
+            </xs:simpleType></xs:list></xs:simpleType></xs:element>
+        </xs:sequence></xs:complexType>
+    </xs:element>
+</xs:schema>

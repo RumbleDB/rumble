@@ -1,0 +1,144 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.xml.schema;
+
+import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.api.Rumble;
+import org.rumbledb.bindings.ExternalBindings;
+import org.rumbledb.compiler.CompilationPipeline;
+import org.rumbledb.config.CompilationConfiguration;
+import org.rumbledb.config.RumbleConfiguration;
+import org.rumbledb.context.InScopeSchemaTypes;
+import org.rumbledb.context.Name;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.resources.ResourceResolver;
+
+/**
+ * Covers named type enumeration and schema imports that require a custom {@link ResourceResolver}.
+ * Annotation tests cover imports with location hints and import failures, but cannot supply the resolver mapping needed
+ * for an import without a location hint.
+ */
+public class XmlSchemaCatalogLoaderTest {
+
+    private static final String NAMESPACE = "urn:test";
+
+    @Test
+    public void typesKeepTheImportPrefix(@TempDir Path directory) throws Exception {
+        Files.writeString(
+                directory.resolve("types.xsd"),
+                schema(NAMESPACE, "<xs:simpleType name=\"Code\"><xs:restriction base=\"xs:string\"/></xs:simpleType>"));
+        URI queryUri = directory.resolve("query.xq").toUri();
+        // Two prefixes for the same schema show that the prefix comes from the import.
+        for (String prefix : List.of("t", "app")) {
+            String query = "import schema namespace " + prefix + " = \"urn:test\" at \"types.xsd\"; ";
+            MainModule module = compile(query + "()", queryUri, new ResourceResolver());
+            Assertions.assertEquals(
+                    prefix + ":Code",
+                    module.getStaticContext()
+                            .getInScopeSchemaTypes()
+                            .getInScopeSchemaType(new Name(NAMESPACE, null, "Code"))
+                            .toString());
+            Item value = new Rumble(RumbleConfiguration.builder().build())
+                    .runQuery(query + prefix + ":Code(\"hello\")", queryUri)
+                    .getAsList()
+                    .get(0);
+            Assertions.assertEquals(prefix, value.getDynamicType().getName().getPrefix());
+        }
+    }
+
+    @Test
+    public void usesResourceMappingsWhenTheImportHasNoLocationHint(@TempDir Path directory) throws Exception {
+        URI logicalSchemaUri = URI.create(NAMESPACE);
+        Path schema = directory.resolve("mapped.xsd");
+        Files.writeString(
+                schema,
+                schema(NAMESPACE, "<xs:simpleType name=\"Code\"><xs:restriction base=\"xs:string\"/></xs:simpleType>"));
+
+        MainModule module = compile(
+                "import schema namespace t = \"urn:test\"; 1",
+                directory.resolve("query.xq").toUri(),
+                new ResourceResolver(Map.of(logicalSchemaUri, schema.toUri())));
+
+        InScopeSchemaTypes types = module.getStaticContext().getInScopeSchemaTypes();
+        Name code = new Name(NAMESPACE, "t", "Code");
+        Assertions.assertTrue(
+                types.getXmlSchemaCatalog().getTypeDefinition(code).isPresent());
+        Assertions.assertNotNull(types.getInScopeSchemaType(code));
+    }
+
+    @Test
+    public void enumeratesNamedTypesIncludingListsAndComplexTypes(@TempDir Path directory) throws Exception {
+        Files.writeString(
+                directory.resolve("main.xsd"),
+                schema(
+                        NAMESPACE,
+                        """
+                        <xs:simpleType name="Count"><xs:restriction base="xs:integer"/></xs:simpleType>
+                        <xs:simpleType name="Counts"><xs:list itemType="t:Count"/></xs:simpleType>
+                        <xs:simpleType name="CountOrString"><xs:union memberTypes="t:Count xs:string"/></xs:simpleType>
+                        <xs:complexType name="Record"><xs:sequence/></xs:complexType>
+                        <xs:element name="anonymous"><xs:complexType><xs:sequence/></xs:complexType></xs:element>
+                        """));
+
+        MainModule module = compile(
+                "import schema namespace t = \"urn:test\" at \"main.xsd\"; 1",
+                directory.resolve("query.xq").toUri(),
+                new ResourceResolver());
+        XmlSchemaCatalog catalog =
+                module.getStaticContext().getInScopeSchemaTypes().getXmlSchemaCatalog();
+        List<Name> names = catalog.getNamedTypeNames();
+        Set<String> importedNames = names.stream()
+                .filter(name -> NAMESPACE.equals(name.getNamespace()))
+                .map(Name::getLocalName)
+                .collect(Collectors.toSet());
+        Assertions.assertEquals(Set.of("Count", "Counts", "CountOrString", "Record"), importedNames);
+        Assertions.assertTrue(names.contains(new Name(Name.XS_NS, "xs", "string")));
+        Assertions.assertTrue(catalog.isSchemaCastTarget(new Name(NAMESPACE, "t", "Counts")));
+        Assertions.assertFalse(catalog.isSchemaCastTarget(new Name(NAMESPACE, "t", "Record")));
+        Assertions.assertThrows(UnsupportedOperationException.class, () -> names.clear());
+    }
+
+    private static MainModule compile(String query, URI queryUri, ResourceResolver resolver) {
+        RumbleConfiguration configuration = RumbleConfiguration.builder()
+                .configureSemantics(semantics -> semantics.queryLanguage("xquery31"))
+                .build();
+        return CompilationPipeline.compileMainModule(
+                query, queryUri, new CompilationConfiguration(configuration, resolver), ExternalBindings.empty());
+    }
+
+    private static String schema(String targetNamespace, String declarations) {
+        String namespaceAttributes = targetNamespace == null
+                ? ""
+                : " targetNamespace=\"" + targetNamespace + "\" xmlns:t=\"" + targetNamespace + "\"";
+        return "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\""
+                + namespaceAttributes
+                + ">"
+                + declarations
+                + "</xs:schema>";
+    }
+}

@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,34 +11,37 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis, Ghislain Fourny
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.flwor.udfs;
+
+import java.io.Serial;
+import java.util.List;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.types.StructType;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.runtime.RuntimeIterator;
 
-import java.util.List;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.runtime.EffectiveBooleanValue;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class WhereClauseUDF implements UDF1<Row, Boolean> {
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private DataFrameContext dataFrameContext;
-    private RuntimeIterator expression;
+    private final DataFrameContext dataFrameContext;
+    private final ItemRuntimePlan expression;
 
-    public WhereClauseUDF(
-            RuntimeIterator expression,
-            DynamicContext context,
-            StructType schema,
-            List<String> columnNames
-    ) {
-        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
+    public WhereClauseUDF(ItemRuntimePlan expression, DynamicContext context, List<FlworDataFrameColumn> columns) {
+        this.dataFrameContext = new DataFrameContext(context, columns);
         this.expression = expression;
+        if (this.expression.isSparkJobNeeded()) {
+            throw new JobWithinAJobException(
+                    "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                    this.expression.getRuntimeStaticContext().getMetadata());
+        }
     }
 
     @Override
@@ -50,7 +50,7 @@ public class WhereClauseUDF implements UDF1<Row, Boolean> {
 
         DynamicContext dynamicContext = this.dataFrameContext.getContext();
 
-        boolean result = this.expression.getEffectiveBooleanValue(dynamicContext);
+        boolean result = EffectiveBooleanValue.evaluate(this.expression, dynamicContext);
         return result;
     }
 }

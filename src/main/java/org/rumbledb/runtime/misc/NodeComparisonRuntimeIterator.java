@@ -1,0 +1,149 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
+ */
+package org.rumbledb.runtime.misc;
+
+import java.io.Serial;
+import java.util.Arrays;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.comparison.NodeComparisonExpression;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
+
+/**
+ * Runtime iterator for node comparisons.
+ *
+ * Node comparisons are used to compare two nodes, by their identity or by their document order.
+ *
+ * @see NodeComparisonExpression
+ */
+public class NodeComparisonRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final NodeComparisonExpression.NodeComparisonOperator operator;
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
+
+    public NodeComparisonRuntimeIterator(
+            ItemRuntimePlan leftIterator,
+            ItemRuntimePlan rightIterator,
+            NodeComparisonExpression.NodeComparisonOperator operator,
+            RuntimeStaticContext staticContext) {
+        super(Arrays.asList(leftIterator, rightIterator), staticContext);
+        this.leftIterator = leftIterator;
+        this.rightIterator = rightIterator;
+        this.operator = operator;
+    }
+
+    public NodeComparisonExpression.NodeComparisonOperator getOperator() {
+        return this.operator;
+    }
+
+    public ItemRuntimePlan getLeftIterator() {
+        return this.leftIterator;
+    }
+
+    public ItemRuntimePlan getRightIterator() {
+        return this.rightIterator;
+    }
+
+    @Override
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        // 1. The operands of a node comparison are evaluated in implementation-dependent order.
+        Item leftItem;
+        Item rightItem;
+
+        try {
+            leftItem = this.leftIterator.materializeAtMostOne(dynamicContext);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Left operand of node comparison must be a single node or empty sequence, got more than one item",
+                    getMetadata());
+        }
+
+        try {
+            rightItem = this.rightIterator.materializeAtMostOne(dynamicContext);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Right operand of node comparison must be a single node or empty sequence, got more than one item",
+                    getMetadata());
+        }
+
+        return applyComparison(leftItem, rightItem, this.operator, getMetadata());
+    }
+
+    private static Item applyComparison(
+            Item leftItem,
+            Item rightItem,
+            NodeComparisonExpression.NodeComparisonOperator operator,
+            ExceptionMetadata metadata) {
+        // 2. If either operand is an empty sequence, the result of the comparison is an empty sequence,
+        // and the implementation need not evaluate the other operand or apply the operator.
+        // However, an implementation may choose to evaluate the other operand in order to determine whether it raises
+        // an error.
+        if (leftItem == null || rightItem == null) {
+            return null;
+        }
+
+        // 3. Each operand must be either a single node or an empty sequence; otherwise a type error
+        // is raised [err:XPTY0004].
+        if (!leftItem.isNode()) {
+            throw new UnexpectedTypeException(
+                    "Left operand of node comparison must be a node, got: " + leftItem.getDynamicType(), metadata);
+        }
+
+        if (!rightItem.isNode()) {
+            throw new UnexpectedTypeException(
+                    "Right operand of node comparison must be a node, got: " + rightItem.getDynamicType(), metadata);
+        }
+
+        boolean result;
+        switch (operator) {
+            case NC_IS: // is
+                // 4. A comparison with the is operator is true if the two operand nodes are the same node;
+                // otherwise it is false.
+                result = leftItem.equals(rightItem);
+                break;
+            case NC_PRECEDES: // <<
+            case NC_FOLLOWS: // >>
+                XMLDocumentPosition leftPos = leftItem.getXmlDocumentPosition();
+                XMLDocumentPosition rightPos = rightItem.getXmlDocumentPosition();
+                if (leftPos == null || rightPos == null) {
+                    throw new UnexpectedTypeException(
+                            "Node comparison in document order requires both operands to have a document position.",
+                            metadata);
+                }
+                int comparison = leftPos.compareTo(rightPos);
+                result = operator == NodeComparisonExpression.NodeComparisonOperator.NC_PRECEDES
+                        ? comparison < 0
+                        : comparison > 0;
+                break;
+            default:
+                throw new OurBadException("Unrecognized node comparison operator: " + operator);
+        }
+
+        return ItemFactory.getInstance().createBooleanItem(result);
+    }
+}

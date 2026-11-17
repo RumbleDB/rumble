@@ -1,12 +1,9 @@
 /*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,74 +11,76 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
- *
+ * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-
 package org.rumbledb.runtime.misc;
 
+import java.io.Serial;
 import java.util.Arrays;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
-public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
+public class StringConcatIterator extends AbstractAtMostOneItemRuntimePlan {
 
+    @Serial
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator leftIterator;
-    private RuntimeIterator rightIterator;
+
+    private final ItemRuntimePlan leftIterator;
+    private final ItemRuntimePlan rightIterator;
 
     public StringConcatIterator(
-            RuntimeIterator leftIterator,
-            RuntimeIterator rightIterator,
-            ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
-    ) {
-        super(Arrays.asList(leftIterator, rightIterator), executionMode, iteratorMetadata);
+            ItemRuntimePlan leftIterator, ItemRuntimePlan rightIterator, RuntimeStaticContext staticContext) {
+        super(Arrays.asList(leftIterator, rightIterator), staticContext);
         this.leftIterator = leftIterator;
         this.rightIterator = rightIterator;
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        this.leftIterator.open(dynamicContext);
-        this.rightIterator.open(dynamicContext);
-        Item left;
-        Item right;
-        // empty sequences are treated as empty strings in concatenation
-        if (this.leftIterator.hasNext()) {
-            left = this.leftIterator.next();
-        } else {
-            left = ItemFactory.getInstance().createStringItem("");
+    public Item evaluateAtMostOne(DynamicContext dynamicContext) {
+        String leftString = atomizeOperandToString(this.leftIterator, dynamicContext, "left");
+        String rightString = atomizeOperandToString(this.rightIterator, dynamicContext, "right");
+        return ItemFactory.getInstance().createStringItem(leftString.concat(rightString));
+    }
+
+    private String atomizeOperandToString(ItemRuntimePlan iterator, DynamicContext dynamicContext, String side) {
+        Item singleAtomic = null;
+        try (Cursor<Item> cursor = iterator.getCursor(dynamicContext)) {
+            while (cursor.hasNext()) {
+                Item item = cursor.next();
+                if (item.isFunction()) {
+                    throw new CannotAtomizeException(
+                            "Cannot atomize a function item in string concatenation expression.", getMetadata());
+                }
+                if (item.isAtomic()) {
+                    singleAtomic = requireSingleAtomic(singleAtomic, item, side);
+                } else {
+                    try {
+                        for (Item atomicItem : item.atomizedValue()) {
+                            singleAtomic = requireSingleAtomic(singleAtomic, atomicItem, side);
+                        }
+                    } catch (CannotAtomizeException e) {
+                        throw new CannotAtomizeException(e.getMessage(), getMetadata());
+                    }
+                }
+            }
         }
-        if (this.rightIterator.hasNext()) {
-            right = this.rightIterator.next();
-        } else {
-            right = ItemFactory.getInstance().createStringItem("");
-        }
-        if (!(left.isAtomic()) || !(right.isAtomic())) {
+        return singleAtomic == null ? "" : singleAtomic.getStringValue();
+    }
+
+    private Item requireSingleAtomic(Item current, Item next, String side) {
+        if (current != null) {
             throw new UnexpectedTypeException(
-                    "String concat expression has arguments that can't be converted to a string "
-                        +
-                        left.serialize()
-                        + ", "
-                        + right.serialize(),
-                    getMetadata()
-            );
+                    "String concatenation expression requires at most one item in its " + side + " input sequence.",
+                    getMetadata());
         }
-
-        String leftStringValue = left.serialize();
-        String rightStringValue = right.serialize();
-
-        this.leftIterator.close();
-        this.rightIterator.close();
-        this.hasNext = false;
-        return ItemFactory.getInstance().createStringItem(leftStringValue.concat(rightStringValue));
+        return next;
     }
 }

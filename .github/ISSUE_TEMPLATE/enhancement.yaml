@@ -1,0 +1,32 @@
+name: Enhancement
+description: Suggest an improvement to an existing feature
+labels: ["enhancement"]
+
+body:
+  - type: markdown
+    attributes:
+      value: "## Enhancement Proposal ✨\nDescribe the improvement you would like to see in an existing feature."
+
+  - type: textarea
+    id: current-issue
+    attributes:
+      label: "Current Issue"
+      description: "What is the limitation or problem with the existing feature?"
+    validations:
+      required: true
+
+  - type: textarea
+    id: suggested-improvement
+    attributes:
+      label: "Suggested Improvement"
+      description: "How should this feature be improved? Describe the proposed changes."
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional-notes
+    attributes:
+      label: "Additional Notes"
+      description: "Provide any additional context, references, or links relevant to this enhancement."
+    validations:
+      required: false
