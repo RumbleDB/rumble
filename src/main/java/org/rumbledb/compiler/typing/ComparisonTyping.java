@@ -28,6 +28,25 @@ public final class ComparisonTyping {
 
     private final StaticTypeErrors errors;
 
+    /** Whether atomic values of these types can be deep-equal, as switch operands and map keys are. */
+    public static boolean mayBeDeepEqual(ItemType left, ItemType right) {
+        return left.getMemberTypes().stream().anyMatch(leftMember -> right.getMemberTypes().stream()
+                .anyMatch(rightMember -> {
+                    ItemType a = leftMember.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
+                            ? BuiltinTypesCatalogue.stringItem
+                            : leftMember;
+                    ItemType b = rightMember.isSubtypeOf(BuiltinTypesCatalogue.untypedAtomicItem)
+                            ? BuiltinTypesCatalogue.stringItem
+                            : rightMember;
+                    return a.mayOverlapWith(b)
+                            || (a.isNumeric() && b.isNumeric())
+                            || (a.canBePromotedTo(BuiltinTypesCatalogue.stringItem)
+                                    && b.canBePromotedTo(BuiltinTypesCatalogue.stringItem))
+                            || (a.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
+                                    && b.isSubtypeOf(BuiltinTypesCatalogue.durationItem));
+                }));
+    }
+
     public ComparisonTyping(StaticTypeErrors errors) {
         this.errors = errors;
     }

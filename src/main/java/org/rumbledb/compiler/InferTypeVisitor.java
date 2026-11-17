@@ -561,7 +561,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTextNodeConstructor(TextNodeConstructorExpression expression, StaticContext argument) {
-        return withType(expression, new SequenceType(BuiltinTypesCatalogue.textNode), argument);
+        visitDescendants(expression, argument);
+        SequenceType contentType = expression.getContentExpression() == null
+                ? SequenceType.createSequenceType("()")
+                : TypeAtomization.inferType(typeOf(expression.getContentExpression(), expression));
+        // Empty atomized content constructs no node; all other content becomes one text node.
+        SequenceType resultType = new SequenceType(
+                BuiltinTypesCatalogue.textNode,
+                contentType.isEmptySequence()
+                        ? SequenceCardinality.EMPTY
+                        : contentType.getCardinality().atMostOne());
+        this.errors.rejectInferredEmpty(resultType, expression, "its atomized content is always empty");
+        expression.setStaticSequenceType(resultType);
+        return argument;
     }
 
     @Override
@@ -1200,7 +1212,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         for (Expression condition : conditions) {
             SequenceType conditionType = typeOf(condition, node);
             checkSwitchType(conditionType, node);
-            if (conditionType.hasOverlapWith(testType)) {
+            SequenceType atomizedCondition = TypeAtomization.inferType(conditionType);
+            SequenceType atomizedTest = TypeAtomization.inferType(testType);
+            // Switch compares atomized values by deep equality, including numeric promotion.
+            if ((atomizedCondition.getCardinality().allowsZero()
+                            && atomizedTest.getCardinality().allowsZero())
+                    || (!atomizedCondition.isEmptySequence()
+                            && !atomizedTest.isEmptySequence()
+                            && ComparisonTyping.mayBeDeepEqual(
+                                    atomizedCondition.getItemType(), atomizedTest.getItemType()))) {
                 mayMatch = true;
             }
         }
@@ -1926,7 +1946,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             argument.replaceVariableSequenceType(
                     expression.getVariableName(),
                     inferUndeclaredVariableType(
-                            expression.getExpression(),
+                            expression.external() ? null : expression.getExpression(),
                             argument.getIsAssignable(expression.getVariableName()),
                             expression));
         }
