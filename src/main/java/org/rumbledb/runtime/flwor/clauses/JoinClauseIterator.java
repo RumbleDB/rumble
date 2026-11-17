@@ -88,22 +88,22 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
     }
 
     /**
-     * Joins two input tuples.
+     * Joins two input tuples while preserving their variable types.
      *
      * Warning: if the two tuples collide in their columns, unexpected things may happen for now.
      *
      * @param context the dynamic context for the evaluation of the predicate expression.
-     * @param leftInputTuple the left tuple.
-     * @param rightInputTuple the right tuple.
-     * @param outputTupleVariableDependencies the necessary and sufficient variable dependencies that the output tuple
-     *        should contain.
-     * @param variablesInLeftInputTuple a list of the variables in the left tuple.
-     * @param variablesInRightInputTuple a list of the variables in the right tuple.
-     * @param predicateIterator the predicate iterator.
-     * @param isLeftOuterJoin true if it is a left outer join, false otherwise.
-     * @param newRightSideVariableName the new name of the variable to rename the context item in the output (null if no
+     * @param left the left tuple.
+     * @param right the right tuple.
+     * @param outputDependencies the necessary and sufficient variable dependencies that the output tuple should contain.
+     * @param leftVariables a list of the variables in the left tuple.
+     * @param rightVariables a list of the variables in the right tuple.
+     * @param predicate the predicate iterator.
+     * @param leftOuter true if it is a left outer join, false otherwise.
+     * @param renamedRightVariable the new name of the variable to rename the context item in the output (null if no
      *        rename).
      * @param metadata the metadata.
+     * @param staticContext the static context for the join.
      * @return the joined tuple.
      */
     public static FlworDataFrame joinInputTupleWithSequenceOnPredicate(
