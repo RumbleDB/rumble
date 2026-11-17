@@ -312,7 +312,10 @@ public final class PathStepTyping {
                 return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
             }
             if (axis.equals(ReverseAxis.ANCESTOR_OR_SELF)) {
-                return !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, null);
+                // Only document nodes are guaranteed to have no ancestors. A failed self test
+                // does not rule out a matching ancestor (for example, an element above a text node).
+                return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
+                        && !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, null);
             }
         }
         return false;
