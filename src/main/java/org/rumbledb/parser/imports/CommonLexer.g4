@@ -861,6 +861,10 @@ KW_ICEBERG_TABLE
    : 'iceberg-table'
    ;
 
+KW_HUDI_TABLE
+   : 'hudi-table'
+   ;
+
 KW_STATICALLY
    : 'statically'
    ;

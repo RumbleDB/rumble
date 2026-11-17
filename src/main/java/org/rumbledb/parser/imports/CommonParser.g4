@@ -964,6 +964,7 @@ commonKeywordOKForFunction
    | KW_GREATEST
    | KW_GROUP
    | KW_GT
+   | KW_HUDI_TABLE
    | KW_ICEBERG_TABLE
    | KW_IDIV
    | KW_IMPORT
@@ -1249,11 +1250,11 @@ copyDecl
    ;
 
 createCollectionExpr
-   : KW_CREATE KW_COLLECTION collectionMode = (KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name = exprSimple RPAREN (KW_WITH content = exprSingle)?
+   : KW_CREATE KW_COLLECTION collectionMode = (KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE | KW_HUDI_TABLE) LPAREN collection_name = exprSimple RPAREN (KW_WITH content = exprSingle)?
    ;
 
 deleteIndexExpr
-   : KW_DELETE ((first = KW_FIRST | last = KW_LAST) num = exprSingle?) KW_FROM KW_COLLECTION collectionMode = (KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name = exprSimple RPAREN
+   : KW_DELETE ((first = KW_FIRST | last = KW_LAST) num = exprSingle?) KW_FROM KW_COLLECTION collectionMode = (KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE | KW_HUDI_TABLE) LPAREN collection_name = exprSimple RPAREN
    ;
 
 deleteSearchExpr
@@ -1261,7 +1262,7 @@ deleteSearchExpr
    ;
 
 insertIndexExpr
-   : KW_INSERT content = exprSingle ((KW_AT pos = exprSingle) | first = KW_FIRST | last = KW_LAST) KW_INTO KW_COLLECTION collectionMode = (KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name = exprSimple RPAREN
+   : KW_INSERT content = exprSingle ((KW_AT pos = exprSingle) | first = KW_FIRST | last = KW_LAST) KW_INTO KW_COLLECTION collectionMode = (KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE | KW_HUDI_TABLE) LPAREN collection_name = exprSimple RPAREN
    ;
 
 insertSearchExpr
@@ -1269,7 +1270,7 @@ insertSearchExpr
    ;
 
 truncateCollectionExpr
-   : (KW_DELETE | KW_TRUNCATE) KW_COLLECTION collectionMode = (KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE) LPAREN collection_name = exprSimple RPAREN
+   : (KW_DELETE | KW_TRUNCATE) KW_COLLECTION collectionMode = (KW_TABLE | KW_DELTA_FILE | KW_ICEBERG_TABLE | KW_HUDI_TABLE) LPAREN collection_name = exprSimple RPAREN
    ;
 
 editCollectionExpr
