@@ -89,8 +89,8 @@ import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.misc.RangeOperationIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
+import org.rumbledb.types.SequenceType;
 
 /**
  * Propagates execution modes for one pass of the algorithm driven by ExecutionModeResolver.
@@ -949,14 +949,22 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
             return argument;
         }
-        expression.setHighestExecutionMode(
-                expression.getArguments().get(0).getHighestExecutionMode(this.visitorConfig));
-        if (expression.getHighestExecutionMode().equals(ExecutionMode.RDD)) {
-            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        // A distributed sequence can be supplied in any position. The callee may produce a scalar,
+        // an RDD, or a DataFrame; the dynamic call adapts that selected plan at its output boundary.
+        ExecutionMode mode = ExecutionMode.LOCAL;
+        for (Expression argumentExpression : expression.getArguments()) {
+            ExecutionMode argumentMode = argumentExpression.getHighestExecutionMode(this.visitorConfig);
+            if (argumentMode.isRDDOrDataFrame()) {
+                mode = argumentMode;
+                break;
+            }
         }
-        if (!this.configuration.runtime().detectDataFrameExecutionMode()) {
-            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        if (mode == ExecutionMode.DATAFRAME
+                && !expression.getStaticSequenceType().getItemType().isObjectItemType()
+                && !expression.getStaticSequenceType().getItemType().isCompatibleWithDataFrames(this.configuration)) {
+            mode = ExecutionMode.RDD;
         }
+        expression.setHighestExecutionMode(mode);
         return argument;
     }
 

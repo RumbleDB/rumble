@@ -181,6 +181,7 @@ import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.functions.FunctionBodyIterator;
 import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
+import org.rumbledb.runtime.functions.FunctionPlanVariant;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
@@ -280,10 +281,17 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
 
     private final VisitorConfig visitorConfig;
     private final RumbleConfiguration config;
+    private boolean specializingFunction;
 
     public RuntimeIteratorVisitor(RumbleConfiguration config) {
         this.visitorConfig = VisitorConfig.RUNTIME_PLAN_GENERATION;
         this.config = config;
+    }
+
+    ItemRuntimePlan generateSpecializedFunctionBody(InlineFunctionExpression expression) {
+        this.specializingFunction = true;
+        return new FunctionBodyIterator(
+                visit(expression.getBody(), null), expression.hasExitStatement(), expression.hasTailCalls());
     }
 
     /** Generates a runtime plan and renders it when debug output is enabled. */
@@ -1192,11 +1200,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
         SequenceType returnType = expression.getReturnType();
         ItemRuntimePlan bodyIterator = new FunctionBodyIterator(
                 this.visit(expression.getBody(), argument), expression.hasExitStatement(), expression.hasTailCalls());
+        Map<FunctionPlanVariant, ItemRuntimePlan> variants =
+                ParallelFunctionSpecialization.compile(expression, this.config);
         ItemRuntimePlan runtimeIterator = new FunctionRuntimeIterator(
                 expression.getName(),
                 paramNameToSequenceTypes,
                 returnType,
                 bodyIterator,
+                variants,
                 expression.getStaticContextForRuntime(this.config, this.visitorConfig));
 
         return runtimeIterator;
@@ -1226,6 +1237,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
                     // This might be worth a more fine-grained adjustment later.
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig),
                     false);
+        } else if (this.specializingFunction) {
+            runtimeIterator = new DynamicFunctionCallIterator(
+                    new NamedFunctionRefRuntimeIterator(
+                            identifier,
+                            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
+                                    .toBuilder().executionMode(ExecutionMode.LOCAL).build()),
+                    arguments,
+                    expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else {
             runtimeIterator = new StaticUserDefinedFunctionCallIterator(
                     identifier,
