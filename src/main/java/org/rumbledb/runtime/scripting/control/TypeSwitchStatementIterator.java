@@ -16,9 +16,7 @@
 package org.rumbledb.runtime.scripting.control;
 
 import java.io.Serial;
-import java.util.Collections;
 import java.util.List;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -59,25 +57,21 @@ public class TypeSwitchStatementIterator extends AbstractAtMostOneItemRuntimePla
 
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
+        List<Item> values = this.testField.materialize(context);
         DynamicContext childContext = new DynamicContext(context);
-        return execute(this.testField.materializeFirstOrNull(context), childContext, ItemRuntimePlan::materialize);
-    }
-
-    private Item execute(
-            Item value, DynamicContext childContext, BiConsumer<ItemRuntimePlan, DynamicContext> materialize) {
-        ItemRuntimePlan selected = selectIterator(value, childContext);
-        materialize.accept(selected, childContext);
+        ItemRuntimePlan selected = selectIterator(values, childContext);
+        selected.materialize(childContext);
         return null;
     }
 
-    private ItemRuntimePlan selectIterator(Item value, DynamicContext childContext) {
+    private ItemRuntimePlan selectIterator(List<Item> values, DynamicContext childContext) {
         for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
-            ItemRuntimePlan selected = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase, value);
+            ItemRuntimePlan selected = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase, values);
             if (selected != null) {
                 if (typeSwitchCase.getVariableName() != null) {
                     childContext
                             .getVariableValues()
-                            .addVariableValue(typeSwitchCase.getVariableName(), Collections.singletonList(value));
+                            .addVariableValue(typeSwitchCase.getVariableName(), values);
                 }
                 return selected;
             }
@@ -86,19 +80,24 @@ public class TypeSwitchStatementIterator extends AbstractAtMostOneItemRuntimePla
         if (this.defaultCase.getVariableName() != null) {
             childContext
                     .getVariableValues()
-                    .addVariableValue(this.defaultCase.getVariableName(), Collections.singletonList(value));
+                    .addVariableValue(this.defaultCase.getVariableName(), values);
         }
         return this.defaultCase.getReturnIterator();
     }
 
     private ItemRuntimePlan testTypeMatchAndReturnCorrespondingIterator(
-            TypeswitchRuntimeIteratorCase typeSwitchCase, Item value) {
+            TypeswitchRuntimeIteratorCase typeSwitchCase, List<Item> values) {
         if (typeSwitchCase.getSequenceTypeUnion() != null) {
             for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
-                if (value == null && sequenceType.isEmptySequence()) {
-                    return typeSwitchCase.getReturnIterator();
-                }
-                if (value != null && InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), value)) {
+                var cardinality = sequenceType.getCardinality();
+                boolean matchesCardinality = switch (values.size()) {
+                    case 0 -> cardinality.allowsZero();
+                    case 1 -> cardinality.allowsOne();
+                    default -> cardinality.allowsMany();
+                };
+                if (matchesCardinality
+                        && values.stream().allMatch(item ->
+                                InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), item))) {
                     return typeSwitchCase.getReturnIterator();
                 }
             }
