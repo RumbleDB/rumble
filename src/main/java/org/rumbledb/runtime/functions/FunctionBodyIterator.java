@@ -36,6 +36,7 @@ import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.runtime.plan.UpdatingRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
+import org.rumbledb.types.SequenceType;
 
 /**
  * The body of a user-defined function. Every call of a function evaluates its body, so this is where exit statements
@@ -61,7 +62,15 @@ public class FunctionBodyIterator extends ItemRuntimePlan
     private final boolean hasTailCalls;
 
     public FunctionBodyIterator(ItemRuntimePlan body, boolean hasExitStatement, boolean hasTailCalls) {
-        super(List.of(body), body.getRuntimeStaticContext());
+        // An early exit can return a different type and number of items from the final expression. Keep the
+        // complete body's type conservative so that return-value conversion and validation are not skipped.
+        super(
+                List.of(body),
+                hasExitStatement
+                        ? body.getRuntimeStaticContext().toBuilder()
+                                .staticType(SequenceType.createSequenceType("item*"))
+                                .build()
+                        : body.getRuntimeStaticContext());
         this.body = body;
         this.hasExitStatement = hasExitStatement;
         this.hasTailCalls = hasTailCalls;
