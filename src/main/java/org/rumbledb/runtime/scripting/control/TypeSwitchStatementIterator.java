@@ -69,18 +69,14 @@ public class TypeSwitchStatementIterator extends AbstractAtMostOneItemRuntimePla
             ItemRuntimePlan selected = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase, values);
             if (selected != null) {
                 if (typeSwitchCase.getVariableName() != null) {
-                    childContext
-                            .getVariableValues()
-                            .addVariableValue(typeSwitchCase.getVariableName(), values);
+                    childContext.getVariableValues().addVariableValue(typeSwitchCase.getVariableName(), values);
                 }
                 return selected;
             }
         }
 
         if (this.defaultCase.getVariableName() != null) {
-            childContext
-                    .getVariableValues()
-                    .addVariableValue(this.defaultCase.getVariableName(), values);
+            childContext.getVariableValues().addVariableValue(this.defaultCase.getVariableName(), values);
         }
         return this.defaultCase.getReturnIterator();
     }
@@ -90,14 +86,16 @@ public class TypeSwitchStatementIterator extends AbstractAtMostOneItemRuntimePla
         if (typeSwitchCase.getSequenceTypeUnion() != null) {
             for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
                 var cardinality = sequenceType.getCardinality();
-                boolean matchesCardinality = switch (values.size()) {
-                    case 0 -> cardinality.allowsZero();
-                    case 1 -> cardinality.allowsOne();
-                    default -> cardinality.allowsMany();
-                };
+                boolean matchesCardinality =
+                        switch (values.size()) {
+                            case 0 -> cardinality.allowsZero();
+                            case 1 -> cardinality.allowsOne();
+                            default -> cardinality.allowsMany();
+                        };
                 if (matchesCardinality
-                        && values.stream().allMatch(item ->
-                                InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), item))) {
+                        && values.stream()
+                                .allMatch(item ->
+                                        InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), item))) {
                     return typeSwitchCase.getReturnIterator();
                 }
             }
