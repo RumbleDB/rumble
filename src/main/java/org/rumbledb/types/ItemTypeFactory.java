@@ -778,10 +778,27 @@ public class ItemTypeFactory {
      * @return an object item type representing the type in Rumble
      */
     public static ItemType createItemTypeFromItem(Item item) {
+        return createItemTypeFromItem(item, false);
+    }
+
+    /**
+     * Detects a runtime schema, optionally narrowing integer storage by value range.
+     * The item's dynamic type is not changed; static and strict inference use the default overload.
+     */
+    public static ItemType createItemTypeFromItem(Item item, boolean detectIntegerRanges) {
+        if (detectIntegerRanges && item.isInteger()) {
+            if (item.isWithinIntRange()) {
+                return BuiltinTypesCatalogue.intItem;
+            }
+            if (item.isWithinLongRange()) {
+                return BuiltinTypesCatalogue.longItem;
+            }
+            return BuiltinTypesCatalogue.integerItem;
+        }
         if (item.isObject()) {
             List<ItemType> itemTypes = new ArrayList<>();
             for (String key : item.getStringKeys()) {
-                itemTypes.add(createItemTypeFromItem(item.getItemByKey(key)));
+                itemTypes.add(createItemTypeFromItem(item.getItemByKey(key), detectIntegerRanges));
             }
             return ItemTypeFactory.createAnonymousObjectType(item.getStringKeys(), itemTypes);
         } else if (item.isMap()) {
@@ -797,9 +814,10 @@ public class ItemTypeFactory {
             if (item.getSize() == 0) {
                 return ItemTypeFactory.createEmptyArrayType();
             }
-            ItemType result = createItemTypeFromItem(item.getItemAt(0));
+            ItemType result = createItemTypeFromItem(item.getItemAt(0), detectIntegerRanges);
             for (int i = 1; i < item.getSize(); i++) {
-                result = result.findLeastCommonSuperTypeLax(createItemTypeFromItem(item.getItemAt(i)));
+                result = result.findLeastCommonSuperTypeLax(
+                        createItemTypeFromItem(item.getItemAt(i), detectIntegerRanges));
             }
             return ItemTypeFactory.createAnonymousArrayType(result);
         } else {
