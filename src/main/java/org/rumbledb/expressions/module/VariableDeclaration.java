@@ -103,7 +103,8 @@ public class VariableDeclaration extends Node {
         if (this.sequenceType != null) {
             return this.sequenceType;
         }
-        if (this.expression != null && this.expression.getStaticSequenceType() != null) {
+        // An external initializer is only a default, not a type constraint on supplied values.
+        if (!this.external && this.expression != null && this.expression.getStaticSequenceType() != null) {
             return this.expression.getStaticSequenceType();
         }
         return SequenceType.createSequenceType("item*");
