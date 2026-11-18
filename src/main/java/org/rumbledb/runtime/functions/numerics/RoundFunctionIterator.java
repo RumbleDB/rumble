@@ -77,10 +77,6 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
         }
         BigInteger precision = precisionSupplier.get();
         try {
-            if (value.isInt()) {
-                BigDecimal bd = roundToPrecision(new BigDecimal(value.getIntValue()), precision);
-                return ItemFactory.getInstance().createIntItem(bd.intValue());
-            }
             if (value.isInteger()) {
                 BigDecimal bd = roundToPrecision(new BigDecimal(value.getIntegerValue()), precision);
                 return ItemFactory.getInstance().createIntegerItem(bd.toBigInteger());
