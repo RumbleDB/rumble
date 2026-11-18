@@ -79,6 +79,9 @@ class FlworSchemaPropagationTest {
         FlworDataFrame source = input();
         TupleRuntimePlan plan = new Source(source, dfContext);
         plan = new CountClauseIterator(plan, N, dfContext);
+        plan.setInputAndOutputTupleVariableDependencies(new HashMap<>(
+                Map.of(X, DynamicContext.VariableDependency.FULL, N, DynamicContext.VariableDependency.FULL)));
+        FLWORSchema countSchema = ((FlworDataFrame) plan.getDataFrame(dynamic)).getSchema();
         plan = new WhereClauseIterator(
                 plan,
                 new ConstantRuntimeIterator(
@@ -114,8 +117,8 @@ class FlworSchemaPropagationTest {
         assertEquals(SequenceType.createSequenceType("long"), result.getSchema().getVariableType(N));
         assertEquals(
                 SequenceType.createSequenceType("string"), result.getSchema().getVariableType(Y));
-        assertTrue(result.getSchema().isBytes(N));
-        assertNull(result.getSchema().getNativeType(N));
+        assertEquals(countSchema.isBytes(N), result.getSchema().isBytes(N));
+        assertEquals(countSchema.getNativeType(N), result.getSchema().getNativeType(N));
         assertTrue(result.isConsistent());
         assertEquals(3, result.getDataFrame().count());
         assertEquals(SequenceType.createSequenceType("int"), source.getVariableType(X));
