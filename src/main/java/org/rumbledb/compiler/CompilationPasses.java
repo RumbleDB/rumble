@@ -120,8 +120,9 @@ final class CompilationPasses {
     }
 
     static CompilationPass<MainModule> prepareParallelFunctionItems() {
-        return analysis("Preparing parallel function items", (module, context) ->
-                ParallelFunctionSpecialization.prepare(module, context.configuration()));
+        return analysis(
+                "Preparing parallel function items",
+                (module, context) -> ParallelFunctionSpecialization.prepare(module, context.configuration()));
     }
 
     private static <M extends Module> CompilationPass<M> analysis(

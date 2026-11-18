@@ -16,6 +16,12 @@
 package iq;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import iq.base.TestFileDiscovery;
+import utils.annotations.AnnotationParseException;
 
 import org.rumbledb.config.RumbleConfiguration;
 
@@ -29,6 +35,16 @@ public class SparkRuntimeTests extends RuntimeTests {
                 .configureRuntime(runtime -> runtime.resultsSizeCap(200).materializationCap(100000))
                 .configureSemantics(semantics -> semantics.datesWithTimeZone(true))
                 .build();
+    }
+
+    @Override
+    protected List<File> testFiles() throws IOException, AnnotationParseException {
+        List<File> files = new ArrayList<>(super.testFiles());
+        // These error cases describe unsupported distributed operations. The separate
+        // SparkRuntimeTestsParallelismDeactivated runner only loads runtime-spark.
+        files.addAll(TestFileDiscovery.jsoniqFiles(new File(
+                System.getProperty("user.dir") + "/src/test/resources/test_files/runtime-spark-parallel-only")));
+        return files;
     }
 
     @Override

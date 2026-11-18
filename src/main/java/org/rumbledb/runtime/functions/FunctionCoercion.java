@@ -114,20 +114,30 @@ public final class FunctionCoercion {
         if (item instanceof FunctionItem function && function.hasParallelVariants()) {
             Map<FunctionPlanVariant, ItemRuntimePlan> variants = new HashMap<>();
             for (int i = 0; i < parameterNames.size(); i++) {
-                if (FunctionCallArgumentConversion.isAtMostOne(expectedSignature.getParameterTypes().get(i))) {
+                if (FunctionCallArgumentConversion.isAtMostOne(
+                        expectedSignature.getParameterTypes().get(i))) {
                     continue;
                 }
-                for (ExecutionMode mode : List.of(
-                        ExecutionMode.RDD, ExecutionMode.DATAFRAME)) {
-                    var wrapped = function.getParallelVariant(function.getParameterNames().get(i), mode);
+                for (ExecutionMode mode : List.of(ExecutionMode.RDD, ExecutionMode.DATAFRAME)) {
+                    var wrapped = function.getParallelVariant(
+                            function.getParameterNames().get(i), mode);
                     if (wrapped != null) {
-                        ItemRuntimePlan coercion = new FunctionCoercionRuntimeIterator(item, parameterNames,
-                                expectedSignature.getReturnType(), exceptionMessage,
-                                staticContext.toBuilder().executionMode(
-                                        wrapped.getRuntimeStaticContext().getExecutionMode()).build());
-                        variants.put(new FunctionPlanVariant(parameterNames.get(i), mode),
-                                FunctionCallArgumentConversion.wrapArgument(coercion,
-                                        expectedSignature.getReturnType(), exceptionMessage, coercion.getRuntimeStaticContext()));
+                        ItemRuntimePlan coercion = new FunctionCoercionRuntimeIterator(
+                                item,
+                                parameterNames,
+                                expectedSignature.getReturnType(),
+                                exceptionMessage,
+                                staticContext.toBuilder()
+                                        .executionMode(wrapped.getRuntimeStaticContext()
+                                                .getExecutionMode())
+                                        .build());
+                        variants.put(
+                                new FunctionPlanVariant(parameterNames.get(i), mode),
+                                FunctionCallArgumentConversion.wrapArgument(
+                                        coercion,
+                                        expectedSignature.getReturnType(),
+                                        exceptionMessage,
+                                        coercion.getRuntimeStaticContext()));
                     }
                 }
             }

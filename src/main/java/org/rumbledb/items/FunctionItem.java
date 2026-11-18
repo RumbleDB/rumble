@@ -65,8 +65,7 @@ public class FunctionItem implements Item {
     // Already compiled, including return conversions. Shared by values and partial applications.
     private Map<FunctionPlanVariant, ItemRuntimePlan> parallelVariants;
 
-    public void setParallelVariants(
-            Map<FunctionPlanVariant, ItemRuntimePlan> variants) {
+    public void setParallelVariants(Map<FunctionPlanVariant, ItemRuntimePlan> variants) {
         this.parallelVariants = variants;
     }
 
@@ -75,7 +74,9 @@ public class FunctionItem implements Item {
     }
 
     public ItemRuntimePlan getParallelVariant(Name parameter, ExecutionMode mode) {
-        return this.parallelVariants == null ? null : this.parallelVariants.get(new FunctionPlanVariant(parameter, mode));
+        return this.parallelVariants == null
+                ? null
+                : this.parallelVariants.get(new FunctionPlanVariant(parameter, mode));
     }
 
     /**

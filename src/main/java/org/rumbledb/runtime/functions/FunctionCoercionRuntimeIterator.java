@@ -19,9 +19,9 @@ import java.io.Serial;
 import java.util.ArrayList;
 import java.util.List;
 
-import lombok.Getter;
-
 import org.apache.spark.api.java.JavaRDD;
+
+import lombok.Getter;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -111,7 +111,8 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
         }
         FunctionCall call = FunctionCall.of(this.callableItem, arguments, callStaticContext, context);
         callStaticContext = callStaticContext.toBuilder()
-                .executionMode(call.plan().getRuntimeStaticContext().getExecutionMode()).build();
+                .executionMode(call.plan().getRuntimeStaticContext().getExecutionMode())
+                .build();
         // The conversion only passes its context on to the call, so it is evaluated in the context of the call.
         ItemRuntimePlan convertedResult = FunctionCallArgumentConversion.wrapForFunctionConversion(
                 call.plan(),

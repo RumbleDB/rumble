@@ -1241,8 +1241,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<ItemRuntimePlan>
             runtimeIterator = new DynamicFunctionCallIterator(
                     new NamedFunctionRefRuntimeIterator(
                             identifier,
-                            expression.getStaticContextForRuntime(this.config, this.visitorConfig)
-                                    .toBuilder().executionMode(ExecutionMode.LOCAL).build()),
+                            expression.getStaticContextForRuntime(this.config, this.visitorConfig).toBuilder()
+                                    .executionMode(ExecutionMode.LOCAL)
+                                    .build()),
                     arguments,
                     expression.getStaticContextForRuntime(this.config, this.visitorConfig));
         } else {

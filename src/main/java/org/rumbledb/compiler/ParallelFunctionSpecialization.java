@@ -52,7 +52,8 @@ final class ParallelFunctionSpecialization {
                 if (node instanceof DynamicFunctionCallExpression call) {
                     for (Expression expression : call.getArguments()) {
                         if (expression != null
-                                && expression.getHighestExecutionMode(VisitorConfig.RUNTIME_PLAN_GENERATION)
+                                && expression
+                                        .getHighestExecutionMode(VisitorConfig.RUNTIME_PLAN_GENERATION)
                                         .isRDDOrDataFrame()) {
                             return true;
                         }
@@ -73,8 +74,11 @@ final class ParallelFunctionSpecialization {
             @Override
             protected Void defaultAction(Node node, Void argument) {
                 if (node instanceof InlineFunctionExpression function
-                        && !function.isExternal() && !function.isSequential() && !function.isUpdating()
-                        && !function.hasTailCalls() && !function.hasExitStatement()) {
+                        && !function.isExternal()
+                        && !function.isSequential()
+                        && !function.isUpdating()
+                        && !function.hasTailCalls()
+                        && !function.hasExitStatement()) {
                     function.setParallelSpecializationEnabled(true);
                 }
                 return visitDescendants(node, argument);
@@ -137,7 +141,10 @@ final class ParallelFunctionSpecialization {
                 modes.visit(copy.getBody(), context);
                 ItemRuntimePlan body = new RuntimeIteratorVisitor(configuration).generateSpecializedFunctionBody(copy);
                 ItemRuntimePlan callee = FunctionCallArgumentConversion.wrapArgument(
-                        body, function.getReturnType(), "Invalid return type for function. ", body.getRuntimeStaticContext());
+                        body,
+                        function.getReturnType(),
+                        "Invalid return type for function. ",
+                        body.getRuntimeStaticContext());
                 variants.put(new FunctionPlanVariant(parameter.getKey(), mode), callee);
             }
         }

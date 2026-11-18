@@ -97,7 +97,8 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
         ExecutionMode mode = ExecutionMode.LOCAL;
         int distributedCount = 0;
         for (int i = 0; i < arguments.size(); i++) {
-            ExecutionMode argumentMode = arguments.get(i).getRuntimeStaticContext().getExecutionMode();
+            ExecutionMode argumentMode =
+                    arguments.get(i).getRuntimeStaticContext().getExecutionMode();
             if (argumentMode.isRDDOrDataFrame()) {
                 parallelParameter = function.getParameterNames().get(i);
                 mode = argumentMode;
@@ -217,7 +218,8 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
             Item functionItem, List<ItemRuntimePlan> arguments, boolean isTailCall, DynamicContext context) {
         if (!isTailCall && functionItem instanceof FunctionItem function && function.hasParallelVariants()) {
             for (ItemRuntimePlan argument : arguments) {
-                if (argument != null && argument.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+                if (argument != null
+                        && argument.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
                     throw new UnsupportedFeatureException(
                             "Partial application of a distributed parameter is not supported yet. "
                                     + "Bind the local parameters first and supply the distributed parameter in the final call.",
