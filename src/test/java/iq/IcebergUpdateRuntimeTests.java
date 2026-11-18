@@ -18,9 +18,11 @@ package iq;
 import java.io.File;
 
 import org.apache.spark.SparkConf;
+import org.junit.jupiter.api.Disabled;
 
 import iq.base.UpdateRuntimeTestsBase;
 
+@Disabled("Re-enable when a Iceberg release supports Spark 4.3.")
 public class IcebergUpdateRuntimeTests extends UpdateRuntimeTestsBase {
 
     public static final File runtimeTestsDirectory =
