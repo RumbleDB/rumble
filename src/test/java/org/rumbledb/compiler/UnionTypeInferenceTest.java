@@ -83,6 +83,17 @@ class UnionTypeInferenceTest {
                 new Case("for $x in (1, \"2\") return $x cast as xs:string", strings),
                 new Case("for $x in (xs:boolean(\"true\"), 1) return $x cast as xs:string", strings),
                 new Case("sum((xs:positiveInteger(1), xs:negativeInteger(-1)))", integers),
+                new Case("-xs:positiveInteger(1)", integers),
+                new Case("-xs:int(-2147483648)", integers),
+                new Case("+xs:positiveInteger(1)", List.of(BuiltinTypesCatalogue.positiveIntegerItem)),
+                new Case("round(xs:unsignedByte(255), -1)", integers),
+                new Case("round(xs:positiveInteger(1))", integers),
+                new Case(
+                        "for $x in (xs:unsignedByte(255), xs:float(1.5)) return round($x, -1)",
+                        List.of(BuiltinTypesCatalogue.integerItem, BuiltinTypesCatalogue.floatItem)),
+                new Case(
+                        "for $x in (xs:positiveInteger(1), xs:float(1.5)) return -$x",
+                        List.of(BuiltinTypesCatalogue.integerItem, BuiltinTypesCatalogue.floatItem)),
                 new Case(
                         "sum((xs:untypedAtomic(\"1\"), 2))",
                         List.of(BuiltinTypesCatalogue.integerItem, BuiltinTypesCatalogue.doubleItem)),
