@@ -16,182 +16,201 @@
 package org.rumbledb.runtime.flwor;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.ArrayType;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.*;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.TypeMappings;
 
+/** Logical variables and the physical columns representing them. */
 public class FLWORSchema implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private Map<Name, SequenceType> variableTypes;
+    public record ColumnBinding(String columnName, ColumnFormat representation, DataType physicalType)
+            implements Serializable {
+        public ColumnBinding {
+            Objects.requireNonNull(columnName);
+            Objects.requireNonNull(representation);
+            Objects.requireNonNull(physicalType);
+        }
 
-    private Set<String> counts;
-    private Set<String> sequencesAsArraysOfBytes;
-    private Set<String> sequencesAsBytes;
-    private Map<String, ItemType> nativelyTypedSequences;
-
-    public FLWORSchema() {
-        this.variableTypes = new HashMap<>();
-        this.counts = new HashSet<>();
-        this.sequencesAsArraysOfBytes = new HashSet<>();
-        this.sequencesAsBytes = new HashSet<>();
-        this.nativelyTypedSequences = new HashMap<>();
+        private boolean hasValidRepresentation() {
+            return switch (representation) {
+                case SERIALIZED_SEQUENCE -> physicalType.equals(DataTypes.BinaryType);
+                case NATIVE_SEQUENCE -> physicalType instanceof ArrayType;
+                case COUNT -> physicalType.equals(DataTypes.LongType);
+                default -> true;
+            };
+        }
     }
 
-    public FLWORSchema(FLWORSchema fdf) {
-        this.variableTypes = new HashMap<>(fdf.variableTypes);
-        this.counts = new HashSet<>(fdf.counts);
-        this.sequencesAsArraysOfBytes = new HashSet<>(fdf.sequencesAsArraysOfBytes);
-        this.sequencesAsBytes = new HashSet<>(fdf.sequencesAsBytes);
-        this.nativelyTypedSequences = new HashMap<>(fdf.nativelyTypedSequences);
-    }
-
-    public void setCount(Name name) {
-        this.counts.add(name.toString());
-    }
-
-    public void setArraysOfBytes(Name name) {
-        this.sequencesAsArraysOfBytes.add(name.toString());
-    }
-
-    public void setBytes(Name name) {
-        this.sequencesAsBytes.add(name.toString());
-    }
-
-    public void setNativeType(Name name, ItemType itemType) {
-        this.nativelyTypedSequences.put(name.toString(), itemType);
-    }
-
-    /** Infers physical sequence representations using master's column naming conventions. */
-    public FLWORSchema(StructType schema) {
-        this();
-        for (StructField field : schema.fields()) {
-            String name = field.name();
-            if (name.endsWith(".count")) {
-                this.counts.add(name);
-            } else if (field.dataType().equals(DataTypes.BinaryType)) {
-                this.sequencesAsBytes.add(name);
-            } else if (field.dataType() instanceof ArrayType
-                    && ((ArrayType) field.dataType()).elementType().equals(DataTypes.BinaryType)) {
-                this.sequencesAsArraysOfBytes.add(name);
-            } else {
-                this.nativelyTypedSequences.put(name, TypeMappings.getItemTypeFromDataFrameDataType(field.dataType()));
+    public record VariableSchema(SequenceType logicalType, List<ColumnBinding> columns) implements Serializable {
+        public VariableSchema {
+            Objects.requireNonNull(logicalType);
+            columns = List.copyOf(columns);
+            if (columns.isEmpty()) {
+                throw new IllegalArgumentException("A variable must have at least one physical column.");
             }
         }
     }
 
-    /** Logical types are independent of whether values are native or serialized. */
+    private final Map<Name, VariableSchema> variables;
+
+    public FLWORSchema() {
+        this.variables = new LinkedHashMap<>();
+    }
+
+    public FLWORSchema(FLWORSchema source) {
+        this.variables = new LinkedHashMap<>(source.variables);
+    }
+
+    /** Compatibility boundary for DataFrames using the existing column naming conventions. */
+    public static FLWORSchema inferFromSparkDataFrameSchema(StructType schema) {
+        FLWORSchema result = new FLWORSchema();
+        for (StructField field : schema.fields()) {
+            FlworDataFrameColumn column = new FlworDataFrameColumn(field.name(), schema);
+            result.addColumn(
+                    column.getVariableName(),
+                    new ColumnBinding(
+                            field.name(),
+                            FlworDataFrameColumn.getColumnFormat(field.name(), schema),
+                            field.dataType()));
+        }
+        return result;
+    }
+
+    public Map<Name, VariableSchema> getVariables() {
+        return Collections.unmodifiableMap(new LinkedHashMap<>(this.variables));
+    }
+
+    public List<ColumnBinding> getColumns(Name variable) {
+        VariableSchema schema = this.variables.get(variable);
+        return schema == null ? List.of() : schema.columns();
+    }
+
+    /** Adds a physical binding without encoding the variable identity in the column name. */
+    public void addColumn(Name variable, ColumnBinding column) {
+        Objects.requireNonNull(variable);
+        Objects.requireNonNull(column);
+        for (VariableSchema schema : this.variables.values()) {
+            if (schema.columns().stream().anyMatch(c -> c.columnName().equals(column.columnName()))) {
+                throw new IllegalArgumentException("Column already bound: " + column.columnName());
+            }
+        }
+        List<ColumnBinding> columns = new ArrayList<>(getColumns(variable));
+        columns.add(column);
+        this.variables.put(variable, new VariableSchema(getVariableType(variable), columns));
+    }
+
     public void setVariableType(Name name, SequenceType type) {
-        this.variableTypes.put(name, type == null ? SequenceType.createSequenceType("item*") : type);
+        if (!this.variables.containsKey(name)) {
+            throw new IllegalArgumentException("Unknown variable: " + name);
+        }
+        this.variables.put(
+                name,
+                new VariableSchema(type == null ? SequenceType.createSequenceType("item*") : type, getColumns(name)));
     }
 
     public SequenceType getVariableType(Name name) {
-        return this.variableTypes.getOrDefault(name, SequenceType.createSequenceType("item*"));
+        VariableSchema schema = this.variables.get(name);
+        return schema == null ? SequenceType.createSequenceType("item*") : schema.logicalType();
     }
 
-    /** Retains types only for surviving variables, excluding newly rebound variables. */
+    /** Keeps explicit bindings for surviving columns; new/rebound columns use the naming convention. */
     public FLWORSchema project(StructType physicalSchema, Collection<Name> reboundVariables) {
-        FLWORSchema result = new FLWORSchema(physicalSchema);
-        Set<Name> survivingVariables = new HashSet<>();
-        for (String column : physicalSchema.fieldNames()) {
-            survivingVariables.add(new FlworDataFrameColumn(column, physicalSchema).getVariableName());
+        FLWORSchema result = new FLWORSchema();
+        Map<String, Name> owners = new HashMap<>();
+        Map<String, ColumnBinding> bindings = new HashMap<>();
+        this.variables.forEach((name, schema) -> schema.columns().forEach(column -> {
+            owners.put(column.columnName(), name);
+            bindings.put(column.columnName(), column);
+        }));
+        for (StructField field : physicalSchema.fields()) {
+            Name owner = owners.get(field.name());
+            if (owner != null && !reboundVariables.contains(owner)) {
+                ColumnBinding previous = bindings.get(field.name());
+                result.addColumn(owner, new ColumnBinding(field.name(), previous.representation(), field.dataType()));
+            } else {
+                FlworDataFrameColumn column = new FlworDataFrameColumn(field.name(), physicalSchema);
+                result.addColumn(
+                        column.getVariableName(),
+                        new ColumnBinding(
+                                field.name(),
+                                FlworDataFrameColumn.getColumnFormat(field.name(), physicalSchema),
+                                field.dataType()));
+            }
         }
-        for (Map.Entry<Name, SequenceType> entry : this.variableTypes.entrySet()) {
-            if (survivingVariables.contains(entry.getKey()) && !reboundVariables.contains(entry.getKey())) {
-                result.setVariableType(entry.getKey(), entry.getValue());
+        for (Name name : result.variables.keySet()) {
+            if (this.variables.containsKey(name) && !reboundVariables.contains(name)) {
+                result.setVariableType(name, getVariableType(name));
             }
         }
         return result;
     }
 
-    public void inheritTypes(FLWORSchema source, Collection<Name> variables) {
-        for (Name variable : variables) {
-            if (source.variableTypes.containsKey(variable)) {
-                this.variableTypes.put(variable, source.variableTypes.get(variable));
+    public void inheritTypes(FLWORSchema source, Collection<Name> names) {
+        for (Name name : names) {
+            if (this.variables.containsKey(name) && source.variables.containsKey(name)) {
+                setVariableType(name, source.getVariableType(name));
             }
         }
     }
 
-    public boolean isConsistent(Dataset<Row> dataFrame) {
-        return isConsistent(dataFrame.schema());
+    public boolean isConsistent(Dataset<Row> frame) {
+        return isConsistent(frame.schema());
     }
 
-    public boolean isConsistent(StructType schema) {
-        FLWORSchema inferred = new FLWORSchema(schema);
-        Set<String> actual = new HashSet<>();
-        for (StructField field : schema.fields()) {
-            String name = field.name();
-            if (!actual.add(name)) {
-                return false;
-            }
-            int representations = (this.counts.contains(name) ? 1 : 0)
-                    + (this.sequencesAsBytes.contains(name) ? 1 : 0)
-                    + (this.sequencesAsArraysOfBytes.contains(name) ? 1 : 0)
-                    + (this.nativelyTypedSequences.containsKey(name) ? 1 : 0);
-            if (representations != 1) {
+    public boolean isConsistent(StructType physicalSchema) {
+        Map<String, DataType> actual = new HashMap<>();
+        for (StructField field : physicalSchema.fields()) {
+            if (actual.put(field.name(), field.dataType()) != null) {
                 return false;
             }
         }
-        Set<String> expected = new HashSet<>(this.counts);
-        expected.addAll(this.sequencesAsBytes);
-        expected.addAll(this.sequencesAsArraysOfBytes);
-        expected.addAll(this.nativelyTypedSequences.keySet());
-        return actual.equals(expected)
-                && this.counts.equals(inferred.counts)
-                && this.sequencesAsBytes.equals(inferred.sequencesAsBytes)
-                && this.sequencesAsArraysOfBytes.equals(inferred.sequencesAsArraysOfBytes)
-                && this.nativelyTypedSequences.keySet().equals(inferred.nativelyTypedSequences.keySet());
+        Set<String> bound = new HashSet<>();
+        for (VariableSchema variable : this.variables.values()) {
+            for (ColumnBinding column : variable.columns()) {
+                if (!bound.add(column.columnName())
+                        || !column.physicalType().equals(actual.get(column.columnName()))
+                        || !column.hasValidRepresentation()) {
+                    return false;
+                }
+            }
+        }
+        return bound.equals(actual.keySet());
     }
 
     public boolean isCount(Name name) {
-        return this.counts.contains(name.toString()) || this.counts.contains(name + ".count");
+        return getColumns(name).stream().anyMatch(c -> c.representation() == ColumnFormat.COUNT);
     }
 
     public boolean isArraysOfBytes(Name name) {
-        return this.sequencesAsArraysOfBytes.contains(name.toString())
-                || this.sequencesAsArraysOfBytes.contains(name + ".sequence");
+        return getColumns(name).stream()
+                .anyMatch(c -> c.representation() == ColumnFormat.NATIVE_SEQUENCE
+                        && c.physicalType() instanceof ArrayType array
+                        && array.elementType().equals(DataTypes.BinaryType));
     }
 
     public boolean isBytes(Name name) {
-        return this.sequencesAsBytes.contains(name.toString());
+        return getColumns(name).stream().anyMatch(c -> c.representation() == ColumnFormat.SERIALIZED_SEQUENCE);
     }
 
     public ItemType getNativeType(Name name) {
-        return this.nativelyTypedSequences.get(name.toString());
+        return getColumns(name).stream()
+                .filter(c -> c.representation() == ColumnFormat.FULLY_NATIVE)
+                .map(c -> TypeMappings.getItemTypeFromDataFrameDataType(c.physicalType()))
+                .findFirst()
+                .orElse(null);
     }
 
+    @Override
     public String toString() {
-        StringBuffer sb = new StringBuffer();
-        sb.append("Counts:\n");
-        for (String s : this.counts) {
-            sb.append(s + "\n");
-        }
-        sb.append("Array of bytes:\n");
-        for (String s : this.sequencesAsArraysOfBytes) {
-            sb.append(s + "\n");
-        }
-        sb.append("Bytes:\n");
-        for (String s : this.sequencesAsBytes) {
-            sb.append(s + "\n");
-        }
-        sb.append("Native types:\n");
-        for (String s : this.nativelyTypedSequences.keySet()) {
-            sb.append(s + " : " + this.nativelyTypedSequences.get(s));
-        }
-        return sb.toString();
+        return this.variables.toString();
     }
 }

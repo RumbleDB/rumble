@@ -15,6 +15,8 @@
  */
 package org.rumbledb.runtime.flwor;
 
+import java.util.List;
+
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.runtime.flwor.FLWORSchema.ColumnBinding;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
+import org.rumbledb.types.SequenceType;
 
 class FLWORSchemaTest {
     private Name name(String value) {
@@ -29,41 +34,77 @@ class FLWORSchemaTest {
     }
 
     @Test
-    void rejectsNativeMetadataForSerializedValues() {
-        StructType physical = new StructType().add("x", DataTypes.BinaryType);
+    void validatesExactPhysicalTypesAndColumnCoverage() {
         FLWORSchema schema = new FLWORSchema();
-        schema.setNativeType(name("x"), org.rumbledb.types.BuiltinTypesCatalogue.longItem);
-        assertFalse(schema.isConsistent(physical));
+        schema.addColumn(name("x"), new ColumnBinding("storage", ColumnFormat.FULLY_NATIVE, DataTypes.StringType));
+        assertFalse(schema.isConsistent(new StructType().add("storage", DataTypes.IntegerType)));
+        assertTrue(schema.isConsistent(new StructType().add("storage", DataTypes.StringType)));
+        assertFalse(schema.isConsistent(
+                new StructType().add("storage", DataTypes.StringType).add("extra", DataTypes.StringType)));
+        assertFalse(schema.isConsistent(new StructType()));
+        assertFalse(schema.isConsistent(
+                new StructType().add("storage", DataTypes.StringType).add("storage", DataTypes.StringType)));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> schema.addColumn(
+                        name("y"), new ColumnBinding("storage", ColumnFormat.FULLY_NATIVE, DataTypes.StringType)));
     }
 
     @Test
-    void checksColumnsAfterSerializedColumnAndMissingColumns() {
+    void rejectsIncompatibleRepresentations() {
         FLWORSchema schema = new FLWORSchema();
-        schema.setBytes(name("x"));
-        StructType physical = new StructType().add("x", DataTypes.BinaryType).add("y", DataTypes.BinaryType);
-        assertFalse(schema.isConsistent(physical));
-        schema.setBytes(name("y"));
-        assertTrue(schema.isConsistent(physical));
-        schema.setBytes(name("missing"));
-        assertFalse(schema.isConsistent(physical));
+        schema.addColumn(
+                name("x"), new ColumnBinding("payload", ColumnFormat.SERIALIZED_SEQUENCE, DataTypes.StringType));
+        assertFalse(schema.isConsistent(new StructType().add("payload", DataTypes.StringType)));
+        FLWORSchema count = new FLWORSchema();
+        count.addColumn(name("x"), new ColumnBinding("total", ColumnFormat.COUNT, DataTypes.StringType));
+        assertFalse(count.isConsistent(new StructType().add("total", DataTypes.StringType)));
     }
 
     @Test
-    void infersRepresentationsAndCopiesIndependently() {
+    void distinguishesArrayValuesFromSequencesAndSupportsMultipleColumns() {
+        var binaryArray = DataTypes.createArrayType(DataTypes.BinaryType);
         StructType physical = new StructType()
-                .add("x", DataTypes.BinaryType)
-                .add("y.sequence", DataTypes.createArrayType(DataTypes.BinaryType))
-                .add("z.count", DataTypes.LongType)
-                .add("n", DataTypes.IntegerType);
-        FLWORSchema schema = new FLWORSchema(physical);
+                .add("x", binaryArray)
+                .add("y.sequence", binaryArray)
+                .add("y.count", DataTypes.LongType)
+                .add("y.sum", DataTypes.DoubleType);
+        FLWORSchema schema = FLWORSchema.inferFromSparkDataFrameSchema(physical);
         assertTrue(schema.isConsistent(physical));
-        assertTrue(schema.isBytes(name("x")));
-        assertTrue(schema.isArraysOfBytes(name("y.sequence")));
-        assertTrue(schema.isCount(name("z.count")));
-        assertNotNull(schema.getNativeType(name("n")));
+        assertFalse(schema.isArraysOfBytes(name("x")));
+        assertNotNull(schema.getNativeType(name("x")));
+        assertTrue(schema.isArraysOfBytes(name("y")));
+        assertTrue(schema.isCount(name("y")));
+        assertEquals(
+                List.of("y.sequence", "y.count", "y.sum"),
+                schema.getColumns(name("y")).stream()
+                        .map(ColumnBinding::columnName)
+                        .toList());
+        assertEquals(2, schema.getVariables().size());
+    }
+
+    @Test
+    void projectionKeepsExplicitOwnersAndSnapshotsAreIndependent() {
+        Name x = name("x");
+        FLWORSchema schema = new FLWORSchema();
+        schema.addColumn(x, new ColumnBinding("payload", ColumnFormat.FULLY_NATIVE, DataTypes.IntegerType));
+        schema.addColumn(x, new ColumnBinding("size", ColumnFormat.COUNT, DataTypes.LongType));
+        schema.setVariableType(x, SequenceType.createSequenceType("int"));
+        FLWORSchema projected = schema.project(new StructType().add("payload", DataTypes.IntegerType), List.of());
+        assertEquals(
+                List.of("payload"),
+                projected.getColumns(x).stream().map(ColumnBinding::columnName).toList());
+        assertEquals(SequenceType.createSequenceType("int"), projected.getVariableType(x));
+        assertEquals(2, schema.getColumns(x).size());
         FLWORSchema copy = new FLWORSchema(schema);
-        copy.setCount(name("x"));
-        assertFalse(copy.isConsistent(physical));
-        assertTrue(schema.isConsistent(physical));
+        copy.setVariableType(x, SequenceType.createSequenceType("string"));
+        assertEquals(SequenceType.createSequenceType("int"), schema.getVariableType(x));
+        assertThrows(
+                UnsupportedOperationException.class, () -> copy.getColumns(x).clear());
+        assertThrows(
+                UnsupportedOperationException.class, () -> copy.getVariables().clear());
+        assertTrue(schema.project(new StructType(), List.of()).getVariables().isEmpty());
+        FLWORSchema rebound = schema.project(new StructType().add("x", DataTypes.StringType), List.of(x));
+        assertEquals(SequenceType.createSequenceType("item*"), rebound.getVariableType(x));
     }
 }

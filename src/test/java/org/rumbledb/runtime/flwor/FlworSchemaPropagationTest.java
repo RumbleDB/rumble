@@ -257,6 +257,44 @@ class FlworSchemaPropagationTest {
         assertEquals(SequenceType.createSequenceType("item*"), projected.getVariableType(Y));
     }
 
+    @Test
+    void explicitBindingsDriveColumnsDependenciesAndProjection() {
+        FLWORSchema schema = new FLWORSchema();
+        schema.addColumn(
+                X,
+                new FLWORSchema.ColumnBinding(
+                        "value_column",
+                        FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
+                        org.apache.spark.sql.types.DataTypes.IntegerType));
+        schema.addColumn(
+                X,
+                new FLWORSchema.ColumnBinding(
+                        "count_column",
+                        FlworDataFrameColumn.ColumnFormat.COUNT,
+                        org.apache.spark.sql.types.DataTypes.LongType));
+        schema.setVariableType(X, SequenceType.createSequenceType("int"));
+        FlworDataFrame frame =
+                new FlworDataFrame(spark.sql("SELECT 7 AS value_column, CAST(1 AS BIGINT) AS count_column"), schema);
+        assertEquals(List.of(X), frame.getVariableNames());
+        assertEquals(
+                "value_column",
+                frame.getColumns(Map.of(X, DynamicContext.VariableDependency.FULL), null, null)
+                        .get(0)
+                        .getColumnName());
+        assertEquals(
+                "count_column",
+                frame.getColumns(Map.of(X, DynamicContext.VariableDependency.COUNT), null, null)
+                        .get(0)
+                        .getColumnName());
+        assertTrue(frame.getColumns(null, null, List.of(X)).isEmpty());
+        FlworDataFrame projected = frame.withDataFrame(frame.getDataFrame().select("value_column"));
+        assertEquals(List.of(X), projected.getVariableNames());
+        assertEquals(SequenceType.createSequenceType("int"), projected.getVariableType(X));
+        assertEquals("`value_column`", projected.getColumns().get(0).toString());
+        assertTrue(projected.isConsistent());
+        assertEquals(7, projected.getDataFrame().first().getInt(0));
+    }
+
     private static final class Source extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
         private final FlworDataFrame frame;
 

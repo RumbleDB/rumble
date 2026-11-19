@@ -26,7 +26,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.UDFRegistration;
-import org.apache.spark.sql.types.StructType;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -53,24 +52,33 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     private FLWORSchema flworSchema;
 
     public FlworDataFrame(Dataset<Row> dataFrame) {
+        this(
+                dataFrame,
+                FLWORSchema.inferFromSparkDataFrameSchema(
+                        requireDataFrame(dataFrame).schema()));
+    }
+
+    private static Dataset<Row> requireDataFrame(Dataset<Row> dataFrame) {
         if (dataFrame == null) {
             throw new OurBadException("The dataframe cannot be null!");
         }
-        this.dataFrame = dataFrame;
-        StructType schema = dataFrame.schema();
-        this.columns = new ArrayList<>();
-        this.flworSchema = new FLWORSchema(schema);
-        for (String c : schema.fieldNames()) {
-            this.columns.add(new FlworDataFrameColumn(c, schema));
-        }
+        return dataFrame;
     }
 
     public FlworDataFrame(Dataset<Row> dataFrame, FLWORSchema schema) {
-        this(dataFrame);
+        this.dataFrame = requireDataFrame(dataFrame);
         if (!schema.isConsistent(dataFrame)) {
             throw new OurBadException("Inconsistent FLWOR schema.");
         }
         this.flworSchema = new FLWORSchema(schema);
+        this.columns = new ArrayList<>();
+        // Keep physical order, including when one variable has multiple representations.
+        Map<String, FlworDataFrameColumn> byColumn = new java.util.HashMap<>();
+        schema.getVariables().forEach((name, variable) -> variable.columns()
+                .forEach(binding -> byColumn.put(binding.columnName(), new FlworDataFrameColumn(name, binding))));
+        for (String column : dataFrame.schema().fieldNames()) {
+            this.columns.add(byColumn.get(column));
+        }
     }
 
     /** Transforms rows while preserving types of retained, unmodified variables. */
@@ -100,18 +108,11 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     public List<Name> getVariableNames() {
-        List<Name> result = new ArrayList<>();
-        for (FlworDataFrameColumn c : getColumns()) {
-            result.add(c.getVariableName());
-        }
-        return result;
+        return new ArrayList<>(this.flworSchema.getVariables().keySet());
     }
 
     public boolean hasVariableName(Name name) {
-        for (FlworDataFrameColumn c : getColumns()) {
-            if (name.equals(c.getVariableName())) return true;
-        }
-        return false;
+        return this.flworSchema.getVariables().containsKey(name);
     }
 
     public UDFRegistration getUDFRegistration() {
@@ -130,8 +131,49 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
             Map<Name, DynamicContext.VariableDependency> dependencies,
             List<Name> variablesToRestrictTo,
             List<Name> variablesToExclude) {
-        return FlworDataFrameUtils.getColumns(
-                this.dataFrame.schema(), dependencies, variablesToRestrictTo, variablesToExclude);
+        List<FlworDataFrameColumn> result = new ArrayList<>();
+        if (dependencies == null) {
+            for (FlworDataFrameColumn column : this.columns) {
+                Name name = column.getVariableName();
+                if ((variablesToRestrictTo == null || variablesToRestrictTo.contains(name))
+                        && (variablesToExclude == null || !variablesToExclude.contains(name))) {
+                    result.add(column);
+                }
+            }
+            return result;
+        }
+        for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
+            Name name = entry.getKey();
+            if ((variablesToRestrictTo != null && !variablesToRestrictTo.contains(name))
+                    || (variablesToExclude != null && variablesToExclude.contains(name))) {
+                continue;
+            }
+            List<FLWORSchema.ColumnBinding> bindings = this.flworSchema.getColumns(name);
+            List<FlworDataFrameColumn.ColumnFormat> formats = new ArrayList<>();
+            if (entry.getValue() != DynamicContext.VariableDependency.FULL) {
+                formats.add(FlworDataFrameColumn.ColumnFormat.valueOf(
+                        entry.getValue().name()));
+            } else {
+                formats.add(FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE);
+                formats.add(FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE);
+            }
+            formats.add(FlworDataFrameColumn.ColumnFormat.NATIVE_SEQUENCE);
+            formats.add(FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE);
+            formats.add(FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE);
+            FLWORSchema.ColumnBinding selected = null;
+            for (FlworDataFrameColumn.ColumnFormat format : formats) {
+                selected = bindings.stream()
+                        .filter(c -> c.representation() == format)
+                        .findFirst()
+                        .orElse(null);
+                if (selected != null) break;
+            }
+            if (selected == null) {
+                throw new OurBadException("No column for " + entry.getValue() + " dependency on " + name);
+            }
+            result.add(new FlworDataFrameColumn(name, selected));
+        }
+        return result;
     }
 
     public void setVariableType(Name name, SequenceType type) {
