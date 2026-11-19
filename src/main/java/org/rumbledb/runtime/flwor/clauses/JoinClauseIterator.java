@@ -56,6 +56,7 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 
 @Log4j2
@@ -87,25 +88,68 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
     }
 
     /**
-     * Joins two input tuples.
+     * Joins two input tuples while preserving their variable types.
      *
      * Warning: if the two tuples collide in their columns, unexpected things may happen for now.
      *
      * @param context the dynamic context for the evaluation of the predicate expression.
-     * @param leftInputTuple the left tuple.
-     * @param rightInputTuple the right tuple.
-     * @param outputTupleVariableDependencies the necessary and sufficient variable dependencies that the output tuple
-     *        should contain.
-     * @param variablesInLeftInputTuple a list of the variables in the left tuple.
-     * @param variablesInRightInputTuple a list of the variables in the right tuple.
-     * @param predicateIterator the predicate iterator.
-     * @param isLeftOuterJoin true if it is a left outer join, false otherwise.
-     * @param newRightSideVariableName the new name of the variable to rename the context item in the output (null if no
+     * @param left the left tuple.
+     * @param right the right tuple.
+     * @param outputDependencies the necessary and sufficient variable dependencies that the output tuple should
+     *        contain.
+     * @param leftVariables a list of the variables in the left tuple.
+     * @param rightVariables a list of the variables in the right tuple.
+     * @param predicate the predicate iterator.
+     * @param leftOuter true if it is a left outer join, false otherwise.
+     * @param renamedRightVariable the new name of the variable to rename the context item in the output (null if no
      *        rename).
      * @param metadata the metadata.
+     * @param staticContext the static context for the join.
      * @return the joined tuple.
      */
     public static FlworDataFrame joinInputTupleWithSequenceOnPredicate(
+            DynamicContext context,
+            FlworDataFrame left,
+            FlworDataFrame right,
+            Map<Name, DynamicContext.VariableDependency> outputDependencies,
+            List<Name> leftVariables,
+            List<Name> rightVariables,
+            ItemRuntimePlan predicate,
+            boolean leftOuter,
+            Name renamedRightVariable,
+            ExceptionMetadata metadata,
+            RuntimeStaticContext staticContext) {
+        FlworDataFrame result = joinDataFrames(
+                        context,
+                        left.getDataFrame(),
+                        right.getDataFrame(),
+                        outputDependencies,
+                        leftVariables,
+                        rightVariables,
+                        predicate,
+                        leftOuter,
+                        renamedRightVariable,
+                        metadata,
+                        staticContext)
+                .inheritTypes(left)
+                .inheritTypes(right);
+        for (Name variable : right.getVariableNames()) {
+            Name output = renamedRightVariable != null && variable.equals(Name.CONTEXT_ITEM)
+                    ? renamedRightVariable
+                    : variable;
+            if (result.hasVariableName(output)) {
+                SequenceType type = right.getVariableType(variable);
+                if (leftOuter) {
+                    type = new SequenceType(
+                            type.getItemType(), type.getCardinality().union(SequenceCardinality.EMPTY));
+                }
+                result.setVariableType(output, type);
+            }
+        }
+        return result;
+    }
+
+    private static FlworDataFrame joinDataFrames(
             DynamicContext context,
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,

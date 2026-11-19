@@ -58,6 +58,14 @@ public class FlworDataFrameColumn implements Serializable {
 
     private ColumnFormat columnFormat;
 
+    private String physicalColumnName;
+
+    public FlworDataFrameColumn(Name variable, FLWORSchema.ColumnBinding binding) {
+        this.variableName = variable;
+        this.columnFormat = binding.representation();
+        this.physicalColumnName = binding.columnName();
+    }
+
     public FlworDataFrameColumn(
             String tableName, Name variableName, ColumnFormat columnFormat, SequenceType sequenceType) {
         this.tableName = tableName;
@@ -152,6 +160,9 @@ public class FlworDataFrameColumn implements Serializable {
     }
 
     public String getColumnName() {
+        if (this.physicalColumnName != null) {
+            return this.physicalColumnName;
+        }
         switch (this.columnFormat) {
             case SERIALIZED_SEQUENCE:
                 return this.variableName.toString();

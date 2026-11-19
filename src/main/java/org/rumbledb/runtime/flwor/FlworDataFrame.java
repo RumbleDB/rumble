@@ -18,7 +18,7 @@ package org.rumbledb.runtime.flwor;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -26,7 +26,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.UDFRegistration;
-import org.apache.spark.sql.types.StructType;
 
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
@@ -50,19 +49,57 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     @Getter
     private List<FlworDataFrameColumn> columns;
 
-    private Map<Name, SequenceType> columnTypes;
+    private FLWORSchema flworSchema;
 
     public FlworDataFrame(Dataset<Row> dataFrame) {
+        this(
+                dataFrame,
+                FLWORSchema.inferFromSparkDataFrameSchema(
+                        requireDataFrame(dataFrame).schema()));
+    }
+
+    private static Dataset<Row> requireDataFrame(Dataset<Row> dataFrame) {
         if (dataFrame == null) {
             throw new OurBadException("The dataframe cannot be null!");
         }
-        this.dataFrame = dataFrame;
-        StructType schema = dataFrame.schema();
-        this.columns = new ArrayList<>();
-        this.columnTypes = new HashMap<>();
-        for (String c : schema.fieldNames()) {
-            this.columns.add(new FlworDataFrameColumn(c, schema));
+        return dataFrame;
+    }
+
+    public FlworDataFrame(Dataset<Row> dataFrame, FLWORSchema schema) {
+        this.dataFrame = requireDataFrame(dataFrame);
+        if (!schema.isConsistent(dataFrame)) {
+            throw new OurBadException("Inconsistent FLWOR schema.");
         }
+        this.flworSchema = new FLWORSchema(schema);
+        this.columns = new ArrayList<>();
+        // Keep physical order, including when one variable has multiple representations.
+        Map<String, FlworDataFrameColumn> byColumn = new java.util.HashMap<>();
+        schema.getVariables().forEach((name, variable) -> variable.columns()
+                .forEach(binding -> byColumn.put(binding.columnName(), new FlworDataFrameColumn(name, binding))));
+        for (String column : dataFrame.schema().fieldNames()) {
+            this.columns.add(byColumn.get(column));
+        }
+    }
+
+    /** Transforms rows while preserving types of retained, unmodified variables. */
+    public FlworDataFrame withDataFrame(Dataset<Row> result, Name... reboundVariables) {
+        return new FlworDataFrame(result, getSchema().project(result.schema(), Arrays.asList(reboundVariables)));
+    }
+
+    /** Adds metadata from a second input, for joins and Cartesian products. */
+    public FlworDataFrame inheritTypes(FlworDataFrame source) {
+        List<Name> variables = getVariableNames();
+        this.flworSchema.inheritTypes(source.getSchema(), variables);
+        return this;
+    }
+
+    /** Returns an independent snapshot of the stored physical and logical schema. */
+    public FLWORSchema getSchema() {
+        return new FLWORSchema(this.flworSchema);
+    }
+
+    public boolean isConsistent() {
+        return getSchema().isConsistent(this.dataFrame);
     }
 
     @Override
@@ -71,18 +108,11 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     public List<Name> getVariableNames() {
-        List<Name> result = new ArrayList<>();
-        for (FlworDataFrameColumn c : getColumns()) {
-            result.add(c.getVariableName());
-        }
-        return result;
+        return new ArrayList<>(this.flworSchema.getVariables().keySet());
     }
 
     public boolean hasVariableName(Name name) {
-        for (FlworDataFrameColumn c : getColumns()) {
-            if (name.equals(c.getVariableName())) return true;
-        }
-        return false;
+        return this.flworSchema.getVariables().containsKey(name);
     }
 
     public UDFRegistration getUDFRegistration() {
@@ -90,14 +120,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     public FlworDataFrame sql(String sqlQuery) {
-        FlworDataFrame result = new FlworDataFrame(this.dataFrame.sparkSession().sql(sqlQuery));
-        for (Name v : this.getVariableNames()) {
-            SequenceType type = this.getVariableType(v);
-            if (result.hasVariableName(v)) {
-                result.setVariableType(v, type);
-            }
-        }
-        return result;
+        return withDataFrame(this.dataFrame.sparkSession().sql(sqlQuery));
     }
 
     public Dataset<Row> sqlRaw(String sqlQuery) {
@@ -108,25 +131,63 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
             Map<Name, DynamicContext.VariableDependency> dependencies,
             List<Name> variablesToRestrictTo,
             List<Name> variablesToExclude) {
-        return FlworDataFrameUtils.getColumns(
-                this.dataFrame.schema(), dependencies, variablesToRestrictTo, variablesToExclude);
+        List<FlworDataFrameColumn> result = new ArrayList<>();
+        if (dependencies == null) {
+            for (FlworDataFrameColumn column : this.columns) {
+                Name name = column.getVariableName();
+                if ((variablesToRestrictTo == null || variablesToRestrictTo.contains(name))
+                        && (variablesToExclude == null || !variablesToExclude.contains(name))) {
+                    result.add(column);
+                }
+            }
+            return result;
+        }
+        for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
+            Name name = entry.getKey();
+            if ((variablesToRestrictTo != null && !variablesToRestrictTo.contains(name))
+                    || (variablesToExclude != null && variablesToExclude.contains(name))) {
+                continue;
+            }
+            List<FLWORSchema.ColumnBinding> bindings = this.flworSchema.getColumns(name);
+            List<FlworDataFrameColumn.ColumnFormat> formats = new ArrayList<>();
+            if (entry.getValue() != DynamicContext.VariableDependency.FULL) {
+                formats.add(FlworDataFrameColumn.ColumnFormat.valueOf(
+                        entry.getValue().name()));
+            } else {
+                formats.add(FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE);
+                formats.add(FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE);
+            }
+            formats.add(FlworDataFrameColumn.ColumnFormat.NATIVE_SEQUENCE);
+            formats.add(FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE);
+            formats.add(FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE);
+            FLWORSchema.ColumnBinding selected = null;
+            for (FlworDataFrameColumn.ColumnFormat format : formats) {
+                selected = bindings.stream()
+                        .filter(c -> c.representation() == format)
+                        .findFirst()
+                        .orElse(null);
+                if (selected != null) break;
+            }
+            if (selected == null) {
+                throw new OurBadException("No column for " + entry.getValue() + " dependency on " + name);
+            }
+            result.add(new FlworDataFrameColumn(name, selected));
+        }
+        return result;
     }
 
     public void setVariableType(Name name, SequenceType type) {
         if (!hasVariableName(name)) {
             throw new OurBadException("Variable " + name + "does not exist!");
         }
-        this.columnTypes.put(name, type);
+        this.flworSchema.setVariableType(name, type);
     }
 
     public SequenceType getVariableType(Name name) {
         if (!hasVariableName(name)) {
             throw new OurBadException("Variable " + name + "does not exist!");
         }
-        if (!this.columnTypes.containsKey(name)) {
-            return SequenceType.createSequenceType("item*");
-        }
-        return this.columnTypes.get(name);
+        return this.flworSchema.getVariableType(name);
     }
 
     public String createTempView() {
@@ -141,8 +202,8 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
             sb.append(c).append('\n');
         }
         sb.append("Column types\n");
-        for (Name n : this.columnTypes.keySet()) {
-            sb.append(n).append(' ').append(this.columnTypes.get(n)).append('\n');
+        for (Name n : getVariableNames()) {
+            sb.append(n).append(' ').append(getVariableType(n)).append('\n');
         }
         sb.append("Data Frame");
         log.debug(sb);

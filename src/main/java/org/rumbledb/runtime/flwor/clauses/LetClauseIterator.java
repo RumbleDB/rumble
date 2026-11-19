@@ -233,7 +233,13 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                     false,
                     getConfiguration());
 
-            return new FlworDataFrame(result);
+            FlworDataFrame output = df.withDataFrame(result, this.variableName);
+            output.setVariableType(
+                    this.variableName,
+                    this.sequenceType != null
+                            ? this.sequenceType
+                            : this.assignmentIterator.getRuntimeStaticContext().getStaticType());
+            return output;
         }
         throw new RuntimeException(
                 "Unexpected program state reached. Initial let clauses are always locally executed.");
@@ -276,7 +282,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         // Now we know we can execute the query as an equi-join.
         // First, we evaluate all input tuples.
-        Dataset<Row> inputDF = this.child.getDataFrame(context).getDataFrame();
+        Dataset<Row> inputDF = childDF.getDataFrame();
 
         // We resolve the dependencies of the predicate expression.
         // If the predicate depends on position() or last(), we are not able yet to support this.
@@ -411,7 +417,13 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 false,
                 getConfiguration());
 
-        return new FlworDataFrame(inputDF);
+        FlworDataFrame output = childDF.withDataFrame(inputDF, this.variableName);
+        output.setVariableType(
+                this.variableName,
+                this.sequenceType != null
+                        ? this.sequenceType
+                        : this.assignmentIterator.getRuntimeStaticContext().getStaticType());
+        return output;
     }
 
     private ItemRuntimePlan getJoinKeyExpression(List<ItemRuntimePlan> equalityCriteria, ExceptionMetadata metadata) {
