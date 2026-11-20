@@ -382,9 +382,11 @@ public class ReturnClauseIterator extends ItemRuntimePlan
         if (nativeClauseContext.getView() == null) {
             return NativeClauseContext.NoNativeQuery;
         }
+        if (!(nativeClauseContext.getSchema() instanceof StructType schema)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
         String rowIdField = nativeClauseContext.addVariable().toString();
-        List<FlworDataFrameColumn> allColumns =
-                FlworDataFrameUtils.getColumns((StructType) nativeClauseContext.getSchema(), null, null, null);
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(schema, null, null, null);
         // add an id column to get the initial dataframe back
         NativeClauseContext subQueryContext = nativeClauseContext.createChild();
         subQueryContext.setView(String.format(
