@@ -1,0 +1,10 @@
+(:JIQS: ShouldRun; Output="true":)
+(: https://www.w3.org/TR/xpath-functions-31/#op.numeric :)
+(: https://www.w3.org/TR/xpath-functions-31/#func-sum :)
+(1 div ((-0.0e0) + 0)) eq xs:double("INF")
+and (1 div (0 + xs:float(-0.0e0))) eq xs:float("INF")
+and (1 div (xs:float(-0.0e0) + 0)) eq xs:float("INF")
+and (1 div ((-0.0e0) + (-0.0e0))) eq xs:double("-INF")
+and sum((xs:dayTimeDuration("P1D"), xs:dayTimeDuration("P2D"))) eq xs:dayTimeDuration("P3D")
+and sum((xs:yearMonthDuration("P1M"), xs:yearMonthDuration("P2M"))) eq xs:yearMonthDuration("P3M")
+and sum(()) eq 0

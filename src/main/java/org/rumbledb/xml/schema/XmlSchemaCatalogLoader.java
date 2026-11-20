@@ -30,13 +30,17 @@ import java.util.function.Consumer;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
 
 import org.apache.xerces.dom.DOMInputImpl;
+import org.apache.xerces.impl.Constants;
+import org.apache.xerces.impl.xs.SchemaGrammar;
+import org.apache.xerces.impl.xs.XSModelImpl;
+import org.apache.xerces.jaxp.validation.XMLSchema11Factory;
 import org.apache.xerces.jaxp.validation.XMLSchemaFactory;
 import org.apache.xerces.jaxp.validation.XSGrammarPoolContainer;
 import org.apache.xerces.xni.grammars.Grammar;
 import org.apache.xerces.xni.grammars.XMLGrammarDescription;
-import org.apache.xerces.xni.grammars.XSGrammar;
 import org.apache.xerces.xs.XSModel;
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
@@ -57,7 +61,7 @@ import org.rumbledb.expressions.module.SchemaImport;
 import org.rumbledb.resources.ResolvedResource;
 
 /**
- * Loads the XSD 1.0 component model declared by an XQuery module's schema
+ * Loads the configured XSD 1.0 or 1.1 component model declared by an XQuery module's schema
  * imports.
  */
 public final class XmlSchemaCatalogLoader {
@@ -75,10 +79,14 @@ public final class XmlSchemaCatalogLoader {
     private XmlSchemaCatalogLoader() {}
 
     public static XmlSchemaCatalog loadBuiltInCatalog() {
+        return loadBuiltInCatalog("1.1");
+    }
+
+    public static XmlSchemaCatalog loadBuiltInCatalog(String xsdVersion) {
         ExceptionMetadata metadata = ExceptionMetadata.EMPTY_METADATA;
         try {
             SchemaErrorHandler errorHandler = new SchemaErrorHandler();
-            XMLSchemaFactory schemaFactory = new XMLSchemaFactory();
+            SchemaFactory schemaFactory = schemaFactory(xsdVersion);
             schemaFactory.setErrorHandler(errorHandler);
 
             // Xerces also supplies the standard built-in types such as xs:anyType.
@@ -157,7 +165,11 @@ public final class XmlSchemaCatalogLoader {
                 compilationConfiguration,
                 metadata,
                 schemaResourceObserver);
-        LoadedSchema loadedSchema = loadSchema(resolvedImports.locations(), resolver, metadata);
+        LoadedSchema loadedSchema = loadSchema(
+                resolvedImports.locations(),
+                resolver,
+                metadata,
+                compilationConfiguration.runtimeConfiguration().semantics().xsdVersion());
         Map<String, String> namespacePrefixes = new LinkedHashMap<>();
         for (SchemaImport schemaImport : schemaImports) {
             if (schemaImport.getBindingKind() == SchemaImport.BindingKind.PREFIX) {
@@ -194,10 +206,18 @@ public final class XmlSchemaCatalogLoader {
         return new ResolvedImports(Map.copyOf(locationsByNamespace), locations);
     }
 
+    private static SchemaFactory schemaFactory(String xsdVersion) {
+        return switch (xsdVersion) {
+            case "1.0" -> new XMLSchemaFactory();
+            case "1.1" -> new XMLSchema11Factory();
+            default -> throw new IllegalArgumentException("Unsupported XSD version: " + xsdVersion);
+        };
+    }
+
     private static LoadedSchema loadSchema(
-            List<URI> locations, SchemaResourceResolver resolver, ExceptionMetadata metadata) {
+            List<URI> locations, SchemaResourceResolver resolver, ExceptionMetadata metadata, String xsdVersion) {
         try {
-            return loadSchema(locations, resolver, metadata, new XMLSchemaFactory());
+            return loadSchema(locations, resolver, metadata, schemaFactory(xsdVersion));
         } catch (SchemaImportException exception) {
             throw exception;
         } catch (SAXException | RuntimeException exception) {
@@ -252,9 +272,9 @@ public final class XmlSchemaCatalogLoader {
         // We convert it into an XSModel, which will be used for validation and type checking.
         Grammar[] grammars =
                 grammarPoolContainer.getGrammarPool().retrieveInitialGrammarSet(XMLGrammarDescription.XML_SCHEMA);
-        XSGrammar[] schemaGrammars = new XSGrammar[grammars.length];
+        SchemaGrammar[] schemaGrammars = new SchemaGrammar[grammars.length];
         for (int index = 0; index < grammars.length; index++) {
-            if (!(grammars[index] instanceof XSGrammar schemaGrammar)) {
+            if (!(grammars[index] instanceof SchemaGrammar schemaGrammar)) {
                 throw new SchemaImportException("Xerces returned a non-schema validation grammar.", metadata);
             }
             schemaGrammars[index] = schemaGrammar;
@@ -264,7 +284,12 @@ public final class XmlSchemaCatalogLoader {
             throw new SchemaImportException("Unable to build the XML Schema component model.", metadata);
         }
 
-        XSModel schemaModel = schemaGrammars[0].toXSModel(schemaGrammars);
+        // toXSModel() implicitly installs XSD 1.0 built-ins, even for 1.1 grammars.
+        // Keep anyType and the other built-ins identical to those used by the validator.
+        short schemaVersion = Constants.W3C_XML_SCHEMA11_NS_URI.equals(grammarPoolContainer.getXMLSchemaVersion())
+                ? Constants.SCHEMA_VERSION_1_1
+                : Constants.SCHEMA_VERSION_1_0;
+        XSModel schemaModel = new XSModelImpl(schemaGrammars, schemaVersion);
         return new LoadedSchema(validationSchema, schemaModel);
     }
 

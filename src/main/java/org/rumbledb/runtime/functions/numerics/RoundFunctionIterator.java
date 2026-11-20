@@ -36,6 +36,8 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan implements NativeQueryRuntimePlan {
@@ -77,10 +79,6 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
         }
         BigInteger precision = precisionSupplier.get();
         try {
-            if (value.isInt()) {
-                BigDecimal bd = roundToPrecision(new BigDecimal(value.getIntValue()), precision);
-                return ItemFactory.getInstance().createIntItem(bd.intValue());
-            }
             if (value.isInteger()) {
                 BigDecimal bd = roundToPrecision(new BigDecimal(value.getIntegerValue()), precision);
                 return ItemFactory.getInstance().createIntegerItem(bd.toBigInteger());
@@ -154,13 +152,21 @@ public class RoundFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
     }
 
     /**
-     * Keeps the type of a numeric argument. Others, such as nodes and untyped values, are converted to xs:double
+     * Keeps the numeric primitive type, since rounding can leave a derived type's range. Other arguments, such as
+     * nodes and untyped values, are converted to xs:double
      * first, so the signature's xs:numeric? applies.
      */
     public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
         SequenceType input = context.argumentType(0);
-        return input.isEmptySequence() || input.getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)
-                ? Optional.of(input)
-                : Optional.empty();
+        if (input.isEmptySequence()) {
+            return Optional.of(input);
+        }
+        if (!input.getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)) {
+            return Optional.empty();
+        }
+        ItemType resultType = ItemTypeFactory.createInferredUnionType(input.getItemType().getMemberTypes().stream()
+                .map(ItemType::getCastingPrimitiveType)
+                .toList());
+        return Optional.of(new SequenceType(resultType, input.getCardinality()));
     }
 }

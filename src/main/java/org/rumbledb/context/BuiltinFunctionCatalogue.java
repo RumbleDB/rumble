@@ -1778,14 +1778,14 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction compare1 = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "compare"),
             List.of("string?", "string?"),
-            "integer",
+            "integer?",
             CompareFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction compare2 = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "compare"),
             List.of("string?", "string?", "string"),
-            "integer",
+            "integer?",
             CompareFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
     /**

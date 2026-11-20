@@ -55,7 +55,9 @@ public final class LookupTyping {
 
         rejectInput(mainType, mainType.hasOverlapWith(SequenceType.createSequenceType("array*")), "an array", node);
 
+        // A JSONiq array contributes at most one item per position, but an XQuery array member may be a sequence.
         SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
+                        && !arrayMembersMayHaveMultipleItems(mainType.getItemType())
                 ? SequenceType.Arity.OneOrZero
                 : SequenceType.Arity.ZeroOrMore;
         ItemType resultItemType = BuiltinTypesCatalogue.item;
@@ -65,6 +67,19 @@ public final class LookupTyping {
             resultItemType = arrayContentType;
         }
         return new SequenceType(resultItemType, inferredArity);
+    }
+
+    /** Whether any possible array has sequence-valued members, including an array hidden by a broader type. */
+    private static boolean arrayMembersMayHaveMultipleItems(ItemType type) {
+        return type.getMemberTypes().stream().anyMatch(member -> {
+            if (member.isArrayItemType()) {
+                return false;
+            }
+            if (member.isXQueryArrayItemType()) {
+                return member.getMemberSequenceType().getCardinality().allowsMany();
+            }
+            return member.mayOverlapWith(BuiltinTypesCatalogue.xqueryArrayItem);
+        });
     }
 
     public SequenceType inferObjectLookupType(SequenceType mainType, SequenceType lookupType, String key, Node node) {
