@@ -15,6 +15,7 @@ _delta_log
 
 delta/
 spark-warehouse/
+hudi-warehouse/
 metastore_db/
 derby.log
 
