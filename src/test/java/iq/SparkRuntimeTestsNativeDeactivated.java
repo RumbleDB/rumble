@@ -19,7 +19,7 @@ import java.io.File;
 
 import org.rumbledb.config.RumbleConfiguration;
 
-public class SparkRuntimeTestsNativeDeactivated extends RuntimeTests {
+public class SparkRuntimeTestsNativeDeactivated extends SparkRuntimeTests {
 
     public RumbleConfiguration getConfiguration() {
         return RumbleConfiguration.builder()

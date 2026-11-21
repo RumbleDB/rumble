@@ -34,9 +34,11 @@ import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionItemStringValueException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.functions.FunctionCoercionRuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionPlanVariant;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.spark.ml.ApplyEstimatorRuntimeIterator;
 import org.rumbledb.spark.ml.ApplyTransformerRuntimeIterator;
@@ -59,6 +61,23 @@ public class FunctionItem implements Item {
     private FunctionSignature signature;
 
     private ItemRuntimePlan bodyIterator;
+
+    // Already compiled, including return conversions. Shared by values and partial applications.
+    private Map<FunctionPlanVariant, ItemRuntimePlan> parallelVariants;
+
+    public void setParallelVariants(Map<FunctionPlanVariant, ItemRuntimePlan> variants) {
+        this.parallelVariants = variants;
+    }
+
+    public boolean hasParallelVariants() {
+        return this.parallelVariants != null && !this.parallelVariants.isEmpty();
+    }
+
+    public ItemRuntimePlan getParallelVariant(Name parameter, ExecutionMode mode) {
+        return this.parallelVariants == null
+                ? null
+                : this.parallelVariants.get(new FunctionPlanVariant(parameter, mode));
+    }
 
     /**
      * The body plan with the conversion of its result to the declared return type, built on the first call and shared
@@ -93,6 +112,7 @@ public class FunctionItem implements Item {
         this.signature = source.signature;
         this.bodyIterator = source.bodyIterator;
         this.calleePlan = source.calleePlan;
+        this.parallelVariants = source.parallelVariants;
         this.dynamicModuleContext = source.dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>(source.localVariablesInClosure);
         this.RDDVariablesInClosure = new HashMap<>(source.RDDVariablesInClosure);
@@ -264,6 +284,7 @@ public class FunctionItem implements Item {
             throw new OurBadException("Only a partial application of a function can share its callee plan.");
         }
         this.calleePlan = function.getCalleePlan();
+        this.parallelVariants = function.parallelVariants;
     }
 
     /**

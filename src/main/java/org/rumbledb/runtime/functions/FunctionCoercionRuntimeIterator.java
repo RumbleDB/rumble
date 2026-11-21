@@ -110,6 +110,9 @@ public class FunctionCoercionRuntimeIterator extends ItemRuntimePlan
                     "Function coercion can only wrap functions, maps, or arrays.", this.staticContext.getMetadata());
         }
         FunctionCall call = FunctionCall.of(this.callableItem, arguments, callStaticContext, context);
+        callStaticContext = callStaticContext.toBuilder()
+                .executionMode(call.plan().getRuntimeStaticContext().getExecutionMode())
+                .build();
         // The conversion only passes its context on to the call, so it is evaluated in the context of the call.
         ItemRuntimePlan convertedResult = FunctionCallArgumentConversion.wrapForFunctionConversion(
                 call.plan(),

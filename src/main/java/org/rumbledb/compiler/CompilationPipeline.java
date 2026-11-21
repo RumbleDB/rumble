@@ -132,6 +132,7 @@ public final class CompilationPipeline {
         passes.add(CompilationPasses.inferTypes());
         passes.add(CompilationPasses.normalizeComparisons());
         passes.add(CompilationPasses.resolveExecutionModes());
+        passes.add(CompilationPasses.prepareParallelFunctionItems());
         if (isJSONiq) {
             passes.add(CompilationPasses.classifyUpdatingExpressions());
         }
