@@ -85,6 +85,14 @@ public enum SequenceCardinality {
         return fromPossibilities(zero, one, many);
     }
 
+    /**
+     * The cardinality of a single value computed from a sequence of this cardinality, which is absent when the
+     * sequence may be empty.
+     */
+    public SequenceCardinality atMostOne() {
+        return allowsZero() ? ZERO_OR_ONE : ONE;
+    }
+
     public SequenceCardinality replaceZeroWithOne() {
         return fromPossibilities(false, allowsZero() || allowsOne(), allowsMany());
     }
@@ -101,6 +109,13 @@ public enum SequenceCardinality {
      */
     public SequenceCardinality filtered() {
         return fromPossibilities(true, allowsOne() || allowsMany(), allowsMany());
+    }
+
+    /**
+     * The cardinality after removing the first item, if any: two items leave one, and more leave many.
+     */
+    public SequenceCardinality withoutFirst() {
+        return fromPossibilities(allowsZero() || allowsOne(), allowsMany(), allowsMany());
     }
 
     public SequenceType.Arity toArity() {

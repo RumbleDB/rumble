@@ -373,10 +373,12 @@ public class ExpressionClassificationVisitor extends AbstractNodeVisitor<Express
         try {
             funcSig = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
         } catch (UnknownFunctionCallException e) {
-            throw new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata());
+            // Type inference, which comes next, reports the undeclared function together with the other errors.
+            funcSig = null;
         }
-        ExpressionClassification result =
-                funcSig.isUpdating() ? ExpressionClassification.UPDATING : ExpressionClassification.SIMPLE;
+        ExpressionClassification result = funcSig != null && funcSig.isUpdating()
+                ? ExpressionClassification.UPDATING
+                : ExpressionClassification.SIMPLE;
         expression.setExpressionClassification(result);
         // TODO: Make vacuous if call to fn:error? Not present!
         return result;
