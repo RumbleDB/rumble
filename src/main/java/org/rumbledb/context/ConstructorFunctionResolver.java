@@ -35,10 +35,11 @@ public final class ConstructorFunctionResolver {
             FunctionIdentifier identifier, FunctionSignature signature, boolean usesSchemaCaster) {
         public BuiltinFunction asBuiltinFunction() {
             return new BuiltinFunction(
-                    this.identifier,
-                    this.signature,
-                    ConstructorFunctionIterator.class,
-                    BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+                            this.identifier,
+                            this.signature,
+                            ConstructorFunctionIterator.class,
+                            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL)
+                    .withReturnTypeRule(ConstructorFunctionIterator.returnTypeRule(this.signature.getReturnType()));
         }
     }
 

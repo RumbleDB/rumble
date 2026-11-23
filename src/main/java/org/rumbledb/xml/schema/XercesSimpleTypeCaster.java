@@ -19,11 +19,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
+import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.dv.InvalidDatatypeValueException;
 import org.apache.xerces.impl.dv.SchemaDVFactory;
 import org.apache.xerces.impl.dv.ValidatedInfo;
 import org.apache.xerces.impl.dv.ValidationContext;
 import org.apache.xerces.impl.dv.XSSimpleType;
+import org.apache.xerces.impl.dv.xs.Schema11DVFactoryImpl;
+import org.apache.xerces.impl.dv.xs.SchemaDVFactoryImpl;
+import org.apache.xerces.impl.dv.xs.TypeValidatorHelper;
 import org.apache.xerces.impl.xpath.regex.RegularExpression;
 import org.apache.xerces.xs.StringList;
 import org.apache.xerces.xs.XSObjectList;
@@ -51,12 +55,20 @@ import org.rumbledb.types.ItemType;
  */
 final class XercesSimpleTypeCaster {
 
+    private final short schemaVersion;
+    private final SchemaDVFactory datatypeFactory;
+
     @NonNull private final XmlSchemaTypeMapper typeMapper;
 
     @NonNull private final XercesTypedValueConverter typedValueConverter;
 
     XercesSimpleTypeCaster(
-            @NonNull XmlSchemaTypeMapper typeMapper, @NonNull XercesTypedValueConverter typedValueConverter) {
+            @NonNull XmlSchemaTypeMapper typeMapper,
+            @NonNull XercesTypedValueConverter typedValueConverter,
+            short schemaVersion) {
+        this.schemaVersion = schemaVersion;
+        this.datatypeFactory =
+                schemaVersion == Constants.SCHEMA_VERSION_1_1 ? new Schema11DVFactoryImpl() : new SchemaDVFactoryImpl();
         this.typeMapper = typeMapper;
         this.typedValueConverter = typedValueConverter;
     }
@@ -285,7 +297,10 @@ final class XercesSimpleTypeCaster {
             ExceptionMetadata metadata)
             throws InvalidDatatypeValueException {
         SimpleTypeValidationContext validationContext = validationContext(value, namespaceResolver);
-        ValidatedInfo schemaValue = validateValue(builtInBaseType(schemaType), lexicalValue(value), validationContext);
+        // XSD 1.1 forbids validating directly against bare xs:NOTATION.
+        // Use the target restriction, whose enumeration permits the notation value.
+        XSSimpleType parsingType = value.isNotation() ? schemaType : builtInBaseType(schemaType);
+        ValidatedInfo schemaValue = validateValue(parsingType, lexicalValue(value), validationContext);
         // Use the basic types defined by the query casting rules. These treat integer and the
         // duration subtypes as casting primitives, although XML Schema does not call them primitives.
         ItemType primitiveType = this.typeMapper
@@ -299,10 +314,14 @@ final class XercesSimpleTypeCaster {
         while (!sourceBase.hasName() || !Name.XS_NS.equals(sourceBase.getName().getNamespace())) {
             sourceBase = sourceBase.getBaseType();
         }
-        XSSimpleType sourceSchemaType = SchemaDVFactory.getInstance()
-                .getBuiltInType(sourceBase.getName().getLocalName());
-        ValidatedInfo sourceValue = validateValue(
-                sourceSchemaType, lexicalValue(patternSource), validationContext(patternSource, namespaceResolver));
+        XSSimpleType sourceSchemaType =
+                this.datatypeFactory.getBuiltInType(sourceBase.getName().getLocalName());
+        ValidatedInfo sourceValue = patternSource.isNotation()
+                ? schemaValue
+                : validateValue(
+                        sourceSchemaType,
+                        lexicalValue(patternSource),
+                        validationContext(patternSource, namespaceResolver));
         checkPatterns(schemaType, sourceValue.getActualValue().toString());
         // Patterns have already been checked against the required text form. Check the remaining
         // restrictions on the parsed value without parsing its text again.
@@ -348,7 +367,7 @@ final class XercesSimpleTypeCaster {
      * For an existing QName, uses the namespace stored in that value for its own prefix, even if
      * the query maps that prefix differently. Other prefixes use the supplied namespace lookup.
      */
-    private static SimpleTypeValidationContext validationContext(Item value, NamespaceResolver namespaceResolver) {
+    private SimpleTypeValidationContext validationContext(Item value, NamespaceResolver namespaceResolver) {
         if (!value.isQName() && !value.isNotation()) {
             return new SimpleTypeValidationContext(namespaceResolver);
         }
@@ -391,12 +410,22 @@ final class XercesSimpleTypeCaster {
     }
 
     /** Supplies Xerces with namespace lookups and validation settings for casting a standalone value. */
-    private static final class SimpleTypeValidationContext implements ValidationContext {
+    private final class SimpleTypeValidationContext implements ValidationContext {
 
         private final NamespaceResolver namespaceResolver;
 
         private SimpleTypeValidationContext(NamespaceResolver namespaceResolver) {
             this.namespaceResolver = namespaceResolver;
+        }
+
+        @Override
+        public TypeValidatorHelper getTypeValidatorHelper() {
+            return TypeValidatorHelper.getInstance(schemaVersion);
+        }
+
+        @Override
+        public short getDatatypeXMLVersion() {
+            return Constants.XML_VERSION_1_0;
         }
 
         /**

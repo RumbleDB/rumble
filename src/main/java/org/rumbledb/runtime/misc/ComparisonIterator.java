@@ -25,11 +25,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
@@ -39,6 +39,7 @@ import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
@@ -113,17 +114,27 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
             return null;
         }
         return applyComparison(
-                left, right, this.comparisonOperator, getRuntimeStaticContext().getDefaultCollation(), getMetadata());
+                left,
+                right,
+                this.comparisonOperator,
+                getRuntimeStaticContext().getDefaultCollation(),
+                getMetadata(),
+                getRuntimeStaticContext());
     }
 
     private static Item applyComparison(
-            Item left, Item right, ComparisonOperator operator, String activeCollation, ExceptionMetadata metadata) {
+            Item left,
+            Item right,
+            ComparisonOperator operator,
+            String activeCollation,
+            ExceptionMetadata metadata,
+            RuntimeStaticContext staticContext) {
         if (left.isArray() || right.isArray()) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on array type", metadata);
+            throw new CannotAtomizeException("Invalid args. Comparison can't be performed on array type", metadata);
         } else if (left.isObject() || right.isObject()) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on object type", metadata);
+            throw new CannotAtomizeException("Invalid args. Comparison can't be performed on object type", metadata);
         } else if (left.isFunction() || right.isFunction()) {
-            throw new NonAtomicKeyException("Invalid args. Comparison can't be performed on function type", metadata);
+            throw new CannotAtomizeException("Invalid args. Comparison can't be performed on function type", metadata);
         }
 
         if (operator.isValueComparison()) {
@@ -149,7 +160,7 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
             return comparisonResultToBooleanItem(comparison, operator, metadata);
         }
 
-        long comparison = compareItems(left, right, operator, metadata);
+        long comparison = compareItems(left, right, operator, metadata, staticContext);
         if (comparison == Long.MIN_VALUE) {
             throw new UnexpectedTypeException(
                     " \""
@@ -177,13 +188,22 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
 
     public static long compareItems(
             Item left, Item right, ComparisonOperator comparisonOperator, ExceptionMetadata ignoredMetadata) {
+        return compareItems(left, right, comparisonOperator, ignoredMetadata, null);
+    }
+
+    private static long compareItems(
+            Item left,
+            Item right,
+            ComparisonOperator comparisonOperator,
+            ExceptionMetadata ignoredMetadata,
+            RuntimeStaticContext staticContext) {
         if (left.isUntypedAtomic() && right.isUntypedAtomic()) {
             left = ItemFactory.getInstance().createStringItem(left.getStringValue());
             right = ItemFactory.getInstance().createStringItem(right.getStringValue());
         } else if (left.isUntypedAtomic()) {
-            left = castUntypedAtomicToMatch(left, right, ignoredMetadata);
+            left = castUntypedAtomicToMatch(left, right, ignoredMetadata, staticContext);
         } else if (right.isUntypedAtomic()) {
-            right = castUntypedAtomicToMatch(right, left, ignoredMetadata);
+            right = castUntypedAtomicToMatch(right, left, ignoredMetadata, staticContext);
         }
 
         if (left.isNull() && right.isNull()) {
@@ -360,7 +380,8 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
         return Double.compare(l, r);
     }
 
-    private static Item castUntypedAtomicToMatch(Item untyped, Item other, ExceptionMetadata metadata) {
+    private static Item castUntypedAtomicToMatch(
+            Item untyped, Item other, ExceptionMetadata metadata, RuntimeStaticContext staticContext) {
         if (!other.isAtomic()) {
             throw new OurBadException("Expected atomic item when casting xs:untypedAtomic in comparison.", metadata);
         }
@@ -369,6 +390,9 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
         }
         if (other.isNumeric()) {
             return ItemFactory.getInstance().createDoubleItem(untyped.castToDoubleValue());
+        }
+        if (other.isQName()) {
+            return CastIterator.castItemToType(untyped, BuiltinTypesCatalogue.QNameItem, metadata, staticContext);
         }
         if (other.isBoolean()) {
             return castUntypedAtomicToBoolean(untyped, metadata);

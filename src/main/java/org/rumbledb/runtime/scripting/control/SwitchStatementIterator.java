@@ -23,8 +23,8 @@ import java.util.stream.Stream;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
+import org.rumbledb.runtime.control.SwitchRuntimeIterator;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
@@ -63,27 +63,12 @@ public class SwitchStatementIterator extends AbstractAtMostOneItemRuntimePlan {
     private ItemRuntimePlan selectApplicableIterator(Function<ItemRuntimePlan, Item> materializeFirst) {
         Item testValue = materializeFirst.apply(this.testField);
 
-        if (testValue != null) {
-            if (testValue.isArray()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition cannot be an array type", getMetadata());
-            } else if (testValue.isObject()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition cannot be an object type", getMetadata());
-            }
-        }
+        testValue = SwitchRuntimeIterator.atomizeOperand(testValue, "Switch condition", getMetadata());
 
         for (ItemRuntimePlan caseKey : this.cases.keySet()) {
             Item caseValue = materializeFirst.apply(caseKey);
 
-            if (caseValue != null) {
-                if (caseValue.isArray()) {
-                    throw new NonAtomicKeyException("Invalid args. Switch case cannot be an array type", getMetadata());
-                } else if (caseValue.isObject()) {
-                    throw new NonAtomicKeyException(
-                            "Invalid args. Switch case  cannot be an object type", getMetadata());
-                }
-            }
+            caseValue = SwitchRuntimeIterator.atomizeOperand(caseValue, "Switch case", getMetadata());
 
             // both are empty sequences
             if (testValue == null) {

@@ -115,8 +115,8 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             try {
                 atomizedGroupingKey.addAll(item.atomizedValue());
             } catch (CannotAtomizeException e) {
-                throw new UnexpectedTypeException(
-                        "Group by variable must atomize to a supported atomic value.", this.metadata);
+                throw new CannotAtomizeException(
+                        "Group by variable must atomize to atomic values: " + e.getJSONiqErrorMessage(), this.metadata);
             }
         }
         if (atomizedGroupingKey.size() > 1) {
