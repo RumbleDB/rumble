@@ -20,7 +20,6 @@ import lombok.Getter;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.types.SequenceType;
 
 @Getter
 public class CopyDeclaration {
@@ -36,12 +35,5 @@ public class CopyDeclaration {
         this.variableName = variableName;
         this.variableMetadata = variableMetadata;
         this.sourceExpression = sourceExpression;
-    }
-
-    public SequenceType getSourceSequenceType() {
-        if (this.sourceExpression != null && this.sourceExpression.getStaticSequenceType() != null) {
-            return this.sourceExpression.getStaticSequenceType();
-        }
-        return SequenceType.createSequenceType("item*");
     }
 }

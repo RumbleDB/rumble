@@ -15,6 +15,8 @@
  */
 package org.rumbledb.types;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -22,6 +24,9 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.TypeInferrenceUtils;
 
 class ItemTypeFactoryTest {
     @Test
@@ -62,5 +67,40 @@ class ItemTypeFactoryTest {
                 true);
         assertSame(named, ItemTypeFactory.createInferredUnionType(List.of(named, BuiltinTypesCatalogue.nullItem)));
         assertSame(named, ItemTypeFactory.createObjectFieldType(new SequenceType(named, SequenceType.Arity.OneOrZero)));
+    }
+
+    @Test
+    void integerRangeDetectionIsOptionalAndDoesNotChangeDynamicTypes() {
+        var factory = ItemFactory.getInstance();
+        List<String> values = List.of(
+                "-2147483648",
+                "2147483647",
+                "-2147483649",
+                "2147483648",
+                "-9223372036854775808",
+                "9223372036854775807",
+                "-9223372036854775809",
+                "9223372036854775808");
+        List<ItemType> expected = List.of(
+                BuiltinTypesCatalogue.intItem,
+                BuiltinTypesCatalogue.intItem,
+                BuiltinTypesCatalogue.longItem,
+                BuiltinTypesCatalogue.longItem,
+                BuiltinTypesCatalogue.longItem,
+                BuiltinTypesCatalogue.longItem,
+                BuiltinTypesCatalogue.integerItem,
+                BuiltinTypesCatalogue.integerItem);
+        for (int i = 0; i < values.size(); i++) {
+            var item = factory.createIntegerItem(new BigInteger(values.get(i)));
+            assertEquals(BuiltinTypesCatalogue.integerItem, ItemTypeFactory.createItemTypeFromItem(item));
+            assertEquals(expected.get(i), ItemTypeFactory.createItemTypeFromItem(item, true));
+            assertEquals(BuiltinTypesCatalogue.integerItem, item.getDynamicType());
+            assertEquals(
+                    BuiltinTypesCatalogue.integerItem,
+                    TypeInferrenceUtils.inferItemTypeOfLocalItems(
+                            List.of(item), ExceptionMetadata.EMPTY_METADATA, TypeInferrenceUtils.TypeMergeMode.STRICT));
+        }
+        var decimal = factory.createDecimalItem(new BigDecimal("1.0"));
+        assertEquals(BuiltinTypesCatalogue.decimalItem, ItemTypeFactory.createItemTypeFromItem(decimal, true));
     }
 }
