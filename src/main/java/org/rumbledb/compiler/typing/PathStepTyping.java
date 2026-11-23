@@ -312,7 +312,10 @@ public final class PathStepTyping {
                 return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
             }
             if (axis.equals(ReverseAxis.ANCESTOR_OR_SELF)) {
-                return !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, null);
+                // Only document nodes are guaranteed to have no ancestors. A failed self test
+                // does not rule out a matching ancestor (for example, an element above a text node).
+                return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode)
+                        && !nodeTestCanMatchContextNode(stepExpr.getNodeTest(), contextItemType, null);
             }
         }
         return false;
@@ -327,22 +330,22 @@ public final class PathStepTyping {
             return true;
         }
         if (nodeTest instanceof TextTest) {
-            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.textNode);
+            return contextItemType.mayOverlapWith(BuiltinTypesCatalogue.textNode);
         }
         if (nodeTest instanceof CommentTest) {
-            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.commentNode);
+            return contextItemType.mayOverlapWith(BuiltinTypesCatalogue.commentNode);
         }
         if (nodeTest instanceof NamespaceNodeTest) {
-            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.namespaceNode);
+            return contextItemType.mayOverlapWith(BuiltinTypesCatalogue.namespaceNode);
         }
         if (nodeTest instanceof PITest) {
-            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.processingInstructionNode);
+            return contextItemType.mayOverlapWith(BuiltinTypesCatalogue.processingInstructionNode);
         }
         if (nodeTest instanceof DocumentTest) {
-            return contextItemType.isSubtypeOf(BuiltinTypesCatalogue.documentNode);
+            return contextItemType.mayOverlapWith(BuiltinTypesCatalogue.documentNode);
         }
         if (nodeTest instanceof AttributeTest attributeTest) {
-            if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)) {
+            if (!contextItemType.mayOverlapWith(BuiltinTypesCatalogue.attributeNode)) {
                 return false;
             }
             if (!attributeTest.isNameWithoutTypeCheck()) {
@@ -354,7 +357,7 @@ public final class PathStepTyping {
             return true;
         }
         if (nodeTest instanceof ElementTest elementTest) {
-            if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)) {
+            if (!contextItemType.mayOverlapWith(BuiltinTypesCatalogue.elementNode)) {
                 return false;
             }
             if (!elementTest.isNameWithoutTypeCheck()) {
@@ -368,7 +371,7 @@ public final class PathStepTyping {
         if (nodeTest instanceof NameTest nameTest) {
             boolean attributePrincipalKind = axis != null && axis.equals(ForwardAxis.ATTRIBUTE);
             if (attributePrincipalKind) {
-                if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.attributeNode)) {
+                if (!contextItemType.mayOverlapWith(BuiltinTypesCatalogue.attributeNode)) {
                     return false;
                 }
                 if (!nameTest.hasQName()) {
@@ -379,7 +382,7 @@ public final class PathStepTyping {
                 }
                 return true;
             }
-            if (!contextItemType.isSubtypeOf(BuiltinTypesCatalogue.elementNode)) {
+            if (!contextItemType.mayOverlapWith(BuiltinTypesCatalogue.elementNode)) {
                 return false;
             }
             if (!nameTest.hasQName()) {

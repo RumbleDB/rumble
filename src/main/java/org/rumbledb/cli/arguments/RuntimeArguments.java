@@ -69,6 +69,12 @@ public final class RuntimeArguments {
             description = "Applies the pending update list returned by the query.")
     private Boolean applyUpdates;
 
+    @Option(
+            names = "--escape-backticks",
+            negatable = true,
+            description = "Escapes embedded backticks in Spark SQL identifiers (disabled by default).")
+    private Boolean escapeBackticks;
+
     public RuntimeConfig toConfig() {
         RuntimeConfig.RuntimeConfigBuilder builder = RuntimeConfig.builder();
         OptionConversion.applyIntIfPresent(this.resultSize, builder::resultsSizeCap);
@@ -80,6 +86,7 @@ public final class RuntimeArguments {
         OptionConversion.applyBooleanIfPresent(this.dataFrameExecution, builder::useDataFrameExecution);
         OptionConversion.applyBooleanIfPresent(this.nativeExecution, builder::useNativeExecution);
         OptionConversion.applyBooleanIfPresent(this.applyUpdates, builder::shouldApplyUpdates);
+        OptionConversion.applyBooleanIfPresent(this.escapeBackticks, builder::escapeBackticks);
         return builder.build();
     }
 }

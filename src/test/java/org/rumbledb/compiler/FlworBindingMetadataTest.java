@@ -109,6 +109,18 @@ class FlworBindingMetadataTest {
         }
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"jq", "xq"})
+    void countReferenceAfterGroupingUsesWidenedType(String extension) {
+        List<Node> nodes = compile("for $i in (10, 9, 8) count $j let $k := $i mod 2 group by $k return $j", extension);
+        VariableReferenceExpression reference = findAll(nodes, VariableReferenceExpression.class).stream()
+                .filter(ref -> ref.getVariableName().toString().equals("j"))
+                .findFirst()
+                .orElseThrow();
+        assertEquals("xs:integer+", reference.getStaticSequenceType().toString());
+        assertEquals(reference.getStaticSequenceType(), reference.getActualType());
+    }
+
     /** A binding's type is the one visible to the clauses after it. */
     private static void assertType(String expected, Clause clause, Name variable) {
         assertEquals(
