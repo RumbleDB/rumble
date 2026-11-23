@@ -1,0 +1,6 @@
+(:JIQS: ShouldRun; Output="true":)
+(: https://www.w3.org/TR/xquery-31/#id-switch :)
+(: The two arrays atomize to a single integer before cardinality is checked. :)
+switch (([], [1]))
+case 1 return true()
+default return false()

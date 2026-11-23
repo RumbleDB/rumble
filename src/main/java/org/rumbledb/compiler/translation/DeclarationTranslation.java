@@ -31,7 +31,6 @@ import org.rumbledb.compiler.translation.TranslationNameResolver.NameRole;
 import org.rumbledb.compiler.utils.AnnotationValidator;
 import org.rumbledb.compiler.utils.FunctionDeclarationValidator;
 import org.rumbledb.context.Name;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
@@ -85,7 +84,7 @@ public final class DeclarationTranslation {
         if (ctx.exprSingle() != null) {
             expr = visitExprSingle.apply(ctx.exprSingle());
             if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
+                expr = TreatExpression.forDeclaredType(expr, seq, var);
             }
         }
         return new VariableDeclaration(
@@ -122,7 +121,7 @@ public final class DeclarationTranslation {
         if (ctx.exprSingle() != null) {
             expr = visitExprSingle.apply(ctx.exprSingle());
             if (seq != null) {
-                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
+                expr = TreatExpression.forDeclaredType(expr, seq, Name.CONTEXT_ITEM);
             }
         }
         return new VariableDeclaration(

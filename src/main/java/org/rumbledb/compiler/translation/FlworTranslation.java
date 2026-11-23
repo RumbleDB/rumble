@@ -153,7 +153,7 @@ public final class FlworTranslation {
                     : new SequenceType(
                             seq.getItemType(),
                             requiresItem ? SequenceType.Arity.OneOrMore : SequenceType.Arity.ZeroOrMore);
-            expr = new TreatExpression(expr, expressionType, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
+            expr = TreatExpression.forDeclaredType(expr, expressionType, var);
         }
 
         return new ForClause(
@@ -207,7 +207,7 @@ public final class FlworTranslation {
 
         Expression expr = visitExprSingle.apply(ctx.exprSingle());
         if (seq != null) {
-            expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
+            expr = TreatExpression.forDeclaredType(expr, seq, var);
         }
 
         return new LetClause(

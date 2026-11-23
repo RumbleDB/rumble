@@ -1,0 +1,15 @@
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:t="urn:nested-union-cardinality"
+           targetNamespace="urn:nested-union-cardinality"
+           elementFormDefault="qualified">
+    <xs:simpleType name="Integers">
+        <xs:list itemType="xs:integer"/>
+    </xs:simpleType>
+    <xs:simpleType name="BooleanOrIntegers">
+        <xs:union memberTypes="xs:boolean t:Integers"/>
+    </xs:simpleType>
+    <xs:simpleType name="DateOrBooleanOrIntegers">
+        <xs:union memberTypes="xs:date t:BooleanOrIntegers"/>
+    </xs:simpleType>
+    <xs:element name="values" type="t:DateOrBooleanOrIntegers"/>
+</xs:schema>

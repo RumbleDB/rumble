@@ -19,20 +19,26 @@ import java.io.Serial;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.TreeMap;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.compiler.typing.ReturnTypeContext;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
@@ -91,5 +97,18 @@ public class AvgFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
                 ItemFactory.getInstance().createLongItem(count),
                 MultiplicativeExpression.MultiplicativeOperator.DIV,
                 metadata);
+    }
+
+    /** At most one item: a number for numbers, or a duration of the kind of the input. */
+    public static Optional<SequenceType> inferReturnType(FunctionCallExpression call, ReturnTypeContext context) {
+        SequenceType inputType = AggregateTyping.validateStrictInput(call, context, "fn:avg");
+        if (inputType.isEmptySequence()) {
+            return Optional.of(SequenceType.createSequenceType("anyAtomicType?"));
+        }
+        ItemType returnItemType = inputType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.numericItem)
+                ? BuiltinTypesCatalogue.numericItem
+                : inputType.getItemType();
+        return Optional.of(
+                new SequenceType(returnItemType, inputType.getCardinality().atMostOne()));
     }
 }
