@@ -39,6 +39,9 @@ public class FunctionArityFunctionIterator extends AbstractAtMostOneItemRuntimeP
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item function = this.getChild(0).materializeFirstOrNull(context);
+        if (function != null && (function.isMap() || function.isArray())) {
+            return ItemFactory.getInstance().createIntItem(1);
+        }
         if (function == null || !function.isFunction()) {
             throw new UnexpectedTypeException(
                     "The argument of fn:function-arity must be a single function item [err:XPTY0004].", getMetadata());
