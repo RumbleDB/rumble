@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="true":)
+(: Observed on master f1775366d: Empty string instead of U+00A0. :)
+(: https://www.w3.org/TR/xpath-functions-31/#func-normalize-space :)
+(: U+00A0 is not XML whitespace and must survive normalization. :)
+deep-equal(string-to-codepoints(normalize-space(codepoints-to-string(160))), 160)
