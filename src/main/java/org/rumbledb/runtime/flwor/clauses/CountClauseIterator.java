@@ -16,7 +16,6 @@
 package org.rumbledb.runtime.flwor.clauses;
 
 import java.io.Serial;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -136,9 +135,8 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
             return input;
         }
 
-        Dataset<Row> dfWithIndex = addSerializedCountColumn(df, this.outputTupleProjection, this.variableName);
-        FLWORSchema outputSchema =
-                input.getSchema().project(Arrays.asList(dfWithIndex.schema().fieldNames()));
+        FLWORSchema outputSchema = input.getSchema().selectInput(this.outputTupleProjection, this.variableName);
+        Dataset<Row> dfWithIndex = addSerializedCountColumn(df, this.variableName, outputSchema.getColumns());
         outputSchema.replaceVariable(
                 this.variableName,
                 new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.One),
@@ -155,6 +153,11 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
                 inputSchema, outputDependencies, null, Collections.singletonList(variableName));
 
+        return addSerializedCountColumn(df, variableName, allColumns);
+    }
+
+    private static Dataset<Row> addSerializedCountColumn(
+            Dataset<Row> df, Name variableName, List<FlworDataFrameColumn> allColumns) {
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
 
         Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());

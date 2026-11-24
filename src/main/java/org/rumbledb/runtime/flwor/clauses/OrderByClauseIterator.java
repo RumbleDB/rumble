@@ -42,6 +42,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -191,7 +192,8 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
         Dataset<Row> df = input.getDataFrame();
         StructType inputSchema = df.schema();
 
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
+        FLWORSchema outputSchema = input.getSchema();
+        List<FlworDataFrameColumn> allColumns = outputSchema.getColumns();
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
                 inputSchema, null, new ArrayList<Name>(this.child.getOutputTupleVariableNames()), null);
 
@@ -200,10 +202,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
             nativeQueryResult = tryNativeQuery(df, this.expressionsWithIterator, allColumns, inputSchema, context);
         }
         if (nativeQueryResult != null) {
-            return new FlworDataFrame(
-                    nativeQueryResult,
-                    input.getSchema()
-                            .project(Arrays.asList(nativeQueryResult.schema().fieldNames())));
+            return new FlworDataFrame(nativeQueryResult, outputSchema);
         }
 
         df.sparkSession()
@@ -227,8 +226,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
 
         if (columnTypesOfRows.length == 0) {
             // The input is empty, so we output this empty DF again.
-            return new FlworDataFrame(
-                    df, input.getSchema().project(Arrays.asList(df.schema().fieldNames())));
+            return new FlworDataFrame(df, outputSchema);
         }
 
         // Every column represents an order by expression
@@ -382,8 +380,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
                 .sql(String.format(
                         "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
                         projectSQL, selectSQL, UDFParameters, appendedOrderingColumnsName, orderingSQL));
-        return new FlworDataFrame(
-                rows, input.getSchema().project(Arrays.asList(rows.schema().fieldNames())));
+        return new FlworDataFrame(rows, outputSchema);
     }
 
     @Override

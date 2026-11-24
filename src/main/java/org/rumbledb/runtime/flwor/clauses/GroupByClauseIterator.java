@@ -17,7 +17,6 @@ package org.rumbledb.runtime.flwor.clauses;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -338,6 +337,9 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
             if (expression.getExpression() != null) {
                 // if a variable is defined in-place with groupby, execute a let on the variable
                 variableAccessNames.add(expression.getVariableName());
+                List<Name> retained = new ArrayList<>(inputFrame.getVariableNames());
+                retained.remove(expression.getVariableName());
+                FLWORSchema outputSchema = inputFrame.getSchema().selectVariables(retained);
                 df = LetClauseIterator.bindLetVariableInDataFrame(
                         df,
                         expression.getVariableName(),
@@ -347,9 +349,9 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                         new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                         null,
                         false,
-                        getConfiguration());
-                FLWORSchema outputSchema =
-                        inputFrame.getSchema().project(Arrays.asList(df.schema().fieldNames()));
+                        getConfiguration(),
+                        outputSchema.getColumns());
+
                 outputSchema.replaceVariable(
                         expression.getVariableName(),
                         expression.getExpression().getRuntimeStaticContext().getStaticType(),

@@ -221,6 +221,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 return getDataFrameAsJoin(context, this.outputTupleProjection, df);
             }
 
+            FLWORSchema outputSchema = df.getSchema().selectInput(this.outputTupleProjection, this.variableName);
             Dataset<Row> result = bindLetVariableInDataFrame(
                     df.getDataFrame(),
                     this.variableName,
@@ -232,10 +233,9 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                             : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                     this.outputTupleProjection,
                     false,
-                    getConfiguration());
+                    getConfiguration(),
+                    outputSchema.getColumns());
 
-            FLWORSchema outputSchema =
-                    df.getSchema().project(Arrays.asList(result.schema().fieldNames()));
             outputSchema.replaceVariable(
                     this.variableName,
                     this.sequenceType != null
@@ -409,6 +409,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         ItemRuntimePlan filteringPredicateIterator = new PredicateIterator(
                 new VariableReferenceIterator(this.variableName, staticContext), predicateIterator, staticContext);
+        FLWORSchema outputSchema = childDF.getSchema().selectInput(parentProjection, this.variableName);
         inputDF = LetClauseIterator.bindLetVariableInDataFrame(
                 inputDF,
                 this.variableName,
@@ -418,10 +419,9 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 new ArrayList<Name>(this.getOutputTupleVariableNames()),
                 parentProjection,
                 false,
-                getConfiguration());
+                getConfiguration(),
+                outputSchema.getColumns());
 
-        FLWORSchema outputSchema =
-                childDF.getSchema().project(Arrays.asList(inputDF.schema().fieldNames()));
         outputSchema.replaceVariable(
                 this.variableName,
                 this.sequenceType != null
@@ -601,11 +601,37 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             boolean hash,
             RumbleConfiguration conf) {
+        return bindLetVariableInDataFrame(
+                dataFrame,
+                newVariableName,
+                sequenceType,
+                newVariableExpression,
+                context,
+                variablesInInputTuple,
+                outputTupleVariableDependencies,
+                hash,
+                conf,
+                null);
+    }
+
+    public static Dataset<Row> bindLetVariableInDataFrame(
+            Dataset<Row> dataFrame,
+            Name newVariableName,
+            SequenceType sequenceType,
+            ItemRuntimePlan newVariableExpression,
+            DynamicContext context,
+            List<Name> variablesInInputTuple,
+            Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
+            boolean hash,
+            RumbleConfiguration conf,
+            List<FlworDataFrameColumn> selectedColumns) {
         StructType inputSchema = dataFrame.schema();
         // inputSchema.printTreeString();
 
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-                inputSchema, outputTupleVariableDependencies, null, Collections.singletonList(newVariableName));
+        List<FlworDataFrameColumn> allColumns = selectedColumns != null
+                ? selectedColumns
+                : FlworDataFrameUtils.getColumns(
+                        inputSchema, outputTupleVariableDependencies, null, Collections.singletonList(newVariableName));
         // for (String c : allColumns) {
         // System.out.println(c);
         // }

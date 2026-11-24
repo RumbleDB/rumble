@@ -94,7 +94,8 @@ class FLWORSchemaTest {
         schema.addColumn(x, new ColumnBinding("payload", ColumnFormat.FULLY_NATIVE, DataTypes.IntegerType));
         schema.addColumn(x, new ColumnBinding("size", ColumnFormat.COUNT, DataTypes.LongType));
         schema.setVariableType(x, SequenceType.createSequenceType("int"));
-        FLWORSchema projected = schema.project(List.of("payload"));
+        FLWORSchema projected =
+                schema.select(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL));
         assertEquals(
                 List.of("payload"),
                 projected.getColumns(x).stream().map(ColumnBinding::columnName).toList());
@@ -107,7 +108,7 @@ class FLWORSchemaTest {
                 UnsupportedOperationException.class, () -> copy.getColumns(x).clear());
         assertThrows(
                 UnsupportedOperationException.class, () -> copy.getVariables().clear());
-        assertTrue(schema.project(List.of()).getVariables().isEmpty());
+        assertTrue(schema.selectVariables(List.of()).getVariables().isEmpty());
         FLWORSchema replacement = new FLWORSchema(schema);
         replacement.replaceVariable(
                 x,
@@ -120,7 +121,8 @@ class FLWORSchemaTest {
                         .map(ColumnBinding::columnName)
                         .toList());
         assertEquals(2, schema.getColumns(x).size());
-        assertTrue(schema.project(List.of("unknown")).getVariables().isEmpty());
+        assertThrows(
+                org.rumbledb.exceptions.OurBadException.class, () -> schema.selectVariables(List.of(name("unknown"))));
     }
 
     @Test
@@ -139,7 +141,7 @@ class FLWORSchemaTest {
         assertTrue(schema.isConsistent(physical));
         assertEquals(
                 SequenceType.createSequenceType("string"),
-                schema.project(List.of("p:customer.name")).getVariableType(variable));
+                schema.selectVariables(List.of(variable)).getVariableType(variable));
         Name other = name("other");
         schema.addColumn(other, new ColumnBinding("other", ColumnFormat.FULLY_NATIVE, DataTypes.IntegerType));
         assertThrows(
@@ -150,5 +152,57 @@ class FLWORSchemaTest {
                         List.of(new ColumnBinding("other", ColumnFormat.FULLY_NATIVE, DataTypes.IntegerType))));
         assertEquals(2, schema.getColumns(variable).size());
         assertEquals(SequenceType.createSequenceType("string"), schema.getVariableType(variable));
+    }
+
+    @Test
+    void logicalDependenciesChooseRepresentationsWithoutColumnNames() {
+        Name x = name("x");
+        FLWORSchema schema = new FLWORSchema();
+        schema.replaceVariable(
+                x,
+                SequenceType.createSequenceType("int*"),
+                List.of(
+                        new ColumnBinding("arbitrary_payload", ColumnFormat.SERIALIZED_SEQUENCE, DataTypes.BinaryType),
+                        new ColumnBinding("arbitrary_total", ColumnFormat.COUNT, DataTypes.LongType)));
+        var full = schema.select(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL));
+        var count = schema.select(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.COUNT));
+        assertEquals("arbitrary_payload", full.getColumns().get(0).getColumnName());
+        assertEquals("arbitrary_total", count.getColumns().get(0).getColumnName());
+        assertEquals(SequenceType.createSequenceType("int*"), count.getVariableType(x));
+        assertEquals(2, schema.selectVariables(List.of(x)).getColumns(x).size());
+        assertEquals(
+                "arbitrary_payload",
+                full.select(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.COUNT))
+                        .getColumns()
+                        .get(0)
+                        .getColumnName());
+        assertThrows(
+                org.rumbledb.exceptions.OurBadException.class,
+                () -> count.select(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL)));
+        assertThrows(
+                org.rumbledb.exceptions.OurBadException.class,
+                () -> schema.select(java.util.Map.of(
+                        name("missing"), org.rumbledb.context.DynamicContext.VariableDependency.FULL)));
+    }
+
+    @Test
+    void mergingSchemasRejectsLogicalAndPhysicalCollisions() {
+        FLWORSchema left = new FLWORSchema();
+        left.replaceVariable(
+                name("x"),
+                SequenceType.createSequenceType("int"),
+                List.of(new ColumnBinding("left_value", ColumnFormat.FULLY_NATIVE, DataTypes.IntegerType)));
+        FLWORSchema right = new FLWORSchema();
+        right.replaceVariable(
+                name("y"),
+                SequenceType.createSequenceType("string"),
+                List.of(new ColumnBinding("right_value", ColumnFormat.FULLY_NATIVE, DataTypes.StringType)));
+        assertEquals(2, left.merge(right).getVariables().size());
+        assertEquals(1, left.getVariables().size());
+        assertThrows(org.rumbledb.exceptions.OurBadException.class, () -> left.merge(left));
+        FLWORSchema collision = new FLWORSchema();
+        collision.addColumn(
+                name("z"), new ColumnBinding("left_value", ColumnFormat.FULLY_NATIVE, DataTypes.IntegerType));
+        assertThrows(IllegalArgumentException.class, () -> left.merge(collision));
     }
 }

@@ -207,14 +207,21 @@ class FlworSchemaPropagationTest {
         schema.addColumn(
                 Y,
                 new FLWORSchema.ColumnBinding(
-                        "y",
+                        "stored_y",
                         FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
                         org.apache.spark.sql.types.DataTypes.StringType));
-        FlworDataFrame right = new FlworDataFrame(spark.sql("SELECT 'value' AS y"), schema);
+        FlworDataFrame right = new FlworDataFrame(spark.sql("SELECT 'value' AS stored_y"), schema);
         right.setVariableType(Y, SequenceType.createSequenceType("string"));
         Name flag = Name.createVariableInNoNamespace("flag");
         FlworDataFrame left = input();
         FLWORSchema withFlag = left.getSchema();
+        withFlag.replaceVariable(
+                X,
+                SequenceType.createSequenceType("int"),
+                List.of(new FLWORSchema.ColumnBinding(
+                        "stored_x",
+                        FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
+                        org.apache.spark.sql.types.DataTypes.LongType)));
         withFlag.replaceVariable(
                 flag,
                 SequenceType.createSequenceType("boolean"),
@@ -222,7 +229,7 @@ class FlworSchemaPropagationTest {
                         "flag",
                         FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
                         org.apache.spark.sql.types.DataTypes.BooleanType)));
-        left = new FlworDataFrame(left.getDataFrame().selectExpr("*", "true AS flag"), withFlag);
+        left = new FlworDataFrame(left.getDataFrame().selectExpr("x AS stored_x", "true AS flag"), withFlag);
         FlworDataFrame result = JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
                 new DynamicContext(config),
                 left,
@@ -312,7 +319,7 @@ class FlworSchemaPropagationTest {
                 org.rumbledb.exceptions.OurBadException.class,
                 () -> new FlworDataFrame(
                         source.getDataFrame().selectExpr("x AS y"),
-                        source.getSchema().project(List.of("y"))));
+                        source.getSchema().selectVariables(List.of())));
     }
 
     @Test
@@ -346,7 +353,8 @@ class FlworSchemaPropagationTest {
                         .getColumnName());
         assertTrue(frame.getColumns(null, null, List.of(X)).isEmpty());
         FlworDataFrame projected = new FlworDataFrame(
-                frame.getDataFrame().select("value_column"), frame.getSchema().project(List.of("value_column")));
+                frame.getDataFrame().select("value_column"),
+                frame.getSchema().select(Map.of(X, DynamicContext.VariableDependency.FULL)));
         assertEquals(List.of(X), projected.getVariableNames());
         assertEquals(SequenceType.createSequenceType("int"), projected.getVariableType(X));
         assertEquals("`value_column`", projected.getColumns().get(0).toString());

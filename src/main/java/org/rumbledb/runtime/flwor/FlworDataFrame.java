@@ -18,7 +18,6 @@ package org.rumbledb.runtime.flwor;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -102,9 +101,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
 
     public FlworDataFrame sql(String sqlQuery) {
         Dataset<Row> rows = this.dataFrame.sparkSession().sql(sqlQuery);
-        FLWORSchema outputSchema =
-                getSchema().project(Arrays.asList(rows.schema().fieldNames()));
-        return new FlworDataFrame(rows, outputSchema);
+        return new FlworDataFrame(rows, getSchema());
     }
 
     public Dataset<Row> sqlRaw(String sqlQuery) {
@@ -115,49 +112,12 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
             Map<Name, DynamicContext.VariableDependency> dependencies,
             List<Name> variablesToRestrictTo,
             List<Name> variablesToExclude) {
-        List<FlworDataFrameColumn> result = new ArrayList<>();
-        if (dependencies == null) {
-            for (FlworDataFrameColumn column : this.columns) {
-                Name name = column.getVariableName();
-                if ((variablesToRestrictTo == null || variablesToRestrictTo.contains(name))
-                        && (variablesToExclude == null || !variablesToExclude.contains(name))) {
-                    result.add(column);
-                }
-            }
-            return result;
-        }
-        for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
-            Name name = entry.getKey();
-            if ((variablesToRestrictTo != null && !variablesToRestrictTo.contains(name))
-                    || (variablesToExclude != null && variablesToExclude.contains(name))) {
-                continue;
-            }
-            List<FLWORSchema.ColumnBinding> bindings = this.flworSchema.getColumns(name);
-            List<FlworDataFrameColumn.ColumnFormat> formats = new ArrayList<>();
-            if (entry.getValue() != DynamicContext.VariableDependency.FULL) {
-                formats.add(FlworDataFrameColumn.ColumnFormat.valueOf(
-                        entry.getValue().name()));
-            } else {
-                formats.add(FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE);
-                formats.add(FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE);
-            }
-            formats.add(FlworDataFrameColumn.ColumnFormat.NATIVE_SEQUENCE);
-            formats.add(FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE);
-            formats.add(FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE);
-            FLWORSchema.ColumnBinding selected = null;
-            for (FlworDataFrameColumn.ColumnFormat format : formats) {
-                selected = bindings.stream()
-                        .filter(c -> c.representation() == format)
-                        .findFirst()
-                        .orElse(null);
-                if (selected != null) break;
-            }
-            if (selected == null) {
-                throw new OurBadException("No column for " + entry.getValue() + " dependency on " + name);
-            }
-            result.add(new FlworDataFrameColumn(name, selected));
-        }
-        return result;
+        List<Name> names = getVariableNames();
+        if (variablesToRestrictTo != null) names.retainAll(variablesToRestrictTo);
+        if (variablesToExclude != null) names.removeAll(variablesToExclude);
+        FLWORSchema selected = this.flworSchema.selectVariables(names);
+        if (dependencies != null) selected = selected.selectInput(dependencies);
+        return selected.getColumns();
     }
 
     public void setVariableType(Name name, SequenceType type) {

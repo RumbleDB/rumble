@@ -18,7 +18,6 @@ package org.rumbledb.runtime.flwor.clauses;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -340,38 +339,20 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         String inputDFTableName = FlworDataFrameUtils.createTempView(inputDF);
         String expressionDFTableName = FlworDataFrameUtils.createTempView(expressionDF);
 
-        // We gather the columns to select from the previous clause.
-        // We need to project away the clause's variables from the previous clause.
-        StructType inputSchema = inputDF.schema();
-        List<Name> overridenVariables = new ArrayList<>();
-        overridenVariables.add(this.variableName);
-        if (this.positionalVariableName != null) {
-            overridenVariables.add(this.positionalVariableName);
-        }
-        List<FlworDataFrameColumn> allColumns =
-                FlworDataFrameUtils.getColumns(inputSchema, this.outputTupleProjection, null, overridenVariables);
-
-        // For the new variables, we need to disambiguate.
-        allColumns.add(new FlworDataFrameColumn(
-                expressionDFTableName, this.variableName, FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE));
-        if (this.positionalVariableName != null) {
-            allColumns.add(new FlworDataFrameColumn(
-                    expressionDFTableName,
-                    this.positionalVariableName,
-                    FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE));
+        FLWORSchema retainedSchema = input.getSchema()
+                .selectInput(this.outputTupleProjection, this.variableName, this.positionalVariableName);
+        FLWORSchema expressionSchema = expression.getSchema().selectInput(this.outputTupleProjection);
+        FLWORSchema outputSchema = retainedSchema.merge(expressionSchema);
+        List<FlworDataFrameColumn> allColumns = retainedSchema.getColumns();
+        for (FlworDataFrameColumn column : allColumns) column.setTableName(inputDFTableName);
+        for (FlworDataFrameColumn column : expressionSchema.getColumns()) {
+            column.setTableName(expressionDFTableName);
+            allColumns.add(column);
         }
         String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
-
-        // And return the Cartesian product with the desired projection.
         Dataset<Row> rows = inputDF.sparkSession()
                 .sql(String.format(
                         "select %s from %s, %s", projectionVariables, inputDFTableName, expressionDFTableName));
-        FLWORSchema outputSchema =
-                input.getSchema().project(Arrays.asList(rows.schema().fieldNames()));
-        for (Name name : expression.getVariableNames()) {
-            outputSchema.replaceVariable(
-                    name, expression.getVariableType(name), FlworDataFrameUtils.getColumnBindings(name, rows.schema()));
-        }
         return new FlworDataFrame(rows, outputSchema);
     }
 
@@ -595,8 +576,9 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         if (this.positionalVariableName != null) {
             variableNamesToExclude.add(this.positionalVariableName);
         }
-        List<FlworDataFrameColumn> allColumns =
-                FlworDataFrameUtils.getColumns(inputSchema, this.outputTupleProjection, null, variableNamesToExclude);
+        List<FlworDataFrameColumn> allColumns = input.getSchema()
+                .selectInput(this.outputTupleProjection, this.variableName, this.positionalVariableName)
+                .getColumns();
 
         Dataset<Row> nativeQueryResult = null;
         if (getConfiguration().runtime().useNativeExecution()) {
@@ -686,8 +668,8 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     }
 
     private FlworDataFrame buildParallelOutput(FlworDataFrame input, Dataset<Row> rows) {
-        FLWORSchema outputSchema =
-                input.getSchema().project(Arrays.asList(rows.schema().fieldNames()));
+        FLWORSchema outputSchema = input.getSchema()
+                .selectInput(this.outputTupleProjection, this.variableName, this.positionalVariableName);
         SequenceType assignmentType =
                 this.assignmentIterator.getRuntimeStaticContext().getStaticType();
         SequenceType bindingType = assignmentType == null

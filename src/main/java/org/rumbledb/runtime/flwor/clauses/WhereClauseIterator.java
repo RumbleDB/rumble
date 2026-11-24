@@ -41,6 +41,7 @@ import org.rumbledb.runtime.EffectiveBooleanValue;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -401,7 +402,8 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
     public static FlworDataFrame tryNativeQuery(
             FlworDataFrame dataFrame, ItemRuntimePlan iterator, DynamicContext context, ExceptionMetadata metadata) {
         StructType inputSchema = dataFrame.getDataFrame().schema();
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
+        FLWORSchema outputSchema = dataFrame.getSchema();
+        List<FlworDataFrameColumn> allColumns = outputSchema.getColumns();
         String input = FlworDataFrameUtils.createTempView(dataFrame.getDataFrame());
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.WHERE, inputSchema, context);
         letContext.setView(input);
@@ -429,8 +431,7 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
                         FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
                         nativeQuery.getView(),
                         nativeQuery.getResultingQuery()));
-        return new FlworDataFrame(
-                rows, dataFrame.getSchema().project(Arrays.asList(rows.schema().fieldNames())));
+        return new FlworDataFrame(rows, outputSchema);
     }
 
     @Override

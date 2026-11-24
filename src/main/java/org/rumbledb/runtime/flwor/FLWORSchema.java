@@ -22,7 +22,9 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.*;
 
+import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -107,20 +109,78 @@ public class FLWORSchema implements Serializable {
         return schema == null ? SequenceType.createSequenceType("item*") : schema.logicalType();
     }
 
-    /** Selects existing bindings only; never infers new variables or changes their types. */
-    public FLWORSchema project(Collection<String> columns) {
+    /** Selects logical variables, retaining all their existing representations. */
+    public FLWORSchema selectVariables(Collection<Name> names) {
         FLWORSchema result = new FLWORSchema();
-        this.variables.forEach((name, variable) -> {
-            for (ColumnBinding binding : variable.columns()) {
-                if (columns.contains(binding.columnName())) {
-                    result.addColumn(name, binding);
-                }
-            }
-            if (result.variables.containsKey(name)) {
-                result.setVariableType(name, variable.logicalType());
-            }
-        });
+        for (Name name : names) {
+            VariableSchema variable = this.variables.get(name);
+            if (variable == null) throw new OurBadException("Unknown FLWOR variable: " + name);
+            result.replaceVariable(name, variable.logicalType(), variable.columns());
+        }
         return result;
+    }
+
+    /** Selects one suitable representation per required variable, in dependency order. */
+    public FLWORSchema select(Map<Name, VariableDependency> dependencies) {
+        FLWORSchema result = new FLWORSchema();
+        for (Map.Entry<Name, VariableDependency> entry : dependencies.entrySet()) {
+            Name name = entry.getKey();
+            List<ColumnFormat> formats = new ArrayList<>();
+            if (entry.getValue() == VariableDependency.FULL) {
+                formats.add(ColumnFormat.FULLY_NATIVE);
+                formats.add(ColumnFormat.SERIALIZED_SEQUENCE);
+                formats.add(ColumnFormat.NATIVE_SEQUENCE);
+            } else {
+                formats.add(ColumnFormat.valueOf(entry.getValue().name()));
+                formats.add(ColumnFormat.NATIVE_SEQUENCE);
+                formats.add(ColumnFormat.FULLY_NATIVE);
+                formats.add(ColumnFormat.SERIALIZED_SEQUENCE);
+            }
+            ColumnBinding selected = null;
+            for (ColumnFormat format : formats) {
+                selected = getColumns(name).stream()
+                        .filter(c -> c.representation() == format)
+                        .findFirst()
+                        .orElse(null);
+                if (selected != null) break;
+            }
+            if (selected == null) {
+                throw new OurBadException("No column for " + entry.getValue() + " dependency on " + name);
+            }
+            result.replaceVariable(name, getVariableType(name), List.of(selected));
+        }
+        return result;
+    }
+
+    /** Restricts requirements to the variables provided by this input, before selecting representations. */
+    public FLWORSchema selectInput(Map<Name, VariableDependency> dependencies, Name... excluded) {
+        Map<Name, VariableDependency> retained = new LinkedHashMap<>(dependencies);
+        retained.keySet().retainAll(this.variables.keySet());
+        retained.keySet().removeAll(Arrays.asList(excluded));
+        return select(retained);
+    }
+
+    /** Combines disjoint logical bindings; collisions must be renamed or replaced explicitly. */
+    public FLWORSchema merge(FLWORSchema other) {
+        FLWORSchema result = new FLWORSchema(this);
+        for (Map.Entry<Name, VariableSchema> entry : other.variables.entrySet()) {
+            if (result.variables.containsKey(entry.getKey())) {
+                throw new OurBadException("Conflicting FLWOR variable: " + entry.getKey());
+            }
+            result.replaceVariable(
+                    entry.getKey(),
+                    entry.getValue().logicalType(),
+                    entry.getValue().columns());
+        }
+        return result;
+    }
+
+    /** Columns for SQL generation come from the planned schema. */
+    public List<FlworDataFrameColumn> getColumns() {
+        List<FlworDataFrameColumn> columns = new ArrayList<>();
+        this.variables.forEach((name, variable) ->
+                variable.columns().forEach(binding -> columns.add(new FlworDataFrameColumn(name, binding))));
+        return columns;
     }
 
     /** Explicitly replaces a variable's logical type and all its physical bindings. */
