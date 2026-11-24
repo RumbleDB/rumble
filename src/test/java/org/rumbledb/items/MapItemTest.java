@@ -33,6 +33,23 @@ class MapItemTest {
     private static final ItemFactory F = ItemFactory.getInstance();
 
     @Test
+    void allCollectionRepresentationsHaveNoFunctionIdentifier() {
+        List<Item> collections = List.of(
+                F.createMapItem(F.createIntItem(1), List.of(F.createStringItem("value")), false),
+                F.createObjectItem(
+                        List.of("key"), List.of(F.createIntItem(1)), ExceptionMetadata.EMPTY_METADATA, false),
+                new LazyObjectItem(),
+                F.createArrayItem(List.of(F.createIntItem(1)), false),
+                F.createSequenceArrayItem(List.of(List.of(F.createIntItem(1), F.createIntItem(2))), false));
+        for (Item collection : collections) {
+            Assertions.assertNull(
+                    collection.getIdentifier(), collection.getClass().getSimpleName());
+        }
+        Assertions.assertThrows(
+                UnsupportedOperationException.class, () -> F.createIntItem(1).getIdentifier());
+    }
+
+    @Test
     void putKeepsEarlierVersionsAndTakesTheNewSameKey() {
         Item original = F.createMapItem(F.createIntItem(1), List.of(F.createStringItem("a")), false);
         Item updated = F.createMapItemAddingKey(

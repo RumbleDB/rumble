@@ -22,10 +22,8 @@ import lombok.extern.log4j.Log4j2;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -45,16 +43,10 @@ public class FunctionNameFunctionIterator extends AbstractAtMostOneItemRuntimePl
     }
 
     private Item evaluate(Item functionItem) {
-        if (functionItem != null && (functionItem.isMap() || functionItem.isArray())) {
+        FunctionIdentifier identifier = functionItem.getIdentifier();
+        if (identifier == null || identifier.getName() == null) {
             return null;
         }
-        if (!(functionItem instanceof FunctionItem function)) {
-            throw new UnexpectedTypeException("fn:function-name expects a function item.", getMetadata());
-        }
-        if (function.getIdentifier() == null || function.getIdentifier().getName() == null) {
-            return null;
-        }
-        Name name = function.getIdentifier().getName();
-        return ItemFactory.getInstance().createQNameItem(name);
+        return ItemFactory.getInstance().createQNameItem(identifier.getName());
     }
 }
