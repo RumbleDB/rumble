@@ -29,6 +29,11 @@ public abstract class AbstractArrayItem implements Item {
     private static final long serialVersionUID = 1L;
 
     @Override
+    public final int getFunctionArity() {
+        return 1;
+    }
+
+    @Override
     public final FunctionIdentifier getIdentifier() {
         return null;
     }

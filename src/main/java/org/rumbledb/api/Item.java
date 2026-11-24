@@ -1097,6 +1097,16 @@ public interface Item extends Serializable {
     }
 
     /**
+     * Returns the arity of a callable item. Maps and arrays have arity one.
+     *
+     * @return the number of function parameters.
+     * @throws UnsupportedOperationException if this item is not callable.
+     */
+    default int getFunctionArity() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Returns the names of the parameters of the function, if it is a function item.
      *
      * @return the function parameter names.
