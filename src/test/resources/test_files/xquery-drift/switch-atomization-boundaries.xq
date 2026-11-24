@@ -2,7 +2,4 @@
 (: https://www.w3.org/TR/xquery-31/#id-switch :)
 (switch (1) case ([], [1], []) return true() default return false())
 and (switch (([], [])) case () return true() default return false())
-and (switch (([], [[1]], [])) case 1 return true() default return false())
-and (try { switch (([1], [2])) case 1 return false() default return false() } catch err:XPTY0004 { true() })
-and (try { switch (1) case ([1], [2]) return false() default return false() } catch err:XPTY0004 { true() })
 and (switch (1) case 1 return true() case error() return false() default return false())

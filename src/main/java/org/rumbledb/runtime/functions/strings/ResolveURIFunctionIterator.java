@@ -63,7 +63,9 @@ public class ResolveURIFunctionIterator extends AbstractAtMostOneItemRuntimePlan
             throw new InvalidArgumentValueException(
                     "The base URI must be absolute, hierarchical, and have no fragment identifier.", getMetadata());
         }
-        String stringURI = uri.resolve(relativeURI).toString();
+        String stringURI = stringRelative.isEmpty()
+                ? uri.toString()
+                : uri.resolve(relativeURI).toString();
 
         return ItemFactory.getInstance().createAnyURIItem(stringURI);
     }
