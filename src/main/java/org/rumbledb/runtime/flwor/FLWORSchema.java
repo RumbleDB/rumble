@@ -41,10 +41,10 @@ public class FLWORSchema implements Serializable {
         }
 
         private boolean hasValidRepresentation() {
-            return switch (representation) {
-                case SERIALIZED_SEQUENCE -> physicalType.equals(DataTypes.BinaryType);
-                case NATIVE_SEQUENCE -> physicalType instanceof ArrayType;
-                case COUNT -> physicalType.equals(DataTypes.LongType);
+            return switch (this.representation) {
+                case SERIALIZED_SEQUENCE -> this.physicalType.equals(DataTypes.BinaryType);
+                case NATIVE_SEQUENCE -> this.physicalType instanceof ArrayType;
+                case COUNT -> this.physicalType.equals(DataTypes.LongType);
                 default -> true;
             };
         }
