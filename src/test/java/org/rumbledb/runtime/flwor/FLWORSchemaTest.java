@@ -69,7 +69,11 @@ class FLWORSchemaTest {
                 .add("y.sequence", binaryArray)
                 .add("y.count", DataTypes.LongType)
                 .add("y.sum", DataTypes.DoubleType);
-        FLWORSchema schema = FLWORSchema.inferFromSparkDataFrameSchema(physical);
+        FLWORSchema schema = new FLWORSchema();
+        schema.addColumn(name("x"), new ColumnBinding("x", ColumnFormat.FULLY_NATIVE, binaryArray));
+        schema.addColumn(name("y"), new ColumnBinding("y.sequence", ColumnFormat.NATIVE_SEQUENCE, binaryArray));
+        schema.addColumn(name("y"), new ColumnBinding("y.count", ColumnFormat.COUNT, DataTypes.LongType));
+        schema.addColumn(name("y"), new ColumnBinding("y.sum", ColumnFormat.SUM, DataTypes.DoubleType));
         assertTrue(schema.isConsistent(physical));
         assertFalse(schema.isArraysOfBytes(name("x")));
         assertNotNull(schema.getNativeType(name("x")));

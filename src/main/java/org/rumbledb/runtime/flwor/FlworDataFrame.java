@@ -51,13 +51,6 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
 
     private FLWORSchema flworSchema;
 
-    public FlworDataFrame(Dataset<Row> dataFrame) {
-        this(
-                dataFrame,
-                FLWORSchema.inferFromSparkDataFrameSchema(
-                        requireDataFrame(dataFrame).schema()));
-    }
-
     private static Dataset<Row> requireDataFrame(Dataset<Row> dataFrame) {
         if (dataFrame == null) {
             throw new OurBadException("The dataframe cannot be null!");

@@ -70,21 +70,6 @@ public class FLWORSchema implements Serializable {
         this.variables = new LinkedHashMap<>(source.variables);
     }
 
-    /** Compatibility boundary for DataFrames using the existing column naming conventions. */
-    public static FLWORSchema inferFromSparkDataFrameSchema(StructType schema) {
-        FLWORSchema result = new FLWORSchema();
-        for (StructField field : schema.fields()) {
-            FlworDataFrameColumn column = new FlworDataFrameColumn(field.name(), schema);
-            result.addColumn(
-                    column.getVariableName(),
-                    new ColumnBinding(
-                            field.name(),
-                            FlworDataFrameColumn.getColumnFormat(field.name(), schema),
-                            field.dataType()));
-        }
-        return result;
-    }
-
     public Map<Name, VariableSchema> getVariables() {
         return Collections.unmodifiableMap(new LinkedHashMap<>(this.variables));
     }

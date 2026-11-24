@@ -62,7 +62,14 @@ class FlworSchemaPropagationTest {
     }
 
     private FlworDataFrame input() {
-        FlworDataFrame frame = new FlworDataFrame(spark.range(3).selectExpr("id AS x"));
+        FLWORSchema schema = new FLWORSchema();
+        schema.addColumn(
+                X,
+                new FLWORSchema.ColumnBinding(
+                        "x",
+                        FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
+                        org.apache.spark.sql.types.DataTypes.LongType));
+        FlworDataFrame frame = new FlworDataFrame(spark.range(3).selectExpr("id AS x"), schema);
         // Spark sees a long, but the logical type is deliberately more precise.
         frame.setVariableType(X, SequenceType.createSequenceType("int"));
         return frame;
@@ -161,7 +168,21 @@ class FlworSchemaPropagationTest {
                 .configureRuntime(r -> r.useNativeExecution(nativeExecution))
                 .build();
         RuntimeStaticContext dfContext = context(config, ExecutionMode.DATAFRAME, "item*");
-        FlworDataFrame source = new FlworDataFrame(spark.sql("SELECT 1 AS x, 'a' AS y UNION ALL SELECT 1, 'b'"));
+        FLWORSchema schema = new FLWORSchema();
+        schema.addColumn(
+                X,
+                new FLWORSchema.ColumnBinding(
+                        "x",
+                        FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
+                        org.apache.spark.sql.types.DataTypes.IntegerType));
+        schema.addColumn(
+                Y,
+                new FLWORSchema.ColumnBinding(
+                        "y",
+                        FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
+                        org.apache.spark.sql.types.DataTypes.StringType));
+        FlworDataFrame source =
+                new FlworDataFrame(spark.sql("SELECT 1 AS x, 'a' AS y UNION ALL SELECT 1, 'b'"), schema);
         source.setVariableType(X, SequenceType.createSequenceType("int"));
         source.setVariableType(Y, SequenceType.createSequenceType("string"));
         GroupByClauseIterator plan = new GroupByClauseIterator(
@@ -182,7 +203,14 @@ class FlworSchemaPropagationTest {
     void joinsCarryBothInputsAndMakeOuterBindingsOptional(boolean leftOuter) {
         RumbleConfiguration config = RumbleConfiguration.defaultConfiguration();
         RuntimeStaticContext dfContext = context(config, ExecutionMode.DATAFRAME, "item*");
-        FlworDataFrame right = new FlworDataFrame(spark.sql("SELECT 'value' AS y"));
+        FLWORSchema schema = new FLWORSchema();
+        schema.addColumn(
+                Y,
+                new FLWORSchema.ColumnBinding(
+                        "y",
+                        FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
+                        org.apache.spark.sql.types.DataTypes.StringType));
+        FlworDataFrame right = new FlworDataFrame(spark.sql("SELECT 'value' AS y"), schema);
         right.setVariableType(Y, SequenceType.createSequenceType("string"));
         Name flag = Name.createVariableInNoNamespace("flag");
         FlworDataFrame left = input();
