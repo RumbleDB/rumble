@@ -120,11 +120,16 @@ public class FLWORSchema implements Serializable {
         return result;
     }
 
-    /** Selects one suitable representation per required variable, in dependency order. */
-    public FLWORSchema select(Map<Name, VariableDependency> dependencies) {
+    /**
+     * Selects one suitable representation per required variable, in dependency order.
+     * If ignoreExtraneousVariables is true, requirements for absent variables are skipped.
+     * Existing variables must always provide a suitable representation.
+     */
+    public FLWORSchema select(Map<Name, VariableDependency> dependencies, boolean ignoreExtraneousVariables) {
         FLWORSchema result = new FLWORSchema();
         for (Map.Entry<Name, VariableDependency> entry : dependencies.entrySet()) {
             Name name = entry.getKey();
+            if (ignoreExtraneousVariables && !this.variables.containsKey(name)) continue;
             List<ColumnFormat> formats = new ArrayList<>();
             if (entry.getValue() == VariableDependency.FULL) {
                 formats.add(ColumnFormat.FULLY_NATIVE);
@@ -152,14 +157,6 @@ public class FLWORSchema implements Serializable {
         return result;
     }
 
-    /** Restricts requirements to the variables provided by this input, before selecting representations. */
-    public FLWORSchema selectInput(Map<Name, VariableDependency> dependencies, Name... excluded) {
-        Map<Name, VariableDependency> retained = new LinkedHashMap<>(dependencies);
-        retained.keySet().retainAll(this.variables.keySet());
-        retained.keySet().removeAll(Arrays.asList(excluded));
-        return select(retained);
-    }
-
     /** Combines disjoint logical bindings; collisions must be renamed or replaced explicitly. */
     public FLWORSchema merge(FLWORSchema other) {
         FLWORSchema result = new FLWORSchema(this);
@@ -181,6 +178,11 @@ public class FLWORSchema implements Serializable {
         this.variables.forEach((name, variable) ->
                 variable.columns().forEach(binding -> columns.add(new FlworDataFrameColumn(name, binding))));
         return columns;
+    }
+
+    /** Removes a logical variable and all its physical bindings. Missing variables are ignored. */
+    public void removeVariable(Name name) {
+        this.variables.remove(Objects.requireNonNull(name));
     }
 
     /** Explicitly replaces a variable's logical type and all its physical bindings. */

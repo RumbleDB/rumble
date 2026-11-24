@@ -135,7 +135,9 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
             return input;
         }
 
-        FLWORSchema outputSchema = input.getSchema().selectInput(this.outputTupleProjection, this.variableName);
+        FLWORSchema outputSchema = input.getSchema();
+        outputSchema.removeVariable(this.variableName);
+        outputSchema = outputSchema.select(this.outputTupleProjection, true);
         Dataset<Row> dfWithIndex = addSerializedCountColumn(df, this.variableName, outputSchema.getColumns());
         outputSchema.replaceVariable(
                 this.variableName,

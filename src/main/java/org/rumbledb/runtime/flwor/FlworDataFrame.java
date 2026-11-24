@@ -116,7 +116,7 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
         if (variablesToRestrictTo != null) names.retainAll(variablesToRestrictTo);
         if (variablesToExclude != null) names.removeAll(variablesToExclude);
         FLWORSchema selected = this.flworSchema.selectVariables(names);
-        if (dependencies != null) selected = selected.selectInput(dependencies);
+        if (dependencies != null) selected = selected.select(dependencies, true);
         return selected.getColumns();
     }
 

@@ -339,9 +339,11 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         String inputDFTableName = FlworDataFrameUtils.createTempView(inputDF);
         String expressionDFTableName = FlworDataFrameUtils.createTempView(expressionDF);
 
-        FLWORSchema retainedSchema = input.getSchema()
-                .selectInput(this.outputTupleProjection, this.variableName, this.positionalVariableName);
-        FLWORSchema expressionSchema = expression.getSchema().selectInput(this.outputTupleProjection);
+        FLWORSchema retainedSchema = input.getSchema();
+        retainedSchema.removeVariable(this.variableName);
+        if (this.positionalVariableName != null) retainedSchema.removeVariable(this.positionalVariableName);
+        retainedSchema = retainedSchema.select(this.outputTupleProjection, true);
+        FLWORSchema expressionSchema = expression.getSchema().select(this.outputTupleProjection, true);
         FLWORSchema outputSchema = retainedSchema.merge(expressionSchema);
         List<FlworDataFrameColumn> allColumns = retainedSchema.getColumns();
         for (FlworDataFrameColumn column : allColumns) column.setTableName(inputDFTableName);
@@ -576,9 +578,11 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         if (this.positionalVariableName != null) {
             variableNamesToExclude.add(this.positionalVariableName);
         }
-        List<FlworDataFrameColumn> allColumns = input.getSchema()
-                .selectInput(this.outputTupleProjection, this.variableName, this.positionalVariableName)
-                .getColumns();
+        FLWORSchema retainedSchema = input.getSchema();
+        retainedSchema.removeVariable(this.variableName);
+        if (this.positionalVariableName != null) retainedSchema.removeVariable(this.positionalVariableName);
+        List<FlworDataFrameColumn> allColumns =
+                retainedSchema.select(this.outputTupleProjection, true).getColumns();
 
         Dataset<Row> nativeQueryResult = null;
         if (getConfiguration().runtime().useNativeExecution()) {
@@ -668,8 +672,10 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
     }
 
     private FlworDataFrame buildParallelOutput(FlworDataFrame input, Dataset<Row> rows) {
-        FLWORSchema outputSchema = input.getSchema()
-                .selectInput(this.outputTupleProjection, this.variableName, this.positionalVariableName);
+        FLWORSchema outputSchema = input.getSchema();
+        outputSchema.removeVariable(this.variableName);
+        if (this.positionalVariableName != null) outputSchema.removeVariable(this.positionalVariableName);
+        outputSchema = outputSchema.select(this.outputTupleProjection, true);
         SequenceType assignmentType =
                 this.assignmentIterator.getRuntimeStaticContext().getStaticType();
         SequenceType bindingType = assignmentType == null
