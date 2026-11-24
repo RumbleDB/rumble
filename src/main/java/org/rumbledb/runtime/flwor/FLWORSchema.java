@@ -122,44 +122,34 @@ public class FLWORSchema implements Serializable {
         return schema == null ? SequenceType.createSequenceType("item*") : schema.logicalType();
     }
 
-    /** Keeps explicit bindings for surviving columns; new/rebound columns use the naming convention. */
-    public FLWORSchema project(StructType physicalSchema, Collection<Name> reboundVariables) {
+    /** Selects existing bindings only; never infers new variables or changes their types. */
+    public FLWORSchema project(Collection<String> columns) {
         FLWORSchema result = new FLWORSchema();
-        Map<String, Name> owners = new HashMap<>();
-        Map<String, ColumnBinding> bindings = new HashMap<>();
-        this.variables.forEach((name, schema) -> schema.columns().forEach(column -> {
-            owners.put(column.columnName(), name);
-            bindings.put(column.columnName(), column);
-        }));
-        for (StructField field : physicalSchema.fields()) {
-            Name owner = owners.get(field.name());
-            if (owner != null && !reboundVariables.contains(owner)) {
-                ColumnBinding previous = bindings.get(field.name());
-                result.addColumn(owner, new ColumnBinding(field.name(), previous.representation(), field.dataType()));
-            } else {
-                FlworDataFrameColumn column = new FlworDataFrameColumn(field.name(), physicalSchema);
-                result.addColumn(
-                        column.getVariableName(),
-                        new ColumnBinding(
-                                field.name(),
-                                FlworDataFrameColumn.getColumnFormat(field.name(), physicalSchema),
-                                field.dataType()));
+        this.variables.forEach((name, variable) -> {
+            for (ColumnBinding binding : variable.columns()) {
+                if (columns.contains(binding.columnName())) {
+                    result.addColumn(name, binding);
+                }
             }
-        }
-        for (Name name : result.variables.keySet()) {
-            if (this.variables.containsKey(name) && !reboundVariables.contains(name)) {
-                result.setVariableType(name, getVariableType(name));
+            if (result.variables.containsKey(name)) {
+                result.setVariableType(name, variable.logicalType());
             }
-        }
+        });
         return result;
     }
 
-    public void inheritTypes(FLWORSchema source, Collection<Name> names) {
-        for (Name name : names) {
-            if (this.variables.containsKey(name) && source.variables.containsKey(name)) {
-                setVariableType(name, source.getVariableType(name));
-            }
+    /** Explicitly replaces a variable's logical type and all its physical bindings. */
+    public void replaceVariable(Name name, SequenceType type, List<ColumnBinding> columns) {
+        FLWORSchema replacement = new FLWORSchema(this);
+        replacement.variables.remove(name);
+        for (ColumnBinding column : columns) {
+            replacement.addColumn(name, column);
         }
+        if (!columns.isEmpty()) {
+            replacement.setVariableType(name, type);
+        }
+        this.variables.clear();
+        this.variables.putAll(replacement.variables);
     }
 
     public boolean isConsistent(Dataset<Row> frame) {

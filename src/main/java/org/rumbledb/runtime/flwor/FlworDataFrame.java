@@ -81,18 +81,6 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
         }
     }
 
-    /** Transforms rows while preserving types of retained, unmodified variables. */
-    public FlworDataFrame withDataFrame(Dataset<Row> result, Name... reboundVariables) {
-        return new FlworDataFrame(result, getSchema().project(result.schema(), Arrays.asList(reboundVariables)));
-    }
-
-    /** Adds metadata from a second input, for joins and Cartesian products. */
-    public FlworDataFrame inheritTypes(FlworDataFrame source) {
-        List<Name> variables = getVariableNames();
-        this.flworSchema.inheritTypes(source.getSchema(), variables);
-        return this;
-    }
-
     /** Returns an independent snapshot of the stored physical and logical schema. */
     public FLWORSchema getSchema() {
         return new FLWORSchema(this.flworSchema);
@@ -120,7 +108,10 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     }
 
     public FlworDataFrame sql(String sqlQuery) {
-        return withDataFrame(this.dataFrame.sparkSession().sql(sqlQuery));
+        Dataset<Row> rows = this.dataFrame.sparkSession().sql(sqlQuery);
+        FLWORSchema outputSchema =
+                getSchema().project(Arrays.asList(rows.schema().fieldNames()));
+        return new FlworDataFrame(rows, outputSchema);
     }
 
     public Dataset<Row> sqlRaw(String sqlQuery) {

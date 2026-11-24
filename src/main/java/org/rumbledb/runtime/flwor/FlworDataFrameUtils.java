@@ -86,6 +86,30 @@ public class FlworDataFrameUtils {
         return serializedBytes;
     }
 
+    /** Locates the physical columns produced for a known variable using the SQL generators' naming convention. */
+    public static List<FLWORSchema.ColumnBinding> getColumnBindings(Name variable, StructType outputSchema) {
+        List<FLWORSchema.ColumnBinding> result = new ArrayList<>();
+        if (variable == null) return result;
+        // The caller supplies the variable identity. Only locate its known physical representations.
+        for (StructField field : outputSchema.fields()) {
+            if (field.name().equals(variable.toString())) {
+                ColumnFormat format = field.dataType().equals(DataTypes.BinaryType)
+                        ? ColumnFormat.SERIALIZED_SEQUENCE
+                        : ColumnFormat.FULLY_NATIVE;
+                result.add(new FLWORSchema.ColumnBinding(field.name(), format, field.dataType()));
+            } else {
+                for (ColumnFormat format : ColumnFormat.values()) {
+                    if (format == ColumnFormat.FULLY_NATIVE || format == ColumnFormat.SERIALIZED_SEQUENCE) continue;
+                    String columnName = new FlworDataFrameColumn(variable, format).getColumnName();
+                    if (field.name().equals(columnName)) {
+                        result.add(new FLWORSchema.ColumnBinding(field.name(), format, field.dataType()));
+                    }
+                }
+            }
+        }
+        return result;
+    }
+
     /**
      * @param inputSchema schema specifies the columns to be used in the query
      * @return list of FLWOR columns in the schema

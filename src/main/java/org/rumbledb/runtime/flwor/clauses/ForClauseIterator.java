@@ -18,6 +18,7 @@ package org.rumbledb.runtime.flwor.clauses;
 import java.io.Serial;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,6 +54,7 @@ import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -278,24 +280,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
     @Override
     public FlworDataFrame createNativeDataFrame(DynamicContext context) {
-        return recordBindingTypes(createClauseDataFrame(context));
-    }
-
-    private FlworDataFrame recordBindingTypes(FlworDataFrame result) {
-        SequenceType assignmentType =
-                this.assignmentIterator.getRuntimeStaticContext().getStaticType();
-        if (result.hasVariableName(this.variableName)
-                && assignmentType != null
-                && result.getVariableType(this.variableName).equals(SequenceType.createSequenceType("item*"))) {
-            result.setVariableType(
-                    this.variableName,
-                    new SequenceType(assignmentType.getItemType(), this.allowingEmpty ? Arity.OneOrZero : Arity.One));
-        }
-        if (this.positionalVariableName != null && result.hasVariableName(this.positionalVariableName)) {
-            result.setVariableType(
-                    this.positionalVariableName, new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One));
-        }
-        return result;
+        return createClauseDataFrame(context);
     }
 
     private FlworDataFrame createClauseDataFrame(DynamicContext context) {
@@ -378,14 +363,16 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
 
         // And return the Cartesian product with the desired projection.
-        return input.withDataFrame(
-                        inputDF.sparkSession()
-                                .sql(String.format(
-                                        "select %s from %s, %s",
-                                        projectionVariables, inputDFTableName, expressionDFTableName)),
-                        this.variableName,
-                        this.positionalVariableName)
-                .inheritTypes(expression);
+        Dataset<Row> rows = inputDF.sparkSession()
+                .sql(String.format(
+                        "select %s from %s, %s", projectionVariables, inputDFTableName, expressionDFTableName));
+        FLWORSchema outputSchema =
+                input.getSchema().project(Arrays.asList(rows.schema().fieldNames()));
+        for (Name name : expression.getVariableNames()) {
+            outputSchema.replaceVariable(
+                    name, expression.getVariableType(name), FlworDataFrameUtils.getColumnBindings(name, rows.schema()));
+        }
+        return new FlworDataFrame(rows, outputSchema);
     }
 
     /**
@@ -474,11 +461,21 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             variablesInRightInputTuple.add(Name.CONTEXT_COUNT);
         }
 
+        FLWORSchema expressionSchema = new FLWORSchema();
+        for (Name name : variablesInRightInputTuple) {
+            SequenceType sequenceType =
+                    sequenceIterator.getRuntimeStaticContext().getStaticType();
+            SequenceType type = name.equals(Name.CONTEXT_ITEM)
+                    ? (sequenceType == null ? null : new SequenceType(sequenceType.getItemType(), Arity.One))
+                    : new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One);
+            expressionSchema.replaceVariable(
+                    name, type, FlworDataFrameUtils.getColumnBindings(name, expressionDF.schema()));
+        }
         FlworDataFrame input = (FlworDataFrame) this.child.getDataFrame(context);
         return JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
                 context,
                 input,
-                new FlworDataFrame(expressionDF),
+                new FlworDataFrame(expressionDF, expressionSchema),
                 this.outputTupleProjection,
                 (this.child == null || this.evaluationDepthLimit == 0)
                         ? Collections.emptyList()
@@ -558,7 +555,26 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 }
             }
         }
-        return new FlworDataFrame(df);
+        FLWORSchema outputSchema = new FLWORSchema();
+        for (Name name : this.child.getOutputTupleVariableNames()) {
+            outputSchema.replaceVariable(name, null, FlworDataFrameUtils.getColumnBindings(name, df.schema()));
+        }
+        SequenceType assignmentType =
+                this.assignmentIterator.getRuntimeStaticContext().getStaticType();
+        outputSchema.replaceVariable(
+                this.variableName,
+                assignmentType == null
+                        ? null
+                        : new SequenceType(
+                                assignmentType.getItemType(), this.allowingEmpty ? Arity.OneOrZero : Arity.One),
+                FlworDataFrameUtils.getColumnBindings(this.variableName, df.schema()));
+        if (this.positionalVariableName != null) {
+            outputSchema.replaceVariable(
+                    this.positionalVariableName,
+                    new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One),
+                    FlworDataFrameUtils.getColumnBindings(this.positionalVariableName, df.schema()));
+        }
+        return new FlworDataFrame(df, outputSchema);
     }
 
     /**
@@ -582,7 +598,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         List<FlworDataFrameColumn> allColumns =
                 FlworDataFrameUtils.getColumns(inputSchema, this.outputTupleProjection, null, variableNamesToExclude);
 
-        FlworDataFrame nativeQueryResult = null;
+        Dataset<Row> nativeQueryResult = null;
         if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(
                     df,
@@ -595,8 +611,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                     context);
         }
         if (nativeQueryResult != null) {
-            return input.withDataFrame(
-                    nativeQueryResult.getDataFrame(), this.variableName, this.positionalVariableName);
+            return buildParallelOutput(input, nativeQueryResult);
         }
 
         List<FlworDataFrameColumn> UDFcolumns;
@@ -667,7 +682,28 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                                 this.variableName));
             }
         }
-        return input.withDataFrame(df, this.variableName, this.positionalVariableName);
+        return buildParallelOutput(input, df);
+    }
+
+    private FlworDataFrame buildParallelOutput(FlworDataFrame input, Dataset<Row> rows) {
+        FLWORSchema outputSchema =
+                input.getSchema().project(Arrays.asList(rows.schema().fieldNames()));
+        SequenceType assignmentType =
+                this.assignmentIterator.getRuntimeStaticContext().getStaticType();
+        SequenceType bindingType = assignmentType == null
+                ? SequenceType.createSequenceType("item*")
+                : new SequenceType(assignmentType.getItemType(), this.allowingEmpty ? Arity.OneOrZero : Arity.One);
+        outputSchema.replaceVariable(
+                this.variableName,
+                bindingType,
+                FlworDataFrameUtils.getColumnBindings(this.variableName, rows.schema()));
+        if (this.positionalVariableName != null) {
+            outputSchema.replaceVariable(
+                    this.positionalVariableName,
+                    new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One),
+                    FlworDataFrameUtils.getColumnBindings(this.positionalVariableName, rows.schema()));
+        }
+        return new FlworDataFrame(rows, outputSchema);
     }
 
     private StructType generateSchema(FlworTuple inputTuple) {
@@ -750,37 +786,21 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             df = getDataFrameFromItemRDD(variableName, expressionRDD).getDataFrame();
         }
         if (positionalVariableName == null && !allowingEmpty) {
-            FlworDataFrame result = new FlworDataFrame(df);
-            if (sequenceType != null) {
-                result.setVariableType(variableName, sequenceType);
-            }
-            return result;
+            return startingOutput(df, variableName, null, sequenceType);
         }
         if (positionalVariableName == null && allowingEmpty) {
             String viewName = FlworDataFrameUtils.createTempView(df);
             df = df.sparkSession()
                     .sql(String.format(
                             "SELECT %s.`%s` FROM VALUES(1) FULL OUTER JOIN %s", viewName, variableName, viewName));
-            FlworDataFrame result = new FlworDataFrame(df);
-            if (sequenceType != null) {
-                result.setVariableType(variableName, sequenceType);
-            }
-            return result;
+            return startingOutput(df, variableName, null, sequenceType);
         }
         // Add column for positional variable, similar to count clause.
         Dataset<Row> dfWithIndex =
                 CountClauseIterator.addSerializedCountColumn(df, outputDependencies, positionalVariableName);
 
         if (!allowingEmpty) {
-            FlworDataFrame result = new FlworDataFrame(dfWithIndex);
-            if (result.hasVariableName(positionalVariableName)) {
-                result.setVariableType(
-                        positionalVariableName, new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One));
-            }
-            if (sequenceType != null && outputDependencies.containsKey(variableName)) {
-                result.setVariableType(variableName, sequenceType);
-            }
-            return result;
+            return startingOutput(dfWithIndex, variableName, positionalVariableName, sequenceType);
         }
         String inputWithIndex = FlworDataFrameUtils.createTempView(dfWithIndex);
         dfWithIndex
@@ -800,12 +820,19 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                         positionalVariableName,
                         positionalVariableName,
                         inputWithIndex));
-        FlworDataFrame result = new FlworDataFrame(dfWithIndex);
-        result.setVariableType(positionalVariableName, new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One));
-        if (sequenceType != null) {
-            result.setVariableType(variableName, sequenceType);
+        return startingOutput(dfWithIndex, variableName, positionalVariableName, sequenceType);
+    }
+
+    private static FlworDataFrame startingOutput(Dataset<Row> rows, Name variable, Name position, SequenceType type) {
+        FLWORSchema outputSchema = new FLWORSchema();
+        outputSchema.replaceVariable(variable, type, FlworDataFrameUtils.getColumnBindings(variable, rows.schema()));
+        if (position != null) {
+            outputSchema.replaceVariable(
+                    position,
+                    new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One),
+                    FlworDataFrameUtils.getColumnBindings(position, rows.schema()));
         }
-        return result;
+        return new FlworDataFrame(rows, outputSchema);
     }
 
     private static FlworDataFrame getDataFrameFromItemRDD(Name variableName, JavaRDD<Item> expressionRDD) {
@@ -817,8 +844,9 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         JavaRDD<Row> rowRDD = expressionRDD.map(new ItemsToBinaryColumn());
 
         // apply the schema to row RDD
-        return new FlworDataFrame(
-                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema));
+        Dataset<Row> rows =
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+        return startingOutput(rows, variableName, null, null);
     }
 
     @Override
@@ -921,7 +949,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the for clause if successful, null otherwise
      */
-    public static FlworDataFrame tryNativeQuery(
+    public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
             Name newVariableName,
             Name positionalVariableName,
@@ -985,7 +1013,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
                     // to return the correct number of empty results we perform a left join between input and
                     // lateral
-                    return new FlworDataFrame(dataFrame
+                    return dataFrame
                             .sparkSession()
                             .sql(String.format(
                                     "select %s %s.`%s` from %s left join %s on %s.`%s` = %s.`%s`",
@@ -997,7 +1025,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                                     viewName2,
                                     rowIdField,
                                     lateralViewName,
-                                    rowIdField)));
+                                    rowIdField));
                 }
             } else {
                 List<String> lateralViewPart = nativeQuery.getLateralViewPart();
@@ -1008,11 +1036,11 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                         nativeQuery.setResultingQuery("explode(" + nativeQuery.getResultingQuery() + ")");
                     }
                     // no array unboxing in the operation
-                    return new FlworDataFrame(dataFrame
+                    return dataFrame
                             .sparkSession()
                             .sql(String.format(
                                     "select %s %s as `%s` from %s",
-                                    selectSQL, nativeQuery.getResultingQuery(), newVariableName, viewName)));
+                                    selectSQL, nativeQuery.getResultingQuery(), newVariableName, viewName));
                 } else {
                     // we have at least an array unboxing operation
                     // col is the default name of explode
@@ -1025,7 +1053,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                         lateralViewString.append(" arr");
                         lateralViewString.append(arrIndex);
                     }
-                    return new FlworDataFrame(dataFrame
+                    return dataFrame
                             .sparkSession()
                             .sql(String.format(
                                     "select %s arr%d.col%s as `%s` from %s %s",
@@ -1034,7 +1062,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                                     nativeQuery.getResultingQuery(),
                                     newVariableName,
                                     viewName,
-                                    lateralViewString)));
+                                    lateralViewString));
                 }
             }
         } else {
@@ -1048,7 +1076,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 // if the resulting query is a sequence, use explode
                 if (SequenceType.Arity.OneOrMore.isSubtypeOf(
                         nativeQuery.getResultingType().getArity())) {
-                    return new FlworDataFrame(dataFrame
+                    return dataFrame
                             .sparkSession()
                             .sql(String.format(
                                     "select %s explodedsequence.col as `%s`, explodedsequence.pos + 1 as `%s` from %s lateral view posexplode(%s) explodedsequence",
@@ -1056,11 +1084,11 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                                     newVariableName,
                                     positionalVariableName,
                                     viewName,
-                                    nativeQuery.getResultingQuery())));
+                                    nativeQuery.getResultingQuery()));
                 }
                 // no array unboxing in the operation
                 // therefore position is for sure 1
-                return new FlworDataFrame(dataFrame
+                return dataFrame
                         .sparkSession()
                         .sql(String.format(
                                 "select %s %s as `%s`, 1 as `%s` from %s",
@@ -1068,7 +1096,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                                 nativeQuery.getResultingQuery(),
                                 newVariableName,
                                 positionalVariableName,
-                                viewName)));
+                                viewName));
             } else {
                 // we have at least an array unboxing operation
                 // pos, col are the default name of posexplode function
@@ -1130,21 +1158,21 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                     String viewName4 = FlworDataFrameUtils.createTempView(dataFrame);
 
                     // we use a lateral view to handle proper counting and NULL handling
-                    return new FlworDataFrame(dataFrame
+                    return dataFrame
                             .sparkSession()
                             .sql(String.format(
                                     "select %s IF(exploded.pos IS NULL, 0, exploded.pos + 1) as `%s`, exploded.col as `%s`  from %s lateral view outer posexplode(grouped) exploded",
-                                    selectSQL, positionalVariableName, newVariableName, viewName4)));
+                                    selectSQL, positionalVariableName, newVariableName, viewName4));
                 } else {
                     // register previously created table
                     String viewName3 = FlworDataFrameUtils.createTempView(dataFrame);
 
                     // finally we unwrap it with a single posexplode
-                    return new FlworDataFrame(dataFrame
+                    return dataFrame
                             .sparkSession()
                             .sql(String.format(
                                     "select %s (exploded.pos + 1) as `%s`, exploded.col as `%s`  from %s lateral view posexplode(grouped) exploded",
-                                    selectSQL, positionalVariableName, newVariableName, viewName3)));
+                                    selectSQL, positionalVariableName, newVariableName, viewName3));
                 }
             }
         }

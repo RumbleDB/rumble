@@ -90,7 +90,7 @@ class FLWORSchemaTest {
         schema.addColumn(x, new ColumnBinding("payload", ColumnFormat.FULLY_NATIVE, DataTypes.IntegerType));
         schema.addColumn(x, new ColumnBinding("size", ColumnFormat.COUNT, DataTypes.LongType));
         schema.setVariableType(x, SequenceType.createSequenceType("int"));
-        FLWORSchema projected = schema.project(new StructType().add("payload", DataTypes.IntegerType), List.of());
+        FLWORSchema projected = schema.project(List.of("payload"));
         assertEquals(
                 List.of("payload"),
                 projected.getColumns(x).stream().map(ColumnBinding::columnName).toList());
@@ -103,8 +103,48 @@ class FLWORSchemaTest {
                 UnsupportedOperationException.class, () -> copy.getColumns(x).clear());
         assertThrows(
                 UnsupportedOperationException.class, () -> copy.getVariables().clear());
-        assertTrue(schema.project(new StructType(), List.of()).getVariables().isEmpty());
-        FLWORSchema rebound = schema.project(new StructType().add("x", DataTypes.StringType), List.of(x));
-        assertEquals(SequenceType.createSequenceType("item*"), rebound.getVariableType(x));
+        assertTrue(schema.project(List.of()).getVariables().isEmpty());
+        FLWORSchema replacement = new FLWORSchema(schema);
+        replacement.replaceVariable(
+                x,
+                SequenceType.createSequenceType("string"),
+                List.of(new ColumnBinding("new_payload", ColumnFormat.FULLY_NATIVE, DataTypes.StringType)));
+        assertEquals(SequenceType.createSequenceType("string"), replacement.getVariableType(x));
+        assertEquals(
+                List.of("new_payload"),
+                replacement.getColumns(x).stream()
+                        .map(ColumnBinding::columnName)
+                        .toList());
+        assertEquals(2, schema.getColumns(x).size());
+        assertTrue(schema.project(List.of("unknown")).getVariables().isEmpty());
+    }
+
+    @Test
+    void explicitReplacementRetainsExpandedNamesAndIsAtomicOnConflicts() {
+        Name variable = new Name("urn:test", "p", "customer.name");
+        StructType physical = new StructType()
+                .add("p:customer.name", DataTypes.StringType)
+                .add("p:customer.name.count", DataTypes.LongType);
+        FLWORSchema schema = new FLWORSchema();
+        schema.replaceVariable(
+                variable,
+                SequenceType.createSequenceType("string"),
+                FlworDataFrameUtils.getColumnBindings(variable, physical));
+        assertEquals(List.of(variable), List.copyOf(schema.getVariables().keySet()));
+        assertEquals(2, schema.getColumns(variable).size());
+        assertTrue(schema.isConsistent(physical));
+        assertEquals(
+                SequenceType.createSequenceType("string"),
+                schema.project(List.of("p:customer.name")).getVariableType(variable));
+        Name other = name("other");
+        schema.addColumn(other, new ColumnBinding("other", ColumnFormat.FULLY_NATIVE, DataTypes.IntegerType));
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> schema.replaceVariable(
+                        variable,
+                        SequenceType.createSequenceType("int"),
+                        List.of(new ColumnBinding("other", ColumnFormat.FULLY_NATIVE, DataTypes.IntegerType))));
+        assertEquals(2, schema.getColumns(variable).size());
+        assertEquals(SequenceType.createSequenceType("string"), schema.getVariableType(variable));
     }
 }

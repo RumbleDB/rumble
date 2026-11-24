@@ -186,7 +186,15 @@ class FlworSchemaPropagationTest {
         right.setVariableType(Y, SequenceType.createSequenceType("string"));
         Name flag = Name.createVariableInNoNamespace("flag");
         FlworDataFrame left = input();
-        left = left.withDataFrame(left.getDataFrame().selectExpr("*", "true AS flag"));
+        FLWORSchema withFlag = left.getSchema();
+        withFlag.replaceVariable(
+                flag,
+                SequenceType.createSequenceType("boolean"),
+                List.of(new FLWORSchema.ColumnBinding(
+                        "flag",
+                        FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
+                        org.apache.spark.sql.types.DataTypes.BooleanType)));
+        left = new FlworDataFrame(left.getDataFrame().selectExpr("*", "true AS flag"), withFlag);
         FlworDataFrame result = JoinClauseIterator.joinInputTupleWithSequenceOnPredicate(
                 new DynamicContext(config),
                 left,
@@ -209,7 +217,15 @@ class FlworSchemaPropagationTest {
         RumbleConfiguration config = RumbleConfiguration.defaultConfiguration();
         Name flag = Name.createVariableInNoNamespace("flag");
         FlworDataFrame source = input();
-        source = source.withDataFrame(source.getDataFrame().selectExpr("*", "true AS flag"));
+        FLWORSchema withFlag = source.getSchema();
+        withFlag.replaceVariable(
+                flag,
+                SequenceType.createSequenceType("boolean"),
+                List.of(new FLWORSchema.ColumnBinding(
+                        "flag",
+                        FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
+                        org.apache.spark.sql.types.DataTypes.BooleanType)));
+        source = new FlworDataFrame(source.getDataFrame().selectExpr("*", "true AS flag"), withFlag);
         FlworDataFrame result = WhereClauseIterator.tryNativeQuery(
                 source,
                 new VariableReferenceIterator(flag, context(config, ExecutionMode.LOCAL, "boolean")),
@@ -250,11 +266,25 @@ class FlworSchemaPropagationTest {
         assertEquals(SequenceType.createSequenceType("int"), source.getVariableType(X));
         FlworDataFrame filtered = source.sql("SELECT * FROM " + source.createTempView() + " WHERE x > 0");
         assertEquals(SequenceType.createSequenceType("int"), filtered.getVariableType(X));
-        FlworDataFrame rebound = source.withDataFrame(spark.sql("SELECT 'replacement' AS x"), X);
-        assertEquals(SequenceType.createSequenceType("item*"), rebound.getVariableType(X));
-        FlworDataFrame projected = source.withDataFrame(source.getDataFrame().selectExpr("x AS y"));
-        assertFalse(projected.hasVariableName(X));
-        assertEquals(SequenceType.createSequenceType("item*"), projected.getVariableType(Y));
+        FLWORSchema replacement = source.getSchema();
+        replacement.replaceVariable(
+                X,
+                SequenceType.createSequenceType("string"),
+                List.of(new FLWORSchema.ColumnBinding(
+                        "x",
+                        FlworDataFrameColumn.ColumnFormat.FULLY_NATIVE,
+                        org.apache.spark.sql.types.DataTypes.StringType)));
+        FlworDataFrame rebound = new FlworDataFrame(spark.sql("SELECT 'replacement' AS x"), replacement);
+        assertEquals(SequenceType.createSequenceType("string"), rebound.getVariableType(X));
+        assertEquals(SequenceType.createSequenceType("int"), source.getVariableType(X));
+        assertThrows(
+                org.rumbledb.exceptions.OurBadException.class,
+                () -> new FlworDataFrame(spark.sql("SELECT 'replacement' AS x"), source.getSchema()));
+        assertThrows(
+                org.rumbledb.exceptions.OurBadException.class,
+                () -> new FlworDataFrame(
+                        source.getDataFrame().selectExpr("x AS y"),
+                        source.getSchema().project(List.of("y"))));
     }
 
     @Test
@@ -287,12 +317,59 @@ class FlworSchemaPropagationTest {
                         .get(0)
                         .getColumnName());
         assertTrue(frame.getColumns(null, null, List.of(X)).isEmpty());
-        FlworDataFrame projected = frame.withDataFrame(frame.getDataFrame().select("value_column"));
+        FlworDataFrame projected = new FlworDataFrame(
+                frame.getDataFrame().select("value_column"), frame.getSchema().project(List.of("value_column")));
         assertEquals(List.of(X), projected.getVariableNames());
         assertEquals(SequenceType.createSequenceType("int"), projected.getVariableType(X));
         assertEquals("`value_column`", projected.getColumns().get(0).toString());
         assertTrue(projected.isConsistent());
         assertEquals(7, projected.getDataFrame().first().getInt(0));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void forReplacementBuildsANewBindingBeforeWrappingRows(boolean nativeExecution) {
+        RumbleConfiguration config = RumbleConfiguration.builder()
+                .configureRuntime(r -> r.useNativeExecution(nativeExecution))
+                .build();
+        RuntimeStaticContext dfContext = context(config, ExecutionMode.DATAFRAME, "item*");
+        FlworDataFrame source = input();
+        ForClauseIterator plan = new ForClauseIterator(
+                new Source(source, dfContext),
+                X,
+                null,
+                false,
+                new ConstantRuntimeIterator(
+                        ItemFactory.getInstance().createStringItem("replacement"),
+                        context(config, ExecutionMode.LOCAL, "string")),
+                dfContext);
+        plan.setInputAndOutputTupleVariableDependencies(
+                new HashMap<>(Map.of(X, DynamicContext.VariableDependency.FULL)));
+        FlworDataFrame result = (FlworDataFrame) plan.getDataFrame(new DynamicContext(config));
+        assertEquals(SequenceType.createSequenceType("string"), result.getVariableType(X));
+        assertEquals(SequenceType.createSequenceType("int"), source.getVariableType(X));
+        assertTrue(result.isConsistent());
+        assertEquals(3, result.getDataFrame().count());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    void groupingWithNoOutputVariablesKeepsGroupCount(boolean nativeExecution) {
+        RumbleConfiguration config = RumbleConfiguration.builder()
+                .configureRuntime(r -> r.useNativeExecution(nativeExecution))
+                .build();
+        RuntimeStaticContext dfContext = context(config, ExecutionMode.DATAFRAME, "item*");
+        GroupByClauseIterator plan = new GroupByClauseIterator(
+                new Source(input(), dfContext),
+                List.of(new GroupByClauseSparkIteratorExpression(
+                        null, X, CollationCatalogue.CODEPOINT_COLLATION, null)),
+                dfContext);
+        plan.setInputAndOutputTupleVariableDependencies(new HashMap<>());
+        FlworDataFrame result = (FlworDataFrame) plan.getDataFrame(new DynamicContext(config));
+        assertTrue(result.getVariableNames().isEmpty());
+        assertEquals(0, result.getDataFrame().schema().fields().length);
+        assertTrue(result.isConsistent());
+        assertEquals(3, result.getDataFrame().count());
     }
 
     private static final class Source extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {

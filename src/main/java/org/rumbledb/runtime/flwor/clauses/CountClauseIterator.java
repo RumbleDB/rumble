@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.flwor.clauses;
 
 import java.io.Serial;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -40,6 +41,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -135,10 +137,13 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
         }
 
         Dataset<Row> dfWithIndex = addSerializedCountColumn(df, this.outputTupleProjection, this.variableName);
-        FlworDataFrame result = input.withDataFrame(dfWithIndex, this.variableName);
-        result.setVariableType(
-                this.variableName, new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.One));
-        return result;
+        FLWORSchema outputSchema =
+                input.getSchema().project(Arrays.asList(dfWithIndex.schema().fieldNames()));
+        outputSchema.replaceVariable(
+                this.variableName,
+                new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.One),
+                FlworDataFrameUtils.getColumnBindings(this.variableName, dfWithIndex.schema()));
+        return new FlworDataFrame(dfWithIndex, outputSchema);
     }
 
     // This method, which implements count semantics, is also intended for use by other clauses (e.g., for clause with

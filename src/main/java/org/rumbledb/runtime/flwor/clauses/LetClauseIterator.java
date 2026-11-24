@@ -41,6 +41,7 @@ import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
@@ -233,13 +234,15 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                     false,
                     getConfiguration());
 
-            FlworDataFrame output = df.withDataFrame(result, this.variableName);
-            output.setVariableType(
+            FLWORSchema outputSchema =
+                    df.getSchema().project(Arrays.asList(result.schema().fieldNames()));
+            outputSchema.replaceVariable(
                     this.variableName,
                     this.sequenceType != null
                             ? this.sequenceType
-                            : this.assignmentIterator.getRuntimeStaticContext().getStaticType());
-            return output;
+                            : this.assignmentIterator.getRuntimeStaticContext().getStaticType(),
+                    FlworDataFrameUtils.getColumnBindings(this.variableName, result.schema()));
+            return new FlworDataFrame(result, outputSchema);
         }
         throw new RuntimeException(
                 "Unexpected program state reached. Initial let clauses are always locally executed.");
@@ -417,13 +420,15 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 false,
                 getConfiguration());
 
-        FlworDataFrame output = childDF.withDataFrame(inputDF, this.variableName);
-        output.setVariableType(
+        FLWORSchema outputSchema =
+                childDF.getSchema().project(Arrays.asList(inputDF.schema().fieldNames()));
+        outputSchema.replaceVariable(
                 this.variableName,
                 this.sequenceType != null
                         ? this.sequenceType
-                        : this.assignmentIterator.getRuntimeStaticContext().getStaticType());
-        return output;
+                        : this.assignmentIterator.getRuntimeStaticContext().getStaticType(),
+                FlworDataFrameUtils.getColumnBindings(this.variableName, inputDF.schema()));
+        return new FlworDataFrame(inputDF, outputSchema);
     }
 
     private ItemRuntimePlan getJoinKeyExpression(List<ItemRuntimePlan> equalityCriteria, ExceptionMetadata metadata) {

@@ -17,6 +17,7 @@ package org.rumbledb.runtime.flwor.clauses;
 
 import java.io.Serial;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,6 +54,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
@@ -346,12 +348,13 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                         null,
                         false,
                         getConfiguration());
-                inputFrame = inputFrame.withDataFrame(df, expression.getVariableName());
-                SequenceType keyType =
-                        expression.getExpression().getRuntimeStaticContext().getStaticType();
-                if (keyType != null) {
-                    inputFrame.setVariableType(expression.getVariableName(), keyType);
-                }
+                FLWORSchema outputSchema =
+                        inputFrame.getSchema().project(Arrays.asList(df.schema().fieldNames()));
+                outputSchema.replaceVariable(
+                        expression.getVariableName(),
+                        expression.getExpression().getRuntimeStaticContext().getStaticType(),
+                        FlworDataFrameUtils.getColumnBindings(expression.getVariableName(), df.schema()));
+                inputFrame = new FlworDataFrame(df, outputSchema);
 
             } else {
                 if (!FlworDataFrameUtils.hasColumnForVariable(inputSchema, expression.getVariableName())) {
@@ -450,14 +453,19 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
     }
 
     private FlworDataFrame groupedDataFrame(FlworDataFrame input, Dataset<Row> rows, List<Name> keys) {
-        FlworDataFrame result = input.withDataFrame(rows);
-        for (Name name : result.getVariableNames()) {
-            if (!keys.contains(name)) {
-                SequenceType type = result.getVariableType(name);
-                result.setVariableType(name, new SequenceType(type.getItemType(), SequenceType.Arity.ZeroOrMore));
-            }
+        if (this.outputTupleProjection.isEmpty()) {
+            // SQL needs a placeholder expression; the FLWOR output is an empty tuple per group.
+            return new FlworDataFrame(rows.select(new org.apache.spark.sql.Column[0]), new FLWORSchema());
         }
-        return result;
+        FLWORSchema outputSchema = new FLWORSchema();
+        for (Name name : input.getVariableNames()) {
+            SequenceType type = input.getVariableType(name);
+            if (!keys.contains(name)) {
+                type = new SequenceType(type.getItemType(), SequenceType.Arity.ZeroOrMore);
+            }
+            outputSchema.replaceVariable(name, type, FlworDataFrameUtils.getColumnBindings(name, rows.schema()));
+        }
+        return new FlworDataFrame(rows, outputSchema);
     }
 
     @Override
@@ -633,6 +641,9 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
             selectString.append(columnName);
             selectString.append(") as ");
             selectString.append(dfColumnSequence);
+        }
+        if (selectString.length() == 0) {
+            selectString.append("TRUE");
         }
         log.info("Rumble was able to optimize a group by clause to a native SQL query.");
         return dataFrame

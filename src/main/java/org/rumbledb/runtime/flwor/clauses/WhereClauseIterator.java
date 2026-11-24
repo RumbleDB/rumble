@@ -18,6 +18,8 @@ package org.rumbledb.runtime.flwor.clauses;
 import java.io.Serial;
 import java.util.*;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 
@@ -192,7 +194,9 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
         String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
         String input = df.createTempView();
-        return df.sql(String.format("select * from %s where whereClauseUDF(%s) = 'true'", input, UDFParameters));
+        Dataset<Row> rows =
+                df.sqlRaw(String.format("select * from %s where whereClauseUDF(%s) = 'true'", input, UDFParameters));
+        return new FlworDataFrame(rows, df.getSchema());
     }
 
     private FlworDataFrame getDataFrameIfLimit(DynamicContext context) {
@@ -232,7 +236,8 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
         log.info("Rumble detected a LIMIT in a count and where clause.");
         FlworDataFrame df = (FlworDataFrame) this.child.getChildIterator().getDataFrame(context);
         String input = df.createTempView();
-        return df.sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
+        Dataset<Row> rows = df.sqlRaw(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
+        return new FlworDataFrame(rows, df.getSchema());
     }
 
     private FlworDataFrame getDataFrameIfJoinPossible(DynamicContext context) {
@@ -416,14 +421,16 @@ public class WhereClauseIterator extends TupleRuntimePlan implements DataFrameRu
                         FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
                         nativeQuery.getView(),
                         nativeQuery.getResultingQuery()));
-        return dataFrame.withDataFrame(dataFrame
+        Dataset<Row> rows = dataFrame
                 .getDataFrame()
                 .sparkSession()
                 .sql(String.format(
                         "select %s from (%s) where %s",
                         FlworDataFrameUtils.getSQLColumnProjection(allColumns, false),
                         nativeQuery.getView(),
-                        nativeQuery.getResultingQuery())));
+                        nativeQuery.getResultingQuery()));
+        return new FlworDataFrame(
+                rows, dataFrame.getSchema().project(Arrays.asList(rows.schema().fieldNames())));
     }
 
     @Override
