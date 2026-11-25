@@ -96,7 +96,7 @@ public class CountFunctionIterator extends AbstractAtMostOneItemRuntimePlan impl
     }
 
     private static Item computeRDD(ItemRuntimePlan iterator, DynamicContext context) {
-        long count = iterator.getRDD(context).count();
+        long count = iterator.getItemDataFrame(context).count();
         return ItemFactory.getInstance().createLongItem(count);
     }
 

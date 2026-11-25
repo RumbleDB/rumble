@@ -20,17 +20,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.parsing.StringToStringItemMapper;
+import org.rumbledb.runtime.dataframe.SerializedItemDataFrame;
+import org.rumbledb.runtime.plan.ItemDataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
-import org.rumbledb.runtime.plan.RDDRuntimePlan;
 import org.rumbledb.spark.SparkSessionManager;
 
-public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implements RDDRuntimePlan<Item> {
+public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implements ItemDataFrameRuntimePlan {
 
     @Serial
     private static final long serialVersionUID = 1L;
@@ -42,11 +44,12 @@ public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implement
     }
 
     @Override
-    public JavaRDD<Item> createNativeRDD(DynamicContext context) {
+    public Dataset<Row> createNativeItemDataFrame(DynamicContext context) {
         ItemRuntimePlan hrefIterator = this.getChild(0);
         Item hrefItem = hrefIterator.materializeFirstOrNull(context);
         if (hrefItem == null) {
-            return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
+            return SerializedItemDataFrame.fromRDD(
+                    SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD());
         }
         String encoding = null;
         if (this.getChildren().size() == 2) {
@@ -72,9 +75,9 @@ public class UnparsedTextLinesFunctionIterator extends ItemRuntimePlan implement
             lines.add(split[i]);
         }
 
-        return SparkSessionManager.getInstance()
+        return SerializedItemDataFrame.fromRDD(SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .parallelize(lines)
-                .mapPartitions(new StringToStringItemMapper());
+                .mapPartitions(new StringToStringItemMapper()));
     }
 }

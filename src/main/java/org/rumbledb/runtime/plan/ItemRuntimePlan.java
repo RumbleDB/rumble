@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+
 import lombok.NonNull;
 
 import org.rumbledb.api.Item;
@@ -28,6 +31,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.dataframe.SerializedItemDataFrame;
 import org.rumbledb.types.SequenceType;
 
 /**
@@ -52,6 +56,15 @@ public abstract class ItemRuntimePlan extends RuntimePlan<Item> {
 
     protected final List<ItemRuntimePlan> getChildren() {
         return this.children;
+    }
+
+    /** Returns an item-preserving DataFrame, executing the selected representation once. */
+    public final Dataset<Row> getItemDataFrame(DynamicContext context) {
+        if (this instanceof ItemDataFrameRuntimePlan capability
+                && this.staticContext.getExecutionMode().isRDDOrDataFrame()) {
+            return capability.createNativeItemDataFrame(context);
+        }
+        return SerializedItemDataFrame.fromRDD(getRDD(context));
     }
 
     public final SequenceType getStaticType() {
