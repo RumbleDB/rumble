@@ -138,6 +138,8 @@ jobs:
           "XQueryTests",
           "DeltaUpdateRuntimeTests",
           "IcebergUpdateRuntimeTests",
+          "HudiUpdateRuntimeTests",
+          "HudiStaticTypingTests",
           "org.rumbledb.**.*Test"
         ]
     steps:

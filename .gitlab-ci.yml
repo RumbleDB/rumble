@@ -151,6 +151,28 @@ IcebergUpdateRuntimeTests:
     reports:
       junit: target/surefire-reports/TEST-iq.IcebergUpdateRuntimeTests.xml
 
+HudiUpdateRuntimeTests:
+  stage: tests
+  script:
+    - mvn -Dtest=HudiUpdateRuntimeTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.HudiUpdateRuntimeTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.HudiUpdateRuntimeTests.xml
+
+HudiStaticTypingTests:
+  stage: tests
+  script:
+    - mvn -Dtest=HudiStaticTypingTests test
+  artifacts:
+    when: always
+    paths:
+      - target/surefire-reports/TEST-iq.HudiStaticTypingTests.xml
+    reports:
+      junit: target/surefire-reports/TEST-iq.HudiStaticTypingTests.xml
+
 NativeFLWORRuntimeTests:
   stage: tests
   script:
