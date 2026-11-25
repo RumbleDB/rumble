@@ -772,47 +772,43 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             df = getDataFrameFromItemRDD(variableName, expressionRDD).getDataFrame();
         }
         if (positionalVariableName == null && !allowingEmpty) {
-            return startingOutput(df, variableName, null, sequenceType);
+            return startingOutput(df, variableName, sequenceType);
         }
         if (positionalVariableName == null && allowingEmpty) {
             String viewName = FlworDataFrameUtils.createTempView(df);
             df = df.sparkSession()
                     .sql(String.format(
                             "SELECT %s.`%s` FROM VALUES(1) FULL OUTER JOIN %s", viewName, variableName, viewName));
-            return startingOutput(df, variableName, null, sequenceType);
+            return startingOutput(df, variableName, sequenceType);
         }
-        // Add column for positional variable, similar to count clause.
-        Dataset<Row> dfWithIndex =
-                CountClauseIterator.addSerializedCountColumn(df, outputDependencies, positionalVariableName);
+        // Keep the item binding alongside its new positional binding.
+        VariableDependency itemDependency = outputDependencies == null
+                ? VariableDependency.FULL
+                : outputDependencies.getOrDefault(variableName, VariableDependency.FULL);
+        FlworDataFrame dfWithIndex = CountClauseIterator.addSerializedCountColumn(
+                startingOutput(df, variableName, sequenceType),
+                Map.of(variableName, itemDependency),
+                positionalVariableName);
 
         if (!allowingEmpty) {
-            return startingOutput(dfWithIndex, variableName, positionalVariableName, sequenceType);
+            return dfWithIndex;
         }
-        String inputWithIndex = FlworDataFrameUtils.createTempView(dfWithIndex);
-        dfWithIndex = dfWithIndex
-                .sparkSession()
-                .sql(String.format(
-                        "SELECT %s.`%s`, IF(%s.`%s` IS NULL, 0, %s.`%s`) AS `%s` FROM VALUES(1) FULL OUTER JOIN %s",
-                        inputWithIndex,
-                        variableName,
-                        inputWithIndex,
-                        positionalVariableName,
-                        inputWithIndex,
-                        positionalVariableName,
-                        positionalVariableName,
-                        inputWithIndex));
-        return startingOutput(dfWithIndex, variableName, positionalVariableName, sequenceType);
+        String inputWithIndex = dfWithIndex.createTempView();
+        return dfWithIndex.sql(String.format(
+                "SELECT %s.`%s`, IF(%s.`%s` IS NULL, 0, %s.`%s`) AS `%s` FROM VALUES(1) FULL OUTER JOIN %s",
+                inputWithIndex,
+                variableName,
+                inputWithIndex,
+                positionalVariableName,
+                inputWithIndex,
+                positionalVariableName,
+                positionalVariableName,
+                inputWithIndex));
     }
 
-    private static FlworDataFrame startingOutput(Dataset<Row> rows, Name variable, Name position, SequenceType type) {
+    private static FlworDataFrame startingOutput(Dataset<Row> rows, Name variable, SequenceType type) {
         FLWORSchema outputSchema = new FLWORSchema();
         outputSchema.replaceVariable(variable, type, FlworDataFrameUtils.getColumnBindings(variable, rows.schema()));
-        if (position != null) {
-            outputSchema.replaceVariable(
-                    position,
-                    new SequenceType(BuiltinTypesCatalogue.longItem, Arity.One),
-                    FlworDataFrameUtils.getColumnBindings(position, rows.schema()));
-        }
         return new FlworDataFrame(rows, outputSchema);
     }
 
@@ -827,7 +823,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         // apply the schema to row RDD
         Dataset<Row> rows =
                 SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
-        return startingOutput(rows, variableName, null, null);
+        return startingOutput(rows, variableName, null);
     }
 
     @Override
