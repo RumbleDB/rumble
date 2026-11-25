@@ -166,8 +166,8 @@ class FLWORSchemaTest {
                         new ColumnBinding("arbitrary_total", ColumnFormat.COUNT, DataTypes.LongType)));
         var full =
                 schema.project(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL), false);
-        var count =
-                schema.project(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.COUNT), false);
+        var count = schema.project(
+                java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.COUNT), false);
         assertEquals("arbitrary_payload", full.getColumns().get(0).getColumnName());
         assertEquals("arbitrary_total", count.getColumns().get(0).getColumnName());
         assertEquals(SequenceType.createSequenceType("int*"), count.getVariableType(x));
