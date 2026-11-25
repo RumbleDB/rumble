@@ -18,9 +18,11 @@ package iq;
 import java.io.File;
 
 import org.apache.spark.SparkConf;
+import org.junit.jupiter.api.Disabled;
 
 import iq.base.UpdateRuntimeTestsBase;
 
+@Disabled("Re-enable when a Delta release supports Spark 4.3.")
 public class DeltaUpdateRuntimeTests extends UpdateRuntimeTestsBase {
 
     public static final File runtimeTestsDirectory =
