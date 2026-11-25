@@ -26,6 +26,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.InvalidProcessingInstructionContentException;
 import org.rumbledb.exceptions.InvalidProcessingInstructionTargetException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.functions.sequences.general.DataFunctionIterator;
 
@@ -85,15 +86,9 @@ public class DirPIConstructorRuntimeIterator extends AbstractAtMostOneItemRuntim
         // string. The resulting string then becomes the content property of the constructed processing instruction
         // node."
         String content = String.join(" ", stringValues);
-        content = removeLeadingWhitespace(content);
-        return ItemFactory.getInstance().createXmlProcessingInstructionNode(this.target, content);
-    }
-
-    private String removeLeadingWhitespace(String value) {
-        int index = 0;
-        while (index < value.length() && Character.isWhitespace(value.charAt(index))) {
-            index++;
-        }
-        return value.substring(index);
+        content = content.replaceFirst("^[ \\t\\r\\n]+", "");
+        Item node = ItemFactory.getInstance().createXmlProcessingInstructionNode(this.target, content);
+        node.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
+        return node;
     }
 }

@@ -58,7 +58,7 @@ public class DateTimeFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         OffsetTime timeDt = timeItem.getTimeValue();
 
         if (dateItem.hasTimeZone() && timeItem.hasTimeZone()) {
-            if (dateDt.getOffset() == timeDt.getOffset()) {
+            if (dateDt.getOffset().equals(timeDt.getOffset())) {
                 dt = OffsetDateTime.of(dateDt.toLocalDate(), timeDt.toLocalTime(), dateDt.getOffset());
                 return ItemFactory.getInstance().createDateTimeItem(dt, true);
             } else {

@@ -51,7 +51,7 @@ public class ResolveQNameFunctionIterator extends AbstractAtMostOneItemRuntimePl
 
         NamespaceBindingUtils.NamespaceResolver resolver = prefix -> resolvePrefix(element, prefix);
         Name resolved = NamespaceBindingUtils.parseLexicalQNameForResolveQName(
-                qnameItem.getStringValue(), resolver, getMetadata());
+                NamespaceBindingUtils.collapseQNameLexical(qnameItem.getStringValue()), resolver, getMetadata());
         return ItemFactory.getInstance().createQNameItem(resolved);
     }
 

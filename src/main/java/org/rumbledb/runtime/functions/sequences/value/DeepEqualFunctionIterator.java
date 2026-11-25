@@ -239,7 +239,8 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 return false;
             }
             // 5b: The string-values of the two nodes are equal.
-            return node1.getStringValue().equals(node2.getStringValue());
+            return CollationSupport.compareStrings(node1.getStringValue(), node2.getStringValue(), collation, metadata)
+                    == 0;
         }
 
         // 6: If the two nodes are both namespace nodes, then they are deep-equal
