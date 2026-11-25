@@ -19,7 +19,6 @@ import java.io.Serial;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -43,7 +42,6 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
     private final String staticPrefix;
     private final DataFunctionIterator prefixIterator;
     private final DataFunctionIterator uriIterator;
@@ -129,7 +127,7 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
         // Spec: "If the result is castable to xs:NCName, then it is used as the local name of the newly constructed
         // namespace node. (The local name of a namespace node represents the prefix part of the namespace binding.)"
         // Spec: "Otherwise, a dynamic error is raised [err:XQDY0074]."
-        if (!isValidNCName(prefix)) {
+        if (!NamespaceBindingUtils.isValidNcName(NamespaceBindingUtils.collapseQNameLexical(prefix))) {
             throw new InvalidElementNameExpressionException(
                     "Computed namespace constructor prefix cannot be cast to xs:NCName.", getMetadata());
         }
@@ -195,9 +193,5 @@ public class ComputedNamespaceConstructorRuntimeIterator extends AbstractAtMostO
             default:
                 return;
         }
-    }
-
-    private boolean isValidNCName(String value) {
-        return value != null && NCNAME_PATTERN.matcher(value).matches();
     }
 }

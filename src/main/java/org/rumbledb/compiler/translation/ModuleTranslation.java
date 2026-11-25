@@ -30,6 +30,7 @@ import org.rumbledb.compiler.utils.URILiteralUtils;
 import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.EmptyModuleURIException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -72,13 +73,8 @@ public final class ModuleTranslation {
             TranslationContext translationContext,
             Function<StringLiteralCtx, String> processStringLiteral) {
         if (ctx.encoding() != null) {
-            String encoding = processStringLiteral.apply(ctx.encoding());
-            if (!encoding.matches("[A-Za-z][A-Za-z0-9._-]*")) {
-                throw new SemanticException(
-                        "Invalid encoding name: " + encoding,
-                        ErrorCode.InvalidEncodingNameErrorCode,
-                        translationContext.metadata(ctx.encoding()));
-            }
+            validateEncodingName(
+                    processStringLiteral.apply(ctx.encoding()), translationContext.metadata(ctx.encoding()));
         }
         if (ctx.version() != null) {
             String version = processStringLiteral.apply(ctx.version()).trim();
@@ -86,6 +82,13 @@ public final class ModuleTranslation {
                     .moduleContext()
                     .setQueryLanguage(LanguageVersion.fromDeclaration(ctx.language(), version)
                             .orElseThrow(() -> new JsoniqVersionException(translationContext.metadata(ctx.context()))));
+        }
+    }
+
+    public static void validateEncodingName(String encoding, ExceptionMetadata metadata) {
+        if (!encoding.matches("[A-Za-z][A-Za-z0-9._-]*")) {
+            throw new SemanticException(
+                    "Invalid encoding name: " + encoding, ErrorCode.InvalidEncodingNameErrorCode, metadata);
         }
     }
 
