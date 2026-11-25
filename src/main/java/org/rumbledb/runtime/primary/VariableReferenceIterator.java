@@ -94,7 +94,7 @@ public class VariableReferenceIterator extends ItemRuntimePlan
             }
             return items.get(0).generateNativeQuery(nativeClauseContext);
         }
-        String escapedName = name.toString().replace("`", FlworDataFrameUtils.backtickEscape);
+        String escapedName = name.toString();
         SequenceType.Arity arity;
         if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(structSchema, name)) {
             escapedName = escapedName + ".sequence";
@@ -117,7 +117,10 @@ public class VariableReferenceIterator extends ItemRuntimePlan
             variableType = variableType.getArrayContentFacet();
         }
         NativeClauseContext newContext = new NativeClauseContext(
-                nativeClauseContext, "`" + escapedName + "`", new SequenceType(variableType, arity));
+                nativeClauseContext,
+                FlworDataFrameUtils.quoteIdentifier(
+                        escapedName, getConfiguration().runtime().escapeBackticks()),
+                new SequenceType(variableType, arity));
         newContext.setSchema(fieldType);
         return newContext;
     }

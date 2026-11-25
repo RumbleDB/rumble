@@ -207,18 +207,23 @@ public class UnionItemType extends AbstractItemType {
 
     @Override
     public boolean isCompatibleWithDataFrames(RumbleConfiguration configuration) {
+        // The built-in numeric union validates through double first, matching its Spark representation.
+        // Arbitrary numeric unions may validate through a narrower member and still need schema inference.
+        if (equals(BuiltinTypesCatalogue.numericItem)) {
+            return true;
+        }
         if (this.types.size() != 2) {
             return false;
         }
         ItemType first = this.types.get(0);
         ItemType second = this.types.get(1);
         if (first.equals(BuiltinTypesCatalogue.nullItem)
-                && second.isAtomicItemType()
+                && second.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
                 && second.isCompatibleWithDataFrames(configuration)) {
             return true;
         }
         if (second.equals(BuiltinTypesCatalogue.nullItem)
-                && first.isAtomicItemType()
+                && first.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
                 && first.isCompatibleWithDataFrames(configuration)) {
             return true;
         }
@@ -270,8 +275,21 @@ public class UnionItemType extends AbstractItemType {
         if (hasNumeric && hasNonNumeric) {
             return BuiltinTypesCatalogue.atomicItem;
         }
-        if (hasNumeric && !hasNull) {
-            return BuiltinTypesCatalogue.numericItem;
+        if (hasNumeric) {
+            // Join the numeric alternatives independently of null, just as for non-null input.
+            ItemType numericType = null;
+            for (ItemType member : resultTypes) {
+                if (!member.equals(BuiltinTypesCatalogue.nullItem)) {
+                    numericType = numericType == null ? member : numericType.findLeastCommonSuperTypeWith(member);
+                }
+            }
+            return hasNull
+                    ? new UnionItemType(
+                            null,
+                            BuiltinTypesCatalogue.atomicItem,
+                            Arrays.asList(numericType, BuiltinTypesCatalogue.nullItem),
+                            false)
+                    : numericType;
         }
         if (this.baseType.isAtomicItemType() && otherBaseType.isAtomicItemType()) {
             return new UnionItemType(null, BuiltinTypesCatalogue.atomicItem, new ArrayList<>(resultTypes), false);

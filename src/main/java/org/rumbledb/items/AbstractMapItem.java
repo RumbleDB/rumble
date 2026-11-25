@@ -19,6 +19,7 @@ import java.io.Serial;
 import java.util.List;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.FunctionIdentifier;
 
 /**
  * Order-independent structural Java equality for every materialized and lazy map representation.
@@ -26,6 +27,16 @@ import org.rumbledb.api.Item;
 public abstract class AbstractMapItem implements Item {
     @Serial
     private static final long serialVersionUID = 1L;
+
+    @Override
+    public final int getFunctionArity() {
+        return 1;
+    }
+
+    @Override
+    public final FunctionIdentifier getIdentifier() {
+        return null;
+    }
 
     @Override
     public final boolean equals(Object other) {

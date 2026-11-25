@@ -25,8 +25,10 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
+import org.rumbledb.types.SequenceType;
 
 public class ArrayFunctionCallIterator extends ItemRuntimePlan implements LocalRuntimePlan<Item> {
 
@@ -71,8 +73,16 @@ public class ArrayFunctionCallIterator extends ItemRuntimePlan implements LocalR
 
     public ArrayFunctionCallIterator(
             Item arrayItem, ItemRuntimePlan indexIterator, RuntimeStaticContext staticContext) {
-        super(indexIterator == null ? null : Collections.singletonList(indexIterator), staticContext);
+        super(
+                indexIterator == null
+                        ? null
+                        : Collections.singletonList(FunctionCallArgumentConversion.wrapArgument(
+                                indexIterator,
+                                SequenceType.createSequenceType("integer"),
+                                "Invalid array function argument. ",
+                                staticContext)),
+                staticContext);
         this.arrayItem = arrayItem;
-        this.indexIterator = indexIterator;
+        this.indexIterator = indexIterator == null ? null : this.getChild(0);
     }
 }

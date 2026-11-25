@@ -78,6 +78,6 @@ public class AdjustTimeToTimezone extends AbstractAtMostOneItemRuntimePlan {
 
     private static boolean checkTimeZoneArgument(Item timezone) {
         Duration timezoneDuration = timezone.getDurationValue();
-        return (Math.abs(timezoneDuration.toMinutes()) > 840) || (Double.compare(timezoneDuration.getNano(), 0) != 0);
+        return !TimezoneValidation.isValid(timezoneDuration);
     }
 }

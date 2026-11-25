@@ -1,0 +1,5 @@
+(:JIQS: ShouldCrash; ErrorCode="FODT0003":)
+(: Observed on master f1775366d: 12:00:00Z instead of FODT0003. :)
+(: https://www.w3.org/TR/xpath-functions-31/#func-adjust-time-to-timezone :)
+(: A one-second offset is not an integral number of minutes. :)
+adjust-time-to-timezone(xs:time("12:00:00Z"), xs:dayTimeDuration("PT1S"))

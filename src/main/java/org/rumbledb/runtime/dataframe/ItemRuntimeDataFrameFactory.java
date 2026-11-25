@@ -30,6 +30,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.typing.JSONiqValidateIterator;
 import org.rumbledb.runtime.typing.TypeInferrenceUtils;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 /**
@@ -49,7 +50,8 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
     public HomogeneousItemDataFrame fromList(
             List<Item> items, DynamicContext context, RuntimeStaticContext staticContext) {
         ItemType itemType = staticContext.getStaticType().getItemType();
-        if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
+        if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())
+                || needsIntegerRangeDetection(itemType)) {
             itemType = TypeInferrenceUtils.inferItemTypeOfLocalItems(
                     items, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
             if (staticContext.getConfiguration().analysis().printInferredTypes()) {
@@ -63,11 +65,32 @@ public final class ItemRuntimeDataFrameFactory implements RuntimeDataFrameFactor
     public HomogeneousItemDataFrame fromRDD(
             JavaRDD<Item> rdd, DynamicContext context, RuntimeStaticContext staticContext) {
         ItemType itemType = staticContext.getStaticType().getItemType();
-        if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())) {
+        if (!itemType.isCompatibleWithDataFrames(staticContext.getConfiguration())
+                || needsIntegerRangeDetection(itemType)) {
             itemType = TypeInferrenceUtils.inferItemTypeOfRDDItems(
                     rdd, staticContext.getMetadata(), TypeInferrenceUtils.TypeMergeMode.LAX);
         }
         return JSONiqValidateIterator.convertRDDToValidDataFrame(rdd, itemType, context, true, staticContext);
+    }
+
+    /** Generic integers in inferred schemas can use int/long columns once their values are known. */
+    private static boolean needsIntegerRangeDetection(ItemType type) {
+        if (type.equals(BuiltinTypesCatalogue.integerItem)) {
+            return true;
+        }
+        if (type.hasName()) {
+            return false;
+        }
+        if (type.isObjectItemType()) {
+            return type.getObjectContentFacet().stream().anyMatch(field -> needsIntegerRangeDetection(field.getType()));
+        }
+        if (type.isArrayItemType()) {
+            return needsIntegerRangeDetection(type.getArrayContentFacet());
+        }
+        if (type.isUnionType()) {
+            return type.getTypes().stream().anyMatch(ItemRuntimeDataFrameFactory::needsIntegerRangeDetection);
+        }
+        return false;
     }
 
     public HomogeneousItemDataFrame fromPlan(ItemRuntimePlan plan, DynamicContext context) {

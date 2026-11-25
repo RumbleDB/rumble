@@ -25,7 +25,8 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.input.BOMInputStream;
 
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
@@ -50,39 +51,9 @@ final class ModuleSourceLoader {
 
     record ModuleSource(String query, URI systemId) {}
 
-    // Pattern to match encoding declaration in XQuery/JSONiq files
-    // Matches: xquery/jsoniq version "..." encoding "..." OR xquery/jsoniq encoding "..."
-    private static final Pattern ENCODING_PATTERN = Pattern.compile(
-            "^\\s*(?:xquery|jsoniq)\\s+(?:version\\s+['\"].*?['\"]\\s+)?encoding\\s+['\"]([A-Za-z][A-Za-z0-9._-]*)['\"]",
-            Pattern.CASE_INSENSITIVE);
-
-    /**
-     * Extracts the encoding declaration from the query text if present.
-     *
-     * @param query The query text to parse
-     * @return The declared encoding name, or empty if no encoding is declared
-     */
-    private static Optional<String> extractEncodingDeclaration(String query) {
-        Matcher matcher = ENCODING_PATTERN.matcher(query);
-        if (matcher.find()) {
-            return Optional.of(matcher.group(1));
-        }
-        return Optional.empty();
-    }
-
-    /**
-     * Validates and returns a Charset for the given encoding name.
-     *
-     * @param encodingName The encoding name from the declaration
-     * @param metadata Exception metadata for error reporting
-     * @return The validated Charset
-     * @throws InvalidEncodingException if the encoding name is invalid or unsupported
-     */
-    private static Charset validateEncoding(String encodingName, ExceptionMetadata metadata) {
+    private static Charset declaredCharset(String encodingName, ExceptionMetadata metadata) {
         try {
             return Charset.forName(encodingName);
-        } catch (IllegalCharsetNameException e) {
-            throw new InvalidEncodingException("Invalid encoding name: " + encodingName, metadata);
         } catch (UnsupportedCharsetException e) {
             throw new InvalidEncodingException("Unsupported encoding: " + encodingName, metadata);
         }
@@ -96,34 +67,31 @@ final class ModuleSourceLoader {
             throw new CannotRetrieveResourceException("No module resource mapping for " + location, metadata);
         }
 
-        // First pass: Read with UTF-8 to extract encoding declaration
-        String initialQuery;
-        URI systemId;
         try (ResolvedResource resource =
                 compilationConfiguration.resourceResolver().resolve(location, configuration, metadata)) {
-            initialQuery = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
-            systemId = resource.getSystemId();
-        }
+            BOMInputStream stream = BOMInputStream.builder()
+                    .setInputStream(resource.getInputStream())
+                    .setByteOrderMarks(
+                            ByteOrderMark.UTF_8,
+                            ByteOrderMark.UTF_16BE,
+                            ByteOrderMark.UTF_16LE,
+                            ByteOrderMark.UTF_32BE,
+                            ByteOrderMark.UTF_32LE)
+                    .get();
+            String bomCharset = stream.getBOMCharsetName();
+            byte[] bytes = stream.readAllBytes();
+            URI systemId = resource.getSystemId();
 
-        // Check for encoding declaration
-        Optional<String> declaredEncoding = extractEncodingDeclaration(initialQuery);
-        if (declaredEncoding.isEmpty()) {
-            // No encoding declared, use UTF-8 query
-            return new ModuleSource(initialQuery, systemId);
-        }
+            // A BOM identifies the charset and, for UTF-16 and UTF-32, the byte order.
+            if (bomCharset != null) {
+                return new ModuleSource(new String(bytes, Charset.forName(bomCharset)), systemId);
+            }
 
-        // Validate the declared encoding
-        Charset charset = validateEncoding(declaredEncoding.get(), metadata);
-
-        // If declared encoding is UTF-8, no need to re-read
-        if (charset.equals(StandardCharsets.UTF_8)) {
-            return new ModuleSource(initialQuery, systemId);
-        }
-
-        // Second pass: Re-read with the declared encoding
-        try (ResolvedResource resource =
-                compilationConfiguration.resourceResolver().resolve(location, configuration, metadata)) {
-            String query = IOUtils.toString(resource.getInputStream(), charset);
+            String utf8Query = new String(bytes, StandardCharsets.UTF_8);
+            Charset charset = ModuleParser.declaredEncoding(utf8Query, systemId, configuration)
+                    .map(encoding -> declaredCharset(encoding, metadata))
+                    .orElse(StandardCharsets.UTF_8);
+            String query = charset.equals(StandardCharsets.UTF_8) ? utf8Query : new String(bytes, charset);
             return new ModuleSource(query, systemId);
         }
     }

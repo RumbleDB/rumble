@@ -1778,14 +1778,14 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction compare1 = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "compare"),
             List.of("string?", "string?"),
-            "integer",
+            "integer?",
             CompareFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
 
     static final BuiltinFunction compare2 = createBuiltinFunction(
             new Name(Name.FN_NS, "fn", "compare"),
             List.of("string?", "string?", "string"),
-            "integer",
+            "integer?",
             CompareFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
     /**
@@ -2645,7 +2645,7 @@ public class BuiltinFunctionCatalogue {
             List.of("item*"),
             "item*",
             ObjectDescendantPairsFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL);
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT);
     /**
      * function that recursively flattens arrays in the input sequence, leaving non-arrays intact
      */

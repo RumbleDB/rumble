@@ -22,8 +22,6 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -39,13 +37,6 @@ public class FunctionArityFunctionIterator extends AbstractAtMostOneItemRuntimeP
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         Item function = this.getChild(0).materializeFirstOrNull(context);
-        if (function == null || !function.isFunction()) {
-            throw new UnexpectedTypeException(
-                    "The argument of fn:function-arity must be a single function item [err:XPTY0004].", getMetadata());
-        }
-        FunctionItem functionItem = (FunctionItem) function;
-        return ItemFactory.getInstance()
-                .createIntegerItem(
-                        BigInteger.valueOf(functionItem.getParameterNames().size()));
+        return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf(function.getFunctionArity()));
     }
 }

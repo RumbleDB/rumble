@@ -27,7 +27,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -88,13 +87,22 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
         return typedValue.isEmpty() ? null : typedValue.get(0);
     }
 
-    private static Item materializeOperand(
+    private static Item materializeAtomizedOperand(
             ItemRuntimePlan plan, DynamicContext context, String role, ExceptionMetadata metadata) {
-        try {
-            return plan.materializeAtMostOne(context);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(role + " must contain at most one item.", metadata);
+        Item result = null;
+        try (Cursor<Item> cursor = plan.getCursor(context)) {
+            while (cursor.hasNext()) {
+                Item value = atomizeOperand(cursor.next(), role, metadata);
+                if (value == null) {
+                    continue;
+                }
+                if (result != null) {
+                    throw new UnexpectedTypeException(role + " must atomize to at most one item.", metadata);
+                }
+                result = value;
+            }
         }
+        return result;
     }
 
     private static final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
@@ -143,11 +151,9 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
         }
 
         private ItemRuntimePlan selectApplicablePlan() {
-            Item testValue = materializeOperand(this.testPlan, this.context, "Switch condition", this.metadata);
-            testValue = atomizeOperand(testValue, "Switch condition", this.metadata);
+            Item testValue = materializeAtomizedOperand(this.testPlan, this.context, "Switch condition", this.metadata);
             for (ItemRuntimePlan caseKey : this.cases.keySet()) {
-                Item caseValue = materializeOperand(caseKey, this.context, "Switch case", this.metadata);
-                caseValue = atomizeOperand(caseValue, "Switch case", this.metadata);
+                Item caseValue = materializeAtomizedOperand(caseKey, this.context, "Switch case", this.metadata);
                 if (testValue == null) {
                     if (caseValue == null) {
                         return this.cases.get(caseKey);
@@ -166,14 +172,10 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
     }
 
     private ItemRuntimePlan selectApplicableIterator(DynamicContext dynamicContext) {
-        Item testValue = materializeOperand(this.testField, dynamicContext, "Switch condition", getMetadata());
-
-        testValue = atomizeOperand(testValue, "Switch condition", getMetadata());
+        Item testValue = materializeAtomizedOperand(this.testField, dynamicContext, "Switch condition", getMetadata());
 
         for (ItemRuntimePlan caseKey : this.cases.keySet()) {
-            Item caseValue = materializeOperand(caseKey, dynamicContext, "Switch case", getMetadata());
-
-            caseValue = atomizeOperand(caseValue, "Switch case", getMetadata());
+            Item caseValue = materializeAtomizedOperand(caseKey, dynamicContext, "Switch case", getMetadata());
 
             // both are empty sequences
             if (testValue == null) {

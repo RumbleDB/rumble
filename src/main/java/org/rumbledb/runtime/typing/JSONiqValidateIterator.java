@@ -192,7 +192,10 @@ public class JSONiqValidateIterator extends ItemRuntimePlan
         // A nullable atomic union (e.g. xs:decimal | js:null) is stored like its non-null member, as
         // UnionItemType.isCompatibleWithDataFrames and TypeMappings already assume.
         ItemType singleNullableType = itemType.getSingleNullableType();
-        if (itemType.isAtomicItemType() || (singleNullableType != null && singleNullableType.isAtomicItemType())) {
+        if (itemType.isAtomicItemType()
+                || itemType.isNumeric()
+                || (singleNullableType != null
+                        && (singleNullableType.isAtomicItemType() || singleNullableType.isNumeric()))) {
             List<StructField> fields = new ArrayList<>();
             String columnName = SparkSessionManager.nonObjectJSONiqItemColumnName;
             boolean nullable = itemType.canBeNull();

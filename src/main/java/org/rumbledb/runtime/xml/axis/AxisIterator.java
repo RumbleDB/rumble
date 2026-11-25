@@ -166,6 +166,11 @@ public abstract class AxisIterator extends ItemRuntimePlan implements LocalRunti
         if (parent == null) {
             return Collections.emptyList();
         }
+        if (node.isAttributeNode()) {
+            List<Item> followingNodes = getDescendants(parent);
+            followingNodes.addAll(getFollowingNodes(parent.parent(), parent));
+            return followingNodes;
+        }
         List<Item> followingNodes = new ArrayList<>();
         List<Item> siblings = parent.children();
         int followingIndex = -1;
@@ -201,6 +206,9 @@ public abstract class AxisIterator extends ItemRuntimePlan implements LocalRunti
     private static List<Item> getPrecedingNodes(Item parent, Item node) {
         if (parent == null) {
             return Collections.emptyList();
+        }
+        if (node.isAttributeNode()) {
+            return getPrecedingNodes(parent.parent(), parent);
         }
         List<Item> precedingNodes = new ArrayList<>();
         List<Item> siblings = parent.children();

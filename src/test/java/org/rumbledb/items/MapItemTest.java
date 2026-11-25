@@ -28,9 +28,32 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.spark.RumbleKryoRegistrator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 class MapItemTest {
     private static final ItemFactory F = ItemFactory.getInstance();
+
+    @Test
+    void allCollectionRepresentationsHaveAnonymousUnaryFunctionMetadata() {
+        List<Item> collections = List.of(
+                F.createMapItem(F.createIntItem(1), List.of(F.createStringItem("value")), false),
+                F.createObjectItem(
+                        List.of("key"), List.of(F.createIntItem(1)), ExceptionMetadata.EMPTY_METADATA, false),
+                new LazyObjectItem(),
+                F.createArrayItem(List.of(F.createIntItem(1)), false),
+                F.createSequenceArrayItem(List.of(List.of(F.createIntItem(1), F.createIntItem(2))), false));
+        for (Item collection : collections) {
+            Assertions.assertEquals(
+                    1, collection.getFunctionArity(), collection.getClass().getSimpleName());
+            Assertions.assertEquals(1, new AnnotatedItem(collection, BuiltinTypesCatalogue.item).getFunctionArity());
+            Assertions.assertNull(
+                    collection.getIdentifier(), collection.getClass().getSimpleName());
+        }
+        Assertions.assertThrows(
+                UnsupportedOperationException.class, () -> F.createIntItem(1).getIdentifier());
+        Assertions.assertThrows(
+                UnsupportedOperationException.class, () -> F.createIntItem(1).getFunctionArity());
+    }
 
     @Test
     void putKeepsEarlierVersionsAndTakesTheNewSameKey() {
