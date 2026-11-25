@@ -49,7 +49,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import scala.collection.Iterator;
-import scala.collection.immutable.ArraySeq;
+import scala.collection.mutable.WrappedArray;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 import com.google.gson.stream.JsonReader;
@@ -750,12 +750,7 @@ public class ItemParser {
                     members.add(convertValueToItem(object, dataType, metadata, memberType));
                 }
             } else {
-                Iterator<Object> iterator = null;
-                if (o instanceof scala.collection.mutable.ArraySeq<?> arraySeq) {
-                    iterator = ((scala.collection.mutable.ArraySeq<Object>) arraySeq).iterator();
-                } else {
-                    iterator = ((ArraySeq<Object>) o).iterator();
-                }
+                Iterator<Object> iterator = ((WrappedArray<Object>) o).iterator();
                 while (iterator.hasNext()) {
                     Object value = iterator.next();
                     members.add(convertValueToItem(value, dataType, metadata, memberType));

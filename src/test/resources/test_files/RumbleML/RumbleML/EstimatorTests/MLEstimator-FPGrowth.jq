@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "label" : 0, "name" : "a", "prediction" : [ "4", "2", "3", "6", "5" ] }, { "label" : 1, "name" : "b", "prediction" : [ "4", "3", "6", "5", "1" ] }, { "label" : 2, "name" : "c", "prediction" : [ "4", "2", "6", "5", "1" ] }, { "label" : 3, "name" : "d", "prediction" : [ "2", "3", "6", "5", "1" ] }, { "label" : 4, "name" : "e", "prediction" : [ "4", "2", "3", "6", "1" ] }, { "label" : 5, "name" : "f", "prediction" : [ "4", "2", "3", "5", "1" ] })" :)
+(:JIQS: ShouldRun; Output="({ "label" : 0, "name" : "a", "prediction" : [ "2", "3", "4", "5", "6" ] }, { "label" : 1, "name" : "b", "prediction" : [ "1", "3", "4", "5", "6" ] }, { "label" : 2, "name" : "c", "prediction" : [ "1", "2", "4", "5", "6" ] }, { "label" : 3, "name" : "d", "prediction" : [ "1", "2", "3", "5", "6" ] }, { "label" : 4, "name" : "e", "prediction" : [ "1", "2", "3", "4", "6" ] }, { "label" : 5, "name" : "f", "prediction" : [ "1", "2", "3", "4", "5" ] })" :)
 let $data := annotate(
     json-lines("../../../../queries/rumbleML/sample-ml-data-flat.json"),
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
@@ -16,5 +16,5 @@ for $result in $tra(
 return {
     "label": $result.label,
     "name": $result.name,
-    "prediction": $result.prediction
+    "prediction": [ for $item in $result.prediction[] order by $item return $item ]
 }
