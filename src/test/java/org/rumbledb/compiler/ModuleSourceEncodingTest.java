@@ -40,15 +40,42 @@ class ModuleSourceEncodingTest {
     private final Rumble rumble = new Rumble(RumbleConfiguration.builder().build());
 
     @ParameterizedTest
-    @CsvSource({"UTF-8, UTF-8", "UTF-16BE, UTF-16", "UTF-16LE, UTF-16", "UTF-32BE, UTF-32", "UTF-32LE, UTF-32"})
-    void readsQueriesWithByteOrderMarks(String charset, String declaredEncoding) throws Exception {
+    @CsvSource({
+        "UTF-8, encoding 'UTF-8'",
+        "UTF-16BE, encoding 'UTF-16'",
+        "UTF-16LE, encoding 'UTF-16'",
+        "UTF-32BE, encoding 'UTF-32'",
+        "UTF-32LE, encoding 'UTF-32'",
+        "UTF-16BE, ''",
+        "UTF-16LE, ''",
+        "UTF-32BE, ''",
+        "UTF-32LE, ''",
+        "UTF-16BE, encoding 'UTF-8'",
+        "UTF-16LE, encoding 'UTF-8'",
+        "UTF-32BE, encoding 'UTF-8'",
+        "UTF-32LE, encoding 'UTF-8'"
+    })
+    void usesTheByteOrderMarkToDecodeQueries(String charset, String encodingClause) throws Exception {
         Path query = this.directory.resolve("main.xq");
         Files.writeString(
                 query,
-                "\uFEFFxquery version '3.1' encoding '" + declaredEncoding + "'; string-to-codepoints('é')",
+                "\uFEFFxquery version '3.1' " + encodingClause + "; string-to-codepoints('é𐐷')",
                 Charset.forName(charset));
 
-        assertCodepoint(query);
+        assertCodepoints(query, 233, 66615);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"windows-1252, €, 8364", "ISO-8859-15, €, 8364", "Shift_JIS, 漢, 28450"})
+    void usesDeclaredEncodingsForQueriesWithoutAByteOrderMark(String charset, String text, int codepoint)
+            throws Exception {
+        Path query = this.directory.resolve("main.xq");
+        Files.writeString(
+                query,
+                "xquery version '3.1' encoding '" + charset + "'; string-to-codepoints('" + text + "')",
+                Charset.forName(charset));
+
+        assertCodepoints(query, codepoint);
     }
 
     @Test
@@ -71,13 +98,13 @@ class ModuleSourceEncodingTest {
                     lib:codepoint()
                     """);
 
-        assertCodepoint(query);
+        assertCodepoints(query, 233);
     }
 
-    private void assertCodepoint(Path query) throws IOException {
+    private void assertCodepoints(Path query, Integer... expected) throws IOException {
         List<Integer> result = this.rumble.runQuery(query.toUri()).getAsList().stream()
                 .map(Item::getIntValue)
                 .toList();
-        assertEquals(List.of(233), result);
+        assertEquals(List.of(expected), result);
     }
 }
