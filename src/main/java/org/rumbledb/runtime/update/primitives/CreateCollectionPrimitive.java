@@ -98,6 +98,18 @@ public class CreateCollectionPrimitive implements UpdatePrimitive {
                             .tableProperty("write.spark.accept-any-schema", "true")
                             .create();
                     break;
+                case HUDI:
+                    // Copy-on-Write table keyed on the row ID, created through the Hudi catalog.
+                    // Hudi reports an existing table with its own exception, so check first.
+                    if (SparkSessionManager.getInstance()
+                            .getOrCreateSession()
+                            .catalog()
+                            .tableExists(this.collection.getLogicalName())) {
+                        throw new TooManyCollectionCreationsOnSameTargetException(
+                                this.collection.getLogicalName(), this.metadata);
+                    }
+                    HudiTables.create(this.collection.getLogicalName(), this.contents);
+                    break;
                 default:
                     throw new UnsupportedOperationException(
                             "Create Collection: Unsupported collection mode: " + this.collection.getMode());

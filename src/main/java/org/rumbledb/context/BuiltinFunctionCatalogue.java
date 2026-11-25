@@ -98,6 +98,7 @@ import org.rumbledb.runtime.functions.input.AvroFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.DeltaFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.DeltaTableFunctionIterator;
+import org.rumbledb.runtime.functions.input.HudiTableFunctionIterator;
 import org.rumbledb.runtime.functions.input.IcebergTableFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonLinesFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
@@ -838,6 +839,17 @@ public class BuiltinFunctionCatalogue {
             "item*",
             IcebergTableFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME);
+
+    /**
+     * function that parses a hudi table
+     */
+    static final BuiltinFunction hudi_table = createBuiltinFunction(
+                    new Name(Name.JN_NS, "jn", "hudi-table"),
+                    List.of("string"),
+                    "item*",
+                    HudiTableFunctionIterator.class,
+                    BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME)
+            .withReturnTypeRule(HudiTableFunctionIterator::inferReturnType);
 
     /**
      * function that parses a csv file
@@ -3312,6 +3324,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(delta_file.getIdentifier(), delta_file);
         builtinFunctions.put(delta_table.getIdentifier(), delta_table);
         builtinFunctions.put(iceberg_table.getIdentifier(), iceberg_table);
+        builtinFunctions.put(hudi_table.getIdentifier(), hudi_table);
         builtinFunctions.put(csv_file1.getIdentifier(), csv_file1);
         builtinFunctions.put(csv_file2.getIdentifier(), csv_file2);
         builtinFunctions.put(root_file1.getIdentifier(), root_file1);
