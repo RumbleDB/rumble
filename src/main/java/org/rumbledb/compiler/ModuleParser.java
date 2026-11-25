@@ -25,12 +25,14 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.misc.Interval;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 import org.rumbledb.bindings.ExternalBindings;
 import org.rumbledb.compiler.context.VersionDeclContext;
+import org.rumbledb.compiler.translation.ModuleTranslation;
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.config.model.LanguageVersion;
@@ -112,6 +114,26 @@ final class ModuleParser {
     private static Optional<Language> declaredLanguage(String query) {
         return probe(
                 query, parser -> VersionDeclContext.from(parser.versionDecl()).language());
+    }
+
+    static Optional<String> declaredEncoding(String query, URI uri, RumbleConfiguration configuration) {
+        return probe(query, JsoniqParser::versionDecl)
+                .map(VersionDeclContext::from)
+                .filter(declaration -> declaration.encoding() != null)
+                .map(declaration -> {
+                    var literal = declaration.encoding();
+                    var start = literal.getStart();
+                    var end = literal.getStop();
+                    String source =
+                            start.getInputStream().getText(Interval.of(start.getStartIndex(), end.getStopIndex()));
+                    ExceptionMetadata metadata = ExceptionMetadata.fromTokens(uri.toString(), start, end, query);
+                    String encoding = declaration.language() == Language.XQUERY
+                            ? StringLiteralUtils.parseXQuery(
+                                    source, configuration.semantics().xmlVersion(), metadata)
+                            : StringLiteralUtils.parseJsoniq(source, metadata);
+                    ModuleTranslation.validateEncodingName(encoding, metadata);
+                    return encoding;
+                });
     }
 
     /**

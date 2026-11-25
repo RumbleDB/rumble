@@ -17,14 +17,18 @@ package org.rumbledb.compiler;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 
-import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.ByteOrderMark;
+import org.apache.commons.io.input.BOMInputStream;
 
 import org.rumbledb.config.CompilationConfiguration;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidEncodingException;
 import org.rumbledb.resources.ResolvedResource;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -43,6 +47,14 @@ final class ModuleSourceLoader {
 
     record ModuleSource(String query, URI systemId) {}
 
+    private static Charset declaredCharset(String encodingName, ExceptionMetadata metadata) {
+        try {
+            return Charset.forName(encodingName);
+        } catch (UnsupportedCharsetException e) {
+            throw new InvalidEncodingException("Unsupported encoding: " + encodingName, metadata);
+        }
+    }
+
     static ModuleSource readModuleSource(
             URI location, CompilationConfiguration compilationConfiguration, ExceptionMetadata metadata)
             throws IOException {
@@ -50,10 +62,33 @@ final class ModuleSourceLoader {
         if (compilationConfiguration.resourceResolver().resolveURI(location).isOpaque()) {
             throw new CannotRetrieveResourceException("No module resource mapping for " + location, metadata);
         }
+
         try (ResolvedResource resource =
                 compilationConfiguration.resourceResolver().resolve(location, configuration, metadata)) {
-            String query = IOUtils.toString(resource.getInputStream(), StandardCharsets.UTF_8);
-            return new ModuleSource(query, resource.getSystemId());
+            BOMInputStream stream = BOMInputStream.builder()
+                    .setInputStream(resource.getInputStream())
+                    .setByteOrderMarks(
+                            ByteOrderMark.UTF_8,
+                            ByteOrderMark.UTF_16BE,
+                            ByteOrderMark.UTF_16LE,
+                            ByteOrderMark.UTF_32BE,
+                            ByteOrderMark.UTF_32LE)
+                    .get();
+            String bomCharset = stream.getBOMCharsetName();
+            byte[] bytes = stream.readAllBytes();
+            URI systemId = resource.getSystemId();
+
+            // A BOM identifies the charset and, for UTF-16 and UTF-32, the byte order.
+            if (bomCharset != null) {
+                return new ModuleSource(new String(bytes, Charset.forName(bomCharset)), systemId);
+            }
+
+            String utf8Query = new String(bytes, StandardCharsets.UTF_8);
+            Charset charset = ModuleParser.declaredEncoding(utf8Query, systemId, configuration)
+                    .map(encoding -> declaredCharset(encoding, metadata))
+                    .orElse(StandardCharsets.UTF_8);
+            String query = charset.equals(StandardCharsets.UTF_8) ? utf8Query : new String(bytes, charset);
+            return new ModuleSource(query, systemId);
         }
     }
 
