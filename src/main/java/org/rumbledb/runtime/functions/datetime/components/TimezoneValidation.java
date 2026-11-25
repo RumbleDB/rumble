@@ -13,18 +13,16 @@
  *
  * Contributor acknowledgements are maintained in the CONTRIBUTORS file at the project root.
  */
-package org.rumbledb.exceptions;
+package org.rumbledb.runtime.functions.datetime.components;
 
-import java.io.Serial;
+import java.time.Duration;
 
-import org.rumbledb.errorcodes.ErrorCode;
+/** Validation shared by the three timezone adjustment functions. */
+final class TimezoneValidation {
+    private TimezoneValidation() {}
 
-public class NonAtomicKeyException extends RumbleException {
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    public NonAtomicKeyException(String message, ExceptionMetadata expressionMetadata) {
-        super(message, ErrorCode.NonAtomicElementErrorCode, expressionMetadata);
+    static boolean isValid(Duration offset) {
+        long seconds = offset.getSeconds();
+        return offset.getNano() == 0 && seconds % 60 == 0 && seconds >= -50400 && seconds <= 50400;
     }
 }

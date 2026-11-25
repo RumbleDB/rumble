@@ -136,8 +136,9 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                             try {
                                 atomized = key.atomizedValue();
                             } catch (CannotAtomizeException e) {
-                                throw new UnexpectedTypeException(
-                                        "Group by variable must atomize to a supported atomic value.", getMetadata());
+                                throw new CannotAtomizeException(
+                                        "Group by variable must atomize to atomic values: " + e.getJSONiqErrorMessage(),
+                                        getMetadata());
                             }
                             if (atomized.size() > 1) {
                                 throw new UnexpectedTypeException(
@@ -167,8 +168,9 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                             try {
                                 atomized.addAll(item.atomizedValue());
                             } catch (CannotAtomizeException e) {
-                                throw new UnexpectedTypeException(
-                                        "Group by variable must atomize to a supported atomic value.", getMetadata());
+                                throw new CannotAtomizeException(
+                                        "Group by variable must atomize to atomic values: " + e.getJSONiqErrorMessage(),
+                                        getMetadata());
                             }
                         }
                         if (atomized.size() > 1) {
@@ -645,7 +647,8 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
             selectString.append(dfColumnSequence);
         }
         if (selectString.length() == 0) {
-            selectString.append("TRUE");
+            // Preserve one tuple per group even when no variables are projected.
+            selectString.append(FlworDataFrameUtils.getSQLColumnProjection(Collections.emptyList(), false));
         }
         log.info("Rumble was able to optimize a group by clause to a native SQL query.");
         return dataFrame

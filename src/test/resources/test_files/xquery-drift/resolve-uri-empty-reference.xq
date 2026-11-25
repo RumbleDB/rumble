@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="true":)
+(: Observed on master f1775366d: http://example.com/ instead of http://example.com/a?old. :)
+(: https://www.w3.org/TR/xpath-functions-31/#func-resolve-uri :)
+(: An empty relative reference retains both the base path and its query. :)
+resolve-uri("", "http://example.com/a?old") eq xs:anyURI("http://example.com/a?old")

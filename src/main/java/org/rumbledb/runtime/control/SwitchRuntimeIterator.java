@@ -25,9 +25,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.CannotAtomizeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
@@ -70,24 +69,40 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
         return new SwitchLocalCursor(this.testField, this.cases, this.defaultReturn, context, getMetadata());
     }
 
-    private static Item atomizeOperand(Item item, String role, ExceptionMetadata metadata) {
-        if (item == null || !item.isNode()) {
+    // Nodes atomize to their typed value and arrays to the atomized values of their members; objects, maps and other
+    // function items cannot be atomized (FOTY0013).
+    public static Item atomizeOperand(Item item, String role, ExceptionMetadata metadata) {
+        if (item == null || item.isAtomic()) {
             return item;
         }
-        List<Item> typedValue = item.atomizedValue();
+        List<Item> typedValue;
+        try {
+            typedValue = item.atomizedValue();
+        } catch (CannotAtomizeException e) {
+            throw new CannotAtomizeException(role + " cannot be atomized: " + e.getJSONiqErrorMessage(), metadata);
+        }
         if (typedValue.size() > 1) {
             throw new UnexpectedTypeException(role + " must atomize to at most one item.", metadata);
         }
         return typedValue.isEmpty() ? null : typedValue.get(0);
     }
 
-    private static Item materializeOperand(
+    private static Item materializeAtomizedOperand(
             ItemRuntimePlan plan, DynamicContext context, String role, ExceptionMetadata metadata) {
-        try {
-            return plan.materializeAtMostOne(context);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(role + " must contain at most one item.", metadata);
+        Item result = null;
+        try (Cursor<Item> cursor = plan.getCursor(context)) {
+            while (cursor.hasNext()) {
+                Item value = atomizeOperand(cursor.next(), role, metadata);
+                if (value == null) {
+                    continue;
+                }
+                if (result != null) {
+                    throw new UnexpectedTypeException(role + " must atomize to at most one item.", metadata);
+                }
+                result = value;
+            }
         }
+        return result;
     }
 
     private static final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
@@ -136,13 +151,9 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
         }
 
         private ItemRuntimePlan selectApplicablePlan() {
-            Item testValue = materializeOperand(this.testPlan, this.context, "Switch condition", this.metadata);
-            validateAtomic(testValue, "Switch condition");
-            testValue = atomizeOperand(testValue, "Switch condition", this.metadata);
+            Item testValue = materializeAtomizedOperand(this.testPlan, this.context, "Switch condition", this.metadata);
             for (ItemRuntimePlan caseKey : this.cases.keySet()) {
-                Item caseValue = materializeOperand(caseKey, this.context, "Switch case", this.metadata);
-                validateAtomic(caseValue, "Switch case");
-                caseValue = atomizeOperand(caseValue, "Switch case", this.metadata);
+                Item caseValue = materializeAtomizedOperand(caseKey, this.context, "Switch case", this.metadata);
                 if (testValue == null) {
                     if (caseValue == null) {
                         return this.cases.get(caseKey);
@@ -158,45 +169,13 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
             }
             return this.defaultPlan;
         }
-
-        private void validateAtomic(Item item, String role) {
-            if (item != null && item.isArray()) {
-                throw new NonAtomicKeyException("Invalid args. " + role + " cannot be an array type", this.metadata);
-            }
-            if (item != null && item.isObject()) {
-                throw new NonAtomicKeyException("Invalid args. " + role + " cannot be an object type", this.metadata);
-            }
-        }
     }
 
     private ItemRuntimePlan selectApplicableIterator(DynamicContext dynamicContext) {
-        Item testValue = materializeOperand(this.testField, dynamicContext, "Switch condition", getMetadata());
-
-        if (testValue != null) {
-            if (testValue.isArray()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition cannot be an array type", getMetadata());
-            } else if (testValue.isObject()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition cannot be an object type", getMetadata());
-            }
-        }
-
-        testValue = atomizeOperand(testValue, "Switch condition", getMetadata());
+        Item testValue = materializeAtomizedOperand(this.testField, dynamicContext, "Switch condition", getMetadata());
 
         for (ItemRuntimePlan caseKey : this.cases.keySet()) {
-            Item caseValue = materializeOperand(caseKey, dynamicContext, "Switch case", getMetadata());
-
-            if (caseValue != null) {
-                if (caseValue.isArray()) {
-                    throw new NonAtomicKeyException("Invalid args. Switch case cannot be an array type", getMetadata());
-                } else if (caseValue.isObject()) {
-                    throw new NonAtomicKeyException(
-                            "Invalid args. Switch case  cannot be an object type", getMetadata());
-                }
-            }
-
-            caseValue = atomizeOperand(caseValue, "Switch case", getMetadata());
+            Item caseValue = materializeAtomizedOperand(caseKey, dynamicContext, "Switch case", getMetadata());
 
             // both are empty sequences
             if (testValue == null) {

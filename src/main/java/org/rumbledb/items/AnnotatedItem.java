@@ -590,6 +590,11 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
+    public int getFunctionArity() {
+        return this.itemToAnnotate.getFunctionArity();
+    }
+
+    @Override
     public FunctionIdentifier getIdentifier() {
         return this.itemToAnnotate.getIdentifier();
     }

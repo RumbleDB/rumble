@@ -63,7 +63,6 @@ import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.GenericForClauseUDF;
-import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
@@ -422,16 +421,12 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         // If the join criterion uses the context count, then we need to add it to the expression side (it is a
         // constant).
         if (predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
-            expressionDF
-                    .sparkSession()
-                    .udf()
-                    .register("serializeIntegerIndex", new IntegerSerializeUDF(), DataTypes.BinaryType);
             long size = expressionDF.count();
             expressionDFTableName = FlworDataFrameUtils.createTempView(expressionDF);
             expressionDF = expressionDF
                     .sparkSession()
                     .sql(String.format(
-                            "SELECT *, serializeIntegerIndex(%s) AS `%s` FROM %s",
+                            "SELECT *, %s AS `%s` FROM %s",
                             Long.toString(size), Name.CONTEXT_COUNT.getLocalName(), expressionDFTableName));
         }
 
@@ -635,12 +630,10 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                                 projectionVariables, UDFParameters, this.variableName, viewName));
             }
         } else {
-            df.sparkSession().udf().register("serializePositionIndex", new IntegerSerializeUDF(), DataTypes.BinaryType);
-
             if (this.allowingEmpty) {
                 df = df.sparkSession()
                         .sql(String.format(
-                                "SELECT %s for_vars.`%s`, serializePositionIndex(IF(for_vars.`%s` IS NULL, 0, for_vars.`%s` + 1)) AS `%s` "
+                                "SELECT %s for_vars.`%s`, IF(for_vars.`%s` IS NULL, 0, for_vars.`%s` + 1) AS `%s` "
                                         + "FROM %s "
                                         + "LATERAL VIEW OUTER posexplode(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
                                 projectionVariables,
@@ -655,7 +648,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             } else {
                 df = df.sparkSession()
                         .sql(String.format(
-                                "SELECT %s for_vars.`%s`, serializePositionIndex(for_vars.`%s` + 1) AS `%s` "
+                                "SELECT %s for_vars.`%s`, for_vars.`%s` + 1 AS `%s` "
                                         + "FROM %s "
                                         + "LATERAL VIEW posexplode(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
                                 projectionVariables,
@@ -756,8 +749,13 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
             String assignment = FlworDataFrameUtils.createTempView(rows.getDataFrame());
             if (rows.getItemType().isObjectItemType()) {
-                List<FlworDataFrameColumn> fields = rows.getColumns();
-                String columnNames = FlworDataFrameUtils.getSQLColumnProjection(fields, false);
+                String columnNames = FlworDataFrameUtils.getSQLProjection(
+                        rows.getKeys(),
+                        false,
+                        iterator.getRuntimeStaticContext()
+                                .getConfiguration()
+                                .runtime()
+                                .escapeBackticks());
                 df = rows.getDataFrame()
                         .sparkSession()
                         .sql(String.format("SELECT struct(%s) AS `%s` FROM %s", columnNames, variableName, assignment));
@@ -791,15 +789,10 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             return startingOutput(dfWithIndex, variableName, positionalVariableName, sequenceType);
         }
         String inputWithIndex = FlworDataFrameUtils.createTempView(dfWithIndex);
-        dfWithIndex
-                .sparkSession()
-                .udf()
-                .register("serializeCountIndex", new IntegerSerializeUDF(), DataTypes.BinaryType);
-
         dfWithIndex = dfWithIndex
                 .sparkSession()
                 .sql(String.format(
-                        "SELECT %s.`%s`, IF(%s.`%s` IS NULL, serializeCountIndex(0), %s.`%s`) AS `%s` FROM VALUES(1) FULL OUTER JOIN %s",
+                        "SELECT %s.`%s`, IF(%s.`%s` IS NULL, 0, %s.`%s`) AS `%s` FROM VALUES(1) FULL OUTER JOIN %s",
                         inputWithIndex,
                         variableName,
                         inputWithIndex,

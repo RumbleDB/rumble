@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="true":)
+(: Observed on master f1775366d: Java ArithmeticException (long overflow) instead of PT0S. :)
+(: https://www.w3.org/TR/xpath-functions-31/#func-multiply-dayTimeDuration :)
+(: The input is representable, and multiplication by zero must yield zero duration. :)
+(xs:dayTimeDuration("P200000D") * 0) eq xs:dayTimeDuration("PT0S")

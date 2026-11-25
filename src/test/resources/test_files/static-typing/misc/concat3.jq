@@ -1,2 +1,2 @@
-(:JIQS: ShouldCrash; ErrorCode="XPTY0004" :)
+(:JIQS: ShouldCrash; ErrorCode="FOTY0013" :)
 {"obj" : 12 } || "qwe"

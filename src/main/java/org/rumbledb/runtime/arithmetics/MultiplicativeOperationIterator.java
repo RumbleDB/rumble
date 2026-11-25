@@ -90,14 +90,14 @@ public class MultiplicativeOperationIterator extends AbstractAtMostOneItemRuntim
                     "Can not atomize an %1$s item: an %1$s has probably been passed where "
                             + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                     left.getDynamicType().toString());
-            throw new NonAtomicKeyException(message, metadata);
+            throw new CannotAtomizeException(message, metadata);
         }
         if (!right.isAtomic()) {
             String message = String.format(
                     "Can not atomize an %1$s item: an %1$s has probably been passed where "
                             + "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
                     right.getDynamicType().toString());
-            throw new NonAtomicKeyException(message, metadata);
+            throw new CannotAtomizeException(message, metadata);
         }
         if (left.isUntypedAtomic()) {
             left = ItemFactory.getInstance().createDoubleItem(left.castToDoubleValue());
@@ -378,16 +378,12 @@ public class MultiplicativeOperationIterator extends AbstractAtMostOneItemRuntim
                     throw new DivisionByZeroException(metadata);
                 }
                 BigDecimal bdResult = new BigDecimal(l).divide(new BigDecimal(r), 18, RoundingMode.HALF_UP);
-                if (bdResult.stripTrailingZeros().scale() <= 0) {
-                    return ItemFactory.getInstance().createIntItem(bdResult.intValueExact());
-                } else {
-                    return ItemFactory.getInstance().createDecimalItem(bdResult);
-                }
+                return ItemFactory.getInstance().createDecimalItem(bdResult);
             case IDIV:
                 if (r == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
-                return ItemFactory.getInstance().createIntItem(l / r);
+                return ItemFactory.getInstance().createIntegerItem(BigInteger.valueOf((long) l / r));
             case MOD:
                 if (r == 0) {
                     throw new DivisionByZeroException(metadata);
@@ -505,22 +501,22 @@ public class MultiplicativeOperationIterator extends AbstractAtMostOneItemRuntim
                     throw new DurationOverflowOrUnderflow(
                             "Overflow after multiplying duration with infinity.", metadata);
                 }
-                long duration = l.toNanos();
-                return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ofNanos((long) (duration * r)));
+                if (r == 0) {
+                    return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ZERO);
+                }
+                BigDecimal seconds = BigDecimal.valueOf(l.getSeconds()).add(BigDecimal.valueOf(l.getNano(), 9));
+                return dayTimeDurationFromSeconds(seconds.multiply(BigDecimal.valueOf(r)), metadata);
             }
             case DIV: {
                 if (Double.isInfinite(r)) {
                     return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ZERO);
                 }
-                long duration = l.toNanos();
                 if (r == 0) {
                     throw new DurationOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
-                try {
-                    return ItemFactory.getInstance().createDayTimeDurationItem(Duration.ofNanos((long) (duration / r)));
-                } catch (ArithmeticException e) {
-                    throw new DatetimeOverflowOrUnderflow(e.getMessage(), metadata);
-                }
+                BigDecimal seconds = BigDecimal.valueOf(l.getSeconds()).add(BigDecimal.valueOf(l.getNano(), 9));
+                return dayTimeDurationFromSeconds(
+                        seconds.divide(BigDecimal.valueOf(r), 9, RoundingMode.DOWN), metadata);
             }
             default:
                 throw new UnexpectedTypeException(
@@ -528,6 +524,19 @@ public class MultiplicativeOperationIterator extends AbstractAtMostOneItemRuntim
                                 + multiplicativeOperator
                                 + "\": operation not possible with parameters of types yearMonthDuration and double",
                         metadata);
+        }
+    }
+
+    private static Item dayTimeDurationFromSeconds(BigDecimal seconds, ExceptionMetadata metadata) {
+        try {
+            // Retain nanosecond precision without requiring the entire duration to fit in a long nanosecond count.
+            BigDecimal rounded = seconds.setScale(9, RoundingMode.DOWN);
+            BigDecimal wholeSeconds = rounded.setScale(0, RoundingMode.DOWN);
+            long nanos = rounded.subtract(wholeSeconds).movePointRight(9).longValueExact();
+            return ItemFactory.getInstance()
+                    .createDayTimeDurationItem(Duration.ofSeconds(wholeSeconds.longValueExact(), nanos));
+        } catch (ArithmeticException e) {
+            throw new DurationOverflowOrUnderflow("Duration arithmetic overflow: " + e.getMessage(), metadata);
         }
     }
 
