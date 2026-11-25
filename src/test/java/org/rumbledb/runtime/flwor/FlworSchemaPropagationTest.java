@@ -354,7 +354,7 @@ class FlworSchemaPropagationTest {
         assertTrue(frame.getColumns(null, null, List.of(X)).isEmpty());
         FlworDataFrame projected = new FlworDataFrame(
                 frame.getDataFrame().select("value_column"),
-                frame.getSchema().select(Map.of(X, DynamicContext.VariableDependency.FULL), false));
+                frame.getSchema().project(Map.of(X, DynamicContext.VariableDependency.FULL), false));
         assertEquals(List.of(X), projected.getVariableNames());
         assertEquals(SequenceType.createSequenceType("int"), projected.getVariableType(X));
         assertEquals("`value_column`", projected.getColumns().get(0).toString());

@@ -341,8 +341,8 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         FLWORSchema retainedSchema = input.getSchema();
         retainedSchema.removeVariable(this.variableName);
         if (this.positionalVariableName != null) retainedSchema.removeVariable(this.positionalVariableName);
-        retainedSchema = retainedSchema.select(this.outputTupleProjection, true);
-        FLWORSchema expressionSchema = expression.getSchema().select(this.outputTupleProjection, true);
+        retainedSchema = retainedSchema.project(this.outputTupleProjection, true);
+        FLWORSchema expressionSchema = expression.getSchema().project(this.outputTupleProjection, true);
         FLWORSchema outputSchema = retainedSchema.merge(expressionSchema);
         List<FlworDataFrameColumn> allColumns = retainedSchema.getColumns();
         for (FlworDataFrameColumn column : allColumns) column.setTableName(inputDFTableName);
@@ -577,7 +577,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         retainedSchema.removeVariable(this.variableName);
         if (this.positionalVariableName != null) retainedSchema.removeVariable(this.positionalVariableName);
         List<FlworDataFrameColumn> allColumns =
-                retainedSchema.select(this.outputTupleProjection, true).getColumns();
+                retainedSchema.project(this.outputTupleProjection, true).getColumns();
 
         Dataset<Row> nativeQueryResult = null;
         if (getConfiguration().runtime().useNativeExecution()) {
@@ -668,7 +668,7 @@ public class ForClauseIterator extends TupleRuntimePlan implements DataFrameRunt
         FLWORSchema outputSchema = input.getSchema();
         outputSchema.removeVariable(this.variableName);
         if (this.positionalVariableName != null) outputSchema.removeVariable(this.positionalVariableName);
-        outputSchema = outputSchema.select(this.outputTupleProjection, true);
+        outputSchema = outputSchema.project(this.outputTupleProjection, true);
         SequenceType assignmentType =
                 this.assignmentIterator.getRuntimeStaticContext().getStaticType();
         SequenceType bindingType = assignmentType == null

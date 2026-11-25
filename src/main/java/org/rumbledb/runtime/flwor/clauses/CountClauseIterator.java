@@ -141,7 +141,7 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
             FlworDataFrame input, Map<Name, DynamicContext.VariableDependency> outputDependencies, Name variableName) {
         FLWORSchema outputSchema = input.getSchema();
         outputSchema.removeVariable(variableName);
-        outputSchema = outputSchema.select(outputDependencies, true);
+        outputSchema = outputSchema.project(outputDependencies, true);
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(outputSchema.getColumns(), true);
 
         Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(input.getDataFrame(), 1L, variableName.toString());

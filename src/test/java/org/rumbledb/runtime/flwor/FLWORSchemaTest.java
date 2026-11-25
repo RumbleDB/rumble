@@ -95,7 +95,7 @@ class FLWORSchemaTest {
         schema.addColumn(x, new ColumnBinding("size", ColumnFormat.COUNT, DataTypes.LongType));
         schema.setVariableType(x, SequenceType.createSequenceType("int"));
         FLWORSchema projected =
-                schema.select(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL), false);
+                schema.project(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL), false);
         assertEquals(
                 List.of("payload"),
                 projected.getColumns(x).stream().map(ColumnBinding::columnName).toList());
@@ -165,26 +165,26 @@ class FLWORSchemaTest {
                         new ColumnBinding("arbitrary_payload", ColumnFormat.SERIALIZED_SEQUENCE, DataTypes.BinaryType),
                         new ColumnBinding("arbitrary_total", ColumnFormat.COUNT, DataTypes.LongType)));
         var full =
-                schema.select(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL), false);
+                schema.project(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL), false);
         var count =
-                schema.select(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.COUNT), false);
+                schema.project(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.COUNT), false);
         assertEquals("arbitrary_payload", full.getColumns().get(0).getColumnName());
         assertEquals("arbitrary_total", count.getColumns().get(0).getColumnName());
         assertEquals(SequenceType.createSequenceType("int*"), count.getVariableType(x));
         assertEquals(2, schema.selectVariables(List.of(x)).getColumns(x).size());
         assertEquals(
                 "arbitrary_payload",
-                full.select(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.COUNT), false)
+                full.project(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.COUNT), false)
                         .getColumns()
                         .get(0)
                         .getColumnName());
         assertThrows(
                 org.rumbledb.exceptions.OurBadException.class,
-                () -> count.select(
+                () -> count.project(
                         java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL), false));
         assertThrows(
                 org.rumbledb.exceptions.OurBadException.class,
-                () -> schema.select(
+                () -> schema.project(
                         java.util.Map.of(name("missing"), org.rumbledb.context.DynamicContext.VariableDependency.FULL),
                         false));
     }
@@ -225,7 +225,7 @@ class FLWORSchemaTest {
         retained.removeVariable(name("missing"));
         assertTrue(retained.getVariables().isEmpty());
         assertTrue(
-                retained.select(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL), true)
+                retained.project(java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL), true)
                         .getVariables()
                         .isEmpty());
         assertEquals(2, original.getColumns(x).size());
@@ -251,14 +251,14 @@ class FLWORSchemaTest {
                 new java.util.LinkedHashMap<>();
         requirements.put(x, org.rumbledb.context.DynamicContext.VariableDependency.COUNT);
         requirements.put(missing, org.rumbledb.context.DynamicContext.VariableDependency.FULL);
-        assertThrows(org.rumbledb.exceptions.OurBadException.class, () -> schema.select(requirements, false));
-        FLWORSchema selected = schema.select(requirements, true);
+        assertThrows(org.rumbledb.exceptions.OurBadException.class, () -> schema.project(requirements, false));
+        FLWORSchema selected = schema.project(requirements, true);
         assertEquals(List.of(x), List.copyOf(selected.getVariables().keySet()));
         assertEquals("total", selected.getColumns().get(0).getColumnName());
         assertEquals(SequenceType.createSequenceType("int*"), selected.getVariableType(x));
         assertThrows(
                 org.rumbledb.exceptions.OurBadException.class,
-                () -> schema.select(
+                () -> schema.project(
                         java.util.Map.of(x, org.rumbledb.context.DynamicContext.VariableDependency.FULL), true));
         assertEquals(1, schema.getVariables().size());
     }

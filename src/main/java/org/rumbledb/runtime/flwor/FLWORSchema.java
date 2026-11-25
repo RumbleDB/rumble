@@ -125,7 +125,7 @@ public class FLWORSchema implements Serializable {
      * If ignoreExtraneousVariables is true, requirements for absent variables are skipped.
      * Existing variables must always provide a suitable representation.
      */
-    public FLWORSchema select(Map<Name, VariableDependency> dependencies, boolean ignoreExtraneousVariables) {
+    public FLWORSchema project(Map<Name, VariableDependency> dependencies, boolean ignoreExtraneousVariables) {
         FLWORSchema result = new FLWORSchema();
         for (Map.Entry<Name, VariableDependency> entry : dependencies.entrySet()) {
             Name name = entry.getKey();

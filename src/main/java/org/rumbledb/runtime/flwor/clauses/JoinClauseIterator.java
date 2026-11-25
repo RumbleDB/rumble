@@ -130,10 +130,10 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
                                 : outputDependencies.get(output));
             }
         }
-        FLWORSchema rightSchema = right.getSchema().select(rightRequirements, false);
+        FLWORSchema rightSchema = right.getSchema().project(rightRequirements, false);
         FLWORSchema outputSchema = left.getSchema();
         if (renamedRightVariable != null) outputSchema.removeVariable(renamedRightVariable);
-        outputSchema = outputSchema.select(outputDependencies, true);
+        outputSchema = outputSchema.project(outputDependencies, true);
         List<FlworDataFrameColumn> columnsToSelect = outputSchema.getColumns();
         for (Name name : rightSchema.getVariables().keySet()) {
             Name output = renamedRightVariable != null && name.equals(Name.CONTEXT_ITEM) ? renamedRightVariable : name;

@@ -223,7 +223,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
             FLWORSchema outputSchema = df.getSchema();
             outputSchema.removeVariable(this.variableName);
-            outputSchema = outputSchema.select(this.outputTupleProjection, true);
+            outputSchema = outputSchema.project(this.outputTupleProjection, true);
             Dataset<Row> result = bindLetVariableInDataFrame(
                     df.getDataFrame(),
                     this.variableName,
@@ -413,7 +413,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 new VariableReferenceIterator(this.variableName, staticContext), predicateIterator, staticContext);
         FLWORSchema outputSchema = childDF.getSchema();
         outputSchema.removeVariable(this.variableName);
-        outputSchema = outputSchema.select(parentProjection, true);
+        outputSchema = outputSchema.project(parentProjection, true);
         inputDF = LetClauseIterator.bindLetVariableInDataFrame(
                 inputDF,
                 this.variableName,
