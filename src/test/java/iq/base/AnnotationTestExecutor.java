@@ -37,6 +37,7 @@ import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FlworSchemaValidationError;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.SemanticException;
@@ -285,6 +286,9 @@ public final class AnnotationTestExecutor {
     }
 
     private static String errorOutput(Throwable exception) {
+        if (ExceptionUtils.indexOfType(exception, FlworSchemaValidationError.class) >= 0) {
+            throw new AssertionError("Unexpected FLWOR schema validation failure", exception);
+        }
         return exception.getMessage() + "\n" + ExceptionUtils.getStackTrace(exception);
     }
 

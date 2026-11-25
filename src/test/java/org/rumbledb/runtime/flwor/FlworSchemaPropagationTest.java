@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.rumbledb.config.RumbleConfiguration;
 import org.rumbledb.context.*;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FlworSchemaValidationError;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.ItemFactory;
@@ -313,10 +314,10 @@ class FlworSchemaPropagationTest {
         assertEquals(SequenceType.createSequenceType("string"), rebound.getVariableType(X));
         assertEquals(SequenceType.createSequenceType("int"), source.getVariableType(X));
         assertThrows(
-                org.rumbledb.exceptions.OurBadException.class,
+                FlworSchemaValidationError.class,
                 () -> new FlworDataFrame(spark.sql("SELECT 'replacement' AS x"), source.getSchema()));
         assertThrows(
-                org.rumbledb.exceptions.OurBadException.class,
+                FlworSchemaValidationError.class,
                 () -> new FlworDataFrame(
                         source.getDataFrame().selectExpr("x AS y"),
                         source.getSchema().selectVariables(List.of())));

@@ -32,6 +32,7 @@ import lombok.extern.log4j.Log4j2;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.FlworSchemaValidationError;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.dataframe.RuntimeDataFrame;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
@@ -60,7 +61,10 @@ public class FlworDataFrame implements RuntimeDataFrame<FlworTuple>, Serializabl
     public FlworDataFrame(Dataset<Row> dataFrame, FLWORSchema schema) {
         this.dataFrame = requireDataFrame(dataFrame);
         if (!schema.isConsistent(dataFrame)) {
-            throw new OurBadException("Inconsistent FLWOR schema.");
+            throw new FlworSchemaValidationError("Inconsistent FLWOR schema. Expected bindings: "
+                    + schema
+                    + ". Spark schema: "
+                    + dataFrame.schema().simpleString());
         }
         this.flworSchema = new FLWORSchema(schema);
         this.columns = new ArrayList<>();

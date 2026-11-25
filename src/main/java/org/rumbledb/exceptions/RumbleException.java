@@ -113,6 +113,9 @@ public class RumbleException extends RuntimeException {
     }
 
     public static RumbleException unnestException(Throwable ex) {
+        if (ex instanceof FlworSchemaValidationError validationError) {
+            throw validationError;
+        }
         if (ex instanceof SparkException) {
             Throwable sparkExceptionCause = ex.getCause();
             return unnestException(sparkExceptionCause);
