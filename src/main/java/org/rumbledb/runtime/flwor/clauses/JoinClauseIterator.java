@@ -166,6 +166,10 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
                 metadata,
                 staticContext,
                 columnsToSelect);
+        if (columnsToSelect.isEmpty() && renamedRightVariable == null) {
+            // The SQL projection uses a placeholder when no variables are needed.
+            rows = rows.drop(SparkSessionManager.temporaryColumnName);
+        }
         return new FlworDataFrame(rows, outputSchema);
     }
 
