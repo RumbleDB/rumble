@@ -80,6 +80,11 @@ public class Collection implements Serializable {
             this.mode = Mode.DELTA;
             this.logicalName = collectionPath.substring(7, collectionPath.length() - 1);
             this.physicalName = collectionPath;
+        } else if (HudiTables.isEncodedTableLocation(collectionPath)) {
+            // case Hudi table - marked by hudi-table() when it reads the table
+            this.mode = Mode.HUDI;
+            this.logicalName = HudiTables.decodeTableLocation(collectionPath);
+            this.physicalName = this.logicalName;
         } else if (collectionPath.indexOf('.') != collectionPath.lastIndexOf('.')) {
             // case Iceberg table - we assume Iceberg tables are always qualified with at
             // least a catalog and a namespace, so they contain at least two dots.
@@ -117,6 +122,9 @@ public class Collection implements Serializable {
                     contents.writeTo(this.logicalName)
                             .option("mergeSchema", "true")
                             .append();
+                    break;
+                case HUDI:
+                    HudiTables.append(this.logicalName, contents);
                     break;
                 default:
                     throw new UnsupportedOperationException(

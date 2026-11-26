@@ -46,31 +46,47 @@ public class UpdatePrimitiveFactory {
 
     public UpdatePrimitive createInsertIntoArrayPrimitive(
             Item targetArray, Item selectorInt, List<Item> contents, ExceptionMetadata metadata) {
+        if (isHudi(targetArray.getCollection())) {
+            contents.forEach(content -> HudiTables.checkItemFieldNames(content));
+        }
         return new InsertIntoArrayPrimitive(targetArray, selectorInt, contents, metadata);
     }
 
     public UpdatePrimitive createInsertIntoObjectPrimitive(
             Item targetObject, Item contentsObject, ExceptionMetadata metadata) {
+        if (isHudi(targetObject.getCollection())) {
+            HudiTables.checkItemFieldNames(contentsObject);
+        }
         return new InsertIntoObjectPrimitive(targetObject, contentsObject, metadata);
     }
 
     public UpdatePrimitive createReplaceInArrayPrimitive(
             Item targetArray, Item selectorInt, Item content, ExceptionMetadata metadata) {
+        if (isHudi(targetArray.getCollection())) {
+            HudiTables.checkItemFieldNames(content);
+        }
         return new ReplaceInArrayPrimitive(targetArray, selectorInt, content, metadata);
     }
 
     public UpdatePrimitive createReplaceInObjectPrimitive(
             Item targetObject, Item selectorStr, Item content, ExceptionMetadata metadata) {
+        if (isHudi(targetObject.getCollection())) {
+            HudiTables.checkItemFieldNames(content);
+        }
         return new ReplaceInObjectPrimitive(targetObject, selectorStr, content, metadata);
     }
 
     public UpdatePrimitive createRenameInObjectPrimitive(
             Item targetObject, Item selectorStr, Item content, ExceptionMetadata metadata) {
+        if (isHudi(targetObject.getCollection())) {
+            HudiTables.checkNamingConvention(content.getStringValue());
+        }
         return new RenameInObjectPrimitive(targetObject, selectorStr, content, metadata);
     }
 
     public UpdatePrimitive createCreateCollectionPrimitive(
             Collection collection, Dataset<Row> contents, ExceptionMetadata metadata) {
+        checkHudiContents(collection, contents);
         return new CreateCollectionPrimitive(collection, contents, metadata);
     }
 
@@ -80,27 +96,43 @@ public class UpdatePrimitiveFactory {
     }
 
     public UpdatePrimitive createEditTuplePrimitive(Item target, Dataset<Row> contents, ExceptionMetadata metadata) {
+        checkHudiContents(target.getCollection(), contents);
         return new EditTuplePrimitive(target, contents, metadata);
     }
 
     public UpdatePrimitive createInsertAfterIntoCollectionPrimitive(
             Item target, Dataset<Row> contents, ExceptionMetadata metadata) {
+        checkHudiContents(target.getCollection(), contents);
         return new InsertAfterIntoCollectionPrimitive(target, contents, metadata);
     }
 
     public UpdatePrimitive createInsertBeforeIntoCollectionPrimitive(
             Item target, Dataset<Row> contents, ExceptionMetadata metadata) {
+        checkHudiContents(target.getCollection(), contents);
         return new InsertBeforeIntoCollectionPrimitive(target, contents, metadata);
     }
 
     public UpdatePrimitive createInsertFirstIntoCollectionPrimitive(
             Collection collection, Dataset<Row> contents, ExceptionMetadata metadata) {
+        checkHudiContents(collection, contents);
         return new InsertFirstIntoCollectionPrimitive(collection, contents, metadata);
     }
 
     public UpdatePrimitive createInsertLastIntoCollectionPrimitive(
             Collection collection, Dataset<Row> contents, ExceptionMetadata metadata) {
+        checkHudiContents(collection, contents);
         return new InsertLastIntoCollectionPrimitive(collection, contents, metadata);
+    }
+
+    private static boolean isHudi(Collection collection) {
+        return collection != null && collection.getMode() == Mode.HUDI;
+    }
+
+    /** Hudi only accepts Avro names as columns, so reject other keys before anything is written. */
+    private static void checkHudiContents(Collection collection, Dataset<Row> contents) {
+        if (isHudi(collection)) {
+            HudiTables.checkSchemaFieldNames(contents.schema());
+        }
     }
 
     public UpdatePrimitive createTruncateCollectionPrimitive(Collection collection, ExceptionMetadata metadata) {

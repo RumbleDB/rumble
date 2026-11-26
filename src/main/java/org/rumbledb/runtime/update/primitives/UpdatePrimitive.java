@@ -164,7 +164,8 @@ public interface UpdatePrimitive {
     }
 
     default void applySetFieldInCollection(String location, long rowID, String fieldPath, String fieldValueSQL) {
-        if (this.getTarget().getCollection().getMode() != Mode.ICEBERG) {
+        Mode mode = this.getTarget().getCollection().getMode();
+        if (mode != Mode.ICEBERG && mode != Mode.HUDI) {
             String updateQuery = "UPDATE "
                     + location
                     + " SET "
@@ -179,13 +180,17 @@ public interface UpdatePrimitive {
             return;
         }
 
-        // Iceberg UPDATE is not supported in this runtime; rewrite the target row instead
+        // Iceberg UPDATE is not supported in this runtime, and Hudi UPDATE cannot set nested struct fields;
+        // rewrite the target row instead
         // Future optimization: batch row rewrites (delete all + insert all) for multi-row updates
 
         Dataset<Row> updatedRows = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .table(location)
                 .where(col(SparkSessionManager.rowIdColumnName).equalTo(rowID));
+        if (mode == Mode.HUDI) {
+            updatedRows = HudiTables.dropMetaColumns(updatedRows);
+        }
         Column newValue = expr(fieldValueSQL);
 
         if (fieldPath.contains(".")) {
@@ -207,6 +212,11 @@ public interface UpdatePrimitive {
         Dataset<Row> frozenRows = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .createDataFrame(rewrittenRows, updatedRows.schema());
+
+        if (mode == Mode.HUDI) {
+            HudiTables.upsert(location, frozenRows);
+            return;
+        }
 
         String deleteQuery =
                 "DELETE FROM " + location + " WHERE `" + SparkSessionManager.rowIdColumnName + "` = " + rowID;

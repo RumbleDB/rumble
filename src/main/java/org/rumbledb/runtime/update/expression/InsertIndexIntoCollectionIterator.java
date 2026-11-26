@@ -35,6 +35,7 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.update.PendingUpdateList;
 import org.rumbledb.runtime.update.primitives.Collection;
+import org.rumbledb.runtime.update.primitives.HudiTables;
 import org.rumbledb.runtime.update.primitives.Mode;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitive;
 import org.rumbledb.runtime.update.primitives.UpdatePrimitiveFactory;
@@ -118,6 +119,9 @@ public class InsertIndexIntoCollectionIterator extends UpdatingExpressionIterato
             URI uri =
                     FileSystemUtil.resolveFileSystemURI(this.staticContext.getStaticURI(), logicalPath, getMetadata());
             logicalPath = FileSystemUtil.convertURIToStringForSpark(uri);
+        }
+        if (mode == Mode.HUDI) {
+            HudiTables.assertHudiTable(logicalPath);
         }
 
         Collection collection = new Collection(mode, logicalPath);

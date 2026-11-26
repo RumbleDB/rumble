@@ -29,6 +29,8 @@ public enum Mode {
                 return DELTA;
             case "iceberg-table":
                 return ICEBERG;
+            case "hudi-table":
+                return HUDI;
             default:
                 throw new IllegalArgumentException("Unknown mode: " + modeStr);
         }

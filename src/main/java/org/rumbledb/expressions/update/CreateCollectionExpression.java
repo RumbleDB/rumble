@@ -36,7 +36,7 @@ public class CreateCollectionExpression extends Expression {
 
     public CreateCollectionExpression(
             Expression collection, Expression contentExpression, Mode mode, ExceptionMetadata metadata) {
-        // Currently supports HIVE/DELTA/ICEBERG
+        // Currently supports HIVE/DELTA/ICEBERG/HUDI
         super(metadata);
         if (collection == null) {
             throw new OurBadException("Collection must be identified for creation.");
@@ -69,6 +69,8 @@ public class CreateCollectionExpression extends Expression {
             sb.append("delta-file");
         } else if (this.mode == Mode.ICEBERG) {
             sb.append("iceberg-table");
+        } else if (this.mode == Mode.HUDI) {
+            sb.append("hudi-table");
         }
         sb.append("(");
         this.collection.serializeToJSONiq(sb, 0);
