@@ -31,6 +31,9 @@ import org.rumbledb.exceptions.InvalidRegexPatternException;
 
 public final class RegexPatternUtils {
 
+    static final String MULTILINE_START_ANCHOR = "(?:\\A|(?<=\\n)(?!\\z))";
+    static final String MULTILINE_END_ANCHOR = "(?:(?=\\n)|(?<!\\n)\\z)";
+
     private static final Pattern XML_WHITESPACE_PATTERN = Pattern.compile("[\\t\\n\\r ]+");
 
     // XML 1.0 (Fifth Edition), productions [4] NameStartChar and [4a] NameChar.
@@ -181,10 +184,10 @@ public final class RegexPatternUtils {
                 result.append(current);
                 continue;
             }
-            // XPath multiline anchors recognize LF only, while dot excludes both LF and CR.
+            // XPath multiline anchors recognize LF only and skip the position after a final LF.
             switch (current) {
-                case '^' -> result.append(multiline ? "(?:\\A|(?<=\\n))" : "\\A");
-                case '$' -> result.append(multiline ? "(?:\\z|(?=\\n))" : "\\z");
+                case '^' -> result.append(multiline ? MULTILINE_START_ANCHOR : "\\A");
+                case '$' -> result.append(multiline ? MULTILINE_END_ANCHOR : "\\z");
                 case '.' -> result.append(dotAll ? "." : "[^\\n\\r]");
                 default -> result.append(current);
             }
