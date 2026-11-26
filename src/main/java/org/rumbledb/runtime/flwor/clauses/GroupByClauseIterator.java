@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.flwor.clauses;
 
 import java.io.Serial;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -49,6 +50,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -68,6 +70,7 @@ import org.rumbledb.runtime.misc.CollationSupport;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.runtime.misc.TimezoneSupport;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.SequenceType;
@@ -109,6 +112,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         }
         Map<FlworKey, List<FlworTuple>> tuplesByKey = new LinkedHashMap<>();
         DynamicContext tupleContext = new DynamicContext(context);
+        ZoneOffset implicitTimezone = TimezoneSupport.xqueryImplicitTimezone(context, getRuntimeStaticContext());
         try (Cursor<FlworTuple> childCursor = this.child.createNativeCursor(context)) {
             while (childCursor.hasNext()) {
                 FlworTuple tuple = childCursor.next();
@@ -150,7 +154,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                                             "Keys in a group-by clause must atomize to atomic values.", getMetadata());
                                 }
                                 value = Collections.singletonList(atomizedKey);
-                                keys.add(normalizeGroupingKey(atomizedKey, expression));
+                                keys.add(normalizeGroupingKey(atomizedKey, expression, implicitTimezone));
                             }
                         }
                         validateGroupingKeySequenceType(expression.getSequenceType(), value, tupleContext);
@@ -179,7 +183,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                         validateGroupingKeySequenceType(expression.getSequenceType(), atomized, tupleContext);
                         tuple.putValue(variable, atomized);
                         if (atomized.size() == 1) {
-                            keys.add(normalizeGroupingKey(atomized.get(0), expression));
+                            keys.add(normalizeGroupingKey(atomized.get(0), expression, implicitTimezone));
                         }
                     }
                 }
@@ -193,7 +197,22 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         return results;
     }
 
-    private Item normalizeGroupingKey(Item key, GroupByClauseSparkIteratorExpression expression) {
+    private Item normalizeGroupingKey(
+            Item key, GroupByClauseSparkIteratorExpression expression, ZoneOffset implicitTimezone) {
+        if (implicitTimezone != null) {
+            if (key.isDateTime() && !key.hasTimeZone()) {
+                return ItemFactory.getInstance().createDateTimeItem(
+                        TimezoneSupport.dateTimeWithImplicitTimezone(key, implicitTimezone), true);
+            }
+            if (key.isDate() && !key.hasTimeZone()) {
+                return ItemFactory.getInstance().createDateItem(
+                        TimezoneSupport.dateTimeWithImplicitTimezone(key, implicitTimezone), true);
+            }
+            if (key.isTime() && !key.hasTimeZone()) {
+                return ItemFactory.getInstance().createTimeItem(
+                        TimezoneSupport.timeWithImplicitTimezone(key, implicitTimezone), true);
+            }
+        }
         return CollationSupport.normalizeItemForCollation(
                 key,
                 expression.getCollationURI() == null
@@ -410,7 +429,12 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                 .register(
                         "createGroupingColumns",
                         new GroupClauseCreateColumnsUDF(
-                                this.groupingExpressions, context, inputSchema, UDFcolumns, getMetadata()),
+                                this.groupingExpressions,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                getMetadata(),
+                                TimezoneSupport.xqueryImplicitTimezone(context, getRuntimeStaticContext())),
                         DataTypes.createStructType(typedFields));
 
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);

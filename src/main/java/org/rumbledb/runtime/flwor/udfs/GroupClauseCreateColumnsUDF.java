@@ -16,6 +16,8 @@
 package org.rumbledb.runtime.flwor.udfs;
 
 import java.io.Serial;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +34,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
+import org.rumbledb.runtime.misc.TimezoneSupport;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -46,6 +49,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
     private final List<Object> results;
     private final ExceptionMetadata metadata;
+    private final ZoneOffset implicitTimezone;
 
     // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
     // The second column is used for strings, with a special value in the first column.
@@ -64,7 +68,8 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             DynamicContext context,
             StructType schema,
             List<FlworDataFrameColumn> columns,
-            ExceptionMetadata metadata) {
+            ExceptionMetadata metadata,
+            ZoneOffset implicitTimezone) {
         this.dataFrameContext = new DataFrameContext(context, columns);
         this.groupingVariableNames = new ArrayList<>();
         this.groupingSequenceTypes = new ArrayList<>();
@@ -74,6 +79,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
         }
         this.results = new ArrayList<>();
         this.metadata = metadata;
+        this.implicitTimezone = implicitTimezone;
     }
 
     @Override
@@ -216,9 +222,23 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(dateTimeGroupIndex);
             this.results.add(null);
             this.results.add(null);
-            this.results.add(nextItem.getEpochMillis());
+            this.results.add(temporalGroupingKey(nextItem));
             return;
         }
         throw new UnexpectedTypeException("Group by variable must atomize to a supported atomic value.", this.metadata);
+    }
+
+    private long temporalGroupingKey(Item item) {
+        if (this.implicitTimezone != null && !item.hasTimeZone()) {
+            if (item.isTime()) {
+                return TimezoneSupport.timeWithImplicitTimezone(item, this.implicitTimezone)
+                        .atDate(LocalDate.EPOCH).toInstant().toEpochMilli();
+            }
+            if (item.isDateTime() || item.isDate()) {
+                return TimezoneSupport.dateTimeWithImplicitTimezone(item, this.implicitTimezone)
+                        .toInstant().toEpochMilli();
+            }
+        }
+        return item.getEpochMillis();
     }
 }

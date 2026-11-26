@@ -217,6 +217,11 @@ final class XPathBackreferenceMatcher {
             int start = this.index++;
             char current = this.source.charAt(start);
             if (current == '(') {
+                // The regex translator inserts these lookarounds for LF-only multiline anchors.
+                if (this.source.startsWith("(?=\\n)", start) || this.source.startsWith("(?<=\\n)", start)) {
+                    this.index = this.source.indexOf(')', this.index) + 1;
+                    return characterTest(this.source.substring(start, this.index), flags);
+                }
                 int firstCapture = this.nextGroup;
                 int number = 0;
                 if (this.source.charAt(this.index) == '?') {

@@ -52,6 +52,7 @@ public final class RegexPatternUtils {
             String pattern, String flagsString, ExceptionMetadata metadata, String xsdVersion) {
         boolean quote = false;
         boolean ignoreWhitespace = false;
+        boolean multiline = false;
         int flags = 0;
         if (flagsString != null) {
             for (char flag : flagsString.toCharArray()) {
@@ -60,7 +61,7 @@ public final class RegexPatternUtils {
                         flags |= Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE;
                         break;
                     case 'm':
-                        flags |= Pattern.MULTILINE;
+                        multiline = true;
                         break;
                     case 's':
                         flags |= Pattern.DOTALL;
@@ -87,9 +88,6 @@ public final class RegexPatternUtils {
             pattern = Pattern.quote(pattern);
         }
         if (!quote) {
-            if ((flags & Pattern.MULTILINE) == 0) {
-                pattern = translateEndAnchors(pattern);
-            }
             boolean caseInsensitive = (flags & Pattern.CASE_INSENSITIVE) != 0;
             if (caseInsensitive || pattern.contains("-[")) {
                 pattern = rewritePattern(pattern, caseInsensitive);
@@ -97,6 +95,7 @@ public final class RegexPatternUtils {
             if (caseInsensitive) {
                 flags &= ~(Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CASE);
             }
+            pattern = translateAnchorsAndWildcard(pattern, multiline, (flags & Pattern.DOTALL) != 0);
             pattern = translateUnicodeBlockEscapes(pattern);
             pattern = translateCharacterClassEscapes(pattern);
         }
@@ -164,7 +163,7 @@ public final class RegexPatternUtils {
                         && "sSiIcCdDwWpP".indexOf(token.text.charAt(1)) < 0);
     }
 
-    private static String translateEndAnchors(String pattern) {
+    private static String translateAnchorsAndWildcard(String pattern, boolean multiline, boolean dotAll) {
         StringBuilder result = new StringBuilder(pattern.length());
         int classDepth = 0;
         for (int i = 0; i < pattern.length(); i++) {
@@ -178,10 +177,16 @@ public final class RegexPatternUtils {
             } else if (current == ']') {
                 classDepth--;
             }
-            if (current == '$' && classDepth == 0) {
-                result.append("\\z");
-            } else {
+            if (classDepth != 0) {
                 result.append(current);
+                continue;
+            }
+            // XPath multiline anchors recognize LF only, while dot excludes both LF and CR.
+            switch (current) {
+                case '^' -> result.append(multiline ? "(?:\\A|(?<=\\n))" : "\\A");
+                case '$' -> result.append(multiline ? "(?:\\z|(?=\\n))" : "\\z");
+                case '.' -> result.append(dotAll ? "." : "[^\\n\\r]");
+                default -> result.append(current);
             }
         }
         return result.toString();
@@ -508,7 +513,9 @@ public final class RegexPatternUtils {
                 }
                 String name = pattern.substring(i + 3, end);
                 result.append(pattern, i, i + 3);
-                if (name.startsWith("Is") && name.length() > 2) {
+                if ("IsPrivateUse".equals(name)) {
+                    result.append("Co");
+                } else if (name.startsWith("Is") && name.length() > 2) {
                     result.append("In").append(name, 2, name.length());
                 } else {
                     result.append(name);
@@ -519,6 +526,9 @@ public final class RegexPatternUtils {
             }
             result.append(current);
             i++;
+            if (current == '\\' && i < pattern.length()) {
+                result.append(pattern.charAt(i++));
+            }
         }
         return result.toString();
     }

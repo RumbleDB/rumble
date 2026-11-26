@@ -101,6 +101,15 @@ public class RegexPatternUtilsTest {
     }
 
     @Test
+    public void multilineAnchorsWithBackreferencesRecognizeOnlyLineFeed() {
+        RegexPatternUtils.CompiledRegex compiledRegex =
+                RegexPatternUtils.compileRegex("^(a)\\1$", "m", ExceptionMetadata.EMPTY_METADATA);
+
+        Assertions.assertTrue(RegexPatternUtils.containsMatch(compiledRegex, "x\naa\ny"));
+        Assertions.assertFalse(RegexPatternUtils.containsMatch(compiledRegex, "x\raa\ry"));
+    }
+
+    @Test
     public void tokenizeOnXmlWhitespaceDoesNotSplitOnFormFeed() {
         Assertions.assertArrayEquals(new String[] {"abc\fdef"}, RegexPatternUtils.tokenizeOnXmlWhitespace("abc\fdef"));
     }

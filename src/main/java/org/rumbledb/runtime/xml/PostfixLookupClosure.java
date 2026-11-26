@@ -24,7 +24,6 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.functions.arrays.ArrayIndexUtils;
 
 /**
@@ -60,26 +59,7 @@ public class PostfixLookupClosure implements FlatMapFunction<Item, Item> {
                     }
                 }
             } else {
-                for (Item rawKey : this.keys) {
-                    List<Item> atomized = rawKey.atomizedValue();
-                    if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
-                        throw new UnexpectedTypeException(
-                                "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
-                                this.expressionMetadata);
-                    }
-                    Item key = atomized.get(0);
-                    if (arg0.isObject()) {
-                        Item value = arg0.getItemByKey(key);
-                        if (value != null) {
-                            results.add(value);
-                        }
-                    } else {
-                        List<Item> valueSequence = arg0.getSequenceByKey(key);
-                        if (valueSequence != null && !valueSequence.isEmpty()) {
-                            results.addAll(valueSequence);
-                        }
-                    }
-                }
+                PostfixLookupIterator.appendMapLookup(arg0, this.keys, results, this.expressionMetadata);
             }
         } else if (arg0.isArray()) {
             if (this.wildcard) {
