@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.functions.sequences.value;
 
 import java.io.Serial;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -32,10 +33,12 @@ public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<I
 
     private final String collation;
     private final ExceptionMetadata metadata;
+    private final ZoneOffset implicitTimezone;
 
-    public SameElementsAndLengthClosure(String collation, ExceptionMetadata metadata) {
+    public SameElementsAndLengthClosure(String collation, ExceptionMetadata metadata, ZoneOffset implicitTimezone) {
         this.collation = collation;
         this.metadata = metadata;
+        this.implicitTimezone = implicitTimezone;
     }
 
     @Override
@@ -43,7 +46,7 @@ public class SameElementsAndLengthClosure implements FlatMapFunction2<Iterator<I
         List<Boolean> list = new ArrayList<>();
         while (iterator1.hasNext() && iterator2.hasNext()) {
             if (!DeepEqualFunctionIterator.checkItemsDeepEqual(
-                    iterator1.next(), iterator2.next(), this.collation, this.metadata)) {
+                    iterator1.next(), iterator2.next(), this.collation, this.metadata, this.implicitTimezone)) {
                 list.add(true);
                 return list.iterator();
             }

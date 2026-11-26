@@ -16,6 +16,8 @@
 package org.rumbledb.runtime.flwor.udfs;
 
 import java.io.Serial;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +59,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
     private static final int stringGroupIndex = 5;
     private static final int doubleGroupIndex = 5;
     private static final int durationGroupIndex = 5;
-    private static final int dateTimeGroupIndex = 5;
+    private static final int dateTimeGroupIndex = 6;
 
     public GroupClauseCreateColumnsUDF(
             List<GroupByClauseSparkIteratorExpression> groupingExpressions,
@@ -213,10 +215,14 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(nextItem.getEpochMillis());
             return;
         } else if (nextItem.hasDateTime()) {
+            Instant instant = nextItem.isTime()
+                    ? nextItem.getTimeValue().atDate(LocalDate.EPOCH).toInstant()
+                    : nextItem.getDateTimeValue().toInstant();
             this.results.add(dateTimeGroupIndex);
+            // A canonical UTC instant preserves all fractional seconds in Spark's grouping key.
+            this.results.add(instant.toString());
             this.results.add(null);
             this.results.add(null);
-            this.results.add(nextItem.getEpochMillis());
             return;
         }
         throw new UnexpectedTypeException("Group by variable must atomize to a supported atomic value.", this.metadata);
