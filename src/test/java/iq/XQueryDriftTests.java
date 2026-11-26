@@ -18,16 +18,35 @@ package iq;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.TimeZone;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.parallel.Isolated;
 
 import iq.base.AnnotationsTestsBase;
 import iq.base.TestFileDiscovery;
 
 import org.rumbledb.config.RumbleConfiguration;
 
+@Isolated("Changes the JVM default timezone")
 public class XQueryDriftTests extends AnnotationsTestsBase {
 
     public static final File runtimeTestsDirectory =
             new File(System.getProperty("user.dir") + "/src/test/resources/test_files/xquery-drift");
+
+    private TimeZone originalTimezone;
+
+    @BeforeAll
+    void setDriftTestTimezone() {
+        this.originalTimezone = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("Europe/Zurich"));
+    }
+
+    @AfterAll
+    void restoreTimezone() {
+        TimeZone.setDefault(this.originalTimezone);
+    }
 
     @Override
     public RumbleConfiguration getConfiguration() {

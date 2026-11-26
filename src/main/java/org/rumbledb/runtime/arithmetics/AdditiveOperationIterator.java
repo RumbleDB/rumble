@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.time.OffsetTime;
 import java.time.Period;
+import java.time.ZoneOffset;
 import java.util.Arrays;
 
 import org.rumbledb.api.Item;
@@ -34,6 +35,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.TimezoneSupport;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -77,10 +79,16 @@ public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan 
             throw new UnexpectedTypeException(
                     "Addition expression requires at most one item in its right input sequence.", getMetadata());
         }
-        return applyOperator(left, right, this.isMinus, getMetadata());
+        return applyOperator(
+                left,
+                right,
+                this.isMinus,
+                getMetadata(),
+                TimezoneSupport.xqueryImplicitTimezone(dynamicContext, getRuntimeStaticContext()));
     }
 
-    private static Item applyOperator(Item left, Item right, boolean isMinus, ExceptionMetadata metadata) {
+    private static Item applyOperator(
+            Item left, Item right, boolean isMinus, ExceptionMetadata metadata, ZoneOffset implicitTimezone) {
         // if left or right equals empty sequence, return empty sequence
         if (left == null || right == null) {
             return null;
@@ -105,7 +113,7 @@ public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan 
         if (right.isUntypedAtomic()) {
             right = ItemFactory.getInstance().createDoubleItem(right.castToDoubleValue());
         }
-        Item result = processItem(left, right, isMinus);
+        Item result = processItem(left, right, isMinus, implicitTimezone);
         if (result == null) {
             throw new UnexpectedTypeException(
                     " \"+\": operation not possible with parameters of type \""
@@ -119,6 +127,10 @@ public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan 
     }
 
     public static Item processItem(Item left, Item right, boolean isMinus) {
+        return processItem(left, right, isMinus, null);
+    }
+
+    private static Item processItem(Item left, Item right, boolean isMinus, ZoneOffset implicitTimezone) {
         if (left.isInt() && right.isInt()) {
             if (right.isInt()
                     && (left.getIntValue() < Integer.MAX_VALUE / 2
@@ -243,18 +255,18 @@ public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan 
         if (left.isDate() && right.isDate()) {
             if (isMinus) {
 
-                return processDateTimeDayTime(left, right);
+                return processDateTimeDayTime(left, right, implicitTimezone);
             }
         }
         if (left.isTime() && right.isTime()) {
             if (isMinus) {
 
-                return processTimeDayTime(left, right);
+                return processTimeDayTime(left, right, implicitTimezone);
             }
         }
         if (left.isDateTime() && right.isDateTime()) {
             if (isMinus) {
-                return processDateTimeDayTime(left, right);
+                return processDateTimeDayTime(left, right, implicitTimezone);
             }
         }
         return null;
@@ -308,15 +320,15 @@ public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan 
         return ItemFactory.getInstance().createDayTimeDurationItem(isMinus ? l.minus(r) : l.plus(r));
     }
 
-    private static Item processDateTimeDayTime(Item left, Item right) {
-        OffsetDateTime l = left.getDateTimeValue();
-        OffsetDateTime r = right.getDateTimeValue();
+    private static Item processDateTimeDayTime(Item left, Item right, ZoneOffset implicitTimezone) {
+        OffsetDateTime l = TimezoneSupport.dateTimeWithImplicitTimezone(left, implicitTimezone);
+        OffsetDateTime r = TimezoneSupport.dateTimeWithImplicitTimezone(right, implicitTimezone);
         return ItemFactory.getInstance().createDayTimeDurationItem(Duration.between(r, l));
     }
 
-    private static Item processTimeDayTime(Item left, Item right) {
-        OffsetTime l = left.getTimeValue();
-        OffsetTime r = right.getTimeValue();
+    private static Item processTimeDayTime(Item left, Item right, ZoneOffset implicitTimezone) {
+        OffsetTime l = TimezoneSupport.timeWithImplicitTimezone(left, implicitTimezone);
+        OffsetTime r = TimezoneSupport.timeWithImplicitTimezone(right, implicitTimezone);
         return ItemFactory.getInstance().createDayTimeDurationItem(Duration.between(r, l));
     }
 

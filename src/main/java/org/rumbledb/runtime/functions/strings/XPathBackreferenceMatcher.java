@@ -217,6 +217,14 @@ final class XPathBackreferenceMatcher {
             int start = this.index++;
             char current = this.source.charAt(start);
             if (current == '(') {
+                if (this.source.startsWith(RegexPatternUtils.MULTILINE_START_ANCHOR, start)) {
+                    this.index = start + RegexPatternUtils.MULTILINE_START_ANCHOR.length();
+                    return characterTest(RegexPatternUtils.MULTILINE_START_ANCHOR, flags);
+                }
+                if (this.source.startsWith(RegexPatternUtils.MULTILINE_END_ANCHOR, start)) {
+                    this.index = start + RegexPatternUtils.MULTILINE_END_ANCHOR.length();
+                    return characterTest(RegexPatternUtils.MULTILINE_END_ANCHOR, flags);
+                }
                 int firstCapture = this.nextGroup;
                 int number = 0;
                 if (this.source.charAt(this.index) == '?') {

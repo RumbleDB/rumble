@@ -18,6 +18,7 @@ package org.rumbledb.context;
 import java.io.Serial;
 import java.io.Serializable;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -244,6 +245,10 @@ public class DynamicContext implements Serializable {
             return this.parent.getCurrentDateTime();
         }
         return this.currentDateTime;
+    }
+
+    public ZoneOffset getImplicitTimezone() {
+        return getCurrentDateTime().getOffset();
     }
 
     public void addGlobalVariable(Name globalVariable) {

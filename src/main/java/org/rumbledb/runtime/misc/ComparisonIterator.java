@@ -119,7 +119,8 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
                 this.comparisonOperator,
                 getRuntimeStaticContext().getDefaultCollation(),
                 getMetadata(),
-                getRuntimeStaticContext());
+                getRuntimeStaticContext(),
+                TimezoneSupport.xqueryImplicitTimezone(dynamicContext, getRuntimeStaticContext()));
     }
 
     private static Item applyComparison(
@@ -128,7 +129,8 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
             ComparisonOperator operator,
             String activeCollation,
             ExceptionMetadata metadata,
-            RuntimeStaticContext staticContext) {
+            RuntimeStaticContext staticContext,
+            ZoneOffset implicitTimezone) {
         if (left.isArray() || right.isArray()) {
             throw new CannotAtomizeException("Invalid args. Comparison can't be performed on array type", metadata);
         } else if (left.isObject() || right.isObject()) {
@@ -160,7 +162,7 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
             return comparisonResultToBooleanItem(comparison, operator, metadata);
         }
 
-        long comparison = compareItems(left, right, operator, metadata, staticContext);
+        long comparison = compareItems(left, right, operator, metadata, staticContext, implicitTimezone);
         if (comparison == Long.MIN_VALUE) {
             throw new UnexpectedTypeException(
                     " \""
@@ -188,7 +190,7 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
 
     public static long compareItems(
             Item left, Item right, ComparisonOperator comparisonOperator, ExceptionMetadata ignoredMetadata) {
-        return compareItems(left, right, comparisonOperator, ignoredMetadata, null);
+        return compareItems(left, right, comparisonOperator, ignoredMetadata, null, null);
     }
 
     private static long compareItems(
@@ -196,7 +198,8 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
             Item right,
             ComparisonOperator comparisonOperator,
             ExceptionMetadata ignoredMetadata,
-            RuntimeStaticContext staticContext) {
+            RuntimeStaticContext staticContext,
+            ZoneOffset implicitTimezone) {
         if (left.isUntypedAtomic() && right.isUntypedAtomic()) {
             left = ItemFactory.getInstance().createStringItem(left.getStringValue());
             right = ItemFactory.getInstance().createStringItem(right.getStringValue());
@@ -296,28 +299,28 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
             return processBytes(l, r);
         }
         if (left.isTime() && right.isTime()) {
-            return processTime(left, right);
+            return processTime(left, right, implicitTimezone);
         }
         if (left.isDate() && right.isDate()) {
-            return processDateTime(left, right);
+            return processDateTime(left, right, implicitTimezone);
         }
         if (left.isDateTime() && right.isDateTime()) {
-            return processDateTime(left, right);
+            return processDateTime(left, right, implicitTimezone);
         }
         if (left.isGDay() && right.isGDay()) {
-            return processDateTime(left, right);
+            return processDateTime(left, right, implicitTimezone);
         }
         if (left.isGMonth() && right.isGMonth()) {
-            return processDateTime(left, right);
+            return processDateTime(left, right, implicitTimezone);
         }
         if (left.isGYear() && right.isGYear()) {
-            return processDateTime(left, right);
+            return processDateTime(left, right, implicitTimezone);
         }
         if (left.isGMonthDay() && right.isGMonthDay()) {
-            return processDateTime(left, right);
+            return processDateTime(left, right, implicitTimezone);
         }
         if (left.isGYearMonth() && right.isGYearMonth()) {
-            return processDateTime(left, right);
+            return processDateTime(left, right, implicitTimezone);
         }
         if (left.isBoolean() && right.isBoolean()) {
             Boolean l = left.getBooleanValue();
@@ -506,15 +509,15 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
         return baseDate.plus(l).compareTo(baseDate.plus(r));
     }
 
-    private static int processDateTime(Item left, Item right) {
-        OffsetDateTime l = left.getDateTimeValue();
-        OffsetDateTime r = right.getDateTimeValue();
+    private static int processDateTime(Item left, Item right, ZoneOffset implicitTimezone) {
+        OffsetDateTime l = TimezoneSupport.dateTimeWithImplicitTimezone(left, implicitTimezone);
+        OffsetDateTime r = TimezoneSupport.dateTimeWithImplicitTimezone(right, implicitTimezone);
         return l.toInstant().compareTo(r.toInstant());
     }
 
-    private static int processTime(Item left, Item right) {
-        OffsetTime l = left.getTimeValue();
-        OffsetTime r = right.getTimeValue();
+    private static int processTime(Item left, Item right, ZoneOffset implicitTimezone) {
+        OffsetTime l = TimezoneSupport.timeWithImplicitTimezone(left, implicitTimezone);
+        OffsetTime r = TimezoneSupport.timeWithImplicitTimezone(right, implicitTimezone);
         return l.atDate(LocalDate.of(1970, 1, 1))
                 .toInstant()
                 .compareTo(r.atDate(LocalDate.of(1970, 1, 1)).toInstant());
