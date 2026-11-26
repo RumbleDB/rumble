@@ -63,16 +63,14 @@ public class HudiTableFunctionIterator extends ItemRuntimePlan implements DataFr
         SparkSession session = SparkSessionManager.getInstance().getOrCreateSession();
 
         // Only a Hudi table gets a precise type. Anything else is reported by the runtime check.
-        if (
-            !(call.getArguments().get(0) instanceof StringLiteralExpression name)
-                || !HudiTables.isHudiTable(name.getValue())
-        ) {
+        if (!(call.getArguments().get(0) instanceof StringLiteralExpression name)
+                || !HudiTables.isHudiTable(name.getValue())) {
             return Optional.empty();
         }
 
         return Optional.of(new SequenceType(
-                ItemTypeFactory.createItemType(
-                        HudiTables.dropMetaColumns(session.read().table(name.getValue()).schema())),
+                ItemTypeFactory.createItemType(HudiTables.dropMetaColumns(
+                        session.read().table(name.getValue()).schema())),
                 SequenceType.Arity.ZeroOrMore));
     }
 }

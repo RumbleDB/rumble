@@ -15,9 +15,6 @@
  */
 package org.rumbledb.runtime.update.primitives;
 
-import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.lit;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -37,11 +34,13 @@ import org.apache.spark.sql.types.MapType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.lit;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.spark.SparkSessionManager;
 
 public final class HudiTables {
-
 
     public static final String TABLE_LOCATION_PREFIX = "hudi-table:";
 
@@ -60,8 +59,8 @@ public final class HudiTables {
 
     public static void checkNamingConvention(String key) {
         if (!AVRO_NAME.matcher(key).matches()) {
-            throw new RuntimeException("Key \"" + key + "\" cannot be stored in a Hudi table. Hudi follows Avro's naming"
-                + " rules.");
+            throw new RuntimeException(
+                    "Key \"" + key + "\" cannot be stored in a Hudi table. Hudi follows Avro's naming" + " rules.");
         }
     }
 
@@ -118,9 +117,12 @@ public final class HudiTables {
         scala.Option<String> provider;
         try {
             TableIdentifier identifier = session.sessionState().sqlParser().parseTableIdentifier(tableName);
-            provider = session.sessionState().catalog().getTableMetadata(identifier).provider();
+            provider = session.sessionState()
+                    .catalog()
+                    .getTableMetadata(identifier)
+                    .provider();
         } catch (Exception e) {
-            // Not a name the session catalog knows 
+            // Not a name the session catalog knows
             return null;
         }
         return provider.isDefined() ? provider.get().toLowerCase() : null;
@@ -134,10 +136,10 @@ public final class HudiTables {
         String provider = provider(tableName);
         if (provider != null && !provider.equals("hudi")) {
             throw new RuntimeException("Table '"
-                + tableName
-                + "' is not a Hudi table (its format is "
-                + provider
-                + "). Use the function that matches its format, such as table(), delta-file() or iceberg-table().");
+                    + tableName
+                    + "' is not a Hudi table (its format is "
+                    + provider
+                    + "). Use the function that matches its format, such as table(), delta-file() or iceberg-table().");
         }
     }
 
@@ -172,8 +174,7 @@ public final class HudiTables {
         contents = dropMetaColumns(contents);
         StructType tableSchema = dropMetaColumns(session.table(tableName).schema());
 
-        Set<String> tableColumns =
-                Arrays.stream(tableSchema.fieldNames()).collect(Collectors.toSet());
+        Set<String> tableColumns = Arrays.stream(tableSchema.fieldNames()).collect(Collectors.toSet());
         List<String> newColumns = new ArrayList<>();
         for (StructField field : contents.schema().fields()) {
             if (!tableColumns.contains(field.name())) {

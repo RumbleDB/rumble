@@ -35,9 +35,8 @@ public class HudiStaticTypingTests extends HudiUpdateRuntimeTests {
 
     @Override
     public RumbleConfiguration getConfiguration() {
-        return super.getConfiguration()
-            .toBuilder()
-            .configureAnalysis(analysis -> analysis.enableStaticTyping(true))
-            .build();
+        return super.getConfiguration().toBuilder()
+                .configureAnalysis(analysis -> analysis.enableStaticTyping(true))
+                .build();
     }
 }

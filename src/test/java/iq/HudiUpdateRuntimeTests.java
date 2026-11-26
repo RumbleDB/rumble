@@ -25,9 +25,10 @@ import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.rumbledb.spark.SparkSessionManager;
 
 import iq.base.UpdateRuntimeTestsBase;
+
+import org.rumbledb.spark.SparkSessionManager;
 
 public class HudiUpdateRuntimeTests extends UpdateRuntimeTestsBase {
 
