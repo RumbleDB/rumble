@@ -79,7 +79,12 @@ public class AdditiveOperationIterator extends AbstractAtMostOneItemRuntimePlan 
             throw new UnexpectedTypeException(
                     "Addition expression requires at most one item in its right input sequence.", getMetadata());
         }
-        return applyOperator(left, right, this.isMinus, getMetadata(), TimezoneSupport.xqueryImplicitTimezone(dynamicContext, getRuntimeStaticContext()));
+        return applyOperator(
+                left,
+                right,
+                this.isMinus,
+                getMetadata(),
+                TimezoneSupport.xqueryImplicitTimezone(dynamicContext, getRuntimeStaticContext()));
     }
 
     private static Item applyOperator(

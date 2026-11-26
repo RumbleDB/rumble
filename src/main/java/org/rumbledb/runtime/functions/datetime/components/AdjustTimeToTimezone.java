@@ -53,7 +53,8 @@ public class AdjustTimeToTimezone extends AbstractAtMostOneItemRuntimePlan {
         OffsetTime value = timeItem.getTimeValue();
         ZoneOffset offset;
         if (this.getChildren().size() == 1) {
-            offset = Objects.requireNonNullElse(TimezoneSupport.xqueryImplicitTimezone(context, getRuntimeStaticContext()), ZoneOffset.UTC);
+            offset = Objects.requireNonNullElse(
+                    TimezoneSupport.xqueryImplicitTimezone(context, getRuntimeStaticContext()), ZoneOffset.UTC);
         } else {
             Item timezone = this.getChild(1).materializeFirstOrNull(context);
             if (timezone == null) {

@@ -82,13 +82,14 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         int maxReference = Math.max(9, groupCount);
         for (int i = 0; i < replacement.length(); i++) {
             char current = replacement.charAt(i);
-            if (current == '\\' && i + 1 < replacement.length()
+            if (current == '\\'
+                    && i + 1 < replacement.length()
                     && (replacement.charAt(i + 1) == '\\' || replacement.charAt(i + 1) == '$')) {
                 result.append(current).append(replacement.charAt(++i));
                 continue;
             }
-            if (current == '\\' || (current == '$'
-                    && (i + 1 == replacement.length() || !isDigit(replacement.charAt(i + 1))))) {
+            if (current == '\\'
+                    || (current == '$' && (i + 1 == replacement.length() || !isDigit(replacement.charAt(i + 1))))) {
                 throw new InvalidReplacementStringException(
                         "'" + replacement + "' contains a disallowed sequence of characters", getMetadata());
             }

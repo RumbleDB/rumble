@@ -232,11 +232,14 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
         if (this.implicitTimezone != null && !item.hasTimeZone()) {
             if (item.isTime()) {
                 return TimezoneSupport.timeWithImplicitTimezone(item, this.implicitTimezone)
-                        .atDate(LocalDate.EPOCH).toInstant().toEpochMilli();
+                        .atDate(LocalDate.EPOCH)
+                        .toInstant()
+                        .toEpochMilli();
             }
             if (item.isDateTime() || item.isDate()) {
                 return TimezoneSupport.dateTimeWithImplicitTimezone(item, this.implicitTimezone)
-                        .toInstant().toEpochMilli();
+                        .toInstant()
+                        .toEpochMilli();
             }
         }
         return item.getEpochMillis();

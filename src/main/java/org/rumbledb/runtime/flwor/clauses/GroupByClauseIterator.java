@@ -67,10 +67,10 @@ import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.misc.TimezoneSupport;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
-import org.rumbledb.runtime.misc.TimezoneSupport;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.spark.SparkSessionManager;
 import org.rumbledb.types.SequenceType;
@@ -201,16 +201,16 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
             Item key, GroupByClauseSparkIteratorExpression expression, ZoneOffset implicitTimezone) {
         if (implicitTimezone != null) {
             if (key.isDateTime() && !key.hasTimeZone()) {
-                return ItemFactory.getInstance().createDateTimeItem(
-                        TimezoneSupport.dateTimeWithImplicitTimezone(key, implicitTimezone), true);
+                return ItemFactory.getInstance()
+                        .createDateTimeItem(TimezoneSupport.dateTimeWithImplicitTimezone(key, implicitTimezone), true);
             }
             if (key.isDate() && !key.hasTimeZone()) {
-                return ItemFactory.getInstance().createDateItem(
-                        TimezoneSupport.dateTimeWithImplicitTimezone(key, implicitTimezone), true);
+                return ItemFactory.getInstance()
+                        .createDateItem(TimezoneSupport.dateTimeWithImplicitTimezone(key, implicitTimezone), true);
             }
             if (key.isTime() && !key.hasTimeZone()) {
-                return ItemFactory.getInstance().createTimeItem(
-                        TimezoneSupport.timeWithImplicitTimezone(key, implicitTimezone), true);
+                return ItemFactory.getInstance()
+                        .createTimeItem(TimezoneSupport.timeWithImplicitTimezone(key, implicitTimezone), true);
             }
         }
         return CollationSupport.normalizeItemForCollation(
