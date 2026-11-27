@@ -41,6 +41,7 @@ import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
@@ -220,6 +221,9 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 return getDataFrameAsJoin(context, this.outputTupleProjection, df);
             }
 
+            FLWORSchema outputSchema = df.getSchema();
+            outputSchema.removeVariable(this.variableName);
+            outputSchema = outputSchema.project(this.outputTupleProjection, true);
             Dataset<Row> result = bindLetVariableInDataFrame(
                     df.getDataFrame(),
                     this.variableName,
@@ -231,9 +235,16 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                             : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                     this.outputTupleProjection,
                     false,
-                    getConfiguration());
+                    getConfiguration(),
+                    outputSchema.getColumns());
 
-            return new FlworDataFrame(result);
+            outputSchema.replaceVariable(
+                    this.variableName,
+                    this.sequenceType != null
+                            ? this.sequenceType
+                            : this.assignmentIterator.getRuntimeStaticContext().getStaticType(),
+                    FlworDataFrameUtils.getColumnBindings(this.variableName, result.schema()));
+            return new FlworDataFrame(result, outputSchema);
         }
         throw new RuntimeException(
                 "Unexpected program state reached. Initial let clauses are always locally executed.");
@@ -276,7 +287,7 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         // Now we know we can execute the query as an equi-join.
         // First, we evaluate all input tuples.
-        Dataset<Row> inputDF = this.child.getDataFrame(context).getDataFrame();
+        Dataset<Row> inputDF = childDF.getDataFrame();
 
         // We resolve the dependencies of the predicate expression.
         // If the predicate depends on position() or last(), we are not able yet to support this.
@@ -400,6 +411,9 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
 
         ItemRuntimePlan filteringPredicateIterator = new PredicateIterator(
                 new VariableReferenceIterator(this.variableName, staticContext), predicateIterator, staticContext);
+        FLWORSchema outputSchema = childDF.getSchema();
+        outputSchema.removeVariable(this.variableName);
+        outputSchema = outputSchema.project(parentProjection, true);
         inputDF = LetClauseIterator.bindLetVariableInDataFrame(
                 inputDF,
                 this.variableName,
@@ -409,9 +423,16 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
                 new ArrayList<Name>(this.getOutputTupleVariableNames()),
                 parentProjection,
                 false,
-                getConfiguration());
+                getConfiguration(),
+                outputSchema.getColumns());
 
-        return new FlworDataFrame(inputDF);
+        outputSchema.replaceVariable(
+                this.variableName,
+                this.sequenceType != null
+                        ? this.sequenceType
+                        : this.assignmentIterator.getRuntimeStaticContext().getStaticType(),
+                FlworDataFrameUtils.getColumnBindings(this.variableName, inputDF.schema()));
+        return new FlworDataFrame(inputDF, outputSchema);
     }
 
     private ItemRuntimePlan getJoinKeyExpression(List<ItemRuntimePlan> equalityCriteria, ExceptionMetadata metadata) {
@@ -584,11 +605,37 @@ public class LetClauseIterator extends TupleRuntimePlan implements DataFrameRunt
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             boolean hash,
             RumbleConfiguration conf) {
+        return bindLetVariableInDataFrame(
+                dataFrame,
+                newVariableName,
+                sequenceType,
+                newVariableExpression,
+                context,
+                variablesInInputTuple,
+                outputTupleVariableDependencies,
+                hash,
+                conf,
+                null);
+    }
+
+    public static Dataset<Row> bindLetVariableInDataFrame(
+            Dataset<Row> dataFrame,
+            Name newVariableName,
+            SequenceType sequenceType,
+            ItemRuntimePlan newVariableExpression,
+            DynamicContext context,
+            List<Name> variablesInInputTuple,
+            Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
+            boolean hash,
+            RumbleConfiguration conf,
+            List<FlworDataFrameColumn> selectedColumns) {
         StructType inputSchema = dataFrame.schema();
         // inputSchema.printTreeString();
 
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-                inputSchema, outputTupleVariableDependencies, null, Collections.singletonList(newVariableName));
+        List<FlworDataFrameColumn> allColumns = selectedColumns != null
+                ? selectedColumns
+                : FlworDataFrameUtils.getColumns(
+                        inputSchema, outputTupleVariableDependencies, null, Collections.singletonList(newVariableName));
         // for (String c : allColumns) {
         // System.out.println(c);
         // }

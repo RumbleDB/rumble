@@ -40,6 +40,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -47,6 +48,8 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.SequenceType;
 
 public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRuntimePlan<FlworTuple> {
 
@@ -125,33 +128,33 @@ public class CountClauseIterator extends TupleRuntimePlan implements DataFrameRu
         if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
-        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
+        FlworDataFrame input = (FlworDataFrame) this.child.getDataFrame(context);
         if (!this.outputTupleProjection.containsKey(this.variableName)) {
-            return new FlworDataFrame(df);
+            return input;
         }
-
-        Dataset<Row> dfWithIndex = addSerializedCountColumn(df, this.outputTupleProjection, this.variableName);
-        return new FlworDataFrame(dfWithIndex);
+        return addSerializedCountColumn(input, this.outputTupleProjection, this.variableName);
     }
 
     // This method, which implements count semantics, is also intended for use by other clauses (e.g., for clause with
     // positional variables).
-    public static Dataset<Row> addSerializedCountColumn(
-            Dataset<Row> df, Map<Name, DynamicContext.VariableDependency> outputDependencies, Name variableName) {
-        StructType inputSchema = df.schema();
+    public static FlworDataFrame addSerializedCountColumn(
+            FlworDataFrame input, Map<Name, DynamicContext.VariableDependency> outputDependencies, Name variableName) {
+        FLWORSchema outputSchema = input.getSchema();
+        outputSchema.removeVariable(variableName);
+        outputSchema = outputSchema.project(outputDependencies, true);
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(outputSchema.getColumns(), true);
 
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-                inputSchema, outputDependencies, null, Collections.singletonList(variableName));
-
-        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
-
-        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
+        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(input.getDataFrame(), 1L, variableName.toString());
 
         String viewName = FlworDataFrameUtils.createTempView(dfWithIndex);
         dfWithIndex = dfWithIndex
                 .sparkSession()
                 .sql(String.format("select %s `%s` from %s", selectSQL, variableName, viewName));
-        return dfWithIndex;
+        outputSchema.replaceVariable(
+                variableName,
+                new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.One),
+                FlworDataFrameUtils.getColumnBindings(variableName, dfWithIndex.schema()));
+        return new FlworDataFrame(dfWithIndex, outputSchema);
     }
 
     @Override
