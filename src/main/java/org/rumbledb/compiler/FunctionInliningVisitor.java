@@ -18,7 +18,6 @@ package org.rumbledb.compiler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Supplier;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
@@ -160,24 +159,32 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
     @Override
     public Node visitSlashExpr(SlashExpr expression, Node argument) {
-        return visitWithFocus(() -> super.visitSlashExpr(expression, argument));
+        boolean previousFocus = this.mayHaveFocus;
+        this.mayHaveFocus = true;
+        try {
+            return super.visitSlashExpr(expression, argument);
+        } finally {
+            this.mayHaveFocus = previousFocus;
+        }
     }
 
     @Override
     public Node visitSimpleMapExpr(SimpleMapExpression expression, Node argument) {
-        return visitWithFocus(() -> super.visitSimpleMapExpr(expression, argument));
+        boolean previousFocus = this.mayHaveFocus;
+        this.mayHaveFocus = true;
+        try {
+            return super.visitSimpleMapExpr(expression, argument);
+        } finally {
+            this.mayHaveFocus = previousFocus;
+        }
     }
 
     @Override
     public Node visitFilterExpression(FilterExpression expression, Node argument) {
-        return visitWithFocus(() -> super.visitFilterExpression(expression, argument));
-    }
-
-    private Node visitWithFocus(Supplier<Node> visit) {
         boolean previousFocus = this.mayHaveFocus;
         this.mayHaveFocus = true;
         try {
-            return visit.get();
+            return super.visitFilterExpression(expression, argument);
         } finally {
             this.mayHaveFocus = previousFocus;
         }
