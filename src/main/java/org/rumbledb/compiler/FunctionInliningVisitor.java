@@ -59,7 +59,6 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
     private Prolog prolog;
 
-    private boolean xquery;
     private boolean mayHaveFocus;
 
     private boolean isImportedFunction(Prolog prolog, FunctionDeclaration target) {
@@ -149,8 +148,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
         this.prolog = mainModule.getProlog();
-        this.xquery = mainModule.getStaticContext().getQueryLanguage().isXQuery();
-        this.mayHaveFocus = this.xquery && this.prolog.hasContextItemDeclaration();
+        this.mayHaveFocus = this.prolog.hasContextItemDeclaration();
         MainModule result = new MainModule(
                 mainModule.getProlog(),
                 (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
@@ -162,7 +160,8 @@ public class FunctionInliningVisitor extends CloneVisitor {
     @Override
     public Node visit(Node node, Node argument) {
         if (node instanceof SlashExpr
-                || (this.xquery && (node instanceof SimpleMapExpression || node instanceof FilterExpression))) {
+                || node instanceof SimpleMapExpression
+                || node instanceof FilterExpression) {
             boolean previousFocus = this.mayHaveFocus;
             this.mayHaveFocus = true;
             try {

@@ -23,7 +23,6 @@ import java.util.Map;
 import org.apache.spark.api.java.JavaRDD;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -137,14 +136,7 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
                 new LinkedHashMap<>(functionItem.getLocalVariablesInClosure()),
                 new LinkedHashMap<>(functionItem.getRDDVariablesInClosure()),
                 new LinkedHashMap<>(functionItem.getDFVariablesInClosure()));
-        RuntimeStaticContext functionContext = functionItem.getBodyIterator().getRuntimeStaticContext();
-        LanguageVersion language = functionContext.getQueryLanguage();
-        if (language == null) {
-            language = functionContext.getConfiguration().semantics().queryLanguage();
-        }
-        if (language.isXQuery()) {
-            callContext.getVariableValues().clearFocus();
-        }
+        callContext.getVariableValues().clearFocus();
         if (functionItem.isBuiltinFunction()) {
             // The global context item must not replace the focus captured at the reference site.
             // DynamicContext removes global bindings from closure copies, so restore the captured focus.

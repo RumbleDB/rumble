@@ -34,7 +34,6 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
-import org.rumbledb.runtime.misc.TimezoneSupport;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
@@ -143,7 +142,7 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
     private ItemRuntimePlan selectApplicableIterator(DynamicContext dynamicContext) {
         ExceptionMetadata metadata = getMetadata();
         String collation = this.staticContext.getDefaultCollation();
-        ZoneOffset timezone = TimezoneSupport.xqueryImplicitTimezone(dynamicContext, this.staticContext);
+        ZoneOffset timezone = dynamicContext.getImplicitTimezone();
         Item testValue = materializeAtomizedOperand(this.testField, dynamicContext, "Switch condition", metadata);
         for (Map.Entry<ItemRuntimePlan, ItemRuntimePlan> entry : this.cases.entrySet()) {
             Item caseValue = materializeAtomizedOperand(entry.getKey(), dynamicContext, "Switch case", metadata);
