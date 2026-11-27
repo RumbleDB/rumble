@@ -29,6 +29,7 @@ import org.rumbledb.errorcodes.ErrorVariables;
 import org.rumbledb.exceptions.CastableException;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidGroupVariableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
@@ -355,8 +356,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
+        StaticContext outerContext = argument;
         argument = visitPreviousClause(clause, argument);
         StaticContext result = new StaticContext(argument);
+        boolean xquery = argument.getQueryLanguage().isXQuery();
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             if (variable.getExpression() != null) {
                 // if a variable declaration takes place
@@ -365,7 +368,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         variable.getVariableName(),
                         variable.getActualSequenceType(),
                         Objects.requireNonNullElse(variable.getVariableMetadata(), clause.getMetadata()));
-            } else if (!argument.isInScope(variable.getVariableName())) {
+            } else if (!argument.isInScope(variable.getVariableName(), xquery ? outerContext : null)) {
+                if (xquery) {
+                    throw new InvalidGroupVariableException(
+                            "Grouping variable is not bound in the input tuples: " + variable.getVariableName(),
+                            Objects.requireNonNullElse(variable.getVariableMetadata(), clause.getMetadata()));
+                }
                 throw new UndeclaredVariableException(
                         "Uninitialized variable reference: " + variable.getVariableName(), clause.getMetadata());
             }

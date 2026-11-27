@@ -15,7 +15,6 @@
  */
 package org.rumbledb.items.parsing;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
@@ -29,6 +28,7 @@ import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.functions.FunctionCall;
+import org.rumbledb.runtime.functions.FunctionCallArgumentConversion;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.types.SequenceType;
@@ -111,29 +111,19 @@ public final class JSONParsingOptions {
             RuntimeStaticContext staticContext,
             ExceptionMetadata metadata) {
         try {
-            List<Name> parameterNames = functionItem.getParameterNames();
-            if (parameterNames == null || parameterNames.size() != 1) {
-                throw new InvalidJSONException(
-                        "Invalid value for option 'fallback': expected a function of arity 1.", metadata);
-            }
-
-            RuntimeStaticContext callContext = RuntimeStaticContext.builder()
-                    .configuration(staticContext.getConfiguration())
-                    .staticType(SequenceType.createSequenceType("item*"))
+            SequenceType resultType = SequenceType.createSequenceType("string");
+            RuntimeStaticContext callContext = staticContext.toBuilder()
+                    .staticType(resultType)
                     .executionMode(ExecutionMode.LOCAL)
                     .metadata(metadata)
                     .build();
 
-            List<ItemRuntimePlan> arguments = new ArrayList<>(1);
-            arguments.add(new StringRuntimeIterator(escapedSequence, callContext));
-            List<Item> results = FunctionCall.of(functionItem, arguments, callContext, dynamicContext)
-                    .materialize();
-            if (results.size() != 1 || !results.get(0).isString()) {
-                throw new InvalidJSONException(
-                        "Invalid result returned by option 'fallback': expected exactly one xs:string.", metadata);
-            }
-
-            return results.get(0).getStringValue();
+            FunctionCall call = FunctionCall.of(
+                    functionItem, List.of(new StringRuntimeIterator(escapedSequence, callContext)), callContext,
+                    dynamicContext);
+            ItemRuntimePlan result = FunctionCallArgumentConversion.wrapAtMostOneForFunctionConversion(
+                    call.plan(), resultType, "Invalid result from option 'fallback'. ", callContext);
+            return result.materializeFirstOrNull(call.context()).getStringValue();
         } catch (RumbleException e) {
             throw e;
         } catch (Exception e) {

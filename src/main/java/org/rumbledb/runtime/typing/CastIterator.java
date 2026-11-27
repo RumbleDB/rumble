@@ -28,7 +28,9 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.xerces.impl.Constants;
 import org.apache.xerces.impl.dv.InvalidDatatypeValueException;
 import org.apache.xerces.impl.dv.SchemaDVFactory;
+import org.apache.xerces.impl.dv.XSSimpleType;
 import org.apache.xerces.impl.dv.xs.TypeValidatorHelper;
+import org.apache.xerces.impl.dv.xs.XSSimpleTypeDecl;
 import org.apache.xerces.impl.validation.ValidationState;
 
 import org.rumbledb.api.Item;
@@ -541,7 +543,7 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
             Item convertedValue = null;
             if (item.isString() || item.isUntypedAtomic()) {
                 convertedValue = ItemFactory.getInstance()
-                        .createAnyURIItem(item.getStringValue().trim());
+                        .createAnyURIItem(normalizeLexicalAccordingToWhitespace(item.getStringValue(), targetType));
             }
             return finalizeAtomicBranchValue(convertedValue, targetType, BuiltinTypesCatalogue.anyURIItem);
         }
@@ -824,20 +826,10 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
      */
     private static String normalizeLexicalAccordingToWhitespace(String lexical, ItemType targetType) {
         WhitespaceFacet facet = targetType.getWhitespaceFacet();
-        if (facet == null) {
-            return lexical;
+        if (facet == WhitespaceFacet.COLLAPSE) {
+            return XSSimpleTypeDecl.normalize(lexical, XSSimpleType.WS_COLLAPSE);
         }
-        switch (facet) {
-            case PRESERVE:
-                return lexical;
-            case REPLACE:
-                return lexical.replaceAll("\\s", " ");
-            case COLLAPSE:
-                String replaced = lexical.replaceAll("\\s", " ");
-                return replaced.trim().replaceAll(" +", " ");
-            default:
-                return lexical;
-        }
+        return facet == WhitespaceFacet.REPLACE ? XSSimpleTypeDecl.normalize(lexical, XSSimpleType.WS_REPLACE) : lexical;
     }
 
     /**

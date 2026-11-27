@@ -103,7 +103,9 @@ public class MapFindFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
         }
 
         if (item.isArray()) {
-            scanItems(item.getItemMembers(), lookupKey, foundMembers);
+            for (int i = 0; i < item.getSize(); i++) {
+                scanItems(item.getSequenceAt(i), lookupKey, foundMembers);
+            }
         }
     }
 }

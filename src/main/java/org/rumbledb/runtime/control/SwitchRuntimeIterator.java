@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.control;
 
 import java.io.Serial;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -33,6 +34,7 @@ import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.dataframe.ItemRuntimeDataFrameFactory;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
+import org.rumbledb.runtime.misc.TimezoneSupport;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
@@ -66,7 +68,7 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
 
     @Override
     public Cursor<Item> createNativeCursor(DynamicContext context) {
-        return new SwitchLocalCursor(this.testField, this.cases, this.defaultReturn, context, getMetadata());
+        return new SwitchLocalCursor(context);
     }
 
     // Nodes atomize to their typed value and arrays to the atomized values of their members; objects, maps and other
@@ -105,31 +107,18 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
         return result;
     }
 
-    private static final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
-        private final ItemRuntimePlan testPlan;
-        private final Map<ItemRuntimePlan, ItemRuntimePlan> cases;
-        private final ItemRuntimePlan defaultPlan;
+    private final class SwitchLocalCursor extends AbstractLocalCursor<Item> {
         private final DynamicContext context;
-        private final ExceptionMetadata metadata;
         private Cursor<Item> selected;
 
-        private SwitchLocalCursor(
-                ItemRuntimePlan testPlan,
-                Map<ItemRuntimePlan, ItemRuntimePlan> cases,
-                ItemRuntimePlan defaultPlan,
-                DynamicContext context,
-                ExceptionMetadata metadata) {
-            super(metadata);
-            this.testPlan = testPlan;
-            this.cases = cases;
-            this.defaultPlan = defaultPlan;
+        private SwitchLocalCursor(DynamicContext context) {
+            super(SwitchRuntimeIterator.this.getMetadata());
             this.context = context;
-            this.metadata = metadata;
         }
 
         @Override
         protected void openLocal() {
-            this.selected = selectApplicablePlan().getCursor(this.context);
+            this.selected = selectApplicableIterator(this.context).getCursor(this.context);
         }
 
         @Override
@@ -149,47 +138,20 @@ public class SwitchRuntimeIterator extends ItemRuntimePlan
                 this.selected = null;
             }
         }
-
-        private ItemRuntimePlan selectApplicablePlan() {
-            Item testValue = materializeAtomizedOperand(this.testPlan, this.context, "Switch condition", this.metadata);
-            for (ItemRuntimePlan caseKey : this.cases.keySet()) {
-                Item caseValue = materializeAtomizedOperand(caseKey, this.context, "Switch case", this.metadata);
-                if (testValue == null) {
-                    if (caseValue == null) {
-                        return this.cases.get(caseKey);
-                    }
-                    continue;
-                }
-                if (caseValue == null) {
-                    continue;
-                }
-                if (AtomicDeepEqual.deepEqual(testValue, caseValue)) {
-                    return this.cases.get(caseKey);
-                }
-            }
-            return this.defaultPlan;
-        }
     }
 
     private ItemRuntimePlan selectApplicableIterator(DynamicContext dynamicContext) {
-        Item testValue = materializeAtomizedOperand(this.testField, dynamicContext, "Switch condition", getMetadata());
-
-        for (ItemRuntimePlan caseKey : this.cases.keySet()) {
-            Item caseValue = materializeAtomizedOperand(caseKey, dynamicContext, "Switch case", getMetadata());
-
-            // both are empty sequences
-            if (testValue == null) {
-                if (caseValue == null) {
-                    return this.cases.get(caseKey);
-                } else {
-                    continue;
-                }
-            }
-            if (caseValue == null) {
-                continue;
-            }
-            if (AtomicDeepEqual.deepEqual(testValue, caseValue)) {
-                return this.cases.get(caseKey);
+        ExceptionMetadata metadata = getMetadata();
+        String collation = this.staticContext.getDefaultCollation();
+        ZoneOffset timezone = TimezoneSupport.xqueryImplicitTimezone(dynamicContext, this.staticContext);
+        Item testValue = materializeAtomizedOperand(this.testField, dynamicContext, "Switch condition", metadata);
+        for (Map.Entry<ItemRuntimePlan, ItemRuntimePlan> entry : this.cases.entrySet()) {
+            Item caseValue = materializeAtomizedOperand(entry.getKey(), dynamicContext, "Switch case", metadata);
+            boolean matches = testValue == null || caseValue == null
+                    ? testValue == caseValue
+                    : AtomicDeepEqual.deepEqual(testValue, caseValue, collation, metadata, timezone);
+            if (matches) {
+                return entry.getValue();
             }
         }
 

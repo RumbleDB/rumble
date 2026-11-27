@@ -42,6 +42,8 @@ public class VariableValues implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+    private static final Set<Name> FOCUS_VARIABLES =
+            Set.of(Name.CONTEXT_ITEM, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT);
 
     private final Map<Name, List<Item>> localVariableValues;
     private final Map<Name, Item> localVariableCounts;
@@ -50,6 +52,7 @@ public class VariableValues implements Serializable {
     private transient boolean nestedQuery;
     private final VariableValues parent;
     private final RumbleConfiguration configuration;
+    private boolean focusBoundary;
 
     public VariableValues(RumbleConfiguration configuration) {
         this.parent = null;
@@ -119,13 +122,17 @@ public class VariableValues implements Serializable {
         if (this.parent != null) {
             this.parent.populateClosure(local, rdd, dataFrames);
         }
+        if (this.focusBoundary) {
+            FOCUS_VARIABLES.forEach(name -> {
+                local.remove(name);
+                rdd.remove(name);
+                dataFrames.remove(name);
+            });
+        }
         new LinkedHashMap<>(this.localVariableValues).forEach((name, value) -> {
             // Module variables are read through the function's module context. Capturing them would
             // evaluate unrelated initializers, including the initializer creating this function.
-            if (this.parent == null
-                    && !name.equals(Name.CONTEXT_ITEM)
-                    && !name.equals(Name.CONTEXT_POSITION)
-                    && !name.equals(Name.CONTEXT_COUNT)) return;
+            if (this.parent == null && !FOCUS_VARIABLES.contains(name)) return;
             rdd.remove(name);
             dataFrames.remove(name);
             local.put(name, value == null ? null : new ArrayList<>(value));
@@ -161,7 +168,7 @@ public class VariableValues implements Serializable {
         if (localContains) {
             return true;
         }
-        if (this.parent != null) {
+        if (canInherit(varName)) {
             return this.parent.contains(varName);
         }
         return false;
@@ -225,7 +232,7 @@ public class VariableValues implements Serializable {
                     df.toRDD(metadata), this.configuration.runtime().materializationCap(), metadata);
         }
 
-        if (this.parent != null) {
+        if (canInherit(varName)) {
             return this.parent.getLocalVariableValue(varName, metadata);
         }
 
@@ -234,9 +241,7 @@ public class VariableValues implements Serializable {
                     "Runtime error retrieving variable " + varName + " value: only count available.", metadata);
         }
 
-        if (varName.equals(Name.CONTEXT_ITEM)
-                || varName.equals(Name.CONTEXT_COUNT)
-                || varName.equals(Name.CONTEXT_POSITION)) {
+        if (FOCUS_VARIABLES.contains(varName)) {
             throw new AbsentPartOfDynamicContextException(
                     "\"" + varName + "\" accessed, but the context item is absent", metadata);
         }
@@ -263,7 +268,7 @@ public class VariableValues implements Serializable {
             return df.toRDD(metadata);
         }
 
-        if (this.parent != null) {
+        if (canInherit(varName)) {
             return this.parent.getRDDVariableValue(varName, metadata);
         }
 
@@ -278,7 +283,7 @@ public class VariableValues implements Serializable {
             return this.dataFrameVariableValues.get(varName);
         }
 
-        if (this.parent != null) {
+        if (canInherit(varName)) {
             return this.parent.getDataFrameVariableValue(varName, metadata);
         }
 
@@ -307,7 +312,7 @@ public class VariableValues implements Serializable {
             return ItemFactory.getInstance()
                     .createIntItem(this.localVariableValues.get(varName).size());
         }
-        if (this.parent != null) {
+        if (canInherit(varName)) {
             return this.parent.getVariableCount(varName, metadata);
         }
         throw new OurBadException("Runtime error retrieving variable " + varName + " value");
@@ -318,6 +323,16 @@ public class VariableValues implements Serializable {
         this.localVariableCounts.remove(varName);
         this.rddVariableValues.remove(varName);
         this.dataFrameVariableValues.remove(varName);
+    }
+
+    /** Starts a scope with absent focus while retaining access to ordinary outer variables. */
+    public void clearFocus() {
+        FOCUS_VARIABLES.forEach(this::removeVariable);
+        this.focusBoundary = true;
+    }
+
+    private boolean canInherit(Name name) {
+        return this.parent != null && !(this.focusBoundary && FOCUS_VARIABLES.contains(name));
     }
 
     public void removeAllVariables() {
@@ -337,7 +352,7 @@ public class VariableValues implements Serializable {
         if (this.localVariableValues.containsKey(Name.CONTEXT_POSITION)) {
             return this.localVariableValues.get(Name.CONTEXT_POSITION).get(0);
         }
-        if (this.parent != null) {
+        if (canInherit(Name.CONTEXT_POSITION)) {
             return this.parent.getPosition();
         }
         return null;
@@ -352,7 +367,7 @@ public class VariableValues implements Serializable {
         if (this.localVariableValues.containsKey(Name.CONTEXT_COUNT)) {
             return this.localVariableValues.get(Name.CONTEXT_COUNT).get(0);
         }
-        if (this.parent != null) {
+        if (canInherit(Name.CONTEXT_COUNT)) {
             return this.parent.getLast();
         }
         return null;

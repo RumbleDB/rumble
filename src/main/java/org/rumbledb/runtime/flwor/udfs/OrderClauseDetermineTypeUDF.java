@@ -24,13 +24,9 @@ import org.apache.spark.sql.api.java.UDF1;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
-import org.rumbledb.runtime.misc.CollationSupport;
-import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     @Serial
@@ -39,7 +35,6 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     private final DataFrameContext dataFrameContext;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
-    private Item nextItem;
     private final List<String> result;
 
     public OrderClauseDetermineTypeUDF(
@@ -57,58 +52,12 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
         this.dataFrameContext.setFromRow(row);
 
         this.result.clear();
-        for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
-            populateFromExpression(expressionWithIterator);
+        for (OrderByClauseAnnotatedChildIterator expression : this.expressionsWithIterator) {
+            Item key = OrderByClauseIterator.evaluateOrderKey(expression, this.dataFrameContext.getContext());
+            this.result.add(key == null
+                    ? OrderByClauseIterator.StringFlagForEmptySequence
+                    : key.getDynamicType().getName().getLocalName());
         }
         return this.result;
-    }
-
-    private void populateFromExpression(OrderByClauseAnnotatedChildIterator expressionWithIterator) {
-        ItemRuntimePlan iterator = expressionWithIterator.getIterator();
-        try {
-            // apply expression in the dynamic context
-            this.nextItem = iterator.materializeAtMostOne(this.dataFrameContext.getContext());
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "Can not order by variables with sequences of multiple items.",
-                    expressionWithIterator
-                            .getIterator()
-                            .getRuntimeStaticContext()
-                            .getMetadata());
-        }
-
-        if (this.nextItem == null) {
-            this.result.add(OrderByClauseIterator.StringFlagForEmptySequence);
-            return;
-        }
-        List<Item> atomized = this.nextItem.atomizedValue();
-        if (atomized.size() > 1) {
-            throw new UnexpectedTypeException(
-                    "Order by variable must atomize to at most one item.",
-                    expressionWithIterator
-                            .getIterator()
-                            .getRuntimeStaticContext()
-                            .getMetadata());
-        }
-        if (atomized.isEmpty()) {
-            this.result.add(OrderByClauseIterator.StringFlagForEmptySequence);
-            return;
-        }
-        this.nextItem = atomized.get(0);
-        if (!this.nextItem.isAtomic()) {
-            throw new UnexpectedTypeException(
-                    "Order by variable must atomize to an atomic value.",
-                    expressionWithIterator
-                            .getIterator()
-                            .getRuntimeStaticContext()
-                            .getMetadata());
-        }
-        this.nextItem = OrderByClauseIterator.normalizeOrderKeyAtomic(
-                this.nextItem,
-                CollationSupport.resolveCollation(
-                        expressionWithIterator.getUri(),
-                        expressionWithIterator.getIterator().getRuntimeStaticContext()),
-                expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata());
-        this.result.add(this.nextItem.getDynamicType().getName().getLocalName());
     }
 }

@@ -246,17 +246,17 @@ public class StaticContext {
     }
 
     public boolean isInScope(Name varName) {
-        boolean found = false;
-        if (this.inScopeVariables.containsKey(varName)) {
-            return true;
-        } else {
-            StaticContext ancestor = this.parent;
-            while (ancestor != null) {
-                found = found || ancestor.getInScopeVariables().containsKey(varName);
-                ancestor = ancestor.parent;
+        return isInScope(varName, null);
+    }
+
+    /** Checks for a binding local to the scopes inside the given outer context. */
+    public boolean isInScope(Name varName, StaticContext outerContext) {
+        for (StaticContext scope = this; scope != null && scope != outerContext; scope = scope.parent) {
+            if (scope.inScopeVariables.containsKey(varName)) {
+                return true;
             }
         }
-        return found;
+        return false;
     }
 
     private InScopeVariable getInScopeVariable(Name varName) {

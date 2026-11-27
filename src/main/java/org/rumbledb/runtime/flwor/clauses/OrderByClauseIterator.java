@@ -33,7 +33,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
@@ -54,6 +53,7 @@ import org.rumbledb.runtime.flwor.tuple.FlworTuple;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -100,22 +100,11 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
         try (Cursor<FlworTuple> childCursor = this.child.createNativeCursor(context)) {
             while (childCursor.hasNext()) {
                 FlworTuple tuple = childCursor.next();
-                List<Item> keys = new ArrayList<>();
+                List<Item> keys = new ArrayList<>(this.expressionsWithIterator.size());
                 for (OrderByClauseAnnotatedChildIterator expression : this.expressionsWithIterator) {
                     tupleContext.getVariableValues().removeAllVariables();
                     tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata());
-                    Item key;
-                    try {
-                        key = expression.getIterator().materializeAtMostOne(tupleContext);
-                    } catch (MoreThanOneItemException e) {
-                        throw new UnexpectedTypeException(
-                                "Keys in an order-by clause must be at most one item.",
-                                expression
-                                        .getIterator()
-                                        .getRuntimeStaticContext()
-                                        .getMetadata());
-                    }
-                    keys.add(atomizeOrderKey(key, expression));
+                    keys.add(evaluateOrderKey(expression, tupleContext));
                 }
                 tuplesByKey
                         .computeIfAbsent(new FlworKey(keys), ignored -> new ArrayList<>())
@@ -127,45 +116,30 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
         return results;
     }
 
-    private Item atomizeOrderKey(Item resultItem, OrderByClauseAnnotatedChildIterator expressionWithIterator) {
-        if (resultItem == null) {
+    public static Item evaluateOrderKey(OrderByClauseAnnotatedChildIterator expression, DynamicContext context) {
+        ItemRuntimePlan iterator = expression.getIterator();
+        RuntimeStaticContext staticContext = iterator.getRuntimeStaticContext();
+        ExceptionMetadata metadata = staticContext.getMetadata();
+        Item key = null;
+        try (Cursor<Item> cursor = iterator.getCursor(context)) {
+            while (cursor.hasNext()) {
+                for (Item atomic : cursor.next().atomizedValue()) {
+                    if (key != null || !atomic.isAtomic()) {
+                        throw new UnexpectedTypeException(
+                                "Keys in an order-by clause must atomize to at most one atomic value.", metadata);
+                    }
+                    key = atomic;
+                }
+            }
+        }
+        if (key == null) {
             return null;
         }
-        List<Item> atomized = resultItem.atomizedValue();
-        if (atomized.size() > 1) {
-            throw new UnexpectedTypeException(
-                    "Keys in an order-by clause must atomize to at most one item.",
-                    expressionWithIterator
-                            .getIterator()
-                            .getRuntimeStaticContext()
-                            .getMetadata());
+        if (key.isUntypedAtomic()) {
+            key = ItemFactory.getInstance().createStringItem(key.getStringValue());
         }
-        if (atomized.isEmpty()) {
-            return null;
-        }
-        Item atomizedItem = atomized.get(0);
-        if (!atomizedItem.isAtomic()) {
-            throw new UnexpectedTypeException(
-                    "Keys in an order-by clause must atomize to atomic values.",
-                    expressionWithIterator
-                            .getIterator()
-                            .getRuntimeStaticContext()
-                            .getMetadata());
-        }
-        String collationUri = CollationSupport.resolveCollation(
-                expressionWithIterator.getUri(),
-                expressionWithIterator.getIterator().getRuntimeStaticContext());
-        return normalizeOrderKeyAtomic(
-                atomizedItem,
-                collationUri,
-                expressionWithIterator.getIterator().getRuntimeStaticContext().getMetadata());
-    }
-
-    public static Item normalizeOrderKeyAtomic(Item atomizedItem, String collationUri, ExceptionMetadata metadata) {
-        if (atomizedItem != null && atomizedItem.isUntypedAtomic()) {
-            atomizedItem = ItemFactory.getInstance().createStringItem(atomizedItem.getStringValue());
-        }
-        return CollationSupport.normalizeItemForCollation(atomizedItem, collationUri, metadata);
+        return CollationSupport.normalizeItemForCollation(
+                key, CollationSupport.resolveCollation(expression.getUri(), staticContext), metadata);
     }
 
     @Override
