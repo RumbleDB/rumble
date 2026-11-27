@@ -17,7 +17,6 @@ package org.rumbledb.runtime.flwor.clauses;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +41,7 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.AtMostOneLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -56,6 +56,7 @@ import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.NativeQueryRuntimePlan;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.spark.SparkSessionManager;
+import org.rumbledb.types.SequenceCardinality;
 import org.rumbledb.types.SequenceType;
 
 @Log4j2
@@ -87,25 +88,92 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
     }
 
     /**
-     * Joins two input tuples.
+     * Joins two input tuples while preserving their variable types.
      *
      * Warning: if the two tuples collide in their columns, unexpected things may happen for now.
      *
      * @param context the dynamic context for the evaluation of the predicate expression.
-     * @param leftInputTuple the left tuple.
-     * @param rightInputTuple the right tuple.
-     * @param outputTupleVariableDependencies the necessary and sufficient variable dependencies that the output tuple
-     *        should contain.
-     * @param variablesInLeftInputTuple a list of the variables in the left tuple.
-     * @param variablesInRightInputTuple a list of the variables in the right tuple.
-     * @param predicateIterator the predicate iterator.
-     * @param isLeftOuterJoin true if it is a left outer join, false otherwise.
-     * @param newRightSideVariableName the new name of the variable to rename the context item in the output (null if no
+     * @param left the left tuple.
+     * @param right the right tuple.
+     * @param outputDependencies the necessary and sufficient variable dependencies that the output tuple should
+     *        contain.
+     * @param leftVariables a list of the variables in the left tuple.
+     * @param rightVariables a list of the variables in the right tuple.
+     * @param predicate the predicate iterator.
+     * @param leftOuter true if it is a left outer join, false otherwise.
+     * @param renamedRightVariable the new name of the variable to rename the context item in the output (null if no
      *        rename).
      * @param metadata the metadata.
+     * @param staticContext the static context for the join.
      * @return the joined tuple.
      */
     public static FlworDataFrame joinInputTupleWithSequenceOnPredicate(
+            DynamicContext context,
+            FlworDataFrame left,
+            FlworDataFrame right,
+            Map<Name, DynamicContext.VariableDependency> outputDependencies,
+            List<Name> leftVariables,
+            List<Name> rightVariables,
+            ItemRuntimePlan predicate,
+            boolean leftOuter,
+            Name renamedRightVariable,
+            ExceptionMetadata metadata,
+            RuntimeStaticContext staticContext) {
+        Map<Name, DynamicContext.VariableDependency> rightRequirements = new java.util.LinkedHashMap<>();
+        for (Name name : right.getVariableNames()) {
+            Name output = renamedRightVariable != null && name.equals(Name.CONTEXT_ITEM) ? renamedRightVariable : name;
+            if (outputDependencies.containsKey(output)) {
+                rightRequirements.put(
+                        name,
+                        renamedRightVariable != null && name.equals(Name.CONTEXT_ITEM)
+                                ? DynamicContext.VariableDependency.FULL
+                                : outputDependencies.get(output));
+            }
+        }
+        FLWORSchema rightSchema = right.getSchema().project(rightRequirements, false);
+        FLWORSchema outputSchema = left.getSchema();
+        if (renamedRightVariable != null) outputSchema.removeVariable(renamedRightVariable);
+        outputSchema = outputSchema.project(outputDependencies, true);
+        List<FlworDataFrameColumn> columnsToSelect = outputSchema.getColumns();
+        for (Name name : rightSchema.getVariables().keySet()) {
+            Name output = renamedRightVariable != null && name.equals(Name.CONTEXT_ITEM) ? renamedRightVariable : name;
+            SequenceType type = rightSchema.getVariableType(name);
+            if (leftOuter)
+                type = new SequenceType(
+                        type.getItemType(), type.getCardinality().union(SequenceCardinality.EMPTY));
+            List<FLWORSchema.ColumnBinding> bindings = new ArrayList<>();
+            for (FLWORSchema.ColumnBinding binding : rightSchema.getColumns(name)) {
+                if (!output.equals(name)) {
+                    bindings.add(new FLWORSchema.ColumnBinding(
+                            output.toString(), binding.representation(), binding.physicalType()));
+                } else {
+                    bindings.add(binding);
+                    columnsToSelect.add(new FlworDataFrameColumn(name, binding));
+                }
+            }
+            outputSchema.replaceVariable(output, type, bindings);
+        }
+        Dataset<Row> rows = joinDataFrames(
+                context,
+                left.getDataFrame(),
+                right.getDataFrame(),
+                outputDependencies,
+                leftVariables,
+                rightVariables,
+                predicate,
+                leftOuter,
+                renamedRightVariable,
+                metadata,
+                staticContext,
+                columnsToSelect);
+        if (columnsToSelect.isEmpty() && renamedRightVariable == null) {
+            // The SQL projection uses a placeholder when no variables are needed.
+            rows = rows.drop(SparkSessionManager.temporaryColumnName);
+        }
+        return new FlworDataFrame(rows, outputSchema);
+    }
+
+    private static Dataset<Row> joinDataFrames(
             DynamicContext context,
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,
@@ -116,8 +184,9 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata,
-            RuntimeStaticContext staticContext) {
-        FlworDataFrame result = tryNativeQueryStatically(
+            RuntimeStaticContext staticContext,
+            List<FlworDataFrameColumn> columnsToSelect) {
+        Dataset<Row> result = tryNativeQueryStatically(
                 context,
                 leftInputTuple,
                 rightInputTuple,
@@ -125,7 +194,8 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
                 predicateIterator,
                 isLeftOuterJoin,
                 newRightSideVariableName,
-                metadata);
+                metadata,
+                columnsToSelect);
         if (result != null) {
             return result;
         }
@@ -244,13 +314,6 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
         // We gather the columns to select from the previous clause.
         // We need to project away the clause's variables from the previous clause.
         // One variable gets renamed. We need to remove it from the projection.
-        List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(
-                jointSchema,
-                outputTupleVariableDependencies,
-                null,
-                (newRightSideVariableName != null)
-                        ? Collections.singletonList(newRightSideVariableName)
-                        : Collections.emptyList());
         String projectionVariables =
                 FlworDataFrameUtils.getSQLColumnProjection(columnsToSelect, newRightSideVariableName != null);
         if (newRightSideVariableName != null) {
@@ -284,7 +347,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
                     .sql(String.format(
                             "SELECT %s FROM %s LEFT OUTER JOIN %s ON joinUDF(%s) = 'true'",
                             projectionVariables, leftInputDFTableName, rightInputDFTableName, UDFParameters));
-            return new FlworDataFrame(resultDF);
+            return resultDF;
         }
 
         if (optimizableJoin) {
@@ -299,7 +362,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
                             SparkSessionManager.rightHandSideHashColumnName,
                             SparkSessionManager.leftHandSideHashColumnName,
                             UDFParameters));
-            return new FlworDataFrame(resultDF);
+            return resultDF;
         }
         // Otherwise, it's a regular join.
         Dataset<Row> resultDF = leftInputTuple
@@ -307,7 +370,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
                 .sql(String.format(
                         "SELECT %s FROM %s JOIN %s ON joinUDF(%s) = 'true'",
                         projectionVariables, leftInputDFTableName, rightInputDFTableName, UDFParameters));
-        return new FlworDataFrame(resultDF);
+        return resultDF;
     }
 
     private static boolean extractEqualityComparisonsForHashing(
@@ -384,7 +447,7 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the group by clause if successful, null otherwise
      */
-    private static FlworDataFrame tryNativeQueryStatically(
+    private static Dataset<Row> tryNativeQueryStatically(
             DynamicContext context,
             Dataset<Row> leftInputTuple,
             Dataset<Row> rightInputTuple,
@@ -392,7 +455,8 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
             ItemRuntimePlan predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
-            ExceptionMetadata metadata) {
+            ExceptionMetadata metadata,
+            List<FlworDataFrameColumn> columnsToSelect) {
         if (isLeftOuterJoin) {
             return null;
         }
@@ -410,15 +474,13 @@ public class JoinClauseIterator extends TupleRuntimePlan implements DataFrameRun
         log.info("Rumble was able to optimize a join to a native SQL query.");
         String left = FlworDataFrameUtils.createTempView(leftInputTuple);
         String right = FlworDataFrameUtils.createTempView(rightInputTuple);
-        List<FlworDataFrameColumn> columnsToSelect = FlworDataFrameUtils.getColumns(
-                unionSchema, outputTupleVariableDependencies, null, Collections.emptyList());
         String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(columnsToSelect, false);
         Dataset<Row> result = leftInputTuple
                 .sparkSession()
                 .sql(String.format(
                         "SELECT %s FROM %s JOIN %s ON %s",
                         projectionVariables, left, right, nativeQuery.getResultingQuery()));
-        return new FlworDataFrame(result);
+        return result;
     }
 
     /**

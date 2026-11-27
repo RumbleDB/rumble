@@ -42,6 +42,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -187,19 +188,21 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
+        FlworDataFrame input = (FlworDataFrame) this.child.getDataFrame(context);
+        Dataset<Row> df = input.getDataFrame();
         StructType inputSchema = df.schema();
 
-        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
+        FLWORSchema outputSchema = input.getSchema();
+        List<FlworDataFrameColumn> allColumns = outputSchema.getColumns();
         List<FlworDataFrameColumn> UDFcolumns = FlworDataFrameUtils.getColumns(
                 inputSchema, null, new ArrayList<Name>(this.child.getOutputTupleVariableNames()), null);
 
-        FlworDataFrame nativeQueryResult = null;
+        Dataset<Row> nativeQueryResult = null;
         if (getConfiguration().runtime().useNativeExecution()) {
             nativeQueryResult = tryNativeQuery(df, this.expressionsWithIterator, allColumns, inputSchema, context);
         }
         if (nativeQueryResult != null) {
-            return nativeQueryResult;
+            return new FlworDataFrame(nativeQueryResult, outputSchema);
         }
 
         df.sparkSession()
@@ -223,7 +226,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
 
         if (columnTypesOfRows.length == 0) {
             // The input is empty, so we output this empty DF again.
-            return new FlworDataFrame(df);
+            return new FlworDataFrame(df, outputSchema);
         }
 
         // Every column represents an order by expression
@@ -373,10 +376,11 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
 
-        return new FlworDataFrame(df.sparkSession()
+        Dataset<Row> rows = df.sparkSession()
                 .sql(String.format(
                         "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
-                        projectSQL, selectSQL, UDFParameters, appendedOrderingColumnsName, orderingSQL)));
+                        projectSQL, selectSQL, UDFParameters, appendedOrderingColumnsName, orderingSQL));
+        return new FlworDataFrame(rows, outputSchema);
     }
 
     @Override
@@ -444,7 +448,7 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the order by clause if successful, null otherwise
      */
-    public static FlworDataFrame tryNativeQuery(
+    public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             List<FlworDataFrameColumn> allColumns,
@@ -456,9 +460,9 @@ public class OrderByClauseIterator extends TupleRuntimePlan implements DataFrame
         log.info("Rumble was able to optimize an order-by clause to a native SQL query.");
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
-        return new FlworDataFrame(dataFrame
+        return dataFrame
                 .sparkSession()
-                .sql(String.format("select %s from input order by %s", selectSQL, queryContext.getResultingQuery())));
+                .sql(String.format("select %s from input order by %s", selectSQL, queryContext.getResultingQuery()));
     }
 
     private static NativeClauseContext createOrderExpression(
