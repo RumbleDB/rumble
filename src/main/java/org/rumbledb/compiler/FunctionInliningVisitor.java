@@ -161,33 +161,27 @@ public class FunctionInliningVisitor extends CloneVisitor {
     public Node visitSlashExpr(SlashExpr expression, Node argument) {
         boolean previousFocus = this.mayHaveFocus;
         this.mayHaveFocus = true;
-        try {
-            return super.visitSlashExpr(expression, argument);
-        } finally {
-            this.mayHaveFocus = previousFocus;
-        }
+        Node result = super.visitSlashExpr(expression, argument);
+        this.mayHaveFocus = previousFocus;
+        return result;
     }
 
     @Override
     public Node visitSimpleMapExpr(SimpleMapExpression expression, Node argument) {
         boolean previousFocus = this.mayHaveFocus;
         this.mayHaveFocus = true;
-        try {
-            return super.visitSimpleMapExpr(expression, argument);
-        } finally {
-            this.mayHaveFocus = previousFocus;
-        }
+        Node result = super.visitSimpleMapExpr(expression, argument);
+        this.mayHaveFocus = previousFocus;
+        return result;
     }
 
     @Override
     public Node visitFilterExpression(FilterExpression expression, Node argument) {
         boolean previousFocus = this.mayHaveFocus;
         this.mayHaveFocus = true;
-        try {
-            return super.visitFilterExpression(expression, argument);
-        } finally {
-            this.mayHaveFocus = previousFocus;
-        }
+        Node result = super.visitFilterExpression(expression, argument);
+        this.mayHaveFocus = previousFocus;
+        return result;
     }
 
     // An inlined call converts its arguments exactly like the function call it replaces.
