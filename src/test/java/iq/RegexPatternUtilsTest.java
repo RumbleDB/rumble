@@ -101,6 +101,28 @@ public class RegexPatternUtilsTest {
     }
 
     @Test
+    public void multilineAnchorsWithBackreferencesRecognizeOnlyLineFeed() {
+        RegexPatternUtils.CompiledRegex compiledRegex =
+                RegexPatternUtils.compileRegex("^(a)\\1$", "m", ExceptionMetadata.EMPTY_METADATA);
+
+        Assertions.assertTrue(RegexPatternUtils.containsMatch(compiledRegex, "x\naa\ny"));
+        Assertions.assertFalse(RegexPatternUtils.containsMatch(compiledRegex, "x\raa\ry"));
+    }
+
+    @Test
+    public void multilineAnchorsDoNotMatchAfterFinalLineFeed() {
+        RegexPatternUtils.CompiledRegex emptyLine =
+                RegexPatternUtils.compileRegex("^$", "m", ExceptionMetadata.EMPTY_METADATA);
+        RegexPatternUtils.CompiledRegex lineFeedBeforeEnd =
+                RegexPatternUtils.compileRegex("\\n$", "m", ExceptionMetadata.EMPTY_METADATA);
+
+        Assertions.assertFalse(RegexPatternUtils.containsMatch(emptyLine, "abcd\ndefg\n"));
+        Assertions.assertTrue(RegexPatternUtils.containsMatch(emptyLine, "abcd\n\ndefg\n"));
+        Assertions.assertFalse(RegexPatternUtils.containsMatch(lineFeedBeforeEnd, "abcd\n"));
+        Assertions.assertTrue(RegexPatternUtils.containsMatch(lineFeedBeforeEnd, "abcd\n\n"));
+    }
+
+    @Test
     public void tokenizeOnXmlWhitespaceDoesNotSplitOnFormFeed() {
         Assertions.assertArrayEquals(new String[] {"abc\fdef"}, RegexPatternUtils.tokenizeOnXmlWhitespace("abc\fdef"));
     }

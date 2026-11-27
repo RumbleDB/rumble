@@ -136,6 +136,7 @@ jobs:
           "MLTestsNativeDeactivated",
           "XMLTests",
           "XQueryTests",
+          "XQueryDriftTests",
           "DeltaUpdateRuntimeTests",
           "IcebergUpdateRuntimeTests",
           "org.rumbledb.**.*Test"

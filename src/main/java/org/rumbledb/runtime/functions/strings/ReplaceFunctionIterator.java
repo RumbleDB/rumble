@@ -18,7 +18,6 @@ package org.rumbledb.runtime.functions.strings;
 import java.io.Serial;
 import java.util.List;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -63,12 +62,6 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
 
         Item replacementStringItem = this.getChild(2).materializeFirstOrNull(context);
         String replacement = replacementStringItem.getStringValue();
-        if (compiledRegex.isQuote()) {
-            replacement = Matcher.quoteReplacement(replacement);
-        } else if (!(checkReplacementStringForValidity(replacement))) {
-            throw new InvalidReplacementStringException(
-                    "'" + replacement + "' contains a disallowed sequence of characters", getMetadata());
-        }
 
         String input;
         if (stringItem == null) {
@@ -77,33 +70,55 @@ public class ReplaceFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
             input = stringItem.getStringValue();
         }
 
-        Matcher m = compiledRegex.getPattern().matcher(input);
-        return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
+        Matcher matcher = compiledRegex.getPattern().matcher(input);
+        String javaReplacement = compiledRegex.isQuote()
+                ? Matcher.quoteReplacement(replacement)
+                : translateReplacement(replacement, matcher.groupCount());
+        return ItemFactory.getInstance().createStringItem(matcher.replaceAll(javaReplacement));
     }
 
-    private static boolean checkReplacementStringForValidity(String repl) {
-        int i = 0;
-        Pattern p = Pattern.compile("\\d");
+    private String translateReplacement(String replacement, int groupCount) {
+        StringBuilder result = new StringBuilder(replacement.length());
+        int maxReference = Math.max(9, groupCount);
+        for (int i = 0; i < replacement.length(); i++) {
+            char current = replacement.charAt(i);
+            if (current == '\\'
+                    && i + 1 < replacement.length()
+                    && (replacement.charAt(i + 1) == '\\' || replacement.charAt(i + 1) == '$')) {
+                result.append(current).append(replacement.charAt(++i));
+                continue;
+            }
+            if (current == '\\'
+                    || (current == '$' && (i + 1 == replacement.length() || !isDigit(replacement.charAt(i + 1))))) {
+                throw new InvalidReplacementStringException(
+                        "'" + replacement + "' contains a disallowed sequence of characters", getMetadata());
+            }
+            if (current != '$') {
+                result.append(current);
+                continue;
+            }
 
-        while (i < repl.length()) {
-            if (repl.charAt(i) == '\\') { // '\' must be followed by another '\' or '$'
-                if (i + 1 >= repl.length()) {
-                    return false;
+            int reference = 0;
+            while (i + 1 < replacement.length() && isDigit(replacement.charAt(i + 1))) {
+                long next = 10L * reference + replacement.charAt(i + 1) - '0';
+                if (next > maxReference) {
+                    break;
                 }
-                if ((!(repl.charAt(i + 1) == '\\')) && (!(repl.charAt(i + 1) == '$'))) {
-                    return false;
-                }
-                i += 2;
-            } else if (repl.charAt(i) == '$') { // '$' must always be followed by a digit
-                if ((i + 1 >= repl.length())
-                        || !(p.matcher(String.valueOf(repl.charAt(i + 1))).matches())) {
-                    return false;
-                }
-                i += 2;
-            } else {
+                reference = (int) next;
                 i++;
             }
+            if (reference <= groupCount) {
+                result.append('$').append(reference);
+            }
+            // Escape literal trailing digits so Java cannot absorb them into a group reference.
+            while (i + 1 < replacement.length() && isDigit(replacement.charAt(i + 1))) {
+                result.append('\\').append(replacement.charAt(++i));
+            }
         }
-        return true;
+        return result.toString();
+    }
+
+    private static boolean isDigit(char character) {
+        return character >= '0' && character <= '9';
     }
 }

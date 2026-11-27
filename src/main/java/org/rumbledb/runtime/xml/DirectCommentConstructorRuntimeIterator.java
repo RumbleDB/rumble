@@ -22,6 +22,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.xml.XMLDocumentPosition;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 
 /**
@@ -45,6 +46,8 @@ public class DirectCommentConstructorRuntimeIterator extends AbstractAtMostOneIt
     public Item evaluateAtMostOne(DynamicContext dynamicContext) {
         // The DirCommentContents of a comment must not contain two consecutive hyphens
         // or end with a hyphen. These rules are syntactically enforced by the grammar.
-        return ItemFactory.getInstance().createXmlCommentNode(this.content);
+        Item node = ItemFactory.getInstance().createXmlCommentNode(this.content);
+        node.setXmlDocumentPosition(XMLDocumentPosition.generateConstructedTreePath(), 0);
+        return node;
     }
 }

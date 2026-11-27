@@ -521,8 +521,8 @@ public final class XmlSchemaCatalog {
 
     /**
      * The values of a simple type, shared by casts to the type and by the typed value of nodes annotated with it.
-     * A list (or a union with a list member) gives its item type with *, since the text is split on whitespace into
-     * any number of values. Any other simple type gives exactly one value.
+     * A list (or a union with a list member, including nested unions) gives its item type with *, since the text is
+     * split on whitespace into any number of values. Any other simple type gives exactly one value.
      */
     private SequenceType simpleTypedValueType(XSSimpleTypeDefinition schemaType) {
         if (mayProduceMultipleValues(schemaType)) {
@@ -663,7 +663,7 @@ public final class XmlSchemaCatalog {
         XSObjectList memberTypes = schemaType.getMemberTypes();
         for (int index = 0; index < memberTypes.getLength(); index++) {
             if (memberTypes.item(index) instanceof XSSimpleTypeDefinition memberType
-                    && memberType.getVariety() == XSSimpleTypeDefinition.VARIETY_LIST) {
+                    && mayProduceMultipleValues(memberType)) {
                 return true;
             }
         }

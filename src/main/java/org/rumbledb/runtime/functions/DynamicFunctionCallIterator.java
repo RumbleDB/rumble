@@ -38,6 +38,8 @@ import org.rumbledb.runtime.plan.DataFrameRuntimePlan;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 import org.rumbledb.runtime.plan.LocalRuntimePlan;
 import org.rumbledb.runtime.plan.RDDRuntimePlan;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 public class DynamicFunctionCallIterator extends ItemRuntimePlan
@@ -110,12 +112,18 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                     "Dynamic function calls can only be performed on functions, arrays, or maps.",
                     staticContext.getMetadata());
         }
+        if (partialApplication && (functionItem.isMap() || functionItem.isArray())) {
+            FunctionSignature signature = new FunctionSignature(
+                    List.of(SequenceType.createSequenceType(functionItem.isArray() ? "integer" : "anyAtomicType")),
+                    SequenceType.createSequenceType("item*"));
+            Item wrapped = FunctionCoercion.coerceToFunctionItem(
+                    functionItem,
+                    ItemTypeFactory.createFunctionItemType(signature),
+                    staticContext,
+                    "Invalid partial application. ");
+            return FunctionCall.of(wrapped, functionArguments, staticContext, context);
+        }
         if (functionItem.isArray()) {
-            if (partialApplication) {
-                throw new UnexpectedTypeException(
-                        "Partial application is not supported when calling arrays as functions.",
-                        staticContext.getMetadata());
-            }
             if (functionArguments.size() != 1 || functionArguments.get(0) == null) {
                 throw new UnexpectedTypeException(
                         "Array function calls must have exactly one argument.", staticContext.getMetadata());
@@ -131,11 +139,6 @@ public class DynamicFunctionCallIterator extends ItemRuntimePlan
                     new ArrayFunctionCallIterator(functionItem, keyIterator, callStaticContext), context);
         }
         if (functionItem.isMap()) {
-            if (partialApplication) {
-                throw new UnexpectedTypeException(
-                        "Partial application is not supported when calling maps as functions.",
-                        staticContext.getMetadata());
-            }
             if (functionArguments.size() != 1 || functionArguments.get(0) == null) {
                 throw new UnexpectedTypeException(
                         "Map function calls must have exactly one argument.", staticContext.getMetadata());

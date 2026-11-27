@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -44,7 +43,6 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
     @Serial
     private static final long serialVersionUID = 1L;
 
-    private static final Pattern NCNAME_PATTERN = Pattern.compile("[A-Za-z_][A-Za-z0-9._-]*");
     private final String staticTarget;
     private final DataFunctionIterator nameIterator;
     private final DataFunctionIterator contentIterator;
@@ -86,11 +84,8 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
                 throw new UnexpectedStaticTypeException(
                         "Computed processing instruction constructor name must evaluate to a single atomic value of type xs:NCName, xs:string, or xs:untypedAtomic");
             }
-            String nameString = atomizedNameItem
-                    .getStringValue()
-                    .replaceAll("[ \t\r\n]+", " ")
-                    .replaceAll("^ | $", "");
-            if (!isValidNCName(nameString)) {
+            String nameString = NamespaceBindingUtils.collapseQNameLexical(atomizedNameItem.getStringValue());
+            if (!NamespaceBindingUtils.isValidNcName(nameString)) {
                 throw new InvalidProcessingInstructionTargetCastException(
                         "Processing instruction target cannot be cast to xs:NCName.", getMetadata());
             }
@@ -117,23 +112,11 @@ public class ComputedPIConstructorRuntimeIterator extends AbstractAtMostOneItemR
             }
         }
         String content = String.join(" ", stringValues);
-        content = removeLeadingWhitespace(content);
+        content = content.replaceFirst("^[ \\t\\r\\n]+", "");
         Item processingInstructionItem = ItemFactory.getInstance().createXmlProcessingInstructionNode(target, content);
         // Nested constructor results need document order before the enclosing constructor finishes.
         String documentPath = XMLDocumentPosition.generateConstructedTreePath();
         processingInstructionItem.setXmlDocumentPosition(documentPath, 0);
         return processingInstructionItem;
-    }
-
-    private boolean isValidNCName(String value) {
-        return value != null && NCNAME_PATTERN.matcher(value).matches();
-    }
-
-    private String removeLeadingWhitespace(String value) {
-        int index = 0;
-        while (index < value.length() && Character.isWhitespace(value.charAt(index))) {
-            index++;
-        }
-        return value.substring(index);
     }
 }

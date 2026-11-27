@@ -112,7 +112,7 @@ public final class ArithmeticTyping {
     /** Whether the unary operation succeeds for some member of the operand type, as for a binary operation. */
     private boolean mayUnaryOperationSucceed(ItemType type) {
         return type.getMemberTypes().stream()
-                .anyMatch(member -> inferUnaryItemType(member) != null
+                .anyMatch(member -> inferUnaryItemType(member, false) != null
                         || (!TypeAtomization.isNeverAtomizable(member) && TypeAtomization.mayAtomizeToAnyType(member)));
     }
 
@@ -286,7 +286,7 @@ public final class ArithmeticTyping {
 
         // if inferred arity does not allow for empty sequence and static type is not an accepted one throw a static
         // error
-        ItemType childItemType = inferUnaryItemType(childInferredType.getItemType());
+        ItemType childItemType = inferUnaryItemType(childInferredType.getItemType(), negated);
         if (childItemType == null) {
             boolean mayPass = mayUnaryOperationSucceed(childInferredType.getItemType());
             if (childInferredType.getArity() == SequenceType.Arity.OneOrZero && !mayPass) {
@@ -304,7 +304,7 @@ public final class ArithmeticTyping {
         return new SequenceType(childItemType, resultArity);
     }
 
-    private ItemType inferUnaryItemType(ItemType type) {
+    private ItemType inferUnaryItemType(ItemType type, boolean negated) {
         List<ItemType> results = new ArrayList<>();
         for (ItemType member : type.getMemberTypes()) {
             if (!TypeAtomization.isAtomizable(member)) {
@@ -318,7 +318,15 @@ public final class ArithmeticTyping {
             if (!normalized.isNumeric()) {
                 return null;
             }
-            results.add(normalized);
+            // Negation can leave a derived type's range, even for xs:int at its minimum value.
+            // Unary plus returns the original numeric item and can keep its restrictions.
+            if (negated) {
+                normalized.getMemberTypes().stream()
+                        .map(ItemType::getCastingPrimitiveType)
+                        .forEach(results::add);
+            } else {
+                results.add(normalized);
+            }
         }
         return ItemTypeFactory.createInferredUnionType(results);
     }

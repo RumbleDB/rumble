@@ -1,0 +1,5 @@
+(:JIQS: ShouldRun; Output="true":)
+(: Observed on master f1775366d: RBST0004 instead of the empty sequence. :)
+(: https://www.w3.org/TR/xpath-functions-31/#func-function-name :)
+(: Maps are anonymous function items. :)
+empty(function-name(map {"a": 1}))

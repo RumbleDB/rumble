@@ -1086,11 +1086,23 @@ public interface Item extends Serializable {
     }
 
     /**
-     * Returns the identifier (name and arity) of the function, if it is a function item.
+     * Returns the identifier (name and arity) of a function item. Maps and arrays return null.
+     * An ordinary anonymous function may have an identifier whose name is null.
      *
-     * @return the function identifier.
+     * @return the function identifier, or null when no identifier is available.
+     * @throws UnsupportedOperationException if this item is not callable.
      */
     default FunctionIdentifier getIdentifier() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
+     * Returns the arity of a callable item. Maps and arrays have arity one.
+     *
+     * @return the number of function parameters.
+     * @throws UnsupportedOperationException if this item is not callable.
+     */
+    default int getFunctionArity() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

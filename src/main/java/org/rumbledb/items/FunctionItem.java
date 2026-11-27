@@ -231,6 +231,11 @@ public class FunctionItem implements Item {
     }
 
     @Override
+    public int getFunctionArity() {
+        return this.parameterNames.size();
+    }
+
+    @Override
     public FunctionIdentifier getIdentifier() {
         return this.identifier;
     }

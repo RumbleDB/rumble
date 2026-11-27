@@ -192,6 +192,9 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
         List<Item> expandedContentSequence =
                 expandDocumentNodes(XmlConstructorContentUtils.normalizeContent(rawContentSequence, getMetadata()));
 
+        // 2. Merge adjacent text and delete empty text before checking attribute ordering.
+        expandedContentSequence = mergeAdjacentTextNodes(expandedContentSequence);
+
         // 3. If the content sequence contains an attribute node or a namespace node following a node that is not an
         // attribute node or a namespace node, a type error is raised [err:XQTY0024].
         validateAttributeOrdering(expandedContentSequence);
@@ -216,12 +219,6 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
                 }
             }
         }
-
-        // 2. Adjacent text nodes in the content sequence are merged into a single text node by concatenating their
-        // contents, with no intervening blanks. After concatenation, any text node whose content is a zero-length
-        // string
-        // is deleted from the content sequence.
-        List<Item> mergedChildren = mergeAdjacentTextNodes(nonAttributeContent);
 
         // XQuery 3.1, 3.9.1.2 Namespace Declaration Attributes:
         // "However, note that namespace declaration attributes (see 3.9.1.2 Namespace Declaration Attributes) do not
@@ -255,7 +252,7 @@ public class ComputedElementConstructorRuntimeIterator extends AbstractAtMostOne
         // TODO: Set other properties (nilled, string-value, typed-value, type-name, is-id, is-idrefs) when we have a
         // stable XML type system
 
-        return new ProcessedContent(mergedChildren, filteredAttributes, namespaces);
+        return new ProcessedContent(nonAttributeContent, filteredAttributes, namespaces);
     }
 
     /**

@@ -18,8 +18,6 @@ package org.rumbledb.runtime.functions.strings;
 import java.io.Serial;
 import java.util.List;
 
-import org.apache.commons.lang3.StringUtils;
-
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -50,6 +48,21 @@ public class NormalizeSpaceFunctionIterator extends AbstractAtMostOneItemRuntime
         if (stringItem == null) {
             return ItemFactory.getInstance().createStringItem("");
         }
-        return ItemFactory.getInstance().createStringItem(StringUtils.normalizeSpace(stringItem.getStringValue()));
+        String input = stringItem.getStringValue();
+        StringBuilder result = new StringBuilder(input.length());
+        boolean pendingSpace = false;
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c == ' ' || c == '\t' || c == '\r' || c == '\n') {
+                pendingSpace = result.length() > 0;
+            } else {
+                if (pendingSpace) {
+                    result.append(' ');
+                }
+                result.append(c);
+                pendingSpace = false;
+            }
+        }
+        return ItemFactory.getInstance().createStringItem(result.toString());
     }
 }
