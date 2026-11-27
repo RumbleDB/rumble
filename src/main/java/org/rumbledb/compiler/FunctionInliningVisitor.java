@@ -18,6 +18,7 @@ package org.rumbledb.compiler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
@@ -158,19 +159,28 @@ public class FunctionInliningVisitor extends CloneVisitor {
     }
 
     @Override
-    public Node visit(Node node, Node argument) {
-        if (node instanceof SlashExpr
-                || node instanceof SimpleMapExpression
-                || node instanceof FilterExpression) {
-            boolean previousFocus = this.mayHaveFocus;
-            this.mayHaveFocus = true;
-            try {
-                return super.visit(node, argument);
-            } finally {
-                this.mayHaveFocus = previousFocus;
-            }
+    public Node visitSlashExpr(SlashExpr expression, Node argument) {
+        return visitWithFocus(() -> super.visitSlashExpr(expression, argument));
+    }
+
+    @Override
+    public Node visitSimpleMapExpr(SimpleMapExpression expression, Node argument) {
+        return visitWithFocus(() -> super.visitSimpleMapExpr(expression, argument));
+    }
+
+    @Override
+    public Node visitFilterExpression(FilterExpression expression, Node argument) {
+        return visitWithFocus(() -> super.visitFilterExpression(expression, argument));
+    }
+
+    private Node visitWithFocus(Supplier<Node> visit) {
+        boolean previousFocus = this.mayHaveFocus;
+        this.mayHaveFocus = true;
+        try {
+            return visit.get();
+        } finally {
+            this.mayHaveFocus = previousFocus;
         }
-        return super.visit(node, argument);
     }
 
     // An inlined call converts its arguments exactly like the function call it replaces.
