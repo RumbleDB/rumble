@@ -54,9 +54,10 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
         this.result.clear();
         for (OrderByClauseAnnotatedChildIterator expression : this.expressionsWithIterator) {
             Item key = OrderByClauseIterator.evaluateOrderKey(expression, this.dataFrameContext.getContext());
-            this.result.add(key == null
-                    ? OrderByClauseIterator.StringFlagForEmptySequence
-                    : key.getDynamicType().getName().getLocalName());
+            this.result.add(
+                    key == null
+                            ? OrderByClauseIterator.StringFlagForEmptySequence
+                            : key.getDynamicType().getName().getLocalName());
         }
         return this.result;
     }

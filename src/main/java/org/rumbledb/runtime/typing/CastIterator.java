@@ -829,7 +829,9 @@ public class CastIterator extends AbstractAtMostOneItemRuntimePlan implements Na
         if (facet == WhitespaceFacet.COLLAPSE) {
             return XSSimpleTypeDecl.normalize(lexical, XSSimpleType.WS_COLLAPSE);
         }
-        return facet == WhitespaceFacet.REPLACE ? XSSimpleTypeDecl.normalize(lexical, XSSimpleType.WS_REPLACE) : lexical;
+        return facet == WhitespaceFacet.REPLACE
+                ? XSSimpleTypeDecl.normalize(lexical, XSSimpleType.WS_REPLACE)
+                : lexical;
     }
 
     /**

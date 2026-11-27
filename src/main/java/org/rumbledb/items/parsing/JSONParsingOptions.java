@@ -119,7 +119,9 @@ public final class JSONParsingOptions {
                     .build();
 
             FunctionCall call = FunctionCall.of(
-                    functionItem, List.of(new StringRuntimeIterator(escapedSequence, callContext)), callContext,
+                    functionItem,
+                    List.of(new StringRuntimeIterator(escapedSequence, callContext)),
+                    callContext,
                     dynamicContext);
             ItemRuntimePlan result = FunctionCallArgumentConversion.wrapAtMostOneForFunctionConversion(
                     call.plan(), resultType, "Invalid result from option 'fallback'. ", callContext);

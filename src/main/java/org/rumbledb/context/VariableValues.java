@@ -42,6 +42,7 @@ public class VariableValues implements Serializable {
 
     @Serial
     private static final long serialVersionUID = 1L;
+
     private static final Set<Name> FOCUS_VARIABLES =
             Set.of(Name.CONTEXT_ITEM, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT);
 

@@ -77,8 +77,8 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
             OrderByClauseAnnotatedChildIterator expressionWithIterator =
                     this.expressionsWithIterator.get(expressionIndex);
 
-            Item key = OrderByClauseIterator.evaluateOrderKey(
-                    expressionWithIterator, this.dataFrameContext.getContext());
+            Item key =
+                    OrderByClauseIterator.evaluateOrderKey(expressionWithIterator, this.dataFrameContext.getContext());
             if (key == null) {
                 if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.GREATEST) {
                     this.results.add(emptySequenceOrderIndexLast);

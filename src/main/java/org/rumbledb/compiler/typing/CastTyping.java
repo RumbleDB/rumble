@@ -181,16 +181,14 @@ public final class CastTyping {
      * statically.
      */
     private static Stream<Boolean> castableMembers(ItemType source, ItemType target) {
-        return source.getMemberTypes().stream()
-                .flatMap(member -> {
-                    SequenceType atomized = TypeAtomization.inferType(new SequenceType(member));
-                    if (atomized.isEmptySequence()) {
-                        return Stream.empty();
-                    }
-                    return TypeAtomization.hasUnknownAtomizedType(member)
-                            ? Stream.of(true)
-                            : atomized.getItemType().getMemberTypes().stream()
-                                    .map(type -> type.isStaticallyCastableAs(target));
-                });
+        return source.getMemberTypes().stream().flatMap(member -> {
+            SequenceType atomized = TypeAtomization.inferType(new SequenceType(member));
+            if (atomized.isEmptySequence()) {
+                return Stream.empty();
+            }
+            return TypeAtomization.hasUnknownAtomizedType(member)
+                    ? Stream.of(true)
+                    : atomized.getItemType().getMemberTypes().stream().map(type -> type.isStaticallyCastableAs(target));
+        });
     }
 }
