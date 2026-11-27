@@ -18,7 +18,6 @@ package org.rumbledb.runtime.functions.arrays;
 import java.io.Serial;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -75,15 +74,7 @@ public class ArraySortFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             rows.add(new SortRow(new ArrayList<>(member), keys));
         }
 
-        RuntimeStaticContext sortStaticContext = localStaticContext();
-        Comparator<SortRow> cmp = (r1, r2) -> {
-            if (SortKeyComparison.sortKeysDeepEqual(r1.keys, r2.keys, collationUri, sortStaticContext)) {
-                return 0;
-            }
-            boolean less = SortKeyComparison.sortKeysDeepLessThan(r1.keys, r2.keys, collationUri, sortStaticContext);
-            return less ? -1 : 1;
-        };
-        rows.sort(cmp);
+        rows.sort((left, right) -> SortKeyComparison.compare(left.keys, right.keys, collationUri, getMetadata()));
 
         boolean allSingleton = true;
         List<List<Item>> sortedMembers = new ArrayList<>(rows.size());

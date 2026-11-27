@@ -29,6 +29,7 @@ import org.rumbledb.errorcodes.ErrorVariables;
 import org.rumbledb.exceptions.CastableException;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidGroupVariableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
@@ -355,6 +356,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
+        StaticContext outerContext = argument;
         argument = visitPreviousClause(clause, argument);
         StaticContext result = new StaticContext(argument);
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
@@ -365,9 +367,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                         variable.getVariableName(),
                         variable.getActualSequenceType(),
                         Objects.requireNonNullElse(variable.getVariableMetadata(), clause.getMetadata()));
-            } else if (!argument.isInScope(variable.getVariableName())) {
-                throw new UndeclaredVariableException(
-                        "Uninitialized variable reference: " + variable.getVariableName(), clause.getMetadata());
+            } else if (!argument.isInScope(variable.getVariableName(), outerContext)) {
+                throw new InvalidGroupVariableException(
+                        "Grouping variable is not bound in the input tuples: " + variable.getVariableName(),
+                        clause.getMetadata());
             }
         }
         return result;

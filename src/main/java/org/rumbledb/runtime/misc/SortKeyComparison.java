@@ -15,17 +15,14 @@
  */
 package org.rumbledb.runtime.misc;
 
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.context.RuntimeStaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 
 /**
  * Lexicographic comparison of sort-key sequences for F&amp;O 3.1 {@code fn:sort} / {@code array:sort}
@@ -35,72 +32,39 @@ public final class SortKeyComparison {
 
     private SortKeyComparison() {}
 
-    public static boolean sortKeysDeepEqual(
-            List<Item> a, List<Item> b, String collationUri, RuntimeStaticContext staticContext) {
-        if (a.size() != b.size()) {
-            return false;
-        }
-        ExceptionMetadata metadata = staticContext.getMetadata();
-        for (int i = 0; i < a.size(); i++) {
-            if (!sortKeyItemDeepEqual(a.get(i), b.get(i), collationUri, metadata)) {
-                return false;
+    public static int compare(List<Item> a, List<Item> b, String collationUri, ExceptionMetadata metadata) {
+        Iterator<Item> left = a.iterator();
+        Iterator<Item> right = b.iterator();
+        while (left.hasNext() && right.hasNext()) {
+            int comparison = compareItems(left.next(), right.next(), collationUri, metadata);
+            if (comparison != 0) {
+                return comparison;
             }
         }
-        return true;
+        return Boolean.compare(left.hasNext(), right.hasNext());
     }
 
-    public static boolean sortKeysDeepLessThan(
-            List<Item> a, List<Item> b, String collationUri, RuntimeStaticContext staticContext) {
-        ExceptionMetadata metadata = staticContext.getMetadata();
-        if (a.isEmpty()) {
-            return !b.isEmpty();
+    private static int compareItems(Item a, Item b, String collationUri, ExceptionMetadata metadata) {
+        if (a.isNumeric() && b.isNumeric()) {
+            boolean aNaN = isNumericNaN(a);
+            boolean bNaN = isNumericNaN(b);
+            if (aNaN || bNaN) {
+                return Boolean.compare(bNaN, aNaN);
+            }
         }
-        if (b.isEmpty()) {
-            return false;
+        if (CollationSupport.isStringCollationType(a) && CollationSupport.isStringCollationType(b)) {
+            return CollationSupport.compareStrings(a.getStringValue(), b.getStringValue(), collationUri, metadata);
         }
-        Item headA = a.get(0);
-        Item headB = b.get(0);
-        if (sortKeyItemDeepEqual(headA, headB, collationUri, metadata)) {
-            return sortKeysDeepLessThan(tail(a), tail(b), collationUri, staticContext);
+        a = normalizeUntypedAtomic(a);
+        b = normalizeUntypedAtomic(b);
+        if (AtomicDeepEqual.deepEqual(a, b, collationUri, metadata)) {
+            return 0;
         }
-        if (isNumericNaN(headA)) {
-            return true;
-        }
-        if (isStringCollationType(headA) && isStringCollationType(headB)) {
-            int cmp = compareStringCollationTypes(headA, headB, collationUri, metadata);
-            return cmp < 0;
-        }
-        Item na = normalizeUntypedAtomic(headA);
-        Item nb = normalizeUntypedAtomic(headB);
-        long cmp = ComparisonIterator.compareItems(na, nb, ComparisonOperator.VC_LT, metadata);
+        long cmp = ComparisonIterator.compareItems(a, b, ComparisonOperator.VC_LT, metadata);
         if (cmp == Long.MIN_VALUE) {
             throw new UnexpectedTypeException("Sort keys contain values that are not comparable.", metadata);
         }
-        return cmp < 0;
-    }
-
-    private static List<Item> tail(List<Item> seq) {
-        if (seq.size() <= 1) {
-            return Collections.emptyList();
-        }
-        return new ArrayList<>(seq.subList(1, seq.size()));
-    }
-
-    private static boolean sortKeyItemDeepEqual(Item a, Item b, String collationUri, ExceptionMetadata metadata) {
-        if (isNumericNaN(a) && isNumericNaN(b)) {
-            return true;
-        }
-        if (isStringCollationType(a) && isStringCollationType(b)) {
-            return compareStringCollationTypes(a, b, collationUri, metadata) == 0;
-        }
-        return DeepEqualFunctionIterator.checkDeepEqual(
-                Collections.singletonList(a), Collections.singletonList(b), collationUri, metadata);
-    }
-
-    private static int compareStringCollationTypes(Item a, Item b, String collationUri, ExceptionMetadata metadata) {
-        String sa = normalizeUntypedAtomic(a).getStringValue();
-        String sb = normalizeUntypedAtomic(b).getStringValue();
-        return CollationSupport.compareStrings(sa, sb, collationUri, metadata);
+        return Long.signum(cmp);
     }
 
     private static Item normalizeUntypedAtomic(Item item) {
@@ -108,10 +72,6 @@ public final class SortKeyComparison {
             return ItemFactory.getInstance().createStringItem(item.getStringValue());
         }
         return item;
-    }
-
-    private static boolean isStringCollationType(Item item) {
-        return item.isString() || item.isAnyURI() || item.isUntypedAtomic();
     }
 
     private static boolean isNumericNaN(Item item) {

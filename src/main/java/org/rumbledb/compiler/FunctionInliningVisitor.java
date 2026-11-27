@@ -26,9 +26,11 @@ import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -57,7 +59,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
 
     private Prolog prolog;
 
-    private boolean inPath;
+    private boolean mayHaveFocus;
 
     private boolean isImportedFunction(Prolog prolog, FunctionDeclaration target) {
         for (var module : prolog.getImportedModules()) {
@@ -146,6 +148,7 @@ public class FunctionInliningVisitor extends CloneVisitor {
     @Override
     public Node visitMainModule(MainModule mainModule, Node argument) {
         this.prolog = mainModule.getProlog();
+        this.mayHaveFocus = this.prolog.hasContextItemDeclaration();
         MainModule result = new MainModule(
                 mainModule.getProlog(),
                 (Program) visit(mainModule.getProgram(), mainModule.getProlog()),
@@ -154,14 +157,30 @@ public class FunctionInliningVisitor extends CloneVisitor {
         return result;
     }
 
-    // Calls in a path expression are not inlined: an inlined body would read the context item of the step,
-    // while a function body has no context item.
     @Override
     public Node visitSlashExpr(SlashExpr expression, Node argument) {
-        boolean wasInPath = this.inPath;
-        this.inPath = true;
+        boolean previousFocus = this.mayHaveFocus;
+        this.mayHaveFocus = true;
         Node result = super.visitSlashExpr(expression, argument);
-        this.inPath = wasInPath;
+        this.mayHaveFocus = previousFocus;
+        return result;
+    }
+
+    @Override
+    public Node visitSimpleMapExpr(SimpleMapExpression expression, Node argument) {
+        boolean previousFocus = this.mayHaveFocus;
+        this.mayHaveFocus = true;
+        Node result = super.visitSimpleMapExpr(expression, argument);
+        this.mayHaveFocus = previousFocus;
+        return result;
+    }
+
+    @Override
+    public Node visitFilterExpression(FilterExpression expression, Node argument) {
+        boolean previousFocus = this.mayHaveFocus;
+        this.mayHaveFocus = true;
+        Node result = super.visitFilterExpression(expression, argument);
+        this.mayHaveFocus = previousFocus;
         return result;
     }
 
@@ -186,14 +205,15 @@ public class FunctionInliningVisitor extends CloneVisitor {
     // Inlining is disabled for functions that:
     // 1. Are sequential.
     // 2. Contain an exit statement.
-    // It is also disabled for calls in a path expression, and for calls with an argument that may be updating,
+    // It is also disabled at call sites with a focus that an inlined body could see, and for calls with an
+    // argument that may be updating,
     // which is an error (XUST0001). Updating expressions are classified after inlining, which binds an unused
     // argument in a let clause that is then removed, so the call is kept for this error to be reported.
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
         FunctionDeclaration targetFunction =
                 getFunctionDeclarationFromProlog(this.prolog, expression.getFunctionIdentifier());
-        if (this.inPath
+        if (this.mayHaveFocus
                 || expression.isPartialApplication()
                 || targetFunction == null
                 // Imported function bodies must retain their module's static settings.

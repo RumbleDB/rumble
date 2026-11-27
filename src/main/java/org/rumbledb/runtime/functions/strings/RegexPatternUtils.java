@@ -92,7 +92,7 @@ public final class RegexPatternUtils {
         }
         if (!quote) {
             boolean caseInsensitive = (flags & Pattern.CASE_INSENSITIVE) != 0;
-            if (caseInsensitive || pattern.contains("-[")) {
+            if (caseInsensitive || pattern.contains("-[") || pattern.contains("&&")) {
                 pattern = rewritePattern(pattern, caseInsensitive);
             }
             if (caseInsensitive) {
@@ -667,17 +667,17 @@ public final class RegexPatternUtils {
             if (index + 1 < pattern.length() && pattern.charAt(index) == '-' && pattern.charAt(index + 1) != '[') {
                 ClassToken rightToken = readClassToken(pattern, index + 1, false);
                 if (isRange(token, rightToken, pattern, index + 1)) {
-                    if (caseInsensitive) {
-                        result.append(expandRange(token.codePoint, rightToken.codePoint));
-                    } else {
-                        result.append(token.text).append('-').append(rightToken.text);
-                    }
+                    String range = caseInsensitive
+                            ? expandRange(token.codePoint, rightToken.codePoint)
+                            : token.text + "-" + rightToken.text;
+                    result.append(range.replace("&", "\\&"));
                     index = rightToken.nextIndex;
                     continue;
                 }
             }
 
-            result.append(caseInsensitive ? expandSimpleToken(token) : token.text);
+            // Java treats a pair of ampersands as intersection inside a character class.
+            result.append((caseInsensitive ? expandSimpleToken(token) : token.text).replace("&", "\\&"));
         }
 
         return new ClassRewriteResult(result.toString(), pattern.length() - 1);

@@ -17,7 +17,6 @@ package org.rumbledb.runtime.functions.sequences.general;
 
 import java.io.Serial;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 
 import org.rumbledb.api.Item;
@@ -81,16 +80,7 @@ public class SortFunctionIterator extends ItemRuntimePlan implements LocalRuntim
             rows.add(new SortRow(item, keys));
         }
 
-        RuntimeStaticContext sortStaticContext = localStaticContext();
-        Comparator<SortRow> comparator = (left, right) -> {
-            if (SortKeyComparison.sortKeysDeepEqual(left.keys, right.keys, collationUri, sortStaticContext)) {
-                return 0;
-            }
-            boolean less =
-                    SortKeyComparison.sortKeysDeepLessThan(left.keys, right.keys, collationUri, sortStaticContext);
-            return less ? -1 : 1;
-        };
-        rows.sort(comparator);
+        rows.sort((left, right) -> SortKeyComparison.compare(left.keys, right.keys, collationUri, getMetadata()));
 
         List<Item> sortedItems = new ArrayList<>(rows.size());
         for (SortRow row : rows) {
