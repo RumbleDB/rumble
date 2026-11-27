@@ -55,6 +55,7 @@ import org.rumbledb.items.structured.HomogeneousItemDataFrame;
 import org.rumbledb.runtime.TupleRuntimePlan;
 import org.rumbledb.runtime.cursor.Cursor;
 import org.rumbledb.runtime.cursor.IteratorLocalCursor;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
@@ -341,7 +342,8 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context).getDataFrame();
+        FlworDataFrame inputFrame = (FlworDataFrame) this.child.getDataFrame(context);
+        Dataset<Row> df = inputFrame.getDataFrame();
         StructType inputSchema;
         // String[] columnNamesArray;
         // List<String> columnNames;
@@ -356,6 +358,9 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
             if (expression.getExpression() != null) {
                 // if a variable is defined in-place with groupby, execute a let on the variable
                 variableAccessNames.add(expression.getVariableName());
+                List<Name> retained = new ArrayList<>(inputFrame.getVariableNames());
+                retained.remove(expression.getVariableName());
+                FLWORSchema outputSchema = inputFrame.getSchema().selectVariables(retained);
                 df = LetClauseIterator.bindLetVariableInDataFrame(
                         df,
                         expression.getVariableName(),
@@ -365,7 +370,14 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                         new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                         null,
                         false,
-                        getConfiguration());
+                        getConfiguration(),
+                        outputSchema.getColumns());
+
+                outputSchema.replaceVariable(
+                        expression.getVariableName(),
+                        expression.getExpression().getRuntimeStaticContext().getStaticType(),
+                        FlworDataFrameUtils.getColumnBindings(expression.getVariableName(), df.schema()));
+                inputFrame = new FlworDataFrame(df, outputSchema);
 
             } else {
                 if (!FlworDataFrameUtils.hasColumnForVariable(inputSchema, expression.getVariableName())) {
@@ -390,7 +402,7 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
         }
         if (nativeQueryResult != null) {
 
-            return new FlworDataFrame(nativeQueryResult);
+            return groupedDataFrame(inputFrame, nativeQueryResult, variableAccessNames);
         }
 
         Map<Name, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
@@ -465,7 +477,23 @@ public class GroupByClauseIterator extends TupleRuntimePlan implements DataFrame
                 .sql(String.format(
                         "select %s from (%s) group by `%s`",
                         projectSQL, createColumnsSQL, appendedGroupingColumnsName));
-        return new FlworDataFrame(result);
+        return groupedDataFrame(inputFrame, result, variableAccessNames);
+    }
+
+    private FlworDataFrame groupedDataFrame(FlworDataFrame input, Dataset<Row> rows, List<Name> keys) {
+        if (this.outputTupleProjection.isEmpty()) {
+            // SQL needs a placeholder expression; the FLWOR output is an empty tuple per group.
+            return new FlworDataFrame(rows.select(new org.apache.spark.sql.Column[0]), new FLWORSchema());
+        }
+        FLWORSchema outputSchema = new FLWORSchema();
+        for (Name name : input.getVariableNames()) {
+            SequenceType type = input.getVariableType(name);
+            if (!keys.contains(name)) {
+                type = new SequenceType(type.getItemType(), SequenceType.Arity.ZeroOrMore);
+            }
+            outputSchema.replaceVariable(name, type, FlworDataFrameUtils.getColumnBindings(name, rows.schema()));
+        }
+        return new FlworDataFrame(rows, outputSchema);
     }
 
     @Override

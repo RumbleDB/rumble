@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.flwor.udfs;
 
 import java.io.Serial;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.ArrayList;
@@ -61,7 +62,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
     private static final int stringGroupIndex = 5;
     private static final int doubleGroupIndex = 5;
     private static final int durationGroupIndex = 5;
-    private static final int dateTimeGroupIndex = 5;
+    private static final int dateTimeGroupIndex = 6;
 
     public GroupClauseCreateColumnsUDF(
             List<GroupByClauseSparkIteratorExpression> groupingExpressions,
@@ -220,28 +221,22 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             return;
         } else if (nextItem.hasDateTime()) {
             this.results.add(dateTimeGroupIndex);
-            this.results.add(null);
-            this.results.add(null);
             this.results.add(temporalGroupingKey(nextItem));
+            this.results.add(null);
+            this.results.add(null);
             return;
         }
         throw new UnexpectedTypeException("Group by variable must atomize to a supported atomic value.", this.metadata);
     }
 
-    private long temporalGroupingKey(Item item) {
-        if (this.implicitTimezone != null && !item.hasTimeZone()) {
-            if (item.isTime()) {
-                return TimezoneSupport.timeWithImplicitTimezone(item, this.implicitTimezone)
+    private String temporalGroupingKey(Item item) {
+        // A canonical UTC instant preserves all fractional seconds in Spark's grouping key.
+        Instant instant = item.isTime()
+                ? TimezoneSupport.timeWithImplicitTimezone(item, this.implicitTimezone)
                         .atDate(LocalDate.EPOCH)
                         .toInstant()
-                        .toEpochMilli();
-            }
-            if (item.isDateTime() || item.isDate()) {
-                return TimezoneSupport.dateTimeWithImplicitTimezone(item, this.implicitTimezone)
-                        .toInstant()
-                        .toEpochMilli();
-            }
-        }
-        return item.getEpochMillis();
+                : TimezoneSupport.dateTimeWithImplicitTimezone(item, this.implicitTimezone)
+                        .toInstant();
+        return instant.toString();
     }
 }

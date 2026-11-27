@@ -19,12 +19,20 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TimeZone;
 
+import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.api.parallel.Isolated;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
+import iq.base.AnnotationTestExecutor;
 import iq.base.TestFileDiscovery;
 import utils.annotations.AnnotationParseException;
 
 import org.rumbledb.config.RumbleConfiguration;
 
+@Isolated("The implicit timezone regression temporarily changes the JVM default timezone")
 public class SparkRuntimeTests extends RuntimeTests {
 
     public static final File sparkRuntimeTestsDirectory =
@@ -50,5 +58,22 @@ public class SparkRuntimeTests extends RuntimeTests {
     @Override
     protected File testDirectory() {
         return sparkRuntimeTestsDirectory;
+    }
+
+    List<File> xqueryTestFiles() throws IOException {
+        return TestFileDiscovery.xqueryFiles(testDirectory());
+    }
+
+    @ParameterizedTest(name = "{index}: {0}")
+    @MethodSource("xqueryTestFiles")
+    @Timeout(1000)
+    void testXQueryAnnotation(File testFile) throws IOException {
+        TimeZone originalTimezone = TimeZone.getDefault();
+        TimeZone.setDefault(TimeZone.getTimeZone("GMT+01:00"));
+        try {
+            AnnotationTestExecutor.run(testFile, getConfiguration(), getExternalBindings(), checkOutput());
+        } finally {
+            TimeZone.setDefault(originalTimezone);
+        }
     }
 }
