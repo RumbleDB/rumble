@@ -15,6 +15,8 @@
  */
 package org.rumbledb.runtime.misc;
 
+import java.time.ZoneOffset;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
@@ -48,6 +50,11 @@ public final class AtomicDeepEqual {
      * @return true if items are deep-equal, false otherwise
      */
     public static boolean deepEqual(Item item1, Item item2, String collation, ExceptionMetadata metadata) {
+        return deepEqual(item1, item2, collation, metadata, null);
+    }
+
+    public static boolean deepEqual(
+            Item item1, Item item2, String collation, ExceptionMetadata metadata, ZoneOffset implicitTimezone) {
         if (!item1.isAtomic() || !item2.isAtomic()) {
             return false;
         }
@@ -67,7 +74,7 @@ public final class AtomicDeepEqual {
             item2 = ItemFactory.getInstance().createStringItem(item2.getStringValue());
         }
         long comparison = ComparisonIterator.compareItems(
-                item1, item2, ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
+                item1, item2, ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA, implicitTimezone);
         // The low-level comparator reports non-comparable types with Long.MIN_VALUE.
         return comparison != Long.MIN_VALUE && comparison == 0;
     }

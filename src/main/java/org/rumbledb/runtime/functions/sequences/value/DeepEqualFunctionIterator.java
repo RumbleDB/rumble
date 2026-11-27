@@ -16,6 +16,7 @@
 package org.rumbledb.runtime.functions.sequences.value;
 
 import java.io.Serial;
+import java.time.ZoneOffset;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +41,7 @@ import org.rumbledb.items.xml.XmlSchemaTypeAnnotation.ContentKind;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.misc.TimezoneSupport;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -67,6 +69,8 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 getRuntimeStaticContext(),
                 getMetadata());
 
+        ZoneOffset implicitTimezone = TimezoneSupport.xqueryImplicitTimezone(context, getRuntimeStaticContext());
+
         if (sequenceIterator1.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()
                 && sequenceIterator2
                         .getRuntimeStaticContext()
@@ -76,7 +80,7 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
             JavaRDD<Item> rdd2 = sequenceIterator2.getRDD(context);
             if (rdd1.partitions().size() == rdd2.partitions().size()) {
                 FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> filter =
-                        new SameElementsAndLengthClosure(collation, getMetadata());
+                        new SameElementsAndLengthClosure(collation, getMetadata(), implicitTimezone);
                 JavaRDD<Boolean> differences = rdd1.zipPartitions(rdd2, filter);
                 return booleanItem(differences.isEmpty());
             } else {
@@ -91,7 +95,7 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                     if (!o1.isPresent() || !o2.isPresent()) {
                         return true;
                     }
-                    return !checkItemsDeepEqual(o1.get(), o2.get(), collation, metadata);
+                    return !checkItemsDeepEqual(o1.get(), o2.get(), collation, metadata, implicitTimezone);
                 });
                 return booleanItem(rddFiltered.isEmpty());
             }
@@ -99,7 +103,7 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         List<Item> items1 = sequenceIterator1.materialize(context);
         List<Item> items2 = sequenceIterator2.materialize(context);
 
-        return booleanItem(checkDeepEqual(items1, items2, collation, getMetadata()));
+        return booleanItem(checkDeepEqual(items1, items2, collation, getMetadata(), implicitTimezone));
     }
 
     private static Item booleanItem(boolean value) {
@@ -118,6 +122,15 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
      */
     public static boolean checkDeepEqual(
             List<Item> items1, List<Item> items2, String collation, ExceptionMetadata metadata) {
+        return checkDeepEqual(items1, items2, collation, metadata, null);
+    }
+
+    private static boolean checkDeepEqual(
+            List<Item> items1,
+            List<Item> items2,
+            String collation,
+            ExceptionMetadata metadata,
+            ZoneOffset implicitTimezone) {
         if (items1.size() != items2.size()) {
             return false;
         } else {
@@ -125,12 +138,16 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 Item item1 = items1.get(i);
                 Item item2 = items2.get(i);
 
-                if (!checkItemsDeepEqual(item1, item2, collation, metadata)) {
+                if (!checkItemsDeepEqual(item1, item2, collation, metadata, implicitTimezone)) {
                     return false;
                 }
             }
             return true;
         }
+    }
+
+    public static boolean checkItemsDeepEqual(Item item1, Item item2, String collation, ExceptionMetadata metadata) {
+        return checkItemsDeepEqual(item1, item2, collation, metadata, null);
     }
 
     /**
@@ -142,9 +159,11 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
      * @param item2 The second item to compare
      * @param collation The collation URI for string comparisons
      * @param metadata Exception metadata for error reporting
+     * @param implicitTimezone The query timezone for atomic value comparisons
      * @return true if the items are deep-equal, false otherwise
      */
-    public static boolean checkItemsDeepEqual(Item item1, Item item2, String collation, ExceptionMetadata metadata) {
+    static boolean checkItemsDeepEqual(
+            Item item1, Item item2, String collation, ExceptionMetadata metadata, ZoneOffset implicitTimezone) {
         if ((item1.isFunction() && !item1.isMap() && !item1.isArray())
                 || (item2.isFunction() && !item2.isMap() && !item2.isArray())) {
             throw new RumbleException(
@@ -165,7 +184,7 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 if (v1 == null || v2 == null) {
                     return false;
                 }
-                if (!checkDeepEqual(v1, v2, collation, metadata)) {
+                if (!checkDeepEqual(v1, v2, collation, metadata, implicitTimezone)) {
                     return false;
                 }
             }
@@ -181,7 +200,8 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 return false;
             }
             for (int i = 0; i < item1.getSize(); i++) {
-                if (!checkDeepEqual(item1.getSequenceAt(i), item2.getSequenceAt(i), collation, metadata)) {
+                if (!checkDeepEqual(
+                        item1.getSequenceAt(i), item2.getSequenceAt(i), collation, metadata, implicitTimezone)) {
                     return false;
                 }
             }
@@ -190,10 +210,10 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
 
         // If both items are nodes, use node-specific deep-equal logic
         if (item1.isNode() && item2.isNode()) {
-            return checkNodesDeepEqual(item1, item2, collation, metadata);
+            return checkNodesDeepEqual(item1, item2, collation, metadata, implicitTimezone);
         }
 
-        return AtomicDeepEqual.deepEqual(item1, item2, collation, metadata);
+        return AtomicDeepEqual.deepEqual(item1, item2, collation, metadata, implicitTimezone);
     }
 
     /**
@@ -205,9 +225,11 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
      * @param node2 The second node to compare
      * @param collation The collation URI for string comparisons
      * @param metadata The exception metadata for error reporting
+     * @param implicitTimezone The query timezone for atomic value comparisons
      * @return true if the nodes are deep-equal, false otherwise
      */
-    private static boolean checkNodesDeepEqual(Item node1, Item node2, String collation, ExceptionMetadata metadata) {
+    private static boolean checkNodesDeepEqual(
+            Item node1, Item node2, String collation, ExceptionMetadata metadata, ZoneOffset implicitTimezone) {
         // 1: If the two nodes are of different kinds, the result is false.
         if (!sameNodeKind(node1, node2)) {
             return false;
@@ -216,19 +238,24 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         // 2: If the two nodes are both document nodes then they are deep-equal
         // if and only if the sequence $i1/(*|text()) is deep-equal to the sequence $i2/(*|text()).
         if (node1.isDocumentNode() && node2.isDocumentNode()) {
-            return checkDeepEqual(getElementsAndTextNodes(node1), getElementsAndTextNodes(node2), collation, metadata);
+            return checkDeepEqual(
+                    getElementsAndTextNodes(node1),
+                    getElementsAndTextNodes(node2),
+                    collation,
+                    metadata,
+                    implicitTimezone);
         }
 
         // 3: If the two nodes are both element nodes then they are deep-equal
         // if and only if all of the following conditions are satisfied:
         if (node1.isElementNode() && node2.isElementNode()) {
-            return checkElementNodesDeepEqual(node1, node2, collation, metadata);
+            return checkElementNodesDeepEqual(node1, node2, collation, metadata, implicitTimezone);
         }
 
         // 4: If the two nodes are both attribute nodes then they are deep-equal
         // if and only if both the following conditions are satisfied:
         if (node1.isAttributeNode() && node2.isAttributeNode()) {
-            return checkAttributeNodesDeepEqual(node1, node2, collation, metadata);
+            return checkAttributeNodesDeepEqual(node1, node2, collation, metadata, implicitTimezone);
         }
 
         // 5: If the two nodes are both processing instruction nodes, then they are deep-equal
@@ -306,10 +333,11 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
      * @param element2 The second element node
      * @param collation The collation URI for string comparisons
      * @param metadata The exception metadata for error reporting
+     * @param implicitTimezone The query timezone for atomic value comparisons
      * @return true if the element nodes are deep-equal, false otherwise
      */
     private static boolean checkElementNodesDeepEqual(
-            Item element1, Item element2, String collation, ExceptionMetadata metadata) {
+            Item element1, Item element2, String collation, ExceptionMetadata metadata, ZoneOffset implicitTimezone) {
         // 3a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
         if (!sameExpandedNodeName(element1, element2)) {
             return false;
@@ -320,18 +348,25 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         if (content1 != content2) {
             return false;
         }
-        if (!checkAttributesDeepEqual(element1.attributes(), element2.attributes(), collation, metadata)) {
+        if (!checkAttributesDeepEqual(
+                element1.attributes(), element2.attributes(), collation, metadata, implicitTimezone)) {
             return false;
         }
         return switch (content1) {
-            case SIMPLE -> checkDeepEqual(element1.atomizedValue(), element2.atomizedValue(), collation, metadata);
+            case SIMPLE -> checkDeepEqual(
+                    element1.atomizedValue(), element2.atomizedValue(), collation, metadata, implicitTimezone);
             case ELEMENT_ONLY -> checkDeepEqual(
                     element1.children().stream().filter(Item::isElementNode).collect(Collectors.toList()),
                     element2.children().stream().filter(Item::isElementNode).collect(Collectors.toList()),
                     collation,
-                    metadata);
+                    metadata,
+                    implicitTimezone);
             case MIXED -> checkDeepEqual(
-                    getElementsAndTextNodes(element1), getElementsAndTextNodes(element2), collation, metadata);
+                    getElementsAndTextNodes(element1),
+                    getElementsAndTextNodes(element2),
+                    collation,
+                    metadata,
+                    implicitTimezone);
             case EMPTY -> true;
         };
     }
@@ -351,17 +386,18 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
      * @param attr2 The second attribute node
      * @param collation The collation URI for string comparisons
      * @param metadata The exception metadata for error reporting
+     * @param implicitTimezone The query timezone for atomic value comparisons
      * @return true if the attribute nodes are deep-equal, false otherwise
      */
     private static boolean checkAttributeNodesDeepEqual(
-            Item attr1, Item attr2, String collation, ExceptionMetadata metadata) {
+            Item attr1, Item attr2, String collation, ExceptionMetadata metadata, ZoneOffset implicitTimezone) {
         // 4a: The two nodes have the same name, that is (node-name($i1) eq node-name($i2)).
         if (!sameExpandedNodeName(attr1, attr2)) {
             return false;
         }
 
         // 4b: The typed value of $i1 is deep-equal to the typed value of $i2.
-        return checkDeepEqual(attr1.atomizedValue(), attr2.atomizedValue(), collation, metadata);
+        return checkDeepEqual(attr1.atomizedValue(), attr2.atomizedValue(), collation, metadata, implicitTimezone);
     }
 
     /**
@@ -372,10 +408,15 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
      * @param attrs2 The second list of attributes
      * @param collation The collation URI for string comparisons
      * @param metadata The exception metadata for error reporting
+     * @param implicitTimezone The query timezone for atomic value comparisons
      * @return true if the attribute lists are deep-equal, false otherwise
      */
     private static boolean checkAttributesDeepEqual(
-            List<Item> attrs1, List<Item> attrs2, String collation, ExceptionMetadata metadata) {
+            List<Item> attrs1,
+            List<Item> attrs2,
+            String collation,
+            ExceptionMetadata metadata,
+            ZoneOffset implicitTimezone) {
         if (attrs1.size() != attrs2.size()) {
             return false;
         }
@@ -384,7 +425,7 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
         for (Item attr1 : attrs1) {
             boolean found = false;
             for (Item attr2 : attrs2) {
-                if (checkAttributeNodesDeepEqual(attr1, attr2, collation, metadata)) {
+                if (checkAttributeNodesDeepEqual(attr1, attr2, collation, metadata, implicitTimezone)) {
                     found = true;
                     break;
                 }

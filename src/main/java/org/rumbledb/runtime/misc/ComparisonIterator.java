@@ -193,6 +193,15 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
         return compareItems(left, right, comparisonOperator, ignoredMetadata, null, null);
     }
 
+    public static long compareItems(
+            Item left,
+            Item right,
+            ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata,
+            ZoneOffset implicitTimezone) {
+        return compareItems(left, right, comparisonOperator, metadata, null, implicitTimezone);
+    }
+
     private static long compareItems(
             Item left,
             Item right,
@@ -518,9 +527,9 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
     private static int processTime(Item left, Item right, ZoneOffset implicitTimezone) {
         OffsetTime l = TimezoneSupport.timeWithImplicitTimezone(left, implicitTimezone);
         OffsetTime r = TimezoneSupport.timeWithImplicitTimezone(right, implicitTimezone);
-        return l.atDate(LocalDate.of(1970, 1, 1))
+        return l.atDate(LocalDate.EPOCH)
                 .toInstant()
-                .compareTo(r.atDate(LocalDate.of(1970, 1, 1)).toInstant());
+                .compareTo(r.atDate(LocalDate.EPOCH).toInstant());
     }
 
     private static int processBoolean(Boolean l, Boolean r) {
