@@ -37,18 +37,21 @@ public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
     private final Map<Name, SequenceType> paramNameToSequenceTypes;
     final SequenceType returnType;
     final ItemRuntimePlan bodyIterator;
+    private final Map<FunctionPlanVariant, ItemRuntimePlan> parallelVariants;
 
     public FunctionRuntimeIterator(
             Name functionName,
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             ItemRuntimePlan bodyIterator,
+            Map<FunctionPlanVariant, ItemRuntimePlan> parallelVariants,
             RuntimeStaticContext staticContext) {
         super(List.of(), staticContext);
         this.functionName = functionName;
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
         this.returnType = returnType;
         this.bodyIterator = bodyIterator;
+        this.parallelVariants = parallelVariants;
     }
 
     @Override
@@ -60,6 +63,7 @@ public class FunctionRuntimeIterator extends AbstractAtMostOneItemRuntimePlan {
                 dynamicContext.getModuleContext(),
                 this.bodyIterator,
                 this.staticContext.isUpdating());
+        function.setParallelVariants(this.parallelVariants);
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
         if (this.functionName == null) {
             // An inline function captures lexical variables, but its focus is absent.

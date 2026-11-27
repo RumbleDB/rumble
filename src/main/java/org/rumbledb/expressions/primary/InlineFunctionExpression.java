@@ -59,6 +59,11 @@ public class InlineFunctionExpression extends Expression {
 
     private final SequenceType returnType;
 
+    /** Set only when the query contains a potentially distributed dynamic call. */
+    @Getter
+    @Setter
+    private boolean parallelSpecializationEnabled;
+
     @Getter
     private final StatementsAndOptionalExpr body;
 

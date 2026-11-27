@@ -27,6 +27,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.HomogeneousItemDataFrame;
@@ -66,6 +67,19 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
         FunctionCallArgumentConversion.wrapAccordingToSignature(
                 functionItem.getIdentifier().getName(), functionItem.getSignature(), convertedArguments, callerContext);
         if (isPartialApplication) {
+            if (functionItem instanceof FunctionItem function && function.hasParallelVariants()) {
+                for (ItemRuntimePlan argument : convertedArguments) {
+                    if (argument != null
+                            && argument.getRuntimeStaticContext()
+                                    .getExecutionMode()
+                                    .isRDDOrDataFrame()) {
+                        throw new UnsupportedFeatureException(
+                                "Partial application of a distributed parameter is not supported yet. "
+                                        + "Bind the local parameters first and supply the distributed parameter in the final call.",
+                                argument.getRuntimeStaticContext().getMetadata());
+                    }
+                }
+            }
             FunctionItem result = partiallyApply(functionItem, convertedArguments, false, context);
             RuntimeStaticContext resultContext = callerContext.toBuilder()
                     .staticType(new SequenceType(ItemTypeFactory.createFunctionItemType(result.getSignature())))
@@ -84,7 +98,46 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
             return new FunctionCall(builtin.buildCallPlan(callContext), callContext);
         }
         FunctionItem function = (FunctionItem) functionItem;
-        return new FunctionCall(function.getCalleePlan(), callContext);
+        return new FunctionCall(selectCalleePlan(function, convertedArguments, callerContext), callContext);
+    }
+
+    private static ItemRuntimePlan selectCalleePlan(
+            FunctionItem function, List<ItemRuntimePlan> arguments, RuntimeStaticContext callerContext) {
+        if (!function.hasParallelVariants()) {
+            return function.getCalleePlan();
+        }
+        Name parallelParameter = null;
+        ExecutionMode mode = ExecutionMode.LOCAL;
+        int distributedCount = 0;
+        for (int i = 0; i < arguments.size(); i++) {
+            ExecutionMode argumentMode =
+                    arguments.get(i).getRuntimeStaticContext().getExecutionMode();
+            if (argumentMode.isRDDOrDataFrame()) {
+                parallelParameter = function.getParameterNames().get(i);
+                mode = argumentMode;
+                distributedCount++;
+            }
+        }
+        if (distributedCount == 0) {
+            return function.getCalleePlan();
+        }
+        if (distributedCount > 1) {
+            throw new UnsupportedFeatureException(
+                    "Function items currently support only one distributed parameter; all other parameters must be local.",
+                    callerContext.getMetadata());
+        }
+        ItemRuntimePlan variant = function.getParallelVariant(parallelParameter, mode);
+        // A generic item* parameter cannot use a typed DataFrame body, but converting the
+        // DataFrame to an RDD preserves distribution and the original item types.
+        if (variant == null && mode == ExecutionMode.DATAFRAME) {
+            variant = function.getParallelVariant(parallelParameter, ExecutionMode.RDD);
+        }
+        if (variant == null) {
+            throw new UnsupportedFeatureException(
+                    "No distributed function plan is available for parameter " + parallelParameter + ".",
+                    callerContext.getMetadata());
+        }
+        return variant;
     }
 
     /**
@@ -183,6 +236,7 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
 
         List<Name> partialApplicationParamNames = new ArrayList<>();
         List<SequenceType> partialApplicationParamTypes = new ArrayList<>();
+        boolean bindsDistributedParameter = false;
 
         for (int i = 0; i < arguments.size(); i++) {
             Name argName = functionItem.getParameterNames().get(i);
@@ -197,11 +251,13 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
                 RDDArgumentValues.remove(argName);
                 DFArgumentValues.remove(argName);
                 if (argIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+                    bindsDistributedParameter = true;
                     DFArgumentValues.put(argName, ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(argIterator, context));
                 } else if (argIterator
                         .getRuntimeStaticContext()
                         .getExecutionMode()
                         .isRDDOrDataFrame()) {
+                    bindsDistributedParameter = true;
                     RDDArgumentValues.put(argName, argIterator.getRDD(context));
                 } else {
                     localArgumentValues.put(argName, argIterator.materialize(context));
@@ -232,6 +288,11 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
         if (functionItem instanceof FunctionItem function
                 && !(functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator)) {
             partiallyAppliedFunction.shareCalleePlan(function);
+            if (bindsDistributedParameter) {
+                // Named partial applications can capture distributed arguments. Keep the original
+                // callee plan because each specialization assumes all other parameters are local.
+                partiallyAppliedFunction.setParallelVariants(null);
+            }
         }
         return partiallyAppliedFunction;
     }

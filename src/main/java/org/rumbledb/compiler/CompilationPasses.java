@@ -119,6 +119,12 @@ final class CompilationPasses {
                         ExecutionModeResolver.resolve(module, context.configuration(), context.externalBindings()));
     }
 
+    static CompilationPass<MainModule> prepareParallelFunctionItems() {
+        return analysis(
+                "Preparing parallel function items",
+                (module, context) -> ParallelFunctionSpecialization.prepare(module, context.configuration()));
+    }
+
     private static <M extends Module> CompilationPass<M> analysis(
             String name, BiConsumer<M, CompilationContext> action) {
         return new NamedPass<>(name, (module, context) -> {
