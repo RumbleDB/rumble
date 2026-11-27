@@ -83,9 +83,14 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+          cache-dependency-path: |
+            pom.xml
+            .github/maven-settings.xml
+            .github/workflows/run-qt3.yml
 
       - name: Build RumbleDB
-        run: mvn -B -q clean compile assembly:single
+        run: mvn --settings .github/maven-settings.xml -B -q clean compile assembly:single
 
       - name: Upload RumbleDB target
         uses: actions/upload-artifact@v7
