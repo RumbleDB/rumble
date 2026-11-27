@@ -70,7 +70,9 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
             if (functionItem instanceof FunctionItem function && function.hasParallelVariants()) {
                 for (ItemRuntimePlan argument : convertedArguments) {
                     if (argument != null
-                            && argument.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+                            && argument.getRuntimeStaticContext()
+                                    .getExecutionMode()
+                                    .isRDDOrDataFrame()) {
                         throw new UnsupportedFeatureException(
                                 "Partial application of a distributed parameter is not supported yet. "
                                         + "Bind the local parameters first and supply the distributed parameter in the final call.",
