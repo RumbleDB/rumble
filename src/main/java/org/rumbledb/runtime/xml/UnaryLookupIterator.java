@@ -86,25 +86,7 @@ public class UnaryLookupIterator extends ItemRuntimePlan implements LocalRuntime
             }
             return;
         }
-        for (Item rawKey : keys) {
-            List<Item> atomized = rawKey.atomizedValue();
-            if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
-                throw new UnexpectedTypeException(
-                        "Map lookup key must atomize to a single atomic value [err:XPTY0004].", getMetadata());
-            }
-            Item key = atomized.get(0);
-            if (map.isObject()) {
-                Item value = map.getItemByKey(key);
-                if (value != null) {
-                    results.add(value);
-                }
-            } else {
-                List<Item> values = map.getSequenceByKey(key);
-                if (values != null) {
-                    results.addAll(values);
-                }
-            }
-        }
+        PostfixLookupIterator.appendMapLookup(map, keys, results, getMetadata());
     }
 
     private void appendArrayLookup(Item array, List<Item> keys, List<Item> results) {

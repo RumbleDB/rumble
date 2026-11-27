@@ -30,6 +30,7 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.RuntimeStaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.cursor.AbstractLocalCursor;
 import org.rumbledb.runtime.cursor.Cursor;
@@ -125,26 +126,7 @@ public class PostfixLookupIterator extends ItemRuntimePlan implements LocalRunti
                 }
                 return results;
             }
-            for (Item rawKey : keys) {
-                List<Item> atomized = rawKey.atomizedValue();
-                if (atomized.size() != 1 || !atomized.get(0).isAtomic()) {
-                    throw new UnexpectedTypeException(
-                            "Map lookup key must atomize to a single atomic value [err:XPTY0004].",
-                            staticContext.getMetadata());
-                }
-                Item key = atomized.get(0);
-                if (item.isObject()) {
-                    Item value = item.getItemByKey(key);
-                    if (value != null) {
-                        results.add(value);
-                    }
-                } else {
-                    List<Item> valueSequence = item.getSequenceByKey(key);
-                    if (valueSequence != null) {
-                        results.addAll(valueSequence);
-                    }
-                }
-            }
+            appendMapLookup(item, keys, results, staticContext.getMetadata());
             return results;
         }
         if (item.isArray()) {
@@ -173,6 +155,27 @@ public class PostfixLookupIterator extends ItemRuntimePlan implements LocalRunti
                         + item.getDynamicType()
                         + " detected instead",
                 staticContext.getMetadata());
+    }
+
+    static void appendMapLookup(Item map, List<Item> keys, List<Item> results, ExceptionMetadata metadata) {
+        for (Item rawKey : keys) {
+            for (Item key : rawKey.atomizedValue()) {
+                if (!key.isAtomic()) {
+                    throw new UnexpectedTypeException("Map lookup keys must be atomic after atomization.", metadata);
+                }
+                if (map.isObject()) {
+                    Item value = map.getItemByKey(key);
+                    if (value != null) {
+                        results.add(value);
+                    }
+                } else {
+                    List<Item> values = map.getSequenceByKey(key);
+                    if (values != null) {
+                        results.addAll(values);
+                    }
+                }
+            }
+        }
     }
 
     @Serial

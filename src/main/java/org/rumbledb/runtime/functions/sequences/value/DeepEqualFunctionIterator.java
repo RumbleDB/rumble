@@ -30,7 +30,6 @@ import org.apache.spark.api.java.function.FlatMapFunction2;
 import scala.Tuple2;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.config.model.LanguageVersion;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.RuntimeStaticContext;
@@ -42,6 +41,7 @@ import org.rumbledb.items.xml.XmlSchemaTypeAnnotation.ContentKind;
 import org.rumbledb.runtime.AbstractAtMostOneItemRuntimePlan;
 import org.rumbledb.runtime.misc.AtomicDeepEqual;
 import org.rumbledb.runtime.misc.CollationSupport;
+import org.rumbledb.runtime.misc.TimezoneSupport;
 import org.rumbledb.runtime.plan.ItemRuntimePlan;
 
 public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan {
@@ -69,12 +69,7 @@ public class DeepEqualFunctionIterator extends AbstractAtMostOneItemRuntimePlan 
                 getRuntimeStaticContext(),
                 getMetadata());
 
-        LanguageVersion language = getRuntimeStaticContext().getQueryLanguage();
-        if (language == null) {
-            language = getConfiguration().semantics().queryLanguage();
-        }
-        ZoneOffset implicitTimezone =
-                language.isXQuery() ? context.getCurrentDateTime().getOffset() : null;
+        ZoneOffset implicitTimezone = TimezoneSupport.xqueryImplicitTimezone(context, getRuntimeStaticContext());
 
         if (sequenceIterator1.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()
                 && sequenceIterator2

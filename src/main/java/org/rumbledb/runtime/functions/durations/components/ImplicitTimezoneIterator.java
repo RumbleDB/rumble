@@ -38,7 +38,7 @@ public class ImplicitTimezoneIterator extends AbstractAtMostOneItemRuntimePlan {
     @Override
     public Item evaluateAtMostOne(DynamicContext context) {
         return ItemFactory.getInstance()
-                .createDayTimeDurationItem(Duration.ofSeconds(
-                        context.getCurrentDateTime().getOffset().getTotalSeconds()));
+                .createDayTimeDurationItem(
+                        Duration.ofSeconds(context.getImplicitTimezone().getTotalSeconds()));
     }
 }

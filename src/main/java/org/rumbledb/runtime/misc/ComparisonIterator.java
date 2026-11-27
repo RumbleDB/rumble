@@ -119,7 +119,8 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
                 this.comparisonOperator,
                 getRuntimeStaticContext().getDefaultCollation(),
                 getMetadata(),
-                getRuntimeStaticContext());
+                getRuntimeStaticContext(),
+                TimezoneSupport.xqueryImplicitTimezone(dynamicContext, getRuntimeStaticContext()));
     }
 
     private static Item applyComparison(
@@ -128,7 +129,8 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
             ComparisonOperator operator,
             String activeCollation,
             ExceptionMetadata metadata,
-            RuntimeStaticContext staticContext) {
+            RuntimeStaticContext staticContext,
+            ZoneOffset implicitTimezone) {
         if (left.isArray() || right.isArray()) {
             throw new CannotAtomizeException("Invalid args. Comparison can't be performed on array type", metadata);
         } else if (left.isObject() || right.isObject()) {
@@ -160,7 +162,7 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
             return comparisonResultToBooleanItem(comparison, operator, metadata);
         }
 
-        long comparison = compareItems(left, right, operator, metadata, staticContext, null);
+        long comparison = compareItems(left, right, operator, metadata, staticContext, implicitTimezone);
         if (comparison == Long.MIN_VALUE) {
             throw new UnexpectedTypeException(
                     " \""
@@ -517,26 +519,14 @@ public class ComparisonIterator extends AbstractAtMostOneItemRuntimePlan impleme
     }
 
     private static int processDateTime(Item left, Item right, ZoneOffset implicitTimezone) {
-        OffsetDateTime l = left.getDateTimeValue();
-        OffsetDateTime r = right.getDateTimeValue();
-        if (implicitTimezone != null && !left.hasTimeZone()) {
-            l = l.withOffsetSameLocal(implicitTimezone);
-        }
-        if (implicitTimezone != null && !right.hasTimeZone()) {
-            r = r.withOffsetSameLocal(implicitTimezone);
-        }
+        OffsetDateTime l = TimezoneSupport.dateTimeWithImplicitTimezone(left, implicitTimezone);
+        OffsetDateTime r = TimezoneSupport.dateTimeWithImplicitTimezone(right, implicitTimezone);
         return l.toInstant().compareTo(r.toInstant());
     }
 
     private static int processTime(Item left, Item right, ZoneOffset implicitTimezone) {
-        OffsetTime l = left.getTimeValue();
-        OffsetTime r = right.getTimeValue();
-        if (implicitTimezone != null && !left.hasTimeZone()) {
-            l = l.withOffsetSameLocal(implicitTimezone);
-        }
-        if (implicitTimezone != null && !right.hasTimeZone()) {
-            r = r.withOffsetSameLocal(implicitTimezone);
-        }
+        OffsetTime l = TimezoneSupport.timeWithImplicitTimezone(left, implicitTimezone);
+        OffsetTime r = TimezoneSupport.timeWithImplicitTimezone(right, implicitTimezone);
         return l.atDate(LocalDate.EPOCH)
                 .toInstant()
                 .compareTo(r.atDate(LocalDate.EPOCH).toInstant());

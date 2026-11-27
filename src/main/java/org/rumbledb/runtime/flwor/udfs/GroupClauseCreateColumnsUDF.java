@@ -18,6 +18,7 @@ package org.rumbledb.runtime.flwor.udfs;
 import java.io.Serial;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +35,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
+import org.rumbledb.runtime.misc.TimezoneSupport;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -48,6 +50,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
     private final List<Object> results;
     private final ExceptionMetadata metadata;
+    private final ZoneOffset implicitTimezone;
 
     // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
     // The second column is used for strings, with a special value in the first column.
@@ -66,7 +69,8 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             DynamicContext context,
             StructType schema,
             List<FlworDataFrameColumn> columns,
-            ExceptionMetadata metadata) {
+            ExceptionMetadata metadata,
+            ZoneOffset implicitTimezone) {
         this.dataFrameContext = new DataFrameContext(context, columns);
         this.groupingVariableNames = new ArrayList<>();
         this.groupingSequenceTypes = new ArrayList<>();
@@ -76,6 +80,7 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
         }
         this.results = new ArrayList<>();
         this.metadata = metadata;
+        this.implicitTimezone = implicitTimezone;
     }
 
     @Override
@@ -215,16 +220,23 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(nextItem.getEpochMillis());
             return;
         } else if (nextItem.hasDateTime()) {
-            Instant instant = nextItem.isTime()
-                    ? nextItem.getTimeValue().atDate(LocalDate.EPOCH).toInstant()
-                    : nextItem.getDateTimeValue().toInstant();
             this.results.add(dateTimeGroupIndex);
-            // A canonical UTC instant preserves all fractional seconds in Spark's grouping key.
-            this.results.add(instant.toString());
+            this.results.add(temporalGroupingKey(nextItem));
             this.results.add(null);
             this.results.add(null);
             return;
         }
         throw new UnexpectedTypeException("Group by variable must atomize to a supported atomic value.", this.metadata);
+    }
+
+    private String temporalGroupingKey(Item item) {
+        // A canonical UTC instant preserves all fractional seconds in Spark's grouping key.
+        Instant instant = item.isTime()
+                ? TimezoneSupport.timeWithImplicitTimezone(item, this.implicitTimezone)
+                        .atDate(LocalDate.EPOCH)
+                        .toInstant()
+                : TimezoneSupport.dateTimeWithImplicitTimezone(item, this.implicitTimezone)
+                        .toInstant();
+        return instant.toString();
     }
 }
