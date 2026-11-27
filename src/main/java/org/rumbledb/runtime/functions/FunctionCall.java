@@ -67,6 +67,17 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
         FunctionCallArgumentConversion.wrapAccordingToSignature(
                 functionItem.getIdentifier().getName(), functionItem.getSignature(), convertedArguments, callerContext);
         if (isPartialApplication) {
+            if (functionItem instanceof FunctionItem function && function.hasParallelVariants()) {
+                for (ItemRuntimePlan argument : convertedArguments) {
+                    if (argument != null
+                            && argument.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
+                        throw new UnsupportedFeatureException(
+                                "Partial application of a distributed parameter is not supported yet. "
+                                        + "Bind the local parameters first and supply the distributed parameter in the final call.",
+                                argument.getRuntimeStaticContext().getMetadata());
+                    }
+                }
+            }
             FunctionItem result = partiallyApply(functionItem, convertedArguments, false, context);
             RuntimeStaticContext resultContext = callerContext.toBuilder()
                     .staticType(new SequenceType(ItemTypeFactory.createFunctionItemType(result.getSignature())))
@@ -216,17 +227,6 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
      */
     public static FunctionItem partiallyApply(
             Item functionItem, List<ItemRuntimePlan> arguments, boolean isTailCall, DynamicContext context) {
-        if (!isTailCall && functionItem instanceof FunctionItem function && function.hasParallelVariants()) {
-            for (ItemRuntimePlan argument : arguments) {
-                if (argument != null
-                        && argument.getRuntimeStaticContext().getExecutionMode().isRDDOrDataFrame()) {
-                    throw new UnsupportedFeatureException(
-                            "Partial application of a distributed parameter is not supported yet. "
-                                    + "Bind the local parameters first and supply the distributed parameter in the final call.",
-                            argument.getRuntimeStaticContext().getMetadata());
-                }
-            }
-        }
         Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(functionItem.getLocalVariablesInClosure());
         Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(functionItem.getRDDVariablesInClosure());
         Map<Name, HomogeneousItemDataFrame> DFArgumentValues =
@@ -234,6 +234,7 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
 
         List<Name> partialApplicationParamNames = new ArrayList<>();
         List<SequenceType> partialApplicationParamTypes = new ArrayList<>();
+        boolean bindsDistributedParameter = false;
 
         for (int i = 0; i < arguments.size(); i++) {
             Name argName = functionItem.getParameterNames().get(i);
@@ -248,11 +249,13 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
                 RDDArgumentValues.remove(argName);
                 DFArgumentValues.remove(argName);
                 if (argIterator.getRuntimeStaticContext().getExecutionMode().isDataFrame()) {
+                    bindsDistributedParameter = true;
                     DFArgumentValues.put(argName, ItemRuntimeDataFrameFactory.INSTANCE.fromPlan(argIterator, context));
                 } else if (argIterator
                         .getRuntimeStaticContext()
                         .getExecutionMode()
                         .isRDDOrDataFrame()) {
+                    bindsDistributedParameter = true;
                     RDDArgumentValues.put(argName, argIterator.getRDD(context));
                 } else {
                     localArgumentValues.put(argName, argIterator.materialize(context));
@@ -283,6 +286,11 @@ public record FunctionCall(ItemRuntimePlan plan, DynamicContext context) {
         if (functionItem instanceof FunctionItem function
                 && !(functionItem.getBodyIterator() instanceof BuiltinNamedFunctionReferenceMarkerIterator)) {
             partiallyAppliedFunction.shareCalleePlan(function);
+            if (bindsDistributedParameter) {
+                // Named partial applications can capture distributed arguments. Keep the original
+                // callee plan because each specialization assumes all other parameters are local.
+                partiallyAppliedFunction.setParallelVariants(null);
+            }
         }
         return partiallyAppliedFunction;
     }
